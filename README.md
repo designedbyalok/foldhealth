@@ -12,6 +12,7 @@ This is a **production-grade prototype** of Fold Health's care coordination plat
 |-------|-----------|
 | Framework | React 19 |
 | Build | Vite 8 |
+| Package Manager | Bun 1.2 |
 | State | Zustand 5 |
 | Routing | Custom hash-based router |
 | Styling | Tailwind CSS 4 + CSS Modules |
@@ -25,8 +26,8 @@ This is a **production-grade prototype** of Fold Health's care coordination plat
 ## Getting Started
 
 ```bash
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 The app runs at `http://localhost:5173`. Navigate to `/#/population/worklist` (default) or use the sidebar to explore other sections.
@@ -138,6 +139,17 @@ The platform follows the **Fold Health design system** with strict adherence to:
 ```
 
 ## Recent Changes
+
+### Platform — Bun migration, Help menu update (May 2026)
+- **Migrated from npm to Bun** — `packageManager` set to `bun@1.2.23`, `bun.lock` replaces `package-lock.json` as the canonical lock file.
+- **Help popover** — added Tasks group (Task List, Kanban Board) to the platform features menu.
+
+### Tasks — Action menus, functional View By/Sort By filters, label click-to-edit (May 2026)
+- **Three-dot action menu** on every list row (appears on hover) and kanban card (top-right corner), with contextual options: Mark as Complete/Missed/Pending depending on current status, and Delete (red).
+- **Functional View By filter** — groups tasks by Status (default), Priority (High/Medium/Low/None), or Due Date (Overdue/Today/Upcoming/No Due Date).
+- **Functional Sort By filter** — sorts tasks within each group by Due Date, Priority, or Name.
+- **Labels click-to-edit** — clicking existing labels opens the multi-select dropdown directly; "Add Label" CTA only shows when no labels are assigned.
+- **Due Date text color** now matches other secondary columns (`var(--neutral-300)`).
 
 ### Tasks — Full Tasks page with preview drawer, Kanban board, and drag-and-drop (May 2026)
 - **New Tasks page** (`src/features/tasks/TasksView.jsx`) rendered when `activePage === 'tasks'`. Matches the Figma Tasks design (node `1371:40866`).

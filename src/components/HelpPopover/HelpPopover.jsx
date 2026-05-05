@@ -53,6 +53,23 @@ const FEATURES = [
     ],
   },
   {
+    group: 'Tasks',
+    items: [
+      {
+        icon: 'solar:checklist-minimalistic-linear',
+        crumbs: ['Task List'],
+        description: 'View, filter, and manage tasks in list or kanban board.',
+        page: 'tasks',
+      },
+      {
+        icon: 'solar:kanban-linear',
+        crumbs: ['Kanban Board'],
+        description: 'Drag-and-drop board view grouped by status.',
+        page: 'tasks',
+      },
+    ],
+  },
+  {
     group: 'Calls',
     items: [
       {

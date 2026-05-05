@@ -251,13 +251,14 @@
   color: var(--neutral-300);
 }
 
-.colCheck { width: 28px; flex-shrink: 0; padding: 0 8px; }
-.colTask  { flex: 1; min-width: 0; }
-.colP     { width: 60px; flex-shrink: 0; }
-.colStatus { width: 120px; flex-shrink: 0; }
-.colDue   { width: 130px; flex-shrink: 0; }
-.colMember { width: 200px; flex-shrink: 0; }
-.colLabels { width: 250px; flex-shrink: 0; }
+.colCheck { width: 48px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.colTask  { flex: 1; min-width: 0; padding: 0 12px 0 0; }
+.colP     { width: 60px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.colStatus { width: 130px; flex-shrink: 0; padding: 0 12px; }
+.colDue   { width: 150px; flex-shrink: 0; padding: 0 12px; }
+.colAssigned { width: 160px; flex-shrink: 0; padding: 0 12px; }
+.colMember { width: 160px; flex-shrink: 0; padding: 0 12px; }
+.colLabels { width: 220px; flex-shrink: 0; padding: 0 12px; }
 
 /* ── Status Group ── */
 .statusGroup {
@@ -423,7 +424,7 @@
 
 /* Status */
 .cellStatus {
-  width: 120px;
+  width: 130px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -432,7 +433,7 @@
 
 /* Due date */
 .cellDue {
-  width: 130px;
+  width: 150px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -446,9 +447,21 @@
   color: var(--status-error);
 }
 
+/* Assigned To */
+.cellAssigned {
+  width: 160px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 12px;
+  font-size: 14px;
+  color: var(--neutral-300);
+}
+
 /* Member */
 .cellMember {
-  width: 200px;
+  width: 160px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -460,7 +473,7 @@
 
 /* Labels */
 .cellLabels {
-  width: 250px;
+  width: 220px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -623,6 +636,7 @@
 
 /* ── Kanban Card ── */
 .kanbanCard {
+  position: relative;
   background: var(--neutral-0);
   border: 0.5px solid var(--neutral-150);
   border-radius: 8px;
@@ -1202,6 +1216,37 @@
 }
 .simpleDropItem:hover { background: var(--neutral-50); }
 
+.dropdownSearch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 0.5px solid var(--neutral-100);
+}
+
+.dropdownSearchInput {
+  border: none;
+  outline: none;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  color: var(--neutral-400);
+  flex: 1;
+  background: none;
+}
+.dropdownSearchInput::placeholder { color: var(--neutral-200); }
+
+.labelOverflow {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--primary-300);
+  background: var(--primary-25);
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: default;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 /* Activity log entries */
 .activityLog {
   display: flex;
@@ -1293,3 +1338,192 @@
   color: var(--neutral-300);
   line-height: 1.2;
 }
+
+/* ── Pagination ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-top: 0.5px solid var(--neutral-100);
+}
+
+.pageBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 4px;
+  background: var(--neutral-0);
+  cursor: pointer;
+  color: var(--neutral-300);
+  transition: background .1s;
+}
+.pageBtn:hover:not(:disabled) { background: var(--neutral-50); }
+.pageBtn:disabled { opacity: 0.4; cursor: default; }
+
+.pageInfo {
+  font-size: 13px;
+  color: var(--neutral-300);
+  min-width: 48px;
+  text-align: center;
+}
+
+/* ── Calendar Dropdown ── */
+.calendarDropdown {
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+  padding: 16px;
+  min-width: 280px;
+}
+
+.calendarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.calendarTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--neutral-400);
+}
+
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  text-align: center;
+}
+
+.calendarDayLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--neutral-200);
+  padding: 6px 0;
+}
+
+.calendarDay {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--neutral-400);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+  transition: background .1s;
+}
+.calendarDay:hover {
+  background: var(--primary-50);
+  color: var(--primary-300);
+}
+
+.calendarToday {
+  border: 1.5px solid var(--primary-200);
+  font-weight: 600;
+  color: var(--primary-300);
+}
+
+.calendarSelected {
+  background: var(--primary-300);
+  color: #fff;
+  font-weight: 600;
+}
+.calendarSelected:hover {
+  background: var(--primary-400);
+  color: #fff;
+}
+
+/* ── Add Task Drawer ── */
+.addTaskTextarea {
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  color: var(--neutral-400);
+  outline: none;
+  resize: vertical;
+  min-height: 60px;
+  line-height: 1.5;
+  transition: border-color .15s;
+}
+.addTaskTextarea:focus { border-color: var(--primary-200); }
+.addTaskTextarea::placeholder { color: var(--neutral-200); }
+
+/* ── Actions Column ── */
+.colActions { width: 48px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.cellActions {
+  width: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.actionMenuBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .15s, background .15s;
+}
+.taskRow:hover .actionMenuBtn,
+.actionMenuBtn:focus { opacity: 1; }
+.actionMenuBtn:hover { background: var(--neutral-100); }
+
+.actionMenuDropdown {
+  background: #fff;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.10);
+  padding: 4px;
+  min-width: 180px;
+}
+
+.actionMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--neutral-400);
+  border: none;
+  background: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background .12s;
+}
+.actionMenuItem:hover { background: var(--neutral-50); }
+
+.actionMenuDanger { color: var(--status-error); }
+.actionMenuDanger:hover { background: rgba(255, 59, 48, 0.06); }
+
+/* Kanban card action menu positioning */
+.cardActionMenu {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.kanbanCard:hover .cardActionMenu { opacity: 1; }

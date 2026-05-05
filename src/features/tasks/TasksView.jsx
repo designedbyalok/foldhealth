@@ -142,6 +142,190 @@ function PriorityIcon({ priority, size = 24 }) {
   );
 }
 
+/* ── Date Picker (inline calendar, same as appointment drawer) ── */
+function TaskDatePicker({ value, onSelect }) {
+  const [open, setOpen] = useState(false);
+  const [viewDate, setViewDate] = useState(() => {
+    if (value) {
+      const parts = value.split('-');
+      if (parts.length === 3) return new Date(+parts[2], +parts[0] - 1, 1);
+    }
+    return new Date();
+  });
+  const btnRef = useRef(null);
+
+  const today = new Date();
+  const todayDay = today.getDate();
+  const todayMonth = today.getMonth();
+  const todayYear = today.getFullYear();
+
+  const selectedParts = value ? value.split('-') : null;
+  const selectedDay = selectedParts ? +selectedParts[1] : null;
+  const selectedMonth = selectedParts ? +selectedParts[0] - 1 : null;
+  const selectedYear = selectedParts ? +selectedParts[2] : null;
+
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const days = [];
+  for (let i = 0; i < firstDay; i++) days.push(null);
+  for (let d = 1; d <= daysInMonth; d++) days.push(d);
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+  const isToday = (d) => d === todayDay && month === todayMonth && year === todayYear;
+  const isSelected = (d) => d === selectedDay && month === selectedMonth && year === selectedYear;
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <button ref={btnRef} className={styles.detailValue} style={{ color: 'var(--neutral-300)' }} onClick={e => { e.stopPropagation(); setOpen(v => !v); }}>
+        <Icon name="solar:calendar-linear" size={16} color="var(--neutral-300)" />
+        <span>{value || 'Select Date'}</span>
+      </button>
+      {open && createPortal(
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={() => setOpen(false)}>
+          <div
+            className={styles.calendarDropdown}
+            style={{ position: 'fixed', top: btnRef.current?.getBoundingClientRect().bottom + 4, left: btnRef.current?.getBoundingClientRect().left, zIndex: 9999 }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className={styles.calendarHeader}>
+              <ActionButton icon="solar:alt-arrow-left-linear" size="S" onClick={() => setViewDate(new Date(year, month - 1, 1))} />
+              <span className={styles.calendarTitle}>{monthNames[month]} {year}</span>
+              <ActionButton icon="solar:alt-arrow-right-linear" size="S" onClick={() => setViewDate(new Date(year, month + 1, 1))} />
+            </div>
+            <div className={styles.calendarGrid}>
+              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => <div key={i} className={styles.calendarDayLabel}>{d}</div>)}
+              {days.map((d, i) => d ? (
+                <button
+                  key={i}
+                  className={[styles.calendarDay, isToday(d) ? styles.calendarToday : '', isSelected(d) ? styles.calendarSelected : ''].filter(Boolean).join(' ')}
+                  onClick={() => { onSelect(`${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}-${year}`); setOpen(false); }}
+                >{d}</button>
+              ) : <div key={i} />)}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+}
+
+/* ── Inline Label Dropdown for list rows (multi-select with search) ── */
+function RowLabelDropdown({ task, children }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const btnRef = useRef(null);
+  const updateTask = useAppStore(s => s.updateTask);
+  const showToast = useAppStore(s => s.showToast);
+  const labels = Array.isArray(task.labels) ? task.labels : [];
+  const filtered = LABEL_OPTIONS.filter(l => !search || l.toLowerCase().includes(search.toLowerCase()));
+
+  const toggle = (l) => {
+    const next = labels.includes(l) ? labels.filter(x => x !== l) : [...labels, l];
+    updateTask(task.id, { labels: next });
+    showToast(labels.includes(l) ? `Label "${l}" removed` : `Label "${l}" added`);
+  };
+
+  return (
+    <div ref={btnRef} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }} onClick={e => { e.stopPropagation(); setOpen(v => !v); }}>
+      {children || (
+        <button className={styles.addLabel}>
+          <Icon name="solar:tag-linear" size={13} color="var(--neutral-200)" />
+          Add Label
+        </button>
+      )}
+      {open && createPortal(
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={e => { e.stopPropagation(); setOpen(false); setSearch(''); }}>
+          <div
+            className={styles.simpleDropdown}
+            style={{ position: 'fixed', top: btnRef.current?.getBoundingClientRect().bottom + 4, left: btnRef.current?.getBoundingClientRect().left, zIndex: 9999 }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className={styles.dropdownSearch}>
+              <Icon name="solar:magnifer-linear" size={14} color="var(--neutral-200)" />
+              <input className={styles.dropdownSearchInput} placeholder="Search labels..." value={search} onChange={e => setSearch(e.target.value)} autoFocus />
+            </div>
+            {filtered.map(l => (
+              <button key={l} className={styles.simpleDropItem} onClick={() => toggle(l)}>
+                <input type="checkbox" checked={labels.includes(l)} readOnly style={{ accentColor: 'var(--primary-300)', width: 15, height: 15, flexShrink: 0 }} />
+                {l}
+              </button>
+            ))}
+            {filtered.length === 0 && <div className={styles.simpleDropItem} style={{ color: 'var(--neutral-200)', cursor: 'default' }}>No results</div>}
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+}
+
+/* ── Three-dot Action Menu for rows and kanban cards ── */
+function RowActionMenu({ task }) {
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef(null);
+  const updateTask = useAppStore(s => s.updateTask);
+  const deleteTask = useAppStore(s => s.deleteTask);
+  const showToast = useAppStore(s => s.showToast);
+
+  const actions = [];
+  if (task.status === 'pending') {
+    actions.push({ key: 'complete', label: 'Mark as Complete', icon: 'solar:check-circle-linear', handler: () => { updateTask(task.id, { status: 'completed' }); showToast('Task marked as complete'); } });
+    actions.push({ key: 'missed', label: 'Mark as Missed', icon: 'solar:close-circle-linear', handler: () => { updateTask(task.id, { status: 'missed' }); showToast('Task marked as missed'); } });
+  } else if (task.status === 'missed') {
+    actions.push({ key: 'pending', label: 'Mark as Pending', icon: 'solar:clock-circle-linear', handler: () => { updateTask(task.id, { status: 'pending' }); showToast('Task marked as pending'); } });
+    actions.push({ key: 'complete', label: 'Mark as Complete', icon: 'solar:check-circle-linear', handler: () => { updateTask(task.id, { status: 'completed' }); showToast('Task marked as complete'); } });
+  } else if (task.status === 'completed') {
+    actions.push({ key: 'pending', label: 'Mark as Pending', icon: 'solar:clock-circle-linear', handler: () => { updateTask(task.id, { status: 'pending' }); showToast('Task marked as pending'); } });
+    actions.push({ key: 'missed', label: 'Mark as Missed', icon: 'solar:close-circle-linear', handler: () => { updateTask(task.id, { status: 'missed' }); showToast('Task marked as missed'); } });
+  }
+  actions.push({ key: 'delete', label: 'Delete', icon: 'solar:trash-bin-trash-linear', danger: true, handler: () => { deleteTask(task.id); showToast('Task deleted'); } });
+
+  return (
+    <div ref={btnRef} style={{ position: 'relative' }}>
+      <button className={styles.actionMenuBtn} onClick={e => { e.stopPropagation(); setOpen(v => !v); }}>
+        <Icon name="solar:menu-dots-bold" size={16} color="var(--neutral-300)" />
+      </button>
+      {open && createPortal(
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={e => { e.stopPropagation(); setOpen(false); }}>
+          <div
+            className={styles.actionMenuDropdown}
+            style={{ position: 'fixed', top: btnRef.current?.getBoundingClientRect().bottom + 4, left: btnRef.current?.getBoundingClientRect().right - 180, zIndex: 9999 }}
+            onClick={e => e.stopPropagation()}
+          >
+            {actions.map(a => (
+              <button key={a.key} className={`${styles.actionMenuItem} ${a.danger ? styles.actionMenuDanger : ''}`} onClick={() => { a.handler(); setOpen(false); }}>
+                <Icon name={a.icon} size={16} />
+                {a.label}
+              </button>
+            ))}
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+}
+
+/* ── Inline Status Dropdown for list rows ── */
+function RowStatusDropdown({ task }) {
+  const updateTask = useAppStore(s => s.updateTask);
+  const showToast = useAppStore(s => s.showToast);
+
+  return (
+    <Select value={task.status} onValueChange={v => { updateTask(task.id, { status: v }); showToast(`Status changed to ${STATUS_LABELS[v]}`); }}>
+      <SelectTrigger className="h-6 text-xs [&>svg]:hidden" style={{ background: 'transparent', border: 'none', padding: 0, minWidth: 'auto', gap: 0 }} onClick={e => e.stopPropagation()}>
+        <Badge variant={STATUS_BADGE_VARIANTS[task.status]} label={STATUS_LABELS[task.status]} trailingIcon="solar:alt-arrow-down-linear" />
+      </SelectTrigger>
+      <SelectContent>
+        {STATUS_ORDER.map(s => <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>)}
+      </SelectContent>
+    </Select>
+  );
+}
+
 /* ── Filter Chip (mirrors FilterBar's FilterChip) ── */
 function TaskFilterChip({ filterDef, value, onSet, onClear }) {
   const [open, setOpen] = useState(false);
@@ -237,16 +421,18 @@ function SkeletonRow() {
 }
 
 /* ── List View: Task Row ── */
-function TaskRow({ task, onToggle, onTaskClick }) {
+function TaskRow({ task, onToggle, onTaskClick, hideAssignedTo }) {
   const isCompleted = task.status === 'completed';
   const labels = Array.isArray(task.labels) ? task.labels : [];
+  const updateTask = useAppStore(s => s.updateTask);
+  const showToast = useAppStore(s => s.showToast);
 
   return (
     <div className={styles.taskRow} onClick={() => onTaskClick?.(task)}>
       <div className={styles.cellCheck}>
         <button
           className={`${styles.taskCheckbox} ${isCompleted ? styles.taskCheckboxChecked : ''}`}
-          onClick={() => onToggle(task)}
+          onClick={e => { e.stopPropagation(); onToggle(task); }}
           aria-label={isCompleted ? 'Mark incomplete' : 'Mark complete'}
         >
           {isCompleted && <Icon name="solar:check-read-linear" size={13} color="#fff" />}
@@ -271,7 +457,7 @@ function TaskRow({ task, onToggle, onTaskClick }) {
         <div className={styles.taskAttachments}>
           {task.attachments > 0 && (
             <span className={styles.attachBadge}>
-              <Icon name="solar:paperclip-2-linear" size={14} color="var(--neutral-300)" />
+              <Icon name="solar:paperclip-linear" size={14} color="var(--neutral-300)" />
               {task.attachments}
             </span>
           )}
@@ -288,20 +474,24 @@ function TaskRow({ task, onToggle, onTaskClick }) {
         <PriorityIcon priority={task.priority} size={16} />
       </div>
 
-      <div className={styles.cellStatus}>
-        <Badge
-          variant={STATUS_BADGE_VARIANTS[task.status]}
-          label={STATUS_LABELS[task.status]}
-          trailingIcon="solar:alt-arrow-down-linear"
-        />
+      <div className={styles.cellStatus} onClick={e => e.stopPropagation()}>
+        <RowStatusDropdown task={task} />
       </div>
 
-      <div className={`${styles.cellDue} ${task.due_missed ? styles.dueMissed : ''}`}>
-        {task.due_missed && (
-          <Icon name="solar:clock-circle-linear" size={14} color="var(--status-error)" />
-        )}
-        {task.due_date}
+      <div className={`${styles.cellDue} ${task.due_missed ? styles.dueMissed : ''}`} onClick={e => e.stopPropagation()}>
+        <TaskDatePicker value={task.due_date} onSelect={v => { updateTask(task.id, { due_date: v }); showToast('Due date updated'); }} />
       </div>
+
+      {!hideAssignedTo && (
+        <div className={styles.cellAssigned}>
+          {task.assigned_to && (
+            <>
+              <Icon name="solar:user-linear" size={14} color="var(--neutral-300)" />
+              <span>{task.assigned_to}</span>
+            </>
+          )}
+        </div>
+      )}
 
       <div className={styles.cellMember}>
         <Icon name="solar:user-linear" size={14} color="var(--neutral-300)" />
@@ -319,27 +509,42 @@ function TaskRow({ task, onToggle, onTaskClick }) {
         </span>
       </div>
 
-      <div className={styles.cellLabels}>
-        {labels.length > 0
-          ? labels.map(l => (
-              <Badge key={l} variant="overflow" label={l} />
-            ))
-          : (
+      <div className={styles.cellLabels} onClick={e => e.stopPropagation()}>
+        <RowLabelDropdown task={task}>
+          {labels.length > 0 ? (
+            <>
+              {labels.slice(0, 2).map(l => (
+                <Badge key={l} variant="overflow" label={l} />
+              ))}
+              {labels.length > 2 && (
+                <span className={styles.labelOverflow} title={labels.slice(2).join(', ')}>+{labels.length - 2}</span>
+              )}
+            </>
+          ) : (
             <button className={styles.addLabel}>
               <Icon name="solar:tag-linear" size={13} color="var(--neutral-200)" />
               Add Label
             </button>
-          )
-        }
+          )}
+        </RowLabelDropdown>
+      </div>
+
+      <div className={styles.cellActions} onClick={e => e.stopPropagation()}>
+        <RowActionMenu task={task} />
       </div>
     </div>
   );
 }
 
 /* ── List View: Status Group ── */
-function StatusGroup({ status, tasks, onToggle, onTaskClick }) {
+const PAGE_SIZE = 5;
+
+function StatusGroup({ status, label: labelProp, tasks, onToggle, onTaskClick, hideAssignedTo, onAddTask }) {
   const [collapsed, setCollapsed] = useState(false);
-  const label = STATUS_LABELS[status];
+  const [page, setPage] = useState(0);
+  const label = labelProp || STATUS_LABELS[status];
+  const totalPages = Math.ceil(tasks.length / PAGE_SIZE);
+  const paginated = tasks.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   return (
     <div className={styles.statusGroup}>
@@ -353,7 +558,7 @@ function StatusGroup({ status, tasks, onToggle, onTaskClick }) {
             icon="solar:add-circle-linear"
             size="S"
             tooltip="Add task"
-            onClick={e => e.stopPropagation()}
+            onClick={e => { e.stopPropagation(); onAddTask?.(status); }}
           />
           <div style={{ width: 0.5, height: 16, background: 'var(--neutral-150)' }} />
           <ActionButton
@@ -364,7 +569,22 @@ function StatusGroup({ status, tasks, onToggle, onTaskClick }) {
           />
         </div>
       </div>
-      {!collapsed && tasks.map(t => <TaskRow key={t.id} task={t} onToggle={onToggle} onTaskClick={onTaskClick} />)}
+      {!collapsed && (
+        <>
+          {paginated.map(t => <TaskRow key={t.id} task={t} onToggle={onToggle} onTaskClick={onTaskClick} hideAssignedTo={hideAssignedTo} />)}
+          {totalPages > 1 && (
+            <div className={styles.pagination}>
+              <button className={styles.pageBtn} disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+                <Icon name="solar:alt-arrow-left-linear" size={14} />
+              </button>
+              <span className={styles.pageInfo}>{page + 1} / {totalPages}</span>
+              <button className={styles.pageBtn} disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+                <Icon name="solar:alt-arrow-right-linear" size={14} />
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -466,7 +686,7 @@ function KanbanCardContent({ task }) {
             )}
             {task.attachments > 0 && (
               <span className={styles.linkedItem}>
-                <Icon name="solar:paperclip-2-linear" size={16} color="var(--neutral-300)" />
+                <Icon name="solar:paperclip-linear" size={16} color="var(--neutral-300)" />
                 {task.attachments}
               </span>
             )}
@@ -478,6 +698,11 @@ function KanbanCardContent({ task }) {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Action menu */}
+      <div className={styles.cardActionMenu} onClick={e => e.stopPropagation()}>
+        <RowActionMenu task={task} />
       </div>
     </>
   );
@@ -672,6 +897,146 @@ function EmptyState({ title, description, icon }) {
   );
 }
 
+/* ── Add Task Drawer ── */
+function AddTaskDrawer({ onClose, defaultStatus }) {
+  const [name, setName] = useState('');
+  const [priority, setPriority] = useState('medium');
+  const [status, setStatus] = useState(defaultStatus || 'pending');
+  const [dueDate, setDueDate] = useState('');
+  const [assignedTo, setAssignedTo] = useState('');
+  const [member, setMember] = useState('');
+  const [description, setDescription] = useState('');
+  const [selectedLabels, setSelectedLabels] = useState([]);
+  const createTask = useAppStore(s => s.createTask);
+  const showToast = useAppStore(s => s.showToast);
+
+  const handleSave = async () => {
+    if (!name.trim()) { showToast('Task name is required'); return; }
+    const task = {
+      name: name.trim(),
+      status,
+      priority,
+      due_date: dueDate || new Date().toISOString().split('T')[0].replace(/(\d{4})-(\d{2})-(\d{2})/, '$2-$3-$1'),
+      assigned_to: assignedTo || 'Dr. JeDee Potter',
+      member: member || 'Celia Gerhold',
+      labels: selectedLabels,
+      meta: description || '',
+      attachments: 0,
+      comments: 0,
+      is_subtask: false,
+    };
+    const result = await createTask(task);
+    if (result) {
+      showToast('Task created');
+      onClose();
+    }
+  };
+
+  return (
+    <Drawer
+      title="Add Task"
+      onClose={onClose}
+      footer={
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          <Button variant="secondary" size="M" onClick={onClose}>Cancel</Button>
+          <Button variant="primary" size="M" onClick={handleSave}>Save Task</Button>
+        </div>
+      }
+    >
+      <div className={styles.drawerContent}>
+        {/* Task Name */}
+        <div className={styles.drawerSection}>
+          <span className={styles.drawerSectionLabel}>Task Name</span>
+          <input
+            className={styles.drawerTaskTitleInput}
+            style={{ margin: 0, width: '100%' }}
+            placeholder="Enter task name..."
+            value={name}
+            onChange={e => setName(e.target.value)}
+            autoFocus
+          />
+        </div>
+
+        {/* Detail rows */}
+        <div className={styles.drawerDetails}>
+          <div className={styles.detailRow}>
+            <span className={styles.detailLabel}>Status</span>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="h-8 text-sm w-[140px]" style={{ background: 'white' }}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_ORDER.map(s => <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className={styles.detailRow}>
+            <span className={styles.detailLabel}>Assigned To</span>
+            <DetailDropdown
+              value={assignedTo || 'Select assignee'}
+              options={ASSIGNEE_OPTIONS}
+              onSelect={setAssignedTo}
+            />
+          </div>
+          <div className={styles.detailRow}>
+            <span className={styles.detailLabel}>Due Date</span>
+            <TaskDatePicker value={dueDate} onSelect={setDueDate} />
+          </div>
+          <div className={styles.detailRow}>
+            <span className={styles.detailLabel}>Priority</span>
+            <DetailDropdown
+              value={priority}
+              options={PRIORITY_OPTIONS}
+              onSelect={setPriority}
+              renderOption={opt => (
+                <><PriorityIcon priority={opt} size={16} /> <span style={{ textTransform: 'capitalize' }}>{opt}</span></>
+              )}
+            >
+              <PriorityIcon priority={priority} size={16} />
+              <span style={{ textTransform: 'capitalize' }}>{priority}</span>
+            </DetailDropdown>
+          </div>
+          <div className={styles.detailRow}>
+            <span className={styles.detailLabel}>Member</span>
+            <DetailDropdown
+              value={member || 'Select member'}
+              options={MEMBER_OPTIONS}
+              onSelect={setMember}
+            />
+          </div>
+          <div className={styles.detailRow}>
+            <span className={styles.detailLabel}>Labels</span>
+            <div className={styles.detailValueLabels}>
+              {selectedLabels.map(l => (
+                <Badge key={l} variant="overflow" label={l} trailingIcon="solar:close-circle-linear" onClick={() => setSelectedLabels(prev => prev.filter(x => x !== l))} />
+              ))}
+              <DetailDropdown
+                value=""
+                options={LABEL_OPTIONS.filter(l => !selectedLabels.includes(l))}
+                onSelect={v => setSelectedLabels(prev => [...prev, v])}
+              >
+                <Icon name="solar:add-circle-linear" size={14} color="var(--neutral-200)" />
+              </DetailDropdown>
+            </div>
+          </div>
+        </div>
+
+        {/* Description */}
+        <div className={styles.drawerSection}>
+          <span className={styles.drawerSectionLabel}>Description</span>
+          <textarea
+            className={styles.addTaskTextarea}
+            placeholder="Add a description..."
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            rows={3}
+          />
+        </div>
+      </div>
+    </Drawer>
+  );
+}
+
 /* ── Task Detail Drawer ── */
 const ASSIGNEE_OPTIONS = ['Dr. JeDee Potter', 'Deborah Hintz', 'Dr. Robert Frost', 'Celia Gerhold'];
 const TASK_POOL_OPTIONS = ['Patient Outreach', 'Care Management', 'Follow-up', 'Documentation'];
@@ -679,31 +1044,50 @@ const MEMBER_OPTIONS = ['Celia Gerhold', 'Ralph Kessler', 'Robert Langdon', 'Cam
 const PRIORITY_OPTIONS = ['high', 'medium', 'low', 'none'];
 const LABEL_OPTIONS = ['Hypertension', 'Exercise', 'Document Collection', 'Medication', 'Diabetes', 'Follow-up'];
 
-function DetailDropdown({ value, options, onSelect, icon, renderOption, children }) {
+function DetailDropdown({ value, options, onSelect, icon, renderOption, children, searchable = true, multiSelect, selected = [] }) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
   const btnRef = useRef(null);
+
+  const filtered = options.filter(opt => {
+    if (!search) return true;
+    const label = typeof opt === 'string' ? opt : opt.label;
+    return label.toLowerCase().includes(search.toLowerCase());
+  });
 
   return (
     <div style={{ position: 'relative' }}>
-      <button ref={btnRef} className={styles.detailValue} onClick={() => setOpen(v => !v)}>
+      <button ref={btnRef} className={styles.detailValue} onClick={e => { e.stopPropagation(); setOpen(v => !v); }}>
         {children || value || '—'}
       </button>
       {open && createPortal(
-        <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={() => setOpen(false)}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={() => { setOpen(false); setSearch(''); }}>
           <div
             className={styles.simpleDropdown}
             style={{ position: 'fixed', top: btnRef.current?.getBoundingClientRect().bottom + 4, left: btnRef.current?.getBoundingClientRect().left, zIndex: 9999 }}
             onClick={e => e.stopPropagation()}
           >
-            {options.map(opt => {
+            {searchable && options.length > 3 && (
+              <div className={styles.dropdownSearch}>
+                <Icon name="solar:magnifer-linear" size={14} color="var(--neutral-200)" />
+                <input className={styles.dropdownSearchInput} placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} autoFocus />
+              </div>
+            )}
+            {filtered.map(opt => {
               const label = typeof opt === 'string' ? opt : opt.label;
               const val = typeof opt === 'string' ? opt : opt.value;
+              const isChecked = multiSelect && selected.includes(val);
               return (
-                <button key={val} className={styles.simpleDropItem} onClick={() => { onSelect(val); setOpen(false); }}>
+                <button key={val} className={styles.simpleDropItem} onClick={() => {
+                  onSelect(val);
+                  if (!multiSelect) { setOpen(false); setSearch(''); }
+                }}>
+                  {multiSelect && <input type="checkbox" checked={isChecked} readOnly style={{ accentColor: 'var(--primary-300)', width: 15, height: 15, flexShrink: 0 }} />}
                   {renderOption ? renderOption(opt) : label}
                 </button>
               );
             })}
+            {filtered.length === 0 && <div className={styles.simpleDropItem} style={{ color: 'var(--neutral-200)', cursor: 'default' }}>No results</div>}
           </div>
         </div>,
         document.body
@@ -840,10 +1224,7 @@ function TaskDetailDrawer({ task, onClose }) {
           </div>
           <div className={styles.detailRow}>
             <span className={styles.detailLabel}>Due Date</span>
-            <button className={styles.detailValue} onClick={() => showToast('Date picker coming soon')}>
-              <Icon name="solar:calendar-linear" size={16} color="var(--neutral-300)" />
-              <span>{task.due_date}</span>
-            </button>
+            <TaskDatePicker value={task.due_date} onSelect={v => { updateTask(task.id, { due_date: v }); showToast('Due date updated'); }} />
           </div>
           <div className={styles.detailRow}>
             <span className={styles.detailLabel}>Priority</span>
@@ -1086,7 +1467,10 @@ export function TasksView() {
   const tasksViewMode = useAppStore(s => s.tasksViewMode);
   const setTasksViewMode = useAppStore(s => s.setTasksViewMode);
   const showToast = useAppStore(s => s.showToast);
+  const createTask = useAppStore(s => s.createTask);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [showAddDrawer, setShowAddDrawer] = useState(false);
+  const [addDrawerStatus, setAddDrawerStatus] = useState('pending');
 
   useEffect(() => { fetchTasks(); }, []);
 
@@ -1132,18 +1516,72 @@ export function TasksView() {
     showToast(`Task moved to ${STATUS_LABELS[newStatus]}`);
   }, [updateTask, showToast]);
 
-  const grouped = STATUS_ORDER.reduce((acc, status) => {
-    const filtered = filteredTasks.filter(t => t.status === status);
-    if (filtered.length) acc.push({ status, tasks: filtered });
-    return acc;
-  }, []);
+  const sortedTasks = useMemo(() => {
+    const sortBy = tasksFilters.sort_by;
+    if (!sortBy) return filteredTasks;
+    const sorted = [...filteredTasks];
+    if (sortBy === 'due_date') {
+      sorted.sort((a, b) => {
+        if (!a.due_date) return 1;
+        if (!b.due_date) return -1;
+        const pa = a.due_date.split('-'); const pb = b.due_date.split('-');
+        const da = new Date(+pa[2], +pa[0] - 1, +pa[1]);
+        const db = new Date(+pb[2], +pb[0] - 1, +pb[1]);
+        return da - db;
+      });
+    } else if (sortBy === 'priority') {
+      const order = { high: 0, medium: 1, low: 2, none: 3 };
+      sorted.sort((a, b) => (order[a.priority] ?? 3) - (order[b.priority] ?? 3));
+    } else if (sortBy === 'name') {
+      sorted.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    }
+    return sorted;
+  }, [filteredTasks, tasksFilters.sort_by]);
+
+  const PRIORITY_ORDER = ['high', 'medium', 'low', 'none'];
+  const PRIORITY_LABELS = { high: 'High', medium: 'Medium', low: 'Low', none: 'None' };
+
+  const grouped = useMemo(() => {
+    const viewBy = tasksFilters.view_by || 'status';
+    if (viewBy === 'priority') {
+      return PRIORITY_ORDER.reduce((acc, p) => {
+        const items = sortedTasks.filter(t => (t.priority || 'none') === p);
+        if (items.length) acc.push({ status: p, label: PRIORITY_LABELS[p], tasks: items });
+        return acc;
+      }, []);
+    }
+    if (viewBy === 'due_date') {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const buckets = { overdue: [], today: [], upcoming: [], no_date: [] };
+      sortedTasks.forEach(t => {
+        if (!t.due_date) { buckets.no_date.push(t); return; }
+        const p = t.due_date.split('-');
+        const d = new Date(+p[2], +p[0] - 1, +p[1]); d.setHours(0, 0, 0, 0);
+        if (d < today) buckets.overdue.push(t);
+        else if (d.getTime() === today.getTime()) buckets.today.push(t);
+        else buckets.upcoming.push(t);
+      });
+      const result = [];
+      if (buckets.overdue.length) result.push({ status: 'overdue', label: 'Overdue', tasks: buckets.overdue });
+      if (buckets.today.length) result.push({ status: 'today', label: 'Today', tasks: buckets.today });
+      if (buckets.upcoming.length) result.push({ status: 'upcoming', label: 'Upcoming', tasks: buckets.upcoming });
+      if (buckets.no_date.length) result.push({ status: 'no_date', label: 'No Due Date', tasks: buckets.no_date });
+      return result;
+    }
+    return STATUS_ORDER.reduce((acc, status) => {
+      const items = sortedTasks.filter(t => t.status === status);
+      if (items.length) acc.push({ status, tasks: items });
+      return acc;
+    }, []);
+  }, [sortedTasks, tasksFilters.view_by]);
 
   const kanbanGroups = STATUS_ORDER.map(status => ({
     status,
-    tasks: filteredTasks.filter(t => t.status === status),
+    tasks: sortedTasks.filter(t => t.status === status),
   }));
 
   const activeFilterCount = Object.keys(tasksFilters).length;
+  const hideAssignedTo = !!tasksFilters.assigned_to;
 
   const renderContent = () => {
     if (tasksLoading && tasks.length === 0) {
@@ -1157,6 +1595,7 @@ export function TasksView() {
             <div className={`${styles.thCell} ${styles.colP}`}>P</div>
             <div className={`${styles.thCell} ${styles.colStatus}`}>Status</div>
             <div className={`${styles.thCell} ${styles.colDue}`}>Due Date</div>
+            {!hideAssignedTo && <div className={`${styles.thCell} ${styles.colAssigned}`}>Assigned To</div>}
             <div className={`${styles.thCell} ${styles.colMember}`}>Member</div>
             <div className={`${styles.thCell} ${styles.colLabels}`}>Labels</div>
           </div>
@@ -1206,12 +1645,14 @@ export function TasksView() {
           <div className={`${styles.thCell} ${styles.colP}`}>P</div>
           <div className={`${styles.thCell} ${styles.colStatus}`}>Status</div>
           <div className={`${styles.thCell} ${styles.colDue}`}>Due Date</div>
+          {!hideAssignedTo && <div className={`${styles.thCell} ${styles.colAssigned}`}>Assigned To</div>}
           <div className={`${styles.thCell} ${styles.colMember}`}>Member</div>
           <div className={`${styles.thCell} ${styles.colLabels}`}>Labels</div>
+          <div className={`${styles.thCell} ${styles.colActions}`} />
         </div>
 
         {grouped.map(g => (
-          <StatusGroup key={g.status} status={g.status} tasks={g.tasks} onToggle={handleToggle} onTaskClick={setSelectedTask} />
+          <StatusGroup key={g.status} status={g.status} label={g.label} tasks={g.tasks} onToggle={handleToggle} onTaskClick={setSelectedTask} hideAssignedTo={hideAssignedTo} onAddTask={(s) => { setAddDrawerStatus(s); setShowAddDrawer(true); }} />
         ))}
       </div>
     );
@@ -1249,7 +1690,7 @@ export function TasksView() {
             onClick={toggleTasksFilterBar}
           />
           <span className={styles.iconDivider} />
-          <Button variant="secondary" size="L" leadingIcon="solar:add-circle-linear" onClick={() => showToast('Add Task — coming soon')}>
+          <Button variant="secondary" size="L" leadingIcon="solar:add-circle-linear" onClick={() => { setAddDrawerStatus('pending'); setShowAddDrawer(true); }}>
             Add Task
           </Button>
           <span className={styles.iconDivider} />
@@ -1280,6 +1721,9 @@ export function TasksView() {
 
       {selectedTask && (
         <TaskDetailDrawer task={selectedTask} onClose={() => setSelectedTask(null)} />
+      )}
+      {showAddDrawer && (
+        <AddTaskDrawer onClose={() => setShowAddDrawer(false)} defaultStatus={addDrawerStatus} />
       )}
     </div>
   );
