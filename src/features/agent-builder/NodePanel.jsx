@@ -1,10 +1,26 @@
 import { useState } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import { Toggle } from '../../components/Toggle/Toggle';
-import { ConversationIcon, GuardrailsIcon, CallTransferIcon, AgentsIcon } from './nodes/NodeIcons';
+import {
+  ConversationIcon,
+  GuardrailsIcon,
+  CallTransferIcon,
+  AgentsIcon,
+  FunctionIcon,
+  PressDigitIcon,
+  LogicSplitIcon,
+  AgentTransferIcon,
+  InCallSmsIcon,
+  ExtractVariableIcon,
+  CodeIcon,
+  McpIcon,
+  NoteIcon,
+} from './nodes/NodeIcons';
 import styles from './NodePanel.module.css';
 
-/* ── Node type config: drawer icons use light bg + colored border; canvas icons use solid bg ── */
+/* ── Node type config — order + colors match Figma 1041:126567 ──
+ * Drawer icons: light bg + colored border. Canvas icons use solid bg.
+ */
 const NODE_TYPES = [
   {
     type: 'conversation',
@@ -13,6 +29,94 @@ const NODE_TYPES = [
     drawerBg: '#E5F4F3',
     drawerBorder: 'rgba(0,150,136,0.1)',
     CustomIcon: ConversationIcon,
+  },
+  {
+    type: 'subagents',
+    label: 'Subagents',
+    iconColor: '#FF907F',
+    drawerBg: 'linear-gradient(136deg, #FFF2F0 2%, #FFEDFA 52%, #EDF5FF 94%)',
+    drawerBorder: '#FF907F',
+    CustomIcon: AgentsIcon,
+  },
+  {
+    type: 'function',
+    label: 'Function',
+    iconColor: '#5800FF',
+    drawerBg: '#EEE5FF',
+    drawerBorder: 'rgba(88,0,255,0.1)',
+    CustomIcon: FunctionIcon,
+  },
+  {
+    type: 'callTransfer',
+    label: 'Call Transfer',
+    iconColor: '#9C27B0',
+    drawerBg: '#F5E9F7',
+    drawerBorder: 'rgba(156,39,176,0.2)',
+    CustomIcon: CallTransferIcon,
+  },
+  {
+    type: 'pressDigit',
+    label: 'Press Digit',
+    iconColor: '#2196F3',
+    drawerBg: '#E9F4FE',
+    drawerBorder: 'rgba(33,150,243,0.3)',
+    CustomIcon: PressDigitIcon,
+  },
+  {
+    type: 'logicSplit',
+    label: 'Logic Split',
+    iconColor: '#8C5AE2',
+    drawerBg: '#FCFAFF',
+    drawerBorder: 'rgba(140,90,226,0.3)',
+    CustomIcon: LogicSplitIcon,
+  },
+  {
+    type: 'agentTransfer',
+    label: 'Agent Transfer',
+    iconColor: '#795548',
+    drawerBg: '#F2EEED',
+    drawerBorder: 'rgba(121,85,72,0.2)',
+    CustomIcon: AgentTransferIcon,
+  },
+  {
+    type: 'inCallSms',
+    label: 'In-call SMS',
+    iconColor: '#9C27B0',
+    drawerBg: '#F5E9F7',
+    drawerBorder: 'rgba(156,39,176,0.2)',
+    CustomIcon: InCallSmsIcon,
+  },
+  {
+    type: 'extractVariable',
+    label: 'Extract Variable',
+    iconColor: '#009688',
+    drawerBg: '#E5F4F3',
+    drawerBorder: 'rgba(0,150,136,0.3)',
+    CustomIcon: ExtractVariableIcon,
+  },
+  {
+    type: 'code',
+    label: 'Code',
+    iconColor: '#145ECC',
+    drawerBg: '#F4F8FE',
+    drawerBorder: 'rgba(20,94,204,0.2)',
+    CustomIcon: CodeIcon,
+  },
+  {
+    type: 'mcp',
+    label: 'MCP',
+    iconColor: '#6F7A90',
+    drawerBg: '#F6F7F8',
+    drawerBorder: '#D0D6E1',
+    CustomIcon: McpIcon,
+  },
+  {
+    type: 'note',
+    label: 'Note',
+    iconColor: '#EEB200',
+    drawerBg: '#FDF7E5',
+    drawerBorder: 'rgba(238,178,0,0.2)',
+    CustomIcon: NoteIcon,
   },
   {
     type: 'appointment',
@@ -31,28 +135,12 @@ const NODE_TYPES = [
     CustomIcon: GuardrailsIcon,
   },
   {
-    type: 'callTransfer',
-    label: 'Call Transfer',
-    iconColor: '#9C27B0',
-    drawerBg: '#F5E9F7',
-    drawerBorder: 'rgba(156,39,176,0.2)',
-    CustomIcon: CallTransferIcon,
-  },
-  {
     type: 'escalation',
     icon: 'solar:danger-triangle-linear',
     label: 'Escalations',
     iconColor: '#D72825',
     drawerBg: '#FFFCF5',
     drawerBorder: 'rgba(215,40,37,0.2)',
-  },
-  {
-    type: 'agents',
-    label: 'Agents',
-    iconColor: '#FF907F',
-    drawerBg: 'linear-gradient(136deg, #FFF2F0 2%, #FFEDFA 52%, #EDF5FF 94%)',
-    drawerBorder: '#FF907F',
-    CustomIcon: AgentsIcon,
   },
   {
     type: 'end',

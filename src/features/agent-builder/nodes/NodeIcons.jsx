@@ -31,6 +31,106 @@ export function CallTransferIcon({ size = 16, color = 'currentColor' }) {
   );
 }
 
+export function FunctionIcon({ size = 16, color = 'currentColor' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5.33333 5.33333H10.6667M5.33333 8H10.6667M5.33333 10.6667H8.66667M3.33333 2H12.6667C13.0349 2 13.3333 2.29848 13.3333 2.66667V13.3333C13.3333 13.7015 13.0349 14 12.6667 14H3.33333C2.96514 14 2.66667 13.7015 2.66667 13.3333V2.66667C2.66667 2.29848 2.96514 2 3.33333 2Z" stroke={color} strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="2" cy="4" r="0.5" fill={color}/>
+      <circle cx="2" cy="8" r="0.5" fill={color}/>
+      <circle cx="2" cy="12" r="0.5" fill={color}/>
+      <circle cx="14" cy="4" r="0.5" fill={color}/>
+      <circle cx="14" cy="8" r="0.5" fill={color}/>
+      <circle cx="14" cy="12" r="0.5" fill={color}/>
+    </svg>
+  );
+}
+
+export function PressDigitIcon({ size = 16, color = 'currentColor' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="3.33" cy="3.33" r="1" stroke={color} strokeWidth="1"/>
+      <circle cx="8" cy="3.33" r="1" stroke={color} strokeWidth="1"/>
+      <circle cx="12.67" cy="3.33" r="1" stroke={color} strokeWidth="1"/>
+      <circle cx="3.33" cy="8" r="1" stroke={color} strokeWidth="1"/>
+      <circle cx="8" cy="8" r="1" stroke={color} strokeWidth="1"/>
+      <circle cx="12.67" cy="8" r="1" stroke={color} strokeWidth="1"/>
+      <circle cx="3.33" cy="12.67" r="1" stroke={color} strokeWidth="1"/>
+      <circle cx="8" cy="12.67" r="1" stroke={color} strokeWidth="1"/>
+      <circle cx="12.67" cy="12.67" r="1" stroke={color} strokeWidth="1"/>
+    </svg>
+  );
+}
+
+export function LogicSplitIcon({ size = 16, color = 'currentColor' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="3.33" cy="3.33" r="1.5" stroke={color} strokeWidth="1"/>
+      <circle cx="3.33" cy="12.67" r="1.5" stroke={color} strokeWidth="1"/>
+      <circle cx="12" cy="8" r="1.5" stroke={color} strokeWidth="1"/>
+      <path d="M4.83 3.33 H 8 C 9 3.33 9.5 4 9.5 5 V 11 C 9.5 12 9 12.67 8 12.67 H 4.83" stroke={color} strokeWidth="1" fill="none" strokeLinecap="round"/>
+      <path d="M9.5 8 H 10.5" stroke={color} strokeWidth="1" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+export function AgentTransferIcon({ size = 16, color = 'currentColor' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="5.5" cy="5" r="2.5" stroke={color} strokeWidth="1"/>
+      <path d="M2 13.5 C 2 11 3.5 9.5 5.5 9.5 C 6.4 9.5 7.2 9.8 7.8 10.3" stroke={color} strokeWidth="1" strokeLinecap="round" fill="none"/>
+      <path d="M9.5 13 L 14 13 M 12 11 L 14 13 L 12 15" stroke={color} strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    </svg>
+  );
+}
+
+export function InCallSmsIcon({ size = 16, color = 'currentColor' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3.5 2.5 L 5.2 2.5 L 6 4.5 L 4.7 5.5 C 5.5 7.2 6.8 8.5 8.5 9.3 L 9.5 8 L 11.5 8.8 V 10.5 C 11.5 11.5 10.7 12.3 9.7 12.3 C 6 12 3 9 2.7 5.3 C 2.7 4.3 3.5 3.5 3.5 2.5Z" stroke={color} strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      <circle cx="11" cy="4" r="1.5" stroke={color} strokeWidth="0.8" fill="none"/>
+      <circle cx="13.5" cy="4" r="0.4" fill={color}/>
+      <circle cx="11" cy="4" r="0.4" fill={color}/>
+      <circle cx="8.5" cy="4" r="0.4" fill={color}/>
+    </svg>
+  );
+}
+
+export function ExtractVariableIcon({ size = 16, color = 'currentColor' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 2.5 C 5 2.5 4 3 4 4 V 6.5 C 4 7.3 3.3 8 2.5 8 C 3.3 8 4 8.7 4 9.5 V 12 C 4 13 5 13.5 6 13.5" stroke={color} strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      <path d="M10 2.5 C 11 2.5 12 3 12 4 V 6.5 C 12 7.3 12.7 8 13.5 8 C 12.7 8 12 8.7 12 9.5 V 12 C 12 13 11 13.5 10 13.5" stroke={color} strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    </svg>
+  );
+}
+
+export function CodeIcon({ size = 16, color = 'currentColor' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5.5 4.5 L 2 8 L 5.5 11.5 M 10.5 4.5 L 14 8 L 10.5 11.5" stroke={color} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    </svg>
+  );
+}
+
+export function McpIcon({ size = 16, color = 'currentColor' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="8" cy="8" r="5.5" stroke={color} strokeWidth="1" fill="none"/>
+      <path d="M5 8 L 6.5 5 L 8 8 L 9.5 5 L 11 8 M 5 11 L 6.5 8 L 8 11 L 9.5 8 L 11 11" stroke={color} strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    </svg>
+  );
+}
+
+export function NoteIcon({ size = 16, color = 'currentColor' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 2 H 10 L 13 5 V 13.5 C 13 13.8 12.8 14 12.5 14 H 3.5 C 3.2 14 3 13.8 3 13.5 V 2.5 C 3 2.2 3.2 2 3.5 2Z" stroke={color} strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      <path d="M9.5 2 V 5 H 13" stroke={color} strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      <path d="M5 8 H 11 M 5 10.5 H 11 M 5 6 H 8" stroke={color} strokeWidth="0.9" strokeLinecap="round" fill="none"/>
+    </svg>
+  );
+}
+
 export function AgentsIcon({ size = 16 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
