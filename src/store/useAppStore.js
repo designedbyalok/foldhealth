@@ -1881,21 +1881,41 @@ export const useAppStore = create((set, get) => ({
       }
 
       const existingNames = new Set(data.map(t => t.name));
-      const missing = fallbackTasks
-        .filter(t => !existingNames.has(t.name))
-        .map(({ id, ...rest }) => rest);
+      const missing = fallbackTasks.filter(t => !existingNames.has(t.name));
       if (missing.length > 0) {
-        const { error: seedErr } = await supabase.from('tasks').insert(missing);
-        if (seedErr) {
-          console.error('Tasks seed error:', seedErr.message);
-        } else {
-          const refetch = await supabase
-            .from('tasks')
-            .select('*')
-            .order('created_at', { ascending: true });
-          data = refetch.data;
-          error = refetch.error;
+        // Insert parents first (no parent_task_id), then subtasks (look up parent name → real id)
+        const parents = missing.filter(t => !t.parent_task_id).map(({ id, parent_task_id, ...rest }) => rest);
+        const subtasks = missing.filter(t => t.parent_task_id);
+        let insertOk = true;
+
+        if (parents.length > 0) {
+          let { error: pErr } = await supabase.from('tasks').insert(parents);
+          if (pErr && /column .* does not exist|schema cache/.test(pErr.message || '')) {
+            const legacy = parents.map(({ pool, mentions, completed_at, description, ...rest }) => rest);
+            ({ error: pErr } = await supabase.from('tasks').insert(legacy));
+          }
+          if (pErr) { console.error('Tasks seed error (parents):', pErr.message); insertOk = false; }
         }
+
+        if (insertOk && subtasks.length > 0) {
+          // Refetch to get real ids of inserted parents
+          const { data: now } = await supabase.from('tasks').select('id, name');
+          const nameToId = new Map((now || []).map(r => [r.name, r.id]));
+          const subRows = subtasks.map(({ id, ...rest }) => ({
+            ...rest,
+            parent_task_id: nameToId.get(rest.parent_task) || null,
+          }));
+          let { error: sErr } = await supabase.from('tasks').insert(subRows);
+          if (sErr && /column .* does not exist|schema cache/.test(sErr.message || '')) {
+            const legacy = subRows.map(({ pool, mentions, completed_at, description, parent_task_id, ...rest }) => rest);
+            ({ error: sErr } = await supabase.from('tasks').insert(legacy));
+          }
+          if (sErr) console.warn('Tasks seed error (subtasks):', sErr.message);
+        }
+
+        const refetch = await supabase.from('tasks').select('*').order('created_at', { ascending: true });
+        data = refetch.data;
+        error = refetch.error;
       }
     }
 
@@ -1929,28 +1949,35 @@ export const useAppStore = create((set, get) => ({
 
   createTask: async (task) => {
     const normalized = { ...task };
-    // If new task is created with a past due date and status is pending, flip to missed
     if (normalized.status === 'pending' && isPastDate(normalized.due_date)) {
       normalized.status = 'missed';
       normalized.due_missed = true;
     } else if (normalized.status === 'missed') {
       normalized.due_missed = true;
     }
+    if (normalized.status === 'completed' && !normalized.completed_at) {
+      normalized.completed_at = new Date().toISOString();
+    }
     const tempId = Date.now();
     const optimistic = { ...normalized, id: tempId };
     set(s => ({ tasks: [...s.tasks, optimistic] }));
-    const { data, error } = await supabase
-      .from('tasks')
-      .insert(normalized)
-      .select()
-      .single();
+
+    // Try insert with full schema; if fails due to missing column, retry with reduced payload
+    let { data, error } = await supabase.from('tasks').insert(normalized).select().single();
+    if (error && /column .* does not exist|schema cache/.test(error.message || '')) {
+      const { parent_task_id, pool, mentions, completed_at, description, ...legacy } = normalized;
+      ({ data, error } = await supabase.from('tasks').insert(legacy).select().single());
+    }
     if (error) {
       console.error('Create task error:', error);
       set(s => ({ tasks: s.tasks.filter(t => t.id !== tempId) }));
       return null;
     }
-    set(s => ({ tasks: s.tasks.map(t => t.id === tempId ? data : t) }));
-    return data;
+    // Merge full payload back so UI keeps client-side fields even if DB ignored them
+    const final = { ...normalized, ...data };
+    set(s => ({ tasks: s.tasks.map(t => t.id === tempId ? final : t) }));
+    get().logTaskAudit(final.id, 'created', { to: final.name });
+    return final;
   },
 
   updateTask: async (id, updates) => {
@@ -1958,22 +1985,23 @@ export const useAppStore = create((set, get) => ({
     const merged = { ...(prev || {}), ...updates };
     const final = { ...updates };
 
-    // Normalize due_missed and status based on due_date / status combinations
     const overdue = isPastDate(merged.due_date);
 
     if ('status' in updates) {
       if (updates.status === 'completed') {
         final.due_missed = false;
+        final.completed_at = new Date().toISOString();
       } else if (updates.status === 'missed') {
         final.due_missed = true;
+        final.completed_at = null;
       } else if (updates.status === 'pending') {
-        // If user sets back to pending but date is past, flip to missed
         if (overdue) {
           final.status = 'missed';
           final.due_missed = true;
         } else {
           final.due_missed = false;
         }
+        final.completed_at = null;
       }
     }
     if ('due_date' in updates && !('status' in updates) && merged.status !== 'completed') {
@@ -1987,19 +2015,50 @@ export const useAppStore = create((set, get) => ({
     }
 
     set(s => ({ tasks: s.tasks.map(t => t.id === id ? { ...t, ...final } : t) }));
-    const { error } = await supabase
-      .from('tasks')
-      .update({ ...final, updated_at: new Date().toISOString() })
-      .eq('id', id);
+
+    // Try DB update; gracefully retry without unknown columns
+    let { error } = await supabase.from('tasks').update({ ...final, updated_at: new Date().toISOString() }).eq('id', id);
+    if (error && /column .* does not exist|schema cache/.test(error.message || '')) {
+      const { parent_task_id, pool, mentions, completed_at, description, ...legacy } = final;
+      ({ error } = await supabase.from('tasks').update({ ...legacy, updated_at: new Date().toISOString() }).eq('id', id));
+    }
     if (error) {
       console.warn('Update task error (optimistic update kept):', error.message);
     }
+
+    // Audit logging
+    if (prev) {
+      Object.entries(updates).forEach(([key, val]) => {
+        if (prev[key] === val) return;
+        if (key === 'status') {
+          get().logTaskAudit(id, 'status_changed', { field: 'status', from: prev.status, to: final.status });
+        } else if (key === 'priority') {
+          get().logTaskAudit(id, 'priority_changed', { field: 'priority', from: prev.priority, to: val });
+        } else if (key === 'due_date') {
+          get().logTaskAudit(id, 'due_date_changed', { field: 'due_date', from: prev.due_date || '(none)', to: val || '(none)' });
+        } else if (key === 'assigned_to') {
+          get().logTaskAudit(id, 'assignee_changed', { field: 'assigned_to', from: prev.assigned_to || '(unassigned)', to: val || '(unassigned)' });
+        } else if (key === 'labels') {
+          const oldL = prev.labels || []; const newL = val || [];
+          const added = newL.filter(l => !oldL.includes(l));
+          const removed = oldL.filter(l => !newL.includes(l));
+          added.forEach(l => get().logTaskAudit(id, 'label_added', { field: 'labels', to: l }));
+          removed.forEach(l => get().logTaskAudit(id, 'label_removed', { field: 'labels', from: l }));
+        } else if (key === 'description' || key === 'meta') {
+          get().logTaskAudit(id, 'description_changed', { field: 'description' });
+        } else if (key === 'name') {
+          get().logTaskAudit(id, 'renamed', { field: 'name', from: prev.name, to: val });
+        }
+      });
+    }
+
     return true;
   },
 
   deleteTask: async (id) => {
     const prev = get().tasks;
-    set(s => ({ tasks: s.tasks.filter(t => t.id !== id) }));
+    // Cascade-delete subtasks locally too
+    set(s => ({ tasks: s.tasks.filter(t => t.id !== id && t.parent_task_id !== id) }));
     const { error } = await supabase
       .from('tasks')
       .delete()
@@ -2009,6 +2068,7 @@ export const useAppStore = create((set, get) => ({
       set({ tasks: prev });
       return false;
     }
+    get().logTaskAudit(id, 'deleted');
     return true;
   },
 
@@ -2068,5 +2128,77 @@ export const useAppStore = create((set, get) => ({
       console.error('Create label error:', error.message);
     }
     return trimmed;
+  },
+
+  // ── Task Pools ──
+  taskPools: [
+    { name: 'Patient Outreach', description: 'Tasks queued for patient outreach team to claim' },
+    { name: 'Care Management', description: 'Care management workflows awaiting clinical staff' },
+    { name: 'Documentation', description: 'Chart review and documentation tasks' },
+    { name: 'Follow-up', description: 'Post-visit follow-up tasks awaiting assignment' },
+  ],
+  fetchTaskPools: async () => {
+    const { data, error } = await supabase.from('task_pools').select('name, description').order('name');
+    if (!error && data && data.length > 0) {
+      set({ taskPools: data });
+    }
+  },
+  claimTask: async (taskId) => {
+    const me = get().currentUserProfile;
+    const claimer = me?.name || 'Current User';
+    const task = get().tasks.find(t => t.id === taskId);
+    if (!task) return false;
+    set(s => ({ tasks: s.tasks.map(t => t.id === taskId ? { ...t, assigned_to: claimer, pool: null } : t) }));
+    const { error } = await supabase
+      .from('tasks')
+      .update({ assigned_to: claimer, pool: null, updated_at: new Date().toISOString() })
+      .eq('id', taskId);
+    if (error) console.warn('Claim task error:', error.message);
+    get().logTaskAudit(taskId, 'claimed', { field: 'assigned_to', from: '(unassigned)', to: claimer });
+    return true;
+  },
+
+  // ── Task Audit Log ──
+  taskAuditLogs: {}, // keyed by task_id → array of log entries
+
+  fetchTaskAuditLog: async (taskId) => {
+    if (!taskId) return [];
+    const { data, error } = await supabase
+      .from('task_audit_log')
+      .select('*')
+      .eq('task_id', taskId)
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.warn('task_audit_log fetch failed (run migration?):', error.message);
+      return get().taskAuditLogs[taskId] || [];
+    }
+    set(s => ({ taskAuditLogs: { ...s.taskAuditLogs, [taskId]: data || [] } }));
+    return data || [];
+  },
+
+  logTaskAudit: async (taskId, actionType, opts = {}) => {
+    if (!taskId) return;
+    const me = get().currentUserProfile;
+    const entry = {
+      task_id: taskId,
+      user_name: me?.name || 'System',
+      user_id: me?.id || null,
+      action_type: actionType,
+      field_name: opts.field || null,
+      from_value: opts.from != null ? String(opts.from) : null,
+      to_value: opts.to != null ? String(opts.to) : null,
+      created_at: new Date().toISOString(),
+    };
+    set(s => {
+      const existing = s.taskAuditLogs[taskId] || [];
+      return { taskAuditLogs: { ...s.taskAuditLogs, [taskId]: [{ ...entry, id: `local-${Date.now()}-${Math.random()}` }, ...existing] } };
+    });
+    const { error } = await supabase.from('task_audit_log').insert(entry);
+    if (error && error.code !== 'PGRST204') {
+      // Silently swallow if table missing; warn otherwise
+      if (!error.message?.includes('task_audit_log') && !error.message?.includes('schema cache')) {
+        console.warn('Audit log persist failed:', error.message);
+      }
+    }
   },
 }));

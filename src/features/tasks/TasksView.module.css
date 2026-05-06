@@ -1044,6 +1044,112 @@
   pointer-events: none;
 }
 
+/* ── Strikethrough for completed tasks ── */
+.taskNameDone {
+  text-decoration: line-through;
+  color: var(--neutral-200);
+}
+
+/* ── Subtask UI ── */
+.subtaskHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.subtaskCount {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--primary-300);
+  background: var(--primary-50, rgba(99, 102, 241, 0.08));
+  border-radius: 999px;
+}
+
+.subtaskAddBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--primary-300);
+  background: none;
+  border: 0.5px solid var(--primary-200);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background .12s;
+}
+.subtaskAddBtn:hover { background: var(--primary-50, rgba(99, 102, 241, 0.06)); }
+
+.subtaskProgressBar {
+  height: 4px;
+  background: var(--neutral-100);
+  border-radius: 2px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.subtaskProgressFill {
+  height: 100%;
+  background: var(--status-success);
+  transition: width .25s ease;
+}
+
+.subtaskAddRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--neutral-50);
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+.subtaskAddInput {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: var(--neutral-400);
+  background: white;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 6px;
+  outline: none;
+}
+.subtaskAddInput:focus { border-color: var(--primary-200); }
+
+.subtaskCardNameDone {
+  text-decoration: line-through;
+  color: var(--neutral-200);
+}
+
+.subtaskEmpty {
+  padding: 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--neutral-200);
+  background: var(--neutral-50);
+  border-radius: 6px;
+}
+
+.subtaskParentLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--primary-300);
+  background: var(--primary-50, rgba(99, 102, 241, 0.06));
+  border: 0.5px solid var(--primary-200);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background .12s;
+}
+.subtaskParentLink:hover { background: var(--primary-100, rgba(99, 102, 241, 0.10)); }
+
 .descToolbar {
   display: flex;
   align-items: center;
