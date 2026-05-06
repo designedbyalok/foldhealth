@@ -544,7 +544,9 @@ function TaskRow({ task, onToggle, onTaskClick, hideAssignedTo }) {
           ) : (
             <span className={`${styles.taskName} ${isCompleted ? styles.taskNameDone : ''}`}>{task.name}</span>
           )}
-          <span className={styles.taskMeta}>{task.meta}</span>
+          <span className={styles.taskMeta}>
+            {task.parent_task ? (task.created_by ? `By : ${task.created_by}` : '') : task.meta}
+          </span>
         </div>
         <div className={styles.taskAttachments}>
           {task.attachments > 0 && (
@@ -772,7 +774,9 @@ function KanbanCardContent({ task }) {
 
         {/* Row 6: Meta + linked counts */}
         <div className={styles.cardFooterRow}>
-          <span className={styles.cardFooterMeta}>{task.meta}</span>
+          <span className={styles.cardFooterMeta}>
+            {task.is_subtask && task.parent_task ? (task.created_by ? `By : ${task.created_by}` : '') : task.meta}
+          </span>
           <div className={styles.cardLinked}>
             {task.is_subtask && (
               <span className={styles.linkedItem}>
@@ -1480,7 +1484,7 @@ function TaskDetailDrawer({ task, onClose, onSelectTask }) {
       is_subtask: true,
       attachments: 0,
       comments: 0,
-      meta: `Subtask of : ${task.name}`,
+      meta: '',
       description: '',
       pool: null,
       mentions: [],

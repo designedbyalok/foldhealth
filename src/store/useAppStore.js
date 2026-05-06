@@ -1869,17 +1869,8 @@ export const useAppStore = create((set, get) => ({
       .order('created_at', { ascending: true });
 
     if (!error && data) {
-      const seen = new Map();
-      const dupeIds = [];
-      for (const t of data) {
-        if (seen.has(t.name)) dupeIds.push(t.id);
-        else seen.set(t.name, t);
-      }
-      if (dupeIds.length > 0) {
-        await supabase.from('tasks').delete().in('id', dupeIds);
-        data = [...seen.values()];
-      }
-
+      // Seed any missing demo task (matched by name). Users may genuinely
+      // create multiple tasks with the same name, so we no longer dedupe.
       const existingNames = new Set(data.map(t => t.name));
       const missing = fallbackTasks.filter(t => !existingNames.has(t.name));
       if (missing.length > 0) {

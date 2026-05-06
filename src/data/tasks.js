@@ -86,7 +86,7 @@ export const fallbackTasks = [
   {
     id: -7,
     name: 'Schedule and attend follow-up appointment',
-    meta: 'Subtask of : Get annual flu vaccine',
+    meta: '',
     description: 'Book appointment with primary care, confirm with patient.',
     parent_task: 'Get annual flu vaccine', parent_task_id: -4, is_subtask: true,
     attachments: 0, comments: 3,
@@ -99,7 +99,7 @@ export const fallbackTasks = [
   {
     id: -8,
     name: 'Verify insurance covers vaccine',
-    meta: 'Subtask of : Get annual flu vaccine',
+    meta: '',
     description: 'Check coverage with payer; document copay if any.',
     parent_task: 'Get annual flu vaccine', parent_task_id: -4, is_subtask: true,
     attachments: 0, comments: 0,
@@ -112,7 +112,7 @@ export const fallbackTasks = [
   {
     id: -9,
     name: 'Practice stress reduction techniques',
-    meta: 'Subtask of : Attend diabetes education session',
+    meta: '',
     description: 'Daily 10-minute breathing exercise; log adherence.',
     parent_task: 'Attend diabetes education session', parent_task_id: -2, is_subtask: true,
     attachments: 1, comments: 0,
