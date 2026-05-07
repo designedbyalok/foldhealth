@@ -101,6 +101,7 @@ function OutreachCell({ patient }) {
 function DropdownMenu({ patientId, onClose }) {
   const openWorkflow = useAppStore(s => s.openWorkflow);
   const showToast = useAppStore(s => s.showToast);
+  const requestAddTask = useAppStore(s => s.requestAddTask);
   const patients = useAppStore(s => s.patients);
   const p = patients.find(x => x.id === patientId);
 
@@ -115,12 +116,16 @@ function DropdownMenu({ patientId, onClose }) {
       ))}
       <div className={styles.dropdownDivider} />
       <div className={styles.dropdownSection}>Care Actions</div>
-      {['Send Assessment','Add Task','Initiate Protocol','Send Education','Warm Referral','Add to Program','Upload File'].map(l => (
+      {['Send Assessment','Initiate Protocol','Send Education','Warm Referral','Add to Program','Upload File'].map(l => (
         <button key={l} className={styles.dropdownItem} onClick={() => { showToast(`${l} – coming soon`); onClose(); }}>
           <Icon name="solar:clipboard-check-linear" size={18} color="var(--neutral-300)" />
           {l}
         </button>
       ))}
+      <button className={styles.dropdownItem} onClick={() => { requestAddTask({ member: p?.name }); onClose(); }}>
+        <Icon name="solar:checklist-minimalistic-linear" size={18} color="var(--neutral-300)" />
+        Add Task
+      </button>
       <div className={styles.dropdownDivider} />
       <div className={styles.dropdownSection}>Automation</div>
       <button className={styles.dropdownItem} onClick={() => { showToast('Run Automation – coming soon'); onClose(); }}>

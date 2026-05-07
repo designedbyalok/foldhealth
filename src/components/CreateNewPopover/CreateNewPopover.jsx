@@ -7,6 +7,7 @@ export function CreateNewPopover({ onClose }) {
   const showToast = useAppStore(s => s.showToast);
   const setActivePage = useAppStore(s => s.setActivePage);
   const setCurrentPage = useAppStore(s => s.setCurrentPage);
+  const requestAddTask = useAppStore(s => s.requestAddTask);
   const ref = useRef(null);
 
   useEffect(() => {
@@ -30,7 +31,10 @@ export function CreateNewPopover({ onClose }) {
       <div className={styles.col}>
         <div className={styles.section}>Add New</div>
         {item('solar:user-plus-linear', 'Patient', 'p')}
-        {item('solar:checklist-minimalistic-linear', 'Task', 't')}
+        <button key="t" className={styles.item} onClick={() => { requestAddTask(); onClose(); }}>
+          <Icon name="solar:checklist-minimalistic-linear" size={16} color="var(--neutral-300)" />
+          Task
+        </button>
         {item('solar:target-linear', 'Campaign', 'c')}
         {item('solar:users-group-two-rounded-linear', 'Patient Group', 'pg')}
       </div>

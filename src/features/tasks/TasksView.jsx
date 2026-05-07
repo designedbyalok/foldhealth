@@ -1137,14 +1137,14 @@ function EmptyState({ title, description, icon }) {
 }
 
 /* ── Add Task Drawer ── */
-function AddTaskDrawer({ onClose, defaultStatus, onTaskCreated }) {
+function AddTaskDrawer({ onClose, defaultStatus, initialMember, onTaskCreated }) {
   const initialStatus = defaultStatus || 'pending';
   const [name, setName] = useState('');
   const [priority, setPriority] = useState('medium');
   const [status, setStatus] = useState(initialStatus);
   const [dueDate, setDueDate] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
-  const [member, setMember] = useState('');
+  const [member, setMember] = useState(initialMember || '');
   const [pool, setPool] = useState('');
   const [description, setDescription] = useState('');
   const [selectedLabels, setSelectedLabels] = useState([]);
@@ -2124,9 +2124,12 @@ export function TasksView() {
   const setTasksViewMode = useAppStore(s => s.setTasksViewMode);
   const showToast = useAppStore(s => s.showToast);
   const createTask = useAppStore(s => s.createTask);
+  const pendingAddTask = useAppStore(s => s.pendingAddTask);
+  const clearPendingAddTask = useAppStore(s => s.clearPendingAddTask);
   const [selectedTask, setSelectedTask] = useState(null);
   const [showAddDrawer, setShowAddDrawer] = useState(false);
   const [addDrawerStatus, setAddDrawerStatus] = useState('pending');
+  const [addDrawerInitialMember, setAddDrawerInitialMember] = useState(null);
 
   const fetchTaskProfiles = useAppStore(s => s.fetchTaskProfiles);
   const fetchTaskLabels = useAppStore(s => s.fetchTaskLabels);
@@ -2143,6 +2146,14 @@ export function TasksView() {
     fetchTaskPools();
     if (!allPatients || allPatients.length === 0) fetchAllPatients();
   }, []);
+
+  useEffect(() => {
+    if (!pendingAddTask) return;
+    setAddDrawerStatus('pending');
+    setAddDrawerInitialMember(pendingAddTask.member || null);
+    setShowAddDrawer(true);
+    clearPendingAddTask();
+  }, [pendingAddTask]);
 
   // The user-scoped tabs (Assigned / Created / Mentions) require a real
   // signed-in profile to compare against; if there's no auth session
@@ -2458,10 +2469,12 @@ export function TasksView() {
       )}
       {showAddDrawer && (
         <AddTaskDrawer
-          onClose={() => setShowAddDrawer(false)}
+          onClose={() => { setShowAddDrawer(false); setAddDrawerInitialMember(null); }}
           defaultStatus={addDrawerStatus}
+          initialMember={addDrawerInitialMember}
           onTaskCreated={(task) => {
             setShowAddDrawer(false);
+            setAddDrawerInitialMember(null);
             setSelectedTask(task);
           }}
         />

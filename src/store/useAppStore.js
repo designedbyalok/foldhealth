@@ -81,6 +81,9 @@ export const useAppStore = create((set, get) => ({
   },
   _themeSubscribed: false,
 
+  // Pending add-task request — set by CreateNewPopover or WorklistRow "Add Task"
+  pendingAddTask: null,
+
   // Top-level navigation (sidebar) — restored from sessionStorage
   activePage: _savedPage === 'builder' ? 'settings' : _savedPage,
   // Tab navigation within pages
@@ -505,6 +508,12 @@ export const useAppStore = create((set, get) => ({
 
   // Actions
   setActivePage: (page) => { sessionStorage.setItem('activePage', page); set({ activePage: page }); updateHash(get); },
+  requestAddTask: (opts = {}) => {
+    sessionStorage.setItem('activePage', 'tasks');
+    set({ activePage: 'tasks', pendingAddTask: { member: opts.member || null } });
+    updateHash(get);
+  },
+  clearPendingAddTask: () => set({ pendingAddTask: null }),
   setActiveTab: (tab) => { sessionStorage.setItem('activeTab', tab); set({ activeTab: tab }); updateHash(get); },
   setSettingsTab: (tab) => { sessionStorage.setItem('settingsTab', tab); set({ settingsTab: tab }); updateHash(get); },
   setShowCreateAgent: (v) => set({ showCreateAgent: v }),
