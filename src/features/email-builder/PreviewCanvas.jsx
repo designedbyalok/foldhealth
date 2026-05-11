@@ -514,11 +514,55 @@ function BlockBody({ id, block, ctx, dragAttributes, dragListeners }) {
     );
   }
 
-  // Divider
   if (type === 'Divider') {
+    const thickness = props.lineHeight || 1;
+    const color = props.lineColor || '#E1E4EA';
+    const lineStyle = props.lineStyle || 'solid';
+    const endLeft = props.endLeft || 'none';
+    const endRight = props.endRight || 'none';
+    const hasEndpoints = endLeft !== 'none' || endRight !== 'none';
+    const markerSize = Math.max(8, thickness * 4);
+
+    if (!hasEndpoints) {
+      return (
+        <div style={{ padding: paddingCss(style.padding) }}>
+          <hr style={{ width: '100%', border: 'none', borderTop: `${thickness}px ${lineStyle} ${color}`, margin: 0 }} />
+        </div>
+      );
+    }
+
     return (
       <div style={{ padding: paddingCss(style.padding) }}>
-        <hr style={{ width: '100%', border: 'none', borderTop: `${props.lineHeight || 1}px solid ${props.lineColor || '#E1E4EA'}`, margin: 0 }} />
+        <svg width="100%" height={markerSize + 2} style={{ display: 'block', overflow: 'visible' }}>
+          <line
+            x1={endLeft !== 'none' ? markerSize / 2 : 0}
+            y1={(markerSize + 2) / 2}
+            x2="100%"
+            y2={(markerSize + 2) / 2}
+            stroke={color}
+            strokeWidth={thickness}
+            strokeDasharray={lineStyle === 'dashed' ? `${thickness * 6} ${thickness * 4}` : 'none'}
+          />
+          {endLeft === 'circle' && (
+            <circle cx={markerSize / 2} cy={(markerSize + 2) / 2} r={markerSize / 2 - 0.5} fill={color} />
+          )}
+          {endLeft === 'arrow' && (
+            <polygon
+              points={`0,${(markerSize + 2) / 2} ${markerSize},${1} ${markerSize},${markerSize + 1}`}
+              fill={color}
+            />
+          )}
+          {endRight === 'circle' && (
+            <circle cx="100%" cy={(markerSize + 2) / 2} r={markerSize / 2 - 0.5} fill={color} style={{ transform: `translateX(-${markerSize / 2}px)` }} />
+          )}
+          {endRight === 'arrow' && (
+            <polygon
+              points={`0,1 0,${markerSize + 1} ${markerSize},${(markerSize + 2) / 2}`}
+              fill={color}
+              style={{ transform: `translateX(calc(100% - ${markerSize}px))` }}
+            />
+          )}
+        </svg>
       </div>
     );
   }
@@ -553,6 +597,7 @@ function BlockBody({ id, block, ctx, dragAttributes, dragListeners }) {
             fontWeight: 600,
             fontSize: sz.fontSize,
             fontFamily: 'inherit',
+            border: props.borderWidth ? `${props.borderWidth}px solid ${props.borderColor || 'transparent'}` : 'none',
           }}
         >
           {props.text || 'Button'}

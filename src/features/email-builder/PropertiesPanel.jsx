@@ -171,6 +171,10 @@ function DesignTab({ block, updateBlock, id }) {
                 onChange={v => update(['data', 'props', 'buttonStyle'], v)}
               />
             </Row2>
+            <Row2>
+              <ColorInput label="Border Color" value={props.borderColor} onChange={v => update(['data', 'props', 'borderColor'], v)} />
+              <IconInput label="Border" suffix="px" value={props.borderWidth ?? 0} onChange={v => update(['data', 'props', 'borderWidth'], Number(v) || 0)} />
+            </Row2>
           </Section>
         </>
       )}
@@ -219,6 +223,46 @@ function DesignTab({ block, updateBlock, id }) {
             <Row2>
               <ColorInput label="Line Color" value={props.lineColor} onChange={v => update(['data', 'props', 'lineColor'], v)} />
               <IconInput label="Thickness" suffix="px" value={props.lineHeight || 1} onChange={v => update(['data', 'props', 'lineHeight'], Number(v) || 1)} />
+            </Row2>
+            <div className={styles.fieldCol}>
+              <label className={styles.fieldLabel}>Style</label>
+              <Toggle
+                items={[
+                  { key: 'solid', label: 'Solid' },
+                  { key: 'dashed', label: 'Dashed' },
+                ]}
+                active={props.lineStyle || 'solid'}
+                size="S"
+                onChange={v => update(['data', 'props', 'lineStyle'], v)}
+              />
+            </div>
+            <Row2>
+              <div className={styles.fieldCol}>
+                <label className={styles.fieldLabel}>Left End</label>
+                <Toggle
+                  items={[
+                    { key: 'none', label: '—' },
+                    { key: 'circle', label: '●' },
+                    { key: 'arrow', label: '◄' },
+                  ]}
+                  active={props.endLeft || 'none'}
+                  size="S"
+                  onChange={v => update(['data', 'props', 'endLeft'], v)}
+                />
+              </div>
+              <div className={styles.fieldCol}>
+                <label className={styles.fieldLabel}>Right End</label>
+                <Toggle
+                  items={[
+                    { key: 'none', label: '—' },
+                    { key: 'circle', label: '●' },
+                    { key: 'arrow', label: '►' },
+                  ]}
+                  active={props.endRight || 'none'}
+                  size="S"
+                  onChange={v => update(['data', 'props', 'endRight'], v)}
+                />
+              </div>
             </Row2>
           </Section>
         </>

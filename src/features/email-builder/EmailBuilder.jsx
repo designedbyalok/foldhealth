@@ -1,15 +1,17 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Reader, renderToStaticMarkup } from '@usewaypoint/email-builder';
+import { Reader } from '@usewaypoint/email-builder';
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core';
 import { useAppStore } from '../../store/useAppStore';
 import { Icon } from '../../components/Icon/Icon';
 import { Button } from '../../components/Button/Button';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Toggle } from '../../components/Toggle/Toggle';
+import { ConfirmDialog } from '../../components/Modal/ConfirmDialog';
 import { ComponentsPanel } from './ComponentsPanel';
 import { PreviewCanvas } from './PreviewCanvas';
 import { PropertiesPanel } from './PropertiesPanel';
 import { DevicePreview } from './DevicePreview';
+import { renderEmailHtml } from './patchEmailHtml';
 import { buildParentMap } from './blockHelpers';
 import styles from './EmailBuilder.module.css';
 
@@ -85,10 +87,8 @@ function SendTestPopover({ onClose }) {
     if (!email || !email.includes('@')) return;
     setStatus('sending');
     setErrorMsg('');
-    let html = '';
-    try {
-      html = renderToStaticMarkup(doc, { rootBlockId: 'root' });
-    } catch {
+    const html = renderEmailHtml(doc);
+    if (!html || html.includes('Could not render')) {
       setStatus('error');
       setErrorMsg('Failed to render email template');
       return;
@@ -156,6 +156,20 @@ function SendTestPopover({ onClose }) {
   );
 }
 
+function countChanges(a, b) {
+  if (!a || !b) return 0;
+  let n = 0;
+  const allKeys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  for (const k of allKeys) {
+    if (JSON.stringify(a[k]) !== JSON.stringify(b[k])) n++;
+  }
+  return n;
+}
+
+function formatTime(date) {
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
 export function EmailBuilder() {
   const name = useAppStore(s => s.editingCampaignName) || 'Untitled Template';
   const setName = useAppStore(s => s.setEditingCampaignName);
@@ -164,9 +178,20 @@ export function EmailBuilder() {
   const showToast = useAppStore(s => s.showToast);
   const moveBlock = useAppStore(s => s.moveBlock);
   const insertNewBlock = useAppStore(s => s.insertNewBlock);
+  const emailDocument = useAppStore(s => s.emailDocument);
   const [activeDrag, setActiveDrag] = useState(null);
   const [viewMode, setViewMode] = useState('builder');
   const [showTestEmail, setShowTestEmail] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState(null);
+  const [savedSnapshot, setSavedSnapshot] = useState(null);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (emailDocument && !savedSnapshot) setSavedSnapshot(structuredClone(emailDocument));
+  }, []);
+
+  const unsavedCount = savedSnapshot ? countChanges(savedSnapshot, emailDocument) : 0;
 
   useEffect(() => {
     const handler = (e) => {
@@ -318,18 +343,42 @@ export function EmailBuilder() {
           </Button>
           {showTestEmail && <SendTestPopover onClose={() => setShowTestEmail(false)} />}
           <ActionButton icon="solar:chart-2-linear" size="L" tooltip="Analytics" onClick={() => showToast('Analytics — coming soon')} />
+          {lastSavedAt && unsavedCount === 0 && (
+            <span className={styles.saveStatus}>
+              <Icon name="solar:check-circle-linear" size={14} color="var(--status-success)" />
+              Saved at {formatTime(lastSavedAt)}
+            </span>
+          )}
+          {unsavedCount > 0 && (
+            <span className={styles.saveStatus} style={{ color: 'var(--status-warning)' }}>
+              <Icon name="solar:pen-2-linear" size={14} color="var(--status-warning)" />
+              {unsavedCount} unsaved change{unsavedCount !== 1 ? 's' : ''}
+            </span>
+          )}
           <Button
             variant="primary"
             size="L"
+            disabled={saving}
             onClick={async () => {
+              setSaving(true);
               const ok = await saveEmailTemplate();
-              showToast(ok ? 'Template saved' : 'Save failed — check console');
-              if (ok) closeEmailBuilder();
+              setSaving(false);
+              if (ok) {
+                setLastSavedAt(new Date());
+                setSavedSnapshot(structuredClone(useAppStore.getState().emailDocument));
+                showToast('Template saved');
+              } else {
+                showToast('Save failed — check console');
+              }
             }}
           >
-            Save
+            {saving ? 'Saving…' : 'Save'}
           </Button>
-          <button className={styles.closeBtn} onClick={closeEmailBuilder} aria-label="Close">
+          <button
+            className={styles.closeBtn}
+            onClick={() => unsavedCount > 0 ? setShowCloseConfirm(true) : closeEmailBuilder()}
+            aria-label="Close"
+          >
             <Icon name="solar:close-circle-linear" size={22} color="var(--neutral-300)" />
           </button>
         </div>
@@ -352,6 +401,19 @@ export function EmailBuilder() {
           </div>
         )}
       </DragOverlay>
+      {showCloseConfirm && (
+        <ConfirmDialog
+          icon="solar:danger-triangle-linear"
+          iconColor="var(--status-warning)"
+          title="Unsaved changes"
+          description={`You have ${unsavedCount} unsaved change${unsavedCount !== 1 ? 's' : ''}. Are you sure you want to close without saving?`}
+          confirmLabel="Discard & Close"
+          cancelLabel="Keep Editing"
+          variant="error"
+          onConfirm={() => { setShowCloseConfirm(false); closeEmailBuilder(); }}
+          onCancel={() => setShowCloseConfirm(false)}
+        />
+      )}
     </DndContext>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { renderToStaticMarkup } from '@usewaypoint/email-builder';
 import { useAppStore } from '../../store/useAppStore';
+import { renderEmailHtml } from './patchEmailHtml';
 import styles from './DevicePreview.module.css';
 
 function EmailIframe({ html, renderWidth }) {
@@ -130,11 +130,7 @@ export function DevicePreview({ device }) {
   if (htmlOverride) {
     emailHtml = htmlOverride;
   } else if (doc) {
-    try {
-      emailHtml = renderToStaticMarkup(doc, { rootBlockId: 'root' });
-    } catch {
-      emailHtml = '<html><body><p style="padding:24px;color:#999;">Could not render preview.</p></body></html>';
-    }
+    emailHtml = renderEmailHtml(doc);
   }
 
   const avail = Math.max(280, stageW - 64);
