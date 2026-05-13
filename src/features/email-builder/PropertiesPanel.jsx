@@ -34,9 +34,9 @@ const FONT_WEIGHTS = [
 ];
 
 const TABS = [
-  { id: 'design',   icon: 'solar:settings-linear' },
-  { id: 'code',     icon: 'solar:code-square-linear' },
-  { id: 'template', icon: 'solar:palette-linear' },
+  { id: 'design',   icon: 'solar:settings-linear',     label: 'Design' },
+  { id: 'code',     icon: 'solar:code-square-linear',  label: 'Code' },
+  { id: 'template', icon: 'solar:palette-linear',      label: 'Template' },
 ];
 
 export function PropertiesPanel() {
@@ -85,8 +85,11 @@ export function PropertiesPanel() {
             key={t.id}
             className={[styles.rightTab, tab === t.id ? styles.rightTabActive : ''].join(' ')}
             onClick={() => setTab(t.id)}
+            title={t.label}
+            aria-label={t.label}
           >
             <Icon name={t.icon} size={16} color="currentColor" />
+            <span className={styles.rightTabLabel}>{t.label}</span>
           </button>
         ))}
       </div>
@@ -227,6 +230,7 @@ function DesignTab({ block, updateBlock, id }) {
             <div className={styles.fieldCol}>
               <label className={styles.fieldLabel}>Style</label>
               <Toggle
+                fullWidth
                 items={[
                   { key: 'solid', label: 'Solid' },
                   { key: 'dashed', label: 'Dashed' },
@@ -240,6 +244,7 @@ function DesignTab({ block, updateBlock, id }) {
               <div className={styles.fieldCol}>
                 <label className={styles.fieldLabel}>Left End</label>
                 <Toggle
+                  fullWidth
                   items={[
                     { key: 'none', label: '—' },
                     { key: 'circle', label: '●' },
@@ -253,6 +258,7 @@ function DesignTab({ block, updateBlock, id }) {
               <div className={styles.fieldCol}>
                 <label className={styles.fieldLabel}>Right End</label>
                 <Toggle
+                  fullWidth
                   items={[
                     { key: 'none', label: '—' },
                     { key: 'circle', label: '●' },
@@ -298,6 +304,7 @@ function DesignTab({ block, updateBlock, id }) {
             <div className={styles.fieldCol}>
               <label className={styles.fieldLabel}>Striped Rows</label>
               <Toggle
+                fullWidth
                 items={[{ key: 'on', label: 'On' }, { key: 'off', label: 'Off' }]}
                 active={props.stripedRows ? 'on' : 'off'}
                 size="S"
@@ -323,6 +330,7 @@ function DesignTab({ block, updateBlock, id }) {
             <div className={styles.fieldCol}>
               <label className={styles.fieldLabel}>Alignment</label>
               <Toggle
+                fullWidth
                 items={[
                   { key: 'left',   label: '', icon: <AlignLeftIcon /> },
                   { key: 'center', label: '', icon: <AlignCenterIcon /> },
@@ -361,6 +369,7 @@ function DesignTab({ block, updateBlock, id }) {
             <div className={styles.fieldCol}>
               <label className={styles.fieldLabel}>Alignment</label>
               <Toggle
+                fullWidth
                 items={[
                   { key: 'left',   label: '', icon: <AlignLeftIcon /> },
                   { key: 'center', label: '', icon: <AlignCenterIcon /> },
@@ -401,6 +410,7 @@ function DesignTab({ block, updateBlock, id }) {
               <div className={styles.fieldCol}>
                 <label className={styles.fieldLabel}>Direction</label>
                 <Toggle
+                  fullWidth
                   items={[
                     { key: 'row', label: '', icon: <DirectionRowIcon /> },
                     { key: 'column', label: '', icon: <DirectionColIcon /> },
@@ -418,6 +428,7 @@ function DesignTab({ block, updateBlock, id }) {
             <div className={styles.fieldCol}>
               <label className={styles.fieldLabel}>Wrap</label>
               <Toggle
+                fullWidth
                 items={[
                   { key: 'nowrap', label: 'No Wrap' },
                   { key: 'wrap', label: 'Wrap' },
@@ -471,6 +482,7 @@ function DesignTab({ block, updateBlock, id }) {
             <div className={styles.fieldCol}>
               <label className={styles.fieldLabel}>Height</label>
               <Toggle
+                fullWidth
                 items={[
                   { key: 'hug', label: 'Hug' },
                   { key: 'fixed', label: 'Fixed' },
@@ -669,6 +681,7 @@ function DesignTab({ block, updateBlock, id }) {
                   <div className={styles.fieldCol}>
                     <label className={styles.fieldLabelStrong}>Alignment</label>
                     <Toggle
+                      fullWidth
                       items={[
                         { key: 'left',    label: '', icon: <AlignLeftIcon /> },
                         { key: 'center',  label: '', icon: <AlignCenterIcon /> },
@@ -682,26 +695,16 @@ function DesignTab({ block, updateBlock, id }) {
                   </div>
                   <div className={styles.fieldCol}>
                     <label className={styles.fieldLabelStrong}>Decoration</label>
-                    <Toggle
-                      items={[
-                        { key: 'none',      label: '', icon: <DecoNoneIcon /> },
-                        { key: 'bold',      label: '', icon: <DecoBoldIcon /> },
-                        { key: 'italic',    label: '', icon: <DecoItalicIcon /> },
-                        { key: 'underline', label: '', icon: <DecoUnderlineIcon /> },
-                        { key: 'strike',    label: '', icon: <DecoStrikeIcon /> },
-                      ]}
-                      active={
-                        style.textDecoration === 'underline' ? 'underline' :
-                        style.textDecoration === 'line-through' ? 'strike' :
-                        style.fontStyle === 'italic' ? 'italic' :
-                        style.fontWeight === 'bold' ? 'bold' : 'none'
-                      }
-                      size="S"
-                      onChange={v => {
-                        update(['data', 'style', 'fontStyle'], v === 'italic' ? 'italic' : null);
-                        update(['data', 'style', 'textDecoration'],
-                          v === 'underline' ? 'underline' : v === 'strike' ? 'line-through' : null);
-                        update(['data', 'style', 'fontWeight'], v === 'bold' ? 'bold' : 'normal');
+                    <DecorationToggles
+                      bold={style.fontWeight === 'bold'}
+                      italic={style.fontStyle === 'italic'}
+                      underline={style.textDecoration === 'underline'}
+                      strike={style.textDecoration === 'line-through'}
+                      onChange={(key, on) => {
+                        if (key === 'bold') update(['data', 'style', 'fontWeight'], on ? 'bold' : 'normal');
+                        if (key === 'italic') update(['data', 'style', 'fontStyle'], on ? 'italic' : null);
+                        if (key === 'underline') update(['data', 'style', 'textDecoration'], on ? 'underline' : null);
+                        if (key === 'strike') update(['data', 'style', 'textDecoration'], on ? 'line-through' : null);
                       }}
                     />
                   </div>
@@ -724,10 +727,6 @@ function DesignTab({ block, updateBlock, id }) {
         </>
       )}
 
-      {/* ── Stub sections ── */}
-      <SectionHeading>Extra</SectionHeading>
-      <SectionHeading>Iteration</SectionHeading>
-      <SectionHeading>Conditions</SectionHeading>
     </div>
   );
 }
@@ -883,6 +882,7 @@ function BulkDesignTab({ doc, bulkIds, updateBlock }) {
               <div className={styles.fieldCol}>
                 <label className={styles.fieldLabelStrong}>Alignment</label>
                 <Toggle
+                  fullWidth
                   items={[
                     { key: 'left',    label: '', icon: <AlignLeftIcon /> },
                     { key: 'center',  label: '', icon: <AlignCenterIcon /> },
@@ -1639,17 +1639,23 @@ const SOCIAL_PRESETS = [
 function SocialIconUpload({ currentUrl, onUpload }) {
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
+  const showToast = useAppStore(s => s.showToast);
 
   const accept = async (file) => {
     if (!file) return;
     const isImage = file.type.startsWith('image/');
     const isSvg = file.type === 'image/svg+xml' || file.name.endsWith('.svg');
-    if (!isImage && !isSvg) return;
+    if (!isImage && !isSvg) {
+      showToast('Icon must be an image or SVG');
+      return;
+    }
     setUploading(true);
     try {
       const url = await uploadImage(file);
       onUpload(url);
-    } catch { /* silent */ }
+    } catch (err) {
+      showToast(err?.message || 'Icon upload failed');
+    }
     setUploading(false);
   };
 
@@ -1765,6 +1771,33 @@ function NavLinkEditor({ links, onChange }) {
         </div>
       ))}
       <button className={styles.tableEditorAddBtn} onClick={addLink}>+ Add link</button>
+    </div>
+  );
+}
+
+// ── Independent decoration toggles — bold/italic/underline/strike can combine ─
+function DecorationToggles({ bold, italic, underline, strike, onChange }) {
+  const items = [
+    { key: 'bold',      on: bold,      icon: <DecoBoldIcon />,      label: 'Bold' },
+    { key: 'italic',    on: italic,    icon: <DecoItalicIcon />,    label: 'Italic' },
+    { key: 'underline', on: underline, icon: <DecoUnderlineIcon />, label: 'Underline' },
+    { key: 'strike',    on: strike,    icon: <DecoStrikeIcon />,    label: 'Strikethrough' },
+  ];
+  return (
+    <div className={styles.decoToggles}>
+      {items.map(it => (
+        <button
+          key={it.key}
+          type="button"
+          className={[styles.decoToggleBtn, it.on ? styles.decoToggleActive : ''].join(' ')}
+          onClick={() => onChange(it.key, !it.on)}
+          title={it.label}
+          aria-label={it.label}
+          aria-pressed={it.on}
+        >
+          {it.icon}
+        </button>
+      ))}
     </div>
   );
 }

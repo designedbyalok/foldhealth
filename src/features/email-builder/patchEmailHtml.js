@@ -190,6 +190,8 @@ function renderBlock(doc, id) {
       const cols = props.columns || [];
       const count = props.columnsCount || cols.length || 2;
       const gap = props.columnsGap ?? 16;
+      const rowGap = props.rowGap ?? 0;
+      const direction = props.direction || 'row';
       const visible = cols.slice(0, count);
       const columnWidths = props.columnWidths || Array.from({ length: count }, () => Math.round(10000 / count) / 100);
 
@@ -203,6 +205,17 @@ function renderBlock(doc, id) {
         wrapS['background-size'] = style.backgroundSize || 'cover';
         wrapS['background-position'] = style.backgroundPosition || 'center';
         wrapS['background-repeat'] = style.backgroundRepeat || 'no-repeat';
+      }
+
+      // Direction = column → stack vertically (each column becomes a full-width
+      // row). Direction = row → render as a horizontal table of cells.
+      if (direction === 'column') {
+        const rows = visible.map(col => {
+          const children = (col.childrenIds || []).map(cid => renderBlock(doc, cid)).join('');
+          const tdS = { 'padding-bottom': `${rowGap}px` };
+          return `<tr><td style="${styleStr(tdS)}">${children || '&nbsp;'}</td></tr>`;
+        }).join('');
+        return `<div style="${styleStr(wrapS)}"><table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation">${rows}</table></div>`;
       }
 
       let colsHtml = visible.map((col, idx) => {

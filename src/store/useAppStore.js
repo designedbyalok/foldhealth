@@ -1957,7 +1957,49 @@ export const useAppStore = create((set, get) => ({
   // JSON document, so it stays as an override until cleared.
   htmlPreviewOverride: null,
   setHtmlPreviewOverride: (html) => set({ htmlPreviewOverride: html }),
-  setEmailDocument: (doc) => set({ emailDocument: doc, htmlPreviewOverride: null }),
+  setEmailDocument: (doc) => {
+    get()._pushEmailHistory();
+    set({ emailDocument: doc, htmlPreviewOverride: null });
+  },
+
+  // ── Undo / Redo for the email document ──
+  // Snapshots the previous emailDocument before each mutation. Rapid edits
+  // (color picker drag, resize drag) coalesce within a 400ms window so the
+  // whole gesture counts as a single undo step.
+  emailHistory: [],
+  emailFuture: [],
+  _lastEmailHistoryTime: 0,
+  _pushEmailHistory: () => {
+    const s = get();
+    if (!s.emailDocument) return;
+    const now = Date.now();
+    const coalesce = now - s._lastEmailHistoryTime < 400 && s.emailHistory.length > 0;
+    set(state => ({
+      emailHistory: coalesce ? state.emailHistory : [...state.emailHistory.slice(-49), state.emailDocument],
+      emailFuture: [],
+      _lastEmailHistoryTime: now,
+    }));
+  },
+  undoEmailEdit: () => set(s => {
+    if (!s.emailDocument || s.emailHistory.length === 0) return {};
+    const prev = s.emailHistory[s.emailHistory.length - 1];
+    return {
+      emailHistory: s.emailHistory.slice(0, -1),
+      emailFuture: [s.emailDocument, ...s.emailFuture].slice(0, 50),
+      emailDocument: prev,
+      _lastEmailHistoryTime: 0,
+    };
+  }),
+  redoEmailEdit: () => set(s => {
+    if (!s.emailDocument || s.emailFuture.length === 0) return {};
+    const next = s.emailFuture[0];
+    return {
+      emailFuture: s.emailFuture.slice(1),
+      emailHistory: [...s.emailHistory.slice(-49), s.emailDocument],
+      emailDocument: next,
+      _lastEmailHistoryTime: 0,
+    };
+  }),
 
   // Named color variables — global "design tokens" for the open template.
   // Setting/picking a variable applies its hex; we don't persist a reference,
@@ -1977,8 +2019,10 @@ export const useAppStore = create((set, get) => ({
 
   // Swap the existing header/footer for a different preset. Replaces by role
   // marker stored on the block; falls back to first/last child by convention.
-  replaceHeaderFooter: (role, presetTree) => set(s => {
-    if (!s.emailDocument) return {};
+  replaceHeaderFooter: (role, presetTree) => {
+    get()._pushEmailHistory();
+    return set(s => {
+      if (!s.emailDocument) return {};
     const doc = { ...s.emailDocument };
     const root = doc.root;
     const childrenIds = [...(root.data.childrenIds || [])];
@@ -2000,8 +2044,9 @@ export const useAppStore = create((set, get) => ({
     }
     Object.assign(doc, presetTree.blocks);
     doc.root = { ...root, data: { ...root.data, childrenIds } };
-    return { emailDocument: doc, selectedBlockId: presetTree.rootId };
-  }),
+      return { emailDocument: doc, selectedBlockId: presetTree.rootId };
+    });
+  },
   openEmailBuilder: (campaign) => {
     const saved = campaign.emailTemplate;
     const defaultVars = [
@@ -2016,22 +2061,30 @@ export const useAppStore = create((set, get) => ({
       emailDocument: saved || makeInitialDocument(campaign),
       colorVariables: campaign.colorVariables || defaultVars,
       selectedBlockId: 'root',
+      emailHistory: [],
+      emailFuture: [],
+      _lastEmailHistoryTime: 0,
     });
     updateHash(get);
   },
   closeEmailBuilder: () => {
-    set({ editingCampaignId: null, editingCampaignName: null, emailDocument: null, selectedBlockId: 'root', bulkSelectedIds: [], htmlPreviewOverride: null });
+    set({ editingCampaignId: null, editingCampaignName: null, emailDocument: null, selectedBlockId: 'root', bulkSelectedIds: [], htmlPreviewOverride: null, emailHistory: [], emailFuture: [], _lastEmailHistoryTime: 0 });
     updateHash(get);
   },
   setSelectedBlockId: (id) => set({ selectedBlockId: id, bulkSelectedIds: [] }),
   setBulkSelectedIds: (ids) => set({ bulkSelectedIds: ids }),
-  updateBlock: (id, updater) => set(s => {
-    if (!s.emailDocument || !s.emailDocument[id]) return {};
-    const block = s.emailDocument[id];
-    const next = typeof updater === 'function' ? updater(block) : updater;
-    return { emailDocument: { ...s.emailDocument, [id]: next } };
-  }),
-  addBlock: (type) => set(s => {
+  updateBlock: (id, updater) => {
+    get()._pushEmailHistory();
+    set(s => {
+      if (!s.emailDocument || !s.emailDocument[id]) return {};
+      const block = s.emailDocument[id];
+      const next = typeof updater === 'function' ? updater(block) : updater;
+      return { emailDocument: { ...s.emailDocument, [id]: next } };
+    });
+  },
+  addBlock: (type) => {
+    get()._pushEmailHistory();
+    return set(s => {
     if (!s.emailDocument) return {};
     let counter = Date.now();
     const genId = () => `block-${counter++}-${Math.random().toString(36).slice(2, 5)}`;
@@ -2060,13 +2113,16 @@ export const useAppStore = create((set, get) => ({
       emailDocument: { ...s.emailDocument, root: updatedRoot, ...tree.blocks },
       selectedBlockId: tree.rootId,
     };
-  }),
+    });
+  },
   // Move an existing block to a new parent slot.
   // target = { parentId, columnIdx?, index } where parentId is 'root' or a
   // block id (Container or ColumnsContainer). For ColumnsContainer parents,
   // columnIdx (0-2) chooses which column. Index is the insert position in
   // that children list.
-  moveBlock: (blockId, target) => set(s => {
+  moveBlock: (blockId, target) => {
+    get()._pushEmailHistory();
+    return set(s => {
     if (!s.emailDocument || blockId === target.parentId) return {};
     const doc = { ...s.emailDocument };
     const map = buildParentMap(doc);
@@ -2137,10 +2193,13 @@ export const useAppStore = create((set, get) => ({
     }
     insertInto(target.parentId, target.columnIdx, targetIndex);
     return { emailDocument: doc };
-  }),
+    });
+  },
 
   // Drop a brand-new component (from the panel) at a specific spot.
-  insertNewBlock: (type, target) => set(s => {
+  insertNewBlock: (type, target) => {
+    get()._pushEmailHistory();
+    return set(s => {
     if (!s.emailDocument) return {};
     let counter = Date.now();
     const genId = () => `block-${counter++}-${Math.random().toString(36).slice(2, 5)}`;
@@ -2176,9 +2235,12 @@ export const useAppStore = create((set, get) => ({
       doc[target.parentId] = { ...parent, data };
     }
     return { emailDocument: doc, selectedBlockId: tree.rootId };
-  }),
+    });
+  },
 
-  duplicateBlock: (id) => set(s => {
+  duplicateBlock: (id) => {
+    get()._pushEmailHistory();
+    return set(s => {
     if (!s.emailDocument || !s.emailDocument[id]) return {};
     const map = buildParentMap(s.emailDocument);
     const slot = map[id];
@@ -2213,7 +2275,8 @@ export const useAppStore = create((set, get) => ({
       doc[slot.parentId] = { ...parent, data };
     }
     return { emailDocument: doc, selectedBlockId: tree.rootId };
-  }),
+    });
+  },
 
   moveBlockUp: (id) => {
     const s = get();
@@ -2224,8 +2287,10 @@ export const useAppStore = create((set, get) => ({
     s.moveBlock(id, { parentId: slot.parentId, columnIdx: slot.columnIdx, index: slot.index - 1 });
   },
 
-  removeBlock: (id) => set(s => {
-    if (!s.emailDocument || id === 'root' || !s.emailDocument[id]) return {};
+  removeBlock: (id) => {
+    get()._pushEmailHistory();
+    return set(s => {
+      if (!s.emailDocument || id === 'root' || !s.emailDocument[id]) return {};
     const doc = { ...s.emailDocument };
     const map = buildParentMap(doc);
     const slot = map[id];
@@ -2257,7 +2322,8 @@ export const useAppStore = create((set, get) => ({
       emailDocument: doc,
       selectedBlockId: s.selectedBlockId === id ? 'root' : s.selectedBlockId,
     };
-  }),
+    });
+  },
 
   // ── Tasks ──
   tasks: [],

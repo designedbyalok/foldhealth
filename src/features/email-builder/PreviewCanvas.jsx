@@ -485,19 +485,22 @@ function BlockBody({ id, block, ctx, dragAttributes, dragListeners }) {
       colsStyle.height = typeof props.height === 'number' ? `${props.height}px` : props.height;
       colsStyle.overflow = 'auto';
     }
+    const isColumn = direction === 'column';
     const totalGap = hGap * (count - 1);
     return (
       <div style={colsStyle}>
         {visible.map((col, idx) => {
           const w = columnWidths[idx] || (100 / count);
+          // In row direction the column-width % drives flex-basis along the
+          // main (horizontal) axis. When the user flips direction to column,
+          // the main axis is vertical — applying the % there would size each
+          // column as a fraction of the parent's height (≈0 in hug mode), so
+          // every column would collapse. Stack them at full width instead.
+          const itemStyle = isColumn
+            ? { width: '100%', minWidth: 0 }
+            : { flex: `0 0 calc(${w}% - ${totalGap * w / 100}px)`, minWidth: 0 };
           return (
-            <div
-              key={idx}
-              style={{
-                flex: `0 0 calc(${w}% - ${totalGap * w / 100}px)`,
-                minWidth: 0,
-              }}
-            >
+            <div key={idx} style={itemStyle}>
               <SortableList parentId={id} columnIdx={idx} childrenIds={col?.childrenIds || []} ctx={ctx} />
             </div>
           );

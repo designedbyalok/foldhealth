@@ -15,13 +15,20 @@
   padding: 1px;
   border: none;
   position: relative;
+  /* Allow the toggle to shrink inside narrow flex parents (fieldCol etc.)
+     instead of overflowing — buttons inside will absorb the constraint. */
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .fullWidth {
   display: flex;
+  width: 100%;
 }
 .fullWidth .btn {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 /* ── Sliding pill indicator ── */
@@ -34,8 +41,10 @@
   border: 0.5px solid var(--neutral-150);
   box-shadow: 0 12px 60px rgba(0, 0, 0, 0.06);
   transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-              width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+              width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.12s ease;
   z-index: 0;
+  pointer-events: none;
 }
 
 /* ── Segment button ── */
@@ -55,6 +64,11 @@
   white-space: nowrap;
   position: relative;
   z-index: 1;
+  /* Allow buttons to shrink rather than overflow the container. The active
+     pill follows actual size via the ResizeObserver in Toggle.jsx. */
+  min-width: 0;
+  flex-shrink: 1;
+  box-sizing: border-box;
 }
 .btn:hover { color: var(--neutral-300); }
 .btnActive { color: var(--neutral-400); }
@@ -71,4 +85,15 @@
   height: 32px;
   padding: 4px 14px;
   font-size: 14px;
+}
+
+/* ── Icon-only mode: tighter padding so 4+ icon buttons fit narrow columns.
+   Triggered automatically when every item has an icon and no text label. ── */
+.iconOnly .btn {
+  padding-left: 6px;
+  padding-right: 6px;
+}
+.sizeS.iconOnly .btn {
+  padding-left: 5px;
+  padding-right: 5px;
 }

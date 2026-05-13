@@ -156,6 +156,51 @@ function SendTestPopover({ onClose }) {
   );
 }
 
+const SHORTCUTS = [
+  { keys: '⌘Z', label: 'Undo' },
+  { keys: '⇧⌘Z', label: 'Redo' },
+  { keys: '⌘D', label: 'Duplicate block' },
+  { keys: '⌘R', label: 'Rename layer' },
+  { keys: 'Enter', label: 'Select first child / bulk-select children' },
+  { keys: '⇧Enter', label: 'Select parent' },
+  { keys: 'Esc', label: 'Clear bulk selection' },
+  { keys: '⌫', label: 'Delete selected block' },
+];
+
+function ShortcutsHelpButton() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <ActionButton
+        icon="solar:question-circle-linear"
+        size="L"
+        tooltip="Keyboard shortcuts"
+        onClick={() => setOpen(o => !o)}
+      />
+      {open && (
+        <div className={styles.shortcutsPopover}>
+          <div className={styles.shortcutsTitle}>Keyboard shortcuts</div>
+          {SHORTCUTS.map(s => (
+            <div key={s.label} className={styles.shortcutRow}>
+              <kbd className={styles.shortcutKey}>{s.keys}</kbd>
+              <span className={styles.shortcutLabel}>{s.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function countChanges(a, b) {
   if (!a || !b) return 0;
   let n = 0;
@@ -179,6 +224,10 @@ export function EmailBuilder() {
   const moveBlock = useAppStore(s => s.moveBlock);
   const insertNewBlock = useAppStore(s => s.insertNewBlock);
   const emailDocument = useAppStore(s => s.emailDocument);
+  const undoEmailEdit = useAppStore(s => s.undoEmailEdit);
+  const redoEmailEdit = useAppStore(s => s.redoEmailEdit);
+  const canUndo = useAppStore(s => s.emailHistory.length > 0);
+  const canRedo = useAppStore(s => s.emailFuture.length > 0);
   const [activeDrag, setActiveDrag] = useState(null);
   const [viewMode, setViewMode] = useState('builder');
   const [showTestEmail, setShowTestEmail] = useState(false);
@@ -200,9 +249,19 @@ export function EmailBuilder() {
       const s = useAppStore.getState();
       const doc = s.emailDocument;
       const id = s.selectedBlockId;
-      if (!doc || !id) return;
+      if (!doc) return;
 
       const isMeta = e.metaKey || e.ctrlKey;
+
+      // Cmd+Z — undo, Cmd+Shift+Z — redo. Allowed even inside text inputs.
+      if (isMeta && (e.key === 'z' || e.key === 'Z')) {
+        e.preventDefault();
+        if (e.shiftKey) s.redoEmailEdit();
+        else s.undoEmailEdit();
+        return;
+      }
+
+      if (!id) return;
 
       // Cmd+D — duplicate
       if (isMeta && e.key === 'd') {
@@ -333,6 +392,21 @@ export function EmailBuilder() {
           />
         </div>
         <div className={styles.topRight} style={{ position: 'relative' }}>
+          <ActionButton
+            icon="solar:undo-left-linear"
+            size="L"
+            tooltip="Undo (⌘Z)"
+            state={canUndo ? 'active' : 'disabled'}
+            onClick={undoEmailEdit}
+          />
+          <ActionButton
+            icon="solar:undo-right-linear"
+            size="L"
+            tooltip="Redo (⇧⌘Z)"
+            state={canRedo ? 'active' : 'disabled'}
+            onClick={redoEmailEdit}
+          />
+          <ShortcutsHelpButton />
           <Button
             variant="secondary"
             size="L"
@@ -342,7 +416,6 @@ export function EmailBuilder() {
             Test Mail
           </Button>
           {showTestEmail && <SendTestPopover onClose={() => setShowTestEmail(false)} />}
-          <ActionButton icon="solar:chart-2-linear" size="L" tooltip="Analytics" onClick={() => showToast('Analytics — coming soon')} />
           {lastSavedAt && unsavedCount === 0 && (
             <span className={styles.saveStatus}>
               <Icon name="solar:check-circle-linear" size={14} color="var(--status-success)" />
