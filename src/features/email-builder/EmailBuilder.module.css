@@ -25,16 +25,6 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  flex: 1 0 auto;
-}
-
-.topRight { justify-content: flex-end; }
-
-.topCenter {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
 }
 
 .topCenter {
@@ -77,6 +67,59 @@
   font-weight: 500;
   color: var(--neutral-200);
   white-space: nowrap;
+}
+
+/* ── Shortcuts help popover ── */
+.shortcutsPopover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #fff;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
+  padding: 12px 16px;
+  width: 280px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shortcutsTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--neutral-300);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.shortcutRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.shortcutKey {
+  flex-shrink: 0;
+  min-width: 52px;
+  text-align: center;
+  padding: 2px 6px;
+  background: var(--neutral-50);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+
+.shortcutLabel {
+  font-size: 12px;
+  color: var(--neutral-400);
+  line-height: 1.4;
 }
 
 /* ── Test email popover ── */
@@ -132,8 +175,8 @@
   gap: 6px;
 }
 
-.testEmailStatusOk { color: var(--success-500, #22c55e); }
-.testEmailStatusErr { color: var(--error-500, #ef4444); }
+.testEmailStatusOk { color: var(--status-success); }
+.testEmailStatusErr { color: var(--status-error); }
 
 .closeBtn {
   display: inline-flex;
@@ -658,57 +701,6 @@
   background: #fff;
 }
 
-/* ── Web / Mobile preview modes ── */
-.previewWrap {
-  flex: 1;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 32px 24px;
-  overflow: auto;
-  background: var(--neutral-25, #fafafa);
-  background-image:
-    linear-gradient(var(--neutral-100) 0.5px, transparent 0.5px),
-    linear-gradient(90deg, var(--neutral-100) 0.5px, transparent 0.5px);
-  background-size: 24px 24px;
-}
-
-.previewDesktop {
-  width: 100%;
-  max-width: 720px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, .04);
-  overflow: hidden;
-}
-
-.previewMobile {
-  width: 375px;
-  max-width: 100%;
-  background: #fff;
-  border-radius: 28px;
-  border: 8px solid #1a1a1f;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, .12);
-  overflow: hidden;
-  position: relative;
-}
-
-.previewMobileNotch {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 96px;
-  height: 18px;
-  background: #1a1a1f;
-  border-radius: 0 0 12px 12px;
-  z-index: 2;
-}
-
-.previewInner {
-  width: 100%;
-}
-
 /* Tabs at top */
 .rightTabs {
   display: flex;
@@ -727,8 +719,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   color: var(--neutral-300);
   transition: color .12s, border-color .12s;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.rightTabLabel {
+  line-height: 1;
 }
 
 .rightTab:hover { color: var(--neutral-400); }
@@ -1109,7 +1109,7 @@
   background: none;
   font-size: 11px;
   font-family: 'Inter', sans-serif;
-  color: var(--error-500, #ef4444);
+  color: var(--status-error);
   cursor: pointer;
   border-radius: 4px;
 }
@@ -1119,12 +1119,12 @@
 .imgUploaderError {
   margin-top: 6px;
   padding: 6px 8px;
-  background: #FFF7E6;
-  border: 0.5px solid #FFD591;
+  background: var(--status-warning-light);
+  border: 0.5px solid var(--status-warning);
   border-radius: 4px;
   font-family: 'Inter', sans-serif;
   font-size: 11px;
-  color: #B45309;
+  color: var(--status-warning);
 }
 
 /* Color Variables editor (in EmailLayout root section) */
@@ -1195,7 +1195,7 @@
   border-radius: 4px;
 }
 
-.colorVarRemove:hover { color: #B91C1C; background: var(--neutral-50); }
+.colorVarRemove:hover { color: var(--status-error); background: var(--neutral-50); }
 
 .colorVarAdd {
   display: inline-flex;
@@ -1215,6 +1215,54 @@
   border-color: var(--primary-300);
   color: var(--primary-300);
   border-style: solid;
+}
+
+/* Decoration toggle group — independent multi-select. Stretches to its
+   fieldCol and lets the four buttons share space so the last one (Strike)
+   never clips in narrow right-panel widths. */
+.decoToggles {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  background: var(--neutral-50);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 6px;
+  height: 28px;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+.decoToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 22px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--neutral-300);
+  padding: 0;
+  transition: background .12s, color .12s;
+}
+
+.decoToggleBtn:hover {
+  background: #fff;
+  color: var(--neutral-400);
+}
+
+.decoToggleActive {
+  background: #fff;
+  color: var(--primary-300);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.decoToggleActive:hover {
+  color: var(--primary-300);
 }
 
 /* Design tab textarea (e.g. for Heading/Text content) */
@@ -1293,9 +1341,9 @@
   padding: 8px 12px;
   font-family: 'Inter', sans-serif;
   font-size: 12px;
-  color: #B91C1C;
-  background: #FEF2F2;
-  border-bottom: 0.5px solid #FECACA;
+  color: var(--status-error);
+  background: var(--status-error-light);
+  border-bottom: 0.5px solid var(--status-error);
 }
 
 /* Editor stack — pre with highlighted HTML below, transparent textarea above. */

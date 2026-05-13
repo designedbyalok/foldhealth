@@ -4,19 +4,13 @@ import { renderEmailHtml } from './patchEmailHtml';
 import styles from './DevicePreview.module.css';
 
 function EmailIframe({ html, renderWidth }) {
-  const iframeRef = useRef(null);
   const wrapRef = useRef(null);
   const [scale, setScale] = useState(1);
   const [size, setSize] = useState({ w: 0, h: 0 });
 
-  useEffect(() => {
-    const f = iframeRef.current;
-    if (!f) return;
-    const doc = f.contentDocument;
-    doc.open();
-    doc.write(html);
-    doc.close();
-  }, [html]);
+  // Render the email HTML via srcdoc + sandbox — isolates the iframe from the
+  // parent origin so any <script> in the email markup cannot run in the app.
+  const srcDoc = html || '<!DOCTYPE html><html><body></body></html>';
 
   useEffect(() => {
     if (!renderWidth) return;
@@ -34,9 +28,10 @@ function EmailIframe({ html, renderWidth }) {
   if (!renderWidth) {
     return (
       <iframe
-        ref={iframeRef}
         title="Email preview"
         className={styles.emailIframe}
+        sandbox=""
+        srcDoc={srcDoc}
       />
     );
   }
@@ -44,8 +39,9 @@ function EmailIframe({ html, renderWidth }) {
   return (
     <div ref={wrapRef} className={styles.emailIframeScaled}>
       <iframe
-        ref={iframeRef}
         title="Email preview"
+        sandbox=""
+        srcDoc={srcDoc}
         style={{
           width: renderWidth,
           height: scale ? size.h / scale : '100%',

@@ -140,6 +140,17 @@ The platform follows the **Fold Health design system** with strict adherence to:
 
 ## Recent Changes
 
+### Email Builder — Undo/Redo, decoration multi-select, shortcuts help, iframe sandbox (May 2026)
+- **Undo / Redo** — full history stack on the email document (`emailHistory`/`emailFuture`), wired to `⌘Z` / `⇧⌘Z` and toolbar buttons. Rapid edits (color picker drag, resize drag) coalesce inside a 400ms window so each gesture counts as one undo step.
+- **Decoration toggles are multi-select** — bold / italic / underline / strikethrough can now combine instead of being mutually exclusive.
+- **Keyboard shortcuts popover** — new `?` button in the top-right surfaces all builder shortcuts.
+- **Right-panel tab labels** — Design / Code / Template tabs now show text alongside icons.
+- **Device preview iframes sandboxed** — `srcdoc` + `sandbox=""` prevents scripts in user-authored email HTML from executing in the app origin.
+- **Token cleanup** — replaced hardcoded status hex values with Fold tokens (`--status-error`, `--status-warning`, `--status-success`).
+- **Removed stub sections** — "Extra", "Iteration", "Conditions" placeholders dropped from the Design tab.
+- **Removed Analytics "coming soon" button** from the top bar.
+- **Surface upload errors** in SocialIconUpload via toast instead of silent catch.
+
 ### Platform — Bun migration, Help menu update (May 2026)
 - **Migrated from npm to Bun** — `packageManager` set to `bun@1.2.23`, `bun.lock` replaces `package-lock.json` as the canonical lock file.
 - **Help popover** — added Tasks group (Task List, Kanban Board) to the platform features menu.

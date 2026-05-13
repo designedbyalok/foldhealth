@@ -2,8 +2,6 @@
 // when invoked with an id generator — same shape as createBlockTree() so the
 // store's addBlock can drop them in without special-casing.
 
-function rgb(hex) { return hex; }
-
 export const HEADER_PRESETS = [
   {
     id: 'simple',
