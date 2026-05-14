@@ -1,7 +1,9 @@
 /* ── Color picker popover ────────────────────────────────────────────── */
 .popover {
-  width: 268px;
-  padding: 12px;
+  width: 264px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 10px;
   background: var(--neutral-0, #fff);
   border: 0.5px solid var(--neutral-150);
   border-radius: 8px;
@@ -10,40 +12,40 @@
   color: var(--neutral-400);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+  /* Custom thin scrollbar so the popover doesn't get a chunky native one. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--neutral-200) transparent;
 }
+.popover::-webkit-scrollbar { width: 6px; }
+.popover::-webkit-scrollbar-thumb { background: var(--neutral-200); border-radius: 3px; }
+.popover::-webkit-scrollbar-track { background: transparent; }
 
-.modeRow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.closeBtn {
+.eyedropperBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
-  border: none;
-  background: transparent;
-  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  border: 0.5px solid var(--neutral-150);
+  background: var(--neutral-0, #fff);
+  border-radius: 6px;
   cursor: pointer;
   flex-shrink: 0;
 }
-.closeBtn:hover { background: var(--neutral-50); }
+.eyedropperBtn:hover { background: var(--neutral-50); border-color: var(--primary-200); }
 
 /* ── Solid picker ────────────────────────────────────────────────────── */
 .solidPicker {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .svSquare {
   position: relative;
   width: 100%;
-  height: 168px;
+  height: 132px;
   border-radius: 6px;
   border: 0.5px solid var(--neutral-150);
   cursor: crosshair;
@@ -197,7 +199,7 @@
 .gradientPicker {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .gradientHeader {
@@ -337,9 +339,9 @@
 .stopRemove:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .activeStopWrap {
-  padding-top: 8px;
+  padding-top: 6px;
   border-top: 0.5px solid var(--neutral-150);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }

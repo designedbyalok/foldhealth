@@ -1747,20 +1747,27 @@ function ColorInput({ label, value, onChange, allowGradient = true }) {
   const isGrad = isGradient(v);
   const displayText = isGrad ? 'Gradient' : (typeof v === 'string' ? v.toUpperCase() : '');
 
-  // Position the portalled popover under the field. If there isn't enough
-  // room to the right of the panel for a 268px popover, anchor it to the
-  // left of the field so it stays on-screen.
+  // Position the portalled popover so it stays fully on-screen. Defaults
+  // to appearing below the field but flips above when there isn't room.
+  // The popover has its own max-height + internal scroll, so a clamped
+  // top still leaves all content reachable.
   useLayoutEffect(() => {
     if (!open || !fieldRef.current) return;
     const update = () => {
       const r = fieldRef.current.getBoundingClientRect();
-      const popoverWidth = 268;
-      // Prefer flush-right with the field; fall back to flush-left if that
-      // would clip past the viewport.
+      const popoverWidth = 264;
+      const margin = 8;
+      // Horizontal: prefer flush-right; clamp to keep inside viewport.
       let left = r.right - popoverWidth;
-      const minLeft = 8;
-      if (left < minLeft) left = Math.min(r.left, window.innerWidth - popoverWidth - 8);
-      setPopoverPos({ top: r.bottom + 4, left });
+      if (left < margin) left = Math.min(r.left, window.innerWidth - popoverWidth - margin);
+      left = Math.max(margin, Math.min(left, window.innerWidth - popoverWidth - margin));
+      // Vertical: prefer below; if there's more room above, flip up.
+      const spaceBelow = window.innerHeight - r.bottom;
+      const spaceAbove = r.top;
+      const top = spaceBelow >= spaceAbove
+        ? r.bottom + 4
+        : Math.max(margin, r.top - 4 - Math.min(spaceAbove - margin, window.innerHeight - 2 * margin));
+      setPopoverPos({ top, left });
     };
     update();
     window.addEventListener('resize', update);

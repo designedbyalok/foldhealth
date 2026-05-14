@@ -87,6 +87,29 @@ function HueSlider({ h, onChange }) {
   );
 }
 
+// EyeDropper button — uses the native EyeDropper API where available
+// (Chromium / Edge / Opera). Hidden on browsers that don't support it
+// rather than showing a non-functional control.
+function EyeDropperBtn({ onPick }) {
+  const supported = typeof window !== 'undefined' && 'EyeDropper' in window;
+  if (!supported) return null;
+  const open = async () => {
+    try {
+      // eslint-disable-next-line no-undef
+      const ed = new window.EyeDropper();
+      const { sRGBHex } = await ed.open();
+      if (sRGBHex) onPick(sRGBHex.toUpperCase());
+    } catch {
+      // User cancelled — fine, no-op.
+    }
+  };
+  return (
+    <button type="button" className={styles.eyedropperBtn} onClick={open} title="Pick color from screen">
+      <Icon name="solar:pipette-linear" size={14} color="var(--neutral-400)" />
+    </button>
+  );
+}
+
 // ── Solid color picker (HSV square + hue + hex/rgb inputs + swatches) ──
 function SolidPicker({ value, onChange, variables }) {
   const hex = normalizeHex(value);
@@ -114,6 +137,7 @@ function SolidPicker({ value, onChange, variables }) {
       <HueSlider h={hsv.h} onChange={commitH} />
 
       <div className={styles.inputsRow}>
+        <EyeDropperBtn onPick={onChange} />
         <div className={styles.hexField}>
           <span className={styles.hexHash}>#</span>
           <input
@@ -297,13 +321,14 @@ function GradientPicker({ value, onChange, variables }) {
         ))}
       </div>
 
-      {/* The active stop's color edits via the full Solid picker below. */}
+      {/* The active stop's color is edited via the inline Solid picker
+          below. We hide the variables grid here to keep the gradient
+          popover compact — variables stay accessible in solid mode. */}
       <div className={styles.activeStopWrap}>
-        <div className={styles.sectionLabel}>Stop color</div>
         <SolidPicker
           value={active.color}
           onChange={(hex) => updateStop(activeStop, { color: hex })}
-          variables={variables}
+          variables={[]}
         />
       </div>
     </div>
@@ -311,12 +336,12 @@ function GradientPicker({ value, onChange, variables }) {
 }
 
 // ── Top-level ColorPicker — mode toggle + popover frame ────────────────
-export function ColorPicker({ value, onChange, variables = [], onClose, allowGradient = true }) {
+// Close behavior is owned by the host (ColorInput's outside-click handler).
+// We don't render a close button here so the chrome stays minimal.
+export function ColorPicker({ value, onChange, variables = [], allowGradient = true }) {
   const initialMode = isGradient(value) ? 'gradient' : 'solid';
   const [mode, setMode] = useState(initialMode);
 
-  // Toggling Solid ↔ Gradient: convert the value sensibly so neither
-  // direction loses the user's current color.
   const setModeWithConvert = (next) => {
     if (next === mode) return;
     if (next === 'gradient' && !isGradient(value)) {
@@ -334,23 +359,16 @@ export function ColorPicker({ value, onChange, variables = [], onClose, allowGra
   return (
     <div className={styles.popover} onMouseDown={(e) => e.stopPropagation()}>
       {allowGradient && (
-        <div className={styles.modeRow}>
-          <Toggle
-            fullWidth
-            size="S"
-            items={[
-              { key: 'solid',    label: 'Solid' },
-              { key: 'gradient', label: 'Gradient' },
-            ]}
-            active={mode}
-            onChange={setModeWithConvert}
-          />
-          {onClose && (
-            <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close">
-              <Icon name="solar:close-circle-linear" size={14} color="var(--neutral-300)" />
-            </button>
-          )}
-        </div>
+        <Toggle
+          fullWidth
+          size="S"
+          items={[
+            { key: 'solid',    label: 'Solid' },
+            { key: 'gradient', label: 'Gradient' },
+          ]}
+          active={mode}
+          onChange={setModeWithConvert}
+        />
       )}
       {mode === 'solid' ? (
         <SolidPicker value={value} onChange={onChange} variables={variables} />

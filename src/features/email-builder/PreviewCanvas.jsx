@@ -6,7 +6,17 @@ import { CSS } from '@dnd-kit/utilities';
 import { useAppStore } from '../../store/useAppStore';
 import { Icon } from '../../components/Icon/Icon';
 import { InlineEditable } from './InlineEditable';
+import { isGradient } from './colorHelpers';
 import styles from './EmailBuilder.module.css';
+
+// Turns a (solid OR gradient) value into the right pair of style props.
+// Gradients can't use `backgroundColor` — they go on `backgroundImage`.
+// Returns an object you can spread onto a style prop.
+function bgProps(value) {
+  if (!value) return {};
+  if (isGradient(value)) return { backgroundImage: value };
+  return { backgroundColor: value };
+}
 
 const TYPE_LABELS = {
   EmailLayout: 'Email',
@@ -431,13 +441,18 @@ function BlockBody({ id, block, ctx, dragAttributes, dragListeners }) {
   if (type === 'Container') {
     const isSelected = ctx.selectedBlockId === id;
     const heightMode = props.heightMode || 'hug';
+    // bgProps() routes gradients to backgroundImage and solids to
+    // backgroundColor. If the user has a Background Image set, it
+    // overrides whatever's in bgColor.
     const containerStyle = {
       position: 'relative',
-      backgroundColor: style.backgroundColor,
-      backgroundImage: style.backgroundImage ? `url(${style.backgroundImage})` : undefined,
-      backgroundSize: style.backgroundSize || 'cover',
-      backgroundPosition: style.backgroundPosition || 'center',
-      backgroundRepeat: style.backgroundRepeat || 'no-repeat',
+      ...bgProps(style.backgroundColor),
+      ...(style.backgroundImage ? {
+        backgroundImage: `url(${style.backgroundImage})`,
+        backgroundSize: style.backgroundSize || 'cover',
+        backgroundPosition: style.backgroundPosition || 'center',
+        backgroundRepeat: style.backgroundRepeat || 'no-repeat',
+      } : {}),
       padding: paddingCss(style.padding),
       color: style.color,
       borderRadius: style.borderRadius ? `${style.borderRadius}px` : undefined,
@@ -474,11 +489,13 @@ function BlockBody({ id, block, ctx, dragAttributes, dragListeners }) {
       alignItems: align === 'top' ? 'flex-start' : align === 'middle' ? 'center' : 'flex-end',
       gap: `${vGap}px ${hGap}px`,
       padding: paddingCss(style.padding),
-      backgroundColor: style.backgroundColor,
-      backgroundImage: style.backgroundImage ? `url(${style.backgroundImage})` : undefined,
-      backgroundSize: style.backgroundSize || 'cover',
-      backgroundPosition: style.backgroundPosition || 'center',
-      backgroundRepeat: style.backgroundRepeat || 'no-repeat',
+      ...bgProps(style.backgroundColor),
+      ...(style.backgroundImage ? {
+        backgroundImage: `url(${style.backgroundImage})`,
+        backgroundSize: style.backgroundSize || 'cover',
+        backgroundPosition: style.backgroundPosition || 'center',
+        backgroundRepeat: style.backgroundRepeat || 'no-repeat',
+      } : {}),
       borderRadius: style.borderRadius ? `${style.borderRadius}px` : undefined,
     };
     if (heightMode === 'fixed' && props.height) {
@@ -531,7 +548,7 @@ function BlockBody({ id, block, ctx, dragAttributes, dragListeners }) {
     );
 
     return (
-      <div style={{ padding: paddingCss(style.padding), textAlign: style.textAlign || 'center', backgroundColor: style.backgroundColor }}>
+      <div style={{ padding: paddingCss(style.padding), textAlign: style.textAlign || 'center', ...bgProps(style.backgroundColor) }}>
         <ResizeWrap id={id} block={block} updateBlock={ctx.updateBlock} isSelected={isSelected} canWidth canHeight>
           {content}
         </ResizeWrap>
@@ -626,7 +643,7 @@ function BlockBody({ id, block, ctx, dragAttributes, dragListeners }) {
           style={{
             display: 'inline-block',
             padding: sz.padding,
-            backgroundColor: props.buttonBackgroundColor || '#7C5CFA',
+            ...bgProps(props.buttonBackgroundColor || '#7C5CFA'),
             color: props.buttonTextColor || '#fff',
             borderRadius: `${radius}px`,
             textDecoration: 'none',
@@ -654,7 +671,7 @@ function BlockBody({ id, block, ctx, dragAttributes, dragListeners }) {
         justifyContent: alignment === 'left' ? 'flex-start' : alignment === 'right' ? 'flex-end' : 'center',
         alignItems: 'center',
         gap: `${gap}px`,
-        backgroundColor: style.backgroundColor,
+        ...bgProps(style.backgroundColor),
       }}>
         {platforms.map(p => (
           <a key={p.id} href={p.url || '#'} onClick={e => e.preventDefault()} title={p.label} style={{ display: 'inline-flex' }}>
@@ -681,7 +698,7 @@ function BlockBody({ id, block, ctx, dragAttributes, dragListeners }) {
         justifyContent: alignment === 'left' ? 'flex-start' : alignment === 'right' ? 'flex-end' : 'center',
         alignItems: 'center',
         gap: `${gap}px`,
-        backgroundColor: style.backgroundColor,
+        ...bgProps(style.backgroundColor),
       }}>
         {links.map((link, i) => (
           <a
