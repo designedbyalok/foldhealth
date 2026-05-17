@@ -122,6 +122,18 @@ function extractStyle(el, win) {
     if (cs.borderTopStyle && cs.borderTopStyle !== 'none') out.borderStyle = cs.borderTopStyle;
   }
 
+  // Hero / fixed-height layout fidelity. getComputedStyle returns the
+  // resolved pixel value, so we just pass the string through and let the
+  // CSS renderer use it.
+  if (cs.minHeight && cs.minHeight !== '0px' && cs.minHeight !== 'auto') {
+    out.minHeight = cs.minHeight;
+  }
+  // Centered email containers commonly set max-width:600px + margin:auto.
+  // Preserve max-width so the parsed Container renders at the source width.
+  if (cs.maxWidth && cs.maxWidth !== 'none') {
+    out.maxWidth = cs.maxWidth;
+  }
+
   return out;
 }
 
@@ -180,6 +192,56 @@ function isColumnsRow(el) {
   return false;
 }
 
+// Map a parsed anchor-button into the exact block shape the Button renderer
+// expects — color/shape/size live on `props`, only padding/textAlign and an
+// optional borderRadius override stay on `style`. Without this normalization
+// the renderer's `props.buttonBackgroundColor || '#7C5CFA'` falls back to
+// the builder's default purple, ignoring the parsed value entirely.
+function inferButtonSize(padding) {
+  if (!padding) return 'medium';
+  const horiz = (padding.left || 0) + (padding.right || 0);
+  if (horiz <= 18) return 'x-small';
+  if (horiz <= 24) return 'small';
+  if (horiz <= 40) return 'medium';
+  return 'large';
+}
+
+function extractButtonBlock(el, win) {
+  const raw = extractStyle(el, win);
+  // Gradient strings on Button don't round-trip through the renderer —
+  // drop them so the renderer falls back cleanly. Solid hex passes through.
+  const bg = raw.backgroundColor && !/^(linear|radial)-gradient/.test(raw.backgroundColor)
+    ? raw.backgroundColor
+    : undefined;
+  const radius = raw.borderRadius;
+  let buttonStyle = 'rectangle';
+  if (radius != null) {
+    if (radius >= 100) buttonStyle = 'pill';
+    else if (radius > 0) buttonStyle = 'rounded';
+  }
+  const props = {
+    text: el.textContent.trim() || 'Button',
+    url: el.getAttribute('href') || '#',
+    buttonStyle,
+    size: inferButtonSize(raw.padding),
+  };
+  if (bg) props.buttonBackgroundColor = bg;
+  if (raw.color) props.buttonTextColor = raw.color;
+  if (raw.borderWidth) {
+    props.borderWidth = raw.borderWidth;
+    if (raw.borderColor) props.borderColor = raw.borderColor;
+  }
+  // Keep only the keys the renderer reads off style: padding, textAlign,
+  // blockAlign, borderRadius. The renderer's `style.borderRadius ?? preset`
+  // means a numeric radius here will override the preset cleanly.
+  const style = {};
+  if (raw.padding) style.padding = raw.padding;
+  if (raw.textAlign) style.textAlign = raw.textAlign;
+  if (raw.blockAlign) style.blockAlign = raw.blockAlign;
+  if (radius != null) style.borderRadius = radius;
+  return { type: 'Button', data: { props, style } };
+}
+
 function makeIdGen() {
   let n = 1;
   const base = Date.now();
@@ -230,13 +292,7 @@ function buildDocFromDom(idoc, win) {
     if (isAnchorButton(el, cs)) {
       const id = genId();
       tagEl(el, id);
-      blocks[id] = {
-        type: 'Button',
-        data: {
-          props: { text: el.textContent.trim() || 'Button', url: el.getAttribute('href') || '#' },
-          style: extractStyle(el, win),
-        },
-      };
+      blocks[id] = extractButtonBlock(el, win);
       return [id];
     }
 
@@ -283,6 +339,27 @@ function buildDocFromDom(idoc, win) {
       return [id];
     }
 
+    // Lists (UL / OL) → single Text block with listStyle so the builder's
+    // list controls in PropertiesPanel can edit them. Each <li> becomes a
+    // line in the text. Nested lists fall through to the wrapper branch
+    // below and end up rendered as raw HTML inside a Text block.
+    if ((el.tagName === 'UL' || el.tagName === 'OL') && !el.querySelector('ul, ol')) {
+      const items = Array.from(el.children).filter(c => c.tagName === 'LI');
+      if (items.length > 0) {
+        const id = genId();
+        tagEl(el, id);
+        const text = items.map(li => extractInlineHtml(li)).join('\n');
+        blocks[id] = {
+          type: 'Text',
+          data: {
+            props: { text, listStyle: el.tagName === 'OL' ? 'number' : 'bullet' },
+            style: extractStyle(el, win),
+          },
+        };
+        return [id];
+      }
+    }
+
     // Columns row (TR with multiple TDs, or div with flex/grid children)
     if (isColumnsRow(el)) {
       const id = genId();
@@ -317,6 +394,43 @@ function buildDocFromDom(idoc, win) {
     // Wrappers with element children → Container (or hoist if pass-through).
     const elementChildren = Array.from(el.children);
     const isWrapperTag = ['DIV', 'SECTION', 'ARTICLE', 'HEADER', 'FOOTER', 'MAIN', 'NAV', 'TABLE', 'TBODY', 'TR', 'TD', 'UL', 'OL', 'LI', 'FIGURE'].includes(el.tagName);
+
+    // Empty wrapper with a fixed height → Spacer. Catches the common
+    // pattern of `<div style="height: 40px"></div>` used to push content
+    // apart in pasted templates. Whitespace-only text content still counts
+    // as empty here.
+    if ((el.tagName === 'DIV' || el.tagName === 'TD') &&
+        elementChildren.length === 0 &&
+        !el.textContent?.trim()) {
+      const h = parsePxNumber(cs.height);
+      if (h != null && h >= 8) {
+        const id = genId();
+        tagEl(el, id);
+        blocks[id] = {
+          type: 'Spacer',
+          data: { props: { height: Math.round(h) }, style: {} },
+        };
+        return [id];
+      }
+    }
+
+    // Anchor-button wrapped in a single-child <p>/<div>. Without this
+    // shortcut the walker falls into the text-leaf branch below and inlines
+    // the anchor as raw HTML in a Text block — visually fine, but the user
+    // can't edit it as a Button. Hoist the inner Button block up.
+    if ((el.tagName === 'P' || el.tagName === 'DIV') && elementChildren.length === 1) {
+      const only = elementChildren[0];
+      const textNodeCount = Array.from(el.childNodes).filter(n => n.nodeType === 3 && n.textContent.trim()).length;
+      if (textNodeCount === 0 && only.tagName === 'A') {
+        const onlyCs = win.getComputedStyle(only);
+        if (isAnchorButton(only, onlyCs)) {
+          const id = genId();
+          tagEl(only, id);
+          blocks[id] = extractButtonBlock(only, win);
+          return [id];
+        }
+      }
+    }
 
     if (isWrapperTag && elementChildren.length > 0) {
       const childrenIds = [];

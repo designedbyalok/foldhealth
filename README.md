@@ -140,6 +140,18 @@ The platform follows the **Fold Health design system** with strict adherence to:
 
 ## Recent Changes
 
+### Email Builder — HTML import: CSS fidelity, block precedence, parser polish (May 2026)
+- **Block-pipeline precedence over `customHtml`.** `PreviewCanvas.jsx` and `patchEmailHtml.js` now check `!hasBlocks` before falling back to the iframe rendering. Imported HTML (which always produces `childrenIds`) routes through `SortableBlock`, restoring the per-block toolbar, drag handles, drop indicator, reorder, and component-panel insertion. Legacy iframe-only docs (no blocks) still get the iframe.
+- **Auto-heal stale `customHtml` on load** (`useAppStore.js:openEmailBuilder`). Campaigns saved before the precedence fix carried a stale `customHtml` field alongside a parsed block tree; stripping it at load means the next save retires the dead field for good.
+- **"Convert to blocks" button** on the legacy iframe banner. Parses the active customHtml and commits the resulting blocks (with the font-substitution dialog if needed). The existing "Remove" button stays for users who'd rather start clean.
+- **Button shape normalization** in the parser (`htmlToDocument.js:extractButtonBlock`). The renderer reads color/shape/size off `props.buttonBackgroundColor`/`buttonTextColor`/`buttonStyle`/`size`; the parser previously put them on `style`, so the default purple won. The helper now promotes them to `props`, infers `buttonStyle` from `borderRadius` (`≥100` → pill, `>0` → rounded, else rectangle), infers `size` from horizontal padding (≤18 x-small, ≤24 small, ≤40 medium, >40 large), and keeps `style` clean with just padding/textAlign/blockAlign and a numeric `borderRadius` override.
+- **Container `max-width` + `min-height` in canvas + export.** `max-width` pairs with `margin: 0 auto` so centred email wrappers render flush-centre; `min-height` lets hero sections hold their height even with short content. Mirrored in `patchEmailHtml.js` so sends/exports match the canvas.
+- **Parser fidelity polish** (`htmlToDocument.js`):
+  - Anchor-buttons wrapped in `<p>`/`<div>` get hoisted to Button blocks (previously inlined as raw HTML inside a Text block).
+  - `<ul>`/`<ol>` with `<li>` children → single Text block with `props.listStyle: 'bullet' | 'number'`.
+  - Empty `<div>` with computed height ≥ 8px → Spacer block.
+  - `extractStyle` now captures `cs.minHeight` and `cs.maxWidth`.
+
 ### Email Builder — HTML import refinements (May 2026)
 - **Confirmed HTML renders through the normal block pipeline.** The Confirm flow no longer stuffs the raw HTML into `customHtml`; the parsed doc commits directly so imported blocks get the full editor experience — drag handles, the per-block toolbar (move/duplicate/delete), reordering, component-panel insertion, the selection outline. Previously the iframe rendering preserved CSS fidelity but locked out all editing affordances.
 - **Font substitution dialog** (`FontSubstitutionDialog.jsx`). When the parser surfaces font families that aren't in the builder's Google Fonts catalogue (e.g. `Helvetica`, `Georgia`), a modal lists each unknown font with a Select to map it to a Google Font we can load. "Apply substitutions" rewrites the doc; "Skip" commits the originals (the renderer falls back to Inter). New helpers `collectUnknownFonts(doc)` and `applyFontMappings(doc, mappings)` live in `htmlToDocument.js`.

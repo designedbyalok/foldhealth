@@ -1550,6 +1550,16 @@ function convertMjmlToFold(mjml) {
 }
 
 // ── Code tab ────────────────────────────────────────────────────────────────
+// Drop any stale `customHtml` from a doc so it routes through the
+// SortableBlock pipeline (full toolbar/DnD). Idempotent — safe to call on
+// docs that don't have it.
+function stripCustomHtml(d) {
+  if (!d?.root?.data) return d;
+  if (!('customHtml' in d.root.data)) return d;
+  const { customHtml: _drop, ...rest } = d.root.data;
+  return { ...d, root: { ...d.root, data: rest } };
+}
+
 function CodeTab({ doc }) {
   const setEmailDocument = useAppStore(s => s.setEmailDocument);
   const htmlPreviewOverride = useAppStore(s => s.htmlPreviewOverride);
@@ -1750,13 +1760,14 @@ function CodeTab({ doc }) {
                 // toolbar, reordering, and component-panel insertion all
                 // keep working. Style fidelity comes from the parser's
                 // computed-style extraction, not from re-using the raw HTML.
-                const unknownFonts = collectUnknownFonts(parsed.doc);
+                const next = stripCustomHtml(parsed.doc);
+                const unknownFonts = collectUnknownFonts(next);
                 if (unknownFonts.length > 0) {
                   // Stash the pending doc; the dialog applies font
                   // substitutions and commits via setEmailDocument.
-                  useAppStore.getState().openFontSubstitutionDialog(parsed.doc, unknownFonts);
+                  useAppStore.getState().openFontSubstitutionDialog(next, unknownFonts);
                 } else {
-                  setEmailDocument(parsed.doc);
+                  setEmailDocument(next);
                 }
               } else {
                 // Parsing produced nothing usable — keep the HTML as a raw
@@ -1770,7 +1781,7 @@ function CodeTab({ doc }) {
                 });
               }
             }}
-            title="Import HTML as editable blocks (canvas renders verbatim)"
+            title="Import HTML as editable blocks"
           >
             <Icon name="solar:check-circle-linear" size={13} color="currentColor" />
             Confirm
@@ -1784,15 +1795,31 @@ function CodeTab({ doc }) {
           <button
             type="button"
             className={styles.codeBannerBtn}
-            onClick={() => {
-              setEmailDocument({
-                ...doc,
-                root: {
-                  ...doc.root,
-                  data: { ...(doc.root?.data || {}), customHtml: undefined },
-                },
-              });
+            onClick={async () => {
+              const html = doc.root.data.customHtml;
+              const parsed = await parseHtmlToDocument(html);
+              if (parsed?.doc) {
+                const next = stripCustomHtml(parsed.doc);
+                const unknownFonts = collectUnknownFonts(next);
+                if (unknownFonts.length > 0) {
+                  useAppStore.getState().openFontSubstitutionDialog(next, unknownFonts);
+                } else {
+                  setEmailDocument(next);
+                }
+              } else {
+                setError('Could not parse the HTML into editable blocks. Try simplifying the markup or remove the custom HTML to start over.');
+              }
             }}
+            title="Convert the HTML into editable blocks"
+            style={{ marginRight: 4 }}
+          >
+            <Icon name="solar:layers-linear" size={13} color="currentColor" />
+            Convert to blocks
+          </button>
+          <button
+            type="button"
+            className={styles.codeBannerBtn}
+            onClick={() => setEmailDocument(stripCustomHtml(doc))}
             title="Remove custom HTML and revert to block-based body"
           >
             <Icon name="solar:trash-bin-minimalistic-linear" size={13} color="currentColor" />

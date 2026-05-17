@@ -2292,10 +2292,21 @@ export const useAppStore = create((set, get) => ({
       { name: 'Text', hex: '#3A485F' },
       { name: 'Muted', hex: '#7B8499' },
     ];
+    // Self-heal: campaigns saved before the customHtml-precedence fix carry
+    // a stale `customHtml` field alongside a fully parsed block tree. The
+    // canvas/export still prefer blocks (PreviewCanvas + patchEmailHtml
+    // now check `!hasBlocks`), but stripping the dead field at load means
+    // the next save persists a clean doc and customHtml retires over time.
+    let doc = saved || makeInitialDocument(campaign);
+    if (doc?.root?.data?.customHtml &&
+        (doc.root?.data?.childrenIds?.length ?? 0) > 0) {
+      const { customHtml: _stale, ...restData } = doc.root.data;
+      doc = { ...doc, root: { ...doc.root, data: restData } };
+    }
     set({
       editingCampaignId: campaign.id,
       editingCampaignName: campaign.name,
-      emailDocument: saved || makeInitialDocument(campaign),
+      emailDocument: doc,
       colorVariables: campaign.colorVariables || defaultVars,
       selectedBlockId: 'root',
       emailHistory: [],

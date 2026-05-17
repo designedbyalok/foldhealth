@@ -445,10 +445,12 @@ export function PreviewCanvas({ dropIndicator }) {
 
   // HTML override → bypass the doc and render the user's edited markup.
   // Live override (htmlPreviewOverride) takes precedence so the user sees
-  // their pending edits; falls back to a persisted customHtml on the root.
-  // Once confirmed (customHtml set, no live override), the iframe body is
-  // contenteditable so the user can keep editing directly on the canvas.
+  // their pending edits. Persisted customHtml is only used as a fallback
+  // when there are no parsed blocks — that way imported HTML (which always
+  // produces childrenIds) flows through the normal SortableBlock pipeline
+  // so the toolbar, drag handles, drop indicator, and reorder all work.
   const customHtml = doc.root?.data?.customHtml;
+  const hasBlocks = (doc.root?.data?.childrenIds?.length ?? 0) > 0;
   if (htmlOverride != null) {
     return (
       <div className={styles.canvasWrap}>
@@ -456,7 +458,7 @@ export function PreviewCanvas({ dropIndicator }) {
       </div>
     );
   }
-  if (customHtml != null) {
+  if (customHtml != null && !hasBlocks) {
     return (
       <div className={styles.canvasWrap}>
         <EditableHtmlIframe html={customHtml} doc={doc} />
@@ -751,6 +753,19 @@ function BlockBody({ id, block, ctx, dragAttributes, dragListeners }) {
       borderRadius: style.borderRadius ? `${style.borderRadius}px` : undefined,
     };
     applyBorder(containerStyle, style);
+    // Centred-email + hero-section fidelity. `max-width` paired with
+    // auto side margins is the standard centring pattern; `min-height`
+    // lets a hero hold its height even when content is short. The parser
+    // emits these from CSS classes that the original HTML used; without
+    // the fields here they were silently dropped on the canvas.
+    if (style.maxWidth) {
+      containerStyle.maxWidth = typeof style.maxWidth === 'number' ? `${style.maxWidth}px` : style.maxWidth;
+      containerStyle.marginLeft = 'auto';
+      containerStyle.marginRight = 'auto';
+    }
+    if (style.minHeight) {
+      containerStyle.minHeight = typeof style.minHeight === 'number' ? `${style.minHeight}px` : style.minHeight;
+    }
     // SVG tint for backgroundImage — substitute fills inline and emit
     // as a data-URI so the existing background-image: url(…) path keeps
     // working without changing CSS plumbing.
