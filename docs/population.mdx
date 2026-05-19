@@ -1,0 +1,46 @@
+---
+title: Population — Worklist, Queue, and HCC
+description: Triage post-discharge patients with the TOC Worklist, prioritize agent calls with the Queue, and review diagnosis gaps in the HCC Worklist.
+---
+
+The **Population** workspace (`#/population/...`) is where care teams triage patients, hand work to AI agents, and close diagnosis gaps. It contains three lists in the left sub-nav.
+
+## TOC Worklist
+
+The TOC (Transitional Care) Worklist is the master patient roster for post-discharge follow-up. Patients are grouped by status:
+
+- **Ongoing Call** — a live agent call is in progress.
+- **In Queue** — queued for an agent to call.
+- **Scheduled** — outreach scheduled for a future date and time.
+- **Needs Attention** — flagged for human review (consent missing, identity unverified, escalation).
+- **Enrolled** — successfully onboarded into a care program.
+
+Use the toolbar to **search**, apply **multi-filter chips**, select rows for **bulk actions**, and paginate. Every row tracks TCPA consent, recording consent, and identity verification status.
+
+## TOC Queue
+
+The Queue (`#/population/queue`) is the prioritized work surface for AI agents. The KPI summary bar at the top shows queue depth, average wait, and SLA breach counts. Reorder patients in the queue from the **Call Queue** drawer in the agent table.
+
+## HCC Worklist
+
+The HCC Worklist (`#/population/hcc`) lists members with open ICD-10 diagnosis gaps for risk-adjustment coding. The table is sticky on both ends — the member cell pins left, actions pin right, and the middle 21 columns scroll horizontally.
+
+### Columns
+
+DOS, Open ICDs, Create Date, Chart Available, Support Team, Coder, Reviewers 1–3, Rendering Provider, Visit Type, RAF Score, RAF Impact, IPA, HP Code, PCP, Decile, Cohort, Risk Level, Advillness, Frailty.
+
+### Open the diagnosis side-car
+
+Select a row to open the **Diagnosis Gaps Details** side-car (582 px wide). It shows:
+
+- The patient banner with avatar, name, sex, age, RAF score, and an impact pill.
+- A segmented **HCC / ICD** view toggle.
+- Toolbar actions: refresh, add ICD, verify, filter, sort, history, book, search.
+- HCC cards grouping ICDs by hierarchical condition category. Each card shows the provider, RAF info, and an expandable list of ICD rows.
+- **Overridden HCCs** and **Closed HCCs** collapsibles at the bottom.
+
+Hover the **Open ICDs** badge in any row to preview that member's open codes in a 360 px popover without leaving the table.
+
+## Filters and search
+
+The Worklist toolbar's **search** input matches patient name, initials, or ID across the active list. Filter chips combine with AND semantics — clear them with **Clear All**.

@@ -1,0 +1,72 @@
+---
+title: Email Builder
+description: Compose pixel-precise patient emails with a block-based editor, import existing HTML, and preview across desktop, tablet, and mobile.
+---
+
+The **Email Builder** is a visual editor for the email templates your campaigns send. You build messages as a tree of blocks — headings, text, images, buttons, columns, dividers — and the builder exports clean, email-client-safe HTML.
+
+## When to use it
+
+- Design a new template from scratch with the block editor.
+- Paste existing HTML from another tool and convert it into editable blocks.
+- Apply a saved header or footer preset to keep brand consistency across campaigns.
+- Preview your design on desktop, tablet, and mobile before sending.
+
+## Layout
+
+| Region            | Purpose                                                                                  |
+|-------------------|------------------------------------------------------------------------------------------|
+| Top bar           | Title, device-preview switcher, undo/redo, **Test** (send to yourself), **Save**.        |
+| Left panel        | **Components** (blocks to drop in) and **Layers** (block tree).                          |
+| Canvas            | The live email render. Click any block to select it.                                     |
+| Right panel       | **Design** (style the selected block), **Code** (HTML import/export), **Template** (presets). |
+
+## Add a block
+
+Drag a tile from the **Components** panel onto the canvas, or select a tile to drop it after the current selection. Available block types:
+
+- **Heading**, **Text**, **Image**, **Button**, **Divider**, **Spacer**.
+- **Container** and **Columns Container** for layout.
+- **Raw HTML** — escape hatch for arbitrary markup. Export passes through verbatim.
+
+## Edit a block
+
+1. Select a block on the canvas.
+2. Open the **Design** tab on the right.
+3. Adjust typography, color, padding, alignment, and the Gap control under **Layout** to space stacked children.
+
+Use the per-block toolbar (move, duplicate, delete) and drag handle on the canvas for fast reordering.
+
+## Undo and redo
+
+The builder keeps a full history stack. Use **⌘Z** to undo and **⇧⌘Z** to redo. Rapid edits like a color-picker drag or resize coalesce inside a 400 ms window so each gesture counts as one step.
+
+Select the **?** button in the top-right to view all keyboard shortcuts.
+
+## Import existing HTML
+
+1. Open the **Code** tab on the right.
+2. Paste your HTML and select the **HTML** sub-tab.
+3. Select **Confirm**.
+4. Choose how to import:
+   - **Keep as raw HTML** — stores the markup as-is for pixel-perfect fidelity. The email renders inside a sandboxed iframe.
+   - **Import as blocks** — the parser reads `getComputedStyle()` for every element and produces a full block tree you can edit normally.
+
+If the parser finds fonts that aren't in the builder's Google Fonts catalogue (e.g. `Helvetica`, `Georgia`), the **Font Substitution** dialog opens. Map each unknown font to a Google Font, or select **Skip** to fall back to Inter.
+
+## Save a header or footer preset
+
+1. Select a header or footer block on the canvas.
+2. Open the **Template** tab on the right.
+3. Select **Save current header/footer as preset**.
+4. Enter a name and an optional description, then save.
+
+Your preset appears under **Your presets** alongside the built-in presets, both in the Template tab and in the in-canvas picker when you select the **Header** or **Footer** tile. Hover a preset and select the trash icon to delete it.
+
+## Preview on different devices
+
+Use the device picker in the top bar to flip between desktop, tablet, and mobile widths. Each preview iframe is sandboxed, so scripts in user-authored HTML never run in the app origin.
+
+## Send a test
+
+Select **Test** in the top bar to send the current draft to your own inbox. The send uses the same template and subject line your campaign would use.

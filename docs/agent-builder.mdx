@@ -1,0 +1,44 @@
+---
+title: Agent Builder
+description: Design conversation flows for AI voice agents in a visual node-based canvas, configure tools, and test with a built-in chat panel.
+---
+
+The **Agent Builder** (`#/builder`) is a visual workflow designer for AI voice and chat agents. You compose conversation nodes on a canvas, wire them with conditional branches, and preview the agent in a side-by-side chat panel before promoting it to production.
+
+## When to use it
+
+- Build a new outreach agent for a care program.
+- Iterate on an existing agent's prompt, tool calls, or branching logic.
+- Test an agent against synthetic patient scenarios in the chat panel.
+
+## The canvas
+
+The canvas hosts your agent as a graph of nodes connected by directed edges. Drag from the Node panel onto the canvas to add a node. Drag from one node's output handle to another node's input handle to wire them.
+
+### Node types
+
+| Node               | Purpose                                                                 |
+|--------------------|-------------------------------------------------------------------------|
+| **Conversation**   | The default node: holds the prompt, voice config, and tool list.        |
+| **Condition**      | Branches the flow on a structured condition.                            |
+| **Tool**           | Calls an external API or internal action.                               |
+| **End**            | Terminates the flow and triggers post-call handoff or write-back.       |
+
+Select a node to open the **Node Settings** panel on the right.
+
+## Configure an agent
+
+Use the panels in the builder to set everything an agent needs:
+
+- **Node Settings** — per-node prompt, voice, tools, and transitions.
+- **Configure** — agent-level metadata: name, role, language, fallback voice.
+- **Global Settings** — workspace-wide defaults that every agent inherits.
+- **Analytics** — call counts, completion rate, and average duration for this agent.
+
+## Test the agent
+
+The **Chat panel** docks to the right of the canvas. Type a patient message to walk the agent through your flow without placing a real call. The Unity icon represents the agent in replies.
+
+## Version and publish
+
+Every save creates a new version of the workflow. Use the version history in the top bar to roll back. When the agent is ready, promote it from the [Agents settings page](/docs/settings/agents).

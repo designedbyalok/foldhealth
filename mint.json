@@ -10,6 +10,40 @@
     {
       "group": "Getting Started",
       "pages": ["docs/introduction"]
+    },
+    {
+      "group": "Workspaces",
+      "pages": [
+        "docs/home",
+        "docs/population",
+        "docs/tasks",
+        "docs/calls",
+        "docs/calendar",
+        "docs/messages",
+        "docs/analytics"
+      ]
+    },
+    {
+      "group": "Agents and outreach",
+      "pages": [
+        "docs/agent-builder",
+        "docs/campaigns",
+        "docs/email-builder"
+      ]
+    },
+    {
+      "group": "Settings",
+      "pages": [
+        "docs/settings/agents",
+        "docs/settings/goals",
+        "docs/settings/embedded-components",
+        "docs/settings/messages",
+        "docs/settings/account"
+      ]
+    },
+    {
+      "group": "Personalization",
+      "pages": ["docs/themes"]
     }
   ]
 }

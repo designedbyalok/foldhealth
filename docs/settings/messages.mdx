@@ -1,0 +1,34 @@
+---
+title: Messages settings
+description: Configure chat groups, agent routing rules, and business hours that control how inbound messages are handled.
+---
+
+The **Messages** settings page (`#/settings/messages`) is where administrators set up the chat groups, routing logic, and hours of operation that drive the [Messages workspace](/docs/messages).
+
+## When to use it
+
+- Stand up a new chat group for a clinical team.
+- Route inbound messages to a specific agent or human queue.
+- Set business hours so the bot answers off-hours but humans take over during the day.
+
+## Chat Settings panel
+
+The default panel lists every chat group. Each row shows the group name, location, last updated date, and a more-options menu (Edit, Audit Log, Duplicate, Delete).
+
+To add a group, select **+ New Group** and configure:
+
+- **Name** and **description**.
+- **Routing rules** — which agents or humans receive messages.
+- **Members** — the people who belong to the group.
+
+## Business Hours drawer
+
+Open **Business Hours** from any group's row to set a weekly schedule. Outside these hours the configured fallback agent answers; inside them, messages route per your agent rules.
+
+## Agent Rules drawer
+
+Open **Agent Rules** to add conditional routing — for example, "if the message contains 'refill', route to the Pharmacy agent." Rules evaluate in order; the first match wins.
+
+## Audit log
+
+Every change is recorded in the audit log with the user's name and a diff of the old and new values. Open **More Options → Audit Log** on any row to review the timeline.

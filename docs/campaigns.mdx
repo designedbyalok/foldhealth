@@ -1,0 +1,54 @@
+---
+title: Campaigns
+description: Create one-time or recurring outreach campaigns with audience filters, a sender identity, a subject line, and a designed email template.
+---
+
+The **Campaign Builder** lets you plan, schedule, and run patient-outreach campaigns over email. Every field auto-saves as you type — you can close the builder mid-edit without losing work.
+
+## When to use it
+
+- Send a one-time release-notes or program-announcement email.
+- Schedule a recurring outreach sequence for a specific audience.
+- Hand a designed template to a campaign so it goes out on the schedule you set.
+
+## Open the builder
+
+1. From the campaigns list, select **+ New Campaign**. A draft row is created immediately so the form has somewhere to save to.
+2. To edit an existing campaign, click the campaign name or the pencil icon. Both open the Campaign Builder. **Edit Template** inside the builder is the single entry point to the [Email Builder](/docs/email-builder).
+
+## Left pane — audience and schedule
+
+The 500 px form on the left holds the campaign basics:
+
+| Field             | What it controls                                                                  |
+|-------------------|-----------------------------------------------------------------------------------|
+| Name              | Up to 60 characters. Use a descriptive name like `Fold July 2024 Release Notes`.  |
+| Description       | Internal-only note about the campaign.                                            |
+| Include audience  | Chip-select of cohorts to send to.                                                 |
+| Exclude audience  | Chip-select of cohorts to suppress.                                                |
+| Send Via          | Email (additional channels coming soon).                                           |
+| Start Date        | Pick **Immediately** to send on **Run**, or **Schedule** for a future date/time.  |
+| End Date          | Optional cutoff for recurring sequences.                                           |
+
+## Right pane — message identity
+
+The right pane holds the outbound identity and a live preview:
+
+- **One-Time / Sequence** toggle.
+- **Sender Name** dropdown — your verified send identities.
+- **Send From** — the sending email address.
+- **Subject Line** — what recipients see in their inbox.
+- **Embedded preview** — read-only render of the email template currently attached.
+
+Select **Edit Template** to open the Email Builder. Closing the Email Builder returns you to the Campaign Builder.
+
+## Run a campaign
+
+1. Verify the audience, schedule, and template look right.
+2. Select **Run Campaign Now**.
+
+This flushes any pending auto-save, sets the campaign status to `running`, and enables it. The campaign sends per the schedule you configured.
+
+## Auto-save
+
+Every field edit is PATCHed to your database 600 ms after the last keystroke. There is no explicit **Save** button — the running indicator in the top bar shows the save state.

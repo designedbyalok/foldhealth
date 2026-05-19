@@ -1,0 +1,28 @@
+---
+title: Themes
+description: Switch Fold Health between Light, Dark, System, Blue, and Astrana Plum from the theme picker in your profile popover.
+---
+
+Fold Health ships with five color themes. The active theme applies instantly across the platform — sidebar, tables, drawers, forms, calendars, and toasts — with a smooth 200 ms cross-fade.
+
+## When to use a different theme
+
+- **Light** — the default. Best in bright environments.
+- **Dark** — easier on the eyes for long evening shifts. Sidebar stays dark chrome in both light and dark mode for cohesion.
+- **System** — follows your operating system's `prefers-color-scheme` setting live. Switches automatically at sunset/sunrise when your OS does.
+- **Blue** — a high-contrast blue accent palette anchored at `#007BFF`. Useful when you want to visually distinguish a sandbox or training environment.
+- **Astrana Plum** — a deep-plum palette anchored at `#6C0C46` for partner-branded deployments.
+
+## Switch theme
+
+1. Select your avatar in the top-right of any page.
+2. Open the **Theme** dropdown between **Switch Account** and **Log Out**.
+3. Pick a theme. The change applies immediately and persists across sessions.
+
+## What changes
+
+Switching theme rewrites the design tokens on the root `<html>` element. Every surface that uses tokens — chrome, forms, tables, charts, the [Calendar](/docs/calendar), toasts, and modals — flips together. There is no page reload and no flash of unstyled content on next load: a blocking inline script reads your saved theme before React mounts.
+
+## Reduced motion
+
+If your OS has **Reduce Motion** enabled, the cross-fade is skipped and the theme flips instantly.

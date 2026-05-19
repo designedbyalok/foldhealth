@@ -1,0 +1,50 @@
+---
+title: Home dashboard
+description: Use the Home dashboard to start your day with greetings, weather, alerts, your calendar, tasks, and quick notes — all in draggable, resizable cards.
+---
+
+The Home dashboard (`#/home`) is your personalized landing surface. It groups the things you check first thing in the morning into five cards on a 12-column grid: a **Welcome** banner, **Alerts & Monitoring**, **Assigned to me**, **Today's Calendar**, **Tasks**, and **Quick Notes**.
+
+## When to use it
+
+- Open Fold Health at the start of a shift to scan urgent alerts, today's appointments, and outstanding tasks.
+- Capture transient notes (call-backs, follow-ups, links) without switching surfaces.
+- Click a calendar slot to schedule an appointment directly from the dashboard.
+
+## Cards
+
+| Card                | What it shows                                                                                              |
+|---------------------|------------------------------------------------------------------------------------------------------------|
+| Welcome             | Time-of-day greeting with your first name, your city, and the current temperature and weather condition.   |
+| Alerts & Monitoring | Patients flagged for missed outreach, unread messages, readmission alerts, or open tasks.                  |
+| Assigned to me      | Recent interactions assigned to you, such as missed calls and message replies.                             |
+| Today's Calendar    | A 24-hour day view with 30-minute slots. A red **Now** line tracks the current time.                       |
+| Tasks               | Tasks grouped by urgency: urgent, soon, later, and done.                                                   |
+| Quick Notes         | Yellow sticky-note cards for URLs or text with timestamps.                                                 |
+
+## Customize the layout
+
+The dashboard is locked by default so cards do not move while you read.
+
+1. Select **Edit Dashboard** in the toolbar.
+2. Drag a card by its header to a new grid position.
+3. Drag the grip in the bottom-right corner of a card to resize it.
+4. Select **Reset** to restore the default layout.
+5. Select **Edit Dashboard** again to lock the layout.
+
+Your layout is saved to your browser and persists across sessions.
+
+## Schedule an appointment from the calendar card
+
+1. Hover any 30-minute slot in **Today's Calendar** to highlight it.
+2. Select the slot to open the schedule drawer pre-populated with that date and time.
+3. Fill in the appointment details and select **Save**.
+
+The new appointment appears as a positioned block in the calendar card.
+
+## Welcome card data sources
+
+The Welcome card resolves your location and weather on first load:
+
+- **Location** — uses your browser's geolocation, then reverse-geocodes the coordinates. If geolocation is blocked, it falls back to a default city.
+- **Weather** — current temperature in °C plus a condition icon, pulled from Open-Meteo using the resolved coordinates.

@@ -1,0 +1,42 @@
+---
+title: Embedded components
+description: Whitelist domains for iframe embeds and configure embedded UI components (Prior Auth, Risk Dashboard, HEDIS Tracker) with JWT context scoping.
+---
+
+The **Embedded Components** settings page (`#/settings/embedded-components`) lets partner platforms embed Fold Health surfaces inside their own apps. You whitelist the domains that can host an iframe and configure which components those iframes are allowed to render.
+
+## When to use it
+
+- Embed the **Prior Auth**, **Risk Dashboard**, or **HEDIS Tracker** widget inside a partner EHR or care-coordination tool.
+- Give a partner organization scoped, HIPAA-compliant access to Fold Health UI without an account hand-off.
+- Audit every embed-config change for compliance review.
+
+## Domain Registry
+
+The **Domain Registry** tab lists every domain that can embed Fold Health. Each row has:
+
+- The domain name and a HIPAA-compliance status indicator.
+- An **enable/disable** switch that takes effect immediately.
+- A per-domain **Audit Log** action.
+- CRUD actions (edit, duplicate, delete) in the more menu.
+
+To add a domain, select **+ New Domain** and fill in the domain, contact, and HIPAA attestation.
+
+## Component Library
+
+The **Component Library** tab lists the embedded UI components partners can render. Each row shows the component name, target surfaces, and the more menu (Edit, Audit Log, Duplicate, Delete).
+
+### Component Wizard
+
+To add or edit a component, select **+ New Component** or **Edit** to open the four-step wizard:
+
+1. **Identity** — name, description, and version.
+2. **Surfaces** — pick where the component can render: **Fold Web**, **Sidecar**, or **Mobile**.
+3. **Context** — define the JWT context scope (patient, encounter, organization) the embedded iframe receives.
+4. **Preview** — live preview of the component with the configured context.
+
+Save to publish the component to all whitelisted domains.
+
+## Audit Log Drawer
+
+Every create, update, delete, and toggle is logged automatically. Open the **Audit Log** action on any row to see a timeline grouped by month with color-coded action types and filter pills. The drawer pulls from your audit-log table in real time.

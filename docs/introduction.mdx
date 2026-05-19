@@ -8,29 +8,40 @@ Fold Health is a care coordination platform for Transitional Care Organizations 
 ## What you can do
 
 <CardGroup cols={2}>
-  <Card title="Manage your population" icon="users">
-    Triage post-discharge patients through a unified worklist and prioritized agent queue, with built-in TCPA consent and identity verification.
+  <Card title="Start your day on Home" icon="house" href="/docs/home">
+    Land on a personalized dashboard with greetings, weather, alerts, today's calendar, tasks, and quick notes — in draggable, resizable cards.
   </Card>
-  <Card title="Build and run AI agents" icon="bot">
+  <Card title="Manage your population" icon="users" href="/docs/population">
+    Triage post-discharge patients through a unified worklist and prioritized agent queue, and close diagnosis gaps in the HCC Worklist.
+  </Card>
+  <Card title="Build and run AI agents" icon="bot" href="/docs/agent-builder">
     Design conversation flows in a visual node-based builder, configure voice agents, and test them before going live.
   </Card>
-  <Card title="Track program goals" icon="target">
+  <Card title="Track program goals" icon="bullseye" href="/docs/settings/goals">
     Configure TCM, outreach, onboarding, preventive, and billing goals with weighted scoring and completion tracking.
   </Card>
-  <Card title="Analyze outcomes" icon="chart-line">
+  <Card title="Analyze outcomes" icon="chart-line" href="/docs/analytics">
     Explore 15 dashboards covering executive, financial, risk, quality, utilization, SDOH, ROI, and more.
+  </Card>
+  <Card title="Design patient emails" icon="envelope" href="/docs/email-builder">
+    Compose pixel-precise emails in a block-based builder, import existing HTML, and preview across devices.
   </Card>
 </CardGroup>
 
-## Core areas
+## Core workspaces
 
-The platform is organized around five workspaces you reach from the sidebar:
+The platform is organized around workspaces you reach from the sidebar:
 
-- **Population** — The patient worklist and agent queue. Patients are grouped by status (Ongoing Call, In Queue, Scheduled, Needs Attention, Enrolled) with search, multi-filter, bulk actions, and pagination.
-- **Analytics** — Fifteen dashboard views with period selection, practice filtering, and drill-down. Use the Executive view for a high-level snapshot and switch to specialized views (Risk, Quality, SDOH, ROI Simulator) when you need depth.
-- **Agent Builder** — A visual workflow designer for conversation nodes, conditional branching, and tool integrations. Preview agents in the chat panel and persist versions before deploying.
-- **Settings → Agents** — Manage AI agents, goals, the knowledge base, escalation policies, and feature toggles.
-- **Settings → Embedded Components** — Whitelist domains for iFrame embeds, configure embedded UI components (Prior Auth, Risk Dashboard, HEDIS Tracker), and review per-entity audit logs.
+- **[Home](/docs/home)** — Personalized dashboard with welcome banner, alerts, calendar, tasks, and quick notes.
+- **[Population](/docs/population)** — The TOC Worklist, TOC Queue, and HCC Worklist. Patients are grouped by status with search, multi-filter, bulk actions, and pagination.
+- **[Tasks](/docs/tasks)** — List or kanban view of every task assigned to you, your pool, or others — with drag-and-drop and functional grouping.
+- **[Calls](/docs/calls)** — Take or place calls, review history with playback and transcripts, and dial members directly.
+- **[Calendar](/docs/calendar)** — Day, week, and month view for appointments with theme-aware styling.
+- **[Messages](/docs/messages)** — Secure SMS and in-app messaging with chat groups and routing rules.
+- **[Analytics](/docs/analytics)** — Fifteen dashboard views with period selection, practice filtering, and drill-down.
+- **[Agent Builder](/docs/agent-builder)** — A visual workflow designer for conversation nodes, conditional branching, and tool integrations.
+- **[Campaigns](/docs/campaigns)** and the **[Email Builder](/docs/email-builder)** — Plan outreach campaigns and design the templates they send.
+- **Settings** — [Agents](/docs/settings/agents), [Goals](/docs/settings/goals), [Embedded Components](/docs/settings/embedded-components), [Messages](/docs/settings/messages), [Account](/docs/settings/account), and more.
 
 ## Who this is for
 
@@ -38,6 +49,6 @@ The platform is organized around five workspaces you reach from the sidebar:
 - **Operations and quality teams** monitoring population health, HEDIS measures, and shared-savings performance.
 - **Administrators** configuring AI agents, escalation rules, embedded components, and access policies.
 
-## What's next
+## Make it your own
 
-More documentation is on the way, including step-by-step guides for the worklist, agent builder, goals wizard, and embedded components. Until then, the [README](https://github.com/designedbyalok/foldhealth) in the source repository is the most complete reference.
+Fold Health ships with five [themes](/docs/themes): Light, Dark, System, Blue, and Astrana Plum. Switch from your profile popover; the change applies instantly across every surface with a smooth cross-fade.

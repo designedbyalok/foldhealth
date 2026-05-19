@@ -1,0 +1,41 @@
+---
+title: Goals
+description: Configure care-program goals — TCM, outreach, onboarding, preventive, and billing — with weighted scoring and completion tracking.
+---
+
+The **Goals** settings page (`#/settings/agents/goals`) is where you define what each care program is trying to achieve. Goals drive completion tracking on the patient worklist and feed the Care Coordination analytics view.
+
+## When to use it
+
+- Stand up a new care program (TCM, chronic disease, preventive screening).
+- Adjust the weighted score that determines when a patient is considered "complete".
+- Audit who changed a goal and when.
+
+## Goal categories
+
+| Category    | What it measures                                                       |
+|-------------|-------------------------------------------------------------------------|
+| TCM         | Transitional Care Management touchpoints after a discharge.            |
+| Outreach    | Patient outreach attempts and completion rate.                          |
+| Onboarding  | Steps to enroll a patient into a program.                               |
+| Preventive  | Wellness visits, screenings, and HEDIS-aligned tasks.                   |
+| Billing     | Billable touchpoints required to close a care episode.                  |
+
+## Create a goal
+
+The **Goal Wizard** is a four-step drawer:
+
+1. **Identity** — name, category, and description.
+2. **Steps** — the ordered tasks that make up the goal.
+3. **Scoring** — weight each step so partial completion still scores.
+4. **Review** — confirm and save.
+
+After saving, the goal becomes available to assign to patients in the relevant programs.
+
+## Edit a goal
+
+Select a row in the Goals table to open the **Goal Detail** drawer. Adjust steps, weights, or status. Every change is written to the audit log with the editor's name and timestamp.
+
+## Audit log
+
+Open the history icon on any row to see the timeline of changes, including status flips (e.g. **Enabled → Disabled** shown as a colored badge transition) and text edits (shown as strikethrough old → new value).

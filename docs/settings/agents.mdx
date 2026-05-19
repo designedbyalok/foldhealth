@@ -1,0 +1,48 @@
+---
+title: Agents
+description: Create, configure, and monitor AI voice agents — assign voices, open the call queue, and review call analytics from one table.
+---
+
+The **Agents** settings page (`#/settings/agents`) lists every AI agent in your workspace. Each row is a click away from the [Agent Builder](/docs/agent-builder), and the actions column gives you direct access to the queue, analytics, and lifecycle actions.
+
+## When to use it
+
+- Create a new agent for a campaign or program.
+- Open an agent's call queue to manage who it will call next.
+- Review per-agent call analytics.
+- Hover a voice badge to preview what the agent sounds like.
+
+## Table columns
+
+The table sticks the **Agent Name** column to the left and the **Status** and **Actions** columns to the right, so the middle columns (Use Case, Version, Voice, Updated, Updated By) scroll horizontally on narrow screens.
+
+- **Agent Name** — select to open the agent in the builder on the Workflow tab.
+- **Voice** — hover the voice badge to open the **Voice Preview** popover with a sample line, an animated progress bar, and a play button.
+
+## Row actions
+
+| Action          | What it does                                                                  |
+|-----------------|-------------------------------------------------------------------------------|
+| Call Queue      | Opens the Call Queue drawer (see below).                                       |
+| Call Analytics  | Opens the per-agent analytics view.                                            |
+| More Options    | Duplicate, archive, or delete the agent. Audit Log is available here.          |
+
+## Call Queue drawer
+
+The Call Queue drawer is a three-tab side panel that gives you live visibility into what an agent is doing.
+
+- **Ongoing Call** — active calls with member info, live call duration (in green), a **Live Transcript** button, a listen icon, and a more-options menu.
+- **In Queue** — queued members with **Call Order** reorder buttons (up/down), a remove-from-queue action, and a more-options menu.
+- **Call Log** — completed calls with outcome and duration.
+
+The drawer header shows the agent name and role with **Edit Configuration** and **Stop** buttons. The tab bar includes refresh, filter, and search.
+
+## Create an agent
+
+1. Select **+ New Agent** in the top-right.
+2. Fill in the name, role, and voice in the create drawer.
+3. Save to drop into the [Agent Builder](/docs/agent-builder) to design the workflow.
+
+## Audit log
+
+Every create, update, and delete is logged automatically. Open **More Options → Audit Log** on any row to see a timeline of changes, with the user's full name from your auth metadata and a **(Current User)** label when the entry is yours.
