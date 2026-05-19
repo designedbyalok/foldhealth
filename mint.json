@@ -1,5 +1,6 @@
 {
   "name": "Fold Health",
+  "favicon": "/favicon.svg",
   "colors": {
     "primary": "#8C5AE2",
     "light": "#A87FF0",

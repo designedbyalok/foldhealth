@@ -10,6 +10,9 @@ keep entries short and specific. Newest at the top.
   "commit and push" when I want changes shipped. Default behavior is: edit
   files, verify locally, and stop. Committing locally is fine when I ask for
   a commit, but `git push` always requires an explicit ask.
+- **No Co-Authored-By trailer in commits.** Do not add
+  `Co-Authored-By: Claude …` or any similar attribution line to commit
+  messages.
 - **Always use reusable components from `src/components/`.** Drawer,
   Button, Toggle, Badge, Select, Slider, Switch, ConfirmDialog, etc.
   Search the components folder before writing a new one. New components
