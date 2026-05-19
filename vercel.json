@@ -5,11 +5,11 @@
   "rewrites": [
     {
       "source": "/docs",
-      "destination": "https://foldhealth.mintlify.app/docs"
+      "destination": "https://fold-ab931789.mintlify.app/docs"
     },
     {
       "source": "/docs/:match*",
-      "destination": "https://foldhealth.mintlify.app/docs/:match*"
+      "destination": "https://fold-ab931789.mintlify.app/docs/:match*"
     }
   ]
 }
