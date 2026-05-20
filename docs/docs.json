@@ -28,6 +28,7 @@
               "features/home",
               "features/population",
               "features/tasks",
+              "docs/features/tasks",
               "features/calls",
               "features/campaigns",
               "features/analytics",
