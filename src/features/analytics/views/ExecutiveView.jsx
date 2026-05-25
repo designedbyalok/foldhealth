@@ -5,7 +5,7 @@ import 'react-resizable/css/styles.css';
 import { Button } from '../../../components/Button/Button';
 import { useAppStore } from '../../../store/useAppStore';
 import { Toggle } from '../../../components/Toggle/Toggle';
-import { KpiCard, InsightBanner, Card, ProgressBar, GhostBtn, safeTableRows, safeBarItems, EmptyState } from './shared';
+import { KpiCard, InsightBanner, Card, ProgressBar, GhostBtn, safeTableRows, safeBarItems, safeConfigData, EmptyState } from './shared';
 import { TcocLineChart, SavingsAreaChart } from './charts';
 import s from '../AnalyticsLayout.module.css';
 
@@ -126,14 +126,21 @@ export function ExecutiveView({ showToast, editing = false, resetTick = 0 }) {
     { label: 'Depression Screening', value: '83%', pct: 83, color: 'green', sub: 'Target 80% ✓' },
   ];
 
-  const costBySettingInline = costInlineData?.items || [];
+  // fetchConfig returns rows shaped { configData: {...} }. Unwrap via
+  // safeConfigData so reads work whether the source is the DB row or
+  // a future raw-shape fallback. Bug history: prior to this, the view
+  // read top-level keys (savingsData.data_points), which works for the
+  // deleted JS fallbacks but never matches DB-mapped rows.
+  const costInline = safeConfigData(costInlineData);
+  const savings = safeConfigData(savingsData);
+  const carePrograms = safeConfigData(careProgramData)?.rows || [];
 
-  const rawSavings = savingsData?.data_points || [];
+  const costBySettingInline = costInline?.items || [];
+
+  const rawSavings = savings?.data_points || [];
   const savingsTrajectory = periodMode === 'r12'
     ? rawSavings.map(v => v != null ? +(v * 1.15).toFixed(2) : null)
     : rawSavings;
-
-  const carePrograms = careProgramData?.rows || [];
 
   const periodLabel = periodMode === 'ytd' ? 'YTD 2025' : 'Rolling 12M';
 
