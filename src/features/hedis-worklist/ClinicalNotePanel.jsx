@@ -99,7 +99,10 @@ export function ClinicalNotePanel({ member, gapCode, year, onClose, editingTaskI
 
   // COMMON section state.
   const [commonExpanded, setCommonExpanded] = useState(true);
-  const [dateOfService, setDateOfService] = useState('');
+  // Default Date of Service to today so reviewers/staff don't dead-end on
+  // the silent `if (!dateOfService) return` guard the first time they click
+  // Submit for Review. The native date picker is YYYY-MM-DD format.
+  const [dateOfService, setDateOfService] = useState(() => new Date().toISOString().slice(0, 10));
   const [audioOnly, setAudioOnly] = useState(false);
   const [audioVideo, setAudioVideo] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -162,7 +165,10 @@ export function ClinicalNotePanel({ member, gapCode, year, onClose, editingTaskI
   const handleSubmitForReview = () => {
     setSubmitted(true);
     const readyCodes = collectReadyCodes();
-    if (!dateOfService) return;
+    if (!dateOfService) {
+      showToast('Date of Service is required');
+      return;
+    }
     if (readyCodes.length === 0) {
       // AC-9 empty-task prevention: no task created when nothing is ready.
       showToast('No gaps marked Ready for Review');
@@ -209,7 +215,10 @@ export function ClinicalNotePanel({ member, gapCode, year, onClose, editingTaskI
   const handleSaveAndSign = () => {
     setSubmitted(true);
     const readyCodes = collectReadyCodes();
-    if (!dateOfService) return;
+    if (!dateOfService) {
+      showToast('Date of Service is required');
+      return;
+    }
     if (readyCodes.length === 0) {
       showToast('No gaps marked Ready for Review');
       return;
@@ -236,7 +245,10 @@ export function ClinicalNotePanel({ member, gapCode, year, onClose, editingTaskI
   const handleSignAndPrint = () => {
     setSubmitted(true);
     const readyCodes = collectReadyCodes();
-    if (!dateOfService) return;
+    if (!dateOfService) {
+      showToast('Date of Service is required');
+      return;
+    }
     if (readyCodes.length === 0) {
       showToast('No gaps marked Ready for Review');
       return;
