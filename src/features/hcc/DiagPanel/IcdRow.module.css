@@ -15,7 +15,7 @@
   transition: background 0.12s, border-color 0.12s;
 }
 .row:hover {
-  background: var(--neutral-50);
+  background: var(--primary-25);
 }
 
 .rowClosed {
@@ -348,21 +348,6 @@
 .dismissedBtn:hover {
   /* one-step darker than --status-error-light for a tactile press feedback */
   background: color-mix(in srgb, var(--status-error-light) 70%, var(--status-error));
-}
-
-/* Figma: 3-dot menu — square icon button, 24px outer box (4px padding around
-   a 16px icon), no border by default. */
-.dotsBtn {
-  width: 24px;
-  height: 24px;
-  min-width: auto;
-  padding: 4px;
-  justify-content: center;
-  border-color: transparent;
-}
-.dotsBtn:hover {
-  background: var(--neutral-50);
-  border-color: transparent;
 }
 
 /* ── MEAT note panel (Phase 2e) ───────────────────────────────────────── */

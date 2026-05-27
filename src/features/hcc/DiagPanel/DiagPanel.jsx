@@ -603,9 +603,12 @@ export function DiagPanel() {
             onClick={() => setSearchOpen(o => !o)}
           />
           <span className={styles.divider} />
-          <ActionButton size="S" tooltip="More" onClick={noop('More')}>
-            <Icon name="custom:menu-dots" size={18} color="var(--neutral-300)" />
-          </ActionButton>
+          <ActionButton
+            icon="solar:menu-dots-linear"
+            size="S"
+            tooltip="More"
+            onClick={noop('More')}
+          />
         </div>
       </div>
 
