@@ -158,7 +158,7 @@ export function HedisWorklistRow({ member, isSelected, onSelect, onOpenGap }) {
               <div key={g.code} className={styles.gapItem}>
                 {assignee ? (
                   <div className={styles.assigneeName}>
-                    <Icon name="solar:user-linear" size={14} color="var(--neutral-300)" />
+                    <Icon name="solar:user-linear" size={14} color="var(--neutral-400)" />
                     <span>{assignee}</span>
                   </div>
                 ) : (
@@ -166,7 +166,7 @@ export function HedisWorklistRow({ member, isSelected, onSelect, onOpenGap }) {
                     className={styles.assigneeBtn}
                     onClick={() => showToast('Assign care manager — coming soon')}
                   >
-                    <Icon name="solar:user-plus-rounded-linear" size={14} color="var(--neutral-300)" />
+                    <Icon name="solar:user-linear" size={14} color="var(--neutral-200)" />
                     Assign
                   </button>
                 )}

@@ -31,12 +31,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px 16px;
+  padding: 6px 12px;
+  gap: 8px;
+  border-bottom: 0.5px solid var(--neutral-150);
   flex-shrink: 0;
 }
 
 .headerTitle {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 500;
   color: var(--neutral-400);
   margin: 0;

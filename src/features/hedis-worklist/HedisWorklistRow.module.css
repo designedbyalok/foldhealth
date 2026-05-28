@@ -172,7 +172,7 @@
 .assigneeBtn {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 0; border: none; background: none;
-  font-size: 13px; font-weight: 400; color: var(--neutral-300);
+  font-size: 13px; font-weight: 400; color: var(--neutral-200);
   cursor: pointer; font-family: 'Inter', sans-serif;
 }
 .assigneeBtn:hover { color: var(--primary-300); }
