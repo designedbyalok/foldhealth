@@ -12,9 +12,9 @@
 
 .panel {
   position: fixed;
-  top: 8px;
-  right: 8px;
-  bottom: 8px;
+  top: 0;
+  right: 0;
+  bottom: 0;
   width: 700px;
   background: var(--neutral-0);
   z-index: 401;
@@ -22,8 +22,8 @@
   flex-direction: column;
   animation: slideIn .25s ease;
   box-shadow: var(--shadow-drawer);
-  border: 0.5px solid var(--neutral-150);
-  border-radius: 16px;
+  border-left: 0.5px solid var(--neutral-150);
+  border-radius: 16px 0 0 16px;
   overflow: hidden;
 }
 

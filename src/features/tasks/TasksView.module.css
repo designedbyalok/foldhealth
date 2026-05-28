@@ -1482,20 +1482,10 @@
 .commentActions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 8px;
 }
 
-.commentCancel {
-  background: none;
-  border: none;
-  font-size: 14px;
-  font-family: 'Inter', sans-serif;
-  color: var(--neutral-300);
-  cursor: pointer;
-  padding: 4px 8px;
-}
-.commentCancel:hover { color: var(--neutral-400); }
 
 /* ── Detail Dropdown ── */
 .simpleDropdown {

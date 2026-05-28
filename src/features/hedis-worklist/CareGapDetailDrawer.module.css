@@ -12,13 +12,11 @@
 .patientBannerWrap { }
 
 /* All content below the banner gets standard horizontal padding */
-.contentBody { padding: 0 24px 24px; }
+.contentBody { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
 
 /* ── Gap header block ── */
 .gapHeader {
-  border-bottom: 0.5px solid var(--neutral-150);
-  padding-bottom: 14px;
-  margin-bottom: 14px;
+  padding-bottom: 8px;
 }
 .gapToolbar {
   display: flex; align-items: center; justify-content: space-between;
@@ -129,15 +127,13 @@
 .accordionBtn:hover { color: var(--primary-300); }
 
 /* ── Suggested actions ── */
+.suggestSection { display: flex; flex-direction: column; gap: 8px; }
 .suggestRow {
   display: flex; align-items: center; gap: 6px;
-  margin-bottom: 8px;
   font-size: 12px; font-weight: 500; color: var(--neutral-300);
 }
 .suggestActions {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  padding-bottom: 14px;
-  border-bottom: 0.5px solid var(--neutral-150);
 }
 .suggestDivider { width: 1px; height: 20px; background: var(--neutral-150); flex-shrink: 0; }
 
@@ -145,40 +141,47 @@
 .tabBar {
   display: flex; align-items: center;
   border-bottom: 0.5px solid var(--neutral-150);
-  margin-top: 12px;
-  overflow-x: auto;
+  height: 40px;
+  flex-shrink: 0;
 }
-.tabBar::-webkit-scrollbar { height: 0; }
+.tabsScroll {
+  display: flex; align-items: center;
+  flex: 1; min-width: 0; height: 100%;
+  overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: none; -ms-overflow-style: none;
+  scroll-behavior: smooth;
+}
+.tabsScroll::-webkit-scrollbar { display: none; }
 .tab {
-  padding: 10px 14px; white-space: nowrap;
-  font-size: 13px; font-weight: 500; color: var(--neutral-300);
+  padding: 0 12px; white-space: nowrap; flex-shrink: 0;
+  font-size: 13px; font-weight: 400; color: var(--neutral-300);
   cursor: pointer; border-bottom: 2px solid transparent;
-  transition: color 0.15s, border-color 0.15s;
+  transition: all 0.12s;
   background: none; border-top: none; border-left: none; border-right: none;
   font-family: 'Inter', sans-serif;
+  height: 100%; display: flex; align-items: center;
 }
 .tab:first-child { padding-left: 0; }
-.tab:hover { color: var(--neutral-400); }
-.tabActive { color: var(--primary-300); border-bottom-color: var(--primary-300); }
+.tab:hover:not(.tabActive) { color: var(--neutral-400); }
+.tabActive { color: var(--primary-300); font-weight: 500; border-bottom-color: var(--primary-300); }
 .tabCount { color: var(--neutral-200); font-weight: 400; }
-.tabMore {
-  padding: 10px; flex-shrink: 0;
-  color: var(--neutral-300); cursor: pointer;
-  background: none; border: none; display: flex; align-items: center;
-}
 
 /* ── Activity Log ── */
-.activityLog { padding-top: 16px; }
-.commentInput {
+.activityLog { display: flex; flex-direction: column; gap: 12px; }
+.commentInput { display: flex; flex-direction: column; gap: 6px; }
+.commentTextarea {
   width: 100%; box-sizing: border-box;
-  padding: 10px 14px; margin-bottom: 16px;
-  border: 0.5px solid var(--neutral-150); border-radius: 8px;
-  background: var(--neutral-0);
-  font-size: 13px; color: var(--neutral-400);
-  font-family: 'Inter', sans-serif;
+  border: 0.5px solid var(--neutral-200); border-radius: 4px;
+  outline: none; padding: 8px;
+  font-size: 14px; font-family: 'Inter', sans-serif; color: var(--neutral-400);
+  resize: none; min-height: 32px; max-height: 120px;
+  transition: border-color .15s;
 }
-.commentInput::placeholder { color: var(--neutral-200); }
-.commentInput:focus { outline: none; border-color: var(--primary-300); }
+.commentTextarea:focus { border-color: var(--primary-200); }
+.commentTextarea::placeholder { color: var(--neutral-200); }
+.commentActions {
+  display: flex; align-items: center; justify-content: flex-start; gap: 8px;
+}
 .activityAttachment {
   display: inline-flex; align-items: center; gap: 6px;
   margin-top: 6px;

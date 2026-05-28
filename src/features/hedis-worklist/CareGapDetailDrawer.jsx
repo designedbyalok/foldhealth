@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Drawer } from '../../components/Drawer/Drawer';
 import { Button } from '../../components/Button/Button';
+import { Input } from '../../components/Input/Input';
 import { ClinicalNotePanel } from './ClinicalNotePanel';
 import { PatientBanner } from '../../components/PatientBanner/PatientBanner';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
@@ -52,7 +53,7 @@ const TABS = [
 // Map a raw caregapActivity entry into the shape the shared Timeline
 // component expects. The Timeline handles month grouping internally.
 function toTimelineEntry(e, i) {
-  const d = new Date(e.when);
+  const d = new Date(e.when ?? e.at);
   const valid = !Number.isNaN(d.getTime());
   const mm = valid ? String(d.getMonth() + 1).padStart(2, '0') : '';
   const dd = valid ? String(d.getDate()).padStart(2, '0') : '';
@@ -62,8 +63,8 @@ function toTimelineEntry(e, i) {
   const ampm = hh >= 12 ? 'PM' : 'AM';
   hh = hh % 12 || 12;
   return {
-    id: e.id ?? `${e.when}-${i}`,
-    createdAt: e.when,
+    id: e.id ?? `${e.when ?? e.at}-${i}`,
+    createdAt: e.when ?? e.at,
     date: valid ? `${mm}/${dd}/${yyyy}` : '',
     time: valid ? `${hh}:${min} ${ampm}` : '',
     user: e.actor || e.user || 'System',
@@ -80,6 +81,7 @@ function toTimelineEntry(e, i) {
 export function CareGapDetailDrawer({ member, gapCode, year, onClose }) {
   const showToast = useAppStore(s => s.showToast);
   const updateGapStatus = useAppStore(s => s.updateGapStatus);
+  const logCareGapActivity = useAppStore(s => s.logCareGapActivity);
   const activityEntries = useAppStore(s => s.caregapActivity[member?.id]);
 
   // Internal gap selection so the header prev/next arrows can cycle through
@@ -93,6 +95,8 @@ export function CareGapDetailDrawer({ member, gapCode, year, onClose }) {
   const [activeTab, setActiveTab] = useState('Activity Log');
   const [showClinicalNote, setShowClinicalNote] = useState(false);
   const [pdfPreview, setPdfPreview] = useState(null);
+  const [commentText, setCommentText] = useState('');
+  const [commentExpanded, setCommentExpanded] = useState(false);
 
   if (!member || gaps.length === 0) return null;
 
@@ -110,6 +114,23 @@ export function CareGapDetailDrawer({ member, gapCode, year, onClose }) {
 
   const goPrev = () => { if (canPrev) { setCurrentCode(gaps[idx - 1].code); setStatusOpen(false); } };
   const goNext = () => { if (canNext) { setCurrentCode(gaps[idx + 1].code); setStatusOpen(false); } };
+
+  const handleAddComment = () => {
+    const text = commentText.trim();
+    if (!text) return;
+    logCareGapActivity(member.id, {
+      when: new Date().toISOString(),
+      actor: 'Alok Kumar',
+      icon: 'solar:chat-round-linear',
+      iconBg: 'var(--primary-100)',
+      iconBorder: 'color-mix(in srgb, var(--primary-300) 20%, transparent)',
+      iconColor: 'var(--primary-300)',
+      title: text,
+      detail: 'Comment',
+    });
+    setCommentText('');
+    setCommentExpanded(false);
+  };
 
   return (
     <>
@@ -195,7 +216,7 @@ export function CareGapDetailDrawer({ member, gapCode, year, onClose }) {
               className={`${styles.assignBtn} ${gap.assignee ? styles.assigned : ''}`}
               onClick={() => showToast('Assign — coming soon')}
             >
-              <Icon name="solar:user-plus-linear" size={15} color="currentColor" />
+              <Icon name="solar:user-linear" size={15} color="currentColor" />
               {gap.assignee || 'Assign'}
               <Icon name="solar:alt-arrow-down-linear" size={12} color="currentColor" />
             </button>
@@ -254,6 +275,7 @@ export function CareGapDetailDrawer({ member, gapCode, year, onClose }) {
       </div>
 
       {/* ── Suggested actions ── */}
+      <div className={styles.suggestSection}>
       <div className={styles.suggestRow}>
         <Icon name="solar:magic-stick-3-bold" size={14} color="var(--primary-300)" />
         Suggested Actions
@@ -262,8 +284,8 @@ export function CareGapDetailDrawer({ member, gapCode, year, onClose }) {
         <Button variant="primary" size="L" leadingIcon="solar:document-add-linear" onClick={() => setShowClinicalNote(true)}>
           Add Clinical Note
         </Button>
-        <Button variant="secondary" size="L" onClick={() => showToast('Add MRC Task — coming soon')}>
-          Add MRC Task
+        <Button variant="tertiary" size="L" onClick={() => showToast('Add Referral — coming soon')}>
+          Add Referral
         </Button>
         <span className={styles.suggestDivider} />
         <Button variant="secondary" size="L" onClick={() => showToast('Add Outreach — coming soon')}>
@@ -273,37 +295,52 @@ export function CareGapDetailDrawer({ member, gapCode, year, onClose }) {
           Set Reminder
         </Button>
       </div>
+      </div>
 
       {/* ── Tabs ── */}
       <div className={styles.tabBar}>
-        {TABS.map(tab => (
-          <button
-            key={tab.key}
-            className={`${styles.tab} ${activeTab === tab.key ? styles.tabActive : ''}`}
-            onClick={() => setActiveTab(tab.key)}
-          >
-            {tab.label}
-            {tab.count != null && <span className={styles.tabCount}>({tab.count})</span>}
-          </button>
-        ))}
-        <button className={styles.tabMore} onClick={() => showToast('More tabs — coming soon')}>
-          <Icon name="solar:alt-arrow-down-linear" size={13} />
-        </button>
+        <div className={styles.tabsScroll}>
+          {TABS.map(tab => (
+            <button
+              key={tab.key}
+              className={`${styles.tab} ${activeTab === tab.key ? styles.tabActive : ''}`}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              {tab.label}
+              {tab.count != null && <span className={styles.tabCount}>({tab.count})</span>}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ── Tab content ── */}
       {activeTab === 'Activity Log' ? (
         <div className={styles.activityLog}>
-          <input
-            className={styles.commentInput}
-            placeholder="Add a comment"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                showToast('Comments — coming soon');
-                e.currentTarget.value = '';
-              }
-            }}
-          />
+          <div className={styles.commentInput}>
+            {commentExpanded ? (
+              <textarea
+                autoFocus
+                className={styles.commentTextarea}
+                placeholder="Add a comment, use @ to mention someone"
+                rows={3}
+                value={commentText}
+                onChange={e => setCommentText(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Escape') { setCommentExpanded(false); setCommentText(''); } }}
+              />
+            ) : (
+              <Input
+                placeholder="Add a comment"
+                onFocus={() => setCommentExpanded(true)}
+                style={{ cursor: 'text', width: '100%' }}
+              />
+            )}
+            {commentExpanded && (
+              <div className={styles.commentActions}>
+                <Button variant="primary" size="S" disabled={!commentText.trim()} onClick={handleAddComment}>Comment</Button>
+                <Button variant="secondary" size="S" onClick={() => { setCommentExpanded(false); setCommentText(''); }}>Cancel</Button>
+              </div>
+            )}
+          </div>
           <Timeline
             entries={timelineEntries}
             emptyLabel="No activity yet for this care gap."

@@ -2115,8 +2115,8 @@ function TaskDetailDrawer({ task, onClose, onSelectTask }) {
             />
             {commentExpanded && (
               <div className={styles.commentActions}>
-                <button className={styles.commentCancel} onClick={() => { setCommentExpanded(false); setCommentText(''); }}>Cancel</button>
                 <Button variant="primary" size="S" disabled={!commentText.trim()} onClick={handleAddComment}>Comment</Button>
+                <Button variant="secondary" size="S" onClick={() => { setCommentExpanded(false); setCommentText(''); }}>Cancel</Button>
               </div>
             )}
           </div>

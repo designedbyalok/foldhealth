@@ -1518,7 +1518,18 @@ export const useAppStore = create((set, get) => ({
   // ─── HCC Worklist (Supabase-backed) ───
   // ── HEDIS worklist — local state for now, no Supabase backing yet ───────
   // Activity log per member: { [memberId]: [{ id, type, message, at, by }] }
-  caregapActivity: {},
+  caregapActivity: {
+    hd1: [
+      { id: 'a1-1', when: '2026-05-14T14:30:00', actor: 'Delores Conn (Co-Ordinator)', icon: 'solar:phone-calling-linear', iconBg: 'var(--primary-100)', iconBorder: 'color-mix(in srgb, var(--primary-300) 20%, transparent)', iconColor: 'var(--primary-300)', title: '4th Outreach — Outgoing Call', detail: 'Completed, Engaged' },
+      { id: 'a1-2', when: '2026-04-28T11:15:00', actor: 'Alok Kumar', icon: 'solar:clipboard-text-linear', iconBg: 'var(--status-success-light)', iconBorder: 'color-mix(in srgb, var(--status-success) 20%, transparent)', iconColor: 'var(--status-success)', title: 'Status changed: Open → Closed', detail: 'Manually closed after care was documented' },
+      { id: 'a1-3', when: '2026-04-10T09:00:00', actor: 'Dr. Aldo Richman', icon: 'solar:document-add-linear', iconBg: 'var(--secondary-100)', iconBorder: 'color-mix(in srgb, var(--secondary-300) 20%, transparent)', iconColor: 'var(--secondary-300)', title: 'Clinical Note Added', detail: 'BP reading 118/76 — within target range' },
+      { id: 'a1-4', when: '2026-03-22T16:00:00', actor: 'Delores Conn (Co-Ordinator)', icon: 'solar:phone-linear', iconBg: 'var(--status-error-light)', iconBorder: 'color-mix(in srgb, var(--status-error) 25%, transparent)', iconColor: 'var(--status-error)', title: '1st Outreach — Patient Chat', detail: 'Scheduled with PCP' },
+    ],
+    hd2: [
+      { id: 'a2-1', when: '2026-05-10T10:00:00', actor: 'Sarah Lee', icon: 'solar:phone-calling-linear', iconBg: 'var(--primary-100)', iconBorder: 'color-mix(in srgb, var(--primary-300) 20%, transparent)', iconColor: 'var(--primary-300)', title: '2nd Outreach — Outgoing Call', detail: 'No answer — voicemail left' },
+      { id: 'a2-2', when: '2026-04-18T13:45:00', actor: 'Marcus Chen', icon: 'solar:clipboard-add-linear', iconBg: 'var(--neutral-50)', iconBorder: 'color-mix(in srgb, var(--neutral-300) 12%, transparent)', iconColor: 'var(--neutral-300)', title: 'Task Added', detail: 'Follow up for colorectal screening referral' },
+    ],
+  },
   // Status updates applied to the local HEDIS mock data via setHedisMembers.
   hedisMembers: [],
   hedisLoading: false,
