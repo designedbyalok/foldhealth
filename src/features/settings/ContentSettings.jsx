@@ -84,15 +84,14 @@ function formatRelative(iso) {
 
 // Skeleton row that matches the live email row layout — 5 columns + action
 // cluster on the right. Reused for the initial load and per-page fetches.
-function EmailRowSkeleton({ bulkMode = false }) {
+function EmailRowSkeleton() {
   return (
     <tr className={styles.row}>
-      {bulkMode ? (
-        <td className={styles.tdCheck}><span className={`${styles.skelBone} ${styles.skelIcon}`} /></td>
-      ) : null}
       <td className={styles.tdName}>
         <div className={styles.skelNameRow}>
-          <span className={`${styles.skelBone} ${styles.skelIcon}`} />
+          <div className={styles.nameLeading}>
+            <span className={`${styles.skelBone} ${styles.skelIcon}`} />
+          </div>
           <div className={styles.nameStack}>
             <span className={`${styles.skelBone} ${styles.skelTextLg}`} />
             <span className={`${styles.skelBone} ${styles.skelTextSm}`} />
@@ -227,7 +226,6 @@ function EmailsTab({
       <div className={styles.tableWrap}>
         <table className={styles.table}>
           <colgroup>
-            {bulkMode ? <col className={styles.colCheck} /> : null}
             <col className={styles.colName} />
             <col className={styles.colCategory} />
             <col className={styles.colSubject} />
@@ -237,21 +235,23 @@ function EmailsTab({
           </colgroup>
           <thead>
             <tr className={styles.headerRow}>
-              {bulkMode ? (
-                <th className={styles.thCheck}>
-                  <Checkbox
-                    checked={
-                      emails.length > 0 && emails.every(e => selectedIds.has(e.id))
-                        ? true
-                        : selectedIds.size > 0
-                          ? 'indeterminate'
-                          : false
-                    }
-                    onCheckedChange={() => onToggleAll(emails)}
-                  />
-                </th>
-              ) : null}
-              <th>Name</th>
+              <th>
+                <div className={styles.nameHeader}>
+                  {bulkMode ? (
+                    <Checkbox
+                      checked={
+                        emails.length > 0 && emails.every(e => selectedIds.has(e.id))
+                          ? true
+                          : selectedIds.size > 0
+                            ? 'indeterminate'
+                            : false
+                      }
+                      onCheckedChange={() => onToggleAll(emails)}
+                    />
+                  ) : null}
+                  <span>Name</span>
+                </div>
+              </th>
               <th>Category</th>
               <th>Subject</th>
               <th>Last Updated</th>
@@ -262,40 +262,56 @@ function EmailsTab({
           <tbody>
             {loading ? (
               Array.from({ length: Math.max(1, perPage > 5 ? 5 : perPage) }).map((_, i) => (
-                <EmailRowSkeleton key={`skel-${i}`} bulkMode={bulkMode} />
+                <EmailRowSkeleton key={`skel-${i}`} />
               ))
             ) : emails.length === 0 ? (
               <tr>
-                <td colSpan={bulkMode ? 7 : 6} className={styles.emptyState}>
+                <td colSpan={6} className={styles.emptyState}>
                   <Icon name="solar:letter-linear" size={32} color="var(--neutral-150)" />
                   <p>No emails match the current filters.</p>
                 </td>
               </tr>
             ) : (
-              emails.map(campaign => (
-                <tr key={campaign.id} className={`${styles.row} ${bulkMode && selectedIds.has(campaign.id) ? styles.rowSelected : ''}`}>
-                  {bulkMode ? (
-                    <td className={styles.tdCheck}>
-                      <Checkbox
-                        checked={selectedIds.has(campaign.id)}
-                        onCheckedChange={() => onToggleId(campaign.id)}
-                      />
-                    </td>
-                  ) : null}
+              emails.map(campaign => {
+                const isSelected = bulkMode && selectedIds.has(campaign.id);
+                const handleNameClick = () => {
+                  if (bulkMode) onToggleId(campaign.id);
+                  else onPreview(campaign);
+                };
+                return (
+                <tr key={campaign.id} className={`${styles.row} ${isSelected ? styles.rowSelected : ''}`}>
                   <td className={styles.tdName}>
-                    <button
-                      type="button"
+                    <div
                       className={styles.nameLink}
-                      onClick={() => onPreview(campaign)}
+                      role="button"
+                      tabIndex={0}
+                      onClick={handleNameClick}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNameClick(); }
+                      }}
                     >
-                      <Icon name="solar:letter-linear" size={15} color="var(--neutral-300)" />
+                      {/* Leading slot — same position in both modes so the table
+                          doesn't shift when bulk-select toggles. */}
+                      <div className={styles.nameLeading}>
+                        {bulkMode ? (
+                          <Checkbox
+                            checked={selectedIds.has(campaign.id)}
+                            onCheckedChange={() => onToggleId(campaign.id)}
+                            // Stop the click from bubbling to the row handler —
+                            // otherwise we'd double-toggle.
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        ) : (
+                          <Icon name="solar:letter-linear" size={16} color="var(--neutral-300)" />
+                        )}
+                      </div>
                       <div className={styles.nameStack}>
                         <span className={styles.nameText}>{campaign.name}</span>
                         {campaign.description ? (
                           <span className={styles.nameDesc}>{campaign.description}</span>
                         ) : null}
                       </div>
-                    </button>
+                    </div>
                   </td>
                   <td className={styles.tdCategory}>
                     {campaign.category ? (
@@ -345,7 +361,8 @@ function EmailsTab({
                     </div>
                   </td>
                 </tr>
-              ))
+                );
+              })
             )}
           </tbody>
         </table>
