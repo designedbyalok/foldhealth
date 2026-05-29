@@ -191,6 +191,7 @@ function SortableCard({ field, selectedId, onSelect, onDelete }) {
     <div
       ref={setNodeRef}
       style={style}
+      data-form-card
       className={`${styles.card} ${selected ? styles.cardSelected : ''}`}
       onClick={() => onSelect(field.linkId)}
     >
@@ -213,8 +214,13 @@ function SortableCard({ field, selectedId, onSelect, onDelete }) {
 
 function Canvas({ fields, selectedId, onSelect, onDelete }) {
   const { setNodeRef, isOver } = useDroppable({ id: 'canvas-drop' });
+  // Clicking anywhere on the canvas that isn't a field card deselects, which
+  // surfaces the global Form Settings in the Properties column.
+  const handleBackgroundClick = (e) => {
+    if (!e.target.closest('[data-form-card]')) onSelect(null);
+  };
   return (
-    <div className={styles.canvasWrap}>
+    <div className={styles.canvasWrap} onClick={handleBackgroundClick}>
       <div ref={setNodeRef} className={`${styles.sheet} ${isOver ? styles.sheetOver : ''}`}>
         {fields.length === 0 ? (
           <div className={styles.canvasEmpty}>

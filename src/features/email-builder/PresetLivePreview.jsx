@@ -31,7 +31,7 @@ function resolvePresetTree(preset) {
  *  - width  (number) — final visible width in px; default 240
  *  - sourceWidth (number) — email canvas width the iframe renders at; default 600
  */
-export function PresetLivePreview({ preset, width, sourceWidth = 600 }) {
+export function PresetLivePreview({ preset, width, sourceWidth = 600, fontFamily = 'MODERN_SANS' }) {
   const tree = useMemo(() => resolvePresetTree(preset), [preset]);
   const iframeRef = useRef(null);
   const wrapRef = useRef(null);
@@ -65,7 +65,7 @@ export function PresetLivePreview({ preset, width, sourceWidth = 600 }) {
           backdropColor: '#FFFFFF',
           canvasColor: '#FFFFFF',
           textColor: '#3A485F',
-          fontFamily: 'MODERN_SANS',
+          fontFamily: fontFamily || 'MODERN_SANS',
           childrenIds: [tree.rootId],
         },
       },
@@ -74,7 +74,7 @@ export function PresetLivePreview({ preset, width, sourceWidth = 600 }) {
     // Preset previews suppress the email's outer 24px wrapper padding so the
     // header/footer sits flush at the top of the thumbnail.
     return renderEmailHtml(doc, { wrapperPadding: '0' });
-  }, [tree]);
+  }, [tree, fontFamily]);
 
   // After the iframe loads its srcdoc, read the rendered body height so the
   // outer wrapper sizes to the actual preview content.

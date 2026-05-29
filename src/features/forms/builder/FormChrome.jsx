@@ -12,9 +12,10 @@ const footerPresetById = (id) => FOOTER_PRESETS.find((p) => p.id === id) || FOOT
 export function FormHeader({ settings, className }) {
   if (!settings?.header?.enabled) return null;
   // No width → PresetLivePreview measures its container and scales to fit.
+  // Pass the form's font so the header reads cohesively with the body.
   return (
     <div className={className}>
-      <PresetLivePreview preset={headerPresetById(settings.header.presetId)} />
+      <PresetLivePreview preset={headerPresetById(settings.header.presetId)} fontFamily={settings.fontFamily} />
     </div>
   );
 }
@@ -23,7 +24,7 @@ export function FormFooter({ settings, className }) {
   if (!settings?.footer?.enabled) return null;
   return (
     <div className={className}>
-      <PresetLivePreview preset={footerPresetById(settings.footer.presetId)} />
+      <PresetLivePreview preset={footerPresetById(settings.footer.presetId)} fontFamily={settings.fontFamily} />
     </div>
   );
 }
