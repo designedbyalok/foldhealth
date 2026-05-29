@@ -14,6 +14,11 @@ import { useAppStore } from './store/useAppStore'
 // on this for any HIPAA-sensitive deployment.
 Sentry.init({
   dsn: 'https://2d5be2c606f585f9dd1fdfe9b23ae274@o4511450529529856.ingest.us.sentry.io/4511450531037184',
+  // Vite sets MODE = 'development' during `bun run dev` and 'production'
+  // during `bun run build`. Tagging here lets the automated Sentry-triage
+  // routine filter on `environment:production` so dev/HMR crashes don't
+  // get auto-fixed.
+  environment: import.meta.env.MODE,
   // Route envelopes through our own /api/monitoring function so requests
   // leave the browser as a same-origin path. Bypasses ad/privacy blockers
   // that match the public *.ingest.sentry.io host.
