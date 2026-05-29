@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useAppStore } from '../../../store/useAppStore';
 import { Icon } from '../../../components/Icon/Icon';
 import { Button } from '../../../components/Button/Button';
-import { getConfidence, getScoreStyle, getMeatNote } from '../data/confidence';
+import { ActionButton } from '../../../components/ActionButton/ActionButton';
+import { getConfidence, getScoreStyle, getMeatNote, MEAT_NOTE_DATA } from '../data/confidence';
 import styles from './IcdRow.module.css';
 
 // Type-badge color spec — Suspect blue, Recapture purple, Manual blue,
@@ -36,6 +37,7 @@ export function IcdRow({ icd }) {
   const reopenHccGap = useAppStore(s => s.reopenHccGap);
   const showToast = useAppStore(s => s.showToast);
   const openIcdActivityLog = useAppStore(s => s.openIcdActivityLog);
+  const openIcdPanel = useAppStore(s => s.openIcdPanel);
   // This card is "selected" when the left panel's Activity Log is scoped to
   // its code (Figma Selection variant 1:33197 → primary-50 bg, primary-300
   // border). Clicking the code toggles the scope on/off.
@@ -58,6 +60,10 @@ export function IcdRow({ icd }) {
   const conf = getConfidence(icd.code);
   const scoreStyle = getScoreStyle(conf.score);
   const typeBadge = icd.type ? TYPE_BADGE[icd.type] : null;
+
+  // Note count: the data field plus the prefilled MEAT note (if this code ships
+  // with a specific one) so a card that already has a note authored shows ≥1.
+  const noteCount = Math.max(icd.notes ?? 0, MEAT_NOTE_DATA[icd.code] ? 1 : 0);
 
   const handleAccept = (e) => {
     e.stopPropagation();
@@ -102,11 +108,6 @@ export function IcdRow({ icd }) {
     showToast('ICD actions — coming in Phase 3');
   };
 
-  const handleCount = (kind) => (e) => {
-    e.stopPropagation();
-    showToast(`${kind} — coming in Phase 3`);
-  };
-
   // Clicking the notes count button opens the unified expansion panel with
   // the MEAT Note section expanded (and Confidence collapsed). Clicking
   // again while MEAT is already open collapses the panel. For closed ICDs
@@ -131,7 +132,7 @@ export function IcdRow({ icd }) {
 
   return (
     <div
-      className={[styles.row, isClosed ? styles.rowClosed : '', isSelected ? styles.rowSelected : ''].join(' ')}
+      className={[styles.row, isDismissed ? styles.rowClosed : '', isSelected ? styles.rowSelected : ''].join(' ')}
       data-status={icd.status}
     >
       {/* Title sub-stack — code + description, then Last Reviewed, then the
@@ -171,7 +172,7 @@ export function IcdRow({ icd }) {
               {typeBadge.label}
             </span>
           )}
-          {conf.score > 0 && !isClosed && (
+          {conf.score > 0 && (
             <button
               type="button"
               className={styles.confidenceBadge}
@@ -205,12 +206,22 @@ export function IcdRow({ icd }) {
       {/* Footer */}
       <div className={styles.footer}>
         <div className={styles.counts}>
-          <button type="button" className={styles.countBtn} onClick={handleCount('Documents')}>
+          <button
+            type="button"
+            className={styles.countBtn}
+            onClick={(e) => { e.stopPropagation(); openIcdPanel('documents', icd.code); }}
+            aria-label={`Open documents for ${icd.code}`}
+          >
             <Icon name="solar:file-text-linear" size={16} color="var(--neutral-300)" />
             <span>{icd.docs ?? 0}</span>
           </button>
           <span className={styles.countDivider} />
-          <button type="button" className={styles.countBtn} onClick={handleCount('Comments')}>
+          <button
+            type="button"
+            className={styles.countBtn}
+            onClick={(e) => { e.stopPropagation(); openIcdPanel('comments', icd.code); }}
+            aria-label={`Open comments for ${icd.code}`}
+          >
             <Icon name="solar:chat-square-linear" size={16} color="var(--neutral-300)" />
             <span>{icd.cmts ?? 0}</span>
           </button>
@@ -230,7 +241,7 @@ export function IcdRow({ icd }) {
               size={16}
               color={panel === 'meat' && meatOpen ? 'var(--primary-300)' : 'var(--neutral-300)'}
             />
-            <span>{icd.notes ?? 0}</span>
+            <span>{noteCount}</span>
           </button>
         </div>
 
@@ -268,14 +279,12 @@ export function IcdRow({ icd }) {
             <span>{isDismissed ? 'Dismissed' : 'Dismiss'}</span>
           </button>
 
-          <button
-            type="button"
-            className={[styles.actionBtn, styles.dotsBtn].join(' ')}
+          <ActionButton
+            icon="solar:menu-dots-linear"
+            size="L"
+            tooltip="More actions"
             onClick={handleMore}
-            aria-label="More actions"
-          >
-            <Icon name="custom:menu-dots" size={18} color="var(--neutral-300)" />
-          </button>
+          />
         </div>
       </div>
 

@@ -2233,6 +2233,9 @@ export const useAppStore = create((set, get) => ({
   setDiagTab: (panel) => set({ diagLeftPanel: panel }),
   // Open the left Activity Log scoped to a single ICD code.
   openIcdActivityLog: (code) => set({ diagLeftPanel: 'activity', diagActivityIcd: code || null }),
+  // Open any left panel tab scoped to a single ICD code (used by the per-card
+  // Documents / Comments / Notes count buttons in IcdRow).
+  openIcdPanel: (panel, code) => set({ diagLeftPanel: panel, diagActivityIcd: code || null }),
   clearDiagActivityIcd: () => set({ diagActivityIcd: null }),
 
   // Upload chart drawer — member object or null. Opened from ChartPopover's

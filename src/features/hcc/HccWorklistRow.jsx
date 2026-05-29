@@ -633,14 +633,17 @@ export function HccWorklistRow({ member, hiddenCols, columns }) {
         <div className={styles.actionsRow}>
           <ActionButton
             icon="solar:eye-linear"
-            size="S"
+            size="L"
             tooltip="View Diagnosis Gaps"
             onClick={(e) => { e.stopPropagation(); openDiagPanel(member.id); }}
           />
           <span className={styles.actionsDivider} />
-          <ActionButton size="S" tooltip="More actions" onClick={openActions}>
-            <Icon name="custom:menu-dots" size={18} color="var(--neutral-300)" />
-          </ActionButton>
+          <ActionButton
+            icon="solar:menu-dots-linear"
+            size="L"
+            tooltip="More actions"
+            onClick={openActions}
+          />
         </div>
       </td>
     </tr>

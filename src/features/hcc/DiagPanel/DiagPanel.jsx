@@ -572,8 +572,11 @@ export function DiagPanel() {
             size="S"
             tooltip="Documents"
             count={String(member?.docStatus?.length || member?.ch || 0)}
-            className={diagLeftPanel === 'documents' ? styles.activeIcon : ''}
-            onClick={() => setDiagLeftPanel(diagLeftPanel === 'documents' ? null : 'documents')}
+            /* Highlight only for the DOS-level Documents panel — an
+               ICD-scoped open (from an ICD card's docs count) must NOT light
+               up this global icon. Same rule as the Activity Log icon. */
+            className={diagLeftPanel === 'documents' && !diagActivityIcd ? styles.activeIcon : ''}
+            onClick={() => setDiagLeftPanel(diagLeftPanel === 'documents' && !diagActivityIcd ? null : 'documents')}
           />
           <span className={styles.divider} />
           <ActionButton
@@ -581,8 +584,8 @@ export function DiagPanel() {
             size="S"
             tooltip="Comments"
             count="6"
-            className={diagLeftPanel === 'comments' ? styles.activeIcon : ''}
-            onClick={() => setDiagLeftPanel(diagLeftPanel === 'comments' ? null : 'comments')}
+            className={diagLeftPanel === 'comments' && !diagActivityIcd ? styles.activeIcon : ''}
+            onClick={() => setDiagLeftPanel(diagLeftPanel === 'comments' && !diagActivityIcd ? null : 'comments')}
           />
           <span className={styles.divider} />
           <ActionButton
@@ -603,9 +606,12 @@ export function DiagPanel() {
             onClick={() => setSearchOpen(o => !o)}
           />
           <span className={styles.divider} />
-          <ActionButton size="S" tooltip="More" onClick={noop('More')}>
-            <Icon name="custom:menu-dots" size={18} color="var(--neutral-300)" />
-          </ActionButton>
+          <ActionButton
+            icon="solar:menu-dots-linear"
+            size="S"
+            tooltip="More"
+            onClick={noop('More')}
+          />
         </div>
       </div>
 
