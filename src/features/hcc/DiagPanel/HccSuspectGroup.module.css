@@ -154,6 +154,43 @@
 .moreBtn:hover:not(:disabled) { background: var(--neutral-50); }
 .moreBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+/* Missed Opportunity + Dismiss — icon-only, matched to the ICD-card
+   Accept/Reject shape so both action clusters read as one system. */
+.missedBtn,
+.dismissBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 24px;
+  border-radius: 4px;
+  background: var(--neutral-0);
+  cursor: pointer;
+  padding: 0 8px;
+}
+.missedBtn {
+  border: 0.5px solid var(--status-warning);
+  color: var(--status-warning);
+}
+.missedBtn:hover:not(:disabled) { background: var(--status-warning-light); }
+.dismissBtn {
+  border: 0.5px solid var(--neutral-200);
+  color: var(--neutral-400);
+}
+.dismissBtn:hover:not(:disabled) { background: var(--neutral-50); }
+.dismissBtnActive {
+  background: var(--primary-25);
+  border-color: var(--primary-300);
+  color: var(--primary-300);
+}
+.disabledAction,
+.disabledAction:hover {
+  background: var(--neutral-50);
+  border: 0.5px solid var(--neutral-200);
+  color: var(--neutral-200);
+  cursor: not-allowed;
+}
+
 /* ── ⋯ menu (portaled) ── */
 .moreMenu {
   position: fixed;

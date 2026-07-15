@@ -164,7 +164,7 @@ const ROLE_KEY_BY_USER = { Support: 'support', Coder: 'coder', QA: 'reviewer', C
 // effect. Rendered as the drawer's dark footer bar (Paper 1WXT).
 const SHORTCUTS = [
   ['A', 'Accept'],
-  ['X', 'Reject'],
+  ['X', 'Dismiss'],
   ['M', 'Missed opportunity'],
   ['D', 'Defer'],
   ['↑↓', 'Move'],

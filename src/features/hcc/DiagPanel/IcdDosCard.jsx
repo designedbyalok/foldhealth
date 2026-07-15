@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAppStore } from '../../../store/useAppStore';
+import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { Icon } from '../../../components/Icon/Icon';
 import { CheckIcon } from '../../../components/Icon/CheckIcon';
 import { CloseIcon } from '../../../components/Icon/CloseIcon';
@@ -120,15 +121,19 @@ export function IcdDosCard({ icd, focusKey, selectedKeys, onToggleSelect, openDi
           )}
         </div>
         <div className={styles.counters} onClick={(e) => e.stopPropagation()}>
-          <button type="button" className={styles.counter} title="Comments" onClick={(e) => { e.stopPropagation(); openIcdPanel('comments', icd.code); }}>
-            <Icon name="solar:chat-round-line-linear" size={14} />
-            {icd.cmts ?? 0}
-          </button>
+          <Tooltip label="Comments">
+            <button type="button" className={styles.counter} onClick={(e) => { e.stopPropagation(); openIcdPanel('comments', icd.code); }}>
+              <Icon name="solar:chat-round-line-linear" size={14} />
+              {icd.cmts ?? 0}
+            </button>
+          </Tooltip>
           <span className={styles.counterDivider} />
-          <button type="button" className={styles.counter} title="Activity" onClick={(e) => { e.stopPropagation(); openIcdActivityLog(icd.code); }}>
-            <Icon name="custom:history" size={14} />
-            {(icd.docs ?? 0) + (icd.notes ?? 0)}
-          </button>
+          <Tooltip label="Activity">
+            <button type="button" className={styles.counter} onClick={(e) => { e.stopPropagation(); openIcdActivityLog(icd.code); }}>
+              <Icon name="custom:history" size={14} />
+              {(icd.docs ?? 0) + (icd.notes ?? 0)}
+            </button>
+          </Tooltip>
           {isManualIcd && (
             <>
               <span className={styles.counterDivider} />
@@ -292,24 +297,28 @@ function DosActionRow({
             </>
           ) : (
             <>
-              <button
-                type="button"
-                className={[styles.acceptBtn, canReview ? '' : styles.disabledAction].filter(Boolean).join(' ')}
-                aria-label="Accept" title={canReview ? 'Accept (A)' : 'Accept'}
-                disabled={!canReview}
-                onClick={canReview ? onAccept : undefined}
-              >
-                <CheckIcon size={15} color="currentColor" />
-              </button>
-              <button
-                type="button"
-                className={[styles.rejectBtn, dismissOpen ? styles.rejectBtnActive : '', canReview ? '' : styles.disabledAction].filter(Boolean).join(' ')}
-                aria-label="Reject" title={canReview ? 'Reject (X)' : 'Reject'}
-                disabled={!canReview}
-                onClick={!canReview ? undefined : (dismissOpen ? onCloseDismiss : onOpenDismiss)}
-              >
-                <CloseIcon size={13} color="currentColor" />
-              </button>
+              <Tooltip label={canReview ? 'Accept (A)' : 'Accept'}>
+                <button
+                  type="button"
+                  className={[styles.acceptBtn, canReview ? '' : styles.disabledAction].filter(Boolean).join(' ')}
+                  aria-label="Accept"
+                  disabled={!canReview}
+                  onClick={canReview ? onAccept : undefined}
+                >
+                  <CheckIcon size={15} color="currentColor" />
+                </button>
+              </Tooltip>
+              <Tooltip label={canReview ? 'Dismiss (X)' : 'Dismiss'}>
+                <button
+                  type="button"
+                  className={[styles.rejectBtn, dismissOpen ? styles.rejectBtnActive : '', canReview ? '' : styles.disabledAction].filter(Boolean).join(' ')}
+                  aria-label="Dismiss"
+                  disabled={!canReview}
+                  onClick={!canReview ? undefined : (dismissOpen ? onCloseDismiss : onOpenDismiss)}
+                >
+                  <CloseIcon size={13} color="currentColor" />
+                </button>
+              </Tooltip>
             </>
           )}
           <button ref={moreRef} type="button" className={styles.moreBtn} aria-label="More actions" onClick={() => (menuPos ? setMenuPos(null) : openMenu())}>

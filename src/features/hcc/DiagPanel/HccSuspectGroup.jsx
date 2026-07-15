@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAppStore } from '../../../store/useAppStore';
+import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { Icon } from '../../../components/Icon/Icon';
 import { CheckIcon } from '../../../components/Icon/CheckIcon';
-import { Button } from '../../../components/Button/Button';
+import { CloseIcon } from '../../../components/Icon/CloseIcon';
 import { useIcdSearch } from '../../../lib/icd/useIcdSearch';
 import { DismissReasonForm } from './DismissReasonForm';
 import { reviewedByLabel } from '../reviewedBy';
@@ -99,15 +100,19 @@ export function SuspectCard({ icd, dosList = [], member }) {
           )}
         </div>
         <span className={styles.counters}>
-          <button type="button" className={styles.counter} title="Comments" onClick={() => openIcdPanel('comments', code)}>
-            <Icon name="solar:chat-round-line-linear" size={13} />
-            {icd.cmts ?? 0}
-          </button>
+          <Tooltip label="Comments">
+            <button type="button" className={styles.counter} onClick={() => openIcdPanel('comments', code)}>
+              <Icon name="solar:chat-round-line-linear" size={14} />
+              {icd.cmts ?? 0}
+            </button>
+          </Tooltip>
           <span className={styles.counterDivider} />
-          <button type="button" className={styles.counter} title="Activity" onClick={() => openIcdActivityLog(code)}>
-            <Icon name="solar:history-linear" size={13} />
-            {(icd.docs ?? 0) + (icd.notes ?? 0)}
-          </button>
+          <Tooltip label="Activity">
+            <button type="button" className={styles.counter} onClick={() => openIcdActivityLog(code)}>
+              <Icon name="solar:history-linear" size={14} />
+              {(icd.docs ?? 0) + (icd.notes ?? 0)}
+            </button>
+          </Tooltip>
         </span>
       </div>
 
@@ -146,27 +151,42 @@ export function SuspectCard({ icd, dosList = [], member }) {
             </>
           ) : (
             <>
-              <Button variant="secondary" size="S" leadingIcon="solar:flag-linear" disabled={!canAct} onClick={missed}>
-                Missed Opportunity
-              </Button>
-              <Button
-                variant="ghost" size="S"
-                disabled={!canAct}
-                className={dismissOpen ? styles.dismissBtnActive : ''}
-                onClick={() => setDismissOpen(v => !v)}
-              >
-                Dismiss
-              </Button>
-              <button
-                ref={moreRef}
-                type="button"
-                className={styles.moreBtn}
-                aria-label="More actions" title={canAct ? 'More actions' : 'Select an ICD and DOS first'}
-                disabled={!canAct}
-                onClick={() => (menuPos ? setMenuPos(null) : openMenu())}
-              >
-                <Icon name="solar:menu-dots-linear" size={15} />
-              </button>
+              {/* Match the ICD-card action row: icon-only 24-tall buttons in
+                  Accept (primary tinted) / Dismiss (neutral) / more-menu shape. */}
+              <Tooltip label={canAct ? 'Missed Opportunity' : 'Select an ICD and DOS first'}>
+                <button
+                  type="button"
+                  className={[styles.missedBtn, canAct ? '' : styles.disabledAction].filter(Boolean).join(' ')}
+                  aria-label="Missed Opportunity"
+                  disabled={!canAct}
+                  onClick={canAct ? missed : undefined}
+                >
+                  <Icon name="solar:flag-linear" size={13} color="currentColor" />
+                </button>
+              </Tooltip>
+              <Tooltip label={canAct ? 'Dismiss' : 'Select an ICD and DOS first'}>
+                <button
+                  type="button"
+                  className={[styles.dismissBtn, dismissOpen ? styles.dismissBtnActive : '', canAct ? '' : styles.disabledAction].filter(Boolean).join(' ')}
+                  aria-label="Dismiss"
+                  disabled={!canAct}
+                  onClick={canAct ? () => setDismissOpen(v => !v) : undefined}
+                >
+                  <CloseIcon size={13} color="currentColor" />
+                </button>
+              </Tooltip>
+              <Tooltip label={canAct ? 'More actions' : 'Select an ICD and DOS first'}>
+                <button
+                  ref={moreRef}
+                  type="button"
+                  className={styles.moreBtn}
+                  aria-label="More actions"
+                  disabled={!canAct}
+                  onClick={() => (menuPos ? setMenuPos(null) : openMenu())}
+                >
+                  <Icon name="solar:menu-dots-linear" size={15} />
+                </button>
+              </Tooltip>
             </>
           )}
         </div>
@@ -278,7 +298,7 @@ function IcdComboPopover({ anchorRef, currentCode, currentDesc, onSelect, onClos
       <div className={styles.comboOverlay} onClick={onClose} />
       <div className={styles.comboMenu} style={{ top: pos.top, left: pos.left, width: pos.width }}>
         <div className={styles.comboSearch}>
-          <Icon name="solar:magnifer-linear" size={14} color="var(--neutral-300)" />
+          <Icon name="solar:magnifer-linear" size={13} color="var(--neutral-300)" />
           <input
             autoFocus
             type="text"
@@ -300,7 +320,7 @@ function IcdComboPopover({ anchorRef, currentCode, currentDesc, onSelect, onClos
                 <span className={styles.comboCode}>{r.code}</span>
                 <span className={styles.comboTitle}>{r.title}</span>
                 {isCurrent && (
-                  <span className={styles.comboCheck}><CheckIcon size={14} color="var(--primary-300)" /></span>
+                  <span className={styles.comboCheck}><CheckIcon size={13} color="var(--primary-300)" /></span>
                 )}
               </button>
             );
@@ -321,9 +341,31 @@ function DosDropdown({ anchorRef, dosList, member, selected, onSelect, onClose }
   const [pos, setPos] = useState(null);
 
   useEffect(() => {
-    const r = anchorRef.current?.getBoundingClientRect();
-    if (r) setPos({ top: r.bottom + 6, left: r.left, width: Math.max(r.width, 280) });
-  }, [anchorRef]);
+    const compute = () => {
+      const r = anchorRef.current?.getBoundingClientRect();
+      if (!r) return;
+      const width = Math.max(r.width, 280);
+      const margin = 8;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      // Estimate menu height (header + up to ~7 rows visible) then decide
+      // whether to flip above the anchor when the viewport can't fit below.
+      const estHeight = Math.min(360, 40 + dosList.length * 56);
+      const spaceBelow = vh - r.bottom - margin;
+      const flipUp = spaceBelow < estHeight && r.top > estHeight + margin;
+      const top = flipUp ? Math.max(margin, r.top - estHeight - 6) : r.bottom + 6;
+      // Clamp horizontally so the menu never leaves the viewport.
+      const left = Math.min(Math.max(margin, r.left), vw - width - margin);
+      setPos({ top, left, width, maxHeight: flipUp ? r.top - margin - 6 : spaceBelow });
+    };
+    compute();
+    window.addEventListener('resize', compute);
+    window.addEventListener('scroll', compute, true);
+    return () => {
+      window.removeEventListener('resize', compute);
+      window.removeEventListener('scroll', compute, true);
+    };
+  }, [anchorRef, dosList.length]);
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
@@ -335,7 +377,7 @@ function DosDropdown({ anchorRef, dosList, member, selected, onSelect, onClose }
   return createPortal(
     <>
       <div className={styles.dosOverlay} onClick={onClose} />
-      <div className={styles.dosMenu} style={{ top: pos.top, left: pos.left, width: pos.width }}>
+      <div className={styles.dosMenu} style={{ top: pos.top, left: pos.left, width: pos.width, maxHeight: pos.maxHeight, overflowY: 'auto' }}>
         <div className={styles.dosMenuHead}>Select DOS</div>
         {dosList.length === 0 && <div className={styles.dosEmpty}>No encounters available</div>}
         {dosList.map((d) => {
