@@ -110,7 +110,7 @@ export const Playground = {
       return (
         <tr key={r.id} className={styles.row}>
           <td className={`${styles.td} ${styles.stickyLeft}`} style={{ left: 0 }}>
-            <Checkbox checked={selected} onCheckedChange={() => toggleOne(r.id)} />
+            <Checkbox checked={selected} onCheckedChange={() => toggleOne(r.id)} aria-label={`Select ${r.name}`} />
           </td>
           <td className={`${styles.td} ${styles.stickyLeft} ${styles.memberTd}`} style={{ left: 36 }}>
             <div className={styles.memberCell}>

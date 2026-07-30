@@ -52,8 +52,9 @@ export function StickyNoteAuditDrawer({ patientId, note, profileOptions, onClose
         </div>
 
         <div className={styles.field}>
-          <label className={styles.fieldLabel}>Sticky Note</label>
+          <label className={styles.fieldLabel} htmlFor="sticky-note-textarea">Sticky Note</label>
           <textarea
+            id="sticky-note-textarea"
             className={styles.noteTextarea}
             value={editText}
             onChange={e => setEditText(e.target.value)}

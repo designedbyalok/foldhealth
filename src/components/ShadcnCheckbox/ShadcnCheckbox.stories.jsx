@@ -40,7 +40,7 @@ function Wrapper({ defaultChecked = false, ...rest }) {
 export const Playground = {
   render: () => (
     <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-      <Wrapper defaultChecked={false} />
+      <Wrapper defaultChecked={false} aria-label="Accept terms" />
       <span style={{ fontSize: 14, color: 'var(--neutral-500)' }}>Accept terms</span>
     </label>
   ),

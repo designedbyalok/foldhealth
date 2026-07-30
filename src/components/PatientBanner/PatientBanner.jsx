@@ -149,7 +149,7 @@ export function PatientBanner({ initials, name, gender, age, memberId, raf, rafC
           <div className={styles.section}>
             <div className={styles.synopsisHeader}>
               <span className={styles.sectionTitle}>Patient Synopsis</span>
-              <select className={styles.conditionSelect}>
+              <select className={styles.conditionSelect} aria-label="Filter synopsis by condition">
                 <option>{MOCK_SYNOPSIS.condition}</option>
               </select>
             </div>

@@ -6,26 +6,29 @@
    ═══════════════════════════════════════════════════════════ */
 
 :root {
-  /* Primary */
+  /* Primary — WCAG AA (4.5:1 on white) enforced on 300. */
   --primary-500: #1A0647;
   --primary-400: #5020A0;
-  --primary-300: #8C5AE2;
+  --primary-300: #7E4CD9;
   --primary-200: #D7C0FF;
   --primary-100: #F5F0FF;
   --primary-50:  #FCFAFF;
   --primary-25:  #FDFDFF;
 
-  /* Secondary (orange) */
-  --secondary-300: #F47A3E;
+  /* Secondary (orange) — 300 darkened so white text and dark text on
+     `--secondary-*` surfaces both pass AA. */
+  --secondary-300: #A94B1B;
   --secondary-200: #FBCEB7;
   --secondary-100: #FEEEE7;
   --secondary-50:  #FFF8F5;
 
-  /* Neutral */
+  /* Neutral — 200/300 darkened so they pass AA as body text on white AND on
+     `--neutral-50` (the app's default surface). 200 stays 1 step lighter
+     than 300 to preserve the hierarchy for secondary/hint text. */
   --neutral-500: #16181D;
   --neutral-400: #3A485F;
-  --neutral-300: #6F7A90;
-  --neutral-200: #8A94A8;
+  --neutral-300: #4F5A70;
+  --neutral-200: #5F6A7E;
   --neutral-150: #D0D6E1;
   --neutral-100: #E9ECF1;
   --neutral-75:  #F3F4F7;
@@ -33,18 +36,19 @@
   --neutral-25:  #FAFAFA;
   --neutral-0:   #FFFFFF;
 
-  /* Status */
+  /* Status — warning/success darkened so white text on the base color and dark
+     text on the `-light` surface both pass AA. */
   --status-error:         #D72825;
   --status-error-light:   #FFF5F5;
-  --status-warning:       #D9A50B;
+  --status-warning:       #7D5C00;
   --status-warning-light: #FFFCF5;
-  --status-success:       #009B53;
+  --status-success:       #007A42;
   --status-success-light: #F5FFFA;
   --status-info:          #145ECC;
   --status-info-light:    #F4F8FE;
 
   /* Status — bright variant (presence indicators, badges over neutral surfaces) */
-  --status-success-bright: #12B76A;
+  --status-success-bright: #087040;
 
   /* Agent column */
   --agent-col-bg: #F8F5FF;

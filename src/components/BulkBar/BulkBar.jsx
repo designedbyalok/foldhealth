@@ -63,6 +63,7 @@ export function BulkBar({ selectedIds: selectedIdsProp, onClear, onChangeAssigne
           checked={selectedIds.length > 0}
           onCheckedChange={() => clearSelected()}
           style={{ width: 20, height: 20 }}
+          aria-label="Clear selection"
         />
         <span className={styles.countText}>{selectedIds.length} Selected</span>
       </div>

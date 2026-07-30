@@ -168,6 +168,7 @@ export function WorklistShell({
                         <Checkbox
                           checked={someSelected ? 'indeterminate' : allSelected}
                           onCheckedChange={(v) => onSelectAll?.(!!v)}
+                          aria-label="Select all rows"
                         />
                       </th>
                     );

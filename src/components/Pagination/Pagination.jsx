@@ -158,6 +158,7 @@ export function Pagination({
         className={styles.btn}
         onClick={() => goTo(currentPage - 1)}
         disabled={currentPage === 1}
+        aria-label="Previous page"
       >
         <Icon name="solar:alt-arrow-left-linear" size={18} />
       </button>
@@ -170,6 +171,8 @@ export function Pagination({
             key={p}
             className={`${styles.btn} ${p === currentPage ? styles.active : ''}`}
             onClick={() => goTo(p)}
+            aria-label={`Page ${p}`}
+            aria-current={p === currentPage ? 'page' : undefined}
           >
             {p}
           </button>
@@ -180,6 +183,7 @@ export function Pagination({
         className={styles.btn}
         onClick={() => goTo(currentPage + 1)}
         disabled={currentPage === totalPages}
+        aria-label="Next page"
       >
         <Icon name="solar:alt-arrow-right-linear" size={18} />
       </button>

@@ -218,12 +218,10 @@ function OutreachEntryBody({ entry }) {
   const toggle = () => { if (expandable) setExpanded(v => !v); };
 
   return (
+    // The nested "View Note" button owns the accessible expander — role="button" here would nest interactives (axe: nested-interactive).
     <div
       className={`${styles.card} ${expanded ? styles.cardExpanded : ''} ${expandable ? '' : styles.cardStatic}`}
       onClick={toggle}
-      role={expandable ? 'button' : undefined}
-      tabIndex={expandable ? 0 : undefined}
-      onKeyDown={expandable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } } : undefined}
     >
       <div className={styles.body}>
         <MetaLine entry={entry} />
@@ -345,11 +343,10 @@ function DetailCardEntryBody({ entry, variant }) {
   const toggle = () => { if (expandable) setExpanded(v => !v); };
 
   return (
+    // See OutreachEntryBody — nested "View Details" button owns the accessible expander (axe: nested-interactive).
     <div
       className={`${styles.card} ${styles.cardStatic}`}
       onClick={toggle}
-      role={expandable ? 'button' : undefined}
-      tabIndex={expandable ? 0 : undefined}
     >
       <div className={styles.body}>
         <MetaLine entry={entry} />

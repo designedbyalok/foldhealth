@@ -62,7 +62,11 @@ export function Drawer({ title, onClose, headerRight, banner, footer, children, 
           <h2 className={styles.headerTitle} style={titleStyle}>{title}</h2>
           <div className={styles.headerRight}>
             {headerRight}
-            <button className={`${styles.closeBtn}${noCloseDivider ? ` ${styles.closeBtnNoDivider}` : ''}`} onClick={requestClose}>
+            <button
+              className={`${styles.closeBtn}${noCloseDivider ? ` ${styles.closeBtnNoDivider}` : ''}`}
+              onClick={requestClose}
+              aria-label="Close drawer"
+            >
               <CloseIcon size={20} />
             </button>
           </div>
