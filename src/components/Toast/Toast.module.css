@@ -44,9 +44,14 @@
   background: var(--status-error) !important;
 }
 
-/* Warning */
+/* Warning — brand yellow bg needs dark text (white fails WCAG AA at 2.24:1). */
 .warning {
   background: var(--status-warning) !important;
+  color: var(--neutral-500) !important;
+}
+.warning .description,
+.warning .closeButton {
+  color: var(--neutral-500) !important;
 }
 
 .content {

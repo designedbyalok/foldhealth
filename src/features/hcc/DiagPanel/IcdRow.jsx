@@ -204,12 +204,12 @@ export function IcdRow({ icd }) {
             <button
               type="button"
               className={styles.confidenceBadge}
-              style={{ background: scoreStyle.bg }}
+              style={{ background: scoreStyle.bg, color: scoreStyle.color }}
               onClick={handleConfidenceClick}
               aria-expanded={panel === 'confidence'}
               title={`Confidence: ${conf.status} (${conf.score})`}
             >
-              <Icon name="solar:star-bold" size={9} color="var(--neutral-0)" />
+              <Icon name="solar:star-bold" size={9} color={scoreStyle.color} />
               <span>{conf.score}</span>
             </button>
           )}
@@ -339,7 +339,7 @@ export function IcdRow({ icd }) {
                 <span className={styles.expandTitle}>Confidence Score</span>
                 <span
                   className={styles.scorePill}
-                  style={{ background: scoreStyle.bg }}
+                  style={{ background: scoreStyle.bg, color: scoreStyle.color }}
                 >
                   <span className={styles.scoreValue}>{conf.score}/100</span>
                   <span className={styles.scoreLabel}>&bull; {scoreStyle.label}</span>

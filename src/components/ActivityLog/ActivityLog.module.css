@@ -197,7 +197,7 @@
 .pillInProgress,
 .pillSubmitted,
 .pillNew,
-.pillPending      { color: var(--status-warning); background: var(--status-warning-light); }
+.pillPending      { color: var(--status-warning-fg); background: var(--status-warning-light); }
 /* HEDIS "Done" + HCC completion signals — success green. */
 .pillAccepted,
 .pillCompleted    { color: var(--status-success); background: var(--status-success-light); }
@@ -437,7 +437,7 @@
   border-radius: 50%;
   background: var(--secondary-50);
   border: 0.5px solid var(--secondary-200);
-  color: var(--secondary-300);
+  color: var(--secondary-300-fg);
   display: inline-flex;
   align-items: center;
   justify-content: center;

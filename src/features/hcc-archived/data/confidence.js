@@ -83,8 +83,8 @@ export function getFieldConfidence(enc, fieldName) {
  */
 export function getScoreStyle(score) {
   if (score >= 75) return { color: 'var(--neutral-0)', bg: 'var(--status-success)',   label: 'Auto-Surface' };
-  if (score >= 55) return { color: 'var(--neutral-0)', bg: 'var(--status-warning)',   label: 'Clinical Review' };
-  if (score >= 35) return { color: 'var(--neutral-0)', bg: 'var(--secondary-300)',    label: 'Batch Review' };
+  if (score >= 55) return { color: 'var(--neutral-500)', bg: 'var(--status-warning)', label: 'Clinical Review' };
+  if (score >= 35) return { color: 'var(--neutral-500)', bg: 'var(--secondary-300)',  label: 'Batch Review' };
   return                 { color: 'var(--neutral-0)', bg: 'var(--neutral-200)',       label: 'Suppressed' };
 }
 

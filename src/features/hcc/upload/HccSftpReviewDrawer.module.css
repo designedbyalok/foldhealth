@@ -356,7 +356,7 @@
 }
 .tabActive .tabCountFlag {
   background: var(--status-warning);
-  color: #fff;
+  color: var(--neutral-500);
 }
 
 /* Slim toolbar above the table — file name + ready/to-review breakdown. */

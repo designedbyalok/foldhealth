@@ -100,7 +100,7 @@
 
 .commBadge {
   background: var(--secondary-300);
-  color: var(--neutral-0);
+  color: var(--neutral-500);
   font-size: 10px;
   font-weight: 500;
   padding: 1px 4px;
@@ -354,7 +354,7 @@
 
 .convUnread {
   background: var(--secondary-300);
-  color: #fff;
+  color: var(--neutral-500);
   font-size: 10px;
   font-weight: 500;
   padding: 1px 4px;

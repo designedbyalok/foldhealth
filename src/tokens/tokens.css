@@ -15,9 +15,11 @@
   --primary-50:  #FCFAFF;
   --primary-25:  #FDFDFF;
 
-  /* Secondary (orange) — 300 darkened so white text and dark text on
-     `--secondary-*` surfaces both pass AA. */
-  --secondary-300: #A94B1B;
+  /* Secondary (orange). Do NOT put white text on `--secondary-300` — pair it
+     with dark text (e.g. `--neutral-500`) so contrast passes AA. For orange
+     text on the `-light` surface, use `--secondary-300-fg`. */
+  --secondary-300:    #F47A3E;
+  --secondary-300-fg: #A94B1B;  /* darker orange — text-on-light-surface, passes AA */
   --secondary-200: #FBCEB7;
   --secondary-100: #FEEEE7;
   --secondary-50:  #FFF8F5;
@@ -36,11 +38,14 @@
   --neutral-25:  #FAFAFA;
   --neutral-0:   #FFFFFF;
 
-  /* Status — warning/success darkened so white text on the base color and dark
-     text on the `-light` surface both pass AA. */
+  /* Status — success darkened so it passes AA on the `-light` surface.
+     `--status-warning` stays brand-accurate; pair it with dark text
+     (e.g. `--neutral-500`), not white. For amber text on the `-light`
+     surface, use `--status-warning-fg`. */
   --status-error:         #D72825;
   --status-error-light:   #FFF5F5;
-  --status-warning:       #7D5C00;
+  --status-warning:       #D9A50B;
+  --status-warning-fg:    #8B6600;  /* darker amber — text-on-light-surface, passes AA */
   --status-warning-light: #FFFCF5;
   --status-success:       #007A42;
   --status-success-light: #F5FFFA;
