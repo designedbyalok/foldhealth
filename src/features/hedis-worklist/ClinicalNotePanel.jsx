@@ -304,7 +304,8 @@ export function ClinicalNotePanel({ member, gapCode, year, onClose, editingTaskI
         initials={member.in}
         name={member.name}
         gender={GENDER_LABEL[member.gender] ?? member.gender}
-        age={ageShort + (member.dob ? ` (${member.dob})` : '')}
+        age={ageShort}
+        dob={member.dob}
         memberId={member.memberId}
         onCall={() => showToast('Call — coming soon')}
       />

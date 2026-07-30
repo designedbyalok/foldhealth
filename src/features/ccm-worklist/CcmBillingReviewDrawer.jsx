@@ -45,6 +45,7 @@ export function CcmBillingReviewDrawer({ member, onClose }) {
           name={member.name}
           gender={member.gender === 'M' ? 'Male' : member.gender === 'F' ? 'Female' : member.gender}
           age={member.age}
+          dob={member.dob}
           memberId={member.memberId}
         />
       }

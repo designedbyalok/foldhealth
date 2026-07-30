@@ -3,6 +3,8 @@ import { Icon } from '../Icon/Icon';
 import { ActionButton } from '../ActionButton/ActionButton';
 import { Badge } from '../Badge/Badge';
 import { BannerExpandIcon } from '../Icon/BannerExpandIcon';
+import { Tooltip } from '../Tooltip/Tooltip';
+import { deriveDob, formatDobDisplay } from '../../lib/patientDob';
 import styles from './PatientBanner.module.css';
 
 /**
@@ -16,6 +18,9 @@ import styles from './PatientBanner.module.css';
  * @param {string}   name       Patient full name
  * @param {string}   gender     "Male" | "Female"
  * @param {string}   age        e.g. "67y 2m"
+ * @param {string}   [dob]      Date of birth for the age hover tooltip.
+ *                              When omitted, a "Mon YYYY" fallback is derived
+ *                              from `age` so the tooltip still shows.
  * @param {string}   memberId   e.g. "#219384756102"
  * @param {string}   [raf]      RAF score e.g. "4.234"
  * @param {string}   [rafChange] RAF change e.g. "0.512"
@@ -43,15 +48,23 @@ const MOCK_SYNOPSIS = {
   generatedAt: '2d ago',
 };
 
-export function PatientBanner({ initials, name, gender, age, memberId, raf, rafChange, rafUp = true, onCall, className, hidePatientLabel = false }) {
+export function PatientBanner({ initials, name, gender, age, dob, memberId, raf, rafChange, rafUp = true, onCall, className, hidePatientLabel = false }) {
   const [expanded, setExpanded] = useState(false);
 
+  // Age meta gets a hover tooltip revealing DOB in mm/dd/yyyy. Prefer the
+  // caller-supplied dob (normalized from ISO / m/d/yyyy variants); otherwise
+  // derive a deterministic date from age + name so the tooltip always shows.
+  const normalizedDob = formatDobDisplay(dob) || deriveDob(age, name);
+  const dobLabel = normalizedDob ? `DOB: ${normalizedDob}` : '';
+
   // Build the leading meta parts so the dot separators stay correct even
-  // when the "Patient" label is hidden.
+  // when the "Patient" label is hidden. Age is kept as a marker string here
+  // and rendered as a Tooltip trigger below.
+  const AGE_MARKER = '__age__';
   const metaParts = [];
   if (!hidePatientLabel) metaParts.push('Patient');
   if (gender) metaParts.push(gender);
-  if (age) metaParts.push(age);
+  if (age) metaParts.push(AGE_MARKER);
   if (memberId) metaParts.push(memberId);
 
   return (
@@ -66,7 +79,17 @@ export function PatientBanner({ initials, name, gender, age, memberId, raf, rafC
               {metaParts.map((part, i) => (
                 <Fragment key={i}>
                   {i > 0 && <span className={styles.dot}>&bull;</span>}
-                  <span>{part}</span>
+                  {part === AGE_MARKER ? (
+                    dobLabel ? (
+                      <Tooltip label={dobLabel} placement="bottom">
+                        <span className={styles.ageTrigger}>{age}</span>
+                      </Tooltip>
+                    ) : (
+                      <span>{age}</span>
+                    )
+                  ) : (
+                    <span>{part}</span>
+                  )}
                 </Fragment>
               ))}
               {raf && (

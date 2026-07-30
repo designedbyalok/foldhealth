@@ -264,6 +264,10 @@
   font-size: 13px;
   font-weight: 400;
   color: var(--neutral-300);
+  cursor: help;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--neutral-150);
 }
 .patientMeta {
   font-size: 13px;

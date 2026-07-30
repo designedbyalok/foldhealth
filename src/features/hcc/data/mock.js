@@ -3,6 +3,8 @@
 // CSS variables, so data rows keep their original `labelColor: C.error` shape and the
 // tokens re-theme for free.
 
+import { deriveDob } from '../../../lib/patientDob';
+
 // Local color map — edit these to change the palette of every dos-label pill at once.
 const C = {
   error:   'var(--status-error)',
@@ -218,6 +220,7 @@ export const HCC_MEMBERS = MEMBERS_RAW.map((m, i) => {
     id: `hcc-${i + 1}`,
     memberId: `M-${left}-${right}`,     // stable per NAME — see hashStr comment above
     language: 'en',
+    dob: deriveDob(m.age, m.name),      // mm/dd/yyyy, stable per NAME
     dos_list,
     dos: dos_list[m.cv ? m.cv - 1 : 0]?.date,
     visits: m.cv && m.tv ? `${m.cv} of ${m.tv} Visits` : null,

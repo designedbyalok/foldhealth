@@ -711,6 +711,7 @@ export function ChartDetailDrawer({ charts, initialId, member, onClose }) {
               name={member?.name || 'Patient'}
               gender={gender}
               age={member?.age || ''}
+              dob={member?.dob}
               memberId={member?.memberId || `#${member?.id || ''}`}
               raf={member?.raf}
               rafChange={member?.ri}

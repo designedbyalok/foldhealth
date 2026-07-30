@@ -337,6 +337,7 @@ export function CareGapDetailDrawer({ member, gapCode, year, onClose }) {
             name={member.name}
             gender={member.gender}
             age={member.age}
+            dob={member.dob}
             memberId={member.memberId}
             hidePatientLabel
             onCall={() => showToast('Call — coming soon')}

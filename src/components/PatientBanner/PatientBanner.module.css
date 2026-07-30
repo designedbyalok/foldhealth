@@ -79,6 +79,13 @@
   color: var(--neutral-300, #6f7a90);
 }
 
+.ageTrigger {
+  cursor: help;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--neutral-150);
+}
+
 .rafValue {
   font-weight: 400;
   color: var(--neutral-400, #3a485f);

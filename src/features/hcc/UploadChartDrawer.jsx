@@ -143,6 +143,7 @@ export function UploadChartDrawer() {
         name={member.name}
         gender={member.g === 'M' ? 'Male' : member.g === 'F' ? 'Female' : member.g}
         age={member.age || ''}
+        dob={member.dob}
         memberId={member.memberId || `#${member.id}`}
         raf={member.raf}
         rafChange={member.ri}

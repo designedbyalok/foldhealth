@@ -65,6 +65,7 @@ export function CcmBillingReportDrawer({ report, onClose }) {
           name={patient?.name || 'Patient'}
           gender={patient?.gender}
           age={patient?.age}
+          dob={patient?.dob}
           memberId={patient?.memberId ? `#${patient.memberId}` : undefined}
           hidePatientLabel={false}
         />

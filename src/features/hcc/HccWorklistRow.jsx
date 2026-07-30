@@ -6,6 +6,8 @@ import { Button } from '../../components/Button/Button';
 import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Icon } from '../../components/Icon/Icon';
+import { Tooltip } from '../../components/Tooltip/Tooltip';
+import { formatDobDisplay, deriveDob } from '../../lib/patientDob';
 import {
   RafTooltip,
   VisitsPopover,
@@ -1108,7 +1110,14 @@ function HccWorklistRowImpl({ member, hiddenCols, columns }) {
                 className={styles.patientNameLink}
                 onClick={e => { e.stopPropagation(); openQuickView({ id: member.id, name: member.name, initials: member.in, gender: member.g, age: member.age, memberId: member.memberId, language: member.language, raf: member.raf }); }}
               >{member.name}</button>{' '}
-              <span className={styles.patientDemo}>({member.g}&bull;{member.age})</span>
+              {(() => {
+                const dobLabel = formatDobDisplay(member.dob) || deriveDob(member.age, member.name);
+                return (
+                  <Tooltip label={dobLabel ? `DOB: ${dobLabel}` : ''} placement="bottom">
+                    <span className={styles.patientDemo}>({member.g}&bull;{member.age})</span>
+                  </Tooltip>
+                );
+              })()}
             </div>
             <div className={styles.patientMeta}>
               {member.memberId} &bull;{' '}
