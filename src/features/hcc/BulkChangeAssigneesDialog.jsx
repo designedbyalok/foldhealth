@@ -148,13 +148,13 @@ export function BulkChangeAssigneesDialog({ open, selectedIds, onClose, onApplie
     return TERMINAL_STATUSES.has(legacyStatus);
   };
 
-  const handleApply = () => {
+  const handleApply = async () => {
     if (!pickedId || !selectedIds?.length) return;
     if (pickedId === '__unassigned') return;
     const pickedUser = candidates.find(c => c.id === pickedId);
     if (!pickedUser) return;
-    let updated = 0;
     let skipped = 0;
+    const jobs = [];
     selectedIds.forEach(memberId => {
       const member = hccMembers.find(m => m.id === memberId);
       const dos = member?.dos_list?.[0]?.date || member?.dos;
@@ -169,13 +169,29 @@ export function BulkChangeAssigneesDialog({ open, selectedIds, onClose, onApplie
       // Pass the picked user's display name so the worklist row's role
       // column updates even for Account-pool users not in the Astrana
       // roster (hccStaffById would return null for those).
-      hccReassignRole(memberId, dos, role, pickedUser.id, 'You', 'Bulk reassign', pickedUser.name);
-      updated++;
+      jobs.push(
+        hccReassignRole(memberId, dos, role, pickedUser.id, 'You', 'Bulk reassign', pickedUser.name)
+          .then(outcome => ({ member, outcome })),
+      );
     });
-    onApplied?.({ updated, skipped, role: ROLE_LABEL[role] });
+    // Close immediately — the rows already flipped optimistically. The
+    // toast waits for the actual DB outcomes: counting fired requests as
+    // "updated" let a success toast mask writes that never persisted
+    // (RLS / missing row / network), which reverted on the next reload.
     onClose?.();
+    const results = await Promise.all(jobs);
+    const updated = results.filter(r => r.outcome?.ok).length;
+    const failed = results.filter(r => !r.outcome?.ok);
+    onApplied?.({ updated, skipped, role: ROLE_LABEL[role] });
     const roleLabel = ROLE_LABEL[role];
-    if (updated && skipped) {
+    if (failed.length) {
+      const names = failed.slice(0, 3).map(r => r.member.name).join(', ');
+      const more = failed.length > 3 ? ` +${failed.length - 3} more` : '';
+      showToast(
+        `Reassigned ${updated} of ${updated + failed.length} ${roleLabel} role${updated + failed.length === 1 ? '' : 's'}`
+        + ` — couldn't save ${names}${more}; those rows were reverted.`,
+      );
+    } else if (updated && skipped) {
       showToast(`Reassigned ${updated} ${roleLabel} role${updated === 1 ? '' : 's'} to ${pickedUser.name} · ${skipped} skipped (already completed)`);
     } else if (updated) {
       showToast(`Reassigned ${updated} ${roleLabel} role${updated === 1 ? '' : 's'} to ${pickedUser.name}`);

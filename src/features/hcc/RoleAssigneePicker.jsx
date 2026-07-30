@@ -123,9 +123,9 @@ export function RoleAssigneePicker({
       : outcome?.reason === 'unresolvable-assignee'
         ? 'could not resolve the selected user'
         : outcome?.reason === 'persistence-failed'
-          ? 'saved locally but the database write failed'
+          ? 'the database write failed and the change was reverted'
           : 'unexpected error';
-    showToast?.(`Couldn’t assign ${u.name} — ${why}. Refresh and try again.`);
+    showToast?.(`Couldn’t assign ${u.name} — ${why}. Try again.`);
   };
 
   return (

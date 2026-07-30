@@ -3883,7 +3883,14 @@ export const useAppStore = create((set, get) => ({
         })),
       ],
     }));
-    const { error } = await supabase.from('hcc_diagnosis_gaps').insert(rows);
+    // ON CONFLICT (member_name, code) DO NOTHING — the constraint is
+    // patient-level while gap fetches are scoped per worklist row
+    // (member_id), so a code promoted from one of the patient's rows is
+    // invisible to the in-memory dedupe when a sibling row promotes it
+    // again. That re-promotion must be a silent no-op, not an error toast.
+    const { error } = await supabase
+      .from('hcc_diagnosis_gaps')
+      .upsert(rows, { onConflict: 'member_name,code', ignoreDuplicates: true });
     if (error) reportPersistFailure(`backfillMockNotLinkedGaps(${memberName})`, error);
   },
 
@@ -5134,51 +5141,90 @@ export const useAppStore = create((set, get) => ({
     track('hcc.role_reassigned', { memberId: pid, fromRole: null, toRole: role });
     // Preconditions: the member has to exist in local state, the DOS has to
     // exist on it, and we need a display name (Astrana staff or the picker's
-    // override). Without any of these the downstream patches silently no-op
-    // — the row stays put and the caller can't tell success from failure.
-    // Return an outcome so the picker can toast "assigned" vs "failed"
-    // instead of always showing success.
-    const fieldByRoleLocal = { support: 'sup', coder: 'cdr', reviewer: 'r1', reviewer2: 'r2' };
-    const preMember = useAppStore.getState().hccMembers.find(m => m.id === pid);
-    if (!preMember) return { ok: false, reason: 'member-not-found' };
-    const fromName = preMember[fieldByRoleLocal[role]] || '—';
-    const patientName = preMember.name;
-    const dosEntry = (preMember.dos_list || []).find(d => d.date === dos);
-    const result = useAppStore.getState().transitionHccDos(pid, dos, 'reassignRole', { role, staffId, actor, reason });
-    // Also patch the member's legacy role field so the worklist row's
-    // RoleStatusCell (which reads member.sup / .cdr / .r1 / .r2 / .r3
-    // directly) reflects the new assignee immediately. Status flips to
-    // 'New' to switch the cell out of its "Assign" empty state.
+    // override). All checked BEFORE any mutation so a failed precondition
+    // never leaves partial state behind. Return an outcome so the picker
+    // can toast "assigned" vs "failed" instead of always showing success.
     //
     // `displayName` is an optional override used by the bulk dialog when
     // picking a user from the system pool (Account → Users + Astrana
     // staff). For Account-pool users not in the Astrana roster,
     // hccStaffById() returns null and the legacy field would never get
     // patched — the displayName override solves that.
+    const fieldByRole = { support: 'sup', coder: 'cdr', reviewer: 'r1', reviewer2: 'r2' };
+    const statusFieldByRole = { support: 'supS', coder: 'cdrS', reviewer: 'r1s', reviewer2: 'r2s' };
+    const preMember = useAppStore.getState().hccMembers.find(m => m.id === pid);
+    if (!preMember) return { ok: false, reason: 'member-not-found' };
     const staff = hccStaffById(staffId);
     const platformName = useAppStore.getState().platformUsers.find(u => u.id === staffId)?.name;
     const name = staff?.name || displayName || platformName;
-    const fieldByRole = { support: 'sup', coder: 'cdr', reviewer: 'r1', reviewer2: 'r2' };
-    const statusFieldByRole = { support: 'supS', coder: 'cdrS', reviewer: 'r1s', reviewer2: 'r2s' };
     const f = fieldByRole[role];
     const sf = statusFieldByRole[role];
     if (!f || !name) return { ok: false, reason: 'unresolvable-assignee' };
-    // Default status on assignment is role-dependent: Support starts at
-    // "Awaiting" (displays as "Action Needed"), while Coder / QA / Compliance
-    // start at "New". Either value takes the cell out of its "Assign" empty
-    // state and marks the role as owned.
+    // Snapshot everything the optimistic patches touch, so a failed DB
+    // write can roll ALL of it back — UI and DB must never disagree
+    // (production users lost trust seeing an assignee that reverted on
+    // the next reload).
+    const fromName = preMember[f] || '—';
+    const prevName = preMember[f] ?? null;
+    const prevStatus = preMember[sf] ?? null;
+    const patientName = preMember.name;
+    const dosEntry = (preMember.dos_list || []).find(d => d.date === dos);
+    const compositeKey = hccDosKey(pid, dos, dosEntry?.provider, dosEntry?.pos);
+    const prevBucket = useAppStore.getState().hccDosAssignments?.[compositeKey];
+    useAppStore.getState().transitionHccDos(pid, dos, 'reassignRole', { role, staffId, actor, reason });
+    // Optimistic UI — ALL of it happens before the network write so every
+    // surface (worklist RoleStatusCell reading member.sup/.cdr/.r1/.r2,
+    // DiagPanel AssigneeAvatar reading hccDosAssignments) flips instantly:
+    //  1. the member's legacy role field + status. Default status on
+    //     assignment is role-dependent: Support starts at "Awaiting"
+    //     (displays "Action Needed"), Coder / QA / Compliance at "New" —
+    //     either takes the cell out of its "Assign" empty state.
+    //  2. the engine bucket's status: reassignRole stamps the assignee but
+    //     leaves status null, which makes resolveCurrentAssignee() still
+    //     report the bucket as unassigned; force-stamp the assign status.
     const assignStatus = role === 'support' ? 'Awaiting' : 'New';
-    set(s => ({
-      hccMembers: s.hccMembers.map(m =>
-        m.id === pid ? { ...m, [f]: name, [sf]: assignStatus } : m,
-      ),
-    }));
+    set(s => {
+      const next = {
+        hccMembers: s.hccMembers.map(m =>
+          m.id === pid ? { ...m, [f]: name, [sf]: assignStatus } : m,
+        ),
+      };
+      const cur = s.hccDosAssignments?.[compositeKey];
+      if (cur && cur[role]) {
+        next.hccDosAssignments = {
+          ...s.hccDosAssignments,
+          [compositeKey]: {
+            ...cur,
+            [role]: { ...cur[role], status: assignStatus },
+          },
+        };
+      }
+      return next;
+    });
     // Persist to Supabase so the reassignment survives reload. Awaited so
     // the caller can distinguish "written to DB" from "optimistic only" —
     // silent writes were masking RLS / missing-row failures in production
     // (user sees success toast, refresh reverts the assignment).
     const persist = await persistHccMemberRoleStatus(pid, role, assignStatus, name);
-    // Log to the canonical activity feed for the History drawer.
+    if (persist?.error) {
+      // Roll back every optimistic patch — the row returns to its last
+      // saved state instead of showing an assignee the DB never accepted.
+      set(s => {
+        const nextAssignments = { ...s.hccDosAssignments };
+        if (prevBucket === undefined) delete nextAssignments[compositeKey];
+        else nextAssignments[compositeKey] = prevBucket;
+        return {
+          hccMembers: s.hccMembers.map(m =>
+            m.id === pid ? { ...m, [f]: prevName, [sf]: prevStatus } : m,
+          ),
+          hccDosAssignments: nextAssignments,
+        };
+      });
+      return { ok: false, reason: 'persistence-failed', detail: persist.error.message, name, previous: fromName };
+    }
+    // Log to the canonical activity feed for the History drawer — only
+    // after the DB write landed, so failed writes don't leave phantom
+    // "assignee changed" entries.
     const ROLE_LABEL = { support: 'Support', coder: 'Coder', reviewer: 'Reviewer', reviewer2: 'Reviewer 2' };
     useAppStore.getState().logHccActivity({
       eventName: 'assignee.changed',
@@ -5192,29 +5238,6 @@ export const useAppStore = create((set, get) => ({
         patientName,
       },
     });
-    // The engine's reassignRole stamps the assignee but leaves status null,
-    // which makes resolveCurrentAssignee() still report this bucket as
-    // unassigned (it only treats the bucket as active when status is both
-    // set and non-'Assign'). Force-stamp the role's default assign status so
-    // AssigneeAvatar / AssigneeCell flip immediately to the active state with
-    // the new owner (Support → Awaiting/"Action Needed", others → New).
-    const compositeKey = hccDosKey(pid, dos, dosEntry?.provider, dosEntry?.pos);
-    set(s => {
-      const cur = s.hccDosAssignments?.[compositeKey];
-      if (!cur || !cur[role]) return {};
-      return {
-        hccDosAssignments: {
-          ...s.hccDosAssignments,
-          [compositeKey]: {
-            ...cur,
-            [role]: { ...cur[role], status: assignStatus },
-          },
-        },
-      };
-    });
-    if (persist?.error) {
-      return { ok: false, reason: 'persistence-failed', detail: persist.error.message, name, previous: fromName };
-    }
     return { ok: true, name, previous: fromName };
   },
 
