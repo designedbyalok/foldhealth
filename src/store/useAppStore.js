@@ -300,6 +300,37 @@ function persistHccActivityRow(row) {
     });
 }
 
+// ── Analytics table batcher ───────────────────────────────────────────
+// Coalesce same-tick analytics_tables lookups into ONE request. Views fire
+// up to a dozen fetchViewTable calls on mount (FinancialView alone has 12);
+// one GET per table_key tripped Sentry's N+1-API-call detector
+// (FOLDHEALTH-2). Calls landing within the same 10ms window share a single
+// `.in('table_key', [...])` query, fanned back out per key.
+const _analyticsTableBatches = new Map(); // `${tenant}|${period}` → { keys:Set, promise }
+function fetchAnalyticsTableBatched(tenant, period, tableKey) {
+  const batchId = `${tenant}|${period}`;
+  let batch = _analyticsTableBatches.get(batchId);
+  if (!batch) {
+    batch = { keys: new Set() };
+    batch.promise = new Promise((resolve, reject) => {
+      setTimeout(() => {
+        _analyticsTableBatches.delete(batchId);
+        supabase
+          .from('analytics_tables').select('*')
+          .eq('tenant_id', tenant).eq('period', period)
+          .in('table_key', [...batch.keys])
+          .then(({ data, error }) => {
+            if (error) return reject(new Error(error.message));
+            resolve(new Map((data || []).map(r => [r.table_key, r])));
+          });
+      }, 10);
+    });
+    _analyticsTableBatches.set(batchId, batch);
+  }
+  batch.keys.add(tableKey);
+  return batch.promise.then(rowsByKey => rowsByKey.get(tableKey) || null);
+}
+
 // ── DiagPanel ancillary tab writes ────────────────────────────────────
 // Comments / Notes / Documents composers post to Supabase org-wide tables
 // so a refresh (or another reviewer) sees the same content. Fire-and-forget
@@ -7187,11 +7218,8 @@ export const useAppStore = create((set, get) => ({
     const { analyticsTenant: t, analyticsPeriod: p } = get();
     const key = `tbl:${tableKey}:${p}`;
     return get().fetchAnalytics(key, async () => {
-      const { data, error } = await supabase
-        .from('analytics_tables').select('*')
-        .eq('tenant_id', t).eq('table_key', tableKey).eq('period', p)
-        .maybeSingle();
-      if (error || !data) return { columns: [], rows: [] };
+      const data = await fetchAnalyticsTableBatched(t, p, tableKey);
+      if (!data) return { columns: [], rows: [] };
       return tableRowToJs(data);
     });
   },
