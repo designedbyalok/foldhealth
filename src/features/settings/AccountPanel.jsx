@@ -23,16 +23,7 @@ import { IdIcon } from '../../components/Icon/IdIcon';
 import { AddIconMinimalist } from '../../components/Icon/AddIconMinimalist';
 import { CreateInsurancePlanDrawer } from './CreateInsurancePlanDrawer';
 import { InsurancePlanViewDrawer } from './InsurancePlanViewDrawer';
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogAction,
-  AlertDialogCancel,
-} from '../../components/ShadcnAlertDialog/ShadcnAlertDialog';
+import { ConfirmDialog } from '../../components/ConfirmDialog/ConfirmDialog';
 import { OrgPanel } from './panels/OrgPanel';
 // FALLBACK_USERS lives in ./fallbackUsers.js so module-eval-time consumers
 // (hcc/systemUsers.js) don't import-cycle through this component file.
@@ -726,32 +717,20 @@ export function AccountPanel() {
         />
       )}
 
-      {/* Delete Insurance Plan confirm dialog (item 3) */}
-      <AlertDialog open={!!deletingPlanId} onOpenChange={open => !open && setDeletingPlanId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
-              <Icon name="solar:trash-bin-2-linear" size={28} color="#D72825" />
-            </div>
-            <AlertDialogTitle>Delete Insurance Plan?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Please confirm if you want to permanently delete this insurance plan from the system.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeletingPlanId(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              style={{ background: '#D72825', color: 'white' }}
-              onClick={() => {
-                setPlans(prev => prev.filter(p => p.id !== deletingPlanId));
-                setDeletingPlanId(null);
-              }}
-            >
-              Delete Plan
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {deletingPlanId && (
+        <ConfirmDialog
+          variant="destructive"
+          icon="solar:trash-bin-2-linear"
+          title="Delete Insurance Plan?"
+          description="Please confirm if you want to permanently delete this insurance plan from the system."
+          confirmLabel="Delete Plan"
+          onCancel={() => setDeletingPlanId(null)}
+          onConfirm={() => {
+            setPlans(prev => prev.filter(p => p.id !== deletingPlanId));
+            setDeletingPlanId(null);
+          }}
+        />
+      )}
 
       {planSavedToast && (
         <div className={styles.toastOverlay}>

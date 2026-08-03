@@ -11,16 +11,7 @@ import { InsuranceCardPreview } from './InsuranceCardPreview';
 import { Icon }            from '../../components/Icon/Icon';
 import avergentLogoUrl     from './assets/avergent-logo.png';
 import prominenceLogoUrl   from './assets/prominence-logo.svg?url';
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogAction,
-  AlertDialogCancel,
-} from '../../components/ShadcnAlertDialog/ShadcnAlertDialog';
+import { ConfirmDialog } from '../../components/ConfirmDialog/ConfirmDialog';
 import {
   Dialog,
   DialogContent,
@@ -914,34 +905,16 @@ export function CreateInsurancePlanDrawer({ onClose, onSave = () => {}, initialP
 
       </Drawer>
 
-      {/* Discard dialog */}
-      <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
-        <AlertDialogContent
-          style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
-            padding: 20, borderRadius: 12, border: '0.5px solid var(--neutral-100)',
-            boxShadow: '0px 12px 30px rgba(0,0,0,0.06)', maxWidth: 360,
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '100%' }}>
-            <Icon name="solar:danger-circle-bold" size={24} color="#D72825" />
-            <AlertDialogTitle style={{ margin: 0, fontSize: 16, fontWeight: 500, color: 'var(--neutral-400)', textAlign: 'center', lineHeight: 1.2 }}>
-              Discard Information ?
-            </AlertDialogTitle>
-            <AlertDialogDescription style={{ margin: 0, fontSize: 14, fontWeight: 400, color: 'var(--neutral-200)', textAlign: 'center', lineHeight: 1.2 }}>
-              This action will discard all information you have entered for the plan. Please confirm if you want to proceed.
-            </AlertDialogDescription>
-          </div>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', width: '100%', maxWidth: 320 }}>
-            <Button variant="secondary" size="L" style={{ flex: 1 }} onClick={() => setShowDiscardDialog(false)}>
-              Cancel
-            </Button>
-            <Button variant="danger" size="L" style={{ flex: 1 }} onClick={() => { setShowDiscardDialog(false); onClose(); }}>
-              Discard
-            </Button>
-          </div>
-        </AlertDialogContent>
-      </AlertDialog>
+      {showDiscardDialog && (
+        <ConfirmDialog
+          variant="destructive"
+          title="Discard Information?"
+          description="This action will discard all information you have entered for the plan. Please confirm if you want to proceed."
+          confirmLabel="Discard"
+          onCancel={() => setShowDiscardDialog(false)}
+          onConfirm={() => { setShowDiscardDialog(false); onClose(); }}
+        />
+      )}
 
       {/* Save changes dialog (edit mode) */}
       <Dialog open={showSaveDialog} onOpenChange={open => !open && setShowSaveDialog(false)}>

@@ -18,7 +18,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { DocEvidenceViewer } from './DiagPanel/DocEvidenceViewer';
 import { ReviewProgressPopover, buildReviewStages, computeReviewProgress, ProgressRing } from './DiagPanel/ReviewProgressPopover';
 import { dosKey } from './assignment/dosState';
-import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription } from '../../components/ShadcnAlertDialog/ShadcnAlertDialog';
+import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription } from '../../components/ConfirmDialog/AlertDialogPrimitives';
 import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { Textarea } from '../../components/Textarea/Textarea';
 import { DOC_TYPES, makeUploadedChartDoc } from './data/chartDocs';

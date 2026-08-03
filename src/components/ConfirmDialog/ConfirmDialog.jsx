@@ -5,7 +5,7 @@ import {
   AlertDialogFooter,
   AlertDialogTitle,
   AlertDialogDescription,
-} from '../ShadcnAlertDialog/ShadcnAlertDialog';
+} from './AlertDialogPrimitives';
 import { Icon } from '../Icon/Icon';
 import { Button } from '../Button/Button';
 

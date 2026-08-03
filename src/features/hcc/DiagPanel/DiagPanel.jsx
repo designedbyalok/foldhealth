@@ -45,7 +45,7 @@ import { slaOutcome } from '../sla';
 import { RoleAssigneePicker } from '../RoleAssigneePicker';
 import { ROLE_LABEL } from '../assignment/astranaStaff';
 import { dosKey } from '../assignment/dosState';
-import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription } from '../../../components/ShadcnAlertDialog/ShadcnAlertDialog';
+import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription } from '../../../components/ConfirmDialog/AlertDialogPrimitives';
 import { Textarea } from '../../../components/Textarea/Textarea';
 import { Button } from '../../../components/Button/Button';
 import styles from './DiagPanel.module.css';
