@@ -12,7 +12,14 @@ const Checkbox = React.forwardRef(({ className, ...props }, ref) => (
     style={{ width: 16, height: 16 }}
     {...props}
   >
-    <CheckboxPrimitive.Indicator className={cn('flex items-center justify-center text-current')}>
+    {/* forceMount keeps the Indicator in the DOM regardless of state so the
+        button's baseline calc is identical when checked vs unchecked. Without
+        this, unmounting the SVG shifts the surrounding line-box by ~3px in
+        inline layouts (Radix mounts the indicator only when active). */}
+    <CheckboxPrimitive.Indicator
+      forceMount
+      className={cn('flex items-center justify-center text-current', 'data-[state=unchecked]:invisible')}
+    >
       {props.checked === 'indeterminate' ? (
         <svg width="8" height="2" viewBox="0 0 8 2" fill="none">
           <rect width="8" height="2" rx="1" fill="white" />
