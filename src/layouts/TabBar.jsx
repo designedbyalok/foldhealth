@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Icon } from '../Icon/Icon';
-import { Button } from '../Button/Button';
-import { SectionTitleBar } from '../SectionTitleBar/SectionTitleBar';
-import { SavedFiltersChip } from '../../features/hcc/SavedFiltersChip';
-import { useAppStore } from '../../store/useAppStore';
+import { Icon } from '../components/Icon/Icon';
+import { Button } from '../components/Button/Button';
+import { SectionTitleBar } from '../components/SectionTitleBar/SectionTitleBar';
+import { SavedFiltersChip } from '../features/hcc/SavedFiltersChip';
+import { useAppStore } from '../store/useAppStore';
 import styles from './TabBar.module.css';
 
 function ConfirmDialog({ message, onConfirm, onCancel }) {
