@@ -47,19 +47,32 @@
      labels clear WCAG AA on white. */
   color: var(--neutral-400);
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  /* Overlap the .tabBar's 0.5px bottom hairline so the active underline
-     visually sits ON that line, not above it. */
-  margin-bottom: -0.5px;
-  transition: color .15s, border-color .15s;
+  transition: color .15s;
   gap: 6px;
 }
 
 .tabItem:hover { color: var(--neutral-500); }
 /* Active label uses primary-400 (#5020A0) for a compliant 9:1 contrast on
-   white; the 2px underline can stay on the brand primary-300 since
-   non-text UI has no contrast requirement. */
-.tabItem.active { color: var(--primary-400); border-bottom-color: var(--primary-300); }
+   white; the 2px underline (rendered by .tabUnderline) can stay on the
+   brand primary-300 since non-text UI has no contrast requirement. */
+.tabItem.active { color: var(--primary-400); }
+
+/* Shared sliding underline. One element translated + resized to the
+   active tab so the transition reads as a single line moving between tabs
+   rather than a cross-fade of two separate borders. Sits on top of the
+   bar's 0.5px hairline. */
+.tabUnderline {
+  position: absolute;
+  bottom: -0.5px;
+  left: 0;
+  height: 2px;
+  background: var(--primary-300);
+  border-radius: 2px 2px 0 0;
+  pointer-events: none;
+  transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1),
+              width 240ms cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 160ms ease-out;
+}
 
 .notifDot {
   display: inline-block;

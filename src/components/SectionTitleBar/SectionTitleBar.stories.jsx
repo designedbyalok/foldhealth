@@ -36,6 +36,11 @@ export default {
       description: 'Comma-separated labels used when `tabCount` exceeds the default set (`tabs` variant).',
       if: { arg: 'variant', eq: 'tabs' },
     },
+    showNotifDot: {
+      control: 'boolean',
+      description: 'When true, the second tab renders the pulsing notif dot ("new activity") indicator.',
+      if: { arg: 'variant', eq: 'tabs' },
+    },
     showSearch: { control: 'boolean' },
     showFilter: { control: 'boolean' },
     showHistory: { control: 'boolean' },
@@ -59,7 +64,7 @@ const SNP_TOGGLE = [
   { key: 'eligible', label: 'Eligible' },
 ];
 
-function Wrapper({ tabCount, tabLabels, ...props }) {
+function Wrapper({ tabCount, tabLabels, showNotifDot, ...props }) {
   const tabs = useMemo(() => {
     const custom = (tabLabels || '')
       .split(',')
@@ -70,9 +75,9 @@ function Wrapper({ tabCount, tabLabels, ...props }) {
     return Array.from({ length: count }, (_, i) => ({
       key: `tab-${i}`,
       label: labels[i] ?? `Tab ${i + 1}`,
-      notif: i === 1,
+      notif: showNotifDot && i === 1,
     }));
-  }, [tabCount, tabLabels]);
+  }, [tabCount, tabLabels, showNotifDot]);
 
   const [activeTab, setActiveTab] = useState('tab-0');
   const [dropdown, setDropdown] = useState(null);
@@ -110,6 +115,7 @@ export const Playground = {
     title: 'HCC List',
     tabCount: 2,
     tabLabels: '',
+    showNotifDot: true,
     showSearch: true,
     showFilter: true,
     showHistory: true,

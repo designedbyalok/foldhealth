@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../Icon/Icon';
 import { Button } from '../Button/Button';
@@ -244,6 +244,12 @@ function TabsSection({ tabs, activeTab, onTabChange, barRef, rightRef }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const measurerRef = useRef(null);
   const moreBtnRef = useRef(null);
+  const rowRef = useRef(null);
+  const tabRefs = useRef(new Map());
+  // Sliding underline geometry — kept in state so the indicator animates via
+  // transition on transform/width. `ready` gates the first paint so the
+  // indicator doesn't fly in from 0 when the bar mounts.
+  const [indicator, setIndicator] = useState({ x: 0, w: 0, ready: false });
 
   const measure = useCallback(() => {
     const measurer = measurerRef.current;
@@ -290,6 +296,19 @@ function TabsSection({ tabs, activeTab, onTabChange, barRef, rightRef }) {
     return () => document.removeEventListener('click', close);
   }, [moreOpen]);
 
+  // Slide the underline to the active tab. `useLayoutEffect` measures after
+  // the DOM has committed but before paint, so the indicator lands on the
+  // right tab in the same frame the tab renders. Re-runs on visibleCount /
+  // active swap so overflow re-layouts stay in sync.
+  useLayoutEffect(() => {
+    const row = rowRef.current;
+    const el = tabRefs.current.get(activeTab);
+    if (!row || !el) return;
+    const rowRect = row.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    setIndicator({ x: elRect.left - rowRect.left, w: elRect.width, ready: true });
+  }, [activeTab, visibleCount, tabs]);
+
   // Keep the active tab always visible by swapping it with the last slot in
   // the visible bucket when it would otherwise live in overflow.
   const activeIdx = tabs.findIndex(t => t.key === activeTab);
@@ -304,7 +323,7 @@ function TabsSection({ tabs, activeTab, onTabChange, barRef, rightRef }) {
   const overflowHasActive = overflow.some(t => t.key === activeTab);
 
   return (
-    <div className={styles.tabsRow}>
+    <div className={styles.tabsRow} ref={rowRef}>
       {/* Hidden measurer — all tabs at their natural width so we can decide
           how many actually fit before rendering the visible row. */}
       <div
@@ -320,6 +339,10 @@ function TabsSection({ tabs, activeTab, onTabChange, barRef, rightRef }) {
       {visible.map(tab => (
         <div
           key={tab.key}
+          ref={(el) => {
+            if (el) tabRefs.current.set(tab.key, el);
+            else tabRefs.current.delete(tab.key);
+          }}
           className={[styles.tabItem, activeTab === tab.key ? styles.active : ''].filter(Boolean).join(' ')}
           onClick={() => onTabChange && onTabChange(tab.key)}
         >
@@ -327,6 +350,19 @@ function TabsSection({ tabs, activeTab, onTabChange, barRef, rightRef }) {
           {tab.notif && <span className={styles.notifDot} title="New activity" />}
         </div>
       ))}
+
+      {/* Sliding underline — one shared element that transitions between the
+          active tab's position + width. Hidden until measured so it doesn't
+          animate in from x=0 on first paint. */}
+      <span
+        className={styles.tabUnderline}
+        aria-hidden
+        style={{
+          transform: `translateX(${indicator.x}px)`,
+          width: indicator.w,
+          opacity: indicator.ready && !overflowHasActive ? 1 : 0,
+        }}
+      />
 
       {overflow.length > 0 && (
         <div className={styles.moreWrap} ref={moreBtnRef}>
