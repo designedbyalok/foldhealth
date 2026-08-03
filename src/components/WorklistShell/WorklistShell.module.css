@@ -1,5 +1,5 @@
 /* WorklistShell — outer chrome shared by every worklist. Header row mirrors
-   src/components/TabBar so the two visually match; the table wrapper below
+   src/layouts/TabBar so the two visually match; the table wrapper below
    provides sticky-column scrolling and hosts the BulkBar + Pagination. */
 
 .shell {

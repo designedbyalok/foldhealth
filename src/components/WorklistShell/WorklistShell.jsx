@@ -89,7 +89,7 @@ export function WorklistShell({
 
   return (
     <div className={styles.shell}>
-      {/* Header (mirrors src/components/TabBar): title as an active tab
+      {/* Header (mirrors src/layouts/TabBar): title as an active tab
           on the left, right-side action icons with dividers. */}
       <div className={styles.header}>
         <div className={styles.left}>

@@ -32,6 +32,8 @@
   display: flex;
   gap: 12px;
   align-self: stretch;
+  min-width: 0;
+  position: relative;
 }
 
 .tabItem {
@@ -40,6 +42,7 @@
   padding: 0 4px;
   font-size: 14px;
   font-weight: 500;
+  white-space: nowrap;
   /* neutral-400 (#3A485F) instead of neutral-300 (#6F7A90) so inactive tab
      labels clear WCAG AA on white. */
   color: var(--neutral-400);
@@ -114,3 +117,47 @@
   background: var(--primary-50);
   border-color: var(--primary-200);
 }
+
+/* ── Tab overflow — "More ▾" dropdown ── */
+.moreWrap {
+  position: relative;
+  display: flex;
+  align-self: stretch;
+}
+
+.tabMore {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.moreDropdown {
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 8px;
+  min-width: 180px;
+  box-shadow: var(--shadow-popover);
+  overflow: hidden;
+  padding: 4px 0;
+  z-index: 9999;
+}
+
+.moreItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--neutral-400);
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.moreItem:hover { background: var(--neutral-50); }
+.moreItemActive { color: var(--primary-400); font-weight: 500; }

@@ -16,7 +16,7 @@
   padding-bottom: 80px;
 }
 
-/* ── TabBar header (mirrors src/components/TabBar/TabBar.module.css) ── */
+/* ── TabBar header (mirrors src/layouts/TabBar.module.css) ── */
 .tabBar {
   background: var(--neutral-0);
   border-bottom: 0.5px solid var(--neutral-150);

@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect } from 'react';
 import { Sidebar } from '../components/Sidebar/Sidebar';
 import { SubNav } from '../components/SubNav/SubNav';
 import { TopBar } from '../components/TopBar/TopBar';
-import { TabBar } from '../components/TabBar/TabBar';
+import { TabBar } from './TabBar';
 import { FilterBar } from '../components/FilterBar/FilterBar';
 import { Pagination } from '../components/Pagination/Pagination';
 import { ActiveCallCard } from '../components/ActiveCallCard/ActiveCallCard';
