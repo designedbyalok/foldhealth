@@ -13,7 +13,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: fadeInLeft 0.15s ease;
+  animation: fadeInLeft var(--duration-fast) var(--ease-out);
   font-family: 'Inter', sans-serif;
 }
 

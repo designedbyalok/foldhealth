@@ -11,7 +11,7 @@
   display: flex;
   gap: 32px;
   min-width: 520px;
-  animation: fadeInDown .15s ease;
+  animation: fadeInDown var(--duration-fast) var(--ease-out);
 }
 
 .col {

@@ -13,7 +13,7 @@
   flex-direction: column;
   overflow: hidden;
   font-family: 'Inter', sans-serif;
-  animation: notif-pop-in 0.16s ease-out;
+  animation: notif-pop-in var(--duration-fast) var(--ease-out);
 }
 
 @keyframes notif-pop-in {

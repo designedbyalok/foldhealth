@@ -8,7 +8,7 @@
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
   overflow: hidden;
   font-family: 'Inter', sans-serif;
-  animation: vpFadeInUp 0.15s ease;
+  animation: vpFadeInUp var(--duration-fast) var(--ease-out);
 }
 
 @keyframes vpFadeInUp {
