@@ -156,12 +156,21 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background 150ms, border-color 150ms;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover),
+    transform var(--duration-fast) var(--ease-out);
   padding: 0;
 }
 
 .taskCheckbox:hover {
   border-color: var(--primary-300);
+}
+
+/* Press feedback — subtle scale-down while held. Slightly deeper than the
+   Button primitive's 0.97 because the checkbox is a smaller hit target. */
+.taskCheckbox:active:not(:disabled) {
+  transform: scale(0.92);
 }
 
 .taskCheckboxChecked {
@@ -172,6 +181,32 @@
 .taskCheckboxChecked:hover {
   background: var(--status-success);
   border-color: var(--status-success);
+}
+
+/* Check icon — always mounted; scale + opacity drive the state change so
+   React never remounts the SVG. */
+.taskCheckIcon {
+  display: inline-flex;
+  transform: scale(0.6);
+  opacity: 0;
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    opacity var(--duration-fast) var(--ease-out);
+}
+
+.taskCheckboxChecked .taskCheckIcon {
+  transform: scale(1);
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .taskCheckbox:active:not(:disabled) {
+    transform: none;
+  }
+  .taskCheckIcon,
+  .taskCheckboxChecked .taskCheckIcon {
+    transform: none;
+  }
 }
 
 /* Task info */

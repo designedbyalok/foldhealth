@@ -1,6 +1,6 @@
 # Animation Plans
 
-Prioritized motion audit for Foldhealth. Written by the `improve-animations` skill against commit `c672e8b`.
+Motion audit for Foldhealth. Plans 001–006 were written by the `improve-animations` skill against commit `c672e8b`; plan 007 comes from a follow-up `/find-animation-opportunities` sweep at commit `f72a4a0`.
 
 Read the top-level audit findings in the chat that produced these plans (or regenerate with `/improve-animations`). Each plan is self-contained — the executor doesn't need any other context.
 
@@ -8,12 +8,13 @@ Read the top-level audit findings in the chat that produced these plans (or rege
 
 | # | Title | Severity | Category | Status |
 |---|---|---|---|---|
-| [001](001-motion-tokens.md) | Add motion tokens (easing + duration) | HIGH | Cohesion & tokens | TODO |
-| [002](002-reduced-motion-strategy.md) | Replace the blanket reduced-motion nuke with a scoped strategy | HIGH | Accessibility | TODO |
-| [003](003-scope-theme-cross-fade.md) | Scope the theme-transition cross-fade instead of every node | HIGH | Performance | TODO |
-| [004](004-eliminate-transition-all.md) | Replace every `transition: all` with an explicit property list | HIGH | Performance | TODO |
-| [005](005-button-press-feedback.md) | Add press feedback to the shared Button component | HIGH | Physicality | TODO |
-| [006](006-drawer-transitions.md) | Convert the Drawer entrance from keyframes to interruptible transitions | MEDIUM | Interruptibility + Easing | TODO |
+| [001](001-motion-tokens.md) | Add motion tokens (easing + duration) | HIGH | Cohesion & tokens | DONE (#102) |
+| [002](002-reduced-motion-strategy.md) | Replace the blanket reduced-motion nuke with a scoped strategy | HIGH | Accessibility | DONE (#102) |
+| [003](003-scope-theme-cross-fade.md) | Scope the theme-transition cross-fade instead of every node | HIGH | Performance | DONE (#102) |
+| [004](004-eliminate-transition-all.md) | Replace every `transition: all` with an explicit property list | HIGH | Performance | DONE (#102) |
+| [005](005-button-press-feedback.md) | Add press feedback to the shared Button component | HIGH | Physicality | DONE (#102) |
+| [006](006-drawer-transitions.md) | Convert the Drawer entrance from keyframes to interruptible transitions | MEDIUM | Interruptibility + Easing | DONE (#102) |
+| [007](007-task-checkbox-toggle.md) | Animate the task checkbox toggle | MEDIUM | Feedback + state indication | TODO |
 
 ## Recommended execution order
 

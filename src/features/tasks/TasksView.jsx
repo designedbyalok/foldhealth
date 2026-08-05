@@ -626,7 +626,9 @@ function TaskRow({ task, onToggle, onTaskClick, hideAssignedTo }) {
           onClick={e => { e.stopPropagation(); onToggle(task); }}
           aria-label={isCompleted ? 'Mark incomplete' : 'Mark complete'}
         >
-          {isCompleted && <Icon name="solar:check-read-linear" size={13} color="var(--neutral-0)" />}
+          <span className={styles.taskCheckIcon}>
+            <Icon name="solar:check-read-linear" size={13} color="var(--neutral-0)" />
+          </span>
         </button>
       </div>
 
@@ -818,7 +820,9 @@ function KanbanCardContent({ task }) {
             onClick={(e) => e.stopPropagation()}
             aria-label={isCompleted ? 'Mark incomplete' : 'Mark complete'}
           >
-            {isCompleted && <Icon name="solar:check-read-linear" size={13} color="var(--neutral-0)" />}
+            <span className={styles.taskCheckIcon}>
+            <Icon name="solar:check-read-linear" size={13} color="var(--neutral-0)" />
+          </span>
           </button>
         </div>
 
