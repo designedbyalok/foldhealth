@@ -36,7 +36,7 @@
 
 @keyframes pg-slide-up  { from { transform: translateY(18px); opacity:0; } to { transform: translateY(0); opacity:1; } }
 @keyframes pg-fade-up   { from { transform: translateY(10px); opacity:0; } to { transform: translateY(0); opacity:1; } }
-@keyframes pg-step-check { from { transform: scale(0) rotate(-20deg); opacity:0; } to { transform: scale(1) rotate(0deg); opacity:1; } }
+@keyframes pg-step-check { from { transform: scale(0.9) rotate(-8deg); opacity:0; } to { transform: scale(1) rotate(0deg); opacity:1; } }
 @keyframes pg-badge-pop  { 0% { transform: scale(0.4); opacity:0; } 60% { transform: scale(1.15); } 100% { transform: scale(1); opacity:1; } }
 
 @keyframes pg-row-slide-out {
