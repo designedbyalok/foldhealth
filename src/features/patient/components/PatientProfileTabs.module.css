@@ -34,7 +34,7 @@
   scroll-behavior: smooth;
 }
 .tabsScroll::-webkit-scrollbar { display: none; }  /* Chrome/Safari */
-.tab { padding: 0 10px; font-size: 14px; font-weight: 400; color: var(--neutral-300); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.12s; white-space: nowrap; height: 100%; display: flex; align-items: center; flex-shrink: 0; scroll-margin-inline: 24px; }
+.tab { padding: 0 10px; font-size: 14px; font-weight: 400; color: var(--neutral-300); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: background var(--duration-instant) var(--ease-hover), color var(--duration-instant) var(--ease-hover), border-color var(--duration-instant) var(--ease-hover); white-space: nowrap; height: 100%; display: flex; align-items: center; flex-shrink: 0; scroll-margin-inline: 24px; }
 .tabActive { color: var(--primary-300); font-weight: 500; border-bottom-color: var(--primary-300); }
 .tab:hover:not(.tabActive) { color: var(--neutral-400); }
 .searchIcon { background: none; border: none; cursor: pointer; padding: 8px 6px; display: flex; align-items: center; flex-shrink: 0; }

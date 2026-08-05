@@ -54,7 +54,10 @@
   border-radius: 50%;
   background: var(--score-color);
   box-shadow: 0 0 0 3px var(--score-halo);
-  transition: all 400ms ease;
+  transition:
+    transform var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out),
+    background var(--duration-base) var(--ease-out);
 }
 
 .scoreRow {
@@ -260,7 +263,10 @@
   border: 1px solid var(--sent-tag-border);
   padding: 3px 7px;
   border-radius: 999px;
-  transition: all 400ms ease;
+  transition:
+    transform var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out),
+    background var(--duration-base) var(--ease-out);
 }
 
 .sentBar {

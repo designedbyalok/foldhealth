@@ -134,6 +134,28 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
+   Motion tokens
+   Curves and durations for every UI transition. Never hand-type
+   a cubic-bezier() or a duration in module CSS — reach for one
+   of these tokens. Decision rules distilled from the animation
+   audit (see plans/README.md).
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  /* Easing */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);         /* strong ease-out — default UI entrances/exits */
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);     /* strong ease-in-out — on-screen morphs */
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);      /* iOS-like drawer curve */
+  --ease-hover: ease;                                  /* built-in ease — hover/color changes only */
+
+  /* Durations */
+  --duration-instant: 100ms;   /* button press feedback, near-instant response */
+  --duration-fast: 160ms;      /* tooltips, small popovers, hover */
+  --duration-base: 200ms;      /* default UI transitions */
+  --duration-medium: 250ms;    /* dropdowns, selects, small drawers */
+  --duration-slow: 300ms;      /* modals, drawers, large panels — hard ceiling for UI */
+}
+
+/* ═══════════════════════════════════════════════════════════
    DARK THEME
    Overrides only — anything not redeclared inherits from :root.
    Sidebar tokens intentionally NOT overridden (always-dark chrome).

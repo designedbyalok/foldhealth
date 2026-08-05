@@ -1,12 +1,21 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../Icon/Icon';
 import { CloseButton } from '../CloseButton/CloseButton';
 import styles from './Drawer.module.css';
 
-// Matches the slideOut / overlayOut animation duration in Drawer.module.css.
-// Keep in sync — bumping one without the other clips or lags the exit.
-const CLOSE_ANIM_MS = 250;
+// Falls back to 250ms when the CSS custom property is unreadable (rare — SSR,
+// portal not yet mounted). The CSS custom property `--drawer-duration` on
+// `.panel` is the source of truth; do NOT hard-code the timing anywhere else.
+const FALLBACK_CLOSE_MS = 250;
+
+function readDrawerDurationMs(node) {
+  if (!node) return FALLBACK_CLOSE_MS;
+  const raw = getComputedStyle(node).getPropertyValue('--drawer-duration').trim();
+  if (!raw) return FALLBACK_CLOSE_MS;
+  const ms = raw.endsWith('ms') ? parseFloat(raw) : parseFloat(raw) * 1000;
+  return Number.isFinite(ms) && ms > 0 ? ms : FALLBACK_CLOSE_MS;
+}
 
 /**
  * Shared Drawer shell — the standard floating right-side panel.
@@ -37,27 +46,30 @@ const CLOSE_ANIM_MS = 250;
  *  - Header padding: 20px 24px 16px
  *  - Body padding: 0 24px 24px (scrollable)
  *  - Footer padding: 16px 24px (if present)
- *  - Animation: slideIn .25s ease (translateX)
+ *  - Animation: transform 250ms var(--ease-drawer) — driven by
+ *    Drawer.module.css @starting-style and [data-closing] transitions.
  */
 export function Drawer({ title, onClose, headerRight, banner, footer, children, className, bodyClassName, headerStyle, titleStyle, noCloseDivider, width }) {
   const panelStyle = width !== undefined
     ? { width: typeof width === 'number' ? `${width}px` : width }
     : undefined;
   // `closing` flips true when the user requests close; we keep the drawer
-  // mounted for CLOSE_ANIM_MS so the slideOut + fade-out play, then call
-  // the parent's onClose to actually unmount. Overlay clicks and close-
-  // button clicks both go through this same gate.
+  // mounted for --drawer-duration so the transform + opacity transitions
+  // play, then call the parent's onClose to actually unmount. Overlay clicks
+  // and close-button clicks both go through this same gate.
   const [closing, setClosing] = useState(false);
+  const panelRef = useRef(null);
   const requestClose = useCallback(() => {
     if (closing) return;
     setClosing(true);
-    setTimeout(() => onClose?.(), CLOSE_ANIM_MS);
+    const ms = readDrawerDurationMs(panelRef.current);
+    setTimeout(() => onClose?.(), ms);
   }, [closing, onClose]);
 
   return createPortal(
     <>
       <div className={styles.overlay} data-closing={closing ? 'true' : 'false'} onClick={requestClose} />
-      <div className={`${styles.panel}${className ? ` ${className}` : ''}`} data-closing={closing ? 'true' : 'false'} style={panelStyle}>
+      <div ref={panelRef} className={`${styles.panel}${className ? ` ${className}` : ''}`} data-closing={closing ? 'true' : 'false'} style={panelStyle}>
         <div className={styles.header} style={headerStyle}>
           <h2 className={styles.headerTitle} style={titleStyle}>{title}</h2>
           <div className={styles.headerRight}>

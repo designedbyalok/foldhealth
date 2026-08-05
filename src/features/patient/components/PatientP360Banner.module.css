@@ -195,7 +195,7 @@
 .profileDropdownTitle { font-size: 14px; font-weight: 500; color: var(--neutral-500); font-family: 'Inter', sans-serif; padding: 0 4px 4px; }
 .profileOption {
   border: 0.5px solid var(--neutral-100); border-radius: 8px; padding: 10px 12px;
-  cursor: pointer; display: flex; flex-direction: column; gap: 6px; transition: all 0.1s;
+  cursor: pointer; display: flex; flex-direction: column; gap: 6px; transition: background var(--duration-instant) var(--ease-hover), color var(--duration-instant) var(--ease-hover), border-color var(--duration-instant) var(--ease-hover);
 }
 .profileOption:hover { border-color: var(--neutral-200); }
 .profileOptionSelected { border-color: var(--primary-300); background: var(--primary-50); }

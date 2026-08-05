@@ -202,7 +202,11 @@
   padding: 8px 12px 12px 8px;
   margin-bottom: 8px;
   cursor: pointer;
-  transition: all .2s ease, transform .2s ease;
+  transition:
+    background var(--duration-base) var(--ease-hover),
+    color var(--duration-base) var(--ease-hover),
+    border-color var(--duration-base) var(--ease-hover),
+    transform var(--duration-base) var(--ease-out);
 }
 .transitionBlockActive {
   background: var(--primary-50);
@@ -315,7 +319,10 @@
   border: none;
   cursor: pointer;
   font-family: 'Inter', sans-serif;
-  transition: all .12s;
+  transition:
+    background var(--duration-instant) var(--ease-hover),
+    color var(--duration-instant) var(--ease-hover),
+    border-color var(--duration-instant) var(--ease-hover);
 }
 .toggleBtnActive {
   background: var(--neutral-0);

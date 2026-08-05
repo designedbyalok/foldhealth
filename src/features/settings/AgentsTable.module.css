@@ -191,7 +191,10 @@
   background: var(--neutral-0);
   color: var(--neutral-300);
   font-family: 'Inter', sans-serif;
-  transition: all .15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
   user-select: none;
   white-space: nowrap;
 }
@@ -225,7 +228,10 @@
   justify-content: center;
   background: transparent;
   color: var(--neutral-200);
-  transition: all .15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
 }
 
 .viewBtn:hover { color: var(--neutral-400); }

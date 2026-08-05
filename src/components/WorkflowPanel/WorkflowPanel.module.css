@@ -131,7 +131,10 @@
   font-weight: 500;
   cursor: pointer;
   border: 1px solid;
-  transition: all .15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
 }
 
 .optYes { background: var(--status-success-light); color: var(--status-success); border-color: color-mix(in srgb, var(--status-success) 30%, transparent); }
@@ -173,7 +176,10 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: all .15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
 }
 
 .checkItem.checked .checkBox {
@@ -196,7 +202,10 @@
   border: 1px solid var(--neutral-150);
   background: var(--neutral-0);
   color: var(--neutral-300);
-  transition: all .15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
 }
 
 .tocTypeBtn.active {

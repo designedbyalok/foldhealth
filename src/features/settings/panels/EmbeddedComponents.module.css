@@ -206,7 +206,10 @@
   border: 0.5px solid var(--neutral-150);
   border-radius: 12px;
   padding: 16px;
-  transition: all .2s;
+  transition:
+    background var(--duration-base) var(--ease-hover),
+    color var(--duration-base) var(--ease-hover),
+    border-color var(--duration-base) var(--ease-hover);
   position: relative;
   overflow: hidden;
 }
@@ -426,7 +429,10 @@
   gap: 6px;
   background: var(--neutral-0);
   text-align: center;
-  transition: all .15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
 }
 .placementCard:hover { border-color: var(--primary-200); }
 .placementCardActive {
@@ -481,7 +487,10 @@
   font-size: 12px;
   color: var(--neutral-400);
   border: 0.5px solid var(--neutral-150);
-  transition: all .15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
   user-select: none;
 }
 .checkItem:hover { background: var(--neutral-50); }
@@ -524,7 +533,10 @@
   font-size: 11px;
   color: var(--neutral-300);
   background: var(--neutral-0);
-  transition: all .15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
   user-select: none;
 }
 .wlPill:hover { border-color: var(--primary-200); }
@@ -565,7 +577,10 @@
 .sliderFill {
   height: 100%;
   border-radius: 4px;
-  transition: all .2s;
+  transition:
+    background var(--duration-base) var(--ease-hover),
+    color var(--duration-base) var(--ease-hover),
+    border-color var(--duration-base) var(--ease-hover);
 }
 .sliderGreen { background: var(--status-success); }
 .sliderAmber { background: var(--status-warning); }
@@ -616,7 +631,10 @@
   color: var(--neutral-300);
   cursor: pointer;
   white-space: nowrap;
-  transition: all .15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
   font-family: 'Inter', sans-serif;
 }
 .previewTab:hover { border-color: var(--primary-200); color: var(--neutral-400); }
@@ -674,7 +692,10 @@
   color: var(--neutral-300);
   cursor: pointer;
   border-bottom: 2px solid transparent;
-  transition: all .15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
   font-family: 'Inter', sans-serif;
 }
 .subTab:hover { color: var(--neutral-400); }

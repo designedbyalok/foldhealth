@@ -97,12 +97,44 @@ export function persistTheme(setting) {
   }
 }
 
-/** Apply a resolved theme ('light' | 'dark') to the <html> element. */
+/**
+ * Duration of the theme cross-fade in ms — mirrors --duration-base in
+ * src/tokens/tokens.css. The +20ms cushion covers the last commit frame.
+ */
+const THEME_TRANSITION_MS = 200;
+const THEME_TRANSITION_CLEAR_MS = THEME_TRANSITION_MS + 20;
+
+/**
+ * Apply a resolved theme ('light' | 'dark' | 'blue' | 'plum') to <html>.
+ *
+ * Coordinates with the [data-theme-transitioning] gate in src/index.css so
+ * theme flips cross-fade. Initial paint is a no-op (guard: same-theme skip),
+ * so the app boots without a fade.
+ *
+ * Never write `data-theme` directly outside this function — the attribute
+ * pair is the contract.
+ */
 export function applyResolvedTheme(resolved) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
-  root.setAttribute('data-theme', resolved);
-  root.classList.toggle('dark', resolved === 'dark');
+  if (root.getAttribute('data-theme') === resolved) {
+    // Still ensure the .dark class matches on first boot; the initial
+    // <html data-theme> may have been set by the blocking script without
+    // the class toggle.
+    root.classList.toggle('dark', resolved === 'dark');
+    return;
+  }
+  root.setAttribute('data-theme-transitioning', '');
+  // Wait one frame so the transitioning attribute applies before the color
+  // tokens change. Without this, the color swap and the transition-property
+  // set race and the fade is inconsistent.
+  requestAnimationFrame(() => {
+    root.setAttribute('data-theme', resolved);
+    root.classList.toggle('dark', resolved === 'dark');
+    setTimeout(() => {
+      root.removeAttribute('data-theme-transitioning');
+    }, THEME_TRANSITION_CLEAR_MS);
+  });
 }
 
 /**

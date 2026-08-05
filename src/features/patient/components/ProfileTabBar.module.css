@@ -16,6 +16,6 @@
   scroll-behavior: smooth;
 }
 .tabs::-webkit-scrollbar { display: none; }
-.tab { padding: 0 10px; font-size: 14px; font-weight: 400; color: var(--neutral-300); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-family: 'Inter', sans-serif; white-space: nowrap; transition: all 0.12s; display: flex; align-items: center; flex-shrink: 0; scroll-margin-inline: 24px; }
+.tab { padding: 0 10px; font-size: 14px; font-weight: 400; color: var(--neutral-300); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; transition: background var(--duration-instant) var(--ease-hover), color var(--duration-instant) var(--ease-hover), border-color var(--duration-instant) var(--ease-hover); display: flex; align-items: center; flex-shrink: 0; scroll-margin-inline: 24px; }
 .tabActive { color: var(--primary-300); font-weight: 500; border-bottom-color: var(--primary-300); }
 .tab:hover:not(.tabActive) { color: var(--neutral-400); }

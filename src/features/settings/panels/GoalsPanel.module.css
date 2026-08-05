@@ -4,7 +4,7 @@
 .filterChip {
   padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
   cursor: pointer; border: 0.5px solid var(--neutral-150); background: var(--neutral-0);
-  color: var(--neutral-300); transition: all .15s; user-select: none;
+  color: var(--neutral-300); transition: background var(--duration-fast) var(--ease-hover), color var(--duration-fast) var(--ease-hover), border-color var(--duration-fast) var(--ease-hover); user-select: none;
 }
 .filterChip:hover { background: var(--neutral-50); color: var(--neutral-400); }
 .filterChipActive {
@@ -18,7 +18,7 @@
 /* Card */
 .card {
   background: var(--neutral-0); border: 0.5px solid var(--neutral-150); border-radius: 12px;
-  padding: 16px; cursor: pointer; transition: all .2s; position: relative; overflow: hidden;
+  padding: 16px; cursor: pointer; transition: background var(--duration-base) var(--ease-hover), color var(--duration-base) var(--ease-hover), border-color var(--duration-base) var(--ease-hover); position: relative; overflow: hidden;
 }
 .card::before {
   content: ''; position: absolute; left: 0; top: 0; bottom: 0;
@@ -75,7 +75,7 @@
 .cardEditBtn {
   padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 500;
   border: 0.5px solid var(--neutral-150); background: var(--neutral-0); color: var(--neutral-300);
-  cursor: pointer; transition: all .15s; font-family: 'Inter', sans-serif;
+  cursor: pointer; transition: background var(--duration-fast) var(--ease-hover), color var(--duration-fast) var(--ease-hover), border-color var(--duration-fast) var(--ease-hover);
 }
 .cardEditBtn:hover { border-color: var(--primary-200); background: var(--primary-50); color: var(--primary-300); }
 
@@ -197,13 +197,13 @@
 
 /* ── Wizard Drawer ── */
 .stepper { display: flex; align-items: center; gap: 0; margin-bottom: 10px; padding: 0 4px; }
-.wizStep { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--neutral-200); cursor: pointer; padding: 6px 0; transition: all .15s; }
+.wizStep { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--neutral-200); cursor: pointer; padding: 6px 0; transition: background var(--duration-fast) var(--ease-hover), color var(--duration-fast) var(--ease-hover), border-color var(--duration-fast) var(--ease-hover); }
 .wizStepActive { color: var(--primary-300); }
 .wizStepDone { color: var(--neutral-400); }
 .wizStepNum {
   width: 22px; height: 22px; border-radius: 4px; display: flex; align-items: center; justify-content: center;
   font-size: 11px; font-weight: 500; background: var(--neutral-0); border: 0.5px solid var(--neutral-150);
-  color: var(--neutral-300); transition: all .2s; flex-shrink: 0; font-variant-numeric: tabular-nums;
+  color: var(--neutral-300); transition: background var(--duration-base) var(--ease-hover), color var(--duration-base) var(--ease-hover), border-color var(--duration-base) var(--ease-hover); flex-shrink: 0; font-variant-numeric: tabular-nums;
 }
 .wizStepActive .wizStepNum { background: var(--neutral-0); color: var(--primary-300); border-color: var(--primary-200); }
 .wizStepDone .wizStepNum { background: var(--primary-50); color: var(--primary-300); border-color: rgba(140,90,226,.3); }
@@ -237,7 +237,7 @@
 .templateGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
 .templateCard {
   background: var(--neutral-0); border: 0.5px solid var(--neutral-150); border-radius: 8px; padding: 12px;
-  cursor: pointer; transition: all .15s;
+  cursor: pointer; transition: background var(--duration-fast) var(--ease-hover), color var(--duration-fast) var(--ease-hover), border-color var(--duration-fast) var(--ease-hover);
 }
 .templateCard:hover { border-color: var(--primary-200); background: var(--primary-50); }
 .templateCardTitle { font-size: 12px; font-weight: 500; color: var(--neutral-500); margin-bottom: 3px; }
@@ -281,19 +281,19 @@
 .scoringToggle {
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 14px;
-  cursor: pointer; transition: all .15s;
+  cursor: pointer; transition: background var(--duration-fast) var(--ease-hover), color var(--duration-fast) var(--ease-hover), border-color var(--duration-fast) var(--ease-hover);
 }
 .scoringToggleLabel { display: flex; align-items: center; gap: 10px; }
 .scoringTitle { font-size: 14px; font-weight: 500; color: var(--neutral-400); }
 .scoringSub { font-size: 12px; color: var(--neutral-300); margin-top: 1px; }
 .toggle {
   width: 34px; height: 18px; border-radius: 4px; background: var(--neutral-150);
-  border: none; cursor: pointer; position: relative; transition: all .2s; flex-shrink: 0;
+  border: none; cursor: pointer; position: relative; transition: background var(--duration-base) var(--ease-hover), color var(--duration-base) var(--ease-hover), border-color var(--duration-base) var(--ease-hover); flex-shrink: 0;
 }
 .toggleOn { background: var(--primary-300); }
 .toggle::after {
   content: ''; position: absolute; width: 14px; height: 14px; border-radius: 3px;
-  background: var(--neutral-0); top: 2px; left: 2px; transition: all .2s;
+  background: var(--neutral-0); top: 2px; left: 2px; transition: background var(--duration-base) var(--ease-hover), color var(--duration-base) var(--ease-hover), border-color var(--duration-base) var(--ease-hover);
 }
 .toggleOn::after { transform: translateX(16px); }
 
@@ -324,7 +324,7 @@
   width: 24px; height: 24px; border-radius: 6px; border: 0.5px solid var(--neutral-150);
   background: var(--neutral-0); color: var(--neutral-300); cursor: pointer;
   display: flex; align-items: center; justify-content: center; font-size: 12px;
-  transition: all .15s;
+  transition: background var(--duration-fast) var(--ease-hover), color var(--duration-fast) var(--ease-hover), border-color var(--duration-fast) var(--ease-hover);
 }
 .iconBtn:hover { background: var(--neutral-50); color: var(--neutral-400); }
 .iconBtnDelete:hover { background: var(--status-error-light); color: var(--status-error); border-color: transparent; }
@@ -405,7 +405,7 @@
   width: 28px; height: 26px; border-radius: 4px; border: none;
   background: transparent; color: var(--neutral-200); cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  font-size: 14px; transition: all .15s;
+  font-size: 14px; transition: background var(--duration-fast) var(--ease-hover), color var(--duration-fast) var(--ease-hover), border-color var(--duration-fast) var(--ease-hover);
 }
 .viewBtn:hover { color: var(--neutral-400); }
 
@@ -440,7 +440,7 @@
 .footerBtn {
   display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px;
   border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;
-  font-family: 'Inter', sans-serif; transition: all .15s; white-space: nowrap; border: none;
+  transition: background var(--duration-fast) var(--ease-hover), color var(--duration-fast) var(--ease-hover), border-color var(--duration-fast) var(--ease-hover); white-space: nowrap; border: none;
 }
 .footerBtnGhost { background: var(--neutral-0); border: 0.5px solid var(--neutral-150); color: var(--neutral-300); }
 .footerBtnGhost:hover { background: var(--neutral-50); color: var(--neutral-400); }

@@ -59,7 +59,10 @@
   background: var(--neutral-0);
   border: none;
   cursor: pointer;
-  transition: all .12s;
+  transition:
+    background var(--duration-instant) var(--ease-hover),
+    color var(--duration-instant) var(--ease-hover),
+    border-color var(--duration-instant) var(--ease-hover);
   border-right: 0.5px solid var(--neutral-150);
 }
 

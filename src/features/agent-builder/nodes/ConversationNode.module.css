@@ -149,7 +149,11 @@
   background: var(--neutral-50);
   border: 0.5px solid var(--neutral-150);
   cursor: pointer;
-  transition: all .2s ease, transform .2s ease;
+  transition:
+    background var(--duration-base) var(--ease-hover),
+    color var(--duration-base) var(--ease-hover),
+    border-color var(--duration-base) var(--ease-hover),
+    transform var(--duration-base) var(--ease-out);
 }
 .transitionRowActive {
   background: var(--primary-50);

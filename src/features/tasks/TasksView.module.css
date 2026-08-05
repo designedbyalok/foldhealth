@@ -56,7 +56,10 @@
   color: var(--neutral-400);
   cursor: pointer;
   white-space: nowrap;
-  transition: all .15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
 }
 
 .filterChip:hover { border-color: var(--primary-200); background: var(--primary-50); }

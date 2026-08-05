@@ -104,7 +104,10 @@
   border: 0.5px solid var(--primary-300);
   border-radius: 8px;
   cursor: pointer;
-  transition: all .15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
   font-family: 'Inter', sans-serif;
   white-space: nowrap;
 }
@@ -160,7 +163,10 @@
   border: 0.5px solid var(--neutral-150);
   border-radius: 8px;
   cursor: pointer;
-  transition: all .15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
   font-family: 'Inter', sans-serif;
   white-space: nowrap;
 }

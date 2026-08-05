@@ -386,7 +386,10 @@
   font-size: 12px;
   font-weight: 500;
   color: var(--neutral-300);
-  transition: all .12s;
+  transition:
+    background var(--duration-instant) var(--ease-hover),
+    color var(--duration-instant) var(--ease-hover),
+    border-color var(--duration-instant) var(--ease-hover);
   padding: 0;
 }
 
@@ -430,7 +433,10 @@
   font-family: 'Inter', sans-serif;
   font-size: 12px;
   color: var(--neutral-200);
-  transition: all .12s;
+  transition:
+    background var(--duration-instant) var(--ease-hover),
+    color var(--duration-instant) var(--ease-hover),
+    border-color var(--duration-instant) var(--ease-hover);
 }
 
 .emptyDropRich {
@@ -763,7 +769,10 @@
   border-radius: 8px;
   background: var(--neutral-0);
   cursor: pointer;
-  transition: all .12s;
+  transition:
+    background var(--duration-instant) var(--ease-hover),
+    color var(--duration-instant) var(--ease-hover),
+    border-color var(--duration-instant) var(--ease-hover);
 }
 
 .layoutTile:hover {

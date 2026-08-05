@@ -94,7 +94,10 @@
   color: var(--neutral-400);
   cursor: pointer;
   font-family: 'Inter', sans-serif;
-  transition: all .15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
 }
 .actionBtn:hover { border-color: #c4b5fd; background: var(--primary-100); color: var(--primary-300); }
 .actionBtn.active { background: #ede5fb; color: var(--primary-300); border-color: #c4b5fd; }

@@ -356,7 +356,7 @@
 .timeSlot {
   padding: 2px 6px; height: 22px; min-width: 85px; border: none; border-radius: 4px;
   font-size: 14px; color: var(--neutral-300); background: var(--neutral-50);
-  cursor: pointer; font-family: 'Inter', sans-serif; transition: all .1s; text-align: center;
+  cursor: pointer; transition: background var(--duration-instant) var(--ease-hover), color var(--duration-instant) var(--ease-hover), border-color var(--duration-instant) var(--ease-hover); text-align: center;
 }
 .timeSlot:hover { background: var(--primary-50); color: var(--primary-300); }
 .timeSlotActive {

@@ -43,32 +43,50 @@ svg.iconify [stroke-width="1.5"] {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Theme transitions
-   Smoothly cross-fade colors when the user flips themes.
-   Initial paint is NOT animated — transitions only fire when
-   a token-driven property changes after first render.
-   `body` triggers the global cascade on theme switch.
-   `*` ensures every leaf surface (cards, badges, icons, borders)
-   participates in the same 200ms transition window.
+   Theme transition cross-fade
+   Only fires while a theme flip is in progress. src/lib/theme/applyTheme.js
+   sets [data-theme-transitioning] on <html>, waits one frame, changes the
+   [data-theme] value, then removes the attribute after --duration-base.
+   Between flips, no transition is applied globally — per-element CSS
+   handles hover/focus color changes at its own cost.
    ═══════════════════════════════════════════════════════════ */
-body {
-  transition: background-color 200ms ease, color 200ms ease;
+html[data-theme-transitioning],
+html[data-theme-transitioning] *,
+html[data-theme-transitioning] *::before,
+html[data-theme-transitioning] *::after {
+  transition:
+    background-color var(--duration-base) var(--ease-hover),
+    color var(--duration-base) var(--ease-hover),
+    border-color var(--duration-base) var(--ease-hover),
+    fill var(--duration-base) var(--ease-hover),
+    stroke var(--duration-base) var(--ease-hover) !important;
+  /* box-shadow deliberately dropped from the theme cross-fade — the shadow
+     tokens don't retint on theme change enough to justify the paint cost. */
 }
 
-*,
-*::before,
-*::after {
-  transition: background-color 200ms ease, color 200ms ease,
-              border-color 200ms ease, fill 200ms ease, stroke 200ms ease,
-              box-shadow 200ms ease;
-}
-
-/* Honor reduced-motion preference */
+/* ═══════════════════════════════════════════════════════════
+   Reduced-motion strategy
+   AUDIT rule: fewer and gentler, not zero. Users who set this pref
+   avoid position/scale motion but still need feedback for state
+   changes. Opacity/color fades stay; position, scale, and rotation
+   are dropped by per-component reduced-motion blocks (see
+   src/features/hcc/DiagPanel/*.module.css for the exemplar). This
+   global rule caps duration so no legacy animation runs long, and
+   halts infinite pulses/shimmers after one iteration.
+   ═══════════════════════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {
-  body,
   *,
   *::before,
   *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+
+  html[data-theme-transitioning],
+  html[data-theme-transitioning] *,
+  html[data-theme-transitioning] *::before,
+  html[data-theme-transitioning] *::after {
     transition: none !important;
   }
 }
@@ -91,7 +109,9 @@ input[type="checkbox"] {
   cursor: pointer;
   position: relative;
   flex-shrink: 0;
-  transition: all .15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
 }
 
 input[type="checkbox"]:hover {
@@ -158,7 +178,9 @@ input[type="radio"] {
   cursor: pointer;
   position: relative;
   flex-shrink: 0;
-  transition: all .15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
 }
 
 input[type="radio"]:hover {

@@ -418,7 +418,10 @@
   background: var(--neutral-0);
   flex-shrink: 0;
   position: relative;
-  transition: all .15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
 }
 
 .radioDotSelected {
@@ -605,7 +608,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all .15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
 }
 
 .checkboxBoxChecked {

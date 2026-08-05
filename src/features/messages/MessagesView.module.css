@@ -107,7 +107,10 @@
   color: var(--neutral-400);
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.1s;
+  transition:
+    background var(--duration-instant) var(--ease-hover),
+    color var(--duration-instant) var(--ease-hover),
+    border-color var(--duration-instant) var(--ease-hover);
 }
 
 .convTab:hover {

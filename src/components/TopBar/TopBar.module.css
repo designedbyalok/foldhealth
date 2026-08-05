@@ -237,7 +237,10 @@
   color: var(--neutral-300);
   position: relative;
   flex-shrink: 0;
-  transition: all .15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
 }
 
 .iconBtn:hover { background: var(--neutral-50); color: var(--primary-300); }

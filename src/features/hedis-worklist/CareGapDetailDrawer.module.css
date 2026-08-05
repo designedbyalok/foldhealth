@@ -406,7 +406,10 @@
   padding: 0 12px; white-space: nowrap; flex-shrink: 0;
   font-size: 13px; font-weight: 400; color: var(--neutral-300);
   cursor: pointer; border-bottom: 2px solid transparent;
-  transition: all 0.12s;
+  transition:
+    background var(--duration-instant) var(--ease-hover),
+    color var(--duration-instant) var(--ease-hover),
+    border-color var(--duration-instant) var(--ease-hover);
   background: none; border-top: none; border-left: none; border-right: none;
   font-family: 'Inter', sans-serif;
   height: 100%; display: flex; align-items: center;

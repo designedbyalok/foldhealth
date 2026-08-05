@@ -23,11 +23,27 @@
   cursor: pointer;
   border: none;
   outline: none;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover),
+    transform var(--duration-fast) var(--ease-out);
   flex-shrink: 0;
   -webkit-appearance: none;
   appearance: none;
   line-height: 1;
+}
+
+/* Press feedback — subtle scale-down on active. Applies to every button type
+   through the shared base class. AUDIT: 0.95–0.98 range; 0.97 is our default. */
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn:active:not(:disabled) {
+    transform: none;
+  }
 }
 
 .btn:focus-visible {

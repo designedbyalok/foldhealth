@@ -48,7 +48,10 @@
   color: var(--neutral-400);
   cursor: pointer;
   white-space: nowrap;
-  transition: all .15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
 }
 
 .chip:hover { border-color: var(--primary-200); background: var(--primary-50); }
@@ -245,7 +248,10 @@
   font-weight: 500;
   color: var(--neutral-400);
   cursor: pointer;
-  transition: all .15s;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
   white-space: nowrap;
 }
 

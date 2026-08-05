@@ -38,7 +38,7 @@
 }
 .slicerToggleBtn {
   font-size: 12px; font-weight: 500; padding: 4px 12px; border-radius: 3px;
-  cursor: pointer; color: var(--neutral-300); transition: all .12s; white-space: nowrap;
+  cursor: pointer; color: var(--neutral-300); transition: background var(--duration-instant) var(--ease-hover), color var(--duration-instant) var(--ease-hover), border-color var(--duration-instant) var(--ease-hover); white-space: nowrap;
   border: none; background: transparent; font-family: 'Inter', sans-serif;
 }
 .slicerToggleBtn.on { background: var(--neutral-0); color: var(--primary-300); box-shadow: 0 1px 2px rgba(0,0,0,.06); }
@@ -46,7 +46,7 @@
 .slicerPersona {
   display: flex; align-items: center; gap: 6px;
   background: var(--neutral-50); border: 0.5px solid var(--neutral-150);
-  border-radius: 4px; padding: 5px 10px; cursor: pointer; transition: all .12s;
+  border-radius: 4px; padding: 5px 10px; cursor: pointer; transition: background var(--duration-instant) var(--ease-hover), color var(--duration-instant) var(--ease-hover), border-color var(--duration-instant) var(--ease-hover);
 }
 .slicerPersona:hover { border-color: var(--primary-200); background: var(--primary-100); }
 .personaDot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
@@ -108,7 +108,7 @@
   background: var(--neutral-0); border: 0.5px solid var(--neutral-150);
   border-radius: 6px; padding: 6px 12px; font-family: 'Inter', sans-serif;
   font-size: 14px; font-weight: 500; color: var(--neutral-400); cursor: pointer;
-  transition: all .12s;
+  transition: background var(--duration-instant) var(--ease-hover), color var(--duration-instant) var(--ease-hover), border-color var(--duration-instant) var(--ease-hover);
 }
 .filterBtn:hover { border-color: var(--neutral-200); color: var(--neutral-500); }
 
@@ -295,7 +295,7 @@
 .tab {
   font-size: 14px; font-weight: 500; color: var(--neutral-300); padding: 8px 14px;
   cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
-  white-space: nowrap; transition: all .12s; user-select: none;
+  white-space: nowrap; transition: background var(--duration-instant) var(--ease-hover), color var(--duration-instant) var(--ease-hover), border-color var(--duration-instant) var(--ease-hover); user-select: none;
   background: none; border-top: none; border-left: none; border-right: none;
   font-family: 'Inter', sans-serif;
 }
@@ -379,7 +379,7 @@
 /* ── NLQ card ── */
 .nlqCard {
   background: var(--neutral-0); border: 0.5px solid var(--neutral-150); border-radius: 6px;
-  padding: 10px 14px; cursor: pointer; transition: all .15s;
+  padding: 10px 14px; cursor: pointer; transition: background var(--duration-fast) var(--ease-hover), color var(--duration-fast) var(--ease-hover), border-color var(--duration-fast) var(--ease-hover);
 }
 .nlqCard:hover { border-color: var(--primary-200); background: var(--primary-100); }
 .nlqTitle { font-size: 14px; font-weight: 500; color: var(--neutral-500); }
