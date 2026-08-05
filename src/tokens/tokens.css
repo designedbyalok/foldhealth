@@ -353,7 +353,11 @@
   --sidebar-bg:                    var(--neutral-0);
   --sidebar-fg:                    var(--neutral-400);
   --sidebar-fg-muted:              var(--neutral-300);
-  --sidebar-hover-bg:              var(--primary-100);
+  /* Light chrome pairs a dark hover surface (primary-400) with white text
+     — the pill deepens one step darker than the active state, matching
+     the same pattern the default dark chrome uses in reverse. */
+  --sidebar-hover-bg:              var(--primary-400);
+  --sidebar-hover-fg:              var(--neutral-0);
   --sidebar-active-bg:             var(--primary-300);
   --sidebar-active-border:         var(--primary-300);
   --sidebar-active-overlay:        rgba(0, 0, 0, 0.10);

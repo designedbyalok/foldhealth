@@ -180,14 +180,20 @@
   transition: color .15s;
 }
 
-/* Hover (inactive) — paint the inner card. Active items skip this rule
-   because the pill owns the paint (see .item.active:hover below). */
+/* Hover (inactive) — paint the inner card AND flip the item's own color so
+   both the label span and the icon (via currentColor) inherit the paired
+   hover-fg. Active items skip this rule because the pill owns the paint
+   (see .item.active:hover below). */
 .item:not(.active):hover .itemInner {
   background: var(--sidebar-hover-bg);
 }
 
-.item:hover span {
-  color: var(--sidebar-fg);
+.item:not(.active):hover {
+  color: var(--sidebar-hover-fg, var(--sidebar-fg));
+}
+
+.item:not(.active):hover span {
+  color: var(--sidebar-hover-fg, var(--sidebar-fg));
 }
 
 /* Active state — background is painted by the sliding pill above, so we
