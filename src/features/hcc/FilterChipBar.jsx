@@ -11,6 +11,27 @@ import {
 } from './filters';
 
 /**
+ * Wrap a state mutation in document.startViewTransition when the browser
+ * supports it, so the HCC worklist tbody crossfades between filter sets
+ * (paired with the view-transition-name in HccWorklistRow.module.css).
+ * Falls back to a direct call when the API is unavailable (Firefox pre-129,
+ * Safari pre-18) — filter still applies, just without the crossfade.
+ *
+ * Rapid filter changes abort in-flight transitions; the API surfaces that
+ * as InvalidStateError on the ready/finished promises. We swallow those
+ * rejections so an intentional abort doesn't spam the console.
+ */
+function withViewTransition(fn) {
+  if (typeof document !== 'undefined' && document.startViewTransition) {
+    const t = document.startViewTransition(fn);
+    t.ready?.catch(() => {});
+    t.finished?.catch(() => {});
+  } else {
+    fn();
+  }
+}
+
+/**
  * HCC/HEDIS filter chip row. Delegates its visual shell, one-line auto-fit,
  * More Filters trigger, tail cluster, and hidden width mirror to the shared
  * <FilterBar autoFit />; keeps its own per-chip type dispatch (multi / radio /
@@ -129,7 +150,9 @@ export function FilterChipBar({
     const vals = filters[k] || [];
     const active = vals.length > 0;
     const summary = active ? summarize(k, vals) : undefined;
-    const setVals = (next) => setFilter(k, next);
+    const setVals = list === 'HCC'
+      ? (next) => withViewTransition(() => setFilter(k, next))
+      : (next) => setFilter(k, next);
 
     if (!def || !['multi', 'radio', 'range', 'date'].includes(def?.type)) {
       return (
@@ -227,8 +250,12 @@ export function FilterChipBar({
       filterDefs={filterDefs}
       primaryKeys={primaryFilterKeys}
       filters={filters}
-      onFilterChange={(k, next) => setFilter(k, next)}
-      onClearAll={clearFilters}
+      onFilterChange={list === 'HCC'
+        ? (k, next) => withViewTransition(() => setFilter(k, next))
+        : (k, next) => setFilter(k, next)}
+      onClearAll={list === 'HCC'
+        ? () => withViewTransition(() => clearFilters())
+        : clearFilters}
       onSaveFilter={onSaveFilter}
       multiSelect
       visibleKeys={controlledVisibleKeys}

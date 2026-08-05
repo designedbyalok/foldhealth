@@ -468,7 +468,7 @@ export function HccWorklistTable() {
               </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className={rowStyles.tbody}>
             {paginated.map(m => (
               <HccWorklistRow
                 key={m.id}

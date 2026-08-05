@@ -28,6 +28,37 @@
 @media (prefers-reduced-motion: reduce) {
   .row { animation: none; }
 }
+
+/* ── Filter cross-fade ──
+   Assigns a view-transition-name to the HCC worklist tbody so filter
+   changes routed through document.startViewTransition (see
+   FilterChipBar.jsx) crossfade the row set instead of teleporting.
+   The `root` snapshot animation is disabled so only this tbody area
+   participates — the sidebar / topbar / filters stay put. */
+.tbody {
+  view-transition-name: hcc-worklist-body;
+}
+::view-transition-old(hcc-worklist-body),
+::view-transition-new(hcc-worklist-body) {
+  animation-duration: var(--duration-slow);
+  animation-timing-function: var(--ease-out);
+}
+::view-transition-old(hcc-worklist-body) {
+  /* Subtle blur mask on the outgoing state — hides the moment two row
+     sets overlap during the crossfade so the swap reads as smooth
+     rather than double-exposed. AUDIT calls out this exact pattern. */
+  filter: blur(2px);
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(hcc-worklist-body),
+  ::view-transition-new(hcc-worklist-body) {
+    animation: none;
+  }
+}
 .row > td {
   background: var(--neutral-0);
   vertical-align: top;      /* member + record-level columns top-align to the first DOS row */
