@@ -353,15 +353,20 @@
   --sidebar-bg:                    var(--neutral-0);
   --sidebar-fg:                    var(--neutral-400);
   --sidebar-fg-muted:              var(--neutral-300);
-  /* Light chrome pairs a dark hover surface (primary-400) with white text
-     — the pill deepens one step darker than the active state, matching
-     the same pattern the default dark chrome uses in reverse. */
-  --sidebar-hover-bg:              var(--primary-400);
-  --sidebar-hover-fg:              var(--neutral-0);
+  /* Two hover treatments on the light chrome:
+     - INACTIVE items lift into a neutral-50 surface with the label/icon in
+       neutral-400 — subtle warm-up that keeps the row readable without
+       committing to brand color.
+     - ACTIVE pill deepens one step darker to primary-400 (from the
+       primary-300 base) so the click target reads as still-selected but
+       hot to press again. Same "one step darker on active hover" pattern
+       as the default dark chrome. */
+  --sidebar-hover-bg:              var(--neutral-50);
+  --sidebar-hover-fg:              var(--neutral-400);
   --sidebar-active-bg:             var(--primary-300);
   --sidebar-active-border:         var(--primary-300);
-  --sidebar-active-overlay:        rgba(0, 0, 0, 0.10);
-  --sidebar-active-overlay-border: transparent;
+  --sidebar-active-overlay:        var(--primary-400);
+  --sidebar-active-overlay-border: var(--primary-400);
   --sidebar-active-fg:             #FFFFFF;
   --sidebar-logo:                  var(--primary-300);
   --sidebar-border:                var(--neutral-150);
