@@ -7,20 +7,23 @@
   pointer-events: none; /* allow clicks to pass through wrapper */
 }
 
+/* Toast body — matches Figma nodes 5578:8010-8013.
+ * 4px around the close button, 12px inline start on the message, 8px gap
+ * between them. 8px radius, 14px Inter Medium at line-height 1.2. */
 .toast {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
   width: max-content !important;
   max-width: min(600px, calc(100vw - 32px)) !important;
-  padding: 12px 48px 12px 16px !important;
+  padding: 4px 4px 4px 12px !important;
   margin: 0 auto !important;
   pointer-events: auto; /* restore clicks on the toast itself */
-  border-radius: 8px;
+  border-radius: 8px !important;
   box-shadow: var(--shadow-popover);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.4;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
   border: none !important;
   color: var(--neutral-0) !important;
 }
@@ -44,7 +47,9 @@
   background: var(--status-error) !important;
 }
 
-/* Warning — brand yellow bg needs dark text (white fails WCAG AA at 2.24:1). */
+/* Warning — Figma design has white text on --status-warning, but that's
+ * 2.24:1 (WCAG AA fail). Keep the brand yellow bg and use dark text so
+ * the toast is still readable. See PR #88 for the a11y decision. */
 .warning {
   background: var(--status-warning) !important;
   color: var(--neutral-500) !important;
@@ -62,7 +67,9 @@
 }
 
 .title {
-  font-weight: 500;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
 }
 
 .description {
@@ -74,18 +81,41 @@
   color: var(--neutral-0) !important;
 }
 
+/* Close button — 24×24 pill sitting inline at the trailing edge (Figma
+ * "ActionButton size=S" with a 16px close icon). Override Sonner's default
+ * absolute positioning so it flows in the toast's flex row. */
 .closeButton {
+  position: static !important;
+  transform: none !important;
+  right: auto !important;
+  top: auto !important;
+  left: auto !important;
+  /* Sonner emits [close, message] in DOM order; flex `order: 1` moves the
+   * close to the trailing edge so the toast reads [message, close] like
+   * the Figma spec. */
+  order: 1;
+  width: 24px !important;
+  height: 24px !important;
+  padding: 4px !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   background: transparent !important;
   border: none !important;
+  border-radius: 4px !important;
   color: var(--neutral-0) !important;
-  opacity: 0.8;
-  right: 16px !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-  left: auto !important;
+  opacity: 0.85;
+  cursor: pointer;
 }
 
 .closeButton:hover {
   opacity: 1;
+  background: color-mix(in srgb, var(--neutral-0) 14%, transparent) !important;
 }
 
+/* Force Sonner's default close-icon svg to the Figma 16px spec. */
+.closeButton svg {
+  width: 16px !important;
+  height: 16px !important;
+}
