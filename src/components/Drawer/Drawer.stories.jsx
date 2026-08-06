@@ -22,9 +22,30 @@ export default {
       options: ['default', 'split-panes', 'patient-banner'],
       description: 'Body composition: plain content, resizable two-pane split, or PatientBanner between header and body.',
     },
+    firstCta: {
+      control: 'boolean',
+      description: 'Renders a primary CTA (`primaryAction`) just before the close button — the drawer inserts the vertical divider for you.',
+    },
+    secondCta: {
+      control: 'boolean',
+      description: 'Renders a secondary CTA (`secondaryAction`) before the primary. Only shows when `firstCta` is also on.',
+      if: { arg: 'firstCta', eq: true },
+    },
   },
-  args: { layout: 'default' },
+  args: { layout: 'default', firstCta: false, secondCta: false },
 };
+
+// Buttons the CTA toggles inject into the drawer header. Kept here (not
+// inside each demo) so every variant shares the same look/labels.
+function CtaButtons({ firstCta, secondCta }) {
+  const first = firstCta ? (
+    <Button variant="primary" size="M" onClick={() => {}}>Save</Button>
+  ) : null;
+  const second = firstCta && secondCta ? (
+    <Button variant="secondary" size="M" onClick={() => {}}>Cancel</Button>
+  ) : null;
+  return { primaryAction: first, secondaryAction: second };
+}
 
 const centerStage = { display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: 24 };
 
@@ -33,15 +54,21 @@ const centerStage = { display: 'flex', alignItems: 'center', justifyContent: 'ce
  * click or the close button — both play the slideOut + overlay fade before
  * unmounting.
  */
-function DrawerDemo({ title = "Drawer Title", children }) {
+function DrawerDemo({ title = "Drawer Title", firstCta, secondCta, children }) {
   const [open, setOpen] = useState(false);
+  const { primaryAction, secondaryAction } = CtaButtons({ firstCta, secondCta });
   return (
     <div style={centerStage}>
       <Button variant="primary" onClick={() => setOpen(true)}>
         Open Drawer
       </Button>
       {open && (
-        <Drawer title={title} onClose={() => setOpen(false)}>
+        <Drawer
+          title={title}
+          onClose={() => setOpen(false)}
+          primaryAction={primaryAction}
+          secondaryAction={secondaryAction}
+        >
           {children}
         </Drawer>
       )}
@@ -49,9 +76,9 @@ function DrawerDemo({ title = "Drawer Title", children }) {
   );
 }
 
-function DefaultDemo() {
+function DefaultDemo({ firstCta, secondCta }) {
   return (
-    <DrawerDemo>
+    <DrawerDemo firstCta={firstCta} secondCta={secondCta}>
       <p style={{ color: "var(--neutral-400)", fontSize: 14, lineHeight: 1.6, margin: 0 }}>
         This is the shared Drawer component — 700px wide, 8px inset, 16px
         border-radius. Used across the entire app for all side panels (call
@@ -71,8 +98,9 @@ function DefaultDemo() {
  * pointer capture pins the drag to the handle, and the right pane is
  * clamped to [380px, 50% of the row].
  */
-function SplitPanesDemo() {
+function SplitPanesDemo({ firstCta, secondCta }) {
   const [open, setOpen] = useState(false);
+  const { primaryAction, secondaryAction } = CtaButtons({ firstCta, secondCta });
   // null = default 50/50 split (both panes flex:1); a number pins the RHS.
   const [rhsWidth, setRhsWidth] = useState(null);
   const rowRef = useRef(null);
@@ -123,6 +151,8 @@ function SplitPanesDemo() {
           onClose={() => { setOpen(false); setRhsWidth(null); }}
           width={1100}
           bodyClassName={splitStyles.splitBody}
+          primaryAction={primaryAction}
+          secondaryAction={secondaryAction}
         >
           <div ref={rowRef} style={{ display: 'flex', flex: 1, minHeight: 0, minWidth: 0 }}>
             <div className={splitStyles.leftPane}>
@@ -169,8 +199,9 @@ function SplitPanesDemo() {
   );
 }
 
-function PatientBannerDemo() {
+function PatientBannerDemo({ firstCta, secondCta }) {
   const [open, setOpen] = useState(false);
+  const { primaryAction, secondaryAction } = CtaButtons({ firstCta, secondCta });
   return (
     <div style={centerStage}>
       <Button variant="primary" onClick={() => setOpen(true)}>
@@ -180,6 +211,8 @@ function PatientBannerDemo() {
         <Drawer
           title="Patient Detail"
           onClose={() => setOpen(false)}
+          primaryAction={primaryAction}
+          secondaryAction={secondaryAction}
           banner={
             <PatientBanner
               initials="JD"
@@ -207,11 +240,11 @@ function PatientBannerDemo() {
 }
 
 export const Playground = {
-  render: ({ layout }) => {
+  render: ({ layout, firstCta, secondCta }) => {
     // Each layout is its own component, so switching the control swaps the
     // whole subtree — no shared hook order to preserve.
-    if (layout === 'split-panes') return <SplitPanesDemo />;
-    if (layout === 'patient-banner') return <PatientBannerDemo />;
-    return <DefaultDemo />;
+    if (layout === 'split-panes') return <SplitPanesDemo firstCta={firstCta} secondCta={secondCta} />;
+    if (layout === 'patient-banner') return <PatientBannerDemo firstCta={firstCta} secondCta={secondCta} />;
+    return <DefaultDemo firstCta={firstCta} secondCta={secondCta} />;
   },
 };
