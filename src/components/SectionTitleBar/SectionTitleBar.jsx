@@ -1,14 +1,15 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../Icon/Icon';
 import { DownChevronIcon } from '../Icon/DownChevronIcon';
 import { Button } from '../Button/Button';
 import { ActionButton } from '../ActionButton/ActionButton';
-import { Badge } from '../Badge/Badge';
 import { SearchBar } from '../SearchBar/SearchBar';
 import { SearchIconButton } from '../SearchIconButton/SearchIconButton';
 import { Toggle } from '../Toggle/Toggle';
 import { FilterChip } from '../FilterChip/FilterChip';
+import { TabStrip } from '../TabStrip/TabStrip';
+import tabStripStyles from '../TabStrip/TabStrip.module.css';
 import styles from './SectionTitleBar.module.css';
 
 /**
@@ -257,23 +258,17 @@ export function SectionTitleBar({
 // ─────────────────────────── Left-side sections ────────────────────────────
 
 /**
- * Tab strip with overflow handling. Measures each tab against the space
- * available between the container's left edge and the right-side action
- * cluster; anything that doesn't fit rolls into a `More ▾` dropdown. When
- * the currently-active tab lands in the overflow bucket we swap it with
- * the last visible tab so the active label always stays on screen.
+ * Tab strip with overflow handling. Delegates the tab row + sliding underline
+ * to `<TabStrip embedded>` (the shared primitive), and layers on the overflow
+ * measurement + "More ▾" dropdown that only the SectionTitleBar context
+ * needs. When the active tab would land in the overflow bucket we swap it
+ * with the last visible slot so the active label always stays on screen.
  */
 function TabsSection({ tabs, activeTab, onTabChange, barRef, rightRef }) {
   const [visibleCount, setVisibleCount] = useState(tabs.length);
   const [moreOpen, setMoreOpen] = useState(false);
   const measurerRef = useRef(null);
   const moreBtnRef = useRef(null);
-  const rowRef = useRef(null);
-  const tabRefs = useRef(new Map());
-  // Sliding underline geometry — kept in state so the indicator animates via
-  // transition on transform/width. `ready` gates the first paint so the
-  // indicator doesn't fly in from 0 when the bar mounts.
-  const [indicator, setIndicator] = useState({ x: 0, w: 0, ready: false });
 
   const measure = useCallback(() => {
     const measurer = measurerRef.current;
@@ -320,19 +315,6 @@ function TabsSection({ tabs, activeTab, onTabChange, barRef, rightRef }) {
     return () => document.removeEventListener('click', close);
   }, [moreOpen]);
 
-  // Slide the underline to the active tab. `useLayoutEffect` measures after
-  // the DOM has committed but before paint, so the indicator lands on the
-  // right tab in the same frame the tab renders. Re-runs on visibleCount /
-  // active swap so overflow re-layouts stay in sync.
-  useLayoutEffect(() => {
-    const row = rowRef.current;
-    const el = tabRefs.current.get(activeTab);
-    if (!row || !el) return;
-    const rowRect = row.getBoundingClientRect();
-    const elRect = el.getBoundingClientRect();
-    setIndicator({ x: elRect.left - rowRect.left, w: elRect.width, ready: true });
-  }, [activeTab, visibleCount, tabs]);
-
   // Keep the active tab always visible by swapping it with the last slot in
   // the visible bucket when it would otherwise live in overflow.
   const activeIdx = tabs.findIndex(t => t.key === activeTab);
@@ -347,54 +329,31 @@ function TabsSection({ tabs, activeTab, onTabChange, barRef, rightRef }) {
   const overflowHasActive = overflow.some(t => t.key === activeTab);
 
   return (
-    <div className={styles.tabsRow} ref={rowRef}>
-      {/* Hidden measurer — all tabs at their natural width so we can decide
-          how many actually fit before rendering the visible row. */}
+    <div className={styles.tabsRow}>
+      {/* Hidden measurer — renders every tab at its natural width using
+          TabStrip's own tab-item class so widths match what TabStrip will
+          actually paint. Drives the overflow calc without a second mount. */}
       <div
         ref={measurerRef}
         aria-hidden
         style={{ position: 'absolute', visibility: 'hidden', display: 'flex', gap: 12, pointerEvents: 'none', whiteSpace: 'nowrap' }}
       >
         {tabs.map(tab => (
-          <div key={tab.key} data-tab-item className={styles.tabItem}>{tab.label}</div>
+          <div key={tab.key} data-tab-item className={tabStripStyles.tabItem}>{tab.label}</div>
         ))}
       </div>
 
-      {visible.map(tab => (
-        <div
-          key={tab.key}
-          ref={(el) => {
-            if (el) tabRefs.current.set(tab.key, el);
-            else tabRefs.current.delete(tab.key);
-          }}
-          className={[styles.tabItem, activeTab === tab.key ? styles.active : ''].filter(Boolean).join(' ')}
-          onClick={() => onTabChange && onTabChange(tab.key)}
-        >
-          {tab.label}
-          {typeof tab.count === 'number' && (
-            <Badge variant="overflow" label={String(tab.count)} />
-          )}
-          {tab.notif && <span className={styles.notifDot} title="New activity" />}
-        </div>
-      ))}
-
-      {/* Sliding underline — one shared element that transitions between the
-          active tab's position + width. Hidden until measured so it doesn't
-          animate in from x=0 on first paint. */}
-      <span
-        className={styles.tabUnderline}
-        aria-hidden
-        style={{
-          transform: `translateX(${indicator.x}px)`,
-          width: indicator.w,
-          opacity: indicator.ready && !overflowHasActive ? 1 : 0,
-        }}
+      <TabStrip
+        items={visible}
+        activeKey={activeTab}
+        onChange={onTabChange}
+        embedded
       />
 
       {overflow.length > 0 && (
         <div className={styles.moreWrap} ref={moreBtnRef}>
           <div
-            className={[styles.tabItem, styles.tabMore, overflowHasActive ? styles.active : ''].filter(Boolean).join(' ')}
+            className={[tabStripStyles.tabItem, styles.tabMore, overflowHasActive ? tabStripStyles.active : ''].filter(Boolean).join(' ')}
             onClick={() => setMoreOpen(v => !v)}
             role="button"
             tabIndex={0}

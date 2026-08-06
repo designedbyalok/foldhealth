@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { Icon } from '../Icon/Icon';
+import { Badge } from '../Badge/Badge';
 import styles from './TabStrip.module.css';
 
 /**
@@ -12,16 +13,20 @@ import styles from './TabStrip.module.css';
  * moving between them, matching SectionTitleBar's motion.
  *
  * Props:
- *  - items       {key, label, icon?}[]  — tab definitions.
+ *  - items       {key, label, icon?, notif?, count?}[]  — tab definitions.
+ *                  `notif` renders a pulsing dot; `count` renders a Badge.
  *  - activeKey   string                 — currently-selected key.
  *  - onChange    (key) => void          — called when a tab is clicked.
  *  - fullWidth   boolean (default true) — bleed to the drawer/container edges.
+ *  - embedded    boolean (default false) — skip the outer bar chrome
+ *                  (background, border-bottom, padding, fullWidth bleed) so
+ *                  the row can drop inside another header (SectionTitleBar).
  *  - trailing    ReactNode              — optional content pinned to the far
  *                                          right (edit button, action group).
  *                                          Sits on the same row as the tabs
  *                                          past a flex spacer.
  */
-export function TabStrip({ items, activeKey, onChange, fullWidth = true, trailing }) {
+export function TabStrip({ items, activeKey, onChange, fullWidth = true, embedded = false, trailing }) {
   const rowRef = useRef(null);
   const tabRefs = useRef(new Map());
   const [indicator, setIndicator] = useState({ x: 0, w: 0, ready: false });
@@ -35,11 +40,14 @@ export function TabStrip({ items, activeKey, onChange, fullWidth = true, trailin
     setIndicator({ x: elRect.left - rowRect.left, w: elRect.width, ready: true });
   }, [activeKey, items]);
 
+  const classes = [
+    styles.tabBar,
+    embedded ? styles.embedded : '',
+    !embedded && fullWidth ? styles.fullWidth : '',
+  ].filter(Boolean).join(' ');
+
   return (
-    <div
-      ref={rowRef}
-      className={[styles.tabBar, fullWidth ? styles.fullWidth : ''].filter(Boolean).join(' ')}
-    >
+    <div ref={rowRef} className={classes}>
       {items.map((it) => {
         const active = it.key === activeKey;
         return (
@@ -61,6 +69,10 @@ export function TabStrip({ items, activeKey, onChange, fullWidth = true, trailin
               />
             )}
             {it.label}
+            {typeof it.count === 'number' && (
+              <Badge variant="overflow" label={String(it.count)} />
+            )}
+            {it.notif && <span className={styles.notifDot} title="New activity" />}
           </button>
         );
       })}

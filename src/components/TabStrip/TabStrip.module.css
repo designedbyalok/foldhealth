@@ -71,3 +71,30 @@
   align-items: center;
   gap: 8px;
 }
+
+/* Notification dot — a small pulsing accent next to the label ("new
+   activity"). Consumers opt in per item via `notif: true`. */
+.notifDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--secondary-300);
+  animation: tabStripNotifPulse 1.4s infinite;
+}
+
+@keyframes tabStripNotifPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: .5; transform: scale(.75); }
+}
+
+/* Embedded — strip the outer bar chrome so this row can drop inside another
+   header (SectionTitleBar). Tabs, underline, hover/active colors stay. */
+.embedded {
+  background: transparent;
+  border-bottom: none;
+  padding: 0;
+  gap: 12px;
+  margin-left: 0;
+  margin-right: 0;
+}

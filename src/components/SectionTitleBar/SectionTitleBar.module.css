@@ -36,57 +36,10 @@
   position: relative;
 }
 
-.tabItem {
-  display: flex;
-  align-items: center;
-  padding: 0 4px;
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-  /* neutral-400 (#3A485F) instead of neutral-300 (#6F7A90) so inactive tab
-     labels clear WCAG AA on white. */
-  color: var(--neutral-400);
-  cursor: pointer;
-  transition: color .15s;
-  gap: 6px;
-}
-
-.tabItem:hover { color: var(--neutral-500); }
-/* Active label uses primary-400 (#5020A0) for a compliant 9:1 contrast on
-   white; the 2px underline (rendered by .tabUnderline) can stay on the
-   brand primary-300 since non-text UI has no contrast requirement. */
-.tabItem.active { color: var(--primary-400); }
-
-/* Shared sliding underline. One element translated + resized to the
-   active tab so the transition reads as a single line moving between tabs
-   rather than a cross-fade of two separate borders. Sits on top of the
-   bar's 0.5px hairline. */
-.tabUnderline {
-  position: absolute;
-  bottom: -0.5px;
-  left: 0;
-  height: 2px;
-  background: var(--primary-300);
-  border-radius: 2px 2px 0 0;
-  pointer-events: none;
-  transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1),
-              width 240ms cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 160ms ease-out;
-}
-
-.notifDot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--secondary-300);
-  animation: sectionTitleBarPulse 1.4s infinite;
-}
-
-@keyframes sectionTitleBarPulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%      { opacity: .5; transform: scale(.75); }
-}
+/* Tab item, sliding underline, and notif dot now live in TabStrip.module.css
+ * and are consumed via <TabStrip embedded> so a single source of truth owns
+ * the tab paint. This module only keeps the wrappers unique to the
+ * SectionTitleBar context (row layout, "More ▾" chip, dropdown). */
 
 /* ── Title (dropdown + toggle variants) ── */
 .titleRow {
