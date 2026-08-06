@@ -36,13 +36,15 @@ export default {
 };
 
 // Buttons the CTA toggles inject into the drawer header. Kept here (not
-// inside each demo) so every variant shares the same look/labels.
+// inside each demo) so every variant shares the same look/labels. Drawer
+// header CTAs always render at size="L" — the shell owns the vertical
+// rhythm and any smaller size would fight the close-button height.
 function CtaButtons({ firstCta, secondCta }) {
   const first = firstCta ? (
-    <Button variant="primary" size="M" onClick={() => {}}>Save</Button>
+    <Button variant="primary" size="L" onClick={() => {}}>Save</Button>
   ) : null;
   const second = firstCta && secondCta ? (
-    <Button variant="secondary" size="M" onClick={() => {}}>Cancel</Button>
+    <Button variant="secondary" size="L" onClick={() => {}}>Cancel</Button>
   ) : null;
   return { primaryAction: first, secondaryAction: second };
 }

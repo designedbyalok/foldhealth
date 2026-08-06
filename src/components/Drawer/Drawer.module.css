@@ -85,21 +85,15 @@
   flex-shrink: 0;
 }
 
-/* Visuals (padding, radius, hover) come from the shared CloseButton; this
-   module only contributes the drawer-specific concern: a vertical divider
-   between headerRight's primary action and the close button. The
-   `styles.closeBtn` class is passed to <CloseButton> via `className`.
-   Sibling-only divider — no border when close is the only child. */
-.headerRight > .closeBtn:not(:only-child) {
-  border-left: 1px solid var(--neutral-100);
-  padding-left: 12px;
-  margin-left: 4px;
-}
-/* Opt-out: pass noCloseDivider to Drawer when the caller provides its own divider. */
-.closeBtnNoDivider.closeBtn:not(:only-child) {
-  border-left: none;
-  padding-left: 4px;
-  margin-left: 0;
+/* Vertical hairline between the header actions and the close button. The
+   Drawer shell renders this as a real `<span>` — the close button never
+   paints its own border. Consumers get the divider automatically whenever
+   they pass `headerRight`, `primaryAction`, or `secondaryAction`. */
+.headerDivider {
+  width: 1px;
+  height: 16px;
+  background: var(--neutral-150);
+  flex-shrink: 0;
 }
 
 /* Full-bleed slot between header and body. Callers pass their own
