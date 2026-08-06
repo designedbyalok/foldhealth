@@ -30,7 +30,7 @@
   background: transparent;
   border: none;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   white-space: nowrap;
   color: var(--neutral-300);
   cursor: pointer;
@@ -39,7 +39,11 @@
 
 .tabItem:hover { color: var(--neutral-400); }
 
-.tabItem.active { color: var(--primary-300); }
+/* Selected tab: bumps to medium and adopts brand purple. */
+.tabItem.active {
+  color: var(--primary-300);
+  font-weight: 500;
+}
 
 /* Shared sliding underline. One element translated + resized to the active
    tab so the transition reads as a single line moving between tabs rather
