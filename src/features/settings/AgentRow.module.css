@@ -1,0 +1,80 @@
+/* Agents-table row — composes from the shared row shell so it reads
+   identically to every other worklist (hover tint, sticky columns,
+   load-in animation, hairline dividers). */
+
+.row          { composes: row          from '../../components/WorklistShell/WorklistRow.module.css'; cursor: pointer; }
+.stickyLeft   { composes: stickyLeft   from '../../components/WorklistShell/WorklistRow.module.css'; }
+.stickyRight  { composes: stickyRight  from '../../components/WorklistShell/WorklistRow.module.css'; }
+.td           { composes: td           from '../../components/WorklistShell/WorklistRow.module.css'; }
+.membersTd    { composes: membersTd    from '../../components/WorklistShell/WorklistRow.module.css'; }
+
+/* Primary identity cell — avatar + name + role stack. */
+.nameCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nameInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.nameLink {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--neutral-400);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nameLink:hover {
+  color: var(--primary-300);
+  text-decoration: underline;
+}
+.role {
+  font-size: 12px;
+  color: var(--neutral-300);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Model + "Last Updated By" cells share a tight nowrap column style. */
+.modelCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--neutral-400);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.userLink {
+  color: var(--neutral-400);
+  cursor: pointer;
+}
+.userLink:hover {
+  color: var(--primary-300);
+  text-decoration: underline;
+}
+
+/* Actions cell — mirrors the Users/Locations tabs so the trio reads as
+   one visual system. */
+.actionsCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+  width: 100%;
+}
+.actionDivider {
+  width: 0.5px;
+  height: 16px;
+  background: var(--neutral-150);
+  flex-shrink: 0;
+}
