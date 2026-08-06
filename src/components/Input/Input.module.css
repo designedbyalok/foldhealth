@@ -1,10 +1,9 @@
 /* ── Fold Health Input ──
  * Figma: Fold-Pixel, node 25:21239
  *
- * States: Placeholder, Filled, Hover, Focus, Disabled, Error
- *
- * Matches the Agent Name input (CreateAgentDrawer) and
- * the Analytics filter field exactly.
+ * States: Placeholder, Filled, Hover, Focus, Disabled, Error, Error Hover.
+ * Structural slots (label, helperText, errorText, password-toggle) are
+ * wrapped in `.field` only when actually used — bare inputs stay bare.
  */
 
 .input {
@@ -19,8 +18,9 @@
   color: var(--neutral-400);
   background: var(--neutral-0);
   outline: none;
-  transition: border-color .15s, box-shadow .15s;
+  transition: border-color .15s, box-shadow .15s, background-color .15s;
   line-height: 1.2;
+  box-sizing: border-box;
 }
 
 .input:hover {
@@ -29,7 +29,7 @@
 
 .input:focus {
   border-color: var(--primary-300);
-  box-shadow: 0 0 0 2px rgba(140, 90, 226, 0.12);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-300) 12%, transparent);
 }
 
 .input::placeholder {
@@ -50,13 +50,91 @@
   cursor: default;
 }
 
-/* Error variant — red border only, background stays white */
+/* Error variant — red border, background lifts to status-error-light on
+   hover to match the Figma "Error, Hover=True" state. */
 .inputError {
   border-color: var(--status-error);
   background: var(--neutral-0);
 }
-
+.inputError:hover {
+  background: var(--status-error-light);
+  border-color: var(--status-error);
+}
 .inputError:focus {
   border-color: var(--status-error);
-  box-shadow: 0 0 0 2px rgba(215, 40, 37, 0.12);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--status-error) 12%, transparent);
+}
+
+/* Reserve room for the trailing icon button (password eye). 32px keeps the
+   button inside the 32px control height without overlapping the caret. */
+.inputWithTrailing {
+  padding-right: 32px;
+}
+
+/* ── Structural wrapper (only when label / helper / error / trailing) ── */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--neutral-300);
+}
+
+.required {
+  color: var(--status-error);
+  margin-left: 2px;
+}
+
+.control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.trailingButton {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--neutral-300);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color .15s, background-color .15s;
+}
+.trailingButton:hover {
+  color: var(--neutral-400);
+  background: var(--neutral-75);
+}
+.trailingButton:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 1px;
+}
+
+.helperText {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.3;
+  color: var(--neutral-300);
+}
+
+.errorText {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.3;
+  color: var(--status-error);
 }
