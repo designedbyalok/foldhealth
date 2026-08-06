@@ -12,7 +12,6 @@
   border: 0.5px solid var(--neutral-150);
   border-radius: 6px;
   padding: 0 8px;
-  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 400;
   color: var(--neutral-400);
@@ -23,7 +22,8 @@
   box-sizing: border-box;
 }
 
-.input:hover {
+/* :not(:disabled) so disabled fields don't gain the hover border. */
+.input:not(:disabled):hover {
   border-color: var(--neutral-200);
 }
 
@@ -39,12 +39,17 @@
 
 .input:disabled {
   background: var(--neutral-50);
-  color: var(--neutral-300);
+  color: var(--neutral-200);
+  border-color: var(--neutral-150);
   cursor: not-allowed;
-  opacity: 0.6;
+}
+.input:disabled::placeholder {
+  color: var(--neutral-200);
 }
 
-.input:read-only {
+/* :not(:disabled) so a disabled input keeps its neutral-200 / not-allowed
+   styling — `:read-only` spec-matches disabled inputs too. */
+.input:read-only:not(:disabled) {
   background: var(--neutral-50);
   color: var(--neutral-300);
   cursor: default;

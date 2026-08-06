@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useState } from 'react';
+import { forwardRef, useCallback, useId, useState } from 'react';
 import { Icon } from '../Icon/Icon';
 import styles from './Input.module.css';
 
@@ -68,6 +68,10 @@ export const Input = forwardRef(function Input(
 ) {
   const [internalError, setInternalError] = useState(null);
   const [passwordVisible, setPasswordVisible] = useState(false);
+  // Guarantee a stable label↔input association even when the caller
+  // doesn't pass `id`. Only used when a label is actually rendered.
+  const autoId = useId();
+  const inputId = id || (label ? autoId : undefined);
 
   // Explicit errorText (or legacy variant='error') wins over internal
   // validation output. Internal state only kicks in when the caller
@@ -119,7 +123,7 @@ export const Input = forwardRef(function Input(
   const inputEl = (
     <input
       ref={ref}
-      id={id}
+      id={inputId}
       type={effectiveType}
       inputMode={inputMode}
       autoComplete={autoComplete}
@@ -155,7 +159,7 @@ export const Input = forwardRef(function Input(
   return (
     <div className={[styles.field, wrapperClassName || ''].filter(Boolean).join(' ')}>
       {label && (
-        <label className={styles.label} htmlFor={id}>
+        <label className={styles.label} htmlFor={inputId}>
           {label}
           {required && <span className={styles.required} aria-hidden> *</span>}
         </label>
