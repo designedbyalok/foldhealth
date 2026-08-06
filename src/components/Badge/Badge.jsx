@@ -1,5 +1,19 @@
 import { Icon } from '../Icon/Icon';
+import { DownChevronIcon } from '../Icon/DownChevronIcon';
 import styles from './Badge.module.css';
+
+// Badges always render icons in the linear (line) weight — even if a caller
+// hands in a filled/bold Solar name. Coerces `solar:foo-bold` → `solar:foo-linear`.
+function toLinear(name) {
+  if (typeof name !== 'string') return name;
+  return name.replace(/-bold$/, '-linear').replace(/-bold(-duotone|-outline)?$/, '-linear');
+}
+
+// Any down-chevron Solar name — regardless of weight — routes to the shared
+// DownChevronIcon so the popover-trigger chevron reads the same everywhere.
+function isDownChevron(name) {
+  return typeof name === 'string' && /alt-arrow-down|arrow-down|angle-down|chevron-down/.test(name);
+}
 
 /**
  * Badge — small colored pill for status, category, count, or tag values.
@@ -55,10 +69,18 @@ export function Badge({
       style={style}
     >
       {dot && <span className={styles.dot} />}
-      {icon && <Icon name={icon} size={13} />}
+      {icon && (
+        isDownChevron(icon)
+          ? <DownChevronIcon size={13} color="currentColor" />
+          : <Icon name={toLinear(icon)} size={13} />
+      )}
       {label}
       {trailingIconElement}
-      {!trailingIconElement && trailingIcon && <Icon name={trailingIcon} size={13} />}
+      {!trailingIconElement && trailingIcon && (
+        isDownChevron(trailingIcon)
+          ? <DownChevronIcon size={13} color="currentColor" />
+          : <Icon name={toLinear(trailingIcon)} size={13} />
+      )}
     </span>
   );
 }
