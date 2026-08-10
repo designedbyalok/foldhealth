@@ -57,10 +57,11 @@ export function NodeSettings({ node, allNodes, onSave, onClose, onDelete }) {
   const [transitions, setTransitions] = useState(node.data.transitions || []);
   const [isEditing, setIsEditing] = useState(false);
   const nameInputRef = useRef(null);
-  const lastSyncedJson = useRef(null);
-  if (lastSyncedJson.current === null) {
-    lastSyncedJson.current = JSON.stringify(node.data.transitions || []);
-  }
+  // Seed via a useState initializer rather than mutating the ref during
+  // render: the lazy-init guard avoided recomputing on every render but wrote
+  // to a ref mid-render, which React may replay or discard.
+  const [initialSyncedJson] = useState(() => JSON.stringify(node.data.transitions || []));
+  const lastSyncedJson = useRef(initialSyncedJson);
 
   useEffect(() => {
     setLabel(node.data.label || '');

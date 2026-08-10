@@ -807,7 +807,9 @@ export function InviteUserDrawer({ onClose, onInvited }) {
         return;
       }
       setSending(true);
-      const results = await Promise.all(bulkRows.map(async (row) => {
+      let results;
+      try {
+        results = await Promise.all(bulkRows.map(async (row) => {
         if (!row.email?.trim()) return false;
         try {
           const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -837,11 +839,15 @@ export function InviteUserDrawer({ onClose, onInvited }) {
         } catch (e) {
           return false;
         }
-      }));
+        }));
+      } finally {
+        // Promise.all rejects on the first unexpected throw; without a finally
+        // the drawer's spinner would stay stuck on.
+        setSending(false);
+      }
       const successCount = results.filter(Boolean).length;
       logAudit('UserProfile', 'bulk', 'Bulk Import', 'created', `Bulk imported ${successCount} users`, 'Lifecycle');
       showToast(`${successCount} user(s) invited successfully`);
-      setSending(false);
       onInvited();
     };
 
