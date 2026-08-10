@@ -34,7 +34,6 @@ export default {
     // what drags the score to 0. Matched relative to the repo root.
     files: [
       '.claude/**',
-      '.kiro/**',
       '.agents/**',
       'dist/**',
       'storybook-static/**',
