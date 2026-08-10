@@ -31,6 +31,10 @@ import styles from './AccountPanel.module.css';
 
 const ALL_TABS = ['Org', 'Users', 'Teams', 'Access Control', 'Locations', 'Insurance Plans', 'Holiday Configuration', 'Merged Or Delayed', 'Allowed Phone', 'Allowed Emails'];
 
+// Bridge the store's slug (`accountTab`, e.g. 'access-control' — also the URL
+// segment the router reads) and the display names in ALL_TABS.
+const tabKeyToName = (key) => ALL_TABS.find(t => t.toLowerCase().replace(/ /g, '-') === key) || 'Org';
+const tabNameToKey = (name) => name.toLowerCase().replace(/ /g, '-');
 
 export { InviteUserDrawer } from './InviteUserDrawer';
 
