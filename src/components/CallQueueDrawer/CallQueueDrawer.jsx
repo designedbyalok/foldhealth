@@ -106,9 +106,10 @@ const TABS = ['Ongoing Call', 'In Queue', 'Call Log'];
 
 /* ── Shared components ── */
 
-function MemberCell({ initials, name, subtitle, onClick, selected }) {
+// Presentational only — the enclosing <tr> owns the row's click behaviour.
+function MemberCell({ initials, name, subtitle, selected }) {
   return (
-    <div className={`${styles.memberCell} ${onClick ? styles.memberCellClickable : ''} ${selected ? styles.memberCellSelected : ''}`} onClick={onClick}>
+    <div className={`${styles.memberCell} ${selected ? styles.memberCellSelected : ''}`}>
       <div className={styles.memberAvatar}>{initials}</div>
       <div className={styles.memberInfo}>
         <span className={styles.memberName}>{name}</span>
@@ -126,7 +127,8 @@ function SearchBar({ value, onChange, onClose }) {
       <input
         autoFocus
         type="text"
-        placeholder="Search\u2026"
+        placeholder="Search…"
+        aria-label="Search calls"
         value={value}
         onChange={e => onChange(e.target.value)}
         className={styles.searchInput}
@@ -488,8 +490,15 @@ export function CallLogTab({ onSelectCall, selectedCallId, searchQuery }) {
           </div>
 
           <div className={styles.dateGroupContent}>
-            <div className={styles.dateGroupHeader} onClick={() => toggleGroup(gi)}>
-              <div className={styles.dateGroupInfo}>
+            {/* The expander is the inner button, not the header row — the row
+                also holds an ActionButton, and nesting controls is invalid. */}
+            <div className={styles.dateGroupHeader}>
+              <button
+                type="button"
+                className={styles.dateGroupInfo}
+                onClick={() => toggleGroup(gi)}
+                aria-expanded={!collapsedGroups[gi]}
+              >
                 <div className={styles.dateGroupLine1}>
                   <span className={styles.dateGroupDate}>{group.date}</span>
                   <span className={styles.dateGroupAgent}>&bull; {group.agentInfo.split(' \u2022 ')[0]} (v1.3)</span>
@@ -503,8 +512,8 @@ export function CallLogTab({ onSelectCall, selectedCallId, searchQuery }) {
                     className={collapsedGroups[gi] ? styles.chevronCollapsed : ''}
                   />
                 </div>
-              </div>
-              <ActionButton icon="solar:menu-dots-linear" size="S" tooltip="More Options" onClick={e => e.stopPropagation()} />
+              </button>
+              <ActionButton icon="solar:menu-dots-linear" size="S" tooltip="More Options" />
             </div>
 
             {!collapsedGroups[gi] && (

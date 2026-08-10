@@ -76,7 +76,9 @@ export function CheckboxListPopover({
 
   return createPortal(
     <>
-      <div className={styles.overlay} onClick={onClose} />
+      {/* Decorative click-catcher: the keyboard path to dismiss is the Escape
+          handler above, so this must not become a full-viewport tab stop. */}
+      <div className={styles.overlay} onClick={onClose} aria-hidden="true" />
       <div
         className={styles.popover}
         style={{ top: pos.top, left: pos.left, width }}
@@ -119,6 +121,7 @@ export function CheckboxListPopover({
             className={styles.search}
             type="text"
             placeholder="Search"
+            aria-label={label ? `Search ${label}` : 'Search options'}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoFocus

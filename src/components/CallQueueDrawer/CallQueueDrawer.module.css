@@ -246,10 +246,6 @@
   gap: 8px;
 }
 
-.memberCellClickable {
-  cursor: pointer;
-}
-
 .memberCellSelected .memberAvatar {
   border-color: var(--primary-300);
 }
@@ -578,15 +574,29 @@
   align-items: center;
   gap: 8px;
   padding: 6px 0;
-  cursor: pointer;
 }
 
+/* The <button> expander for the group — cursor lives here, not on the header
+   row, so the pointer only appears over what is actually clickable. */
 .dateGroupInfo {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  cursor: pointer;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+
+.dateGroupInfo:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .dateGroupLine1 {
