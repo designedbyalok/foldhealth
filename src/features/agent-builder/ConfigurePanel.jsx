@@ -5,77 +5,48 @@ import { SECTIONS, DEFAULT_FORM } from './ConfigurePanelParts.constants';
 import { ConfigurePanelSections } from './ConfigurePanelSections';
 import styles from './ConfigurePanel.module.css';
 
-export function ConfigurePanel({ agent, onSave }) {
-  const scrollRef = useRef(null);
-  const [activeSection, setActiveSection] = useState('agent-use-case');
+// Shape the saved config into the editable form. Pure, so it runs during
+// render instead of being pushed into state by an effect.
+function buildForm(agent, builderConfig) {
+  if (!builderConfig) {
+    return { ...DEFAULT_FORM, agentName: agent?.name || '', useCaseName: agent?.use_case || '' };
+  }
+  return {
+    agentName: agent?.name || '',
+    agentRole: builderConfig.agent_role || '',
+    useCaseName: builderConfig.use_case_name || agent?.use_case || '',
+    description: builderConfig.description || '',
+    goalIds: builderConfig.goal_ids || [],
+    systemPrompt: builderConfig.system_prompt || '',
+    toneOfVoice: builderConfig.tone_of_voice || 'professional',
+    voice: builderConfig.voice || 'erica',
+    empathyLevel: builderConfig.empathy_level ?? 75,
+    speakingPace: builderConfig.speaking_pace ?? 75,
+    languages: builderConfig.languages || ['english'],
+    adaptations: builderConfig.adaptations || [],
+    selectedPolicies: builderConfig.selected_policies || [],
+    populationType: builderConfig.population_type || 'worklist',
+    selectedWorklist: builderConfig.selected_worklist || '',
+    modality: builderConfig.modality || 'voice',
+    phone: builderConfig.phone || '',
+    email: builderConfig.email || '',
+    officeHours: builderConfig.office_hours || '',
+  };
+}
+
+/**
+ * Owns the editable form. `initialForm` seeds it once per mount, so the parent
+ * resets it by changing this component's `key` rather than by syncing state in
+ * an effect — the form has to stay mutable, so deriving it on every render
+ * would throw away whatever the user has typed.
+ */
+function ConfigureForm({ agent, initialForm, expanded, toggleExpanded, setGoalDetailId, saveAgentConfig, showToast, onSave }) {
+  const [form, setForm] = useState(initialForm);
   const savingRef = useRef(false);
-  const formLoadedRef = useRef(false);
-  const fetchAgentIdRef = useRef(null);
-
-  const builderConfig = useAppStore(s => s.builderConfig);
-  const builderConfigLoading = useAppStore(s => s.builderConfigLoading);
-  const fetchAgentConfig = useAppStore(s => s.fetchAgentConfig);
-  const saveAgentConfig = useAppStore(s => s.saveAgentConfig);
-  const showToast = useAppStore(s => s.showToast);
-  const setGoalDetailId = useAppStore(s => s.setGoalDetailId);
-  const goalDetailId = useAppStore(s => s.goalDetailId);
-
-  const [expanded, setExpanded] = useState({
-    'agent-use-case': true,
-    'personalization': true,
-    'policies': true,
-    'target-population': true,
-    'knowledge-base': false,
-    'communication': true,
-  });
-
-  const [form, setForm] = useState({ ...DEFAULT_FORM, agentName: agent?.name || '' });
-
-  useEffect(() => {
-    if (!agent?.id) return;
-    if (fetchAgentIdRef.current === agent.id && formLoadedRef.current) return;
-    fetchAgentIdRef.current = agent.id;
-    formLoadedRef.current = false;
-    fetchAgentConfig(agent.id);
-  }, [agent?.id, fetchAgentConfig]);
-
-  useEffect(() => {
-    if (!agent?.id || builderConfigLoading || formLoadedRef.current) return;
-    formLoadedRef.current = true;
-    if (builderConfig) {
-      setForm({
-        agentName: agent?.name || '',
-        agentRole: builderConfig.agent_role || '',
-        useCaseName: builderConfig.use_case_name || agent?.use_case || '',
-        description: builderConfig.description || '',
-        goalIds: builderConfig.goal_ids || [],
-        systemPrompt: builderConfig.system_prompt || '',
-        toneOfVoice: builderConfig.tone_of_voice || 'professional',
-        voice: builderConfig.voice || 'erica',
-        empathyLevel: builderConfig.empathy_level ?? 75,
-        speakingPace: builderConfig.speaking_pace ?? 75,
-        languages: builderConfig.languages || ['english'],
-        adaptations: builderConfig.adaptations || [],
-        selectedPolicies: builderConfig.selected_policies || [],
-        populationType: builderConfig.population_type || 'worklist',
-        selectedWorklist: builderConfig.selected_worklist || '',
-        modality: builderConfig.modality || 'voice',
-        phone: builderConfig.phone || '',
-        email: builderConfig.email || '',
-        officeHours: builderConfig.office_hours || '',
-      });
-    } else {
-      setForm(prev => ({ ...prev, agentName: agent?.name || '', useCaseName: agent?.use_case || '' }));
-    }
-  }, [builderConfig, builderConfigLoading, agent?.id, agent?.name, agent?.use_case]);
 
   const updateField = useCallback((field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));
   }, []);
-
-  const toggleExpanded = (id) => {
-    setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
-  };
 
   const toggleArrayItem = (field, item) => {
     setForm(prev => {
@@ -103,6 +74,64 @@ export function ConfigurePanel({ agent, onSave }) {
     if (ok) showToast('Configuration saved');
     else showToast('Failed to save configuration');
     if (onSave) onSave();
+  };
+
+  return (
+    <ConfigurePanelSections
+      form={form}
+      expanded={expanded}
+      toggleExpanded={toggleExpanded}
+      updateField={updateField}
+      toggleArrayItem={toggleArrayItem}
+      toggleGoal={toggleGoal}
+      setGoalDetailId={setGoalDetailId}
+    />
+  );
+}
+
+export function ConfigurePanel({ agent, onSave }) {
+  const scrollRef = useRef(null);
+  const [activeSection, setActiveSection] = useState('agent-use-case');
+  const fetchAgentIdRef = useRef(null);
+
+  const builderConfig = useAppStore(s => s.builderConfig);
+  const builderConfigLoading = useAppStore(s => s.builderConfigLoading);
+  const fetchAgentConfig = useAppStore(s => s.fetchAgentConfig);
+  const saveAgentConfig = useAppStore(s => s.saveAgentConfig);
+  const showToast = useAppStore(s => s.showToast);
+  const setGoalDetailId = useAppStore(s => s.setGoalDetailId);
+  const goalDetailId = useAppStore(s => s.goalDetailId);
+
+  const [expanded, setExpanded] = useState({
+    'agent-use-case': true,
+    'personalization': true,
+    'policies': true,
+    'target-population': true,
+    'knowledge-base': false,
+    'communication': true,
+  });
+
+  useEffect(() => {
+    if (!agent?.id) return;
+    if (fetchAgentIdRef.current === agent.id) return;
+    fetchAgentIdRef.current = agent.id;
+    fetchAgentConfig(agent.id);
+  }, [agent?.id, fetchAgentConfig]);
+
+  // The key has to track whether a config has actually ARRIVED, not just
+  // whether the fetch is in flight: builderConfigLoading is often already false
+  // on mount, so keying on it alone leaves the form stuck on defaults when the
+  // row lands a tick later. 'loaded' vs 'empty' is what flips the remount.
+  //
+  // Once past 'loading' the key is stable, so edits survive re-renders, and it
+  // only re-seeds when the agent changes — matching the one-shot hydration the
+  // removed effect did via its formLoadedRef guard.
+  const configState = builderConfigLoading ? 'loading' : builderConfig ? 'loaded' : 'empty';
+  const formKey = `${agent?.id ?? 'none'}:${configState}`;
+  const initialForm = buildForm(agent, configState === 'loaded' ? builderConfig : null);
+
+  const toggleExpanded = (id) => {
+    setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   useEffect(() => {
@@ -174,14 +203,16 @@ export function ConfigurePanel({ agent, onSave }) {
 
       <div className={styles.scrollArea} ref={scrollRef}>
         <div className={styles.scrollInner}>
-          <ConfigurePanelSections
-            form={form}
+          <ConfigureForm
+            key={formKey}
+            agent={agent}
+            initialForm={initialForm}
             expanded={expanded}
             toggleExpanded={toggleExpanded}
-            updateField={updateField}
-            toggleArrayItem={toggleArrayItem}
-            toggleGoal={toggleGoal}
             setGoalDetailId={setGoalDetailId}
+            saveAgentConfig={saveAgentConfig}
+            showToast={showToast}
+            onSave={onSave}
           />
         </div>
       </div>
