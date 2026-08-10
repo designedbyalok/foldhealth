@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
+import styles from './ChartDetailDrawer.module.css';
 import { buildReviewStages, computeReviewProgress } from './DiagPanel/ReviewProgressPopover.utils';
 import { dosKey } from './assignment/dosState';
 import { DOC_TYPES, makeUploadedChartDoc } from './data/chartDocs';
@@ -546,7 +547,6 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
 
 
   return {
-    action,
     actionPos,
     actionRef,
     assignPos,
@@ -563,7 +563,6 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
     currentBadge,
     currentStatus,
     dmRef,
-    doc,
     docActions,
     docs,
     dosExpanded,
@@ -577,10 +576,7 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
     gender,
     handleClose,
     insufficientPrompt,
-    isEditingRow,
     isEmpty,
-    isFailing,
-    isSel,
     isSupportAssigned,
     leftPanel,
     m,
@@ -592,13 +588,10 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
     openAssign,
     overdue,
     passDoc,
-    pos,
-    provider,
     requestTeamClose,
     resetUpload,
     reviewerName,
     saveUpload,
-    sel,
     selected,
     setConfirmDeleteDoc,
     setDosExpanded,
@@ -635,7 +628,6 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
     upType,
     updateChartDocMeta,
     uploadKey,
-    vt,
     charts,
     initialId,
     member,

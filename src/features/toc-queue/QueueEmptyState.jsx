@@ -25,7 +25,7 @@ export function QueueEmptyState() {
           style={{
             display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4,
             fontSize: 13, color: 'var(--primary-300)', cursor: 'pointer', textDecoration: 'none',
-            background: 'none', border: 'none', padding: 0, font: inherit,
+            background: 'none', border: 'none', padding: 0, font: 'inherit',
           }}
           onClick={() => setActiveTab('worklist')}
         >

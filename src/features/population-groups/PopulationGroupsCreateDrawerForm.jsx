@@ -18,7 +18,7 @@ export function PopulationGroupsCreateDrawerForm({ vm }) {
     segmentName, setSegmentName, description, setDescription,
     chosenFilter, setChosenFilter, memberStatus, setMemberStatus,
     dragOver, setDragOver, uploadFile, setUploadFile,
-    uploadState, setUploadState, uploadPct, criteria, setCriteria,
+    uploadState, setUploadState, uploadPct, setUploadPct, criteria, setCriteria,
     fileInputRef, handleFile,
     addCriterion, removeCriterion, updateCriterion,
   } = vm;

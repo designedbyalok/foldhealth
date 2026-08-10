@@ -433,7 +433,7 @@ export function usePopulationGroupsView({
     modalOpen, setModalOpen, segmentName, setSegmentName, description, setDescription,
     chosenFilter, setChosenFilter, memberStatus, setMemberStatus,
     dragOver, setDragOver, uploadFile, setUploadFile,
-    showCloseConfirm, setShowCloseConfirm, uploadState, setUploadState, uploadPct,
+    showCloseConfirm, setShowCloseConfirm, uploadState, setUploadState, uploadPct, setUploadPct,
     matchSummary, setMatchSummary, matchedExp, setMatchedExp,
     notFoundExp, setNotFoundExp, dupExp, setDupExp,
     patDDOpen, setPatDDOpen, showPreview, setShowPreview,

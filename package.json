@@ -18,12 +18,16 @@
     "lint:css": "stylelint \"src/**/*.css\"",
     "guardrails": "node scripts/ds-guardrails.mjs",
     "receiver-audit": "node scripts/receiver-audit.mjs --all",
+    "check:no-undef": "node scripts/check-no-undef.mjs",
     "prepare": "husky",
     "doctor": "bunx react-doctor@latest"
   },
   "lint-staged": {
     "*.{js,jsx,css}": "node scripts/ds-guardrails.mjs --staged",
-    "*.{js,jsx}": "node scripts/receiver-audit.mjs --staged"
+    "*.{js,jsx}": [
+      "node scripts/receiver-audit.mjs --staged",
+      "node scripts/check-no-undef.mjs"
+    ]
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

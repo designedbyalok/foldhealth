@@ -243,6 +243,34 @@ export function HccSftpReviewDrawer({ inline = false, onExit }) {
     </div>
   ) : null;
 
+  // Both layouts below render the same panels, so build the element once —
+  // the standalone branch referenced a `panels` binding that the split
+  // refactor left behind.
+  const panels = (
+    <HccSftpReviewDrawerPanels
+      activeBatch={activeBatch}
+      batches={batches}
+      switcherOpen={switcherOpen}
+      setSwitcherOpen={setSwitcherOpen}
+      setActiveId={setActiveId}
+      focusedGroup={focusedGroup}
+      visibleEncs={visibleEncs}
+      activeEncs={activeEncs}
+      patientSlots={patientSlots}
+      focusIdx={focusIdx}
+      hccMembers={hccMembers}
+      docTab={docTab}
+      cardStackRef={cardStackRef}
+      applyComplianceDecision={applyComplianceDecision}
+      patchEnc={patchEnc}
+      createFromEncounter={createFromEncounter}
+      setEncounterStatus={setEncounterStatus}
+      showToast={showToast}
+      handleAddPatientToWorklist={handleAddPatientToWorklist}
+      goNext={goNext}
+    />
+  );
+
   // Inline (inside ICD Creation) — own top bar + footer, no floating chrome.
   if (inline) {
     return (
@@ -258,28 +286,7 @@ export function HccSftpReviewDrawer({ inline = false, onExit }) {
           </button>
           {navBar}
         </div>
-        <div className={styles.inlineBody}><HccSftpReviewDrawerPanels
-        activeBatch={activeBatch}
-        batches={batches}
-        switcherOpen={switcherOpen}
-        setSwitcherOpen={setSwitcherOpen}
-        setActiveId={setActiveId}
-        focusedGroup={focusedGroup}
-        visibleEncs={visibleEncs}
-        activeEncs={activeEncs}
-        patientSlots={patientSlots}
-        focusIdx={focusIdx}
-        hccMembers={hccMembers}
-        docTab={docTab}
-        cardStackRef={cardStackRef}
-        applyComplianceDecision={applyComplianceDecision}
-        patchEnc={patchEnc}
-        createFromEncounter={createFromEncounter}
-        setEncounterStatus={setEncounterStatus}
-        showToast={showToast}
-        handleAddPatientToWorklist={handleAddPatientToWorklist}
-        goNext={goNext}
-      /></div>
+        <div className={styles.inlineBody}>{panels}</div>
         {footerBar && <div className={styles.inlineFooterBar}>{footerBar}</div>}
       </div>
     );

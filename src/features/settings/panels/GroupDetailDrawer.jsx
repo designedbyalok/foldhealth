@@ -256,7 +256,7 @@ export function GroupDetailDrawer() {
           style={{
             fontSize: 13, color: 'var(--primary-300)', fontWeight: 500, textDecoration: 'none',
             display: 'inline-flex', alignItems: 'center', gap: 3,
-            background: 'none', border: 'none', padding: 0, font: inherit, cursor: 'pointer',
+            background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer',
           }}
         >
           See Business Hours <Icon name="solar:arrow-right-up-linear" size={12} color="var(--primary-300)" />

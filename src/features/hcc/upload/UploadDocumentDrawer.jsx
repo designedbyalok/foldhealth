@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { ACCEPT_EXT, ACCEPT_MIME, CHOOSER_OPTIONS } from './UploadDocumentDrawerPicker.utils';
 import { Drawer } from '../../../components/Drawer/Drawer';
 import { Button } from '../../../components/Button/Button';
 import { Icon } from '../../../components/Icon/Icon';

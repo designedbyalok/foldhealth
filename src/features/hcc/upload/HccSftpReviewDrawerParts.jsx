@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../../../components/Icon/Icon';
 import { Button } from '../../../components/Button/Button';
@@ -10,7 +10,7 @@ import { Select } from '../../../components/Select/Select';
 import { IcdSearch } from '../../../components/IcdSearch/IcdSearch';
 import { getFieldConfidence } from '../data/confidence';
 import { POS_LABEL } from './mockOcr';
-import { encStatus } from './HccSftpReviewDrawer.utils';
+import { encStatus, flaggedCount } from './HccSftpReviewDrawer.utils';
 import styles from './HccSftpReviewDrawer.module.css';
 
 export function DocToolbar({ batch, setSelectedAll, showToast }) {

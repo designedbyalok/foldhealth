@@ -1,0 +1,44 @@
+name: Undefined References
+
+# Blocks PRs that reference an identifier that does not exist. Unlike the
+# design-system guardrails this is NOT diff-scoped — it runs over all of src/,
+# because the whole point is that the count stays at zero.
+#
+# Why this rule specifically, when `bun run lint` reports ~880 problems: a
+# referenced-but-undefined identifier is a guaranteed ReferenceError on whatever
+# code path reaches it, and this app has no error boundary above AppLayout — so
+# React unmounts to an empty #root and the user gets a white screen with nothing
+# useful in the console.
+#
+# That happened: a 338-file split refactor (26476f9) dropped two helpers from
+# AccountPanel and blanked all of Settings -> Account, plus 60 more of the same
+# across HCC, population-groups and settings. Every one of them was sitting in
+# the lint output, ungated. See scripts/check-no-undef.mjs.
+
+on:
+  pull_request:
+    branches: [main, preview]
+  push:
+    branches: [main]
+
+concurrency:
+  group: no-undef-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  no-undef:
+    name: Undefined references
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.23
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Check for undefined references
+        run: node scripts/check-no-undef.mjs

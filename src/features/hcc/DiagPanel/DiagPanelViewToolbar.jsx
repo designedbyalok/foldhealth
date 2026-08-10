@@ -13,7 +13,7 @@ export function DiagPanelViewToolbar(p) {
     toggleBulkMode, searchQuery, setSearchQuery, setAddIcdMode, filterCount, filterOpen,
     setFilterOpen, docsCount, commentsCount, diagLeftPanel, setDiagLeftPanel, setFocusIdx,
     setDiagTab, openDocsFromToolbar, moreOpen, setMoreOpen, moreWrapRef, filters, setFilters,
-    icdsRaw, notLinkedRaw, member,
+    icdsRaw, notLinkedRaw, member, diagActivityIcd,
   } = p;
   return (
     <>

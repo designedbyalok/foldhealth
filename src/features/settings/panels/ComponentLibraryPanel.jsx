@@ -346,7 +346,7 @@ export function ComponentLibraryPanel({ searchQuery = '' }) {
                 background: 'none',
                 border: 'none',
                 padding: 0,
-                font: inherit,
+                font: 'inherit',
               }}
               onClick={() => showToast('Navigate to Domain Registry to re-register')}
             >

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../../../components/Icon/Icon';
 import { Button } from '../../../components/Button/Button';
@@ -14,7 +14,9 @@ import {
   OCR_TIER_LABEL, OCR_TIER_TONE, anyCheckFailed, anyCheckPending,
   CHECK_KEYS, CHECK_LABELS, STANDARD_REASONS,
 } from '../compliance';
-import { sftpEncStatus, highConfidenceSftpIdxs, ICD_LOOKUP } from './HccSftpReviewDrawer.utils';
+import { sftpEncStatus, highConfidenceSftpIdxs, ICD_LOOKUP, countFlaggedEncounters } from './HccSftpReviewDrawer.utils';
+import { getFieldConfidence } from '../data/confidence';
+import { POS_LABEL } from './mockOcr';
 import styles from './HccSftpReviewDrawer.module.css';
 
 export function DocToolbar({ batch, setSelectedAll, showToast }) {

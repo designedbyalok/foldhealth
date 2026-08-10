@@ -5,7 +5,7 @@ import {
 
 export function PopulationGroupsCreateDrawerSummary({ vm, onMemberAdded }) {
   const {
-    matchSummary, setMatchSummary, uploadFile, setUploadFile, uploadState, setUploadState, uploadPct,
+    matchSummary, setMatchSummary, uploadFile, setUploadFile, uploadState, setUploadState, uploadPct, setUploadPct,
     matchedExp, setMatchedExp, notFoundExp, setNotFoundExp, dupExp, setDupExp,
     showPreview, newMode, editGroupId, csvAllClear, manualSelRef, parsedRef,
     reclassifyDuplicate,

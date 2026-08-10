@@ -15,7 +15,7 @@ export function PopulationGroupsCreateDrawerWide({ vm, onMemberAdded }) {
   const {
     segmentName, setSegmentName, description, setDescription,
     chosenFilter, setChosenFilter, memberStatus, setMemberStatus,
-    uploadFile, setUploadFile, uploadState, setUploadState, uploadPct,
+    uploadFile, setUploadFile, uploadState, setUploadState, uploadPct, setUploadPct,
     matchSummary, setMatchSummary, setCriteria,
     procStepRef, manualSelRef, parsedRef, loadingStartRef,
     startPgSession, resetModalState, setModalOpen,
