@@ -154,6 +154,7 @@ export const AssigneeChange = forwardRef(function AssigneeChange({
               type="text"
               className={styles.searchInput}
               placeholder="Search users…"
+              aria-label="Search users"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />

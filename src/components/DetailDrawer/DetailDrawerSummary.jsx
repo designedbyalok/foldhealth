@@ -79,7 +79,7 @@ export function DetailDrawerSummary({
 }) {
   return (
     <>
-      <div className={styles.sectionHeader} onClick={onToggle}>
+      <button type="button" className={styles.sectionHeader} onClick={onToggle} aria-expanded={open}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span className={styles.sparkle}>
             <Icon name="solar:magic-stick-3-bold" size={14} />
@@ -97,7 +97,7 @@ export function DetailDrawerSummary({
             <span className={styles.aiGradientText} style={{ fontWeight: 500 }}>Regenerating…</span>
           </span>
         )}
-      </div>
+      </button>
 
       {open && !callSummary && (
         <div style={{ padding: '16px', fontSize: 13, color: 'var(--neutral-300)', textAlign: 'center' }}>

@@ -206,6 +206,7 @@ export function Pagination({
           min={1}
           max={totalPages}
           placeholder="#"
+          aria-label="Go to page number"
           value={goToInput}
           onChange={(e) => setGoToInput(e.target.value)}
           onKeyDown={handleGoToKeyDown}

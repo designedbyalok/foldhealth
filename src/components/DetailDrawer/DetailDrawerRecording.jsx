@@ -26,14 +26,32 @@ export function DetailDrawerRecording({
   const progress = duration > 0 ? elapsed / duration : 0;
   const progressBarIdx = Math.floor(progress * WAVE_BARS.length);
 
+  // The waveform is a scrubber, so keyboard users get the arrow/Home/End
+  // contract a slider is expected to honour. Writing currentTime fires the
+  // audio element's timeupdate, which is what keeps `elapsed` in sync.
+  const SEEK_STEP = 5;
+  const seekTo = (seconds) => {
+    if (!audioRef.current || duration === 0) return;
+    audioRef.current.currentTime = Math.max(0, Math.min(duration, seconds));
+  };
+
+  const handleWaveformKeyDown = (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') seekTo(elapsed + SEEK_STEP);
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') seekTo(elapsed - SEEK_STEP);
+    else if (e.key === 'Home') seekTo(0);
+    else if (e.key === 'End') seekTo(duration);
+    else return;
+    e.preventDefault();
+  };
+
   return (
     <>
-      <div className={styles.sectionHeader} onClick={onToggleSection}>
+      <button type="button" className={styles.sectionHeader} onClick={onToggleSection} aria-expanded={open}>
         <span className={styles.sectionTitle}>Call Recording &amp; Transcript</span>
         <span className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`}>
           <Icon name="solar:alt-arrow-right-linear" size={16} />
         </span>
-      </div>
+      </button>
       {open && (!callTranscript || callTranscript.length === 0) && (
         <div style={{ padding: '16px', fontSize: 13, color: 'var(--neutral-300)', textAlign: 'center' }}>
           No call recording available. Recording will appear after a completed call.
@@ -53,7 +71,18 @@ export function DetailDrawerRecording({
             <span className={styles.audioTime}>
               {playState === 'idle' ? formatTime(duration) : formatTime(elapsed)}
             </span>
-            <div className={styles.waveformContainer} onClick={onSeek}>
+            <div
+              className={styles.waveformContainer}
+              onClick={onSeek}
+              onKeyDown={handleWaveformKeyDown}
+              role="slider"
+              tabIndex={0}
+              aria-label="Seek recording"
+              aria-valuemin={0}
+              aria-valuemax={Math.round(duration) || 0}
+              aria-valuenow={Math.round(elapsed) || 0}
+              aria-valuetext={`${formatTime(elapsed)} of ${formatTime(duration)}`}
+            >
               <div className={styles.waveform}>
                 {WAVE_BARS.map((h, i) => (
                   <div
@@ -93,12 +122,17 @@ export function DetailDrawerRecording({
             </div>
           </div>
 
-          <div className={styles.transcriptSubHeader} onClick={() => setShowTranscript(v => !v)}>
+          <button
+            type="button"
+            className={styles.transcriptSubHeader}
+            onClick={() => setShowTranscript(v => !v)}
+            aria-expanded={showTranscript}
+          >
             <span className={styles.transcriptSubTitle}>Call Transcript</span>
             <span className={`${styles.chevron} ${showTranscript ? styles.chevronOpen : ''}`}>
               <Icon name="solar:alt-arrow-right-linear" size={14} color="var(--neutral-200)" />
             </span>
-          </div>
+          </button>
 
           {showTranscript && (
             <div className={styles.transcriptBody} ref={transcriptContainerRef}>

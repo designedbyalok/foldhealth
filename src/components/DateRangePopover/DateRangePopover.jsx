@@ -103,7 +103,9 @@ export function DateRangePopover({
 
   return createPortal(
     <>
-      <div className={styles.overlay} onClick={onClose} />
+      {/* Decorative click-catcher: the keyboard path to dismiss is the Escape
+          handler above, so this must not become a full-viewport tab stop. */}
+      <div className={styles.overlay} onClick={onClose} aria-hidden="true" />
       <div
         className={styles.popover}
         style={{ top, left: Math.max(12, left), width }}
