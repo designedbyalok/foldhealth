@@ -61,6 +61,16 @@ export default {
           'api/**',
           'netlify/functions/**',
           'supabase/functions/**',
+
+          // hcc-archived is an INTENTIONAL archive, not dead code. AppLayout
+          // documents it as a frozen snapshot of HCC, lazy-loaded so upstream
+          // HCC changes never alter it, and it is reachable in the product via
+          // the "HCC (Archived)" worklist. Most of its internals are naturally
+          // unreferenced from the live tree — that is what an archive looks
+          // like — so unused-file flags ~50 of them and would keep tempting
+          // whoever reads the report next to delete a deliberate snapshot.
+          // Confirmed with the code owner (2026-08): keep it.
+          'src/features/hcc-archived/**',
         ],
         // Note the `deslop/` prefix — dead-code analysis comes from deslop-js,
         // not the react-doctor oxlint plugin, so `react-doctor/unused-file`
