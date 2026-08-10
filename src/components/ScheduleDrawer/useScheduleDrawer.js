@@ -40,7 +40,7 @@ export function useScheduleDrawer({ onClose, selectedSlot, onSave, existingAppoi
 
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [reasonForVisit, setReasonForVisit] = useState('');
-  const [appointmentType, setAppointmentType] = useState(null);
+  const [appointmentType, setAppointmentTypeState] = useState(null);
   const [mode, setMode] = useState('');
   const [location, setLocation] = useState('');
   const [provider, setProvider] = useState('');
@@ -97,12 +97,16 @@ export function useScheduleDrawer({ onClose, selectedSlot, onSave, existingAppoi
     });
   }, []);
 
-  useEffect(() => {
-    if (appointmentType) {
-      setMode(appointmentType.mode === 'Virtual' ? 'Virtual' : 'At Clinic');
+  // Picking a type resets the mode and location it implies. Doing it here, in
+  // the event that causes it, keeps mode/location as plain user-editable state
+  // instead of state an effect has to chase after every render.
+  const setAppointmentType = (next) => {
+    setAppointmentTypeState(next);
+    if (next) {
+      setMode(next.mode === 'Virtual' ? 'Virtual' : 'At Clinic');
       setLocation(LOCATION_OPTIONS[0]);
     }
-  }, [appointmentType]);
+  };
 
   const canSchedule = selectedPatient && appointmentType;
 

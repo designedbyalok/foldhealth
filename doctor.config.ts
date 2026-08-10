@@ -113,9 +113,61 @@ export default {
       // triggered it but incomplete — AccountPanel also contained these invite
       // writes. Splitting them into this file surfaced that, so the write now
       // carries its own reasoning instead of inheriting a partial one.
+      //
+      // SECOND CORRECTION (2026-08). The justification above was still too
+      // generous. "Admins can update any profile" gates WHICH ROW you may
+      // write, never WHICH COLUMNS — and `Users can update own profile`
+      // (auth.uid() = id) let ANY authenticated user write their own
+      // admin_role. PreferencesDrawer was doing exactly that, defaulting the
+      // field to 'Business/Practice Owner', so saving preferences promoted you
+      // to the top privilege. That is almost certainly where the 36 admins we
+      // cut back to 5 came from. RLS alone never enforced this.
+      //
+      // Now it genuinely is enforced, by supabase/profiles_guard_authz_fields.sql:
+      //   • a BEFORE INSERT OR UPDATE trigger on profiles rejects any change to
+      //     admin_role / role / clinical_roles unless the caller is an admin
+      //     acting on someone else (self-elevation denied even for admins), and
+      //   • admin_set_user_roles(), a SECURITY DEFINER RPC that re-derives the
+      //     caller's admin status server-side, is the only sanctioned door.
+      // Verified against production inside a rolled-back transaction: 8/8
+      // assertions, including a real non-admin self-escalation attempt.
+      //
+      // The remaining hit is on InviteUserDrawer.utils.js's assignUserRoles —
+      // the RPC wrapper itself. The rule pattern-matches "supabase call near
+      // role-ish identifiers", so it flags the very fix it recommends. There is
+      // no client-side change that clears it, short of not naming the fields.
       {
-        files: ['src/features/settings/account/InviteUserDrawer.jsx'],
+        files: [
+          'src/features/settings/account/InviteUserDrawer.jsx',
+          'src/features/settings/account/InviteUserDrawer.utils.js',
+        ],
         rules: ['react-doctor/supabase-client-owned-authz-field'],
+      },
+
+      // The iframe editor's cleanup IS total — it removes the `load` listener,
+      // removes the current document's input/click listeners via
+      // unsubscribeDoc(), and clears the debounce timer, all from one cleanup
+      // function. The rule still fires because the setTimeout lives two
+      // closures deep (effect -> handleLoad -> onInput) and the listener
+      // removal is indirected through a `subscribed` record, neither of which
+      // it can trace statically. Restructuring purely to flatten those
+      // closures would make the teardown harder to follow, not safer.
+      {
+        files: ['src/features/email-builder/PreviewCanvasEditableHtml.jsx'],
+        rules: ['react-doctor/effect-needs-cleanup'],
+      },
+
+      // ConfigurePanel's `form` is not derived state — it is editable state
+      // hydrated ONCE from an async fetch (guarded by formLoadedRef) and then
+      // owned by the user as they type. Computing it during render, which is
+      // what the rule asks for, would recompute it from builderConfig on every
+      // render and silently discard their edits. The two sibling hits this rule
+      // reported were real and are fixed: useScheduleDrawer and
+      // useChartDetailDrawer now set their derived values in the event that
+      // causes them instead of chasing them from an effect.
+      {
+        files: ['src/features/agent-builder/ConfigurePanel.jsx'],
+        rules: ['react-doctor/no-derived-state'],
       },
 
       // no-impure-state-updater false positives: `onTriggerEnter(recordRect)`

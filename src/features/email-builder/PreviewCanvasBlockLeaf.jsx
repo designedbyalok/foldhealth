@@ -3,6 +3,13 @@ import { tintSvgMarkup } from './svgTint';
 import { paddingCss, bgProps, BUTTON_SIZE_STYLES, BUTTON_PRESET_RADIUS, NO_IMAGE_PLACEHOLDER_STYLE } from './PreviewCanvas.utils';
 import { ResizeWrap } from './PreviewCanvasResize';
 
+/**
+ * Renders one leaf block for the *builder canvas only* — the email that
+ * actually gets sent is produced separately by renderEmailHtml(). Because
+ * nothing here is navigable, link-shaped blocks (Button, Social, NavBar)
+ * render as styled spans rather than anchors that swallow their own clicks;
+ * the click still bubbles to the canvas so the block gets selected.
+ */
 export function renderLeafBlock(type, ctx, { id, props, style, block }) {
   if (type === 'Image') {
     const isSelected = ctx.selectedBlockId === id;
@@ -145,9 +152,7 @@ export function renderLeafBlock(type, ctx, { id, props, style, block }) {
     const radius = style.borderRadius ?? BUTTON_PRESET_RADIUS[props.buttonStyle || 'rectangle'] ?? 0;
     return (
       <div style={{ padding: paddingCss(style.padding), textAlign: style.blockAlign || style.textAlign || 'center' }}>
-        <a
-          href={props.url || '#'}
-          onClick={e => e.preventDefault()}
+        <span
           style={{
             display: 'inline-block',
             padding: sz.padding,
@@ -162,7 +167,7 @@ export function renderLeafBlock(type, ctx, { id, props, style, block }) {
           }}
         >
           {props.text || 'Button'}
-        </a>
+        </span>
       </div>
     );
   }
@@ -180,11 +185,11 @@ export function renderLeafBlock(type, ctx, { id, props, style, block }) {
           gap: `${gap}px`,
         }}>
           {platforms.map(p => (
-            <a key={p.id} href={p.url || '#'} onClick={e => e.preventDefault()} title={p.label} style={{ display: 'inline-flex' }}>
+            <span key={p.id} title={p.label} style={{ display: 'inline-flex' }}>
               {p.iconUrl
                 ? <img src={p.iconUrl} alt={p.label} width={iconSize} height={iconSize} style={{ display: 'block' }} />
                 : <div style={{ width: iconSize, height: iconSize, borderRadius: 4, border: '1px dashed var(--neutral-150)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: 'var(--neutral-200)' }}>?</div>}
-            </a>
+            </span>
           ))}
         </div>
       </div>
@@ -206,14 +211,12 @@ export function renderLeafBlock(type, ctx, { id, props, style, block }) {
           gap: `${gap}px`,
         }}>
           {links.map((link, i) => (
-            <a
+            <span
               key={i}
-              href={link.url || '#'}
-              onClick={e => e.preventDefault()}
               style={{ color: linkColor, fontSize, fontWeight, textDecoration: 'none', fontFamily: 'inherit' }}
             >
               {link.label}
-            </a>
+            </span>
           ))}
         </div>
       </div>

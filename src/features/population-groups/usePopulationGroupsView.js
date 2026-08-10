@@ -107,6 +107,12 @@ export function usePopulationGroupsView({
   const fileInputRef  = useRef(null);
   const parsedRef        = useRef(null); // stores parsed match results while loading timer runs
   const loadingStartRef  = useRef(null); // timestamp when loading began (for mini-bar hand-off)
+  const uploadTickRef    = useRef(null); // progress-animation interval, cleared on unmount
+
+  /* The upload progress interval is started from an event handler, so nothing
+     stops it if the view unmounts mid-upload — it would keep calling
+     setUploadPct on a dead component. Own it here. */
+  useEffect(() => () => clearInterval(uploadTickRef.current), []);
 
   /* ── close dropdowns on outside click ── */
   useEffect(() => {
@@ -240,11 +246,13 @@ export function usePopulationGroupsView({
     /* ── Animate progress over ~5 s (≈2–4 % per 200 ms tick) ── */
     const startTime = Date.now();
     let pct = 0;
+    clearInterval(uploadTickRef.current);
     const iv = setInterval(() => {
       pct += Math.random() * 3 + 1;
       if (pct >= 100) { clearInterval(iv); setUploadPct(100); }
       else setUploadPct(Math.round(pct));
     }, 200);
+    uploadTickRef.current = iv;
 
     const isXlsx = /\.xlsx$/i.test(file.name || '');
     const reader = new FileReader();

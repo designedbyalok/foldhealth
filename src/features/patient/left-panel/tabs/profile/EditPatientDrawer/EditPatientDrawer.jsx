@@ -173,40 +173,44 @@ export function EditPatientDrawer({
   const handleSave = async () => {
     if (!patientId) return;
     setSaving(true);
-    const ok = await updateP360Profile(patientId, {
-      chosen_name:        form.chosen_name || null,
-      date_of_birth:      form.date_of_birth || null,
-      age:                form.age || null,
-      gender_identity:    form.gender_identity || null,
-      pronoun:            form.pronoun || null,
-      sex_at_birth:       form.sex_at_birth || null,
-      sexual_orientation: form.sexual_orientation || null,
-      primary_language:   form.primary_language || null,
-      secondary_language: form.secondary_language || null,
-      blood_group:        form.blood_group || null,
-      marital_status:     form.marital_status || null,
-      race:               form.race || null,
-      ethnicity:          form.ethnicity || null,
-      ipa:                form.ipa || null,
-      emails:             form.email ? [form.email] : [],
-      plan_numbers_primary: form.phone ? [form.phone] : [],
-      address_line1:      form.address_line1 || null,
-      address_line2:      form.address_line2 || null,
-      city:               form.city || null,
-      state:              form.state || null,
-      zipcode:            form.zipcode || null,
-      location_landmark:  form.location_landmark || null,
-      custom_fields:      form.custom_fields || [],
-      extra_languages:    form.extra_languages || [],
-      extra_phones:       form.extra_phones || [],
-      tags:               form.tags || [],
-      employer:           form.employer || null,
-      practice_location:  form.practice_location || null,
-      additional_notes:   form.notes || null,
-      profile_source:     form.profile_source || null,
-      profile_created_on: form.profile_created_on || null,
-    });
-    setSaving(false);
+    let ok = false;
+    try {
+      ok = await updateP360Profile(patientId, {
+        chosen_name:        form.chosen_name || null,
+        date_of_birth:      form.date_of_birth || null,
+        age:                form.age || null,
+        gender_identity:    form.gender_identity || null,
+        pronoun:            form.pronoun || null,
+        sex_at_birth:       form.sex_at_birth || null,
+        sexual_orientation: form.sexual_orientation || null,
+        primary_language:   form.primary_language || null,
+        secondary_language: form.secondary_language || null,
+        blood_group:        form.blood_group || null,
+        marital_status:     form.marital_status || null,
+        race:               form.race || null,
+        ethnicity:          form.ethnicity || null,
+        ipa:                form.ipa || null,
+        emails:             form.email ? [form.email] : [],
+        plan_numbers_primary: form.phone ? [form.phone] : [],
+        address_line1:      form.address_line1 || null,
+        address_line2:      form.address_line2 || null,
+        city:               form.city || null,
+        state:              form.state || null,
+        zipcode:            form.zipcode || null,
+        location_landmark:  form.location_landmark || null,
+        custom_fields:      form.custom_fields || [],
+        extra_languages:    form.extra_languages || [],
+        extra_phones:       form.extra_phones || [],
+        tags:               form.tags || [],
+        employer:           form.employer || null,
+        practice_location:  form.practice_location || null,
+        additional_notes:   form.notes || null,
+        profile_source:     form.profile_source || null,
+        profile_created_on: form.profile_created_on || null,
+      });
+    } finally {
+      setSaving(false);
+    }
     if (ok) onClose?.();
   };
 

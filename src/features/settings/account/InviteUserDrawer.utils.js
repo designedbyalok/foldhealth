@@ -10,6 +10,25 @@ export function preventDefaultDrag(e) {
   e.preventDefault();
 }
 
+/**
+ * Assign a user's authorization columns (admin_role / role / clinical_roles).
+ *
+ * These are the only columns that decide what someone can do, so the client is
+ * not allowed to write them directly — a `profiles_guard_authz_fields` trigger
+ * rejects that. This RPC is SECURITY DEFINER and re-derives the caller's admin
+ * status from the database before applying anything.
+ */
+export async function assignUserRoles(userId, adminRole, clinicalRoles) {
+  const roles = clinicalRoles || [];
+  const { error } = await supabase.rpc('admin_set_user_roles', {
+    target_id: userId,
+    new_admin_role: adminRole || 'Employer',
+    new_role: roles.length > 0 ? roles[0] : 'Viewer',
+    new_clinical_roles: roles,
+  });
+  return !error;
+}
+
 export function downloadUserImportTemplate() {
   const csv = 'First Name,Middle Name,Last Name,Email,Admin Role\nAmy,,Brenneman,amy@fold.health,Employer\n';
   const blob = new Blob([csv], { type: 'text/csv' });
@@ -65,9 +84,6 @@ export async function sendSingleInvite({ form, showToast, logAudit, onInvited })
     const profileExtras = {
       full_name: `${form.first_name} ${form.last_name}`.trim(),
       first_name: form.first_name, middle_name: form.middle_name, last_name: form.last_name,
-      admin_role: form.admin_role,
-      role: form.clinical_roles.length > 0 ? form.clinical_roles[0] : 'Viewer',
-      clinical_roles: form.clinical_roles,
       gender: form.gender, bio: form.bio, mobile: form.mobile, fax: form.fax,
       zip_code: form.zip_code, address_line1: form.address_line1, address_line2: form.address_line2,
       state: form.state, city: form.city,
@@ -75,6 +91,10 @@ export async function sendSingleInvite({ form, showToast, logAudit, onInvited })
       locations: form.locations, languages: form.languages,
     };
     await supabase.from('profiles').update(profileExtras).eq('id', userId);
+    // Roles go through admin_set_user_roles, never a plain column write: the
+    // function re-checks that the caller is an admin server-side, so the
+    // privilege decision never depends on what the browser chose to send.
+    await assignUserRoles(userId, form.admin_role, form.clinical_roles);
     logAudit('UserProfile', userId, profileExtras.full_name, 'created', `Invited user: ${form.email}`, 'Lifecycle');
   }
 
@@ -133,9 +153,9 @@ export async function importBulkUsers({ bulkRows, showToast, logAudit, onInvited
         await supabase.from('profiles').update({
           full_name: `${row.first_name} ${row.last_name}`.trim(),
           first_name: row.first_name, middle_name: row.middle_name, last_name: row.last_name,
-          admin_role: row.admin_role || 'Employer', role: 'Viewer',
           gender: row.gender, mobile: row.mobile, fax: row.fax, zip_code: row.zip_code,
         }).eq('id', userId);
+        await assignUserRoles(userId, row.admin_role, []);
         return true;
       }
       return false;

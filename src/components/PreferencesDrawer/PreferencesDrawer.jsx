@@ -86,7 +86,6 @@ export function PreferencesDrawer({ onClose }) {
             middle_name: data.middle_name || '',
             date_of_birth: data.date_of_birth || '',
             gender: data.gender || '',
-            admin_role: data.admin_role || 'Business/Practice Owner',
             bio: data.bio || '',
             mobile: data.mobile || data.phone || '',
             email: data.email || user.email || '',
@@ -113,6 +112,12 @@ export function PreferencesDrawer({ onClose }) {
       full_name: `${form.first_name} ${form.last_name}`.trim(),
       ...form,
     };
+    // This is a self-update, so it must never carry authorization columns —
+    // the spread above would happily forward anything that lands in `form`.
+    // The database enforces this too; stripping here keeps the request honest.
+    delete updates.role;
+    delete updates.admin_role;
+    delete updates.clinical_roles;
     const { error } = await supabase.from('profiles').update(updates).eq('id', profile.id);
     if (!error) {
       // Also update auth metadata

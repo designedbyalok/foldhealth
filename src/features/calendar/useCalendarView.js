@@ -296,9 +296,14 @@ export function useCalendarView() {
       if (overlay) overlay.style.opacity = '0';
     }
 
+    // Remember the exact nodes we subscribed to. Re-querying at cleanup time
+    // can return a different set once schedule-x has re-rendered the grid,
+    // which would leave the original listeners attached forever.
+    let subscribedDays = [];
+
     const timer = setTimeout(() => {
-      const days = document.querySelectorAll('.sx__time-grid-day');
-      days.forEach(day => {
+      subscribedDays = Array.from(document.querySelectorAll('.sx__time-grid-day'));
+      subscribedDays.forEach(day => {
         day.addEventListener('mousemove', handleMove);
         day.addEventListener('mouseleave', handleLeave);
       });
@@ -327,11 +332,11 @@ export function useCalendarView() {
 
     return () => {
       clearTimeout(timer);
-      const days = document.querySelectorAll('.sx__time-grid-day');
-      days.forEach(day => {
+      subscribedDays.forEach(day => {
         day.removeEventListener('mousemove', handleMove);
         day.removeEventListener('mouseleave', handleLeave);
       });
+      subscribedDays = [];
       if (hoverRef.current?.parentElement) {
         hoverRef.current.parentElement.removeChild(hoverRef.current);
       }

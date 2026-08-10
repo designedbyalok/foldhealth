@@ -80,9 +80,8 @@ export function DetailDrawer() {
     }, 2000);
   };
 
-  if (!detailPatient) return null;
-  const p = detailPatient;
-
+  // Derived from the call list alone (never from detailPatient), so it can sit
+  // above the early return and keep the transcript-scroll effect unconditional.
   const specificCall = activeCallRow?.id
     ? (detailPatientCalls || []).find(c => c.id === activeCallRow.id)
     : null;
@@ -91,22 +90,6 @@ export function DetailDrawer() {
   const goalsDetail = callRecord.goalsDetail || [];
   const callSummary = callRecord.callSummary || null;
   const callTranscript = callRecord.callTranscript || [];
-
-  const callDate = activeCallRow?.date || callRecord.startedAt || p.callDate || null;
-  const callDurationFull = activeCallRow?.duration || callRecord.duration || p.callDurationFull || null;
-  const callDir = activeCallRow?.dir || callRecord.direction || (callRecord.callType === 'voicemail' ? 'missed' : callRecord.callType === 'declined' ? 'declined' : 'outgoing');
-  const agentName = activeCallRow?.agent || callRecord.agentName || 'Anna';
-  const isMissedOrDeclined = callDir === 'missed' || callDir === 'declined';
-
-  const handleCopySummary = () => {
-    if (!callSummary) return;
-    const text = `Key Points Discussed:\n${callSummary.keyPoints.map(pt => `• ${pt}`).join('\n')}\n\nAction Items:\n${callSummary.actionItems.map(a => `• ${a}`).join('\n')}`;
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
-  };
-
-  const toggleSection = (key) => setOpenSections(s => ({ ...s, [key]: !s[key] }));
 
   useEffect(() => {
     if (playState !== 'playing' || !openSections.transcript) return;
@@ -123,6 +106,25 @@ export function DetailDrawer() {
       }
     }
   }, [elapsed, playState, openSections.transcript, callTranscript]);
+
+  if (!detailPatient) return null;
+  const p = detailPatient;
+
+  const callDate = activeCallRow?.date || callRecord.startedAt || p.callDate || null;
+  const callDurationFull = activeCallRow?.duration || callRecord.duration || p.callDurationFull || null;
+  const callDir = activeCallRow?.dir || callRecord.direction || (callRecord.callType === 'voicemail' ? 'missed' : callRecord.callType === 'declined' ? 'declined' : 'outgoing');
+  const agentName = activeCallRow?.agent || callRecord.agentName || 'Anna';
+  const isMissedOrDeclined = callDir === 'missed' || callDir === 'declined';
+
+  const handleCopySummary = () => {
+    if (!callSummary) return;
+    const text = `Key Points Discussed:\n${callSummary.keyPoints.map(pt => `• ${pt}`).join('\n')}\n\nAction Items:\n${callSummary.actionItems.map(a => `• ${a}`).join('\n')}`;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
+
+  const toggleSection = (key) => setOpenSections(s => ({ ...s, [key]: !s[key] }));
 
   return (
     <Drawer title="Call Details" onClose={closeDetail}>

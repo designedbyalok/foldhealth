@@ -11,7 +11,6 @@ export function EditableHtmlIframe({ html, doc }) {
   const iframeRef = useRef(null);
   const lastLoadedRef = useRef(null);
   const editingRef = useRef(false);
-  const debounceRef = useRef(null);
 
   // (Re)load the iframe only when the html prop changes from the outside —
   // not in response to our own writes. editingRef gates against echoing
@@ -69,9 +68,24 @@ export function EditableHtmlIframe({ html, doc }) {
     const iframe = iframeRef.current;
     if (!iframe) return;
 
+    // Every `load` swaps in a fresh document, so the previous document's
+    // listeners have to come off before the new ones go on — and the last set
+    // has to come off at unmount. Track whatever is currently subscribed.
+    let subscribed = null;
+    // Scoped to the effect rather than a ref so the timer is created and
+    // cleared in one place, and cannot outlive the subscription that feeds it.
+    let debounceTimer = null;
+    const unsubscribeDoc = () => {
+      if (!subscribed) return;
+      subscribed.doc.removeEventListener('input', subscribed.onInput);
+      subscribed.doc.removeEventListener('click', subscribed.onClick);
+      subscribed = null;
+    };
+
     const handleLoad = () => {
       const idoc = iframe.contentDocument;
       if (!idoc) return;
+      unsubscribeDoc();
       const body = idoc.body;
       if (!body) return;
       body.setAttribute('contenteditable', 'true');
@@ -108,8 +122,8 @@ export function EditableHtmlIframe({ html, doc }) {
 
       const onInput = () => {
         editingRef.current = true;
-        if (debounceRef.current) clearTimeout(debounceRef.current);
-        debounceRef.current = setTimeout(() => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
           flush();
           editingRef.current = false;
         }, 300);
@@ -125,6 +139,7 @@ export function EditableHtmlIframe({ html, doc }) {
 
       idoc.addEventListener('input', onInput);
       idoc.addEventListener('click', onClick);
+      subscribed = { doc: idoc, onInput, onClick };
     };
 
     iframe.addEventListener('load', handleLoad);
@@ -133,7 +148,8 @@ export function EditableHtmlIframe({ html, doc }) {
     lastLoadedRef.current = html;
     return () => {
       iframe.removeEventListener('load', handleLoad);
-      if (debounceRef.current) clearTimeout(debounceRef.current);
+      unsubscribeDoc();
+      clearTimeout(debounceTimer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

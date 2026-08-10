@@ -164,19 +164,21 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
   // Mirrors the Add DOS drawer's upload states: Dropzone → uploading progress
   // card → uploaded file card.
   const [showUpload, setShowUpload] = useState(false);
-  const [upFile, setUpFile] = useState(null);
+  const [upFile, setUpFileState] = useState(null);
   const [upCaption, setUpCaption] = useState('');
   const [upCaptionTouched, setUpCaptionTouched] = useState(false);
   const [upType, setUpType] = useState('');
   const [uploadKey, setUploadKey] = useState(0); // remount UploadDropField to reset it
   // Once a file lands in the drop zone, seed the Caption with the file's
-  // name (extension stripped) so the user has a sensible default. Stop
-  // auto-syncing as soon as the user types their own caption; a subsequent
-  // file swap re-syncs. Matches the UploadChartDrawer behavior.
-  useEffect(() => {
-    if (!upFile || upCaptionTouched) return;
-    setUpCaption(upFile.name.replace(/\.[a-z0-9]+$/i, ''));
-  }, [upFile, upCaptionTouched]);
+  // name (extension stripped) so the user has a sensible default — unless
+  // they've already typed their own caption. Seeded here, at the drop, rather
+  // than from an effect that re-derives it on every render.
+  const setUpFile = (file) => {
+    setUpFileState(file);
+    if (file && !upCaptionTouched) {
+      setUpCaption(file.name.replace(/\.[a-z0-9]+$/i, ''));
+    }
+  };
   useEffect(() => {
     if (!actionPos) return;
     const onDoc = (e) => {

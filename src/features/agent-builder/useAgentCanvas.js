@@ -46,7 +46,6 @@ export function useAgentCanvas() {
   // Auto-save status indicator
   const [autoSaveStatus, setAutoSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved'
   const autoSaveTimer = useRef(null);
-  const idleTimer = useRef(null);
   const lastSavedSnapshot = useRef('');
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -312,18 +311,34 @@ export function useAgentCanvas() {
     if (!builderFlow || saving) return;
     const snapshot = JSON.stringify({ nodes, edges });
     if (snapshot === lastSavedSnapshot.current) return;
+    // `cancelled` guards the writes that happen after the await, which can
+    // land long after this effect has torn down.
+    let cancelled = false;
     clearTimeout(autoSaveTimer.current);
     setAutoSaveStatus('idle');
     autoSaveTimer.current = setTimeout(async () => {
       setAutoSaveStatus('saving');
       const viewport = reactFlowInstance.current?.getViewport() || { x: 0, y: 0, zoom: 1 };
       await saveFlow(nodes, edges, viewport);
+      if (cancelled) return;
       lastSavedSnapshot.current = snapshot;
       setAutoSaveStatus('saved');
-      idleTimer.current = setTimeout(() => setAutoSaveStatus('idle'), 1500);
     }, 1500);
-    return () => { clearTimeout(autoSaveTimer.current); clearTimeout(idleTimer.current); };
+    return () => {
+      cancelled = true;
+      clearTimeout(autoSaveTimer.current);
+    };
   }, [nodes, edges, builderFlow, saving, saveFlow]);
+
+  // "Saved" is a transient badge that decays back to idle. It lives in its own
+  // effect so the timer is created and cleared in the same scope — previously
+  // it was spawned inside the async save callback, where the enclosing
+  // effect's cleanup had already run by the time it existed.
+  useEffect(() => {
+    if (autoSaveStatus !== 'saved') return undefined;
+    const t = setTimeout(() => setAutoSaveStatus('idle'), 1500);
+    return () => clearTimeout(t);
+  }, [autoSaveStatus]);
 
   // Undo / Redo — pop from past/future and apply via setNodes/setEdges.
   // skipHistory prevents the resulting state change from re-recording.
