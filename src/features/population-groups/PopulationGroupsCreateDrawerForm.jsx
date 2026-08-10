@@ -94,7 +94,7 @@ export function PopulationGroupsCreateDrawerForm({ vm }) {
                                 </div>
                                 <div style={{ fontSize:12, color:'var(--neutral-200)', marginTop:3 }}>{uploadPct}%</div>
                               </div>
-                              <button onClick={() => { setUploadFile(null); setUploadState('idle'); setUploadPct(0); }}
+                              <button aria-label="Remove uploaded file" onClick={() => { setUploadFile(null); setUploadState('idle'); setUploadPct(0); }}
                                 style={{ border:'none', background:'none', cursor:'pointer', display:'flex', alignItems:'center', padding:4, borderRadius:4, transition:'background 0.15s' }}
                                 onMouseEnter={e => e.currentTarget.style.background='var(--neutral-75)'}
                                 onMouseLeave={e => e.currentTarget.style.background='none'}>
@@ -139,16 +139,16 @@ export function PopulationGroupsCreateDrawerForm({ vm }) {
                           return (
                             <div key={idx} style={{ display:'flex', alignItems:'center', gap:6, marginBottom:8 }}>
                               <span style={{ fontSize:14, fontWeight:500, color:'var(--neutral-300)', width:24, textAlign:'center', flexShrink:0 }}>{idx===0?'IF':'AND'}</span>
-                              <select className="pg-crit-select" value={c.attr} onChange={e => updateCriterion(idx,'attr',e.target.value)}
+                              <select aria-label="Criterion attribute" className="pg-crit-select" value={c.attr} onChange={e => updateCriterion(idx,'attr',e.target.value)}
                                 style={{ flex:2, padding:'7px 8px', border:'0.5px solid var(--neutral-150)', borderRadius:6, fontSize:14, color:'var(--neutral-400)', fontFamily:'Inter, sans-serif', background:'var(--neutral-0)', outline:'none' }}>
                                 {CRIT_ATTRS.map(a => <option key={a.label} value={a.label}>{a.label}</option>)}
                               </select>
-                              <select className="pg-crit-select" value={c.op} onChange={e => updateCriterion(idx,'op',e.target.value)}
+                              <select aria-label="Criterion operator" className="pg-crit-select" value={c.op} onChange={e => updateCriterion(idx,'op',e.target.value)}
                                 style={{ flex:1.4, padding:'7px 6px', border:'0.5px solid var(--neutral-150)', borderRadius:6, fontSize:14, color:'var(--neutral-400)', fontFamily:'Inter, sans-serif', background:'var(--neutral-0)', outline:'none' }}>
                                 {attrDef.ops.map(op => <option key={op} value={op}>{op}</option>)}
                               </select>
                               {attrDef.type==='select' ? (
-                                <select className="pg-crit-select" value={c.val} onChange={e => updateCriterion(idx,'val',e.target.value)}
+                                <select aria-label="Criterion value" className="pg-crit-select" value={c.val} onChange={e => updateCriterion(idx,'val',e.target.value)}
                                   style={{ flex:2, padding:'7px 6px', border:'0.5px solid var(--neutral-150)', borderRadius:6, fontSize:14, color:'var(--neutral-400)', fontFamily:'Inter, sans-serif', background:'var(--neutral-0)', outline:'none' }}>
                                   <option value="">Select…</option>
                                   {attrDef.opts.map(o => <option key={o} value={o}>{o}</option>)}

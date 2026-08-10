@@ -67,6 +67,7 @@ export function UserCard({ member, teamType, priorUtilization, breakdown = [], u
             type="number"
             min={0} max={100}
             className={drawerStyles.capacityInput}
+            aria-label="Capacity percent"
             value={member.capacityPct}
             onChange={(e) => onPatch({ capacityPct: e.target.value })}
           />
@@ -82,6 +83,7 @@ export function UserCard({ member, teamType, priorUtilization, breakdown = [], u
           <div key={i} className={drawerStyles.assignRow}>
             <select
               className={drawerStyles.assignDim}
+              aria-label="Assignment dimension"
               value={row.dim || dims[0] || ''}
               onChange={(e) => onPatchAssignTo(i, { dim: e.target.value, value: '' })}
             >
@@ -99,6 +101,7 @@ export function UserCard({ member, teamType, priorUtilization, breakdown = [], u
                 type="number"
                 min={0} max={100}
                 className={drawerStyles.assignPctInput}
+                aria-label="Assignment percent"
                 value={row.pct}
                 onChange={(e) => onPatchAssignTo(i, { pct: e.target.value })}
               />

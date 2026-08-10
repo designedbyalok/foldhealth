@@ -94,7 +94,7 @@ function QuickNoteItem({ note, onSave, onDelete, onAuditLog }) {
               <button className={styles.quickNoteActionBtn} onClick={(e) => { e.stopPropagation(); onAuditLog(); }} aria-label="Audit Log">
                 <Icon name="solar:clock-circle-linear" size={13} color="var(--neutral-300)" />
               </button>
-              <button className={styles.quickNoteCollapseBtn} onClick={() => setExpanded(false)}>
+              <button className={styles.quickNoteCollapseBtn} onClick={() => setExpanded(false)} aria-label="Collapse quick notes">
                 <Icon name="solar:alt-arrow-up-linear" size={12} color="var(--neutral-300)" />
               </button>
             </div>

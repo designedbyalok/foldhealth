@@ -423,22 +423,22 @@ export function FigmaIncorrectRow({ row, onAdd, onRemove, isLast, onToast, match
       <div style={{ display: 'flex', alignItems: 'flex-start', paddingRight: 12 }}>
         <div style={{ flex: 1, minWidth: 0, padding: '2px 12px 8px' }}>
           <CellOuter err={hasError}>
-            <input value={foldId} onChange={e => handleFoldIdChange(e.target.value)} style={FIGMA_INCORRECT_INPUT_ST} />
+            <input aria-label="Fold ID" value={foldId} onChange={e => handleFoldIdChange(e.target.value)} style={FIGMA_INCORRECT_INPUT_ST} />
           </CellOuter>
         </div>
         <div style={{ flex: 1, minWidth: 0, padding: '2px 12px 8px' }}>
           <CellOuter err={mismatch.firstName}>
-            <input disabled value={firstName} style={{ ...FIGMA_INCORRECT_INPUT_ST, background:'var(--neutral-50)', color:'var(--neutral-150)', cursor:'not-allowed' }} />
+            <input aria-label="First name" disabled value={firstName} style={{ ...FIGMA_INCORRECT_INPUT_ST, background:'var(--neutral-50)', color:'var(--neutral-150)', cursor:'not-allowed' }} />
           </CellOuter>
         </div>
         <div style={{ flex: 1, minWidth: 0, padding: '2px 12px 8px' }}>
           <CellOuter err={mismatch.lastName}>
-            <input disabled value={lastName} style={{ ...FIGMA_INCORRECT_INPUT_ST, background:'var(--neutral-50)', color:'var(--neutral-150)', cursor:'not-allowed' }} />
+            <input aria-label="Last name" disabled value={lastName} style={{ ...FIGMA_INCORRECT_INPUT_ST, background:'var(--neutral-50)', color:'var(--neutral-150)', cursor:'not-allowed' }} />
           </CellOuter>
         </div>
         <div style={{ flex: 1, minWidth: 0, padding: '2px 12px 8px' }}>
           <CellOuter err={mismatch.dob}>
-            <input disabled value={dob} style={{ ...FIGMA_INCORRECT_INPUT_ST, background:'var(--neutral-50)', color:'var(--neutral-150)', cursor:'not-allowed' }} />
+            <input aria-label="Date of birth" disabled value={dob} style={{ ...FIGMA_INCORRECT_INPUT_ST, background:'var(--neutral-50)', color:'var(--neutral-150)', cursor:'not-allowed' }} />
           </CellOuter>
         </div>
         <div style={{ width: 130, flexShrink: 0, padding: '2px 12px 8px 12px', display: 'flex', alignItems: 'center' }}>

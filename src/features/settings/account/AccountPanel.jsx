@@ -152,7 +152,7 @@ export function AccountPanel() {
         <div className={styles.toastOverlay}>
           <div className={styles.toast}>
             <span className={styles.toastText}>Plan Saved Successfully</span>
-            <button className={styles.toastClose} onClick={() => setPlanSavedToast(false)}>
+            <button className={styles.toastClose} onClick={() => setPlanSavedToast(false)} aria-label="Dismiss notification">
               <Icon name="solar:close-circle-linear" size={16} color="white" />
             </button>
           </div>

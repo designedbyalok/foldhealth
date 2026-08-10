@@ -156,7 +156,7 @@ export function DetailDrawerRecording({
                       {!isSystem && (
                         <div className={styles.msgHeader}>
                           <span className={styles.msgSender}>{msg.name}</span>
-                          <button className={styles.msgMore}><Icon name="solar:menu-dots-linear" size={14} /></button>
+                          <button className={styles.msgMore} aria-label="Message actions"><Icon name="solar:menu-dots-linear" size={14} /></button>
                         </div>
                       )}
                       <div className={styles.msgBubble}>{msg.text}</div>

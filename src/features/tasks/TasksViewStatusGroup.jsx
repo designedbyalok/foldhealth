@@ -50,11 +50,11 @@ export function StatusGroup({ status, label: labelProp, tasks, onToggle, onTaskC
           {paginated.map(t => <TaskRow key={t.id} task={t} onToggle={onToggle} onTaskClick={onTaskClick} hideAssignedTo={hideAssignedTo} hideMember={hideMember} />)}
           {totalPages > 1 && (
             <div className={styles.pagination}>
-              <button className={styles.pageBtn} disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+              <button className={styles.pageBtn} disabled={page === 0} onClick={() => setPage(p => p - 1)} aria-label="Previous page">
                 <Icon name="solar:alt-arrow-left-linear" size={14} />
               </button>
               <span className={styles.pageInfo}>{page + 1} / {totalPages}</span>
-              <button className={styles.pageBtn} disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+              <button className={styles.pageBtn} disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} aria-label="Next page">
                 <Icon name="solar:alt-arrow-right-linear" size={14} />
               </button>
             </div>

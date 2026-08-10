@@ -55,6 +55,7 @@ export function TaskDetailDrawerHeader({
           <input
             ref={titleRef}
             className={styles.drawerTaskTitleInput}
+            aria-label="Task title"
             value={titleDraft}
             onChange={e => setTitleDraft(e.target.value)}
             onBlur={onTitleSave}

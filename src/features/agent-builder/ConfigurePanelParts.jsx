@@ -106,6 +106,7 @@ export function ConfigureSlider({ value, onChange, label, badgeText }) {
           <span className={styles.sliderThumbText}>{value}</span>
         </div>
         <input
+          aria-label={label}
           type="range"
           min={0}
           max={100}

@@ -86,6 +86,7 @@ export function TierForm({ tier, index, expanded, isActive, onToggle, onUpdate, 
           <button
             className={styles.tierDeleteBtn}
             onClick={e => { e.stopPropagation(); onDelete(tier.id); }}
+            aria-label="Delete tier"
           >
             <Icon name="solar:trash-bin-2-linear" size={16} color="var(--neutral-300)" className={styles.tierTrashIcon} />
           </button>

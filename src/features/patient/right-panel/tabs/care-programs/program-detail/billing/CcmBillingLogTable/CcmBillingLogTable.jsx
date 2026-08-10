@@ -58,6 +58,7 @@ function InclusionToggle({ value, onChange }) {
           value === false ? styles.inclusionSegExcluded : '',
         ].filter(Boolean).join(' ')}
         aria-pressed={value === false}
+        aria-label="Exclude from billing"
         onClick={() => onChange(value === false ? null : false)}
       >
         <Icon name="solar:close-circle-linear" size={14} />
@@ -69,6 +70,7 @@ function InclusionToggle({ value, onChange }) {
           value === true ? styles.inclusionSegIncluded : value == null ? styles.inclusionSegPending : '',
         ].filter(Boolean).join(' ')}
         aria-pressed={value === true}
+        aria-label="Include in billing"
         onClick={() => onChange(value === true ? null : true)}
       >
         <Icon name="solar:check-circle-linear" size={14} />

@@ -94,7 +94,7 @@ export function PatientP360BannerDrawer({ patient, p }) {
         <span className={styles.drawerCondBadge}>Hypertension</span>
         <span className={styles.drawerMoreBadge}>+2</span>
         <button className={styles.drawerAddTagBtn} aria-label="Add tag"><Icon name="solar:add-circle-linear" size={12} color="var(--neutral-300)" /></button>
-        <button className={styles.drawerExpandIcon} onClick={() => setDrawerExpanded(v => !v)} aria-expanded={drawerExpanded}>
+        <button className={styles.drawerExpandIcon} onClick={() => setDrawerExpanded(v => !v)} aria-expanded={drawerExpanded} aria-label={drawerExpanded ? 'Collapse panel' : 'Expand panel'}>
           <span className={`${styles.drawerExpandIconInner} ${drawerExpanded ? styles.drawerExpandIconRotated : ''}`}>
             <Icon name="custom:expand-drawer" size={16} />
           </span>

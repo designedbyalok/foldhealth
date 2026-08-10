@@ -17,7 +17,7 @@ export default function PaginationBar({
     <div style={{ height:52, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', borderTop:'0.5px solid var(--neutral-150)', background:'var(--neutral-0)' }}>
       <div style={{ display:'flex', alignItems:'center', gap:6 }}>
         {/* Prev */}
-        <button className="pg-btn" disabled={safePage===1} onClick={() => onPageChange(p => Math.max(1,p-1))}
+        <button className="pg-btn" aria-label="Previous page" disabled={safePage===1} onClick={() => onPageChange(p => Math.max(1,p-1))}
           style={{ opacity: safePage===1 ? 0.4 : 1 }}>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8.5 10.5L5 7l3.5-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
@@ -30,7 +30,7 @@ export default function PaginationBar({
           </button>
         ))}
         {/* Next */}
-        <button className="pg-btn" disabled={safePage===totalPages} onClick={() => onPageChange(p => Math.min(totalPages,p+1))}
+        <button className="pg-btn" aria-label="Next page" disabled={safePage===totalPages} onClick={() => onPageChange(p => Math.min(totalPages,p+1))}
           style={{ opacity: safePage===totalPages ? 0.4 : 1 }}>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5.5 3.5L9 7l-3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
@@ -40,6 +40,7 @@ export default function PaginationBar({
         {/* Page size selector */}
         <div style={{ position:'relative', display:'inline-flex' }}>
           <select
+            aria-label="Rows per page"
             value={pageSize}
             onChange={e => onPageSizeChange(Number(e.target.value))}
             style={{ height:28, padding:'0 24px 0 10px', border:'0.5px solid var(--neutral-150)', borderRadius:4, background:'var(--neutral-0)', fontSize:12, fontWeight:500, color:'var(--neutral-300)', cursor:'pointer', appearance:'none', fontFamily:'Inter, sans-serif', outline:'none' }}>

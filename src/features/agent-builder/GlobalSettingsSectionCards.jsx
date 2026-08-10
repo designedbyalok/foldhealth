@@ -257,6 +257,7 @@ export function GlobalSettingsSpeechAndCallSection({ settings, update }) {
               value={settings.reminderEverySec}
               onChange={v => update('reminderEverySec', v)}
               unit="seconds"
+              ariaLabel="Reminder interval in seconds"
               min={1}
               max={300}
             />
@@ -264,6 +265,7 @@ export function GlobalSettingsSpeechAndCallSection({ settings, update }) {
               value={settings.reminderTimes}
               onChange={v => update('reminderTimes', v)}
               unit="times"
+              ariaLabel="Number of reminders"
               min={1}
               max={20}
             />

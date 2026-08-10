@@ -39,7 +39,7 @@ function MultiSelect({ options, value = [], onChange, placeholder }) {
         {value.length > 0 ? value.map(v => (
           <span key={v} className={styles.tag}>
             {v}
-            <button className={styles.tagClose} onClick={e => { e.stopPropagation(); toggle(v); }}>
+            <button className={styles.tagClose} onClick={e => { e.stopPropagation(); toggle(v); }} aria-label={`Remove ${v}`}>
               <Icon name="solar:close-linear" size={10} color="var(--neutral-300)" />
             </button>
           </span>

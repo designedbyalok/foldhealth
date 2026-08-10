@@ -44,7 +44,7 @@ export function ChatInputArea({
             </div>
             <div className={styles.replyPreviewText}>{replyTo.content || '📎 Media'}</div>
           </div>
-          <button className={styles.replyPreviewClose} onClick={onClearReply}>
+          <button className={styles.replyPreviewClose} onClick={onClearReply} aria-label="Cancel reply">
             <Icon name="solar:close-circle-bold" size={16} />
           </button>
         </div>

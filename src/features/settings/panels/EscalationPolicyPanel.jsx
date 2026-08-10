@@ -45,7 +45,7 @@ export function EscalationPolicyPanel() {
               <div style={s.desc}>Escalate when AI confidence drops below this %</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <input style={s.input} type="number" min={0} max={100} value={config.confidenceThreshold} onChange={e => update('confidenceThreshold', +e.target.value)} />
+              <input aria-label="Confidence Threshold" style={s.input} type="number" min={0} max={100} value={config.confidenceThreshold} onChange={e => update('confidenceThreshold', +e.target.value)} />
               <span style={{ fontSize: 12, color: 'var(--neutral-300)' }}>%</span>
             </div>
           </div>
@@ -55,7 +55,7 @@ export function EscalationPolicyPanel() {
               <div style={s.desc}>Escalate when negative sentiment exceeds this %</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <input style={s.input} type="number" min={0} max={100} value={config.sentimentThreshold} onChange={e => update('sentimentThreshold', +e.target.value)} />
+              <input aria-label="Negative Sentiment Threshold" style={s.input} type="number" min={0} max={100} value={config.sentimentThreshold} onChange={e => update('sentimentThreshold', +e.target.value)} />
               <span style={{ fontSize: 12, color: 'var(--neutral-300)' }}>%</span>
             </div>
           </div>
@@ -64,14 +64,14 @@ export function EscalationPolicyPanel() {
               Max Conversation Loops
               <div style={s.desc}>Escalate after this many repeated loops</div>
             </div>
-            <input style={s.input} type="number" min={1} max={10} value={config.maxLoops} onChange={e => update('maxLoops', +e.target.value)} />
+            <input aria-label="Max Conversation Loops" style={s.input} type="number" min={1} max={10} value={config.maxLoops} onChange={e => update('maxLoops', +e.target.value)} />
           </div>
           <div style={{ ...s.row, borderBottom: 'none' }}>
             <div style={s.label}>
               Max Turn Count
               <div style={s.desc}>Escalate after this many conversation turns</div>
             </div>
-            <input style={s.input} type="number" min={5} max={50} value={config.maxTurns} onChange={e => update('maxTurns', +e.target.value)} />
+            <input aria-label="Max Turn Count" style={s.input} type="number" min={5} max={50} value={config.maxTurns} onChange={e => update('maxTurns', +e.target.value)} />
           </div>
         </div>
       </div>
@@ -85,14 +85,14 @@ export function EscalationPolicyPanel() {
         <div style={s.card}>
           <div style={s.row}>
             <div style={s.label}>Transfer Phone Number</div>
-            <input style={{ ...s.input, width: 140 }} value={config.transferNumber} onChange={e => update('transferNumber', e.target.value)} />
+            <input aria-label="Transfer Phone Number" style={{ ...s.input, width: 140 }} value={config.transferNumber} onChange={e => update('transferNumber', e.target.value)} />
           </div>
           <div style={s.row}>
             <div style={s.label}>
               Queue Threshold
               <div style={s.desc}>Offer callback when queue exceeds this count</div>
             </div>
-            <input style={s.input} type="number" min={1} max={50} value={config.queueThreshold} onChange={e => update('queueThreshold', +e.target.value)} />
+            <input aria-label="Queue Threshold" style={s.input} type="number" min={1} max={50} value={config.queueThreshold} onChange={e => update('queueThreshold', +e.target.value)} />
           </div>
           <div style={{ ...s.row, borderBottom: 'none' }}>
             <div style={s.label}>
@@ -100,7 +100,7 @@ export function EscalationPolicyPanel() {
               <div style={s.desc}>Promised callback time in minutes</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <input style={s.input} type="number" min={5} max={120} value={config.callbackSlaMinutes} onChange={e => update('callbackSlaMinutes', +e.target.value)} />
+              <input aria-label="Callback SLA" style={s.input} type="number" min={5} max={120} value={config.callbackSlaMinutes} onChange={e => update('callbackSlaMinutes', +e.target.value)} />
               <span style={{ fontSize: 12, color: 'var(--neutral-300)' }}>min</span>
             </div>
           </div>

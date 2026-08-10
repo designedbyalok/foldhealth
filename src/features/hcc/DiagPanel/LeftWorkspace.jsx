@@ -1082,6 +1082,7 @@ function CommentEntry({ item, isFirst, isLast, onEdit, onDelete }) {
               autoFocus
               type="text"
               className={styles.commentComposer}
+              aria-label="Edit comment"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {

@@ -557,7 +557,7 @@ export function CampaignView() {
       {/* Pagination */}
       <div className={styles.footer}>
         <div className={styles.paginationRow}>
-          <button className={styles.pageBtn} disabled>
+          <button className={styles.pageBtn} disabled aria-label="Previous page">
             <Icon name="solar:alt-arrow-left-linear" size={16} color="var(--neutral-200)" />
           </button>
           {[1, 2].map(n => (
@@ -567,7 +567,7 @@ export function CampaignView() {
           ))}
           <span className={styles.pageDots}>…</span>
           <button className={styles.pageBtn}>10</button>
-          <button className={styles.pageBtn}>
+          <button className={styles.pageBtn} aria-label="Next page">
             <Icon name="solar:alt-arrow-right-linear" size={16} color="var(--neutral-300)" />
           </button>
           <div className={styles.perPageWrap}>

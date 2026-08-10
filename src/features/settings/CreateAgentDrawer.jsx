@@ -97,7 +97,7 @@ function StepTemplateSelect({ agentName, setAgentName, selectedTemplate, setSele
           <div className={styles.bannerTitle}>Create From Templates</div>
           <div className={styles.bannerDesc}>Start from a pre-built agent for your care use case</div>
         </div>
-        <button className={styles.bannerClose} onClick={onBack}><CloseIcon size={18} color="var(--neutral-300)" /></button>
+        <button className={styles.bannerClose} onClick={onBack} aria-label="Back"><CloseIcon size={18} color="var(--neutral-300)" /></button>
       </div>
       <div className={styles.templateSection}>
         <div className={styles.sectionTitle}>Select from Agent Templates</div>
@@ -307,7 +307,7 @@ function StepPrompt({ agentName, setAgentName, onBack, prompt, setPrompt }) {
           <div className={styles.bannerTitle}>Create From Prompt</div>
           <div className={styles.bannerDesc}>Describe your agent in plain language and AI builds the workflow</div>
         </div>
-        <button className={styles.bannerClose} onClick={onBack}><CloseIcon size={18} color="var(--neutral-300)" /></button>
+        <button className={styles.bannerClose} onClick={onBack} aria-label="Back"><CloseIcon size={18} color="var(--neutral-300)" /></button>
       </div>
 
       {/* Utility Configuration */}
@@ -324,13 +324,13 @@ function StepPrompt({ agentName, setAgentName, onBack, prompt, setPrompt }) {
         </div>
         {utilityRows.map((row, i) => (
           <div key={i} className={styles.utilityRow}>
-            <select className={styles.utilitySelect} value={row.type} onChange={e => updateRow(i, 'type', e.target.value)}>
+            <select aria-label="Utility type" className={styles.utilitySelect} value={row.type} onChange={e => updateRow(i, 'type', e.target.value)}>
               <option value="">Select Type</option>
               {UTILITY_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
             <input className={styles.utilityInput} placeholder="Enter Key" value={row.key} onChange={e => updateRow(i, 'key', e.target.value)} />
             <input className={styles.utilityDefaultInput} placeholder="Select Default" value={row.defaultVal} onChange={e => updateRow(i, 'defaultVal', e.target.value)} />
-            <button className={styles.utilityDeleteBtn} onClick={() => removeRow(i)}>
+            <button className={styles.utilityDeleteBtn} onClick={() => removeRow(i)} aria-label="Remove utility">
               <Icon name="solar:trash-bin-minimalistic-linear" size={16} color="var(--neutral-300)" />
             </button>
           </div>

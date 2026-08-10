@@ -81,6 +81,7 @@ function EditableCell({ value, onCommit, style: extraStyle }) {
     return (
       <input
         ref={ref}
+        aria-label="Edit cell"
         value={draft}
         onChange={e => setDraft(e.target.value)}
         onBlur={finish}

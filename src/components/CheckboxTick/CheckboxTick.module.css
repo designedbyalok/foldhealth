@@ -1,0 +1,33 @@
+/* Mirrors the `input[type="checkbox"]` rule in src/index.css (Fold Pixel 1.0)
+   declaration-for-declaration, so swapping this in for a native checkbox is
+   visually invisible. Keep the two in sync. */
+.tick {
+  box-sizing: border-box;
+  border: 1px solid var(--neutral-300);
+  border-radius: 5px;
+  background: var(--neutral-0);
+  position: relative;
+  flex-shrink: 0;
+  display: inline-block;
+  transition:
+    background var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
+}
+
+.tickChecked {
+  background: var(--primary-300);
+  border-color: var(--primary-300);
+}
+
+/* The check itself — a rotated two-sided border, same as the native rule. */
+.tickChecked::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 4.5px;
+  width: 5px;
+  height: 9px;
+  border: solid var(--neutral-0);
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}

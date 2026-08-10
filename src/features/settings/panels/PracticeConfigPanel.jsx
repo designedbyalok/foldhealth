@@ -47,9 +47,9 @@ export function PracticeConfigPanel() {
               <Switch checked={hours[i].enabled} onChange={() => {
                 const next = [...hours]; next[i] = { ...next[i], enabled: !next[i].enabled }; setHours(next);
               }} />
-              <input style={s.timeInput} value={hours[i].start} readOnly disabled={!hours[i].enabled} />
+              <input aria-label={`${day} opening time`} style={s.timeInput} value={hours[i].start} readOnly disabled={!hours[i].enabled} />
               <span style={{ color: 'var(--neutral-200)' }}>to</span>
-              <input style={s.timeInput} value={hours[i].end} readOnly disabled={!hours[i].enabled} />
+              <input aria-label={`${day} closing time`} style={s.timeInput} value={hours[i].end} readOnly disabled={!hours[i].enabled} />
             </div>
           ))}
         </div>
@@ -88,7 +88,7 @@ export function PracticeConfigPanel() {
           </div>
           <div style={{ ...s.row, borderBottom: 'none' }}>
             <span>When voicemail detected</span>
-            <select style={s.select} value={vmBehavior} onChange={e => setVmBehavior(e.target.value)}>
+            <select aria-label="When voicemail detected" style={s.select} value={vmBehavior} onChange={e => setVmBehavior(e.target.value)}>
               {VM_OPTIONS.map(o => <option key={o}>{o}</option>)}
             </select>
           </div>

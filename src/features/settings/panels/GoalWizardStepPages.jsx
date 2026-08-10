@@ -5,6 +5,7 @@ import { Badge } from '../../../components/Badge/Badge';
 import { Button } from '../../../components/Button/Button';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Input } from '../../../components/Input/Input';
+import { Select } from '../../../components/Select/Select';
 import { Switch } from '../../../components/Switch/Switch';
 import s from './GoalsPanel.module.css';
 import { WIZARD_LABELS, PROGRAMS, MODES } from './GoalWizardStepPages.constants';
@@ -100,15 +101,15 @@ export function GoalWizardConfigureStep({ active, isEdit, name, setName, nameErr
       <div style={{ display: 'flex', gap: 12 }}>
         <div className={s.formGroup} style={{ flex: 1 }}>
           <div className={s.formLabel}>Program</div>
-          <select className={s.formSelect} value={program} onChange={e => setProgram(e.target.value)}>
-            {PROGRAMS.map(p => <option key={p} value={p}>{p}</option>)}
-          </select>
+          <Select
+            options={PROGRAMS.map(p => ({ value: p, label: p }))}
+            value={program}
+            onChange={setProgram}
+          />
         </div>
         <div className={s.formGroup} style={{ flex: 1 }}>
           <div className={s.formLabel}>Completion Mode</div>
-          <select className={s.formSelect} value={mode} onChange={e => setMode(e.target.value)}>
-            {MODES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-          </select>
+          <Select options={MODES} value={mode} onChange={setMode} />
         </div>
       </div>
       <div className={s.formGroup}>
@@ -155,7 +156,7 @@ export function GoalWizardStepsStep({
         {weighted && (
           <div className={s.thresholdRow}>
             <span className={s.thresholdLabel}>Pass Threshold</span>
-            <input className={s.thresholdInput} type="number" min={1} max={1000} value={passingScore}
+            <input aria-label="Pass threshold" className={s.thresholdInput} type="number" min={1} max={1000} value={passingScore}
               onChange={e => { e.stopPropagation(); setPassingScore(parseInt(e.target.value) || 0); }} />
             <span className={s.thresholdUnit}>pts</span>
             <span className={s.thresholdTotal}>Total: {totalScore}pt</span>
@@ -181,13 +182,13 @@ export function GoalWizardStepsStep({
             <div className={s.addStepRow}>
               <Input type="text" value={st.name} style={{ flex: 2 }}
                 onChange={e => updateStep(i, { name: e.target.value })} placeholder="Step name" />
-              <select className={s.formSelect} value={st.type} style={{ flex: 1 }}
+              <select aria-label="Step type" className={s.formSelect} value={st.type} style={{ flex: 1 }}
                 onChange={e => updateStep(i, { type: e.target.value })}>
                 <option value="mandatory">Required</option>
                 <option value="conditional">Optional</option>
               </select>
               {weighted && (
-                <input className={s.thresholdInput} type="number" min={1} max={999} value={st.score} style={{ width: 50 }}
+                <input aria-label="Step score" className={s.thresholdInput} type="number" min={1} max={999} value={st.score} style={{ width: 50 }}
                   onChange={e => updateStep(i, { score: parseInt(e.target.value) || 0 })} />
               )}
             </div>
@@ -231,13 +232,13 @@ export function GoalWizardStepsStep({
           <div className={s.addStepRow}>
             <Input type="text" placeholder="Step name" style={{ flex: 2 }} value={newStep.name}
               onChange={e => setNewStep({ ...newStep, name: e.target.value })} />
-            <select className={s.formSelect} style={{ flex: 1 }} value={newStep.type}
+            <select aria-label="New step type" className={s.formSelect} style={{ flex: 1 }} value={newStep.type}
               onChange={e => setNewStep({ ...newStep, type: e.target.value })}>
               <option value="mandatory">Required</option>
               <option value="conditional">Optional</option>
             </select>
             {weighted && (
-              <input className={s.thresholdInput} type="number" min={1} max={999} value={newStep.score} style={{ width: 50 }}
+              <input aria-label="New step score" className={s.thresholdInput} type="number" min={1} max={999} value={newStep.score} style={{ width: 50 }}
                 onChange={e => setNewStep({ ...newStep, score: parseInt(e.target.value) || 0 })} />
             )}
           </div>

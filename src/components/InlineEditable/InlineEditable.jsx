@@ -70,6 +70,7 @@ export function InlineEditable({
           if (e.key === 'Enter') commit();
           else if (e.key === 'Escape') cancel();
         }}
+        aria-label={title}
         className={[styles.input, styles[`size_${size}`], inputClassName || ''].filter(Boolean).join(' ')}
       />
     );

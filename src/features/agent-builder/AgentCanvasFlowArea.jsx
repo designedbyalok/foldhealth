@@ -104,11 +104,11 @@ export function AgentCanvasFlowArea({
                 Fit View
               </button>
               <span className={styles.zoomDivider} />
-              <button className={styles.zoomBtn} onClick={() => reactFlowInstance.current?.zoomOut()}>
+              <button className={styles.zoomBtn} onClick={() => reactFlowInstance.current?.zoomOut()} aria-label="Zoom out">
                 <Icon name="solar:minus-circle-linear" size={14} />
               </button>
               <span className={styles.zoomLevel}>{zoomLevel}%</span>
-              <button className={styles.zoomBtn} onClick={() => reactFlowInstance.current?.zoomIn()}>
+              <button className={styles.zoomBtn} onClick={() => reactFlowInstance.current?.zoomIn()} aria-label="Zoom in">
                 <Icon name="solar:add-circle-linear" size={14} />
               </button>
             </div>

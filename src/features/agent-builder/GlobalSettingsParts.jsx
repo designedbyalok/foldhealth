@@ -110,11 +110,12 @@ export function CheckRow({ label, checked, onChange }) {
   );
 }
 
-export function NumberUnit({ value, onChange, unit, min = 0, max = 9999 }) {
+export function NumberUnit({ value, onChange, unit, min = 0, max = 9999, ariaLabel }) {
   return (
     <div className={styles.numberUnit}>
       <input
         type="number"
+        aria-label={ariaLabel || `Value in ${unit}`}
         className={styles.numberInput}
         value={value}
         min={min}

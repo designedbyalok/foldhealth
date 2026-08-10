@@ -2,6 +2,7 @@ import { useState, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../../components/Icon/Icon';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
+import { CheckboxTick } from '../../components/CheckboxTick/CheckboxTick';
 import { useAppStore } from '../../store/useAppStore';
 import { MONTH_NAMES, formatDateFriendly } from './TasksView.utils';
 import styles from './TasksView.module.css';
@@ -126,8 +127,8 @@ export function CreatableLabelDropdown({ selectedLabels, onToggle, children }) {
               />
             </div>
             {filtered.map(l => (
-              <button key={l} className={styles.simpleDropItem} onClick={() => onToggle(l)}>
-                <input type="checkbox" checked={selectedLabelSet.has(l)} readOnly style={{ accentColor: 'var(--primary-300)', width: 15, height: 15, flexShrink: 0 }} />
+              <button key={l} type="button" role="menuitemcheckbox" aria-checked={selectedLabelSet.has(l)} className={styles.simpleDropItem} onClick={() => onToggle(l)}>
+                <CheckboxTick checked={selectedLabelSet.has(l)} size={15} />
                 {l}
               </button>
             ))}
@@ -186,8 +187,8 @@ export function DetailDropdown({ value, options, onSelect, icon, renderOption, c
                 <button key={val} className={styles.simpleDropItem} onClick={() => {
                   onSelect(val);
                   if (!multiSelect) { setOpen(false); setSearch(''); }
-                }}>
-                  {multiSelect && <input type="checkbox" checked={isChecked} readOnly style={{ accentColor: 'var(--primary-300)', width: 15, height: 15, flexShrink: 0 }} />}
+                }} type="button" role={multiSelect ? 'menuitemcheckbox' : undefined} aria-checked={multiSelect ? isChecked : undefined}>
+                  {multiSelect && <CheckboxTick checked={isChecked} size={15} />}
                   {renderOption ? renderOption(opt) : label}
                 </button>
               );

@@ -221,6 +221,7 @@ export function CampaignBuilder() {
               <input
                 type="date"
                 className={styles.dateInput}
+                aria-label="Campaign start date"
                 value={fromIsoToInput(campaign.startAt)}
                 onChange={e => set({ startAt: toIsoOrNull(e.target.value) })}
               />
@@ -232,6 +233,7 @@ export function CampaignBuilder() {
             <input
               type="date"
               className={styles.dateInput}
+              aria-label="Campaign end date"
               value={fromIsoToInput(campaign.endDate)}
               onChange={e => set({ endDate: toIsoOrNull(e.target.value) })}
               placeholder="Select the End Date"

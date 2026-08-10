@@ -2,6 +2,7 @@ import { useState, useRef, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../../components/Icon/Icon';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
+import { CheckboxTick } from '../../components/CheckboxTick/CheckboxTick';
 import { Button } from '../../components/Button/Button';
 import { Badge } from '../../components/Badge/Badge';
 import { Avatar } from '../../components/Avatar/Avatar';
@@ -72,8 +73,8 @@ export function RowLabelDropdown({ task, children }) {
               />
             </div>
             {filtered.map(l => (
-              <button key={l} className={styles.simpleDropItem} onClick={() => toggle(l)}>
-                <input type="checkbox" checked={labelSet.has(l)} readOnly style={{ accentColor: 'var(--primary-300)', width: 15, height: 15, flexShrink: 0 }} />
+              <button key={l} type="button" role="menuitemcheckbox" aria-checked={labelSet.has(l)} className={styles.simpleDropItem} onClick={() => toggle(l)}>
+                <CheckboxTick checked={labelSet.has(l)} size={15} />
                 {l}
               </button>
             ))}

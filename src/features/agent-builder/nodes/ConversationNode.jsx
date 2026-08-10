@@ -147,7 +147,7 @@ export const ConversationNode = memo(function ConversationNode({ data, id }) {
             <Icon name="solar:tuning-2-linear" size={14} color="var(--neutral-300)" />
             <span>Transition</span>
             <div className={styles.addBtnWrap} ref={addMenuRef}>
-              <button className={`${styles.addTransitionBtn} nodrag nopan`} onClick={(e) => { e.stopPropagation(); setShowAddMenu(v => !v); }}>
+              <button className={`${styles.addTransitionBtn} nodrag nopan`} onClick={(e) => { e.stopPropagation(); setShowAddMenu(v => !v); }} aria-label="Add transition">
                 <Icon name="solar:add-circle-linear" size={14} color="var(--primary-300)" />
               </button>
               {showAddMenu && (

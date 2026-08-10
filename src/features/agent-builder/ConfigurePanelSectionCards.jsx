@@ -230,7 +230,7 @@ export function ConfigurePoliciesSection({ form, expanded, toggleExpanded, toggl
                 <span className={styles.policyName}>{p.name}</span>
                 <span className={styles.policyDesc}>{p.desc}</span>
               </div>
-              <button className={styles.expandBtn} type="button" onClick={e => e.stopPropagation()}>
+              <button className={styles.expandBtn} type="button" onClick={e => e.stopPropagation()} aria-label="Edit">
                 <Icon name="solar:pen-new-square-linear" size={16} color="#6F7A90" />
               </button>
               {p.recommended && <span className={styles.recommendedBadge}>Recommended</span>}

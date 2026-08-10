@@ -108,6 +108,7 @@ export function IcdRowExpansionPanel({
               <span>Review this auto-generated MEAT note before accepting.</span>
             </div>
             <textarea
+              aria-label="MEAT note"
               className={styles.meatTextarea}
               value={meatText}
               onChange={(e) => setMeatText(e.target.value)}

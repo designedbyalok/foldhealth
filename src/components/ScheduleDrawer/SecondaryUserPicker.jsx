@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../Icon/Icon';
+import { CheckboxTick } from '../CheckboxTick/CheckboxTick';
 import { Avatar } from '../Avatar/Avatar';
 import { getInitials, PROVIDER_OPTIONS } from './scheduleDrawerConstants';
 import styles from './ScheduleDrawer.module.css';
@@ -25,7 +26,7 @@ export function SecondaryUserPicker({ selected, onChange, profileUsers, primary 
       {selected.map(name => (
         <span key={name} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, color: 'var(--neutral-400)', background: 'var(--neutral-50)', padding: '2px 8px', borderRadius: 4, border: '0.5px solid var(--neutral-100)' }}>
           <Avatar variant="assignee" initials={getInitials(name).toUpperCase()} /> {name}
-          <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} onClick={() => toggle(name)}>
+          <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} onClick={() => toggle(name)} aria-label={`Remove ${name}`}>
             <Icon name="solar:close-linear" size={10} color="var(--neutral-300)" />
           </button>
         </span>
@@ -39,8 +40,8 @@ export function SecondaryUserPicker({ selected, onChange, profileUsers, primary 
             <div className={styles.providerDropdown} style={{ position: 'fixed', top: btnRef.current?.getBoundingClientRect().bottom + 4, left: btnRef.current?.getBoundingClientRect().left, zIndex: 9999 }} onClick={e => e.stopPropagation()}>
               <div className={styles.apptSearchWrap}><Icon name="solar:magnifer-linear" size={14} color="var(--neutral-200)" /><input className={styles.apptSearchInput} placeholder="Search" value={search} onChange={e => setSearch(e.target.value)} autoFocus /></div>
               {filtered.map(name => (
-                <button key={name} className={styles.providerItem} onClick={() => toggle(name)} style={{ background: selectedSet.has(name) ? 'var(--primary-25)' : undefined }}>
-                  <input type="checkbox" checked={selectedSet.has(name)} readOnly style={{ accentColor: 'var(--primary-300)', width: 15, height: 15 }} />
+                <button key={name} type="button" role="menuitemcheckbox" aria-checked={selectedSet.has(name)} className={styles.providerItem} onClick={() => toggle(name)} style={{ background: selectedSet.has(name) ? 'var(--primary-25)' : undefined }}>
+                  <CheckboxTick checked={selectedSet.has(name)} size={15} />
                   <Avatar variant="assignee" initials={getInitials(name).toUpperCase()} />
                   <span style={{ fontSize: 14, color: 'var(--neutral-400)' }}>{name}</span>
                 </button>

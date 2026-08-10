@@ -178,7 +178,7 @@ export function ChatPanel({ nodes, edges, onApplyFlow, agentName }) {
           </div>
           <span className={styles.headerName}>Workflow Assistant</span>
         </div>
-        <button className={styles.moreBtn}>
+        <button className={styles.moreBtn} aria-label="More options">
           <Icon name="solar:menu-dots-bold" size={16} color="var(--neutral-300)" />
         </button>
       </div>
@@ -218,7 +218,7 @@ export function ChatPanel({ nodes, edges, onApplyFlow, agentName }) {
       {/* Input */}
       <div className={styles.inputArea}>
         <div className={styles.inputWrap}>
-          <button className={styles.attachBtn}>
+          <button className={styles.attachBtn} aria-label="Attach file">
             <Icon name="solar:paperclip-linear" size={16} color="var(--neutral-300)" />
           </button>
           <input
@@ -234,6 +234,7 @@ export function ChatPanel({ nodes, edges, onApplyFlow, agentName }) {
             className={`${styles.sendBtn} ${input.trim() ? styles.sendBtnActive : ''}`}
             onClick={handleSend}
             disabled={!input.trim() || isProcessing}
+            aria-label="Send message"
           >
             <Icon name="solar:arrow-up-linear" size={16} color={input.trim() ? '#fff' : 'var(--neutral-200)'} />
           </button>

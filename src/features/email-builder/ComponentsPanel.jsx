@@ -499,6 +499,7 @@ function LayerRow({ id, block, depth, ctx }) {
           <input
             ref={renameInputRef}
             className={styles.layerRenameInput}
+            aria-label="Rename layer"
             defaultValue={block.data?.alias || layerLabel(block)}
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}

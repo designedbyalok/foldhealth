@@ -150,6 +150,7 @@ export function NodeSettingsTransitions({
                         />
                         <select
                           className={styles.ruleOpSelect}
+                          aria-label="Comparison operator"
                           value={r.operator}
                           onChange={e => onUpdateRule(i, ri, 'operator', e.target.value)}
                         >

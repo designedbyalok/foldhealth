@@ -199,7 +199,7 @@ function SnapshotContent({ agent, showBanner, setShowBanner }) {
     <>
       {showBanner && (
         <div className={styles.banner}>
-          <button className={styles.bannerClose} onClick={() => setShowBanner(false)}>
+          <button className={styles.bannerClose} onClick={() => setShowBanner(false)} aria-label="Dismiss banner">
             <CloseIcon size={16} color="#fff" />
           </button>
           <div className={styles.bannerIcon}>
@@ -509,7 +509,7 @@ function CallLogContent() {
             <div className={styles.callLogRight}>
               <div className={styles.callLogRightHeader}>
                 <span className={styles.callLogRightTitle}>Goal Summary</span>
-                <button className={styles.callLogRightClose} onClick={() => setSelectedCall(null)}>
+                <button className={styles.callLogRightClose} onClick={() => setSelectedCall(null)} aria-label="Close call details">
                   <CloseIcon size={16} />
                 </button>
               </div>

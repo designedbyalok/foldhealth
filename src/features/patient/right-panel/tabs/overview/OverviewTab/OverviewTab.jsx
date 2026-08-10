@@ -89,7 +89,7 @@ function RecentNotesTable() {
           <tbody>
             {RECENT_NOTES.slice(0, 3).map(note => (
               <tr key={note.id}>
-                <td><input type="checkbox" className={styles.checkbox} /></td>
+                <td><input type="checkbox" className={styles.checkbox} aria-label={`Select ${note.title}`} /></td>
                 <td>
                   <div className={styles.noteTitle}>{note.title}</div>
                   <div className={styles.noteSub}>{note.subtitle}</div>
@@ -134,7 +134,7 @@ function ActiveCareProgramsTable() {
           <tbody>
             {ACTIVE_CARE_PROGRAMS.slice(0, 3).map(prog => (
               <tr key={prog.id}>
-                <td><input type="checkbox" className={styles.checkbox} /></td>
+                <td><input type="checkbox" className={styles.checkbox} aria-label={`Select ${prog.name}`} /></td>
                 <td>
                   <div className={styles.progressCell}>
                     <ProgressRing progress={prog.progress} size={16} stroke={2} />
@@ -183,7 +183,7 @@ function UpcomingAppointmentsTable({ onViewAll }) {
           <tbody>
             {UPCOMING_APPOINTMENTS.slice(0, 3).map(appt => (
               <tr key={appt.id}>
-                <td><input type="checkbox" className={styles.checkbox} /></td>
+                <td><input type="checkbox" className={styles.checkbox} aria-label={`Select ${appt.title}`} /></td>
                 <td>
                   <div className={styles.noteTitle}>{appt.title}</div>
                   <div className={styles.noteSub}>{appt.subtitle}</div>

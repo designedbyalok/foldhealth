@@ -4,9 +4,19 @@ import { Drawer } from '../../../components/Drawer/Drawer';
 import { Button } from '../../../components/Button/Button';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { useAppStore } from '../../../store/useAppStore';
+import { Select } from '../../../components/Select/Select';
 import { Switch } from '../../../components/Switch/Switch';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+const TIMEZONES = [
+  'Asia/Kolkata (+5:30)',
+  'America/New_York (ET)',
+  'America/Chicago (CT)',
+  'America/Denver (MT)',
+  'America/Los_Angeles (PT)',
+  'UTC (+0:00)',
+].map(tz => ({ value: tz, label: tz }));
 
 const DEFAULT_SLOTS = {
   Sunday: [{ from: '12:00 am', to: '12:00 am' }],
@@ -60,20 +70,12 @@ export function BusinessHoursDrawer() {
       {/* Time Zone */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontSize: 14, color: 'var(--neutral-300)', marginBottom: 6 }}>Time Zone</div>
-        <select value={timezone} onChange={e => setTimezone(e.target.value)} style={{
-          width: '100%', padding: '8px 12px', borderRadius: 4, border: '0.5px solid var(--neutral-150)',
-          fontSize: 14, fontFamily: "'Inter', sans-serif", outline: 'none', color: 'var(--neutral-400)',
-          appearance: 'none', cursor: 'pointer', paddingRight: 32, background: 'var(--neutral-0)',
-          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238a94a8' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
-          backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center',
-        }}>
-          <option>Asia/Kolkata (+5:30)</option>
-          <option>America/New_York (ET)</option>
-          <option>America/Chicago (CT)</option>
-          <option>America/Denver (MT)</option>
-          <option>America/Los_Angeles (PT)</option>
-          <option>UTC (+0:00)</option>
-        </select>
+        <Select
+          options={TIMEZONES}
+          value={timezone}
+          onChange={setTimezone}
+          style={{ width: '100%' }}
+        />
       </div>
 
       {/* Day cards */}
@@ -110,7 +112,7 @@ export function BusinessHoursDrawer() {
                   <div>
                     <div style={{ fontSize: 11, color: 'var(--primary-300)', marginBottom: 4 }}>From Time</div>
                     <div style={{ position: 'relative' }}>
-                      <input value={slot.from} readOnly style={{
+                      <input aria-label="From time" value={slot.from} readOnly style={{
                         ...inputStyle,
                         color: isAvailable ? 'var(--neutral-400)' : 'var(--neutral-200)',
                         background: isAvailable ? '#fff' : 'var(--neutral-50)',
@@ -122,7 +124,7 @@ export function BusinessHoursDrawer() {
                   <div>
                     <div style={{ fontSize: 11, color: 'var(--neutral-300)', marginBottom: 4 }}>To Time</div>
                     <div style={{ position: 'relative' }}>
-                      <input value={slot.to} readOnly style={{
+                      <input aria-label="To time" value={slot.to} readOnly style={{
                         ...inputStyle,
                         color: isAvailable ? 'var(--neutral-400)' : 'var(--neutral-200)',
                         background: isAvailable ? '#fff' : 'var(--neutral-50)',

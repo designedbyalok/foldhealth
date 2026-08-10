@@ -351,12 +351,14 @@ export function ColorVariablesEditor() {
           <input
             type="text"
             value={cv.name}
+            aria-label="Color variable name"
             onChange={e => updateColorVariable(cv.name, { name: e.target.value })}
             className={styles.colorVarNameInput}
           />
           <input
             type="text"
             value={cv.hex.toUpperCase()}
+            aria-label="Color variable hex"
             onChange={e => updateColorVariable(cv.name, { hex: e.target.value })}
             className={styles.colorVarHexInput}
           />
@@ -517,6 +519,7 @@ export function TableEditor({ columns, rows, onChangeColumns, onChangeRows }) {
             <input
               className={styles.tableEditorInput}
               value={col.header}
+              aria-label="Column header"
               onChange={e => updateHeader(ci, e.target.value)}
               style={{ fontWeight: 600 }}
             />
@@ -533,6 +536,7 @@ export function TableEditor({ columns, rows, onChangeColumns, onChangeRows }) {
                 <input
                   className={styles.tableEditorInput}
                   value={row[col.key] || ''}
+                  aria-label="Cell value"
                   onChange={e => updateCell(ri, col.key, e.target.value)}
                 />
               </div>
@@ -633,6 +637,7 @@ export function SocialEditor({ platforms, onChange }) {
           <input
             className={styles.tableEditorInput}
             value={p.label}
+            aria-label="Platform label"
             onChange={e => updatePlatform(i, 'label', e.target.value)}
             style={{ fontWeight: 500, flex: '0 0 70px' }}
           />

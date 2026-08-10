@@ -68,7 +68,7 @@ export function RowActionMenu({ task }) {
 
   return (
     <div ref={btnRef} style={{ position: 'relative' }}>
-      <button className={styles.actionMenuBtn} onClick={e => { e.stopPropagation(); setOpen(v => !v); }}>
+      <button className={styles.actionMenuBtn} onClick={e => { e.stopPropagation(); setOpen(v => !v); }} aria-label="Task actions">
         <Icon name="solar:menu-dots-bold" size={16} color="var(--neutral-300)" />
       </button>
       {open && createPortal(

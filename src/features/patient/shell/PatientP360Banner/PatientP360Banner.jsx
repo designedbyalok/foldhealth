@@ -126,7 +126,7 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
             </>
           )}
 
-          <button className={styles.expandArrow} onClick={() => setExpanded(v => !v)} aria-expanded={expanded}>
+          <button className={styles.expandArrow} onClick={() => setExpanded(v => !v)} aria-expanded={expanded} aria-label={expanded ? 'Collapse patient summary' : 'Expand patient summary'}>
             <span className={`${styles.drawerExpandIconInner} ${expanded ? styles.drawerExpandIconRotated : ''}`}>
               <Icon name="custom:expand-drawer" size={16} />
             </span>

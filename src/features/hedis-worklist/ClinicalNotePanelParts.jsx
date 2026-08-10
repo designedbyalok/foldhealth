@@ -123,7 +123,7 @@ function KedFields({ data, submitted, onUpdate }) {
           <div className={styles.fieldGroup} style={{ marginBottom: 0 }}>
             <div className={styles.fieldLabel}>{label} <span className={styles.required}>•</span></div>
             <div className={`${styles.inputWithSuffix} ${submitted && !data[field] ? styles.inputWithSuffixError : ''}`}>
-              <input type="number" value={data[field]} onChange={e => onUpdate({ [field]: e.target.value })} />
+              <input aria-label={label} type="number" value={data[field]} onChange={e => onUpdate({ [field]: e.target.value })} />
               <span className={styles.inputSuffix}>{suffix}</span>
             </div>
             {submitted && !data[field] && <div className={styles.fieldError}>{field === 'egfr' ? 'eGFR' : 'uACR'} is required</div>}

@@ -46,7 +46,7 @@ export function ScheduleDrawerTimePicker({
             </div>
             {isSectionOpen('pickTime') ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input type="time" value={customTime} onChange={e => setCustomTime(e.target.value)} style={{ height: 32, border: '0.5px solid var(--neutral-200)', borderRadius: 4, fontSize: 14, fontFamily: 'Inter, sans-serif', color: 'var(--neutral-400)', padding: '0 8px' }} autoFocus />
+                <input aria-label="Custom time" type="time" value={customTime} onChange={e => setCustomTime(e.target.value)} style={{ height: 32, border: '0.5px solid var(--neutral-200)', borderRadius: 4, fontSize: 14, fontFamily: 'Inter, sans-serif', color: 'var(--neutral-400)', padding: '0 8px' }} autoFocus />
                 <button onClick={() => { if (customTime) { const [hh, mm] = customTime.split(':').map(Number); const ampm = hh >= 12 ? 'pm' : 'am'; const h12 = hh === 0 ? 12 : hh > 12 ? hh - 12 : hh; setTime(`${h12}:${String(mm).padStart(2, '0')} ${ampm}`); setSectionOpen('timePicker', false); setSectionOpen('pickTime', false); } }} style={{ fontSize: 12, color: 'var(--primary-300)', background: 'var(--primary-50)', border: '0.5px solid var(--primary-200)', borderRadius: 4, padding: '4px 12px', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>Set</button>
                 <button onClick={() => setSectionOpen('pickTime', false)} style={{ fontSize: 12, color: 'var(--neutral-300)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Cancel</button>
               </div>

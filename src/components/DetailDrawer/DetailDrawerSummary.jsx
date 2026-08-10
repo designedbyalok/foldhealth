@@ -114,11 +114,11 @@ export function DetailDrawerSummary({
               <span>Generated on 03/24/26, 07:23 pm</span>
             </div>
             <div className={styles.footerActions}>
-              <button className={styles.iconBtn} onClick={(e) => { e.stopPropagation(); onRefresh(); }} disabled={isRefreshing}>
+              <button className={styles.iconBtn} onClick={(e) => { e.stopPropagation(); onRefresh(); }} disabled={isRefreshing} aria-label="Regenerate summary">
                 <Icon name="solar:refresh-linear" size={14} style={isRefreshing ? { animation: 'ai-shift 1s linear infinite' } : {}} />
               </button>
               <div className={styles.summaryDivider} />
-              <button className={styles.iconBtn} onClick={(e) => { e.stopPropagation(); onCopy(); }}>
+              <button className={styles.iconBtn} onClick={(e) => { e.stopPropagation(); onCopy(); }} aria-label="Copy summary">
                 {copied ? <span className={styles.copyFb}><Icon name="solar:check-read-linear" size={14} /></span> : <Icon name="solar:copy-linear" size={14} />}
               </button>
             </div>

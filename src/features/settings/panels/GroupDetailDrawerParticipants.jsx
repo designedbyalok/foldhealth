@@ -3,6 +3,7 @@ import { Avatar } from '../../../components/Avatar/Avatar';
 import { Button } from '../../../components/Button/Button';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Badge } from '../../../components/Badge/Badge';
+import { CheckboxTick } from '../../../components/CheckboxTick/CheckboxTick';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { Switch } from '../../../components/Switch/Switch';
 import { labelStyle, reqDot, inputStyle } from './GroupDetailDrawer.utils.jsx';
@@ -65,11 +66,19 @@ export function GroupDetailDrawerParticipants(props) {
                     const isSelected = selectedUserIdSet.has(u.id);
                     const initials = u.name.split(' ').map(n => n[0]).join('').slice(0, 2);
                     return (
-                      <div key={u.id} onClick={() => toggleUser(u.id)} style={{
-                        display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
-                        borderBottom: '0.5px solid var(--neutral-75)', cursor: 'pointer',
-                      }}>
-                        <input type="checkbox" checked={isSelected} readOnly style={{ accentColor: 'var(--primary-300)', width: 16, height: 16, cursor: 'pointer' }} />
+                      <div
+                        key={u.id}
+                        role="checkbox"
+                        aria-checked={isSelected}
+                        tabIndex={0}
+                        onClick={() => toggleUser(u.id)}
+                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleUser(u.id); } }}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+                          borderBottom: '0.5px solid var(--neutral-75)', cursor: 'pointer',
+                        }}
+                      >
+                        <CheckboxTick checked={isSelected} size={16} />
                         <Avatar variant={u.isAgent ? 'agent' : 'assignee'} initials={initials} />
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--neutral-500)' }}>{u.name}</div>
@@ -80,11 +89,19 @@ export function GroupDetailDrawerParticipants(props) {
                   }) : filteredSearchRoles.map(r => {
                     const isSelected = selectedRoleIdSet.has(r.id);
                     return (
-                      <div key={r.id} onClick={() => toggleRole(r.id)} style={{
-                        display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
-                        borderBottom: '0.5px solid var(--neutral-75)', cursor: 'pointer',
-                      }}>
-                        <input type="checkbox" checked={isSelected} readOnly style={{ accentColor: 'var(--primary-300)', width: 16, height: 16, cursor: 'pointer' }} />
+                      <div
+                        key={r.id}
+                        role="checkbox"
+                        aria-checked={isSelected}
+                        tabIndex={0}
+                        onClick={() => toggleRole(r.id)}
+                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleRole(r.id); } }}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
+                          borderBottom: '0.5px solid var(--neutral-75)', cursor: 'pointer',
+                        }}
+                      >
+                        <CheckboxTick checked={isSelected} size={16} />
                         <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--neutral-500)' }}>{r.name}</span>
                       </div>
                     );

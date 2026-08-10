@@ -116,11 +116,11 @@ export function DateRangePicker({
       {open && (
         <div className={styles.calPopover}>
           <div className={styles.calHeader}>
-            <button type="button" className={styles.calNav} onClick={() => setViewDate(new Date(year, month - 1, 1))}>
+            <button type="button" className={styles.calNav} onClick={() => setViewDate(new Date(year, month - 1, 1))} aria-label="Previous month">
               <Icon name="solar:alt-arrow-left-linear" size={16} color="var(--neutral-300)" />
             </button>
             <span className={styles.calTitle}>{MONTH_NAMES[month]} {year}</span>
-            <button type="button" className={styles.calNav} onClick={() => setViewDate(new Date(year, month + 1, 1))}>
+            <button type="button" className={styles.calNav} onClick={() => setViewDate(new Date(year, month + 1, 1))} aria-label="Next month">
               <Icon name="solar:alt-arrow-right-linear" size={16} color="var(--neutral-300)" />
             </button>
           </div>

@@ -78,6 +78,7 @@ export function ConversationListPanel({
             <button
               className={styles.convSearchClear}
               onClick={onClearSearch}
+              aria-label="Clear search"
             >
               <Icon name="solar:close-circle-bold" size={15} />
             </button>
