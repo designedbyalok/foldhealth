@@ -35,9 +35,12 @@ const SYSTEM_USERS = (() => {
     vendors: s.vendors || [],
   }));
   const astranaIds = new Set(astrana.map(u => u.id));
-  const account = FALLBACK_USERS
-    .filter(u => !astranaIds.has(u.id))
-    .map(u => ({ ...u, source: 'account', tins: [], vendors: [] }));
+  const account = [];
+  for (const u of FALLBACK_USERS) {
+    if (!astranaIds.has(u.id)) {
+      account.push({ ...u, source: 'account', tins: [], vendors: [] });
+    }
+  }
   return [...astrana, ...account];
 })();
 
@@ -102,12 +105,16 @@ export function ConfigureTeamDrawer({ kind = 'hcc', editTeam = null, onClose }) 
   const selectedIds = new Set(members.map(m => m.userId));
   const filteredUsers = useMemo(() => {
     const q = userSearch.trim().toLowerCase();
-    return SYSTEM_USERS
-      .filter(u => !selectedIds.has(u.id))
-      .filter(u => !q
-        || u.name.toLowerCase().includes(q)
-        || (u.email || '').toLowerCase().includes(q)
-        || (u.role || '').toLowerCase().includes(q));
+    const result = [];
+    for (const u of SYSTEM_USERS) {
+      if (selectedIds.has(u.id)) continue;
+      if (q
+        && !u.name.toLowerCase().includes(q)
+        && !(u.email || '').toLowerCase().includes(q)
+        && !(u.role || '').toLowerCase().includes(q)) continue;
+      result.push(u);
+    }
+    return result;
   }, [userSearch, members]);
 
   const addMember = (u) => {
@@ -142,11 +149,13 @@ export function ConfigureTeamDrawer({ kind = 'hcc', editTeam = null, onClose }) 
   // over-allocating the user globally. The breakdown popup lists the
   // contributions side-by-side (committed + "this team (draft)").
   const utilizationFor = (userId) => {
-    const fromOtherTeams = existingTeams
-      .filter(t => !editTeam || t.id !== editTeam.id)
-      .flatMap(t => t.members)
-      .filter(m => m.userId === userId)
-      .reduce((sum, m) => sum + (Number(m.capacityPct) || 0), 0);
+    let fromOtherTeams = 0;
+    for (const t of existingTeams) {
+      if (editTeam && t.id === editTeam.id) continue;
+      for (const m of (t.members || [])) {
+        if (m.userId === userId) fromOtherTeams += Number(m.capacityPct) || 0;
+      }
+    }
     const fromDraft = (members.find(m => m.userId === userId)?.capacityPct);
     return fromOtherTeams + (Number(fromDraft) || 0);
   };
@@ -155,15 +164,18 @@ export function ConfigureTeamDrawer({ kind = 'hcc', editTeam = null, onClose }) 
   // Lists every team currently consuming this user's capacity, including a
   // pseudo-row for the in-progress draft so the math is transparent.
   const breakdownFor = (userId) => {
-    const committed = existingTeams
-      .filter(t => !editTeam || t.id !== editTeam.id)
-      .flatMap(t => (t.members || []).map(m => ({ team: t, member: m })))
-      .filter(x => x.member.userId === userId)
-      .map(x => ({
-        teamName: x.team.name,
-        teamType: x.team.teamType,
-        pct: Number(x.member.capacityPct) || 0,
-      }));
+    const committed = [];
+    for (const t of existingTeams) {
+      if (editTeam && t.id === editTeam.id) continue;
+      for (const m of (t.members || [])) {
+        if (m.userId !== userId) continue;
+        committed.push({
+          teamName: t.name,
+          teamType: t.teamType,
+          pct: Number(m.capacityPct) || 0,
+        });
+      }
+    }
     const draftMember = members.find(m => m.userId === userId);
     const draftPct = Number(draftMember?.capacityPct) || 0;
     if (draftPct > 0) {
@@ -182,31 +194,49 @@ export function ConfigureTeamDrawer({ kind = 'hcc', editTeam = null, onClose }) 
   // dim=TIN and value=tin, capping at 100 for display sanity.
   const tinAssignedPct = (tin) => {
     if (!tin) return 0;
-    const fromOtherTeams = existingTeams
-      .filter(t => !editTeam || t.id !== editTeam.id)
-      .flatMap(t => t.members || [])
-      .flatMap(m => m.assignTo || [])
-      .filter(r => r.dim === 'TIN' && r.value === tin)
-      .reduce((sum, r) => sum + (Number(r.pct) || 0), 0);
-    const fromDraft = members
-      .flatMap(m => m.assignTo || [])
-      .filter(r => r.dim === 'TIN' && r.value === tin)
-      .reduce((sum, r) => sum + (Number(r.pct) || 0), 0);
+    let fromOtherTeams = 0;
+    for (const t of existingTeams) {
+      if (editTeam && t.id === editTeam.id) continue;
+      for (const m of (t.members || [])) {
+        for (const r of (m.assignTo || [])) {
+          if (r.dim === 'TIN' && r.value === tin) fromOtherTeams += Number(r.pct) || 0;
+        }
+      }
+    }
+    let fromDraft = 0;
+    for (const m of members) {
+      for (const r of (m.assignTo || [])) {
+        if (r.dim === 'TIN' && r.value === tin) fromDraft += Number(r.pct) || 0;
+      }
+    }
     return Math.min(100, fromOtherTeams + fromDraft);
   };
 
   // Users assigned to a given TIN (across all teams) — used by the
   // "Total Assigned Users" hover popup in each user's Assign-To section.
-  const usersAssignedToTin = (tin) => existingTeams
-    .flatMap(t => (t.members || []))
-    .filter(m => (m.assignTo || []).some(r => r.dim === 'TIN' && r.value === tin))
-    .map(m => ({
-      name: m.name,
-      initials: m.initials,
-      roles: m.roles,
-      capacityPct: (m.assignTo || []).filter(r => r.dim === 'TIN' && r.value === tin)
-        .reduce((s, r) => s + (Number(r.pct) || 0), 0),
-    }));
+  const usersAssignedToTin = (tin) => {
+    const result = [];
+    for (const t of existingTeams) {
+      for (const m of (t.members || [])) {
+        let capacityPct = 0;
+        let matched = false;
+        for (const r of (m.assignTo || [])) {
+          if (r.dim === 'TIN' && r.value === tin) {
+            matched = true;
+            capacityPct += Number(r.pct) || 0;
+          }
+        }
+        if (!matched) continue;
+        result.push({
+          name: m.name,
+          initials: m.initials,
+          roles: m.roles,
+          capacityPct,
+        });
+      }
+    }
+    return result;
+  };
 
   // Block save if any member's Assign-To rows over-allocate their capacity.
   // (A user assigning 70% across rows when their capacity here is 50% is a
@@ -227,15 +257,22 @@ export function ConfigureTeamDrawer({ kind = 'hcc', editTeam = null, onClose }) 
     if (!canSave) return;
     const now = todayMMDDYYYY();
     const actor = 'You';
-    const cleanMembers = members.map(m => ({
-      ...m,
-      capacityPct: Number(m.capacityPct) || 0,
-      assignTo: (m.assignTo || []).filter(r => r.dim && r.value).map(r => ({
-        dim: r.dim,
-        value: r.value,
-        pct: Number(r.pct) || 0,
-      })),
-    }));
+    const cleanMembers = members.map(m => {
+      const assignTo = [];
+      for (const r of (m.assignTo || [])) {
+        if (!r.dim || !r.value) continue;
+        assignTo.push({
+          dim: r.dim,
+          value: r.value,
+          pct: Number(r.pct) || 0,
+        });
+      }
+      return {
+        ...m,
+        capacityPct: Number(m.capacityPct) || 0,
+        assignTo,
+      };
+    });
     if (isEdit) {
       updateHccCareTeam(editTeam.id, {
         name: name.trim(),
@@ -622,11 +659,20 @@ function UserCard({ member, teamType, priorUtilization, breakdown = [], usersFor
         {(member.assignTo || []).length > 0 && (() => {
           // Aggregate users across every TIN this user is assigned to,
           // so the hover shows ALL teammates touching the same TIN buckets.
-          const tinValues = Array.from(new Set(
-            (member.assignTo || []).filter(r => r.dim === 'TIN' && r.value).map(r => r.value),
-          ));
+          const tinValues = [];
+          const tinSeen = new Set();
+          for (const r of (member.assignTo || [])) {
+            if (r.dim !== 'TIN' || !r.value || tinSeen.has(r.value)) continue;
+            tinSeen.add(r.value);
+            tinValues.push(r.value);
+          }
           const headerTin = tinValues[0] || '';
-          const rows = tinValues.flatMap(t => (usersForTin?.(t) || []).map(u => ({ ...u, tin: t })));
+          const rows = [];
+          for (const t of tinValues) {
+            for (const u of (usersForTin?.(t) || [])) {
+              rows.push({ ...u, tin: t });
+            }
+          }
           return (
             <HoverCard
               placement="top"

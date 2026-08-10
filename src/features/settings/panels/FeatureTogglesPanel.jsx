@@ -26,7 +26,7 @@ const s = {
 
 export function FeatureTogglesPanel() {
   const [toggles, setToggles] = useState(
-    Object.fromEntries(FEATURES.map(f => [f.key, true]))
+    () => Object.fromEntries(FEATURES.map(f => [f.key, true]))
   );
 
   return (

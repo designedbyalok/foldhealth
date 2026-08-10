@@ -33,27 +33,36 @@ export function ProgramRelatedTasks({ programCode, onAddTask, filters = EMPTY_FI
   // store rows (parent_task_id → parent); include them so they show as rows
   // with the "Parent Task : …" label, exactly like the Tasks module.
   const tasks = useMemo(() => {
-    const parents = (added || []).map(a => globalTasks.find(g => g.id === a.id) || a);
+    const globalTaskById = new Map(globalTasks.map(g => [g.id, g]));
+    const parents = (added || []).map(a => globalTaskById.get(a.id) || a);
     const seen = new Set();
     const result = [];
     const push = (t) => { if (t && !seen.has(t.id)) { seen.add(t.id); result.push(t); } };
     for (const p of parents) {
       push(p);
-      globalTasks
-        .filter(g => g.parent_task_id === p.id || (g.is_subtask && g.parent_task === p.name))
-        .forEach(push);
+      for (const g of globalTasks) {
+        if (g.parent_task_id === p.id || (g.is_subtask && g.parent_task === p.name)) {
+          push(g);
+        }
+      }
     }
     return result;
   }, [added, globalTasks]);
 
   const q = search.trim().toLowerCase();
-  const shownTasks = useMemo(() => tasks.filter(t =>
-    (!q || (t.name || '').toLowerCase().includes(q))
-    && (!filters.status.length || filters.status.includes(STATUS_LABEL[t.status]))
-    && (!filters.priority.length || filters.priority.includes(cap(t.priority)))
-    && (!filters.dueDate.length || filters.dueDate.includes(t.due_date))
-    && (!filters.completedDate.length || filters.completedDate.includes(fmtCompleted(t.completed_at)))
-  ), [tasks, filters, q]);
+  const shownTasks = useMemo(() => {
+    const statusSet = filters.status.length ? new Set(filters.status) : null;
+    const prioritySet = filters.priority.length ? new Set(filters.priority) : null;
+    const dueDateSet = filters.dueDate.length ? new Set(filters.dueDate) : null;
+    const completedDateSet = filters.completedDate.length ? new Set(filters.completedDate) : null;
+    return tasks.filter(t =>
+      (!q || (t.name || '').toLowerCase().includes(q))
+      && (!statusSet || statusSet.has(STATUS_LABEL[t.status]))
+      && (!prioritySet || prioritySet.has(cap(t.priority)))
+      && (!dueDateSet || dueDateSet.has(t.due_date))
+      && (!completedDateSet || completedDateSet.has(fmtCompleted(t.completed_at)))
+    );
+  }, [tasks, filters, q]);
 
   // Clicking a task row opens the shared Task Details drawer. Re-resolve from
   // the live store so edits made in the drawer stay reflected.

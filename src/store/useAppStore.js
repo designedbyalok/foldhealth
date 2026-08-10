@@ -1622,8 +1622,10 @@ export const useAppStore = create((set, get) => ({
     // Reconcile the saved order with the current worklist set: drop labels
     // that no longer exist, append any new worklists at the end.
     const known = defaultLabels || [];
-    const saved = (order || []).filter(l => known.includes(l));
-    const merged = [...saved, ...known.filter(l => !saved.includes(l))];
+    const knownSet = new Set(known);
+    const saved = (order || []).filter(l => knownSet.has(l));
+    const savedSet = new Set(saved);
+    const merged = [...saved, ...known.filter(l => !savedSet.has(l))];
 
     set({ worklistOrder: merged, worklistOrderLoaded: true });
     try { localStorage.setItem('worklistOrder', JSON.stringify(merged)); } catch { /* */ }
@@ -7289,9 +7291,10 @@ export const useAppStore = create((set, get) => ({
   invokeAgent: (patientIds, agentName, agentRole) => {
     const MAX_CONCURRENT = 3;
     const state = get();
+    const patientIdSet = new Set(patientIds);
     let activeCount = state.patients.filter(p => p.status === 'oncall' && p.onCall).length;
     const updated = state.patients.map(p => {
-      if (!patientIds.includes(p.id)) return p;
+      if (!patientIdSet.has(p.id)) return p;
       const newP = { ...p, agentAssigned: agentName, agentRole };
       if (p.status !== 'completed' && p.status !== 'failed') {
         if (activeCount < MAX_CONCURRENT) {
@@ -7317,7 +7320,7 @@ export const useAppStore = create((set, get) => ({
 
     // Create call records for invoked patients and persist to Supabase
     for (const p of updated) {
-      if (patientIds.includes(p.id)) {
+      if (patientIdSet.has(p.id)) {
         get().persistPatient(p.id, {
           agentAssigned: p.agentAssigned,
           agentRole: p.agentRole,
@@ -9173,8 +9176,10 @@ export const useAppStore = create((set, get) => ({
           get().logTaskAudit(id, 'assignee_changed', { field: 'assigned_to', from: prev.assigned_to || '(unassigned)', to: val || '(unassigned)' });
         } else if (key === 'labels') {
           const oldL = prev.labels || []; const newL = val || [];
-          const added = newL.filter(l => !oldL.includes(l));
-          const removed = oldL.filter(l => !newL.includes(l));
+          const oldSet = new Set(oldL);
+          const newSet = new Set(newL);
+          const added = newL.filter(l => !oldSet.has(l));
+          const removed = oldL.filter(l => !newSet.has(l));
           added.forEach(l => get().logTaskAudit(id, 'label_added', { field: 'labels', to: l }));
           removed.forEach(l => get().logTaskAudit(id, 'label_removed', { field: 'labels', from: l }));
         } else if (key === 'description' || key === 'meta') {

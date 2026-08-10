@@ -73,7 +73,10 @@ export const MORE_FILTER_ITEMS = [
   { k: 'lvd',    label: 'Last Visit Date',     primary: false },
 ];
 
-export const PRIMARY_FILTER_KEYS = MORE_FILTER_ITEMS.filter(x => x.primary).map(x => x.k);
+export const PRIMARY_FILTER_KEYS = [];
+for (const x of MORE_FILTER_ITEMS) {
+  if (x.primary) PRIMARY_FILTER_KEYS.push(x.k);
+}
 
 export const FILTER_DEFS = [
   // Visit Type — canonical option set used across the worklist. Records get a
@@ -267,7 +270,7 @@ const SUPPORT_STATUS_MATCH = {
 // DOS-derived filters (Measurement Year, DOS Source) agree with the per-DOS
 // badges instead of only looking at the current-visit `m.dos`.
 function memberDosDates(m) {
-  if (Array.isArray(m.dos_list) && m.dos_list.length) return m.dos_list.map(e => e.date).filter(Boolean);
+  if (Array.isArray(m.dos_list) && m.dos_list.length) return m.dos_list.flatMap(e => e.date ? [e.date] : []);
   return m.dos ? [m.dos] : [];
 }
 
@@ -395,7 +398,7 @@ function matchOne(m, k, vals) {
     case 'my': {
       // Measurement Year = the service year of any of the member's DOS entries.
       const years = new Set(
-        memberDosDates(m).map(d => parseMdY(d)).filter(Boolean).map(d => String(d.getFullYear())),
+        memberDosDates(m).flatMap(d => { const p = parseMdY(d); return p ? [String(p.getFullYear())] : []; }),
       );
       return vals.some(v => years.has(v));
     }
@@ -417,7 +420,7 @@ function matchOne(m, k, vals) {
       const codes = new Set(vals.map(v => (String(v).match(/^(\d{2})/)?.[1] || v)));
       const rowPositions = new Set([
         m.pos,
-        ...((m.dos_list || []).map(d => d?.pos).filter(Boolean)),
+        ...((m.dos_list || []).flatMap(d => d?.pos ? [d.pos] : [])),
       ].filter(Boolean));
       for (const code of rowPositions) if (codes.has(code)) return true;
       return false;

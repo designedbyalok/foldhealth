@@ -125,10 +125,7 @@ export function CommentComposer({
   const fetchPlatformUsers = useAppStore(s => s.fetchPlatformUsers);
   useEffect(() => { fetchPlatformUsers?.(); }, [fetchPlatformUsers]);
   // Fall back to the mock so the picker still renders before the fetch lands.
-  const users = useMemo(
-    () => (platformUsers?.length ? platformUsers : SYSTEM_USERS),
-    [platformUsers],
-  );
+  const users = platformUsers?.length ? platformUsers : SYSTEM_USERS;
   const matches = useMemo(() => {
     if (!mention) return [];
     const q = mention.query.toLowerCase();

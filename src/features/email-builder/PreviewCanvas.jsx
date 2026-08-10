@@ -9,6 +9,7 @@ import { InlineEditable } from './InlineEditable';
 import { getFontStack } from './googleFonts';
 import { isGradient } from './colorHelpers';
 import { tintSvgMarkup } from './svgTint';
+import { sanitizeSvg, sanitizeEmailHtml } from '../../lib/sanitizeHtml';
 import styles from './EmailBuilder.module.css';
 
 // Turns a (solid OR gradient) value into the right pair of style props.
@@ -36,6 +37,28 @@ const TYPE_LABELS = {
   Table: 'Table',
   RawHtml: 'Raw HTML',
 };
+
+const BUTTON_SIZE_STYLES = {
+  'x-small': { padding: '6px 12px', fontSize: 12 },
+  small: { padding: '8px 16px', fontSize: 13 },
+  medium: { padding: '12px 20px', fontSize: 14 },
+  large: { padding: '14px 28px', fontSize: 16 },
+};
+const BUTTON_PRESET_RADIUS = { rectangle: 0, rounded: 6, pill: 9999 };
+const NO_IMAGE_PLACEHOLDER_STYLE = {
+  padding: 24, border: '1px dashed var(--neutral-150)', borderRadius: 8, color: 'var(--neutral-200)', fontSize: 12,
+};
+const EDITABLE_INPUT_BASE_STYLE = {
+  width: '100%',
+  padding: '8px 12px',
+  border: 'none',
+  background: 'var(--primary-25, #FAFAFF)',
+  outline: '2px solid var(--primary-300)',
+  outlineOffset: -2,
+  fontSize: 'inherit',
+  fontFamily: 'inherit',
+};
+const EDITABLE_DISPLAY_STYLE = { padding: '8px 12px', cursor: 'text', minHeight: 20 };
 
 function blockLabel(block) {
   const role = block.data?.role;
@@ -758,7 +781,10 @@ function BlockBody({ id, block, ctx, dragAttributes, dragListeners }) {
           padding: paddingCss(style.padding),
           textAlign: style.blockAlign || style.textAlign,
         }}
-        dangerouslySetInnerHTML={{ __html: props.html || '' }}
+        // Preview only — this renders in our origin, so a <script> pasted by
+        // one teammate would otherwise execute for everyone who opens the
+        // campaign. The exported email still uses the author's raw markup.
+        dangerouslySetInnerHTML={{ __html: sanitizeEmailHtml(props.html) }}
       />
     );
   }
@@ -942,12 +968,17 @@ function BlockBody({ id, block, ctx, dragAttributes, dragListeners }) {
     const content = hasSvg ? (
       <div
         style={{ ...imgStyle, display: 'inline-block', lineHeight: 0 }}
-        dangerouslySetInnerHTML={{ __html: props.tintColor ? tintSvgMarkup(props.svgRaw, props.tintColor) : props.svgRaw }}
+        // svgRaw is fetched from a remote URL (or uploaded), and SVG can carry
+        // <script>/on* handlers — sanitize after tinting, so the tint pass
+        // can't reintroduce anything the sanitizer would have stripped.
+        dangerouslySetInnerHTML={{
+          __html: sanitizeSvg(props.tintColor ? tintSvgMarkup(props.svgRaw, props.tintColor) : props.svgRaw),
+        }}
       />
     ) : props.url ? (
       <img src={props.url} alt={props.alt || ''} style={imgStyle} />
     ) : (
-      <div style={{ padding: 24, border: '1px dashed var(--neutral-150)', borderRadius: 8, color: 'var(--neutral-200)', fontSize: 12, width: imgStyle.width }}>
+      <div style={{ ...NO_IMAGE_PLACEHOLDER_STYLE, width: imgStyle.width }}>
         No image
       </div>
     );
@@ -1053,10 +1084,8 @@ function BlockBody({ id, block, ctx, dragAttributes, dragListeners }) {
   }
 
   if (type === 'Button') {
-    const sizeStyles = { 'x-small': { padding: '6px 12px', fontSize: 12 }, small: { padding: '8px 16px', fontSize: 13 }, medium: { padding: '12px 20px', fontSize: 14 }, large: { padding: '14px 28px', fontSize: 16 } };
-    const presetRadius = { rectangle: 0, rounded: 6, pill: 9999 };
-    const sz = sizeStyles[props.size || 'medium'] || sizeStyles.medium;
-    const radius = style.borderRadius ?? presetRadius[props.buttonStyle || 'rectangle'] ?? 0;
+    const sz = BUTTON_SIZE_STYLES[props.size || 'medium'] || BUTTON_SIZE_STYLES.medium;
+    const radius = style.borderRadius ?? BUTTON_PRESET_RADIUS[props.buttonStyle || 'rectangle'] ?? 0;
     return (
       <div style={{ padding: paddingCss(style.padding), textAlign: style.blockAlign || style.textAlign || 'center' }}>
         <a
@@ -1222,17 +1251,7 @@ function EditableCell({ value, onCommit, style: extraStyle }) {
         onBlur={finish}
         onKeyDown={e => { if (e.key === 'Enter') finish(); if (e.key === 'Escape') { setDraft(value); setEditing(false); } }}
         onClick={e => e.stopPropagation()}
-        style={{
-          width: '100%',
-          padding: '8px 12px',
-          border: 'none',
-          background: 'var(--primary-25, #FAFAFF)',
-          outline: '2px solid var(--primary-300)',
-          outlineOffset: -2,
-          fontSize: 'inherit',
-          fontFamily: 'inherit',
-          ...extraStyle,
-        }}
+        style={{ ...EDITABLE_INPUT_BASE_STYLE, ...extraStyle }}
       />
     );
   }
@@ -1240,7 +1259,7 @@ function EditableCell({ value, onCommit, style: extraStyle }) {
   return (
     <div
       onDoubleClick={startEdit}
-      style={{ padding: '8px 12px', cursor: 'text', minHeight: 20, ...extraStyle }}
+      style={{ ...EDITABLE_DISPLAY_STYLE, ...extraStyle }}
     >
       {value || ' '}
     </div>

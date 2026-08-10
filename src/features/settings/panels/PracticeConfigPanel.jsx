@@ -28,7 +28,7 @@ const s = {
 };
 
 export function PracticeConfigPanel() {
-  const [hours, setHours] = useState(DAYS.map(() => ({ ...DEFAULT_HOURS, enabled: true })));
+  const [hours, setHours] = useState(() => DAYS.map(() => ({ ...DEFAULT_HOURS, enabled: true })));
   const [vmBehavior, setVmBehavior] = useState('Leave voicemail');
   const [amdEnabled, setAmdEnabled] = useState(true);
 

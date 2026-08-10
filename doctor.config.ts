@@ -49,6 +49,13 @@ export default {
       { files: ['src/features/settings/account/AccountPanel.jsx'], rules: ['react-doctor/supabase-client-owned-authz-field'] },
       { files: ['src/store/useAppStore.js'], rules: ['react-doctor/supabase-client-owned-authz-field'] },
 
+      // ProductTour reads/writes its own row keyed by a `user_id` taken from
+      // supabase.auth.getUser() — there is no client-side change that makes a
+      // client filter into a security boundary. Enforcement now lives in the
+      // database: supabase/user_tour_status_rls.sql scopes the table to
+      // auth.uid() and defaults the owner column server-side.
+      { files: ['src/components/ProductTour/ProductTour.jsx'], rules: ['react-doctor/supabase-client-owned-authz-field'] },
+
       // no-impure-state-updater false positives: `onTriggerEnter(recordRect)`
       // is a custom hover-delay helper, not a React state setter — the rule
       // mis-flags `recordRect`'s getBoundingClientRect as an impure updater.
@@ -98,6 +105,59 @@ export default {
       // Every failure path resets it — the reset is in a finally, just gated
       // on a `redirecting` flag, which the rule reads as conditional.
       { files: ['src/features/auth/ResetPasswordPage.jsx'], rules: ['react-doctor/no-loading-flag-reset-outside-finally'] },
+
+      // dangerous-html-sink — the four sinks that render untrusted HTML now go
+      // through src/lib/sanitizeHtml.js (DOMPurify). These remaining four are
+      // deliberate and were each read before being ruled out:
+      //   • InlineEditable (x2) is the email builder's contenteditable surface
+      //     — the user is authoring markup for their own email, and the DOM is
+      //     the editing model. Sanitizing would fight the editor.
+      //   • PreviewCanvas's RawHtml block IS the "paste raw HTML" feature.
+      //   • ChatPanel HTML-escapes msg.content in renderMessageMarkup() before
+      //     its markdown pass, so the only tags reaching the sink are ours;
+      //     the rule can't see through the helper.
+      {
+        files: [
+          'src/features/email-builder/InlineEditable.jsx',
+          'src/features/agent-builder/ChatPanel.jsx',
+        ],
+        rules: ['react-doctor/dangerous-html-sink'],
+      },
+
+      // iframe-missing-sandbox — verified empirically in the Browser pane
+      // (2026-08): adding ANY sandbox attribute disables Chromium's built-in
+      // PDF viewer. Tested blob: and data: sources against sandbox="",
+      // allow-same-origin, allow-same-origin allow-scripts,
+      // …allow-popups and allow-downloads allow-same-origin — the unsandboxed
+      // baseline rendered, every sandboxed variant rendered blank. Sandboxing
+      // these would break chart / letter / evidence document viewing, so the
+      // rule is suppressed for the four document previewers rather than
+      // shipping a broken clinical viewer. Sources are same-origin blob:/data:
+      // URLs built by the app, not third-party content.
+      {
+        files: [
+          'src/components/FilePreview/FilePreview.jsx',
+          'src/components/PdfPreviewOverlay/PdfPreviewOverlay.jsx',
+          'src/features/hcc/DiagPanel/DocEvidenceViewer.jsx',
+          'src/features/patient/right-panel/tabs/care-programs/program-detail/letters/AddLetterDrawer/AddLetterDrawer.jsx',
+        ],
+        rules: ['react-doctor/iframe-missing-sandbox'],
+      },
+
+      // The two embed panels already carry a curated
+      // sandbox="allow-scripts allow-same-origin". That pair is only an escape
+      // when the frame is same-origin with the embedder; these src values are
+      // always absolute cross-origin `https://${domain}${path}` built from the
+      // admin-curated domain registry, so the frame gets its own origin and
+      // cannot reach ours. Dropping allow-same-origin would break vendor
+      // widgets that need their own storage.
+      {
+        files: [
+          'src/features/settings/panels/ComponentLibraryPanel.jsx',
+          'src/features/settings/panels/ComponentWizardDrawer.jsx',
+        ],
+        rules: ['react-doctor/iframe-missing-sandbox'],
+      },
 
       // RangeSliderPopover re-seeds its slider values when reopened with a
       // different range — the standard controlled-reopen sync.

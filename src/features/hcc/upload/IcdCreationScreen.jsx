@@ -635,7 +635,7 @@ function RecordsSection({ title, encs, onAdd, showAddAll, onAddAll, needsReview,
 }
 
 function ReviewRow({ enc, onAdd, needsReview, readOnly }) {
-  const initials = (enc.patient?.name || '').split(/\s+/).map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '??';
+  const initials = (enc.patient?.name || '').split(/\s+/).flatMap(w => w[0] ? [w[0]] : []).slice(0, 2).join('').toUpperCase() || '??';
   const confidence = enc.patient?.matchConfidence || 0;
   const issueLabel = enc.patient?.idMismatch
     ? 'ID Mismatch'

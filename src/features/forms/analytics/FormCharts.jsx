@@ -7,7 +7,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell,
   BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip,
-} from 'recharts';
+} from '../../../components/LazyRecharts/LazyRecharts';
 import { SERIES_COLORS } from './formAnalyticsUi';
 
 const FONT = { fontFamily: "'Inter', sans-serif" };

@@ -18,6 +18,15 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
+// JSON.stringify does not HTML-escape, so a `</script>` (or a bare `<`) in the
+// value would close the surrounding <script> block and execute as markup. The
+// origin here is derived from request headers, which a client controls, so the
+// value reaching this sink is untrusted. Escaping `<` as < keeps the JSON
+// semantically identical while making it inert inside HTML.
+function jsonForScript(value) {
+  return JSON.stringify(value).replace(/</g, '\\u003C');
+}
+
 function resolveOrigin(req) {
   const host = req.headers['x-forwarded-host'] || req.headers.host || 'foldhealth.vercel.app';
   const proto = req.headers['x-forwarded-proto'] || (host.includes('localhost') ? 'http' : 'https');
@@ -66,7 +75,7 @@ export default function handler(req, res) {
 <meta name="twitter:image" content="${img}" />
 
 <meta http-equiv="refresh" content="0; url=${escapeHtml(appUrl)}" />
-<script>location.replace(${JSON.stringify(appUrl)});</script>
+<script>location.replace(${jsonForScript(appUrl)});</script>
 </head>
 <body style="font-family:system-ui,sans-serif;color:#6B6B80;padding:40px">
 Redirecting to ${t}…

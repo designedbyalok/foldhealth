@@ -37,7 +37,10 @@ const AWV_FILTER_DEFS = [
   { key: 'assignee',      label: 'Assignee',           primary: true },
 ];
 const AWV_MORE_FILTER_ITEMS = AWV_FILTER_DEFS.map(fd => ({ k: fd.key, label: fd.label, primary: fd.primary }));
-const AWV_PRIMARY_KEYS = AWV_FILTER_DEFS.filter(fd => fd.primary).map(fd => fd.key);
+const AWV_PRIMARY_KEYS = [];
+for (const fd of AWV_FILTER_DEFS) {
+  if (fd.primary) AWV_PRIMARY_KEYS.push(fd.key);
+}
 
 // WorklistShell column defs — sticky checkbox + sticky Members col on the
 // left, all AWV data columns in the middle, sticky Actions on the right.
@@ -88,15 +91,33 @@ export function AwvWorklistTable() {
 
   useEffect(() => { fetchMembers(); }, [fetchMembers]);
 
-  const filterOptions = useMemo(() => ({
-    progSubStatus: [...new Set(members.map(m => m.progSubStatus).filter(Boolean))],
-    progName:      [...new Set(members.map(m => m.progName).filter(Boolean))],
-    ri:            [...new Set(members.map(m => m.ri).filter(Boolean))].sort(),
-    dec:           [...new Set(members.map(m => m.dec).filter(Boolean))].sort((a,b) => Number(a) - Number(b)),
-    ad:            [...new Set(members.map(m => m.ad).filter(Boolean))].sort(),
-    fr:            [...new Set(members.map(m => m.fr).filter(Boolean))].sort(),
-    assignee:      [...new Set(members.map(m => m.assignee).filter(Boolean))].sort(),
-  }), [members]);
+  const filterOptions = useMemo(() => {
+    const progSubStatus = new Set();
+    const progName = new Set();
+    const ri = new Set();
+    const dec = new Set();
+    const ad = new Set();
+    const fr = new Set();
+    const assignee = new Set();
+    for (const m of members) {
+      if (m.progSubStatus) progSubStatus.add(m.progSubStatus);
+      if (m.progName) progName.add(m.progName);
+      if (m.ri) ri.add(m.ri);
+      if (m.dec) dec.add(m.dec);
+      if (m.ad) ad.add(m.ad);
+      if (m.fr) fr.add(m.fr);
+      if (m.assignee) assignee.add(m.assignee);
+    }
+    return {
+      progSubStatus: [...progSubStatus],
+      progName:      [...progName],
+      ri:            ri.toSorted(),
+      dec:           dec.toSorted((a, b) => Number(a) - Number(b)),
+      ad:            ad.toSorted(),
+      fr:            fr.toSorted(),
+      assignee:      assignee.toSorted(),
+    };
+  }, [members]);
 
   const filtered = useMemo(() => {
     let rows = members;

@@ -128,7 +128,7 @@ export function CareProgramsTab() {
 
   // Filter chip options (string lists), derived from the enrolled programs.
   const assigneeOptions = useMemo(
-    () => [...new Set(programs.map(p => p.assignee).filter(Boolean))],
+    () => [...new Set(programs.flatMap(p => p.assignee ? [p.assignee] : []))],
     [programs],
   );
   const programOptionsList = useMemo(
@@ -204,21 +204,26 @@ export function CareProgramsTab() {
   const visible = useMemo(() => {
     let list = programs;
     if (activeSubTab !== 'All') list = list.filter(p => matchesTab(p, activeSubTab));
-    if (filters.assignee.length) list = list.filter(p => filters.assignee.includes(p.assignee));
-    if (filters.program.length) list = list.filter(p => filters.program.includes(p.code));
-    if (filters.status.length) list = list.filter(p => filters.status.includes(p.status));
+    const assigneeSet = filters.assignee.length ? new Set(filters.assignee) : null;
+    const programSet = filters.program.length ? new Set(filters.program) : null;
+    const statusSet = filters.status.length ? new Set(filters.status) : null;
+    if (assigneeSet) list = list.filter(p => assigneeSet.has(p.assignee));
+    if (programSet) list = list.filter(p => programSet.has(p.code));
+    if (statusSet) list = list.filter(p => statusSet.has(p.status));
     const q = searchText.trim().toLowerCase();
     if (q) list = list.filter(p => p.name.toLowerCase().includes(q));
     return list;
   }, [programs, activeSubTab, filters, searchText]);
 
+  const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const visibleIds = visible.map(p => p.id);
-  const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedIds.includes(id));
-  const someSelected = visibleIds.some(id => selectedIds.includes(id)) && !allSelected;
+  const visibleIdSet = useMemo(() => new Set(visibleIds), [visibleIds]);
+  const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedIdSet.has(id));
+  const someSelected = selectedIds.some(id => visibleIdSet.has(id)) && !allSelected;
   const toggleAll = (checked) =>
     setSelectedIds(checked
       ? [...new Set([...selectedIds, ...visibleIds])]
-      : selectedIds.filter(id => !visibleIds.includes(id)));
+      : selectedIds.filter(id => !visibleIdSet.has(id)));
   const toggleOne = (id) =>
     setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
@@ -368,7 +373,7 @@ export function CareProgramsTab() {
               <tr key={p.id} className={styles.clickableRow} onClick={() => openProgram(p)}>
                 <td className={styles.checkCell} onClick={e => e.stopPropagation()}>
                   <Checkbox
-                    checked={selectedIds.includes(p.id)}
+                    checked={selectedIdSet.has(p.id)}
                     onCheckedChange={() => toggleOne(p.id)}
                     aria-label={`Select ${p.name}`}
                   />

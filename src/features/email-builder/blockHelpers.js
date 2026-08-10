@@ -339,12 +339,12 @@ export function cloneBlockTree(doc, sourceId, genId) {
     const data = clone.data || {};
     const props = data.props || {};
     if (Array.isArray(props.childrenIds)) {
-      props.childrenIds = props.childrenIds.map(cid => cloneOne(cid)).filter(Boolean);
+      props.childrenIds = props.childrenIds.flatMap(cid => { const c = cloneOne(cid); return c ? [c] : []; });
     }
     if (Array.isArray(props.columns)) {
       props.columns = props.columns.map(col => ({
         ...col,
-        childrenIds: (col.childrenIds || []).map(cid => cloneOne(cid)).filter(Boolean),
+        childrenIds: (col.childrenIds || []).flatMap(cid => { const c = cloneOne(cid); return c ? [c] : []; }),
       }));
     }
     blocks[newId] = clone;

@@ -261,6 +261,7 @@ export function generateFlowFromPrompt(prompt) {
   }
 
   // Wire up transition target labels
+  const nodeById = new Map(nodes.map(n => [n.id, n]));
   for (const node of nodes) {
     if (!node.data.transitions) continue;
     for (const t of node.data.transitions) {
@@ -268,7 +269,7 @@ export function generateFlowFromPrompt(prompt) {
         // Find the connected edge
         const edge = edges.find(e => e.source === node.id && e.sourceHandle === `t-${node.data.transitions.indexOf(t)}`);
         if (edge) {
-          const targetNode = nodes.find(n => n.id === edge.target);
+          const targetNode = nodeById.get(edge.target);
           if (targetNode) t.target = targetNode.data.label;
         }
       }

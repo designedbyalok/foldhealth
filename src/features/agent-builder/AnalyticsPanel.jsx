@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import {
   ResponsiveContainer, AreaChart, Area,
   XAxis, YAxis, Tooltip,
-} from 'recharts';
+} from '../../components/LazyRecharts/LazyRecharts';
 import { Icon } from '../../components/Icon/Icon';
 import { CloseIcon } from '../../components/Icon/CloseIcon';
 import { CallLogTab, GoalDetailPanel, ResizeDragger } from '../../components/CallQueueDrawer/CallQueueDrawer';

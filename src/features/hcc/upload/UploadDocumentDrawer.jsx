@@ -359,7 +359,7 @@ function PickerPhase({ showToast, cancel }) {
   // extracted document, landing on the one the user clicked (Figma
   // 4999:156381). Previous/Next there steps through the rest.
   const reviewRecord = (rec) => {
-    const batchIds = [...new Set(records.map(r => r.batchId).filter(Boolean))];
+    const batchIds = [...new Set(records.flatMap(r => r.batchId ? [r.batchId] : []))];
     cancel?.();
     openReviewForBatches?.(batchIds, rec?.batchId);
   };
@@ -384,7 +384,7 @@ function PickerPhase({ showToast, cancel }) {
   const [filterOpen, setFilterOpen] = useState(false);
   const [recordFilters, setRecordFilters] = useState({ by: [], date: [] });
   const uploaderOptions = useMemo(() => (
-    [...new Set(records.map(r => r.actorName || 'You'))].sort()
+    [...new Set(records.map(r => r.actorName || 'You'))].toSorted()
   ), [records]);
   const dateOptions = useMemo(() => (
     [...new Set(records.map(r => shortDate(r.dateISO)).filter(Boolean))]

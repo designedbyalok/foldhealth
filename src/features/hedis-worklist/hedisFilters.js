@@ -148,13 +148,23 @@ function matchOne(m, k, vals) {
       return vals.includes(m.gender) || vals.includes(long);
     }
     case 'language':            return vals.includes(LANGUAGE_LABEL[m.language] || m.language);
-    case 'gapStatus':           return (m.gaps || []).some(g => vals.includes(g.status));
+    case 'gapStatus': {
+      const valSet = new Set(vals);
+      for (const g of (m.gaps || [])) {
+        if (valSet.has(g.status)) return true;
+      }
+      return false;
+    }
     case 'assignee': {
       // Match a member if the row-level assignee OR any per-gap assignee
       // is in the selected set — same fields the row's Assignee column
       // renders, so filter and cell agree on who "owns" the row.
-      if (vals.includes(m.assignee)) return true;
-      return (m.gaps || []).some(g => vals.includes(g.assignee));
+      const valSet = new Set(vals);
+      if (valSet.has(m.assignee)) return true;
+      for (const g of (m.gaps || [])) {
+        if (valSet.has(g.assignee)) return true;
+      }
+      return false;
     }
     case 'lastOutreachOutcome': return vals.includes(m.lastOutreachOutcome);
     case 'preferredCallTime':   return vals.includes(m.preferredCallTime);
@@ -162,8 +172,8 @@ function matchOne(m, k, vals) {
     case 'city':                return vals.includes(m.city);
     case 'ipa':                 return vals.includes(m.ipa);
     case 'hpCode':              return vals.includes(m.hpCode);
-    case 'phone':               return vals.some(v => (m.phone || '').includes(v));
-    case 'zip':                 return vals.some(v => (m.zip || '').includes(v));
+    case 'phone':               return matchesAnyLiteralSubstring(m.phone || '', vals);
+    case 'zip':                 return matchesAnyLiteralSubstring(m.zip || '', vals);
     case 'dob':                 return matchDateRange(m.dob, vals);
     case 'lastOutreachDate':    return matchDateRange(m.outreachDate, vals);
     // Coverage / plan
@@ -209,6 +219,14 @@ function matchRange(value, vals) {
   const mn = parseInt(vals[0], 10);
   const mx = parseInt(vals[1], 10);
   return v >= mn && v <= mx;
+}
+
+function matchesAnyLiteralSubstring(haystack, needles) {
+  if (!haystack || !needles.length) return false;
+  const pattern = needles
+    .map(n => String(n).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('|');
+  return new RegExp(pattern).test(haystack);
 }
 
 function parseIsoLocal(s) {

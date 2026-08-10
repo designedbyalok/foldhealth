@@ -70,7 +70,10 @@ const BUCKET_FN = {
 };
 
 const MORE_FILTER_ITEMS = FILTER_KEYS.map(f => ({ k: f.key, label: f.label, primary: f.primary }));
-const PRIMARY_FILTER_KEYS = FILTER_KEYS.filter(f => f.primary).map(f => f.key);
+const PRIMARY_FILTER_KEYS = [];
+for (const f of FILTER_KEYS) {
+  if (f.primary) PRIMARY_FILTER_KEYS.push(f.key);
+}
 const KEY_ORDER = Object.fromEntries(FILTER_KEYS.map((f, i) => [f.key, i]));
 
 function EmptySearch() {
@@ -116,12 +119,21 @@ export function SnpWorklistTable() {
   useEffect(() => { fetchPlatformUsers(); }, [fetchPlatformUsers]);
 
   const filterOptions = useMemo(() => {
+    const sets = {};
+    for (const { key } of FILTER_KEYS) {
+      if (BUCKET_FN[key]) sets[key] = new Set();
+    }
+    for (const m of members) {
+      for (const { key } of FILTER_KEYS) {
+        const bucket = BUCKET_FN[key];
+        if (!bucket) continue;
+        const val = bucket(m);
+        if (val) sets[key].add(val);
+      }
+    }
     const opts = {};
     for (const { key } of FILTER_KEYS) {
-      const bucket = BUCKET_FN[key];
-      opts[key] = bucket
-        ? [...new Set(members.map(m => bucket(m)).filter(Boolean))].sort()
-        : [];
+      opts[key] = sets[key] ? [...sets[key]].sort() : [];
     }
     return opts;
   }, [members]);
@@ -148,11 +160,14 @@ export function SnpWorklistTable() {
   // Visible chips = primary set (or user-customised set) plus any chip that
   // has an active value — otherwise applying a saved filter could hide the
   // very chip whose value it just set.
-  const activeKeys = useMemo(
-    () => FILTER_KEYS.map(f => f.key).filter(k => (filters[k] || []).length > 0),
-    [filters],
-  );
-  const orderKeys = (keys) => [...new Set(keys)].sort(
+  const activeKeys = useMemo(() => {
+    const keys = [];
+    for (const { key } of FILTER_KEYS) {
+      if ((filters[key] || []).length > 0) keys.push(key);
+    }
+    return keys;
+  }, [filters]);
+  const orderKeys = (keys) => [...new Set(keys)].toSorted(
     (a, b) => (KEY_ORDER[a] ?? 99) - (KEY_ORDER[b] ?? 99),
   );
   const visibleKeys = useMemo(() => {

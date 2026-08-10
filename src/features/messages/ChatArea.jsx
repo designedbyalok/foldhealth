@@ -69,9 +69,12 @@ export function ChatArea({ currentUser, otherUser, onConversationUpdate }) {
 
   // ── Mark received messages as read ──
   const markRead = useCallback(async (msgs) => {
-    const ids = msgs
-      .filter(m => m.recipient_id === currentUser.id && !m.read_at && !String(m.id).startsWith('opt-'))
-      .map(m => m.id);
+    const ids = [];
+    for (const m of msgs) {
+      if (m.recipient_id === currentUser.id && !m.read_at && !String(m.id).startsWith('opt-')) {
+        ids.push(m.id);
+      }
+    }
     if (!ids.length) return;
     await supabase.from('direct_messages').update({ read_at: new Date().toISOString() }).in('id', ids);
     onUpdateRef.current?.();
@@ -319,7 +322,7 @@ export function ChatArea({ currentUser, otherUser, onConversationUpdate }) {
                         src={msg.media_url}
                         alt={msg.media_name || 'image'}
                         className={styles.msgImage}
-                        onClick={() => window.open(msg.media_url, '_blank')}
+                        onClick={() => window.open(msg.media_url, '_blank', 'noopener,noreferrer')}
                       />
                     )}
                     {msg.media_url && msg.media_type === 'file' && (

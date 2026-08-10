@@ -52,17 +52,18 @@ function formatCallDate(str) {
   });
 }
 
+const CALL_DIR_MAP = {
+  outgoing: { icon: 'solar:outgoing-call-linear',  color: 'var(--primary-300)' },
+  incoming: { icon: 'solar:incoming-call-linear',  color: 'var(--accent-teal)' },
+  answered: { icon: 'solar:phone-calling-linear',  color: 'var(--accent-light-green)' },
+  declined: { icon: 'solar:end-call-linear',       color: 'var(--status-error)' },
+};
+
 function CallDirBadge({ dir, size = 14 }) {
   if (dir === 'missed') {
     return <MissedCallIcon size={size} color="var(--status-error)" />;
   }
-  const map = {
-    outgoing: { icon: 'solar:outgoing-call-linear',  color: 'var(--primary-300)' },
-    incoming: { icon: 'solar:incoming-call-linear',  color: 'var(--accent-teal)' },
-    answered: { icon: 'solar:phone-calling-linear',  color: 'var(--accent-light-green)' },
-    declined: { icon: 'solar:end-call-linear',       color: 'var(--status-error)' },
-  };
-  const cfg = map[dir] || map.outgoing;
+  const cfg = CALL_DIR_MAP[dir] || CALL_DIR_MAP.outgoing;
   return <Icon name={cfg.icon} size={size} color={cfg.color} />;
 }
 
@@ -203,6 +204,21 @@ function CallsTableRow({ row, onClick }) {
   );
 }
 
+const TH_STYLE = {
+  padding: '8px 14px',
+  fontSize: 12,
+  fontWeight: 500,
+  color: 'var(--neutral-300)',
+  borderBottom: '1px solid var(--neutral-150)',
+  background: 'var(--neutral-0)',
+  position: 'sticky',
+  top: 0,
+  zIndex: 2,
+  textAlign: 'left',
+  whiteSpace: 'nowrap',
+  userSelect: 'none',
+};
+
 export function CallsView() {
   const [activeInbox, setActiveInbox] = useState('agents');
   const [activeCallId, setActiveCallId] = useState('c1');
@@ -285,21 +301,6 @@ export function CallsView() {
     } else {
       showToast('Call details — coming soon');
     }
-  };
-
-  const thStyle = {
-    padding: '8px 14px',
-    fontSize: 12,
-    fontWeight: 500,
-    color: 'var(--neutral-300)',
-    borderBottom: '1px solid var(--neutral-150)',
-    background: 'var(--neutral-0)',
-    position: 'sticky',
-    top: 0,
-    zIndex: 2,
-    textAlign: 'left',
-    whiteSpace: 'nowrap',
-    userSelect: 'none',
   };
 
   return (
@@ -517,13 +518,13 @@ export function CallsView() {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th style={{ ...thStyle, minWidth: 200, left: 0, zIndex: 3 }}>Calls</th>
-                  <th style={thStyle}>Date &amp; Time</th>
-                  <th style={thStyle}>Duration</th>
-                  <th style={thStyle}>Goal Status</th>
-                  <th style={thStyle}>Engagement Score</th>
-                  <th style={thStyle}>Out of Office</th>
-                  <th style={{ ...thStyle, width: 130, right: 0, zIndex: 3 }}>Actions</th>
+                  <th style={{ ...TH_STYLE, minWidth: 200, left: 0, zIndex: 3 }}>Calls</th>
+                  <th style={TH_STYLE}>Date &amp; Time</th>
+                  <th style={TH_STYLE}>Duration</th>
+                  <th style={TH_STYLE}>Goal Status</th>
+                  <th style={TH_STYLE}>Engagement Score</th>
+                  <th style={TH_STYLE}>Out of Office</th>
+                  <th style={{ ...TH_STYLE, width: 130, right: 0, zIndex: 3 }}>Actions</th>
                 </tr>
               </thead>
               <tbody>

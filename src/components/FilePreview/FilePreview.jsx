@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Icon } from '../Icon/Icon';
 import { Button } from '../Button/Button';
+import { sanitizeRichText } from '../../lib/sanitizeHtml';
 import styles from './FilePreview.module.css';
 
 /**
@@ -88,8 +89,9 @@ export function FilePreview({ src, name, ext, className }) {
     }
     return (
       <div className={wrapClass}>
-        {/* mammoth output is plain semantic HTML from the docx body */}
-        <div className={styles.docxPage} dangerouslySetInnerHTML={{ __html: docxHtml }} />
+        {/* mammoth output is HTML derived from a user-uploaded .docx, so it is
+            untrusted input and gets sanitized before it reaches the DOM. */}
+        <div className={styles.docxPage} dangerouslySetInnerHTML={{ __html: sanitizeRichText(docxHtml) }} />
       </div>
     );
   }

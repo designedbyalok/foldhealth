@@ -189,10 +189,10 @@ export function ProgramDetailView({ program, onClose, startAtFirstStep = false, 
     [programAddedTasks, allStoreTasks],
   );
   const taskFilterMeta = useMemo(() => ([
-    { key: 'status', label: 'Status', options: [...new Set(programTasks.map(t => TASK_STATUS_LABEL[t.status]).filter(Boolean))] },
-    { key: 'priority', label: 'Priority', options: [...new Set(programTasks.map(t => capFirst(t.priority)).filter(Boolean))] },
-    { key: 'dueDate', label: 'Due Date', options: [...new Set(programTasks.map(t => t.due_date).filter(Boolean))] },
-    { key: 'completedDate', label: 'Completed Date', options: [...new Set(programTasks.map(t => fmtCompletedDate(t.completed_at)).filter(Boolean))] },
+    { key: 'status', label: 'Status', options: [...new Set(programTasks.flatMap(t => TASK_STATUS_LABEL[t.status] ? [TASK_STATUS_LABEL[t.status]] : []))] },
+    { key: 'priority', label: 'Priority', options: [...new Set(programTasks.flatMap(t => { const v = capFirst(t.priority); return v ? [v] : []; }))] },
+    { key: 'dueDate', label: 'Due Date', options: [...new Set(programTasks.flatMap(t => t.due_date ? [t.due_date] : []))] },
+    { key: 'completedDate', label: 'Completed Date', options: [...new Set(programTasks.flatMap(t => { const v = fmtCompletedDate(t.completed_at); return v ? [v] : []; }))] },
   ]), [programTasks]);
   const addProgramTask = useAppStore(s => s.addProgramTask);
   // Letters pane drawers.
@@ -221,10 +221,10 @@ export function ProgramDetailView({ program, onClose, startAtFirstStep = false, 
   // Letters filter bar — one chip per column (except File Name); options are
   // the distinct values present in the shown letters.
   const letterFilterMeta = useMemo(() => ([
-    { key: 'fileType', label: 'File Type', options: [...new Set(visibleLetters.map(l => l.fileType).filter(Boolean))] },
+    { key: 'fileType', label: 'File Type', options: [...new Set(visibleLetters.flatMap(l => l.fileType ? [l.fileType] : []))] },
     { key: 'sentVia', label: 'Sent Via', options: [...new Set(visibleLetters.flatMap(l => l.sentVia || []))] },
-    { key: 'lastSent', label: 'Last Sent', options: [...new Set(visibleLetters.map(l => l.lastSent).filter(Boolean))] },
-    { key: 'sentBy', label: 'Sent By', options: [...new Set(visibleLetters.map(l => l.sentBy).filter(Boolean))] },
+    { key: 'lastSent', label: 'Last Sent', options: [...new Set(visibleLetters.flatMap(l => l.lastSent ? [l.lastSent] : []))] },
+    { key: 'sentBy', label: 'Sent By', options: [...new Set(visibleLetters.flatMap(l => l.sentBy ? [l.sentBy] : []))] },
   ]), [visibleLetters]);
   const setLetterFilter = (key, vals) => setLetterFilters(f => ({ ...f, [key]: vals }));
   const clearLetterFilters = () => setLetterFilters(EMPTY_LETTER_FILTERS);

@@ -2,6 +2,7 @@ import { Icon } from '../../../components/Icon/Icon';
 import { AiInsightIcon } from '../../../components/Icon/AiInsightIcon';
 import { Button } from '../../../components/Button/Button';
 import { useAppStore } from '../../../store/useAppStore';
+import { sanitizeRichText } from '../../../lib/sanitizeHtml';
 import s from '../AnalyticsLayout.module.css';
 
 // ─── Safe data extractors ───
@@ -172,7 +173,9 @@ export function InsightBanner({ icon, title, text, variant = '', buttons = [], s
       </div>
       <div className={s.insightBody}>
         <div className={s.insightEyebrow}>{title}</div>
-        <div className={s.insightText} dangerouslySetInnerHTML={{ __html: text }} />
+        {/* Insight copy carries inline <strong> and arrives from Supabase, so
+            it is sanitized rather than trusted verbatim. */}
+        <div className={s.insightText} dangerouslySetInnerHTML={{ __html: sanitizeRichText(text) }} />
         {buttons.length > 0 && (
           <div className={s.insightBtns}>
             {buttons.map((b, i) => (

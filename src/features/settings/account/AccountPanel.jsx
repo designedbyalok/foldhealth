@@ -63,13 +63,13 @@ export function getInitials(name) {
 const MOCK_ROLES = Object.keys(ROLE_COLORS);
 const MOCK_LOCATIONS = ['Toms River', 'Montebello', 'Sparks', 'Chesapeake', 'Visalia', 'Lowell', 'Palm Bay', 'Lawton', 'Oceanside', 'Merced', 'Oakland Park'];
 
+const tabKeyToName = (key) => ALL_TABS.find(t => t.toLowerCase().replace(/ /g, '-') === key) || 'Org';
+const tabNameToKey = (name) => name.toLowerCase().replace(/ /g, '-');
+
 export function AccountPanel() {
   const storeTab = useAppStore(s => s.accountTab);
   const setStoreTab = useAppStore(s => s.setAccountTab);
-  // Map store key to display name
-  const tabKeyToName = (key) => ALL_TABS.find(t => t.toLowerCase().replace(/ /g, '-') === key) || 'Org';
-  const tabNameToKey = (name) => name.toLowerCase().replace(/ /g, '-');
-  const [activeTab, setActiveTabLocal] = useState(tabKeyToName(storeTab || 'org'));
+  const [activeTab, setActiveTabLocal] = useState(() => tabKeyToName(storeTab || 'org'));
   const setActiveTab = (tab) => { setActiveTabLocal(tab); setStoreTab(tabNameToKey(tab)); };
   const [showCreateInsurance, setShowCreateInsurance] = useState(false);
   const [plans, setPlans] = useState([]);
@@ -807,13 +807,9 @@ export function InviteUserDrawer({ onClose, onInvited }) {
         return;
       }
       setSending(true);
-      let successCount = 0;
-      for (const row of bulkRows) {
-        if (!row.email?.trim()) continue;
+      const results = await Promise.all(bulkRows.map(async (row) => {
+        if (!row.email?.trim()) return false;
         try {
-          // Same single-email invite flow as handleSendInvite — signUp
-          // with invited='true' meta, bare-origin emailRedirectTo so
-          // supabase-js can parse its own recovery fragment.
           const { data: authData, error: authError } = await supabase.auth.signUp({
             email: row.email, password: crypto.randomUUID(),
             options: {
@@ -826,7 +822,7 @@ export function InviteUserDrawer({ onClose, onInvited }) {
               emailRedirectTo: window.location.origin,
             },
           });
-          if (authError) continue;
+          if (authError) return false;
           const userId = authData?.user?.id;
           if (userId) {
             await supabase.from('profiles').update({
@@ -835,10 +831,14 @@ export function InviteUserDrawer({ onClose, onInvited }) {
               admin_role: row.admin_role || 'Employer', role: 'Viewer',
               gender: row.gender, mobile: row.mobile, fax: row.fax, zip_code: row.zip_code,
             }).eq('id', userId);
-            successCount++;
+            return true;
           }
-        } catch (e) { /* skip failed rows */ }
-      }
+          return false;
+        } catch (e) {
+          return false;
+        }
+      }));
+      const successCount = results.filter(Boolean).length;
       logAudit('UserProfile', 'bulk', 'Bulk Import', 'created', `Bulk imported ${successCount} users`, 'Lifecycle');
       showToast(`${successCount} user(s) invited successfully`);
       setSending(false);

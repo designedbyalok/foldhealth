@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
-} from 'recharts';
+} from '../../../../../components/LazyRecharts/LazyRecharts';
 import { Icon } from '../../../../../components/Icon/Icon';
 import { Toggle } from '../../../../../components/Toggle/Toggle';
 import { ActionButton } from '../../../../../components/ActionButton/ActionButton';

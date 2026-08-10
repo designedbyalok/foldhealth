@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   ComposedChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, ResponsiveContainer,
-} from 'recharts';
+} from '../../../../../../components/LazyRecharts/LazyRecharts';
 import { Toggle } from '../../../../../../components/Toggle/Toggle';
 import styles from './VitalsLabsTab.module.css';
 

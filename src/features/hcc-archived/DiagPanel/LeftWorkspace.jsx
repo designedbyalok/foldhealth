@@ -184,7 +184,7 @@ const DATE_PRESETS = ['Today', 'Last 7 days', 'Last 30 days', 'This month'];
  * entries (plus member.dos_list for the DOS filter).
  */
 function computeFilterOptions(entries, member) {
-  const dos = new Set((member?.dos_list || []).map(d => d.date).filter(Boolean));
+  const dos = new Set((member?.dos_list || []).flatMap(d => d.date ? [d.date] : []));
   const hcc = new Set();
   const icd = new Set();
   const by  = new Set();

@@ -177,7 +177,7 @@ export function LeftWorkspace({
   const activityIcd = useAppStore(s => s.diagActivityIcd);
   const clearDiagActivityIcd = useAppStore(s => s.clearDiagActivityIcd);
   const memberDosList = useMemo(
-    () => (member?.dos_list || []).map(d => d.date).filter(Boolean),
+    () => (member?.dos_list || []).flatMap(d => d.date ? [d.date] : []),
     [member?.dos_list],
   );
   const [filters, setFilters] = useState(() => ({
@@ -357,7 +357,7 @@ const DATE_PRESETS = ['Today', 'Last 7 days', 'Last 30 days', 'This month'];
  * entries (plus member.dos_list for the DOS filter).
  */
 function computeFilterOptions(entries, member, extras = {}) {
-  const dos = new Set((member?.dos_list || []).map(d => d.date).filter(Boolean));
+  const dos = new Set((member?.dos_list || []).flatMap(d => d.date ? [d.date] : []));
   const hcc = new Set();
   const icd = new Set();
   const HCC_RE = /HCC\s*\d+/g;
@@ -397,10 +397,10 @@ function computeFilterOptions(entries, member, extras = {}) {
   }
   const cmp = (a, b) => a.localeCompare(b);
   return {
-    dos:  [...dos].sort(cmp),
-    hcc:  [...hcc].sort(cmp),
-    icd:  [...icd].sort(cmp),
-    by:   [...byPool].sort(cmp),
+    dos:  dos.toSorted(cmp),
+    hcc:  hcc.toSorted(cmp),
+    icd:  icd.toSorted(cmp),
+    by:   byPool.toSorted(cmp),
     date: DATE_PRESETS,
   };
 }
@@ -994,7 +994,7 @@ function groupByMonth(items) {
 // so full-name mentions (e.g. "@Abhay Pratap Chaudhary") remain intact.
 function renderCommentBody(body, users) {
   if (!body) return null;
-  const names = (users?.length ? users : []).map(u => u.name).filter(Boolean);
+  const names = (users?.length ? users : []).flatMap(u => u.name ? [u.name] : []);
   // Longest-first so a full-name match wins over a first-name-only prefix.
   const sortedNames = names.slice().sort((a, b) => b.length - a.length);
   if (!sortedNames.length) return body;

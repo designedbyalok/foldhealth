@@ -23,8 +23,10 @@ function formatDate(date) {
   return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 }
 
+const TIMEZONE_FORMATTER = new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' });
+
 function getTimezone(date) {
-  const parts = new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' }).formatToParts(date);
+  const parts = TIMEZONE_FORMATTER.formatToParts(date);
   const tz = parts.find(p => p.type === 'timeZoneName');
   return tz?.value || Intl.DateTimeFormat().resolvedOptions().timeZone;
 }

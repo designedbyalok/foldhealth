@@ -221,11 +221,19 @@ export function ApcmBillingTable({ searchQuery = '', filtersOpen = false }) {
     setCurrentPage(n);
   };
 
+  const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const attestationForSet = useMemo(
+    () => (attestationFor ? new Set(attestationFor) : null),
+    [attestationFor],
+  );
+  const allFilteredIdSet = useMemo(() => new Set(rows.map(p => p.id)), [rows]);
+
   // Bulk selection (scoped to current page) — Case C patients can't be
   // selected; "select all" therefore only ranges over attestable rows.
   const allIds = paginated.filter(p => !isCannotAttest(p)).map(p => p.id);
-  const allSelected = allIds.length > 0 && allIds.every(id => selectedIds.includes(id));
-  const someSelected = selectedIds.some(id => allIds.includes(id)) && !allSelected;
+  const allIdSet = useMemo(() => new Set(allIds), [allIds]);
+  const allSelected = allIds.length > 0 && allIds.every(id => selectedIdSet.has(id));
+  const someSelected = selectedIds.some(id => allIdSet.has(id)) && !allSelected;
 
   const toggleSelect = (id) => {
     // Guard: Case C patients cannot be selected (their checkbox is disabled
@@ -238,11 +246,10 @@ export function ApcmBillingTable({ searchQuery = '', filtersOpen = false }) {
   const handleSelectAll = (checked) =>
     setSelectedIds(checked
       ? [...new Set([...selectedIds, ...allIds])]
-      : selectedIds.filter(id => !allIds.includes(id))
+      : selectedIds.filter(id => !allIdSet.has(id))
     );
 
-  const allFilteredIds = rows.map(p => p.id);
-  const tabSelectedIds = selectedIds.filter(id => allFilteredIds.includes(id));
+  const tabSelectedIds = selectedIds.filter(id => allFilteredIdSet.has(id));
 
   const handleTriggerBill = (ids) => {
     // Filter out Case C patients defensively — they should never reach here
@@ -285,9 +292,9 @@ export function ApcmBillingTable({ searchQuery = '', filtersOpen = false }) {
   };
 
   const handleAttestationSubmit = () => {
-    if (attestationFor) {
-      setPatients(prev => prev.filter(p => !attestationFor.includes(p.id)));
-      setSelectedIds(prev => prev.filter(id => !attestationFor.includes(id)));
+    if (attestationForSet) {
+      setPatients(prev => prev.filter(p => !attestationForSet.has(p.id)));
+      setSelectedIds(prev => prev.filter(id => !attestationForSet.has(id)));
     }
     setAttestationFor(null);
   };
@@ -420,8 +427,8 @@ export function ApcmBillingTable({ searchQuery = '', filtersOpen = false }) {
                   <ApcmBillingRow
                     key={patient.id}
                     patient={patient}
-                    isSelected={selectedIds.includes(patient.id)}
-                    isActive={attestationFor?.includes(patient.id) ?? false}
+                    isSelected={selectedIdSet.has(patient.id)}
+                    isActive={attestationForSet?.has(patient.id) ?? false}
                     onSelect={toggleSelect}
                     onTriggerBill={handleTriggerBill}
                     onCommentChange={handleCommentChange}
@@ -478,7 +485,7 @@ export function ApcmBillingTable({ searchQuery = '', filtersOpen = false }) {
           <span className={styles.bulkDivider} />
           <CloseButton
             size={16}
-            onClick={() => setSelectedIds(prev => prev.filter(id => !allFilteredIds.includes(id)))}
+            onClick={() => setSelectedIds(prev => prev.filter(id => !allFilteredIdSet.has(id)))}
             className={styles.bulkClose}
             label="Clear selection"
           />
@@ -487,7 +494,7 @@ export function ApcmBillingTable({ searchQuery = '', filtersOpen = false }) {
 
       {attestationFor && (
         <AttestationModal
-          patients={patients.filter(p => attestationFor.includes(p.id))}
+          patients={patients.filter(p => attestationForSet?.has(p.id))}
           onClose={() => setAttestationFor(null)}
           onSubmit={handleAttestationSubmit}
         />

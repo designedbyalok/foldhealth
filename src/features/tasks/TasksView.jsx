@@ -96,6 +96,8 @@ const TASK_FILTER_DEFS = [
 
 const STATUS_ORDER = ['pending', 'missed', 'completed'];
 const STATUS_LABELS = { pending: 'Pending', missed: 'Missed', completed: 'Completed' };
+const PRIORITY_ORDER = ['high', 'medium', 'low', 'none'];
+const PRIORITY_LABELS = { high: 'High', medium: 'Medium', low: 'Low', none: 'None' };
 const STATUS_BADGE_VARIANTS = {
   pending: 'status-queued',
   missed: 'status-failed',
@@ -195,6 +197,8 @@ function PriorityIcon({ priority, size = 24 }) {
   );
 }
 
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
 /* ── Date Picker (inline calendar, same as appointment drawer) ── */
 function TaskDatePicker({ value, onSelect, overdue }) {
   const [open, setOpen] = useState(false);
@@ -224,7 +228,6 @@ function TaskDatePicker({ value, onSelect, overdue }) {
   const days = [];
   for (let i = 0; i < firstDay; i++) days.push(null);
   for (let d = 1; d <= daysInMonth; d++) days.push(d);
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
   const isToday = (d) => d === todayDay && month === todayMonth && year === todayYear;
   const isSelected = (d) => d === selectedDay && month === selectedMonth && year === selectedYear;
@@ -249,7 +252,7 @@ function TaskDatePicker({ value, onSelect, overdue }) {
           >
             <div className={styles.calendarHeader}>
               <ActionButton icon="solar:alt-arrow-left-linear" size="S" onClick={() => setViewDate(new Date(year, month - 1, 1))} />
-              <span className={styles.calendarTitle}>{monthNames[month]} {year}</span>
+              <span className={styles.calendarTitle}>{MONTH_NAMES[month]} {year}</span>
               <ActionButton icon="solar:alt-arrow-right-linear" size="S" onClick={() => setViewDate(new Date(year, month + 1, 1))} />
             </div>
             <div className={styles.calendarGrid}>
@@ -1276,7 +1279,7 @@ export function AddTaskDrawer({ onClose, defaultStatus, initialMember, onTaskCre
   }, [taskProfiles, currentUserProfile]);
 
   const memberOptions = useMemo(() => {
-    const names = (allPatients || []).map(p => p.name).filter(Boolean);
+    const names = (allPatients || []).flatMap(p => p.name ? [p.name] : []);
     return names.length > 0 ? names : MEMBER_OPTIONS;
   }, [allPatients]);
 
@@ -1331,29 +1334,27 @@ export function AddTaskDrawer({ onClose, defaultStatus, initialMember, onTaskCre
     const result = await createTask(task);
     if (result) {
       // Persist the staged subtasks now that we have the parent id.
-      for (const subName of stagedSubtasks) {
-        await createTask({
-          name: subName.slice(0, TITLE_MAX),
-          status: 'pending',
-          priority: 'medium',
-          due_date: task.due_date,
-          assigned_to: finalAssigneeName,
-          assigned_to_id: finalAssigneeId,
-          member: task.member,
-          labels: [],
-          parent_task: task.name,
-          parent_task_id: result.id,
-          is_subtask: true,
-          attachments: 0,
-          comments: 0,
-          meta: '',
-          description: '',
-          pool: null,
-          mentions: [],
-          created_by: me,
-          created_by_id: meId,
-        });
-      }
+      await Promise.all(stagedSubtasks.map(subName => createTask({
+        name: subName.slice(0, TITLE_MAX),
+        status: 'pending',
+        priority: 'medium',
+        due_date: task.due_date,
+        assigned_to: finalAssigneeName,
+        assigned_to_id: finalAssigneeId,
+        member: task.member,
+        labels: [],
+        parent_task: task.name,
+        parent_task_id: result.id,
+        is_subtask: true,
+        attachments: 0,
+        comments: 0,
+        meta: '',
+        description: '',
+        pool: null,
+        mentions: [],
+        created_by: me,
+        created_by_id: meId,
+      })));
       showToast('Task created');
       onTaskCreated?.(result);
     }
@@ -1791,7 +1792,7 @@ export function TaskDetailDrawer({ task, onClose, onSelectTask }) {
     (taskProfiles || []).forEach(p => { if (p.name && !seen.has(p.name)) { list.push(p.name); seen.add(p.name); } });
     return list.length > 0 ? list : ASSIGNEE_OPTIONS;
   })();
-  const memberNames = ((allPatients || []).map(p => p.name).filter(Boolean));
+  const memberNames = (allPatients || []).flatMap(p => p.name ? [p.name] : []);
   const memberOptionsForDrawer = memberNames.length > 0 ? memberNames : MEMBER_OPTIONS;
 
   const handleStatusChange = (newStatus) => {
@@ -2551,9 +2552,6 @@ export function TasksView() {
         return [fd];
       });
   }, [taskProfiles, allPatients]);
-
-  const PRIORITY_ORDER = ['high', 'medium', 'low', 'none'];
-  const PRIORITY_LABELS = { high: 'High', medium: 'Medium', low: 'Low', none: 'None' };
 
   const grouped = useMemo(() => {
     const viewBy = tasksFilters.view_by || 'status';

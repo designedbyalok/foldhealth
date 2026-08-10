@@ -11,6 +11,22 @@ const INITIAL_MESSAGE = {
   time: formatTime(),
 };
 
+// Message text is user- and model-authored, so it must be HTML-escaped BEFORE
+// the tiny markdown pass adds its own tags — otherwise a message containing
+// markup (e.g. `<img onerror=…>`) executes when injected into the bubble.
+// Escaping first means the only tags that survive are the ones we add here.
+function renderMessageMarkup(content) {
+  const escaped = String(content ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+  return escaped
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br/>')
+    .replace(/• /g, '&bull; ');
+}
+
 function formatTime() {
   return new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 }
@@ -171,10 +187,7 @@ export function ChatPanel({ nodes, edges, onApplyFlow, agentName }) {
             )}
             <div className={styles.msgBubble}>
               <div className={styles.msgContent} dangerouslySetInnerHTML={{
-                __html: msg.content
-                  .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                  .replace(/\n/g, '<br/>')
-                  .replace(/• /g, '&bull; ')
+                __html: renderMessageMarkup(msg.content)
               }} />
               <span className={styles.msgTime}>{msg.time}</span>
             </div>

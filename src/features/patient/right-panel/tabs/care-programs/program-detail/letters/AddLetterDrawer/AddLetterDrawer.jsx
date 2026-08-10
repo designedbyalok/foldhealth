@@ -53,7 +53,7 @@ export function AddLetterDrawer({ letters = [], addedIds, onAdd, onPreview, onDo
     setSortKey(key);
   };
 
-  const typeOptions = useMemo(() => [...new Set(letters.map(l => l.fileType).filter(Boolean))], [letters]);
+  const typeOptions = useMemo(() => [...new Set(letters.flatMap(l => l.fileType ? [l.fileType] : []))], [letters]);
   const catOptions = useMemo(() => [...new Set(letters.map(l => letterCategory(l.fileName)))], [letters]);
 
   const q = search.trim().toLowerCase();
@@ -62,7 +62,7 @@ export function AddLetterDrawer({ letters = [], addedIds, onAdd, onPreview, onDo
     && (!typeSel.length || typeSel.includes(l.fileType))
     && (!catSel.length || catSel.includes(letterCategory(l.fileName))));
   const rows = sortKey === 'lastSent'
-    ? [...filtered].sort((a, b) => (sortDir === 'asc' ? 1 : -1) * (toTime(a.lastSent) - toTime(b.lastSent)))
+    ? filtered.toSorted((a, b) => (sortDir === 'asc' ? 1 : -1) * (toTime(a.lastSent) - toTime(b.lastSent)))
     : filtered;
 
   const toggle = (id) => setSelected(prev => {

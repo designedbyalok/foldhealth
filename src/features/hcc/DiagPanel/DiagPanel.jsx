@@ -560,7 +560,7 @@ export function DiagPanel() {
   const gapVtOptions = useMemo(() => VISIT_TYPES.map(vt => ({ value: vt, label: vt })), []);
   const gapDocTypeOptions = useMemo(() => DOC_TYPES.map(t => ({ value: t, label: t })), []);
   const gapExcludeCodes = useMemo(
-    () => pendingGaps.map(c => c.pick?.code).filter(Boolean),
+    () => pendingGaps.flatMap(c => c.pick?.code ? [c.pick.code] : []),
     [pendingGaps],
   );
 
@@ -976,7 +976,7 @@ export function DiagPanel() {
   // spread each ICD across a subset of the record's own DOS dates so the
   // drawer's grouping always stays coherent with the worklist.
   const cardIcds = useMemo(() => {
-    const dates = dosList.map(d => d.date).filter(Boolean);
+    const dates = dosList.flatMap(d => d.date ? [d.date] : []);
     return assocICDs
       .filter(matchQ)
       .map((icd, idx) => {

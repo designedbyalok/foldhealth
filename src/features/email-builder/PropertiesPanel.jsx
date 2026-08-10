@@ -1087,7 +1087,7 @@ function ColumnDesignTab({ block, updateBlock, id, columnIdx }) {
 }
 
 function BulkDesignTab({ doc, bulkIds, updateBlock }) {
-  const blocks = bulkIds.map(id => doc?.[id]).filter(Boolean);
+  const blocks = bulkIds.flatMap(id => { const b = doc?.[id]; return b ? [b] : []; });
   const clearBulk = useAppStore(s => s.setBulkSelectedIds);
   if (blocks.length === 0) return <div className={styles.emptyState}>No blocks selected</div>;
 
@@ -1470,7 +1470,7 @@ function convertMjmlToFold(mjml) {
         return id;
       }
       case 'column': {
-        const childIds = (node.children || []).map(convertNode).filter(Boolean);
+        const childIds = (node.children || []).flatMap(child => { const id = convertNode(child); return id ? [id] : []; });
         return childIds;
       }
       case 'group':
@@ -1481,14 +1481,14 @@ function convertMjmlToFold(mjml) {
           if (child.type === 'group') {
             for (const gc of (child.children || [])) {
               if (gc.type === 'column') {
-                columns.push((gc.children || []).map(convertNode).filter(Boolean));
+                columns.push((gc.children || []).flatMap(child => { const id = convertNode(child); return id ? [id] : []; }));
               } else {
                 const cid = convertNode(gc);
                 if (cid) flatChildren.push(cid);
               }
             }
           } else if (child.type === 'column') {
-            columns.push((child.children || []).map(convertNode).filter(Boolean));
+            columns.push((child.children || []).flatMap(gc => { const id = convertNode(gc); return id ? [id] : []; }));
           } else {
             const cid = convertNode(child);
             if (cid) flatChildren.push(cid);
@@ -2950,9 +2950,14 @@ const TEXT_STYLE_PRESETS = [
 function htmlToPlain(html) {
   if (typeof html !== 'string') return '';
   if (typeof document === 'undefined' || !/[<&]/.test(html)) return html;
-  const div = document.createElement('div');
-  div.innerHTML = html.replace(/<br\s*\/?>/gi, '\n');
-  return (div.textContent || div.innerText || '').replace(/ /g, ' ');
+  // DOMParser builds an inert document: unlike assigning innerHTML on a
+  // detached node, nothing here fetches resources or fires handlers such as
+  // <img onerror>. We only ever read text back out.
+  const doc = new DOMParser().parseFromString(
+    html.replace(/<br\s*\/?>/gi, '\n'),
+    'text/html',
+  );
+  return (doc.body.textContent || '').replace(/ /g, ' ');
 }
 
 function TextStyleChips({ block, updateBlock, id }) {

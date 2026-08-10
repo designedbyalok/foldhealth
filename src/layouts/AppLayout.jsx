@@ -250,12 +250,13 @@ export function AppLayout() {
       if (existing) {
         await supabase.from('profiles').update(identity).eq('id', user.id);
       } else {
+        // Identity fields only. `role` / `admin_role` / `clinical_roles` are
+        // authorization fields and must be owned by the database (the
+        // handle_new_user() trigger and column defaults), never chosen by the
+        // client — otherwise a forged request could self-assign privileges.
         await supabase.from('profiles').insert({
           ...identity,
           status: 'Active',
-          role: 'Viewer',
-          clinical_roles: [],
-          admin_role: 'Employer',
         });
       }
     });

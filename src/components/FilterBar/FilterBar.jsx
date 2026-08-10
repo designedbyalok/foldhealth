@@ -81,7 +81,7 @@ const FILTER_DEFS = [
 // data-agnostic.
 function resolveOptions(filterDef, patients) {
   if (filterDef.optionsFromData) {
-    const unique = [...new Set((patients || []).map(p => p[filterDef.key]).filter(Boolean))];
+    const unique = [...new Set((patients || []).flatMap(p => { const v = p[filterDef.key]; return v ? [v] : []; }))];
     return unique.sort().map(a => ({ value: a, label: a }));
   }
   return filterDef.options || [];

@@ -79,29 +79,54 @@ export function FilterChipBar({
   const fetchPlatformUsers = useAppStore(s => s.fetchPlatformUsers);
   useEffect(() => { fetchPlatformUsers(); }, [fetchPlatformUsers]);
 
-  const byRole = (role) => platformUsers
-    .filter(u => u.clinicalRoles?.includes(role))
-    .map(u => u.name);
-  const distinct = (key) => [...new Set(hccMembers.map(m => m[key]).filter(Boolean))].sort();
-  const hccDynamicOpts = useMemo(() => ({
-    vt:   [
-            ...[...new Set(hccMembers.map(m => m.visitType || m.vt).filter(Boolean))].sort(),
-            'No Visit Type',
-          ],
-    asgn: platformUsers.map(u => u.name),
-    supU: byRole('Support'),
-    cdrU: byRole('Coder'),
-    r1u:  byRole('QA'),
-    r2u:  byRole('Compliance'),
-    rp:    distinct('rp'),
-    pcp:   distinct('pcp'),
-    ipa:   distinct('ipa'),
-    hp:    distinct('hp'),
-    city:  distinct('city'),
-    state: distinct('state'),
-    tin:   distinct('tin'),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [hccMembers, platformUsers]);
+  const hccDynamicOpts = useMemo(() => {
+    const vt = new Set();
+    const rp = new Set();
+    const pcp = new Set();
+    const ipa = new Set();
+    const hp = new Set();
+    const city = new Set();
+    const state = new Set();
+    const tin = new Set();
+    for (const m of hccMembers) {
+      const v = m.visitType || m.vt;
+      if (v) vt.add(v);
+      if (m.rp) rp.add(m.rp);
+      if (m.pcp) pcp.add(m.pcp);
+      if (m.ipa) ipa.add(m.ipa);
+      if (m.hp) hp.add(m.hp);
+      if (m.city) city.add(m.city);
+      if (m.state) state.add(m.state);
+      if (m.tin) tin.add(m.tin);
+    }
+    const supU = [];
+    const cdrU = [];
+    const r1u = [];
+    const r2u = [];
+    for (const u of platformUsers) {
+      const roles = u.clinicalRoles;
+      if (!roles) continue;
+      if (roles.includes('Support')) supU.push(u.name);
+      if (roles.includes('Coder')) cdrU.push(u.name);
+      if (roles.includes('QA')) r1u.push(u.name);
+      if (roles.includes('Compliance')) r2u.push(u.name);
+    }
+    return {
+      vt:   vt.toSorted().concat('No Visit Type'),
+      asgn: platformUsers.map(u => u.name),
+      supU,
+      cdrU,
+      r1u,
+      r2u,
+      rp:    rp.toSorted(),
+      pcp:   pcp.toSorted(),
+      ipa:   ipa.toSorted(),
+      hp:    hp.toSorted(),
+      city:  city.toSorted(),
+      state: state.toSorted(),
+      tin:   tin.toSorted(),
+    };
+  }, [hccMembers, platformUsers]);
   const dynamicOpts = dynamicOptsProp || (list === 'HCC' ? hccDynamicOpts : {});
   const optsFor = (def) => {
     const dynKey = def?.dynamic;

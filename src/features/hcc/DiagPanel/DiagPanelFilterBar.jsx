@@ -52,15 +52,15 @@ export function DiagPanelFilterBar({
     // Visit Type options come from the member's dos_list entries — the same
     // list of visit types the DOS row / worklist row show for this member.
     const vt = new Set(
-      (member?.dos_list || []).map(d => d?.vt).filter(Boolean),
+      (member?.dos_list || []).flatMap(d => d?.vt ? [d.vt] : []),
     );
     return {
-      years:   [...years].sort().reverse(),
-      hcc:     [...hccs].sort(),
-      by:      [...byList].sort(),
-      lastRec: [...lastRec].sort().reverse(),
+      years:   years.toSorted().reverse(),
+      hcc:     hccs.toSorted(),
+      by:      byList.toSorted(),
+      lastRec: lastRec.toSorted().reverse(),
       created: member?.date ? [member.date] : [],
-      vt:      [...vt].sort(),
+      vt:      vt.toSorted(),
     };
   }, [icds, member?.date, member?.dos_list]);
 

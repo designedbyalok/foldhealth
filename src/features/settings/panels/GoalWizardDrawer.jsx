@@ -38,8 +38,8 @@ export function GoalWizardDrawer() {
   const [mode, setMode] = useState(editGoal?.mode || 'all-mandatory');
   const [desc, setDesc] = useState(editGoal?.description || '');
   const [nlInput, setNlInput] = useState('');
-  const [steps, setSteps] = useState(editGoal?.steps?.map(st => ({ ...st })) || []);
-  const [metrics, setMetrics] = useState(editGoal?.successMetrics ? [...editGoal.successMetrics] : []);
+  const [steps, setSteps] = useState(() => editGoal?.steps?.map(st => ({ ...st })) || []);
+  const [metrics, setMetrics] = useState(() => editGoal?.successMetrics ? [...editGoal.successMetrics] : []);
   const [weighted, setWeighted] = useState(editGoal?.weightedScoring || false);
   const [passingScore, setPassingScore] = useState(editGoal?.passingScore || 100);
   const [showAddStep, setShowAddStep] = useState(false);

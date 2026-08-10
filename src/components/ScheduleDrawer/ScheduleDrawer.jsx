@@ -11,6 +11,8 @@ import { useAppStore } from '../../store/useAppStore';
 import { supabase } from '../../lib/supabase';
 import styles from './ScheduleDrawer.module.css';
 
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
 export const FALLBACK_APPOINTMENT_TYPES = [
   { name: 'Annual Wellness Visit', code: 'AWV', mode: 'In-person', duration: '60 min', color: '#D9A50B' },
   // Program-related appointment types — one per care program. When booked for
@@ -322,7 +324,6 @@ function DatePicker({ value, onSelect }) {
   const days = [];
   for (let i = 0; i < firstDay; i++) days.push(null);
   for (let d = 1; d <= daysInMonth; d++) days.push(d);
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
   return (
     <div style={{ position: 'relative' }}>
@@ -336,7 +337,7 @@ function DatePicker({ value, onSelect }) {
           <div className={styles.calendarDropdown} style={{ position: 'fixed', top: btnRef.current?.getBoundingClientRect().bottom + 4, left: btnRef.current?.getBoundingClientRect().left, zIndex: 9999 }} onClick={e => e.stopPropagation()}>
             <div className={styles.calendarHeader}>
               <ActionButton icon="solar:alt-arrow-left-linear" size="S" onClick={() => setViewDate(new Date(year, month - 1, 1))} />
-              <span className={styles.calendarTitle}>{monthNames[month]} {year}</span>
+              <span className={styles.calendarTitle}>{MONTH_NAMES[month]} {year}</span>
               <ActionButton icon="solar:alt-arrow-right-linear" size="S" onClick={() => setViewDate(new Date(year, month + 1, 1))} />
             </div>
             <div className={styles.calendarGrid}>

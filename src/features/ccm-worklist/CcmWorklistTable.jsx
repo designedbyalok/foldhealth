@@ -185,9 +185,16 @@ export function CcmWorklistTable() {
   // each row through BUCKET_FN and deduping. Empty buckets (e.g. 'Unknown'
   // when no member has that field) drop out via the Set.
   const filterOptions = useMemo(() => {
+    const sets = Object.fromEntries(FILTER_KEYS.map(({ key }) => [key, new Set()]));
+    for (const m of members) {
+      for (const { key } of FILTER_KEYS) {
+        const val = BUCKET_FN[key](m);
+        if (val) sets[key].add(val);
+      }
+    }
     const opts = {};
     for (const { key } of FILTER_KEYS) {
-      opts[key] = [...new Set(members.map(m => BUCKET_FN[key](m)).filter(Boolean))].sort();
+      opts[key] = [...sets[key]].sort();
     }
     return opts;
   }, [members]);
@@ -212,10 +219,13 @@ export function CcmWorklistTable() {
     return rows;
   }, [members, searchQuery, filters, billableFilter, unloggedFilter]);
 
-  const userOptions = useMemo(
-    () => [...new Set(members.map(m => m.assigneeName).filter(Boolean))].sort(),
-    [members],
-  );
+  const userOptions = useMemo(() => {
+    const names = new Set();
+    for (const m of members) {
+      if (m.assigneeName) names.add(m.assigneeName);
+    }
+    return names.toSorted();
+  }, [members]);
 
   const paginated = useMemo(() => {
     const start = (page - 1) * perPage;

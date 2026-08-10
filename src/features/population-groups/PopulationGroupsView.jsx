@@ -63,6 +63,11 @@ function BulkSelectIcon({ size = 20 }) {
 /* Group name — clamped to 2 lines; shows the full name via the Tooltip component only when truncated.
    The structure stays stable (always Tooltip-wrapped) so the measured span node never swaps out;
    the tooltip only opens when the text is actually truncated. */
+const GROUP_NAME_STYLE = {
+  fontSize: 14, fontWeight: 500, color: 'var(--neutral-400)', lineHeight: 1.4, minWidth: 0,
+  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', wordBreak: 'break-word',
+};
+
 function GroupName({ name }) {
   const ref = useRef(null);
   const [truncated, setTruncated] = useState(false);
@@ -88,7 +93,7 @@ function GroupName({ name }) {
     <Tooltip label={truncated ? name : ''} maxWidth={380}>
       <span
         ref={ref}
-        style={{ fontSize:14, fontWeight:500, color:'var(--neutral-400)', lineHeight:1.4, minWidth:0, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden', wordBreak:'break-word' }}
+        style={GROUP_NAME_STYLE}
       >
         {name}
       </span>
@@ -319,6 +324,22 @@ function FigmaMatchedSection({ patients, expanded, onToggle, allDone }) {
   );
 }
 
+const FIGMA_INCORRECT_INPUT_ST = {
+  flex: 1, height: 32, border: 'none', background: 'transparent',
+  padding: '0 8px', fontSize: 14, outline: 'none',
+  fontFamily: 'Inter,sans-serif', color: 'var(--neutral-400)', boxSizing: 'border-box',
+  minWidth: 0,
+};
+const FIGMA_INCORRECT_HDR_COLS = ['Patient ID', 'First Name', 'Last Name', 'Date of Birth', 'Actions'];
+const DUPLICATE_COL_HDR = { fontSize: 12, fontWeight: 500, color: 'var(--neutral-300)', fontFamily: 'Inter,sans-serif' };
+const TABLE_TH_STYLE = {
+  padding: '8px 16px', fontSize: 12, fontWeight: 500, color: 'var(--neutral-300)',
+  borderBottom: '0.5px solid var(--neutral-150)', background: 'var(--neutral-0)',
+  position: 'sticky', top: 0, zIndex: 2, textAlign: 'left',
+  whiteSpace: 'nowrap', userSelect: 'none',
+};
+const TABLE_TD_STYLE = { padding: '12px 16px', fontSize: 14, fontWeight: 400, color: 'var(--neutral-300)', verticalAlign: 'middle' };
+
 function FigmaIncorrectRow({ row, onAdd, onRemove, isLast, onToast, matchedIds }) {
   const [foldId,    setFoldId]    = React.useState(row.rawId    || '');
   const [firstName, setFirstName] = React.useState(row.rawFn   || '');
@@ -398,14 +419,6 @@ function FigmaIncorrectRow({ row, onAdd, onRemove, isLast, onToast, matchedIds }
 
   /* CellOuter is defined at module level above to prevent remounting on re-render (which would lose cursor focus) */
 
-  const inputSt = {
-    flex: 1, height: 32, border: 'none', background: 'transparent',
-    padding: '0 8px', fontSize: 14, outline: 'none',
-    fontFamily: 'Inter,sans-serif', color: 'var(--neutral-400)', boxSizing: 'border-box',
-    minWidth: 0,
-  };
-
-  const HDR_COLS = ['Patient ID', 'First Name', 'Last Name', 'Date of Birth', 'Actions'];
   const [isRemoving, setIsRemoving] = React.useState(false);
 
   const handleRemoveWithAnim = () => {
@@ -417,7 +430,7 @@ function FigmaIncorrectRow({ row, onAdd, onRemove, isLast, onToast, matchedIds }
     <div className={isRemoving ? 'row-removing' : ''} style={{ borderBottom: isLast ? 'none' : '0.5px solid var(--neutral-200)', paddingTop: 8, fontFamily: 'Inter,sans-serif' }}>
       {/* Column headers — inside each card per Figma */}
       <div style={{ display: 'flex', paddingRight: 12 }}>
-        {HDR_COLS.map((h, hi) => (
+        {FIGMA_INCORRECT_HDR_COLS.map((h, hi) => (
           <div key={h} style={{
             ...(hi < 4 ? { flex: 1, minWidth: 0 } : { width: 130, flexShrink: 0 }),
             padding: '4px 12px',
@@ -432,22 +445,22 @@ function FigmaIncorrectRow({ row, onAdd, onRemove, isLast, onToast, matchedIds }
       <div style={{ display: 'flex', alignItems: 'flex-start', paddingRight: 12 }}>
         <div style={{ flex: 1, minWidth: 0, padding: '2px 12px 8px' }}>
           <CellOuter err={hasError}>
-            <input value={foldId} onChange={e => handleFoldIdChange(e.target.value)} style={inputSt} />
+            <input value={foldId} onChange={e => handleFoldIdChange(e.target.value)} style={FIGMA_INCORRECT_INPUT_ST} />
           </CellOuter>
         </div>
         <div style={{ flex: 1, minWidth: 0, padding: '2px 12px 8px' }}>
           <CellOuter err={mismatch.firstName}>
-            <input disabled value={firstName} style={{ ...inputSt, background:'var(--neutral-50)', color:'var(--neutral-150)', cursor:'not-allowed' }} />
+            <input disabled value={firstName} style={{ ...FIGMA_INCORRECT_INPUT_ST, background:'var(--neutral-50)', color:'var(--neutral-150)', cursor:'not-allowed' }} />
           </CellOuter>
         </div>
         <div style={{ flex: 1, minWidth: 0, padding: '2px 12px 8px' }}>
           <CellOuter err={mismatch.lastName}>
-            <input disabled value={lastName} style={{ ...inputSt, background:'var(--neutral-50)', color:'var(--neutral-150)', cursor:'not-allowed' }} />
+            <input disabled value={lastName} style={{ ...FIGMA_INCORRECT_INPUT_ST, background:'var(--neutral-50)', color:'var(--neutral-150)', cursor:'not-allowed' }} />
           </CellOuter>
         </div>
         <div style={{ flex: 1, minWidth: 0, padding: '2px 12px 8px' }}>
           <CellOuter err={mismatch.dob}>
-            <input disabled value={dob} style={{ ...inputSt, background:'var(--neutral-50)', color:'var(--neutral-150)', cursor:'not-allowed' }} />
+            <input disabled value={dob} style={{ ...FIGMA_INCORRECT_INPUT_ST, background:'var(--neutral-50)', color:'var(--neutral-150)', cursor:'not-allowed' }} />
           </CellOuter>
         </div>
         <div style={{ width: 130, flexShrink: 0, padding: '2px 12px 8px 12px', display: 'flex', alignItems: 'center' }}>
@@ -563,8 +576,6 @@ function FigmaIncorrectSection({ entries, expanded, onToggle, onAdd, onRemove, o
 }
 
 function FigmaDuplicateSection({ entries, matched, expanded, onToggle, onRemove }) {
-  const colHdr = { fontSize:12, fontWeight:500, color:'var(--neutral-300)', fontFamily:'Inter,sans-serif' };
-
   /* Group entries by rawId — each key is a duplicate group */
   const groups = React.useMemo(() => {
     const g = {};
@@ -604,11 +615,11 @@ function FigmaDuplicateSection({ entries, matched, expanded, onToggle, onRemove 
       <div>
           {/* Column headers — shared once at the top */}
           <div style={{ display:'flex', padding:'4px 0', borderBottom:'0.5px solid var(--neutral-150)', fontFamily:'Inter,sans-serif' }}>
-            <div style={{ flex:1, minWidth:0, padding:'0 12px 0 24px', ...colHdr }}>Patient ID</div>
-            <div style={{ flex:1, minWidth:0, padding:'0 12px', ...colHdr }}>First Name</div>
-            <div style={{ flex:1, minWidth:0, padding:'0 12px', ...colHdr }}>Last Name</div>
-            <div style={{ flex:1, minWidth:0, padding:'0 12px', ...colHdr }}>Date of Birth</div>
-            <div style={{ width:130, flexShrink:0, padding:'0 12px', ...colHdr }}>Actions</div>
+            <div style={{ flex:1, minWidth:0, padding:'0 12px 0 24px', ...DUPLICATE_COL_HDR }}>Patient ID</div>
+            <div style={{ flex:1, minWidth:0, padding:'0 12px', ...DUPLICATE_COL_HDR }}>First Name</div>
+            <div style={{ flex:1, minWidth:0, padding:'0 12px', ...DUPLICATE_COL_HDR }}>Last Name</div>
+            <div style={{ flex:1, minWidth:0, padding:'0 12px', ...DUPLICATE_COL_HDR }}>Date of Birth</div>
+            <div style={{ width:130, flexShrink:0, padding:'0 12px', ...DUPLICATE_COL_HDR }}>Actions</div>
           </div>
 
           {Object.entries(groups).map(([rawId, dupes], gi) => {
@@ -1294,7 +1305,7 @@ function PopulationGroupsView({ activeFilter, onToggleSidebar, onMiniBarOpen, mi
   const saveGroup = async () => {
     const groupType = chosenFilter === 'dynamic' ? 'Dynamic' : 'Static';
     const newName = segmentName.trim();
-    const memberIds = matchSummary.matched.map(m => m.id).filter(Boolean);
+    const memberIds = matchSummary.matched.flatMap(m => m.id ? [m.id] : []);
     const payload = {
       name: newName, description: description.trim(), type: groupType,
       filterType: chosenFilter || null, memberStatus, memberIds,
@@ -1479,13 +1490,6 @@ function PopulationGroupsView({ activeFilter, onToggleSidebar, onMiniBarOpen, mi
   const canSave      = canCreate && isDirty;
 
   /* Header / cell styling — matches the Settings → Account → Users table (AccountPanel.module.css) */
-  const thStyle = {
-    padding: '8px 16px', fontSize: 12, fontWeight: 500, color: 'var(--neutral-300)',
-    borderBottom: '0.5px solid var(--neutral-150)', background: 'var(--neutral-0)',
-    position: 'sticky', top: 0, zIndex: 2, textAlign: 'left',
-    whiteSpace: 'nowrap', userSelect: 'none',
-  };
-  const tdStyle = { padding: '12px 16px', fontSize: 14, fontWeight: 400, color: 'var(--neutral-300)', verticalAlign: 'middle' };
   const unmatchedAll     = [...matchSummary.notFound]; /* duplicates don't block preview */
   const allResolved      = unmatchedAll.length > 0 && unmatchedAll.every(e => manualSel[e.entryId]);
   /* For the grey default CSV flow: Create is only enabled once all incorrect + duplicate entries are dealt with */
@@ -1562,7 +1566,7 @@ function PopulationGroupsView({ activeFilter, onToggleSidebar, onMiniBarOpen, mi
         <table style={{ width:'100%', borderCollapse:'collapse', fontFamily:'Inter, sans-serif', minWidth:900 }}>
           <thead>
             <tr>
-              <th style={{ ...thStyle, width:36, padding:'8px 10px' }}>
+              <th style={{ ...TABLE_TH_STYLE, width:36, padding:'8px 10px' }}>
                 <Checkbox checked={false} aria-label="Select all" />
               </th>
               {[
@@ -1581,7 +1585,7 @@ function PopulationGroupsView({ activeFilter, onToggleSidebar, onMiniBarOpen, mi
                   activeKey={pgSortKey}
                   activeDir={pgSortDir}
                   onSort={pgRequestSort}
-                  style={{ ...thStyle, width: col.w ? col.w : undefined }}
+                  style={{ ...TABLE_TH_STYLE, width: col.w ? col.w : undefined }}
                 />
               ))}
             </tr>
@@ -1606,7 +1610,7 @@ function PopulationGroupsView({ activeFilter, onToggleSidebar, onMiniBarOpen, mi
                   </td>
 
                   {/* name + avatar */}
-                  <td style={tdStyle}>
+                  <td style={TABLE_TD_STYLE}>
                     <div style={{ display:'flex', alignItems:'center', gap:10, minWidth:0 }}>
                       <Avatar variant="patient" initials={<UsersGroupRoundedLinear size={16} color="var(--primary-300)" />} />
                       <GroupName name={g.name} />
@@ -1614,19 +1618,19 @@ function PopulationGroupsView({ activeFilter, onToggleSidebar, onMiniBarOpen, mi
                   </td>
 
                   {/* active members */}
-                  <td style={tdStyle}>{g.count != null ? g.count : '–'}</td>
+                  <td style={TABLE_TD_STYLE}>{g.count != null ? g.count : '–'}</td>
 
                   {/* inactive members */}
-                  <td style={tdStyle}>{g.inactive != null ? g.inactive : '–'}</td>
+                  <td style={TABLE_TD_STYLE}>{g.inactive != null ? g.inactive : '–'}</td>
 
                   {/* type */}
-                  <td style={tdStyle}>{g.type}</td>
+                  <td style={TABLE_TD_STYLE}>{g.type}</td>
 
                   {/* created date */}
-                  <td style={{ ...tdStyle, whiteSpace:'nowrap', width:160 }}>{g.created}</td>
+                  <td style={{ ...TABLE_TD_STYLE, whiteSpace:'nowrap', width:160 }}>{g.created}</td>
 
                   {/* updated date */}
-                  <td style={{ ...tdStyle, whiteSpace:'nowrap', width:160 }}>{g.updated}</td>
+                  <td style={{ ...TABLE_TD_STYLE, whiteSpace:'nowrap', width:160 }}>{g.updated}</td>
 
                   {/* actions */}
                   <td style={{ padding:'0 12px', verticalAlign:'middle' }}>

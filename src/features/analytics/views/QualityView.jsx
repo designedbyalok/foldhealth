@@ -17,6 +17,15 @@ const DEFAULT_LAYOUT = [
   { i: 'zeroGap',         x: 0, y: 15, w: 12, h: 7, minW: 6, minH: 5, maxW: 12, maxH: 200 },
 ];
 
+const QUALITY_FILTER_OPTIONS = ['All Measures', 'HEDIS', 'Star Ratings', 'ACO CAHPS', 'ACO PC01'];
+const PRACTICE_QUALITY = [
+  { name: 'Patel Family Med.', composite: '72%', gaps: 342, toGoal: '-18', awv: '71%', trend: '\u2191', status: 'green' },
+  { name: 'Riverside Medical', composite: '58%', gaps: 511, toGoal: '+46', awv: '48%', trend: '\u2193', status: 'red' },
+  { name: 'Valley Primary Care', composite: '65%', gaps: 428, toGoal: '+12', awv: '61%', trend: '\u2192', status: 'amber' },
+  { name: 'Northside Clinic', composite: '69%', gaps: 198, toGoal: '-4', awv: '74%', trend: '\u2191', status: 'green' },
+  { name: 'Eastside Health', composite: '71%', gaps: 162, toGoal: '-10', awv: '68%', trend: '\u2191', status: 'green' },
+];
+
 export function QualityView({ showToast, editing = false, resetTick = 0 }) {
   const fetchViewKpis = useAppStore(st => st.fetchViewKpis);
   const fetchViewTable = useAppStore(st => st.fetchViewTable);
@@ -35,21 +44,12 @@ export function QualityView({ showToast, editing = false, resetTick = 0 }) {
   const insight = kpiData?.insight || null;
   const allMeasures = safeTableRows(qualityMeasures);
 
-  const filterOptions = ['All Measures', 'HEDIS', 'Star Ratings', 'ACO CAHPS', 'ACO PC01'];
+  const filterOptions = QUALITY_FILTER_OPTIONS;
   const measures = measureFilter === 'All Measures'
     ? allMeasures
     : allMeasures.filter(m => (m.tag || '') === measureFilter || (m.tag === 'Stars' && measureFilter === 'Star Ratings'));
 
-  // Practice-level quality data
-  const practiceQuality = [
-    { name: 'Patel Family Med.', composite: '72%', gaps: 342, toGoal: '-18', awv: '71%', trend: '\u2191', status: 'green' },
-    { name: 'Riverside Medical', composite: '58%', gaps: 511, toGoal: '+46', awv: '48%', trend: '\u2193', status: 'red' },
-    { name: 'Valley Primary Care', composite: '65%', gaps: 428, toGoal: '+12', awv: '61%', trend: '\u2192', status: 'amber' },
-    { name: 'Northside Clinic', composite: '69%', gaps: 198, toGoal: '-4', awv: '74%', trend: '\u2191', status: 'green' },
-    { name: 'Eastside Health', composite: '71%', gaps: 162, toGoal: '-10', awv: '68%', trend: '\u2191', status: 'green' },
-  ];
-
-  // \u2500\u2500 Per-key content renderers \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // ── Per-key content renderers ───────────────────────────────────────────
   const renderInsight = () => insight ? (
     <InsightBanner
       icon={insight.icon}
@@ -82,7 +82,7 @@ export function QualityView({ showToast, editing = false, resetTick = 0 }) {
           onChange={e => setMeasureFilter(e.target.value)}
           style={{ fontSize: 12, padding: '3px 8px', minWidth: 130, borderRadius: 6, border: '1px solid var(--neutral-100)' }}
         >
-          {filterOptions.map(f => <option key={f}>{f}</option>)}
+          {QUALITY_FILTER_OPTIONS.map(f => <option key={f}>{f}</option>)}
         </select>
       }
     >
@@ -141,7 +141,7 @@ export function QualityView({ showToast, editing = false, resetTick = 0 }) {
             <tr><th>Practice</th><th className={s.r}>Composite</th><th className={s.r}>Open Gaps</th><th className={s.r}>Gaps to Goal</th><th className={s.r}>AWV%</th><th>Trend</th></tr>
           </thead>
           <tbody>
-            {practiceQuality.map((p, i) => {
+            {PRACTICE_QUALITY.map((p, i) => {
               const rc = p.status === 'red' ? s.valR : p.status === 'green' ? s.valG : s.valA;
               const tc = p.trend === '\u2191' ? 'var(--status-success)' : p.trend === '\u2193' ? 'var(--status-error)' : 'var(--status-warning)';
               return (

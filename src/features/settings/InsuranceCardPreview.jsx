@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import { AVERGENT_THEME, PROMINENCE_THEME, NO_THEME } from './CardThemePicker';
+import { sanitizeRichText } from '../../lib/sanitizeHtml';
 import styles from './InsuranceCardPreview.module.css';
 
 /* Theme selector — bordered field + dropdown (Figma 2005:76958 / 8:64414) */
@@ -272,7 +273,9 @@ export function InsuranceCardPreview({
             {/* Note bar — theme-tinted */}
             {noteText && (
               <div className={styles.backNoteBar} style={{ background: cardTheme?.noteBg || '#FFEDDB' }}>
-                <p className={styles.backNote} dangerouslySetInnerHTML={{ __html: data.additionalNote }} />
+                {/* Rich-text field authored in CreateInsurancePlanDrawer and
+                    read back for every viewer of the plan — sanitize. */}
+                <p className={styles.backNote} dangerouslySetInnerHTML={{ __html: sanitizeRichText(data.additionalNote) }} />
               </div>
             )}
           </div>

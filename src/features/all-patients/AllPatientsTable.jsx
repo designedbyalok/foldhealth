@@ -124,7 +124,7 @@ export function AllPatientsTable() {
     language: m.language,
     assignee: m.assigneeName,
     assigneeInitials: m.assigneeInitials,
-    tags: (m.tags || []).map(t => t.label).filter(Boolean),
+    tags: (m.tags || []).flatMap(t => t.label ? [t.label] : []),
   })), [snpWorklistMembers]);
 
   // If Supabase has data, use it and add SNP members not already covered

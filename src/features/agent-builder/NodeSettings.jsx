@@ -57,7 +57,10 @@ export function NodeSettings({ node, allNodes, onSave, onClose, onDelete }) {
   const [transitions, setTransitions] = useState(node.data.transitions || []);
   const [isEditing, setIsEditing] = useState(false);
   const nameInputRef = useRef(null);
-  const lastSyncedJson = useRef(JSON.stringify(node.data.transitions || []));
+  const lastSyncedJson = useRef(null);
+  if (lastSyncedJson.current === null) {
+    lastSyncedJson.current = JSON.stringify(node.data.transitions || []);
+  }
 
   useEffect(() => {
     setLabel(node.data.label || '');

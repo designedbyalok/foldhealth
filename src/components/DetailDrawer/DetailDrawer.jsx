@@ -42,7 +42,7 @@ const Typewriter = ({ text, speed = 10, onDone }) => {
   const [n, setN] = useState(0);
   useEffect(() => {
     if (n >= text.length) { onDone?.(); return; }
-    const id = setTimeout(() => setN(n + 1), speed);
+    const id = setTimeout(() => setN(prev => prev + 1), speed);
     return () => clearTimeout(id);
   }, [n, text, speed]);
   return <>{text.slice(0, n)}{n < text.length && <span className={styles.typeCursor} />}</>;

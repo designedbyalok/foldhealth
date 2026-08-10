@@ -10,7 +10,7 @@
 import {
   ResponsiveContainer, LineChart, Line, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, Legend,
-} from 'recharts';
+} from '../../../components/LazyRecharts/LazyRecharts';
 
 // ─── Design Tokens ───
 const COLORS = {
@@ -63,6 +63,10 @@ function FoldTooltip({ active, payload, label, prefix = '$', suffix = '' }) {
 // ─── Shared axis tick style ───
 const AXIS_TICK = { fontSize: 12, fill: COLORS.neutral200, ...FONT };
 const GRID_STYLE = { stroke: COLORS.neutral100, strokeDasharray: '3 3' };
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const DEFAULT_SAVINGS_VALUES = [0.18, 0.34, 0.48, 0.62, 0.78, 0.88, 0.96, 1.04, 1.12, 1.20, 1.26, 1.32];
+const DEFAULT_RAF_VALUES = [1.02, 1.02, 1.03, 1.03, 1.04, 1.04, 1.03, 1.04, 1.04, 1.04, 1.04, 1.042];
+const DEFAULT_READMIT_VALUES = [15.2, 15.8, 16.1, 16.4, 16.8, 17.2, 17.0, 17.6, 17.8, 18.0, 18.2, 18.4];
 
 // ═══════════════════════════════════════════════════
 //  1. TCOC Trend Chart (Executive Dashboard)
@@ -87,7 +91,6 @@ function TcocLegend({ isTotal }) {
 }
 
 export function TcocLineChart({ tab, data, mode = 'pmpm' }) {
-  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const isTotal = mode === 'total';
   const series = data?.[`tcoc_${tab}`] || data?.tcoc_all || [];
   // For "Total Cost" mode, multiply PMPM by a member count factor (8,420 members / 1000)
@@ -154,8 +157,7 @@ export function TcocLineChart({ tab, data, mode = 'pmpm' }) {
 //  2. Savings Trajectory Chart (Executive / Shared Savings)
 // ═══════════════════════════════════════════════════
 export function SavingsAreaChart({ data, targetLabel, targetValue }) {
-  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const values = Array.isArray(data) ? data : [0.18, 0.34, 0.48, 0.62, 0.78, 0.88, 0.96, 1.04, 1.12, 1.20, 1.26, 1.32];
+  const values = Array.isArray(data) ? data : DEFAULT_SAVINGS_VALUES;
 
   const chartData = MONTHS.map((m, i) => ({
     month: m,
@@ -190,8 +192,7 @@ export function SavingsAreaChart({ data, targetLabel, targetValue }) {
 //  3. RAF Score Trend Chart (Risk & Revenue)
 // ═══════════════════════════════════════════════════
 export function RafTrendLineChart({ data, potential }) {
-  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const values = Array.isArray(data) ? data : [1.02, 1.02, 1.03, 1.03, 1.04, 1.04, 1.03, 1.04, 1.04, 1.04, 1.04, 1.042];
+  const values = Array.isArray(data) ? data : DEFAULT_RAF_VALUES;
 
   const chartData = MONTHS.map((m, i) => ({
     month: m,
@@ -220,8 +221,7 @@ export function RafTrendLineChart({ data, potential }) {
 //  4. Readmission Rate Trend Chart (Utilization)
 // ═══════════════════════════════════════════════════
 export function ReadmitTrendLineChart({ data, threshold }) {
-  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const values = Array.isArray(data) ? data : [15.2, 15.8, 16.1, 16.4, 16.8, 17.2, 17.0, 17.6, 17.8, 18.0, 18.2, 18.4];
+  const values = Array.isArray(data) ? data : DEFAULT_READMIT_VALUES;
 
   const chartData = MONTHS.map((m, i) => ({
     month: m,

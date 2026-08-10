@@ -118,9 +118,8 @@ export function CcmUnloggedTable({ patientId, periodId, expanded, onToggleExpand
     if (invalid.length) return;
     setSaving(true);
     try {
-      for (const r of selRows) {
-        // eslint-disable-next-line no-await-in-loop
-        await addCcmBillableActivity({
+      await Promise.all(selRows.map(r =>
+        addCcmBillableActivity({
           id: randomId(),
           periodId,
           patientId,
@@ -131,8 +130,8 @@ export function CcmUnloggedTable({ patientId, periodId, expanded, onToggleExpand
           loggedByInitials: 'Y',
           occurredAt: new Date().toISOString(),
           isUnlogged: true,
-        });
-      }
+        }),
+      ));
       setRows(prev => prev.filter(r => !selected.has(r.id)));
       setSelected(new Set());
     } finally {
