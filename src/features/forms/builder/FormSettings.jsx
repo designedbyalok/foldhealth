@@ -3,7 +3,7 @@
  * selected. Mirrors the email-builder's Design/Template panel layout
  * (section strips, field columns, live preset cards) for visual consistency.
  */
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Select } from '../../../components/Select/Select';
 import { Switch } from '../../../components/Switch/Switch';
 import { Icon } from '../../../components/Icon/Icon';
@@ -132,6 +132,7 @@ function PresetGrid({ presets, selectedId, onSelect }) {
 }
 
 export function FormSettings({ settings, onChange }) {
+  const uid = useId();
   const s = settings || {};
   const set = (patch) => onChange({ ...s, ...patch });
   const header = s.header || { enabled: false, presetId: HEADER_PRESETS[0].id };
@@ -169,8 +170,9 @@ export function FormSettings({ settings, onChange }) {
       <div className={email.sectionHeadingStrip}>Typography</div>
       <div className={email.sectionContent}>
         <div className={email.fieldCol}>
-          <label className={email.fieldLabel}>Font family</label>
+          <label className={email.fieldLabel} htmlFor={`${uid}-font-family`}>Font family</label>
           <Select
+            id={`${uid}-font-family`}
             value={s.fontFamily || 'Inter'}
             options={FONT_OPTIONS}
             onChange={(v) => set({ fontFamily: v })}
@@ -197,12 +199,12 @@ export function FormSettings({ settings, onChange }) {
             </div>
             {start.enabled !== false && (
               <>
-                <label className={email.fieldLabel}>Title</label>
-                <Input className={styles.ctl} value={start.title || ''} placeholder="Welcome" onChange={(e) => set({ start: { ...start, title: e.target.value } })} />
-                <label className={email.fieldLabel}>Description</label>
-                <Textarea className={styles.ctl} rows={2} value={start.description || ''} placeholder="A short intro for respondents" onChange={(e) => set({ start: { ...start, description: e.target.value } })} />
-                <label className={email.fieldLabel}>Button label</label>
-                <Input className={styles.ctl} value={start.buttonLabel || 'Start'} onChange={(e) => set({ start: { ...start, buttonLabel: e.target.value } })} />
+                <label className={email.fieldLabel} htmlFor={`${uid}-start-title`}>Title</label>
+                <Input id={`${uid}-start-title`} className={styles.ctl} value={start.title || ''} placeholder="Welcome" onChange={(e) => set({ start: { ...start, title: e.target.value } })} />
+                <label className={email.fieldLabel} htmlFor={`${uid}-start-description`}>Description</label>
+                <Textarea id={`${uid}-start-description`} className={styles.ctl} rows={2} value={start.description || ''} placeholder="A short intro for respondents" onChange={(e) => set({ start: { ...start, description: e.target.value } })} />
+                <label className={email.fieldLabel} htmlFor={`${uid}-start-button`}>Button label</label>
+                <Input id={`${uid}-start-button`} className={styles.ctl} value={start.buttonLabel || 'Start'} onChange={(e) => set({ start: { ...start, buttonLabel: e.target.value } })} />
               </>
             )}
           </div>

@@ -1,4 +1,4 @@
-import { useRef, useState, useLayoutEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useLayoutEffect, useCallback } from 'react';
 import styles from './EmailBuilder.module.css';
 
 export function getCommonValue(blocks, getter) {
@@ -386,9 +386,4 @@ export function highlightHtml(input) {
 }
 
 // ── Template tab ────────────────────────────────────────────────────────────
-const TEMPLATE_PRESETS = [
-  { id: 'welcome',  label: 'Welcome',          accent: '#7C5CFA' },
-  { id: 'reminder', label: 'Care Reminder',    accent: '#22C55E' },
-  { id: 'followup', label: 'Visit Follow-up',  accent: '#F59E0B' },
-  { id: 'survey',   label: 'Patient Survey',   accent: '#EC4899' },
-];
+

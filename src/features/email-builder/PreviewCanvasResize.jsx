@@ -1,5 +1,10 @@
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
+import { useAppStore } from '../../store/useAppStore';
+import { Icon } from '../../components/Icon/Icon';
+import { getFontStack } from './googleFonts';
 import { parseSize } from './PreviewCanvas.utils';
+import { EditableHtmlIframe } from './PreviewCanvasEditableHtml';
+import { SortableList } from './PreviewCanvasSortable';
 import styles from './EmailBuilder.module.css';
 
 export function ContainerResizeHandle({ id, block, updateBlock }) {

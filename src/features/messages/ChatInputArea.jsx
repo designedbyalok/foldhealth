@@ -51,10 +51,10 @@ export function ChatInputArea({
       )}
 
       <div className={styles.chatInputToolbar}>
-        <label className={styles.chatInputSwitch}>
+        <span className={styles.chatInputSwitch}>
           <div className={styles.switchTrack}><div className={styles.switchThumb} /></div>
           <span className={styles.switchLabel}>Internal</span>
-        </label>
+        </span>
         <div className={styles.chatInputActions}>
           <ActionButton icon="solar:paperclip-linear"          size="S" tooltip="Attach file" onClick={onAttachClick} />
           <ActionButton icon="solar:emoji-funny-square-linear" size="S" tooltip="Emoji" />

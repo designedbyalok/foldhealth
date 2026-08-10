@@ -4,7 +4,7 @@ import { Avatar } from '../Avatar/Avatar';
 import { getInitials } from './scheduleDrawerConstants';
 import styles from './ScheduleDrawer.module.css';
 
-export function PatientSearch({ patients, onSelect }) {
+export function PatientSearch({ patients, onSelect, inputId }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -27,6 +27,7 @@ export function PatientSearch({ patients, onSelect }) {
       <div className={styles.searchInputWrap}>
         <Icon name="solar:magnifer-linear" size={16} color="var(--neutral-200)" />
         <input
+          id={inputId}
           className={styles.searchInput}
           placeholder="Search patient or prospect"
           value={query}

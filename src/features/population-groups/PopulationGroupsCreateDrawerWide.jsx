@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { Input as FoldInput } from '../../components/Input/Input';
 import { Textarea } from '../../components/Textarea/Textarea';
 import { Button } from '../../components/Button/Button';
@@ -10,6 +11,7 @@ const Input = (props) => <FoldInput {...props} />;
 Input.TextArea = ({ rows = 3, ...props }) => <Textarea rows={rows} {...props} />;
 
 export function PopulationGroupsCreateDrawerWide({ vm, onMemberAdded }) {
+  const uid = useId();
   const {
     segmentName, setSegmentName, description, setDescription,
     chosenFilter, setChosenFilter, memberStatus, setMemberStatus,
@@ -24,8 +26,9 @@ export function PopulationGroupsCreateDrawerWide({ vm, onMemberAdded }) {
                 {/* LEFT: locked form */}
                 <div className="thin-scroll" style={{ width:'clamp(300px, 38%, 460px)', flexShrink:0, overflowY:'auto', padding:'16px', borderRight:'0.5px solid var(--neutral-100)' }}>
                   <div style={{ marginBottom:16 }}>
-                    <label style={{ display:'block', fontSize:14, fontWeight:400, color:'var(--neutral-200)', marginBottom:5 }}>Create Segment Name <span style={{ color:'var(--status-error)' }}>•</span></label>
+                    <label style={{ display:'block', fontSize:14, fontWeight:400, color:'var(--neutral-200)', marginBottom:5 }} htmlFor={`${uid}-segment-name`}>Create Segment Name <span style={{ color:'var(--status-error)' }}>•</span></label>
                     <Input
+                      id={`${uid}-segment-name`}
                       value={segmentName}
                       onChange={e => setSegmentName(e.target.value)}
                       placeholder="Enter Name"
@@ -33,8 +36,9 @@ export function PopulationGroupsCreateDrawerWide({ vm, onMemberAdded }) {
                     />
                   </div>
                   <div style={{ marginBottom:16 }}>
-                    <label style={{ display:'block', fontSize:14, fontWeight:400, color:'var(--neutral-200)', marginBottom:5 }}>Description</label>
+                    <label style={{ display:'block', fontSize:14, fontWeight:400, color:'var(--neutral-200)', marginBottom:5 }} htmlFor={`${uid}-description`}>Description</label>
                     <Input.TextArea
+                      id={`${uid}-description`}
                       value={description}
                       onChange={e => setDescription(e.target.value)}
                       placeholder="Enter Description"
@@ -42,7 +46,7 @@ export function PopulationGroupsCreateDrawerWide({ vm, onMemberAdded }) {
                     />
                   </div>
                   <div style={{ marginBottom:16 }}>
-                    <label style={{ display:'block', fontSize:14, fontWeight:400, color:'var(--neutral-200)', marginBottom:5 }}>Choose Filter <span style={{ color:'var(--status-error)' }}>•</span></label>
+                    <span style={{ display:'block', fontSize:14, fontWeight:400, color:'var(--neutral-200)', marginBottom:5 }}>Choose Filter <span style={{ color:'var(--status-error)' }}>•</span></span>
                     <DrawerSelect
                       value={chosenFilter}
                       onChange={val => { setChosenFilter(val); setUploadFile(null); setUploadState('idle'); setCriteria([{ attr:'Age', op:'≥', val:'' }]); }}
@@ -51,7 +55,7 @@ export function PopulationGroupsCreateDrawerWide({ vm, onMemberAdded }) {
                     />
                   </div>
                   <div style={{ marginBottom:16 }}>
-                    <label style={{ display:'block', fontSize:14, fontWeight:400, color:'var(--neutral-200)', marginBottom:5 }}>Frequency <span style={{ color:'var(--status-error)' }}>•</span></label>
+                    <span style={{ display:'block', fontSize:14, fontWeight:400, color:'var(--neutral-200)', marginBottom:5 }}>Frequency <span style={{ color:'var(--status-error)' }}>•</span></span>
                     <DrawerSelect
                       value="one-time"
                       onChange={() => {}}
@@ -61,7 +65,7 @@ export function PopulationGroupsCreateDrawerWide({ vm, onMemberAdded }) {
                     />
                   </div>
                   <div>
-                    <label style={{ display:'block', fontSize:14, fontWeight:400, color:'var(--neutral-200)', marginBottom:5 }}>Current Membership Status</label>
+                    <span style={{ display:'block', fontSize:14, fontWeight:400, color:'var(--neutral-200)', marginBottom:5 }}>Current Membership Status</span>
                     <DrawerSelect
                       value={memberStatus}
                       onChange={val => setMemberStatus(val)}

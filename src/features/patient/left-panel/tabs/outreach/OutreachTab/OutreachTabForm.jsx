@@ -120,7 +120,7 @@ export function OutreachTabForm({
 
             <div className={styles.callFieldsGrid}>
               <div className={styles.callFieldWrap}>
-                <label className={styles.callFieldLabel}>Call Via Number</label>
+                <span className={styles.callFieldLabel}>Call Via Number</span>
                 <FieldDropdown
                   value={callViaNumber}
                   onChange={setCallViaNumber}
@@ -129,15 +129,15 @@ export function OutreachTabForm({
                 />
               </div>
               <div className={styles.callFieldWrap}>
-                <label className={styles.callFieldLabel}>Called To Number</label>
+                <span className={styles.callFieldLabel}>Called To Number</span>
                 <FieldDropdown value={calledToNumber} onChange={setCalledToNumber} placeholder="Select number" options={CALLED_TO_OPTIONS} />
               </div>
               <div className={styles.callFieldWrap}>
-                <label className={styles.callFieldLabel}>Call Type</label>
+                <span className={styles.callFieldLabel}>Call Type</span>
                 <FieldDropdown value={callType} onChange={setCallType} placeholder="Select type" options={['Provider', 'Patient', 'Caregiver', 'Family']} />
               </div>
               <div className={styles.callFieldWrap}>
-                <label className={styles.callFieldLabel}>Duration</label>
+                <span className={styles.callFieldLabel}>Duration</span>
                 <div className={styles.callDurationRow}>
                   <Input type="number" className={styles.callDurationInput} value={callDurationMin} min={0} max={99}
                     onChange={e => setCallDurationMin(e.target.value.padStart(2, '0').slice(-2))} />

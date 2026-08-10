@@ -58,3 +58,16 @@ export function countChanges(a, b) {
 export function formatTime(date) {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
+
+export function htmlToPlain(html) {
+  if (typeof html !== 'string') return '';
+  if (typeof document === 'undefined' || !/[<&]/.test(html)) return html;
+  // DOMParser builds an inert document: unlike assigning innerHTML on a
+  // detached node, nothing here fetches resources or fires handlers such as
+  // <img onerror>. We only ever read text back out.
+  const doc = new DOMParser().parseFromString(
+    html.replace(/<br\s*\/?>/gi, '\n'),
+    'text/html',
+  );
+  return (doc.body.textContent || '').replace(/ /g, ' ');
+}

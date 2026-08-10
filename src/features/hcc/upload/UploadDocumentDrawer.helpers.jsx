@@ -2,6 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '../../../components/Button/Button';
 import { Icon } from '../../../components/Icon/Icon';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
+import { CloseButton } from '../../../components/CloseButton/CloseButton';
+import { MenuPopover } from '../../../components/MenuPopover/MenuPopover';
+import { useAppStore } from '../../../store/useAppStore';
 import styles from './UploadDocumentDrawer.module.css';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

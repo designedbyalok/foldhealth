@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback, useId } from 'react';
 import { Icon } from '../Icon/Icon';
 import { ActionButton } from '../ActionButton/ActionButton';
 import { Avatar } from '../Avatar/Avatar';
@@ -40,6 +40,7 @@ function getUserDisplayName(user) {
 const ALL_HCC_ROLES = ['Support', 'Coder', 'QA', 'Compliance'];
 
 function ProfilePopover({ user, onClose, onPreferences }) {
+  const uid = useId();
   const popoverRef = useRef(null);
   const [editing, setEditing] = useState(false);
   const [firstName, setFirstName] = useState(user?.user_metadata?.first_name || '');
@@ -148,12 +149,12 @@ function ProfilePopover({ user, onClose, onPreferences }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12, padding: '8px 0', borderTop: '0.5px solid var(--neutral-100)', borderBottom: '0.5px solid var(--neutral-100)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--neutral-300)', marginBottom: 2, display: 'block' }}>First Name</label>
-              <Input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="First" autoFocus />
+              <label htmlFor={`${uid}-first-name`} style={{ fontSize: 11, fontWeight: 500, color: 'var(--neutral-300)', marginBottom: 2, display: 'block' }}>First Name</label>
+              <Input id={`${uid}-first-name`} value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="First" autoFocus />
             </div>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--neutral-300)', marginBottom: 2, display: 'block' }}>Last Name</label>
-              <Input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Last" />
+              <label htmlFor={`${uid}-last-name`} style={{ fontSize: 11, fontWeight: 500, color: 'var(--neutral-300)', marginBottom: 2, display: 'block' }}>Last Name</label>
+              <Input id={`${uid}-last-name`} value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Last" />
             </div>
           </div>
           <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>

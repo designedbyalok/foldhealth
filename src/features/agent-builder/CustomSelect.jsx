@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import styles from './NodeSettings.module.css';
 
-export function CustomSelect({ value, options, placeholder, onChange }) {
+export function CustomSelect({ id, value, options, placeholder, onChange }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -17,7 +17,7 @@ export function CustomSelect({ value, options, placeholder, onChange }) {
 
   return (
     <div className={styles.customSelect} ref={ref}>
-      <button className={`${styles.customSelectTrigger} ${open ? styles.customSelectTriggerOpen : ''}`} onClick={() => setOpen(!open)}>
+      <button id={id} className={`${styles.customSelectTrigger} ${open ? styles.customSelectTriggerOpen : ''}`} onClick={() => setOpen(!open)}>
         <span className={value ? styles.customSelectValue : styles.customSelectPlaceholder}>
           {selected?.label || placeholder || 'Select...'}
         </span>

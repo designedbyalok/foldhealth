@@ -34,7 +34,7 @@ export function SectionCard({ id, icon, title, isComplete, expanded, onToggle, c
 }
 
 /* ─────────────── CustomSelect ─────────────── */
-export function CustomSelect({ value, options, onChange, placeholder }) {
+export function CustomSelect({ id, value, options, onChange, placeholder }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -48,7 +48,7 @@ export function CustomSelect({ value, options, onChange, placeholder }) {
 
   return (
     <div className={styles.selectWrap} ref={ref}>
-      <button className={styles.selectBtn} onClick={() => setOpen(!open)} type="button">
+      <button id={id} className={styles.selectBtn} onClick={() => setOpen(!open)} type="button">
         <span className={`${styles.selectBtnText} ${!selected ? styles.selectBtnPlaceholder : ''}`}>
           {selected ? selected.label : placeholder}
         </span>
@@ -121,7 +121,13 @@ export function ConfigureSlider({ value, onChange, label, badgeText }) {
 /* ─────────────── Checkbox ─────────────── */
 export function ConfigureCheckbox({ checked, onChange, label }) {
   return (
-    <label className={styles.checkboxItem} onClick={() => onChange(!checked)}>
+    <label className={styles.checkboxItem}>
+      <input
+        type="checkbox"
+        className={styles.srOnlyInput}
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+      />
       <span className={`${styles.checkboxBox} ${checked ? styles.checkboxBoxChecked : ''}`}>
         {checked && <Icon name="solar:check-read-linear" size={14} color="#fff" />}
       </span>
@@ -149,7 +155,7 @@ export function RadioCard({ selected, onClick, title, desc, className }) {
 }
 
 /* ─────────────── GoalSelector ─────────────── */
-export function GoalSelector({ selectedIds, onToggle, onPreview }) {
+export function GoalSelector({ id, selectedIds, onToggle, onPreview }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const goalsData = useAppStore(s => s.goalsData) || [];
@@ -170,7 +176,7 @@ export function GoalSelector({ selectedIds, onToggle, onPreview }) {
 
   return (
     <div className={styles.goalSelector} ref={ref}>
-      <button className={styles.selectBtn} onClick={() => setOpen(!open)} type="button">
+      <button id={id} className={styles.selectBtn} onClick={() => setOpen(!open)} type="button">
         <span className={`${styles.selectBtnText} ${!selectedIds.length ? styles.selectBtnPlaceholder : ''}`}>
           {selectedIds.length ? `${selectedIds.length} goal${selectedIds.length > 1 ? 's' : ''} selected` : 'Select goals…'}
         </span>

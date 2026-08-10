@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { Input } from '../../components/Input/Input';
 import { Button } from '../../components/Button/Button';
 import { Icon } from '../../components/Icon/Icon';
@@ -30,6 +31,7 @@ export function LoginForm({
   onResendVerification,
   onToggleSignUp,
 }) {
+  const uid = useId();
   return (
     <>
       <div className={styles.logo}>
@@ -69,8 +71,9 @@ export function LoginForm({
         {isSignUp && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div className={styles.field}>
-              <label className={styles.label}>First Name <span style={{ color: 'var(--status-error)' }}>*</span></label>
+              <label className={styles.label} htmlFor={`${uid}-first-name`}>First Name <span style={{ color: 'var(--status-error)' }}>*</span></label>
               <Input
+                id={`${uid}-first-name`}
                 type="text"
                 value={firstName}
                 onChange={e => setFirstName(e.target.value)}
@@ -79,8 +82,9 @@ export function LoginForm({
               />
             </div>
             <div className={styles.field}>
-              <label className={styles.label}>Last Name <span style={{ color: 'var(--status-error)' }}>*</span></label>
+              <label className={styles.label} htmlFor={`${uid}-last-name`}>Last Name <span style={{ color: 'var(--status-error)' }}>*</span></label>
               <Input
+                id={`${uid}-last-name`}
                 type="text"
                 value={lastName}
                 onChange={e => setLastName(e.target.value)}
@@ -91,8 +95,9 @@ export function LoginForm({
           </div>
         )}
         <div className={styles.field}>
-          <label className={styles.label}>Email</label>
+          <label className={styles.label} htmlFor={`${uid}-email`}>Email</label>
           <Input
+            id={`${uid}-email`}
             type="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
@@ -104,7 +109,7 @@ export function LoginForm({
         {!forgotMode && (
           <div className={styles.field}>
             <div className={styles.labelRow}>
-              <label className={styles.label}>Password</label>
+              <label className={styles.label} htmlFor={`${uid}-password`}>Password</label>
               {!isSignUp && (
                 <button type="button" className={styles.forgotLink} onClick={onEnterForgotMode}>
                   Forgot Password?
@@ -113,6 +118,7 @@ export function LoginForm({
             </div>
             <div className={styles.passwordWrap}>
               <Input
+                id={`${uid}-password`}
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
@@ -134,8 +140,9 @@ export function LoginForm({
 
         {!forgotMode && isSignUp && (
           <div className={styles.field}>
-            <label className={styles.label}>Confirm Password</label>
+            <label className={styles.label} htmlFor={`${uid}-confirm-password`}>Confirm Password</label>
             <Input
+              id={`${uid}-confirm-password`}
               type="password"
               value={confirmPassword}
               onChange={e => setConfirmPassword(e.target.value)}

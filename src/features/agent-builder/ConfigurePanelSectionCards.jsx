@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import {
   SectionCard,
@@ -21,6 +22,7 @@ import { getBadgeText } from './ConfigurePanelParts.utils';
 import styles from './ConfigurePanel.module.css';
 
 export function ConfigureAgentUseCaseSection({ form, expanded, toggleExpanded, updateField, toggleGoal, setGoalDetailId }) {
+  const uid = useId();
   return (
     <SectionCard
       id="agent-use-case"
@@ -35,8 +37,9 @@ export function ConfigureAgentUseCaseSection({ form, expanded, toggleExpanded, u
 
         <div className={styles.fieldRow}>
           <div className={styles.field}>
-            <label className={styles.fieldLabel}>Agent Name <span className={styles.fieldRequired} /></label>
+            <label className={styles.fieldLabel} htmlFor={`${uid}-agent-name`}>Agent Name <span className={styles.fieldRequired} /></label>
             <input
+              id={`${uid}-agent-name`}
               className={styles.fieldInput}
               value={form.agentName}
               onChange={e => updateField('agentName', e.target.value)}
@@ -44,8 +47,9 @@ export function ConfigureAgentUseCaseSection({ form, expanded, toggleExpanded, u
             />
           </div>
           <div className={styles.field}>
-            <label className={styles.fieldLabel}>Agent Role <span className={styles.fieldRequired} /></label>
+            <label className={styles.fieldLabel} htmlFor={`${uid}-agent-role`}>Agent Role <span className={styles.fieldRequired} /></label>
             <CustomSelect
+              id={`${uid}-agent-role`}
               value={form.agentRole}
               options={ROLE_OPTIONS}
               onChange={v => updateField('agentRole', v)}
@@ -55,9 +59,10 @@ export function ConfigureAgentUseCaseSection({ form, expanded, toggleExpanded, u
         </div>
 
         <div className={styles.field}>
-          <label className={styles.fieldLabel}>Use Case Name <span className={styles.fieldRequired} /></label>
+          <label className={styles.fieldLabel} htmlFor={`${uid}-use-case-name`}>Use Case Name <span className={styles.fieldRequired} /></label>
           <div className={styles.fieldInputWrap}>
             <input
+              id={`${uid}-use-case-name`}
               className={styles.fieldInput}
               value={form.useCaseName}
               onChange={e => updateField('useCaseName', e.target.value.slice(0, 100))}
@@ -70,8 +75,9 @@ export function ConfigureAgentUseCaseSection({ form, expanded, toggleExpanded, u
         </div>
 
         <div className={styles.field}>
-          <label className={styles.fieldLabel}>Description</label>
+          <label className={styles.fieldLabel} htmlFor={`${uid}-description`}>Description</label>
           <textarea
+            id={`${uid}-description`}
             className={styles.textarea}
             value={form.description}
             onChange={e => updateField('description', e.target.value)}
@@ -81,8 +87,9 @@ export function ConfigureAgentUseCaseSection({ form, expanded, toggleExpanded, u
         </div>
 
         <div className={styles.field}>
-          <label className={styles.fieldLabel}>Agent Goals <span className={styles.fieldRequired} /></label>
+          <label className={styles.fieldLabel} htmlFor={`${uid}-agent-goals`}>Agent Goals <span className={styles.fieldRequired} /></label>
           <GoalSelector
+            id={`${uid}-agent-goals`}
             selectedIds={form.goalIds}
             onToggle={toggleGoal}
             onPreview={(id) => setGoalDetailId(id)}
@@ -109,6 +116,7 @@ export function ConfigureAgentUseCaseSection({ form, expanded, toggleExpanded, u
 }
 
 export function ConfigurePersonalizationSection({ form, expanded, toggleExpanded, updateField, toggleArrayItem }) {
+  const uid = useId();
   return (
     <SectionCard
       id="personalization"
@@ -134,8 +142,9 @@ export function ConfigurePersonalizationSection({ form, expanded, toggleExpanded
       </div>
 
       <div className={styles.field}>
-        <label className={styles.subsectionTitle}>Voice</label>
+        <label className={styles.subsectionTitle} htmlFor={`${uid}-voice`}>Voice</label>
         <CustomSelect
+          id={`${uid}-voice`}
           value={form.voice}
           options={VOICE_OPTIONS}
           onChange={v => updateField('voice', v)}
@@ -312,6 +321,7 @@ export function ConfigureKnowledgeBaseSection({ expanded, toggleExpanded }) {
 }
 
 export function ConfigureCommunicationSection({ form, expanded, toggleExpanded, updateField }) {
+  const uid = useId();
   return (
     <SectionCard
       id="communication"
@@ -340,8 +350,9 @@ export function ConfigureCommunicationSection({ form, expanded, toggleExpanded, 
         <div className={styles.subsectionTitle}>Communication Details</div>
 
         <div className={styles.field}>
-          <label className={styles.fieldLabel}>Phone Number</label>
+          <label className={styles.fieldLabel} htmlFor={`${uid}-phone`}>Phone Number</label>
           <input
+            id={`${uid}-phone`}
             className={styles.fieldInput}
             value={form.phone}
             onChange={e => updateField('phone', e.target.value)}
@@ -350,8 +361,9 @@ export function ConfigureCommunicationSection({ form, expanded, toggleExpanded, 
         </div>
 
         <div className={styles.field}>
-          <label className={styles.fieldLabel}>Email ID</label>
+          <label className={styles.fieldLabel} htmlFor={`${uid}-email`}>Email ID</label>
           <input
+            id={`${uid}-email`}
             className={styles.fieldInput}
             value={form.email}
             onChange={e => updateField('email', e.target.value)}
@@ -360,8 +372,9 @@ export function ConfigureCommunicationSection({ form, expanded, toggleExpanded, 
         </div>
 
         <div className={styles.field}>
-          <label className={styles.fieldLabel}>Office Hours</label>
+          <label className={styles.fieldLabel} htmlFor={`${uid}-office-hours`}>Office Hours</label>
           <input
+            id={`${uid}-office-hours`}
             className={styles.fieldInput}
             value={form.officeHours}
             onChange={e => updateField('officeHours', e.target.value)}

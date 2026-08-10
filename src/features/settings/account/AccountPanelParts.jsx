@@ -22,7 +22,7 @@ export function useLocationNames() {
 }
 
 /* Tag input helper — renders removable badges inside an input-like container */
-export function TagInput({ value = [], onChange, placeholder }) {
+export function TagInput({ value = [], onChange, placeholder, inputId }) {
   const [inputVal, setInputVal] = useState('');
   const addTag = () => {
     const v = inputVal.trim();
@@ -38,6 +38,7 @@ export function TagInput({ value = [], onChange, placeholder }) {
         </span>
       ))}
       <input
+        id={inputId}
         className={styles.tagInputField}
         value={inputVal}
         onChange={e => setInputVal(e.target.value)}
@@ -87,7 +88,8 @@ export function MultiSelectField({ label, required, options, value = EMPTY_STRIN
   const valueSet = useMemo(() => new Set(value), [value]);
   return (
     <div className={styles.formField}>
-      <label className={styles.formLabel}>{label} {required && <span className={styles.required}>*</span>}</label>
+      {/* Not a <label>: the trigger below is a div, which htmlFor can't target. */}
+      <span className={styles.formLabel}>{label} {required && <span className={styles.required}>*</span>}</span>
       <div ref={triggerRef} style={{ position: 'relative' }}>
         <div className={styles.tagInput} onClick={() => setOpen(v => !v)} style={{ cursor: 'pointer' }}>
           {value.length > 0 ? value.map(v => (

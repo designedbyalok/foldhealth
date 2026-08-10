@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Dialog, DialogContent } from '../ShadcnDialog/ShadcnDialog';
 import { Select } from '../Select/Select';
 import { Textarea } from '../Textarea/Textarea';
@@ -32,6 +32,7 @@ export function ReasonDialog({
   onCancel,
   onSubmit,
 }) {
+  const uid = useId();
   const [code, setCode] = useState('');
   const [freeText, setFreeText] = useState('');
 
@@ -56,8 +57,9 @@ export function ReasonDialog({
           {description && <p className={styles.description}>{description}</p>}
 
           <div className={styles.field}>
-            <label className={styles.label}>Standard reason</label>
+            <label className={styles.label} htmlFor={`${uid}-reason-code`}>Standard reason</label>
             <Select
+              id={`${uid}-reason-code`}
               options={options}
               value={code === null ? '' : code}
               onChange={(v) => setCode(v === '__other__' ? '' : v)}
@@ -66,10 +68,11 @@ export function ReasonDialog({
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label}>
+            <label className={styles.label} htmlFor={`${uid}-reason-notes`}>
               Additional notes {code ? '(optional)' : <span className={styles.required}>*</span>}
             </label>
             <Textarea
+              id={`${uid}-reason-notes`}
               value={freeText}
               onChange={(e) => setFreeText(e.target.value)}
               placeholder={code

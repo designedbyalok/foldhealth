@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import Signature from '@uiw/react-signature';
 import { Icon } from '../../components/Icon/Icon';
 import { Input } from '../../components/Input/Input';
@@ -24,15 +25,17 @@ export function AttestationSignatoryForm({
   drawnSignature,
   errors,
 }) {
+  const uid = useId();
   return (
     <div className={styles.section}>
       <div className={styles.sectionTitle}>Signatory Information</div>
       <div className={styles.formGrid}>
         <div className={styles.field}>
-          <label className={styles.label}>
+          <label className={styles.label} htmlFor={`${uid}-provider-name`}>
             Provider Name <span className={styles.required}>*</span>
           </label>
           <input
+            id={`${uid}-provider-name`}
             className={`${styles.input} ${errors.providerName ? styles.inputError : ''}`}
             placeholder="Full name"
             value={providerName}
@@ -42,10 +45,11 @@ export function AttestationSignatoryForm({
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>
+          <label className={styles.label} htmlFor={`${uid}-credentials`}>
             Credentials <span className={styles.required}>*</span>
           </label>
           <input
+            id={`${uid}-credentials`}
             className={`${styles.input} ${errors.credentials ? styles.inputError : ''}`}
             placeholder="e.g. MD, DO, NP"
             value={credentials}
@@ -55,10 +59,11 @@ export function AttestationSignatoryForm({
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>
+          <label className={styles.label} htmlFor={`${uid}-npi`}>
             NPI <span className={styles.required}>*</span>
           </label>
           <input
+            id={`${uid}-npi`}
             className={`${styles.input} ${errors.npi ? styles.inputError : ''}`}
             placeholder="10-digit NPI"
             value={npi}
@@ -69,8 +74,9 @@ export function AttestationSignatoryForm({
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>Date &amp; Time of Signature</label>
+          <label className={styles.label} htmlFor={`${uid}-signature-date`}>Date &amp; Time of Signature</label>
           <input
+            id={`${uid}-signature-date`}
             className={`${styles.input} ${styles.inputReadonly}`}
             value={signatureDate}
             readOnly
@@ -79,9 +85,9 @@ export function AttestationSignatoryForm({
 
         <div className={`${styles.field} ${styles.formGridFull}`}>
           <div className={styles.signatureHeader}>
-            <label className={styles.label}>
+            <span className={styles.label}>
               Digital Signature <span className={styles.required}>*</span>
-            </label>
+            </span>
             <Toggle
               items={SIGNATURE_MODES}
               active={signatureMode}

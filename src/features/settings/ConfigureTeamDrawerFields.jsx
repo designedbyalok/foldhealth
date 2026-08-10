@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { capacityTone } from './teamTypeConfig';
@@ -14,13 +15,15 @@ export function ConfigureTeamDrawerUserPicker({
   onFocus,
   onAddMember,
 }) {
+  const uid = useId();
   return (
     <div className={drawerStyles.field}>
-      <label className={drawerStyles.label}>
+      <label className={drawerStyles.label} htmlFor={`${uid}-user-search`}>
         Create Team With <span className={drawerStyles.required}>*</span>
       </label>
       <div className={drawerStyles.userPickerWrap} ref={searchRef}>
         <input
+          id={`${uid}-user-search`}
           type="text"
           className={drawerStyles.input}
           placeholder="Search user to add in a team"
@@ -67,14 +70,16 @@ export function ConfigureTeamDrawerUserPicker({
 }
 
 export function ConfigureTeamDrawerBasicFields({ name, teamType, teamTypeOptions, onNameChange, onTeamTypeChange }) {
+  const uid = useId();
   return (
     <>
       <div className={drawerStyles.field}>
-        <label className={drawerStyles.label}>
+        <label className={drawerStyles.label} htmlFor={`${uid}-team-name`}>
           Team Name <span className={drawerStyles.required}>*</span>
         </label>
         <div className={drawerStyles.nameWrap}>
           <input
+            id={`${uid}-team-name`}
             type="text"
             className={drawerStyles.input}
             value={name}
@@ -87,10 +92,11 @@ export function ConfigureTeamDrawerBasicFields({ name, teamType, teamTypeOptions
       </div>
 
       <div className={drawerStyles.field}>
-        <label className={drawerStyles.label}>
+        <label className={drawerStyles.label} htmlFor={`${uid}-team-type`}>
           Team Type <span className={drawerStyles.required}>*</span>
         </label>
         <select
+          id={`${uid}-team-type`}
           className={drawerStyles.select}
           value={teamType}
           onChange={(e) => onTeamTypeChange(e.target.value)}

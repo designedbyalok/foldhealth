@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import { useState, useEffect, useRef, useLayoutEffect, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { useAppStore } from '../../store/useAppStore';
 import { ColorPicker } from './ColorPicker';
@@ -11,6 +11,7 @@ import styles from './EmailBuilder.module.css';
  * email-builder Properties panel and the form-builder settings.
  */
 export function ColorInput({ label, value, onChange, allowGradient = true }) {
+  const hexId = useId();
   const colorVariables = useAppStore(s => s.colorVariables);
   const recentlyUsedColors = useAppStore(s => s.recentlyUsedColors);
   const pushRecentColor = useAppStore(s => s.pushRecentColor);
@@ -71,7 +72,7 @@ export function ColorInput({ label, value, onChange, allowGradient = true }) {
 
   return (
     <div className={styles.fieldCol} ref={fieldRef}>
-      {label && <label className={styles.fieldLabel}>{label}</label>}
+      {label && <label className={styles.fieldLabel} htmlFor={hexId}>{label}</label>}
       <div className={styles.colorInputWrap}>
         <button
           type="button"
@@ -88,6 +89,7 @@ export function ColorInput({ label, value, onChange, allowGradient = true }) {
           />
         </button>
         <input
+          id={hexId}
           type="text"
           className={styles.colorHex}
           value={displayText}

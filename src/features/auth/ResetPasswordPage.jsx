@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { track } from '../../lib/tracking';
 import { Input } from '../../components/Input/Input';
@@ -43,6 +43,7 @@ function readTokenFromUrl() {
 }
 
 export function ResetPasswordPage({ onDone }) {
+  const uid = useId();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -204,9 +205,10 @@ export function ResetPasswordPage({ onDone }) {
           ) : (
           <form className={styles.form} onSubmit={handleSubmit}>
             <div className={styles.field}>
-              <label className={styles.label}>New Password</label>
+              <label className={styles.label} htmlFor={`${uid}-new-password`}>New Password</label>
               <div className={styles.passwordWrap}>
                 <Input
+                  id={`${uid}-new-password`}
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
@@ -226,8 +228,9 @@ export function ResetPasswordPage({ onDone }) {
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label}>Confirm New Password</label>
+              <label className={styles.label} htmlFor={`${uid}-confirm-password`}>Confirm New Password</label>
               <Input
+                id={`${uid}-confirm-password`}
                 type="password"
                 value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}

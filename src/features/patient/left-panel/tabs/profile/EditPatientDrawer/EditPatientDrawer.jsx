@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { cloneElement, isValidElement, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Drawer } from '../../../../../../components/Drawer/Drawer';
 import { Button } from '../../../../../../components/Button/Button';
 import { Input } from '../../../../../../components/Input/Input';
@@ -98,13 +98,27 @@ function initialForm(patient, p) {
  * Select and Textarea children.
  */
 function Field({ label, required, children, className }) {
+  // Every Field in this drawer wraps a single Input / Select / Textarea /
+  // DatePicker, all of which take an `id`, so the wrapper owns the
+  // label↔control wiring rather than repeating it at 18 call sites.
+  const controlId = useId();
+  const single = isValidElement(children);
+  const control = single && !children.props.id
+    ? cloneElement(children, { id: controlId })
+    : children;
+  const labelFor = single ? (children.props.id || controlId) : undefined;
+  const text = (
+    <>
+      {label}
+      {required && <span className={styles.required}>*</span>}
+    </>
+  );
   return (
     <div className={[styles.field, className || ''].filter(Boolean).join(' ')}>
-      <label className={styles.fieldLabel}>
-        {label}
-        {required && <span className={styles.required}>*</span>}
-      </label>
-      {children}
+      {labelFor
+        ? <label className={styles.fieldLabel} htmlFor={labelFor}>{text}</label>
+        : <span className={styles.fieldLabel}>{text}</span>}
+      {control}
     </div>
   );
 }

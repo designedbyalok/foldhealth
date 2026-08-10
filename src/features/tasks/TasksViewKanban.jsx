@@ -1,12 +1,25 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
-import { useDroppable } from '@dnd-kit/core';
+import {
+  useDroppable,
+  DndContext,
+  DragOverlay,
+  useSensor,
+  useSensors,
+  PointerSensor,
+  pointerWithin,
+  closestCenter,
+} from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { Icon } from '../../components/Icon/Icon';
 import { Badge } from '../../components/Badge/Badge';
+import { Avatar } from '../../components/Avatar/Avatar';
+import { ActionButton } from '../../components/ActionButton/ActionButton';
+import { toast } from '../../components/Toast/sonnerToast';
 import { useAppStore } from '../../store/useAppStore';
-import { STATUS_LABELS, STATUS_BADGE_VARIANTS, isOverdue, formatDateFriendly } from './TasksView.utils';
-import { PriorityIcon } from './TasksViewIcons';
+import { STATUS_LABELS, STATUS_BADGE_VARIANTS, PRIORITY_COLORS, isOverdue, formatDateFriendly } from './TasksView.utils';
+import { PriorityIcon, SubtaskIcon } from './TasksViewIcons';
+import { RowActionMenu } from './TasksViewRowDropdowns';
 import styles from './TasksView.module.css';
 
 export function KanbanCardContent({ task }) {

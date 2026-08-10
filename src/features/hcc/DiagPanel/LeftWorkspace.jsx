@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useId } from 'react';
 import { useAppStore } from '../../../store/useAppStore';
 import { Icon } from '../../../components/Icon/Icon';
 import { CloseButton } from '../../../components/CloseButton/CloseButton';
@@ -1560,6 +1560,7 @@ function DocumentsUploader() {
     setCaption(prev => (!prev.trim() || prev === file?.name) ? f.name : prev);
     setError(''); setFile(f); setProgress(0); setPhase('uploading');
   };
+  const fileInputId = useId();
   const pick = () => inputRef.current?.click();
   const onPicked = (e) => { startUpload(e.target.files?.[0]); e.target.value = ''; };
   const onDrop = (e) => { e.preventDefault(); setDrag(false); startUpload(e.dataTransfer.files?.[0]); };
@@ -1610,6 +1611,7 @@ function DocumentsUploader() {
   // Hidden file input (always mounted so picker works across phases).
   const hiddenInput = (
     <input
+      id={fileInputId}
       ref={inputRef}
       type="file"
       accept={DOC_ACCEPT}
@@ -1626,12 +1628,12 @@ function DocumentsUploader() {
       {phase === 'empty' && (
         <>
           <label
+            htmlFor={fileInputId}
             className={[styles.docDropZone, drag ? styles.docDropZoneActive : ''].join(' ')}
             onDragEnter={(e) => { e.preventDefault(); setDrag(true); }}
             onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
             onDragLeave={() => setDrag(false)}
             onDrop={onDrop}
-            onClick={pick}
           >
             <Icon name="solar:upload-minimalistic-linear" size={20} color="var(--neutral-300)" />
             <span className={styles.docDropText}>

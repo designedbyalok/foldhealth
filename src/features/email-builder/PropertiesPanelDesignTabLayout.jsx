@@ -21,6 +21,7 @@ import { parseHtmlToDocument, collectUnknownFonts } from './htmlToDocument';
 import styles from './EmailBuilder.module.css';
 
 import { getCommonValue } from './PropertiesPanel.utils.jsx';
+import { AlignBottomIcon, AlignCenterIcon, AlignLeftIcon, AlignMiddleIcon, AlignRightIcon, AlignTopIcon, HeightIcon, IconInput, PaddingControl, RadiusIcon, Row2, Section, SectionHeading, WidthIcon } from './PropertiesPanelFields';
 
 const RADIUS_TYPES = new Set(['Button', 'Image', 'Container', 'ColumnsContainer']);
 const BG_IMAGE_TYPES = new Set(['Container', 'ColumnsContainer']);
@@ -32,7 +33,7 @@ const FONT_WEIGHTS_FALLBACK = [
 ];
 
 export function DesignTabLayout({ ctx }) {
-  const { block, updateBlock, id, update, props, style, isLayout, padding, rootFontFamily } = ctx;
+  const { block, updateBlock, id, update, data, props, style, isLayout, padding, rootFontFamily } = ctx;
   return (
     <>
       {/* ── Layout ── */}
@@ -91,7 +92,7 @@ export function DesignTabLayout({ ctx }) {
         {(block.type === 'Container' || block.type === 'ColumnsContainer') ? (
           <Row2>
             <div className={styles.fieldCol}>
-              <label className={styles.fieldLabel}>Height</label>
+              <span className={styles.fieldLabel}>Height</span>
               <Toggle
                 fullWidth
                 items={[
@@ -136,7 +137,7 @@ export function DesignTabLayout({ ctx }) {
         {(block.type === 'Container' || block.type === 'ColumnsContainer') && props.heightMode === 'fixed' && (
           <Row2>
             <div className={styles.fieldCol}>
-              <label className={styles.fieldLabel}>Horizontal</label>
+              <span className={styles.fieldLabel}>Horizontal</span>
               <Toggle
                 fullWidth
                 size="S"
@@ -150,7 +151,7 @@ export function DesignTabLayout({ ctx }) {
               />
             </div>
             <div className={styles.fieldCol}>
-              <label className={styles.fieldLabel}>Vertical</label>
+              <span className={styles.fieldLabel}>Vertical</span>
               <Toggle
                 fullWidth
                 size="S"
@@ -181,7 +182,7 @@ export function DesignTabLayout({ ctx }) {
             from textAlign which only controls text inside the element. */}
         {!isLayout && (
           <div className={styles.fieldCol}>
-            <label className={styles.fieldLabel}>Align</label>
+            <span className={styles.fieldLabel}>Align</span>
             <Toggle
               fullWidth
               items={[

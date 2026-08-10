@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useId } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import { useAppStore } from '../../store/useAppStore';
 import { getNodeConfig } from './nodes/nodeConfig';
@@ -7,6 +7,7 @@ import { NodeSettingsTransitions } from './NodeSettingsTransitions';
 import styles from './NodeSettings.module.css';
 
 export function NodeSettings({ node, allNodes, onSave, onClose, onDelete }) {
+  const uid = useId();
   const updateNodeData = useAppStore(s => s.updateNodeData);
   const activeTransition = useAppStore(s => s.builderActiveTransition);
   const setActiveTransition = useAppStore(s => s.setBuilderActiveTransition);
@@ -127,8 +128,9 @@ export function NodeSettings({ node, allNodes, onSave, onClose, onDelete }) {
       ) : (
         <>
           <div className={styles.section}>
-            <label className={styles.sectionLabel}>Conversation</label>
+            <label className={styles.sectionLabel} htmlFor={`${uid}-conversation`}>Conversation</label>
             <textarea
+              id={`${uid}-conversation`}
               className={styles.textarea}
               value={prompt}
               onChange={e => {
@@ -166,8 +168,8 @@ export function NodeSettings({ node, allNodes, onSave, onClose, onDelete }) {
           <div className={styles.divider} />
 
           <div className={styles.section}>
-            <label className={styles.sectionLabel}>Guardrails</label>
-            <textarea className={styles.textarea} value={guardrails} onChange={e => setGuardrails(e.target.value)} placeholder="Add guardrails for this node..." rows={3} />
+            <label className={styles.sectionLabel} htmlFor={`${uid}-guardrails`}>Guardrails</label>
+            <textarea id={`${uid}-guardrails`} className={styles.textarea} value={guardrails} onChange={e => setGuardrails(e.target.value)} placeholder="Add guardrails for this node..." rows={3} />
           </div>
         </>
       )}

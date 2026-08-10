@@ -23,6 +23,7 @@ import styles from './EmailBuilder.module.css';
 import { getCommonValue } from './PropertiesPanel.utils.jsx';
 
 const RADIUS_TYPES = new Set(['Button', 'Image', 'Container', 'ColumnsContainer']);
+const TEXT_TYPES = new Set(['Heading', 'Text', 'Button']);
 const BG_IMAGE_TYPES = new Set(['Container', 'ColumnsContainer']);
 const BUTTON_STYLE_RADIUS = { rectangle: 0, rounded: 6, pill: 9999 };
 const FONT_FAMILIES = GOOGLE_FONTS.map(f => ({ value: f.value, label: f.label }));
@@ -34,6 +35,7 @@ import { DesignTabBlocksPrimary } from './PropertiesPanelDesignTabBlocksPrimary'
 import { DesignTabBlocksSecondary } from './PropertiesPanelDesignTabBlocksSecondary';
 import { DesignTabLayout } from './PropertiesPanelDesignTabLayout';
 import { DesignTabAppearance } from './PropertiesPanelDesignTabAppearance';
+import { AlignBottomIcon, AlignCenterIcon, AlignJustifyIcon, AlignLeftIcon, AlignMiddleIcon, AlignRightIcon, AlignTopIcon, FieldLabel, HeightIcon, IconInput, PadBottomIcon, PadLeftIcon, PadRightIcon, PadTopIcon, PaddingControl, RadiusIcon, Row2, Section, SectionHeading, SelectInput } from './PropertiesPanelFields';
 
 export function DesignTab({ block, updateBlock, id }) {
   const rootFontFamily = useAppStore(s => s.emailDocument?.root?.data?.fontFamily);
@@ -59,7 +61,7 @@ export function DesignTab({ block, updateBlock, id }) {
   const props = data.props || {};
   const style = data.style || {};
   const padding = (style.padding ?? data.padding) || { top: 16, bottom: 16, left: 16, right: 16 };
-  const ctx = { block, updateBlock, id, update, props, style, isLayout, padding, rootFontFamily };
+  const ctx = { block, updateBlock, id, update, data, props, style, isLayout, padding, rootFontFamily };
 
   return (
     <div className={styles.designScroll}>
@@ -95,7 +97,7 @@ export function ColumnDesignTab({ block, updateBlock, id, columnIdx }) {
       <Section>
         <Row2>
           <div className={styles.fieldCol}>
-            <label className={styles.fieldLabel}>Horizontal</label>
+            <span className={styles.fieldLabel}>Horizontal</span>
             <Toggle
               fullWidth
               size="S"
@@ -109,7 +111,7 @@ export function ColumnDesignTab({ block, updateBlock, id, columnIdx }) {
             />
           </div>
           <div className={styles.fieldCol}>
-            <label className={styles.fieldLabel}>Vertical</label>
+            <span className={styles.fieldLabel}>Vertical</span>
             <Toggle
               fullWidth
               size="S"
@@ -125,7 +127,7 @@ export function ColumnDesignTab({ block, updateBlock, id, columnIdx }) {
         </Row2>
 
         <div className={styles.fieldCol}>
-          <label className={styles.fieldLabel}>Height</label>
+          <span className={styles.fieldLabel}>Height</span>
           <Toggle
             fullWidth
             size="S"
@@ -303,7 +305,7 @@ export function BulkDesignTab({ doc, bulkIds, updateBlock }) {
             </Row2>
             <Row2>
               <div className={styles.fieldCol}>
-                <label className={styles.fieldLabelStrong}>Alignment</label>
+                <span className={styles.fieldLabelStrong}>Alignment</span>
                 <Toggle
                   fullWidth
                   items={[

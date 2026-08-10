@@ -21,6 +21,7 @@ import { parseHtmlToDocument, collectUnknownFonts } from './htmlToDocument';
 import styles from './EmailBuilder.module.css';
 
 import { getCommonValue } from './PropertiesPanel.utils.jsx';
+import { BorderControl, ColorVariablesEditor, ImageUploader, Row2, Section, SectionHeading, SelectInput } from './PropertiesPanelFields';
 
 const RADIUS_TYPES = new Set(['Button', 'Image', 'Container', 'ColumnsContainer']);
 const BG_IMAGE_TYPES = new Set(['Container', 'ColumnsContainer']);

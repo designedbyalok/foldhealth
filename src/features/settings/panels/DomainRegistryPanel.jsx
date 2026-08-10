@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useId } from 'react';
 import { Icon } from '../../../components/Icon/Icon';
 import { CloseButton } from '../../../components/CloseButton/CloseButton';
 import { Badge } from '../../../components/Badge/Badge';
@@ -40,10 +40,14 @@ function getComponentStats(domainId, components) {
 }
 
 /* ── Form Field Wrapper ── */
-function FormField({ label, hint, children }) {
+const FORM_FIELD_LABEL_STYLE = { fontSize: 12, fontWeight: 500, color: 'var(--neutral-300)' };
+
+function FormField({ label, hint, controlId, children }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--neutral-300)' }}>{label}</label>
+      {controlId
+        ? <label htmlFor={controlId} style={FORM_FIELD_LABEL_STYLE}>{label}</label>
+        : <span style={FORM_FIELD_LABEL_STYLE}>{label}</span>}
       {children}
       {hint && <span style={{ fontSize: 11, color: hint.color || 'var(--neutral-200)' }}>{hint.text || hint}</span>}
     </div>
@@ -52,6 +56,7 @@ function FormField({ label, hint, children }) {
 
 /* ── Add Domain Drawer ── */
 function AddDomainDrawer({ onClose, onSave }) {
+  const uid = useId();
   const [form, setForm] = useState({ vendor: '', domain: '', category: DOMAIN_CATEGORIES[0], hipaa: HIPAA_OPTIONS[0] });
 
   const domainHint = useMemo(() => {
@@ -75,23 +80,25 @@ function AddDomainDrawer({ onClose, onSave }) {
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <FormField label={<>Vendor / label <span style={{ color: 'var(--status-error)' }}>*</span></>}>
-            <Input placeholder="e.g. Availity" value={form.vendor} onChange={e => setForm(f => ({ ...f, vendor: e.target.value }))} autoFocus />
+          <FormField label={<>Vendor / label <span style={{ color: 'var(--status-error)' }}>*</span></>} controlId={`${uid}-vendor`}>
+            <Input id={`${uid}-vendor`} placeholder="e.g. Availity" value={form.vendor} onChange={e => setForm(f => ({ ...f, vendor: e.target.value }))} autoFocus />
           </FormField>
-          <FormField label={<>Domain <span style={{ color: 'var(--status-error)' }}>*</span></>} hint={domainHint}>
-            <Input placeholder="e.g. portal.availity.com" value={form.domain} onChange={e => setForm(f => ({ ...f, domain: e.target.value }))} />
+          <FormField label={<>Domain <span style={{ color: 'var(--status-error)' }}>*</span></>} hint={domainHint} controlId={`${uid}-domain`}>
+            <Input id={`${uid}-domain`} placeholder="e.g. portal.availity.com" value={form.domain} onChange={e => setForm(f => ({ ...f, domain: e.target.value }))} />
           </FormField>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <FormField label="Category">
+          <FormField label="Category" controlId={`${uid}-category`}>
             <Select
+              id={`${uid}-category`}
               options={DOMAIN_CATEGORIES.map(c => ({ value: c, label: c }))}
               value={form.category}
               onChange={v => setForm(f => ({ ...f, category: v }))}
             />
           </FormField>
-          <FormField label="HIPAA compliance">
+          <FormField label="HIPAA compliance" controlId={`${uid}-hipaa`}>
             <Select
+              id={`${uid}-hipaa`}
               options={HIPAA_OPTIONS.map(h => ({ value: h, label: h }))}
               value={form.hipaa}
               onChange={v => setForm(f => ({ ...f, hipaa: v }))}
@@ -116,6 +123,7 @@ function AddDomainDrawer({ onClose, onSave }) {
 
 /* ── Edit Domain Drawer ── */
 function EditDomainDrawer({ domain, onClose, onSave }) {
+  const uid = useId();
   const [form, setForm] = useState({ vendor: domain.vendor, category: domain.category, hipaa: domain.hipaa });
   const canSave = form.vendor.trim();
 
@@ -131,23 +139,25 @@ function EditDomainDrawer({ domain, onClose, onSave }) {
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <FormField label={<>Vendor / label <span style={{ color: 'var(--status-error)' }}>*</span></>}>
-            <Input value={form.vendor} onChange={e => setForm(f => ({ ...f, vendor: e.target.value }))} autoFocus />
+          <FormField label={<>Vendor / label <span style={{ color: 'var(--status-error)' }}>*</span></>} controlId={`${uid}-vendor`}>
+            <Input id={`${uid}-vendor`} value={form.vendor} onChange={e => setForm(f => ({ ...f, vendor: e.target.value }))} autoFocus />
           </FormField>
-          <FormField label="Domain (read-only)">
-            <Input value={domain.domain} disabled readOnly />
+          <FormField label="Domain (read-only)" controlId={`${uid}-domain`}>
+            <Input id={`${uid}-domain`} value={domain.domain} disabled readOnly />
           </FormField>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <FormField label="Category">
+          <FormField label="Category" controlId={`${uid}-category`}>
             <Select
+              id={`${uid}-category`}
               options={DOMAIN_CATEGORIES.map(c => ({ value: c, label: c }))}
               value={form.category}
               onChange={v => setForm(f => ({ ...f, category: v }))}
             />
           </FormField>
-          <FormField label="HIPAA compliance">
+          <FormField label="HIPAA compliance" controlId={`${uid}-hipaa`}>
             <Select
+              id={`${uid}-hipaa`}
               options={HIPAA_OPTIONS.map(h => ({ value: h, label: h }))}
               value={form.hipaa}
               onChange={v => setForm(f => ({ ...f, hipaa: v }))}

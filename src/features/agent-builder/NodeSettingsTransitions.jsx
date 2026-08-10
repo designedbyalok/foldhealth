@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useId } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import { Button } from '../../components/Button/Button';
 import { CustomSelect } from './CustomSelect';
@@ -17,6 +17,7 @@ export function NodeSettingsTransitions({
   onRemoveRule,
   onReorderTransitions,
 }) {
+  const uid = useId();
   const [showAddMenu, setShowAddMenu] = useState(false);
   const addMenuRef = useRef(null);
   const [shakeIdx, setShakeIdx] = useState(null);
@@ -116,7 +117,7 @@ export function NodeSettingsTransitions({
             <div className={styles.transitionContentCol}>
               {/* Condition header + delete */}
               <div className={styles.conditionHeader}>
-                <label className={styles.fieldLabel}>Condition</label>
+                <span className={styles.fieldLabel}>Condition</span>
                 <button className={styles.removeTransitionBtn} onClick={() => onRemoveTransition(i)} title="Remove transition">
                   <Icon name="solar:trash-bin-minimalistic-linear" size={13} color="var(--status-error)" />
                 </button>
@@ -184,8 +185,9 @@ export function NodeSettingsTransitions({
 
               {/* Jump to Node */}
               <div className={styles.transitionField}>
-                <label className={styles.fieldLabel}>Jump to Node</label>
+                <label className={styles.fieldLabel} htmlFor={`${uid}-transition-${i}-target`}>Jump to Node</label>
                 <CustomSelect
+                  id={`${uid}-transition-${i}-target`}
                   value={t.target || ''}
                   options={nodeOptions}
                   placeholder="Select Transfer Node"

@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { Icon } from '../../../components/Icon/Icon';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Button } from '../../../components/Button/Button';
@@ -15,17 +16,19 @@ export function IcdCardBody({
   onUpdate, onRemove, onSave, handleDosSelect, handleCustomDate, handleVtChange,
   toggleLinkedDoc, setDragOver, onDrop,
 }) {
+  const uid = useId();
   if (card.collapsed) return null;
 
   return (
     <>
           <div className={styles.formGrid}>
             <div className={styles.field}>
-              <label className={styles.fieldTitle}>
+              <label className={styles.fieldTitle} htmlFor={`${uid}-dos`}>
                 DOS <span className={styles.required}>•</span>
               </label>
               <Select
                 multiple
+                id={`${uid}-dos`}
                 options={effectiveDosOptions}
                 value={card.dosList.map(d => d.value)}
                 onChange={handleDosSelect}
@@ -39,11 +42,12 @@ export function IcdCardBody({
               />
             </div>
             <div className={styles.field}>
-              <label className={styles.fieldTitle}>
+              <label className={styles.fieldTitle} htmlFor={`${uid}-provider`}>
                 Rendering Provider <span className={styles.required}>•</span>
               </label>
               <Select
                 options={providerOptions.length ? providerOptions : providerAll}
+                id={`${uid}-provider`}
                 value={card.provider}
                 onChange={(v) => onUpdate({ provider: v })}
                 placeholder="Select Rendering Provider"
@@ -51,11 +55,12 @@ export function IcdCardBody({
               />
             </div>
             <div className={styles.field}>
-              <label className={styles.fieldTitle}>
+              <label className={styles.fieldTitle} htmlFor={`${uid}-pos`}>
                 POS <span className={styles.required}>•</span>
               </label>
               <Select
                 options={posOptions}
+                id={`${uid}-pos`}
                 value={card.pos}
                 onChange={(v) => onUpdate({ pos: v })}
                 placeholder="Select Place of Service"
@@ -64,10 +69,11 @@ export function IcdCardBody({
             <div className={styles.field}>
               {dosIsExisting ? (
                 <>
-                  <label className={styles.fieldTitle}>
+                  <label className={styles.fieldTitle} htmlFor={`${uid}-doc-type`}>
                     Document Type <span className={styles.required}>•</span>
                   </label>
                   <Select
+                    id={`${uid}-doc-type`}
                     options={docTypeOptions}
                     value={card.docType}
                     onChange={(v) => onUpdate({ docType: v })}
@@ -76,10 +82,11 @@ export function IcdCardBody({
                 </>
               ) : (
                 <>
-                  <label className={styles.fieldTitle}>
+                  <label className={styles.fieldTitle} htmlFor={`${uid}-visit-type`}>
                     Visit Type <span className={styles.required}>•</span>
                   </label>
                   <Select
+                    id={`${uid}-visit-type`}
                     options={vtOptions}
                     value={card.visitType}
                     onChange={handleVtChange}
@@ -92,9 +99,9 @@ export function IcdCardBody({
 
           {showEvidenceList && (
             <div className={styles.evidenceWrap}>
-              <label className={styles.fieldTitle}>
+              <span className={styles.fieldTitle}>
                 Evidence Documentation <span className={styles.required}>•</span>
-              </label>
+              </span>
               <div className={styles.evidenceCard}>
                 <div className={styles.evidenceHeader}>Select From already Linked</div>
                 {memberDocs.length === 0 ? (

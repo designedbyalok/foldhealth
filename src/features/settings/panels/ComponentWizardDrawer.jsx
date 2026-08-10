@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useId, cloneElement, isValidElement } from 'react';
 import { Icon } from '../../../components/Icon/Icon';
 import { Badge } from '../../../components/Badge/Badge';
 import { Button } from '../../../components/Button/Button';
@@ -106,10 +106,18 @@ function Stepper({ step, onStepClick }) {
 
 /* ── Reusable form field wrapper ── */
 function FormField({ label, hint, children, style }) {
+  const controlId = useId();
+  const single = isValidElement(children);
+  const control = single && !children.props.id
+    ? cloneElement(children, { id: controlId })
+    : children;
+  const labelFor = single ? (children.props.id || controlId) : undefined;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, ...style }}>
-      <label className={s.label}>{label}</label>
-      {children}
+      {labelFor
+        ? <label className={s.label} htmlFor={labelFor}>{label}</label>
+        : <span className={s.label}>{label}</span>}
+      {control}
       {hint && <span className={s.hint}>{hint}</span>}
     </div>
   );
@@ -322,9 +330,9 @@ function StepSurfaces({ data, onChange }) {
             {data.webPlacement === 'side-drawer' && (
               <div className={s.modalGrid} style={{ gap: 12 }}>
                 <div className={s.formGroup}>
-                  <label className={s.label}>Drawer width</label>
+                  <label className={s.label} htmlFor="cw-drawer-width">Drawer width</label>
                   <div className={s.sliderRow}>
-                    <input type="range" min={300} max={800} step={10} value={data.drawerWidth}
+                    <input id="cw-drawer-width" type="range" min={300} max={800} step={10} value={data.drawerWidth}
                       className={s.sliderRange}
                       onChange={e => onChange({ drawerWidth: Number(e.target.value) })} />
                     <span className={s.sliderValue}>{data.drawerWidth}px</span>
@@ -363,8 +371,8 @@ function StepSurfaces({ data, onChange }) {
             {/* P360 tab config */}
             {data.webPlacement === 'p360-tab' && (
               <div className={s.formGroup}>
-                <label className={s.label}>Tab label</label>
-                <Input style={{ maxWidth: 220 }} value={data.webTabLabel} onChange={e => onChange({ webTabLabel: e.target.value })} />
+                <label className={s.label} htmlFor="cw-web-tab-label">Tab label</label>
+                <Input id="cw-web-tab-label" style={{ maxWidth: 220 }} value={data.webTabLabel} onChange={e => onChange({ webTabLabel: e.target.value })} />
               </div>
             )}
             {/* Widget card config */}
@@ -475,8 +483,8 @@ function StepSurfaces({ data, onChange }) {
                 </div>
                 {data.sidecarPlacement === 'tab' && (
                   <div className={s.formGroup}>
-                    <label className={s.label}>Tab label in Sidecar</label>
-                    <Input style={{ maxWidth: 200 }} value={data.sidecarTabLabel} onChange={e => onChange({ sidecarTabLabel: e.target.value })} />
+                    <label className={s.label} htmlFor="cw-sidecar-tab-label">Tab label in Sidecar</label>
+                    <Input id="cw-sidecar-tab-label" style={{ maxWidth: 200 }} value={data.sidecarTabLabel} onChange={e => onChange({ sidecarTabLabel: e.target.value })} />
                   </div>
                 )}
                 {data.sidecarPlacement === 'widget' && (
@@ -528,8 +536,8 @@ function StepSurfaces({ data, onChange }) {
             </div>
             {data.mobilePlacement === 'profile-tab' && (
               <div className={s.formGroup}>
-                <label className={s.label}>Tab label on mobile</label>
-                <Input style={{ maxWidth: 200 }} value={data.mobileTabLabel} onChange={e => onChange({ mobileTabLabel: e.target.value })} />
+                <label className={s.label} htmlFor="cw-mobile-tab-label">Tab label on mobile</label>
+                <Input id="cw-mobile-tab-label" style={{ maxWidth: 200 }} value={data.mobileTabLabel} onChange={e => onChange({ mobileTabLabel: e.target.value })} />
               </div>
             )}
             {data.mobilePlacement === 'home-card' && (

@@ -596,6 +596,25 @@
   gap: 8px;
   cursor: pointer;
   font-family: 'Inter', sans-serif;
+  /* Anchors .srOnlyInput to this row, so focusing it scrolls here rather
+     than to wherever the nearest positioned ancestor happens to be. */
+  position: relative;
+}
+
+/* The real checkbox behind .checkboxBox's custom visual. Tailwind's `sr-only`
+   can't be used here: src/index.css styles input[type="checkbox"] unlayered,
+   and unlayered rules beat @layer utilities, so the native box stays visible.
+   Scoping to .checkboxItem keeps this override on the right side of that. */
+.checkboxItem input[type="checkbox"].srOnlyInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .checkboxBox {

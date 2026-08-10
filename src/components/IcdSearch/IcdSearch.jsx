@@ -28,6 +28,7 @@ const EMPTY_EXCLUDE_CODES = [];
  * @param {string}   [props.className]
  */
 export function IcdSearch({
+  id,
   onSelect,
   placeholder = 'Search and Add ICD Code & Description, HCC Code & Description',
   excludeCodes = EMPTY_EXCLUDE_CODES,
@@ -120,6 +121,7 @@ export function IcdSearch({
       <div className={styles.inputWrap}>
         <Icon name="solar:magnifer-linear" size={15} className={styles.searchIcon} />
         <Input
+          id={id}
           ref={inputRef}
           className={styles.inputField}
           variant={variant}

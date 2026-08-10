@@ -7,7 +7,7 @@
  * The working copy (name / fields / scoring) lives in local state; Save pushes
  * it to Supabase via store.saveForm. Opened/closed through editingFormId.
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   DndContext, DragOverlay, PointerSensor, KeyboardSensor,
   useSensor, useSensors, useDraggable, useDroppable, closestCenter,
@@ -265,6 +265,7 @@ function CheckRow({ label, checked, onChange }) {
 }
 
 function Properties({ field, onPatch, settings, onSettingsChange }) {
+  const uid = useId();
   if (!field) {
     // Nothing selected → form-level settings (font, background, header/footer).
     return (
@@ -284,12 +285,12 @@ function Properties({ field, onPatch, settings, onSettingsChange }) {
             <Icon name="solar:lock-keyhole-minimalistic-linear" size={14} color="var(--status-success)" />
             Validated &amp; locked — items and scoring can’t be edited.
           </div>
-          <label className={styles.propLabel}>Label</label>
-          <Input className={styles.ctl} value={field.text || ''} disabled readOnly />
+          <label className={styles.propLabel} htmlFor={`${uid}-locked-label`}>Label</label>
+          <Input id={`${uid}-locked-label`} className={styles.ctl} value={field.text || ''} disabled readOnly />
           {field.source ? <p className={styles.propHint}>Source: {field.source}</p> : null}
           {field.type === 'choice' && (
             <>
-              <label className={styles.propLabel}>Options &amp; scores</label>
+              <span className={styles.propLabel}>Options &amp; scores</span>
               {(field.options || []).map((o, i) => (
                 <div key={i} className={styles.optRow}>
                   <Input className={styles.optText} value={o.value} disabled readOnly />
@@ -312,8 +313,9 @@ function Properties({ field, onPatch, settings, onSettingsChange }) {
     <aside className={styles.props}>
       <div className={styles.propsHeader}>{field.type === 'group' ? 'Section' : 'Question'}</div>
       <div className={styles.propsBody}>
-        <label className={styles.propLabel}>Label</label>
+        <label className={styles.propLabel} htmlFor={`${uid}-label`}>Label</label>
         <Input
+          id={`${uid}-label`}
           className={styles.ctl}
           value={field.text || ''}
           onChange={(e) => onPatch({ text: e.target.value })}
@@ -325,8 +327,9 @@ function Properties({ field, onPatch, settings, onSettingsChange }) {
             <CheckRow label="Make this component reusable" checked={field.reusable} onChange={(v) => onPatch({ reusable: v })} />
             <CheckRow label="Share with patient" checked={field.shareWithPatient} onChange={(v) => onPatch({ shareWithPatient: v })} />
 
-            <label className={styles.propLabel}>Description</label>
+            <label className={styles.propLabel} htmlFor={`${uid}-description`}>Description</label>
             <Textarea
+              id={`${uid}-description`}
               className={styles.ctl}
               rows={3}
               placeholder="Add description"
@@ -336,8 +339,9 @@ function Properties({ field, onPatch, settings, onSettingsChange }) {
 
             {(field.type === 'string' || field.type === 'integer' || field.type === 'decimal' || field.type === 'text') && (
               <>
-                <label className={styles.propLabel}>Placeholder</label>
+                <label className={styles.propLabel} htmlFor={`${uid}-placeholder`}>Placeholder</label>
                 <Input
+                  id={`${uid}-placeholder`}
                   className={styles.ctl}
                   value={field.placeholder || ''}
                   onChange={(e) => onPatch({ placeholder: e.target.value })}
@@ -349,7 +353,7 @@ function Properties({ field, onPatch, settings, onSettingsChange }) {
 
         {isChoice && (
           <>
-            <label className={styles.propLabel}>Options &amp; scoring</label>
+            <span className={styles.propLabel}>Options &amp; scoring</span>
             <p className={styles.propHint}>Set a score per option to make this question scorable.</p>
             {(field.options || []).map((o, i) => (
               <div key={i} className={styles.optRow}>

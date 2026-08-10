@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useId } from 'react';
 import { Icon } from '../../../components/Icon/Icon';
 import { Badge } from '../../../components/Badge/Badge';
 import { Button } from '../../../components/Button/Button';
@@ -43,6 +43,7 @@ const fieldSelect = {
 const fieldGroup = { marginBottom: 20 };
 
 function FaqDrawer({ mode, faq, onClose, onSave, saving }) {
+  const uid = useId();
   const isEdit = mode === 'edit';
   const [form, setForm] = useState({
     question: faq?.question || '',
@@ -73,8 +74,9 @@ function FaqDrawer({ mode, faq, onClose, onSave, saving }) {
       headerRight={headerRight}
     >
       <div style={fieldGroup}>
-        <label style={fieldLabel}>Question</label>
+        <label style={fieldLabel} htmlFor={`${uid}-question`}>Question</label>
         <input
+          id={`${uid}-question`}
           style={fieldInput}
           placeholder="e.g. What is Transitional Care Management?"
           value={form.question}
@@ -86,8 +88,9 @@ function FaqDrawer({ mode, faq, onClose, onSave, saving }) {
       </div>
 
       <div style={fieldGroup}>
-        <label style={fieldLabel}>Answer</label>
+        <label style={fieldLabel} htmlFor={`${uid}-answer`}>Answer</label>
         <textarea
+          id={`${uid}-answer`}
           style={fieldTextarea}
           placeholder="Provide a clear, helpful answer…"
           value={form.answer}
@@ -98,8 +101,9 @@ function FaqDrawer({ mode, faq, onClose, onSave, saving }) {
       </div>
 
       <div style={fieldGroup}>
-        <label style={fieldLabel}>Category</label>
+        <label style={fieldLabel} htmlFor={`${uid}-category`}>Category</label>
         <select
+          id={`${uid}-category`}
           style={fieldSelect}
           value={form.category}
           onChange={e => setForm(f => ({ ...f, category: e.target.value }))}

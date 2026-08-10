@@ -94,7 +94,7 @@ export function ScheduleDrawerViewMode({
         </div>
 
         <div className={styles.section}>
-          <label className={styles.sectionLabel}>Patient Details</label>
+          <span className={styles.sectionLabel}>Patient Details</span>
           <div className={styles.patientCard}>
             <div className={styles.patientCardHeader}>
               <Avatar variant="patient" initials={getInitials(ea.patient_name).toUpperCase()} />
@@ -115,7 +115,7 @@ export function ScheduleDrawerViewMode({
             </div>
             {ea.reason_for_visit && (
               <div className={styles.reasonField} style={{ pointerEvents: 'none' }}>
-                <label className={styles.reasonLabel}>Reason for Visit</label>
+                <span className={styles.reasonLabel}>Reason for Visit</span>
                 <div className={styles.reasonInput} style={{ background: 'var(--neutral-50)', minHeight: 32 }}>{ea.reason_for_visit}</div>
               </div>
             )}
@@ -133,7 +133,7 @@ export function ScheduleDrawerViewMode({
         </div>
 
         <div className={styles.section} style={isPastAppointment ? { pointerEvents: 'none', opacity: 0.7 } : undefined}>
-          <label className={styles.sectionLabel}>Appointment Details {isPastAppointment && <span style={{ fontSize: 11, color: 'var(--neutral-200)', fontWeight: 400 }}>(Past — read only)</span>}</label>
+          <span className={styles.sectionLabel}>Appointment Details {isPastAppointment && <span style={{ fontSize: 11, color: 'var(--neutral-200)', fontWeight: 400 }}>(Past — read only)</span>}</span>
           <div className={styles.detailsCard}>
             <div className={styles.detailRow}>
               <span className={styles.detailLabel}>Appointment Type</span>
@@ -163,7 +163,7 @@ export function ScheduleDrawerViewMode({
         </div>
 
         <div className={styles.section}>
-          <label className={styles.sectionLabel}>Member Instruction</label>
+          <span className={styles.sectionLabel}>Member Instruction</span>
           {editingInstruction ? (
             <div className={styles.instructionEditor}>
               <div
@@ -199,7 +199,7 @@ export function ScheduleDrawerViewMode({
 
         {showViewStaffInstructions && (
           <div className={styles.section}>
-            <label className={styles.sectionLabel}>Staff Instructions</label>
+            <span className={styles.sectionLabel}>Staff Instructions</span>
             {editingStaffInstruction ? (
               <div className={styles.instructionEditor}>
                 <div

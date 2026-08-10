@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useId } from 'react';
 import { Drawer } from '../../../../components/Drawer/Drawer';
 import { Button } from '../../../../components/Button/Button';
 import { Input } from '../../../../components/Input/Input';
@@ -42,6 +42,7 @@ const EMPTY_ALL_LOCATIONS = [];
  * drawer builds the merged object and hands it back for persistence.
  */
 export function EditLocationDrawer({ location, allLocations = EMPTY_ALL_LOCATIONS, onClose, onSubmit }) {
+  const uid = useId();
   const isEdit = !!location;
   const [step, setStep] = useState(1);
 
@@ -137,8 +138,9 @@ export function EditLocationDrawer({ location, allLocations = EMPTY_ALL_LOCATION
         {step === 1 ? (
           <>
             <div className={styles.section}>
-              <label className={styles.label}>Select EHR Instance</label>
+              <label className={styles.label} htmlFor={`${uid}-ehr-instance`}>Select EHR Instance</label>
               <Select
+                id={`${uid}-ehr-instance`}
                 value={form.ehrInstance}
                 onChange={(v) => set('ehrInstance', v)}
                 options={EHR_INSTANCES.map(e => ({ value: e, label: e }))}
@@ -146,50 +148,50 @@ export function EditLocationDrawer({ location, allLocations = EMPTY_ALL_LOCATION
             </div>
 
             <div className={styles.section}>
-              <label className={styles.label}>Name<span className={styles.required}>*</span></label>
-              <Input value={form.name} onChange={e => set('name', e.target.value)} placeholder="Practice location name" />
+              <label className={styles.label} htmlFor={`${uid}-name`}>Name<span className={styles.required}>*</span></label>
+              <Input id={`${uid}-name`} value={form.name} onChange={e => set('name', e.target.value)} placeholder="Practice location name" />
             </div>
 
             <div className={styles.section}>
-              <label className={styles.label}>Address Line 1<span className={styles.required}>*</span></label>
-              <Input value={form.addressLine1} onChange={e => set('addressLine1', e.target.value)} placeholder="Street address" />
+              <label className={styles.label} htmlFor={`${uid}-address1`}>Address Line 1<span className={styles.required}>*</span></label>
+              <Input id={`${uid}-address1`} value={form.addressLine1} onChange={e => set('addressLine1', e.target.value)} placeholder="Street address" />
             </div>
 
             <div className={styles.section}>
-              <label className={styles.label}>Address Line 2</label>
-              <Input value={form.addressLine2} onChange={e => set('addressLine2', e.target.value)} placeholder="Suite, floor, etc." />
+              <label className={styles.label} htmlFor={`${uid}-address2`}>Address Line 2</label>
+              <Input id={`${uid}-address2`} value={form.addressLine2} onChange={e => set('addressLine2', e.target.value)} placeholder="Suite, floor, etc." />
             </div>
 
             <div className={styles.twoCol}>
               <div className={styles.section}>
-                <label className={styles.label}>Zipcode<span className={styles.required}>*</span></label>
-                <Input value={form.zipCode} onChange={e => set('zipCode', e.target.value)} placeholder="e.g. 21201" />
+                <label className={styles.label} htmlFor={`${uid}-zip`}>Zipcode<span className={styles.required}>*</span></label>
+                <Input id={`${uid}-zip`} value={form.zipCode} onChange={e => set('zipCode', e.target.value)} placeholder="e.g. 21201" />
               </div>
               <div className={styles.section}>
-                <label className={styles.label}>Select Timezone<span className={styles.required}>*</span></label>
-                <Select value={form.timezone} onChange={(v) => set('timezone', v)} options={TIMEZONE_OPTIONS} searchable />
+                <label className={styles.label} htmlFor={`${uid}-timezone`}>Select Timezone<span className={styles.required}>*</span></label>
+                <Select id={`${uid}-timezone`} value={form.timezone} onChange={(v) => set('timezone', v)} options={TIMEZONE_OPTIONS} searchable />
               </div>
             </div>
 
             <div className={styles.twoCol}>
               <div className={styles.section}>
-                <label className={styles.label}>City</label>
-                <Input value={form.city} onChange={e => set('city', e.target.value)} placeholder="City" />
+                <label className={styles.label} htmlFor={`${uid}-city`}>City</label>
+                <Input id={`${uid}-city`} value={form.city} onChange={e => set('city', e.target.value)} placeholder="City" />
               </div>
               <div className={styles.section}>
-                <label className={styles.label}>State</label>
-                <Input value={form.state} onChange={e => set('state', e.target.value)} placeholder="State" />
+                <label className={styles.label} htmlFor={`${uid}-state`}>State</label>
+                <Input id={`${uid}-state`} value={form.state} onChange={e => set('state', e.target.value)} placeholder="State" />
               </div>
             </div>
 
             <div className={styles.section}>
-              <label className={styles.label}>Google Map Link</label>
-              <Input value={form.googleMapLink} onChange={e => set('googleMapLink', e.target.value)} placeholder="Enter Google Map Link" />
+              <label className={styles.label} htmlFor={`${uid}-map-link`}>Google Map Link</label>
+              <Input id={`${uid}-map-link`} value={form.googleMapLink} onChange={e => set('googleMapLink', e.target.value)} placeholder="Enter Google Map Link" />
             </div>
 
             <div className={styles.section}>
-              <label className={styles.label}>Default Communication Number</label>
-              <Input value={form.defaultPhone} onChange={e => set('defaultPhone', e.target.value)} placeholder="+1 (555) 000-0000" />
+              <label className={styles.label} htmlFor={`${uid}-default-phone`}>Default Communication Number</label>
+              <Input id={`${uid}-default-phone`} value={form.defaultPhone} onChange={e => set('defaultPhone', e.target.value)} placeholder="+1 (555) 000-0000" />
               <p className={styles.empty}>Set the location default communication phone number to enable automation to send SMS to patients based on their assigned location.</p>
             </div>
           </>

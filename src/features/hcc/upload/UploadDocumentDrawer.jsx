@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Drawer } from '../../../components/Drawer/Drawer';
 import { Button } from '../../../components/Button/Button';
@@ -724,6 +724,7 @@ function SftpPhase({ showToast }) {
 // context, attach a document, Confirm. Routes through the existing
 // hccCreateOrMergeFromEncounter so dedup + activity-log wiring all works.
 function SinglePhase({ hccMembers, batchId, showToast, createFromEncounter, onDone, onSaveApiChange }) {
+  const uid = useId();
   const [patient, setPatient] = useState(null);   // selected hccMember or null
   const [patientQuery, setPatientQuery] = useState('');
   const [patientPickerOpen, setPatientPickerOpen] = useState(false);
@@ -815,12 +816,13 @@ function SinglePhase({ hccMembers, batchId, showToast, createFromEncounter, onDo
           reveals the match list in an absolutely-positioned popover so
           the DOS card below never shifts. */}
       <div className={styles.singleSection} ref={patientPickerWrapRef}>
-        <label className={styles.singleLabel}>
+        <label className={styles.singleLabel} htmlFor={`${uid}-member`}>
           Member <span className={styles.singleReq}>•</span>
         </label>
         <div className={styles.singleMemberField}>
           {patient && !patientPickerOpen ? (
             <button
+              id={`${uid}-member`}
               type="button"
               className={styles.singleMemberSelected}
               onClick={() => {
@@ -839,6 +841,7 @@ function SinglePhase({ hccMembers, batchId, showToast, createFromEncounter, onDo
             </button>
           ) : (
             <input
+              id={`${uid}-member`}
               ref={patientInputRef}
               type="text"
               className={styles.singleMemberInput}
@@ -914,6 +917,7 @@ function SinglePhase({ hccMembers, batchId, showToast, createFromEncounter, onDo
  * and an ICD Codes section listing each pick as its own row.
  */
 function SingleDosCard({ block, providerOptions, patient, onPatch, onRemove, showToast }) {
+  const uid = useId();
   const [collapsed, setCollapsed] = useState(false);
   const onPickFile = (file) => {
     if (!file) return;
@@ -983,19 +987,21 @@ function SingleDosCard({ block, providerOptions, patient, onPatch, onRemove, sho
 
         <div className={styles.singleGrid}>
           <div className={styles.singleField}>
-            <label className={styles.singleLabel}>
+            <label className={styles.singleLabel} htmlFor={`${uid}-dos`}>
               DOS <span className={styles.singleReq}>•</span>
             </label>
             <DatePicker
+              id={`${uid}-dos`}
               value={toIsoDate(block.dos)}
               onSelect={(iso) => onPatch({ dos: fromIsoDate(iso) })}
             />
           </div>
           <div className={styles.singleField}>
-            <label className={styles.singleLabel}>
+            <label className={styles.singleLabel} htmlFor={`${uid}-provider`}>
               Rendering Provider <span className={styles.singleReq}>•</span>
             </label>
             <Select
+              id={`${uid}-provider`}
               options={providerOptions}
               value={block.provider}
               placeholder="Select Rendering Provider"
@@ -1005,10 +1011,11 @@ function SingleDosCard({ block, providerOptions, patient, onPatch, onRemove, sho
             />
           </div>
           <div className={styles.singleField}>
-            <label className={styles.singleLabel}>
+            <label className={styles.singleLabel} htmlFor={`${uid}-pos`}>
               POS <span className={styles.singleReq}>•</span>
             </label>
             <Select
+              id={`${uid}-pos`}
               options={POS_SELECT_OPTIONS}
               value={block.pos}
               placeholder="Select Place of Service"
@@ -1018,10 +1025,11 @@ function SingleDosCard({ block, providerOptions, patient, onPatch, onRemove, sho
             />
           </div>
           <div className={styles.singleField}>
-            <label className={styles.singleLabel}>
+            <label className={styles.singleLabel} htmlFor={`${uid}-doc-type`}>
               Document Type <span className={styles.singleReq}>•</span>
             </label>
             <Select
+              id={`${uid}-doc-type`}
               options={DOC_TYPE_OPTIONS}
               value={block.docType}
               placeholder="Select Document Type"
@@ -1031,8 +1039,9 @@ function SingleDosCard({ block, providerOptions, patient, onPatch, onRemove, sho
         </div>
 
         <div className={styles.singleIcdSection}>
-          <label className={styles.singleLabel}>ICD Codes</label>
+          <label className={styles.singleLabel} htmlFor={`${uid}-icd-search`}>ICD Codes</label>
           <IcdSearch
+            id={`${uid}-icd-search`}
             placeholder="Search and Add ICD Code & Description, HCC Code & Description"
             excludeCodes={block.icds.map(i => i.code)}
             onSelect={(icd) => onPatch({

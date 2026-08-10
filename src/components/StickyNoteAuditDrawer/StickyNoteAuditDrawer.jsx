@@ -45,8 +45,9 @@ export function StickyNoteAuditDrawer({ patientId, note, profileOptions, onClose
       {/* Top form section */}
       <div className={styles.formSection}>
         <div className={styles.field}>
-          <label className={styles.fieldLabel}>Member Profile</label>
+          <label className={styles.fieldLabel} htmlFor="sticky-note-profile">Member Profile</label>
           <Select
+            id="sticky-note-profile"
             options={profiles.map(p => ({ value: p, label: p }))}
             value={selectedProfile}
             onChange={setSelectedProfile}

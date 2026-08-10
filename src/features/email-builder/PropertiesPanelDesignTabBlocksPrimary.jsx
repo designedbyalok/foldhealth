@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useLayoutEffect, Fragment } from 'react';
+import { useState, useEffect, useRef, useCallback, useLayoutEffect, useId, Fragment } from 'react';
 import { createPortal } from 'react-dom';
 import { renderEmailHtml } from './patchEmailHtml';
 import { useAppStore } from '../../store/useAppStore';
@@ -21,6 +21,8 @@ import { parseHtmlToDocument, collectUnknownFonts } from './htmlToDocument';
 import styles from './EmailBuilder.module.css';
 
 import { getCommonValue } from './PropertiesPanel.utils.jsx';
+import { htmlToPlain } from './EmailBuilder.utils';
+import { FieldLabel, IconInput, ImageUploader, LinkInput, PlainInput, Row2, Section, SectionHeading, SelectInput, TextStyleChips } from './PropertiesPanelFields';
 
 const RADIUS_TYPES = new Set(['Button', 'Image', 'Container', 'ColumnsContainer']);
 const BG_IMAGE_TYPES = new Set(['Container', 'ColumnsContainer']);
@@ -32,6 +34,7 @@ const FONT_WEIGHTS_FALLBACK = [
 ];
 
 export function DesignTabBlocksPrimary({ ctx }) {
+  const uid = useId();
   const { block, updateBlock, id, update, props, style, isLayout, padding, rootFontFamily } = ctx;
   return (
     <>
@@ -76,8 +79,9 @@ export function DesignTabBlocksPrimary({ ctx }) {
           <SectionHeading>HTML</SectionHeading>
           <Section>
             <div className={styles.fieldCol}>
-              <label className={styles.fieldLabel}>Markup</label>
+              <label className={styles.fieldLabel} htmlFor={`${uid}-raw-html`}>Markup</label>
               <Textarea
+                id={`${uid}-raw-html`}
                 value={props.html || ''}
                 onChange={e => update(['data', 'props', 'html'], e.target.value)}
                 rows={12}

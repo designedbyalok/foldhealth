@@ -15,15 +15,15 @@ export function ScheduleDrawerPatientSection({
   if (!selectedPatient) {
     return (
       <div className={styles.section}>
-        <label className={styles.sectionLabel}>Patient/Prospect <span className={styles.required}>*</span></label>
-        <PatientSearch patients={patients} onSelect={setSelectedPatient} />
+        <label className={styles.sectionLabel} htmlFor="schedule-patient-search">Patient/Prospect <span className={styles.required}>*</span></label>
+        <PatientSearch inputId="schedule-patient-search" patients={patients} onSelect={setSelectedPatient} />
       </div>
     );
   }
 
   return (
     <div className={styles.section}>
-      <label className={styles.sectionLabel}>Patient Details</label>
+      <span className={styles.sectionLabel}>Patient Details</span>
       <div className={styles.patientCard}>
         <div className={styles.patientCardHeader}>
           <Avatar variant="patient" initials={getInitials(selectedPatient.name).toUpperCase()} />
@@ -39,8 +39,9 @@ export function ScheduleDrawerPatientSection({
         </div>
 
         <div className={styles.reasonField}>
-          <label className={styles.reasonLabel}>Reason for Visit</label>
+          <label className={styles.reasonLabel} htmlFor="schedule-reason-for-visit">Reason for Visit</label>
           <input
+            id="schedule-reason-for-visit"
             className={styles.reasonInput}
             placeholder="Enter Reason for Visit"
             value={reasonForVisit}

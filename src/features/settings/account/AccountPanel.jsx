@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../../../lib/supabase';
 import { useAppStore } from '../../../store/useAppStore';
@@ -449,6 +449,7 @@ const DRAWER_TABS = ['User Details', 'Business Hours', 'Assigned Patients'];
 const EHR_SYSTEMS = ['Athena Health', 'Epic', 'Cerner', 'eClinicalWorks', 'Allscripts', 'NextGen', 'Greenway Health', 'DrChrono'];
 
 export function EditUserDrawer({ user, onClose, onSave }) {
+  const uid = useId();
   const locationNames = useLocationNames();
   const raw = user._raw || {};
   const logAudit = useAppStore(s => s.logAudit);
@@ -533,8 +534,9 @@ export function EditUserDrawer({ user, onClose, onSave }) {
         <div className={styles.formScroll}>
           {/* Administrative Roles */}
           <div className={styles.formSection}>
-            <label className={styles.formLabel}>Administrative Roles <span className={styles.required}>*</span></label>
-            <div className={styles.radioGroup} role="radiogroup">
+            {/* Names the radiogroup rather than a single control, so aria-labelledby not htmlFor. */}
+            <span className={styles.formLabel} id={`${uid}-admin-roles`}>Administrative Roles <span className={styles.required}>*</span></span>
+            <div className={styles.radioGroup} role="radiogroup" aria-labelledby={`${uid}-admin-roles`}>
               {ADMIN_ROLES.map(role => (
                 <RadioButton key={role} label={role} checked={form.admin_role === role} onChange={() => set('admin_role', role)} />
               ))}
@@ -552,8 +554,9 @@ export function EditUserDrawer({ user, onClose, onSave }) {
 
           {/* Map User to EHR */}
           <div className={styles.formSection}>
-            <label className={styles.formLabel}>Map User to EHR <span className={styles.required}>*</span></label>
-            <div className={styles.formGrid}>
+            {/* Names the pair of selects below, not one control. */}
+            <span className={styles.formLabel} id={`${uid}-ehr-map`}>Map User to EHR <span className={styles.required}>*</span></span>
+            <div className={styles.formGrid} role="group" aria-labelledby={`${uid}-ehr-map`}>
               <div className={styles.formField}>
                 <Select
                   options={EHR_SYSTEMS.map(s => ({ value: s, label: s }))}
@@ -581,8 +584,9 @@ export function EditUserDrawer({ user, onClose, onSave }) {
             <h4 className={styles.formSectionTitle}>Basic Info</h4>
             <div className={styles.formGrid}>
               <div className={styles.formField}>
-                <label className={styles.formLabel}>First Name <span className={styles.required}>*</span></label>
+                <label className={styles.formLabel} htmlFor={`${uid}-first-name`}>First Name <span className={styles.required}>*</span></label>
                 <Input
+                  id={`${uid}-first-name`}
                   value={form.first_name}
                   onChange={e => set('first_name', e.target.value)}
                   placeholder="First name"
@@ -593,12 +597,13 @@ export function EditUserDrawer({ user, onClose, onSave }) {
                 )}
               </div>
               <div className={styles.formField}>
-                <label className={styles.formLabel}>Middle Name</label>
-                <Input value={form.middle_name} onChange={e => set('middle_name', e.target.value)} placeholder="Middle name" />
+                <label className={styles.formLabel} htmlFor={`${uid}-middle-name`}>Middle Name</label>
+                <Input id={`${uid}-middle-name`} value={form.middle_name} onChange={e => set('middle_name', e.target.value)} placeholder="Middle name" />
               </div>
               <div className={styles.formField}>
-                <label className={styles.formLabel}>Last Name <span className={styles.required}>*</span></label>
+                <label className={styles.formLabel} htmlFor={`${uid}-last-name`}>Last Name <span className={styles.required}>*</span></label>
                 <Input
+                  id={`${uid}-last-name`}
                   value={form.last_name}
                   onChange={e => set('last_name', e.target.value)}
                   placeholder="Last name"
@@ -609,9 +614,10 @@ export function EditUserDrawer({ user, onClose, onSave }) {
                 )}
               </div>
               <div className={styles.formField}>
-                <label className={styles.formLabel}>Date of Birth</label>
+                <label className={styles.formLabel} htmlFor={`${uid}-dob`}>Date of Birth</label>
                 <div className={styles.dateInputWrap}>
                   <input
+                    id={`${uid}-dob`}
                     type="date"
                     className={styles.dateInput}
                     value={form.date_of_birth || ''}
@@ -620,12 +626,13 @@ export function EditUserDrawer({ user, onClose, onSave }) {
                 </div>
               </div>
               <div className={styles.formField}>
-                <label className={styles.formLabel}>Credentials <span className={styles.required}>*</span></label>
-                <TagInput value={form.credentials} onChange={v => set('credentials', v)} placeholder="e.g. Dr, NP" />
+                <label className={styles.formLabel} htmlFor={`${uid}-credentials`}>Credentials <span className={styles.required}>*</span></label>
+                <TagInput inputId={`${uid}-credentials`} value={form.credentials} onChange={v => set('credentials', v)} placeholder="e.g. Dr, NP" />
               </div>
               <div className={styles.formField}>
-                <label className={styles.formLabel}>Gender <span className={styles.required}>*</span></label>
+                <label className={styles.formLabel} htmlFor={`${uid}-gender`}>Gender <span className={styles.required}>*</span></label>
                 <Select
+                  id={`${uid}-gender`}
                   options={GENDER_OPTIONS.map(g => ({ value: g, label: g }))}
                   value={form.gender || undefined}
                   onChange={v => set('gender', v)}
@@ -637,14 +644,14 @@ export function EditUserDrawer({ user, onClose, onSave }) {
 
           {/* Profile */}
           <div className={styles.formSection}>
-            <label className={styles.formLabel}>Profile</label>
-            <textarea className={styles.formTextarea} rows={5} value={form.bio} onChange={e => set('bio', e.target.value)} placeholder="Brief bio or description..." />
+            <label className={styles.formLabel} htmlFor={`${uid}-bio`}>Profile</label>
+            <textarea id={`${uid}-bio`} className={styles.formTextarea} rows={5} value={form.bio} onChange={e => set('bio', e.target.value)} placeholder="Brief bio or description..." />
           </div>
 
           {/* Licence State */}
           <div className={styles.formSection}>
-            <label className={styles.formLabel}>Licence State <span className={styles.required}>*</span></label>
-            <TagInput value={form.licence_states} onChange={v => set('licence_states', v)} placeholder="Add state..." />
+            <label className={styles.formLabel} htmlFor={`${uid}-licence-states`}>Licence State <span className={styles.required}>*</span></label>
+            <TagInput inputId={`${uid}-licence-states`} value={form.licence_states} onChange={v => set('licence_states', v)} placeholder="Add state..." />
           </div>
 
           {/* Contact Info */}
@@ -652,20 +659,20 @@ export function EditUserDrawer({ user, onClose, onSave }) {
             <h4 className={styles.formSectionTitle}>Contact Info</h4>
             <div className={styles.formGrid}>
               <div className={styles.formField}>
-                <label className={styles.formLabel}>Mobile Number <span className={styles.required}>*</span></label>
-                <Input value={form.mobile} onChange={e => set('mobile', e.target.value)} placeholder="+1 234 567 890" />
+                <label className={styles.formLabel} htmlFor={`${uid}-mobile`}>Mobile Number <span className={styles.required}>*</span></label>
+                <Input id={`${uid}-mobile`} value={form.mobile} onChange={e => set('mobile', e.target.value)} placeholder="+1 234 567 890" />
               </div>
               <div className={styles.formField}>
-                <label className={styles.formLabel}>Email <span className={styles.required}>*</span></label>
-                <Input value={form.email} disabled />
+                <label className={styles.formLabel} htmlFor={`${uid}-email`}>Email <span className={styles.required}>*</span></label>
+                <Input id={`${uid}-email`} value={form.email} disabled />
               </div>
               <div className={styles.formField}>
-                <label className={styles.formLabel}>Fax Number <span className={styles.required}>*</span></label>
-                <Input value={form.fax} onChange={e => set('fax', e.target.value)} placeholder="+1 234 567 890" />
+                <label className={styles.formLabel} htmlFor={`${uid}-fax`}>Fax Number <span className={styles.required}>*</span></label>
+                <Input id={`${uid}-fax`} value={form.fax} onChange={e => set('fax', e.target.value)} placeholder="+1 234 567 890" />
               </div>
               <div className={styles.formField}>
-                <label className={styles.formLabel}>Zip Code <span className={styles.required}>*</span></label>
-                <Input value={form.zip_code} onChange={e => set('zip_code', e.target.value)} placeholder="12345" />
+                <label className={styles.formLabel} htmlFor={`${uid}-zip`}>Zip Code <span className={styles.required}>*</span></label>
+                <Input id={`${uid}-zip`} value={form.zip_code} onChange={e => set('zip_code', e.target.value)} placeholder="12345" />
               </div>
             </div>
           </div>
@@ -675,20 +682,20 @@ export function EditUserDrawer({ user, onClose, onSave }) {
             <h4 className={styles.formSectionTitle}>Additional Info</h4>
             <div className={styles.formGrid}>
               <div className={styles.formField}>
-                <label className={styles.formLabel}>Address Line 1 <span className={styles.required}>*</span></label>
-                <Input value={form.address_line1} onChange={e => set('address_line1', e.target.value)} placeholder="Street address" />
+                <label className={styles.formLabel} htmlFor={`${uid}-address1`}>Address Line 1 <span className={styles.required}>*</span></label>
+                <Input id={`${uid}-address1`} value={form.address_line1} onChange={e => set('address_line1', e.target.value)} placeholder="Street address" />
               </div>
               <div className={styles.formField}>
-                <label className={styles.formLabel}>Address Line 2 <span className={styles.required}>*</span></label>
-                <Input value={form.address_line2} onChange={e => set('address_line2', e.target.value)} placeholder="Apt, suite, etc." />
+                <label className={styles.formLabel} htmlFor={`${uid}-address2`}>Address Line 2 <span className={styles.required}>*</span></label>
+                <Input id={`${uid}-address2`} value={form.address_line2} onChange={e => set('address_line2', e.target.value)} placeholder="Apt, suite, etc." />
               </div>
               <div className={styles.formField}>
-                <label className={styles.formLabel}>State <span className={styles.required}>*</span></label>
-                <Input value={form.state} onChange={e => set('state', e.target.value)} placeholder="State" />
+                <label className={styles.formLabel} htmlFor={`${uid}-state`}>State <span className={styles.required}>*</span></label>
+                <Input id={`${uid}-state`} value={form.state} onChange={e => set('state', e.target.value)} placeholder="State" />
               </div>
               <div className={styles.formField}>
-                <label className={styles.formLabel}>City <span className={styles.required}>*</span></label>
-                <Input value={form.city} onChange={e => set('city', e.target.value)} placeholder="City" />
+                <label className={styles.formLabel} htmlFor={`${uid}-city`}>City <span className={styles.required}>*</span></label>
+                <Input id={`${uid}-city`} value={form.city} onChange={e => set('city', e.target.value)} placeholder="City" />
               </div>
             </div>
           </div>

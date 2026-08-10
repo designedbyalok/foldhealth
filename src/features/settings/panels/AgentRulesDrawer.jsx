@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Icon } from '../../../components/Icon/Icon';
 import { Badge } from '../../../components/Badge/Badge';
 import { Avatar } from '../../../components/Avatar/Avatar';
@@ -13,6 +13,7 @@ const RULE_BADGE_VARIANT = { safety: 'status-failed', system: 'ai-care', custom:
 const RULE_TYPE_LABEL = { safety: 'Safety', system: 'System', custom: 'Custom' };
 
 export function AgentRulesDrawer() {
+  const uid = useId();
   const agentRulesGroupId = useAppStore(s => s.agentRulesGroupId);
   const setAgentRulesGroupId = useAppStore(s => s.setAgentRulesGroupId);
   const showToast = useAppStore(s => s.showToast);
@@ -134,8 +135,8 @@ export function AgentRulesDrawer() {
         {showAddRule && (
           <div style={{ padding: '14px 20px', background: 'var(--neutral-50)', borderBottom: '0.5px solid var(--neutral-150)' }}>
             <div style={{ marginBottom: 10 }}>
-              <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--neutral-300)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Rule Name</label>
-              <input value={newRuleName} onChange={e => setNewRuleName(e.target.value)}
+              <label htmlFor={`${uid}-new-rule-name`} style={{ fontSize: 11, fontWeight: 500, color: 'var(--neutral-300)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Rule Name</label>
+              <input id={`${uid}-new-rule-name`} value={newRuleName} onChange={e => setNewRuleName(e.target.value)}
                 placeholder="e.g., Billing disputes to human" style={{
                 width: '100%', marginTop: 4, padding: '8px 12px', borderRadius: 4,
                 border: '0.5px solid var(--neutral-150)', fontSize: 13, fontFamily: "'Inter', sans-serif",
@@ -144,8 +145,8 @@ export function AgentRulesDrawer() {
             </div>
             <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
               <div style={{ flex: 1 }}>
-                <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--neutral-300)', textTransform: 'uppercase', letterSpacing: '.04em' }}>If (Condition)</label>
-                <select value={newRuleCondition} onChange={e => setNewRuleCondition(e.target.value)} style={{
+                <label htmlFor={`${uid}-new-rule-condition`} style={{ fontSize: 11, fontWeight: 500, color: 'var(--neutral-300)', textTransform: 'uppercase', letterSpacing: '.04em' }}>If (Condition)</label>
+                <select id={`${uid}-new-rule-condition`} value={newRuleCondition} onChange={e => setNewRuleCondition(e.target.value)} style={{
                   width: '100%', marginTop: 4, padding: '8px 12px', borderRadius: 4,
                   border: '0.5px solid var(--neutral-150)', fontSize: 13, fontFamily: "'Inter', sans-serif",
                   outline: 'none', background: 'var(--neutral-0)', cursor: 'pointer',
@@ -157,8 +158,8 @@ export function AgentRulesDrawer() {
                 </select>
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--neutral-300)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Then (Action)</label>
-                <select value={newRuleAction} onChange={e => setNewRuleAction(e.target.value)} style={{
+                <label htmlFor={`${uid}-new-rule-action`} style={{ fontSize: 11, fontWeight: 500, color: 'var(--neutral-300)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Then (Action)</label>
+                <select id={`${uid}-new-rule-action`} value={newRuleAction} onChange={e => setNewRuleAction(e.target.value)} style={{
                   width: '100%', marginTop: 4, padding: '8px 12px', borderRadius: 4,
                   border: '0.5px solid var(--neutral-150)', fontSize: 13, fontFamily: "'Inter', sans-serif",
                   outline: 'none', background: 'var(--neutral-0)', cursor: 'pointer',
@@ -252,19 +253,19 @@ export function AgentRulesDrawer() {
           {editingRuleId === r.id && !r.locked && (
             <div style={{ padding: '12px 16px', background: 'var(--neutral-50)', borderBottom: '0.5px solid var(--neutral-150)' }}>
               <div style={{ marginBottom: 8 }}>
-                <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--neutral-300)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Rule Name</label>
-                <input value={r.name} onChange={e => setRules(prev => prev.map(rule => rule.id === r.id ? { ...rule, name: e.target.value } : rule))}
+                <label htmlFor={`${uid}-rule-${r.id}-name`} style={{ fontSize: 11, fontWeight: 500, color: 'var(--neutral-300)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Rule Name</label>
+                <input id={`${uid}-rule-${r.id}-name`} value={r.name} onChange={e => setRules(prev => prev.map(rule => rule.id === r.id ? { ...rule, name: e.target.value } : rule))}
                   style={{ width: '100%', marginTop: 4, padding: '8px 12px', borderRadius: 4, border: '0.5px solid var(--neutral-150)', fontSize: 13, fontFamily: "'Inter', sans-serif", outline: 'none', boxSizing: 'border-box' }} />
               </div>
               <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--neutral-300)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Condition</label>
-                  <input value={r.condition} onChange={e => setRules(prev => prev.map(rule => rule.id === r.id ? { ...rule, condition: e.target.value } : rule))}
+                  <label htmlFor={`${uid}-rule-${r.id}-condition`} style={{ fontSize: 11, fontWeight: 500, color: 'var(--neutral-300)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Condition</label>
+                  <input id={`${uid}-rule-${r.id}-condition`} value={r.condition} onChange={e => setRules(prev => prev.map(rule => rule.id === r.id ? { ...rule, condition: e.target.value } : rule))}
                     style={{ width: '100%', marginTop: 4, padding: '8px 12px', borderRadius: 4, border: '0.5px solid var(--neutral-150)', fontSize: 13, fontFamily: "'Inter', sans-serif", outline: 'none', boxSizing: 'border-box' }} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: 11, fontWeight: 500, color: 'var(--neutral-300)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Action</label>
-                  <input value={r.action} onChange={e => setRules(prev => prev.map(rule => rule.id === r.id ? { ...rule, action: e.target.value } : rule))}
+                  <label htmlFor={`${uid}-rule-${r.id}-action`} style={{ fontSize: 11, fontWeight: 500, color: 'var(--neutral-300)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Action</label>
+                  <input id={`${uid}-rule-${r.id}-action`} value={r.action} onChange={e => setRules(prev => prev.map(rule => rule.id === r.id ? { ...rule, action: e.target.value } : rule))}
                     style={{ width: '100%', marginTop: 4, padding: '8px 12px', borderRadius: 4, border: '0.5px solid var(--neutral-150)', fontSize: 13, fontFamily: "'Inter', sans-serif", outline: 'none', boxSizing: 'border-box' }} />
                 </div>
               </div>

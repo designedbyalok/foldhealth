@@ -1,6 +1,10 @@
-import { useCallback } from 'react';
+import { useCallback, useState, useRef } from 'react';
 import { InlineEditable } from './InlineEditable';
-import { paddingCss } from './PreviewCanvas.utils';
+import {
+  paddingCss,
+  EDITABLE_INPUT_BASE_STYLE,
+  EDITABLE_DISPLAY_STYLE,
+} from './PreviewCanvas.utils';
 
 export function InlineTable({ id, props, style, commitTable }) {
   const cols = props.columns || [];

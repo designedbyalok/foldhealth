@@ -5,7 +5,7 @@ import styles from './ScheduleDrawer.module.css';
 function InstructionEditor({ label, placeholder, inputRef, showRemove, onRemove }) {
   return (
     <div className={styles.section}>
-      <label className={styles.sectionLabel}>{label}</label>
+      <span className={styles.sectionLabel}>{label}</span>
       <div className={styles.instructionEditor}>
         <div
           className={styles.instructionEditable}

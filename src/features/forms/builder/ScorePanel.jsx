@@ -6,7 +6,7 @@
  * Three columns: Scores (list + select) | Configure (aggregation, range) |
  * Interpretations (bands). Locked (validated) scores are read-only.
  */
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Icon } from '../../../components/Icon/Icon';
 import { CloseButton } from '../../../components/CloseButton/CloseButton';
 import { Button } from '../../../components/Button/Button';
@@ -21,6 +21,7 @@ const AGG_OPTIONS = [AGGREGATION.SUM, AGGREGATION.AVERAGE, AGGREGATION.COUNT, AG
 const SEVERITIES = [SEVERITY.NEUTRAL, SEVERITY.INFO, SEVERITY.WARNING, SEVERITY.HIGH, SEVERITY.CRITICAL];
 
 export function ScorePanel({ fields, scoring, onChange }) {
+  const uid = useId();
   const scores = scoring?.scores || [];
   const scorable = scorableFields(fields);
   const index = engineItemIndex(fields);
@@ -111,10 +112,11 @@ export function ScorePanel({ fields, scoring, onChange }) {
                 Validated &amp; locked — cutoffs can’t be edited.
               </div>
             ) : null}
-            <label className={styles.propLabel}>Score name</label>
-            <Input className={styles.ctl} value={selected.label} disabled={locked} readOnly={locked} onChange={(e) => replace({ label: e.target.value })} />
-            <label className={styles.propLabel}>Aggregation</label>
+            <label className={styles.propLabel} htmlFor={`${uid}-score-name`}>Score name</label>
+            <Input id={`${uid}-score-name`} className={styles.ctl} value={selected.label} disabled={locked} readOnly={locked} onChange={(e) => replace({ label: e.target.value })} />
+            <label className={styles.propLabel} htmlFor={`${uid}-aggregation`}>Aggregation</label>
             <Select
+              id={`${uid}-aggregation`}
               className={styles.ctl}
               value={selected.aggregation}
               disabled={locked}

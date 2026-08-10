@@ -21,6 +21,7 @@ import { parseHtmlToDocument, collectUnknownFonts } from './htmlToDocument';
 import styles from './EmailBuilder.module.css';
 
 import { getCommonValue } from './PropertiesPanel.utils.jsx';
+import { AlignCenterIcon, AlignLeftIcon, AlignRightIcon, ColumnWidthBar, DirectionColIcon, DirectionRowIcon, IconInput, ImageUploader, NavLinkEditor, PlainInput, Row2, Section, SectionHeading, SelectInput, SocialEditor, TableEditor } from './PropertiesPanelFields';
 
 const RADIUS_TYPES = new Set(['Button', 'Image', 'Container', 'ColumnsContainer']);
 const BG_IMAGE_TYPES = new Set(['Container', 'ColumnsContainer']);
@@ -62,7 +63,7 @@ export function DesignTabBlocksSecondary({ ctx }) {
           <SectionHeading>Divider</SectionHeading>
           <Section>
             <div className={styles.fieldCol}>
-              <label className={styles.fieldLabel}>Orientation</label>
+              <span className={styles.fieldLabel}>Orientation</span>
               <Toggle
                 fullWidth
                 items={[
@@ -88,7 +89,7 @@ export function DesignTabBlocksSecondary({ ctx }) {
               />
             )}
             <div className={styles.fieldCol}>
-              <label className={styles.fieldLabel}>Style</label>
+              <span className={styles.fieldLabel}>Style</span>
               <Toggle
                 fullWidth
                 items={[
@@ -102,7 +103,7 @@ export function DesignTabBlocksSecondary({ ctx }) {
             </div>
             <Row2>
               <div className={styles.fieldCol}>
-                <label className={styles.fieldLabel}>Left End</label>
+                <span className={styles.fieldLabel}>Left End</span>
                 <Toggle
                   fullWidth
                   items={[
@@ -116,7 +117,7 @@ export function DesignTabBlocksSecondary({ ctx }) {
                 />
               </div>
               <div className={styles.fieldCol}>
-                <label className={styles.fieldLabel}>Right End</label>
+                <span className={styles.fieldLabel}>Right End</span>
                 <Toggle
                   fullWidth
                   items={[
@@ -162,7 +163,7 @@ export function DesignTabBlocksSecondary({ ctx }) {
               <ColorInput label="Stripe" value={props.stripedColor || '#F6F4FF'} onChange={v => update(['data', 'props', 'stripedColor'], v)} />
             </Row2>
             <div className={styles.fieldCol}>
-              <label className={styles.fieldLabel}>Striped Rows</label>
+              <span className={styles.fieldLabel}>Striped Rows</span>
               <Toggle
                 fullWidth
                 items={[{ key: 'on', label: 'On' }, { key: 'off', label: 'Off' }]}
@@ -188,7 +189,7 @@ export function DesignTabBlocksSecondary({ ctx }) {
               <IconInput label="Gap" suffix="px" value={props.gap || 16} onChange={v => update(['data', 'props', 'gap'], parseFloat(v) || 16)} />
             </Row2>
             <div className={styles.fieldCol}>
-              <label className={styles.fieldLabel}>Alignment</label>
+              <span className={styles.fieldLabel}>Alignment</span>
               <Toggle
                 fullWidth
                 items={[
@@ -227,7 +228,7 @@ export function DesignTabBlocksSecondary({ ctx }) {
               />
             </Row2>
             <div className={styles.fieldCol}>
-              <label className={styles.fieldLabel}>Alignment</label>
+              <span className={styles.fieldLabel}>Alignment</span>
               <Toggle
                 fullWidth
                 items={[
@@ -268,7 +269,7 @@ export function DesignTabBlocksSecondary({ ctx }) {
                 }}
               />
               <div className={styles.fieldCol}>
-                <label className={styles.fieldLabel}>Direction</label>
+                <span className={styles.fieldLabel}>Direction</span>
                 <Toggle
                   fullWidth
                   items={[
@@ -286,7 +287,7 @@ export function DesignTabBlocksSecondary({ ctx }) {
               <IconInput label="V Gap" suffix="px" value={props.rowGap ?? 0} onChange={v => update(['data', 'props', 'rowGap'], parseFloat(v) || 0)} />
             </Row2>
             <div className={styles.fieldCol}>
-              <label className={styles.fieldLabel}>Wrap</label>
+              <span className={styles.fieldLabel}>Wrap</span>
               <Toggle
                 fullWidth
                 items={[
@@ -299,7 +300,7 @@ export function DesignTabBlocksSecondary({ ctx }) {
               />
             </div>
             <div className={styles.fieldCol}>
-              <label className={styles.fieldLabel}>Column Widths</label>
+              <span className={styles.fieldLabel}>Column Widths</span>
               <ColumnWidthBar
                 count={props.columnsCount || 2}
                 widths={props.columnWidths}

@@ -50,7 +50,7 @@ export function ScheduleDrawerAppointmentDetails({
 
   return (
     <div className={styles.section}>
-      <label className={styles.sectionLabel}>Appointment Details</label>
+      <span className={styles.sectionLabel}>Appointment Details</span>
       <div className={styles.detailsCard}>
         <div className={styles.detailRow}>
           <span className={styles.detailLabel}>Appointment Type</span>

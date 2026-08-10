@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { Input as FoldInput } from '../../components/Input/Input';
 import { Textarea } from '../../components/Textarea/Textarea';
 import { Avatar } from '../../components/Avatar/Avatar';
@@ -12,6 +13,7 @@ const Input = (props) => <FoldInput {...props} />;
 Input.TextArea = ({ rows = 3, ...props }) => <Textarea rows={rows} {...props} />;
 
 export function PopulationGroupsCreateDrawerForm({ vm }) {
+  const uid = useId();
   const {
     segmentName, setSegmentName, description, setDescription,
     chosenFilter, setChosenFilter, memberStatus, setMemberStatus,
@@ -26,10 +28,11 @@ export function PopulationGroupsCreateDrawerForm({ vm }) {
 
                   {/* Segment Name */}
                   <div style={{ marginBottom:16 }}>
-                    <label style={{ display:'block', fontSize:14, fontWeight:400, color:'var(--neutral-200)', marginBottom:6 }}>
+                    <label style={{ display:'block', fontSize:14, fontWeight:400, color:'var(--neutral-200)', marginBottom:6 }} htmlFor={`${uid}-segment-name`}>
                       Create Segment Name <span style={{ color:'var(--status-error)' }}>•</span>
                     </label>
                     <Input
+                      id={`${uid}-segment-name`}
                       value={segmentName}
                       onChange={e => setSegmentName(e.target.value)}
                       placeholder="Enter Name"
@@ -39,8 +42,9 @@ export function PopulationGroupsCreateDrawerForm({ vm }) {
 
                   {/* Description */}
                   <div style={{ marginBottom:16 }}>
-                    <label style={{ display:'block', fontSize:14, fontWeight:400, color:'var(--neutral-200)', marginBottom:6 }}>Description</label>
+                    <label style={{ display:'block', fontSize:14, fontWeight:400, color:'var(--neutral-200)', marginBottom:6 }} htmlFor={`${uid}-description`}>Description</label>
                     <Input.TextArea
+                      id={`${uid}-description`}
                       value={description}
                       onChange={e => setDescription(e.target.value)}
                       placeholder="Enter Description"
@@ -50,9 +54,9 @@ export function PopulationGroupsCreateDrawerForm({ vm }) {
 
                   {/* Choose Filter dropdown */}
                   <div style={{ marginBottom:8 }}>
-                    <label style={{ display:'block', fontSize:14, fontWeight:400, color:'var(--neutral-200)', marginBottom:6 }}>
+                    <span style={{ display:'block', fontSize:14, fontWeight:400, color:'var(--neutral-200)', marginBottom:6 }}>
                       Choose Filter <span style={{ color:'var(--status-error)' }}>•</span>
-                    </label>
+                    </span>
                     <DrawerSelect
                       value={chosenFilter}
                       onChange={val => { setChosenFilter(val); setUploadFile(null); setUploadState('idle'); setCriteria([{ attr:'Age', op:'≥', val:'' }]); }}
@@ -174,9 +178,9 @@ export function PopulationGroupsCreateDrawerForm({ vm }) {
                   {/* Frequency (static-csv only, fixed/disabled) */}
                   {chosenFilter === 'static-csv' && (
                     <div style={{ marginBottom:16 }}>
-                      <label style={{ display:'block', fontSize:14, fontWeight:400, color:'var(--neutral-200)', marginBottom:6 }}>
+                      <span style={{ display:'block', fontSize:14, fontWeight:400, color:'var(--neutral-200)', marginBottom:6 }}>
                         Frequency <span style={{ color:'var(--status-error)' }}>•</span>
-                      </label>
+                      </span>
                       <DrawerSelect
                         value="one-time"
                         onChange={() => {}}
@@ -189,7 +193,7 @@ export function PopulationGroupsCreateDrawerForm({ vm }) {
 
                   {/* Fold Membership Status — always visible */}
                   <div style={{ marginBottom:16 }}>
-                    <label style={{ display:'block', fontSize:14, fontWeight:400, color:'var(--neutral-200)', marginBottom:6 }}>Fold Membership Status</label>
+                    <span style={{ display:'block', fontSize:14, fontWeight:400, color:'var(--neutral-200)', marginBottom:6 }}>Fold Membership Status</span>
                     <DrawerSelect
                       value={memberStatus}
                       onChange={val => setMemberStatus(val)}

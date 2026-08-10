@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { Button } from '../../../components/Button/Button';
 import { Icon } from '../../../components/Icon/Icon';
 import { Input } from '../../../components/Input/Input';
@@ -18,7 +19,7 @@ export function SinglePhasePatientSection({
 }) {
   return (
     <div className={styles.singleSection}>
-      <label className={styles.singleLabel}>Patient *</label>
+      <span className={styles.singleLabel}>Patient *</span>
       {patient ? (
         <div className={styles.singlePatientChip}>
           <Avatar variant="patient" initials={patient.in} />
@@ -68,10 +69,12 @@ export function SinglePhaseIcdSection({
   onAddIcd,
   onRemoveIcd,
 }) {
+  const uid = useId();
   return (
     <div className={styles.singleSection}>
-      <label className={styles.singleLabel}>ICD codes *</label>
+      <label className={styles.singleLabel} htmlFor={`${uid}-icd-query`}>ICD codes *</label>
       <Input
+        id={`${uid}-icd-query`}
         placeholder="Search by code or description (e.g. E11.9, COPD)…"
         value={icdQuery}
         onChange={(e) => onQueryChange(e.target.value)}
@@ -124,7 +127,7 @@ export function SinglePhaseDosSection({
 }) {
   return (
     <div className={styles.singleSection}>
-      <label className={styles.singleLabel}>Date of Service *</label>
+      <span className={styles.singleLabel}>Date of Service *</span>
       <Toggle
         size="S"
         items={[
@@ -161,15 +164,17 @@ export function SinglePhaseEncounterGrid({
   onDocTypeChange,
   onConditionChange,
 }) {
+  const uid = useId();
   return (
     <div className={styles.singleGrid}>
       <div className={styles.singleField}>
-        <label className={styles.singleLabel}>Rendering Provider *</label>
-        <Input placeholder="Dr. Sarah Connor" value={provider} onChange={(e) => onProviderChange(e.target.value)} />
+        <label className={styles.singleLabel} htmlFor={`${uid}-provider`}>Rendering Provider *</label>
+        <Input id={`${uid}-provider`} placeholder="Dr. Sarah Connor" value={provider} onChange={(e) => onProviderChange(e.target.value)} />
       </div>
       <div className={styles.singleField}>
-        <label className={styles.singleLabel}>POS *</label>
+        <label className={styles.singleLabel} htmlFor={`${uid}-pos`}>POS *</label>
         <Select
+          id={`${uid}-pos`}
           options={Object.entries(POS_LABEL).map(([code, label]) => ({
             value: code,
             label: `${code} — ${label}`,
@@ -179,8 +184,9 @@ export function SinglePhaseEncounterGrid({
         />
       </div>
       <div className={styles.singleField}>
-        <label className={styles.singleLabel}>Document Type</label>
+        <label className={styles.singleLabel} htmlFor={`${uid}-doc-type`}>Document Type</label>
         <Select
+          id={`${uid}-doc-type`}
           options={['Progress Note', 'SOAP Note', 'Telehealth Note', 'Visit Summary', 'Lab Report', 'Imaging Report'].map(t => ({
             value: t,
             label: t,
@@ -190,17 +196,18 @@ export function SinglePhaseEncounterGrid({
         />
       </div>
       <div className={styles.singleField}>
-        <label className={styles.singleLabel}>Condition / Notes</label>
-        <Input placeholder="Short clinical note (optional)" value={condition} onChange={(e) => onConditionChange(e.target.value)} />
+        <label className={styles.singleLabel} htmlFor={`${uid}-condition`}>Condition / Notes</label>
+        <Input id={`${uid}-condition`} placeholder="Short clinical note (optional)" value={condition} onChange={(e) => onConditionChange(e.target.value)} />
       </div>
     </div>
   );
 }
 
 export function SinglePhaseFileSection({ file, fileInputRef, showToast, onFileChange, onRemoveFile }) {
+  const uid = useId();
   return (
     <div className={styles.singleSection}>
-      <label className={styles.singleLabel}>Supporting document</label>
+      <label className={styles.singleLabel} htmlFor={`${uid}-file`}>Supporting document</label>
       {file ? (
         <div className={styles.singleFileChip}>
           <Icon name="solar:file-text-linear" size={16} color="var(--neutral-400)" />
@@ -216,6 +223,7 @@ export function SinglePhaseFileSection({ file, fileInputRef, showToast, onFileCh
         </button>
       )}
       <input
+        id={`${uid}-file`}
         ref={fileInputRef}
         type="file"
         accept={ACCEPT_EXT}
