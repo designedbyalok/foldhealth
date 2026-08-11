@@ -7,7 +7,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
-export default defineConfig([globalIgnores(['dist']), {
+export default defineConfig([globalIgnores(['dist', 'storybook-static', 'coverage', '.claude']), {
   files: ['**/*.{js,jsx}'],
   extends: [
     js.configs.recommended,
@@ -67,5 +67,11 @@ export default defineConfig([globalIgnores(['dist']), {
         message: 'Do not re-implement a filter chip — use the shared src/components/FilterChip so filter badges stay identical app-wide. See CONTRIBUTING.md.',
       },
     ],
+  },
+}, {
+  files: ['vite.config.js', 'vite-plugin-dev-api.js', 'scripts/**/*.{js,mjs}', 'api/**/*.js', 'api/**/*.jsx'],
+  languageOptions: {
+    globals: { ...globals.node },
+    parserOptions: { ecmaVersion: 'latest', sourceType: 'module' },
   },
 }, ...storybook.configs["flat/recommended"]])
