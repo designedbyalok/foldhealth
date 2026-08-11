@@ -86,14 +86,16 @@ function Stepper({ step, onStepClick }) {
         const current = i === step;
         return (
           <div key={label} style={{ display: 'contents' }}>
-            <div
-              className={`${g.wizStep} ${current ? g.wizStepActive : done ? g.wizStepDone : ''}`}
+            <button
+              type="button"
+              className={`buttonReset ${g.wizStep} ${current ? g.wizStepActive : done ? g.wizStepDone : ''}`}
               onClick={() => i < step && onStepClick(i)}
+              disabled={i >= step}
               style={{ cursor: i < step ? 'pointer' : 'default' }}
             >
               <div className={g.wizStepNum}>{done ? <Icon name="solar:check-read-linear" size={12} /> : i + 1}</div>
               <span className={g.wizStepLabel}>{label}</span>
-            </div>
+            </button>
             {i < STEPS.length - 1 && (
               <div className={`${g.wizConnector} ${done ? g.wizConnectorDone : ''}`} />
             )}
@@ -293,14 +295,20 @@ function StepSurfaces({ data, onChange }) {
         {WIZARD_SURFACES.map(sf => {
           const active = data.surfaces.includes(sf.key);
           return (
-            <div key={sf.key} className={active ? s.surfaceCardActive : s.surfaceCard} onClick={() => toggleSurface(sf.key)}>
+            <button
+              type="button"
+              key={sf.key}
+              className={`buttonReset ${active ? s.surfaceCardActive : s.surfaceCard}`}
+              aria-pressed={active}
+              onClick={() => toggleSurface(sf.key)}
+            >
               <div className={s.surfaceIcon}><Icon name={sf.icon} size={18} color="var(--primary-300)" /></div>
               <div className={s.surfaceInfo}>
                 <div className={s.surfaceName}>{sf.name}</div>
                 <div className={s.surfaceDesc}>{sf.desc}</div>
               </div>
               <div className={s.surfaceCheck}>{active ? '✓' : ''}</div>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -318,11 +326,17 @@ function StepSurfaces({ data, onChange }) {
                 const SvgComp = WEB_SVG_MAP[pl.value];
                 const active = data.webPlacement === pl.value;
                 return (
-                  <div key={pl.value} className={active ? s.placementCardActive : s.placementCard} onClick={() => onChange({ webPlacement: pl.value })}>
+                  <button
+                    type="button"
+                    key={pl.value}
+                    className={`buttonReset ${active ? s.placementCardActive : s.placementCard}`}
+                    aria-pressed={active}
+                    onClick={() => onChange({ webPlacement: pl.value })}
+                  >
                     {SvgComp && <SvgComp />}
                     <div className={s.placementLabel}>{pl.label}</div>
                     <div className={s.placementDesc}>{pl.description}</div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -414,14 +428,19 @@ function StepSurfaces({ data, onChange }) {
                   {ACTION_MENU_LOCATIONS.map(loc => {
                     const active = data.actionMenus?.includes(loc.key);
                     return (
-                      <div key={loc.key} className={active ? s.checkItemActive : s.checkItem}
+                      <button
+                        type="button"
+                        key={loc.key}
+                        className={`buttonReset ${active ? s.checkItemActive : s.checkItem}`}
+                        aria-pressed={active}
                         onClick={() => {
                           const menus = active ? data.actionMenus.filter(k => k !== loc.key) : [...(data.actionMenus || []), loc.key];
                           onChange({ actionMenus: menus });
-                        }}>
+                        }}
+                      >
                         <div className={s.checkBox}>{active ? '✓' : ''}</div>
                         {loc.label}
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -430,13 +449,18 @@ function StepSurfaces({ data, onChange }) {
                   {WORKLIST_OPTIONS.map(wl => {
                     const active = data.worklists?.includes(wl);
                     return (
-                      <div key={wl} className={active ? s.wlPillActive : s.wlPill}
+                      <button
+                        type="button"
+                        key={wl}
+                        className={`buttonReset ${active ? s.wlPillActive : s.wlPill}`}
+                        aria-pressed={active}
                         onClick={() => {
                           const wls = active ? data.worklists.filter(w => w !== wl) : [...(data.worklists || []), wl];
                           onChange({ worklists: wls });
-                        }}>
+                        }}
+                      >
                         {wl}
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -461,9 +485,21 @@ function StepSurfaces({ data, onChange }) {
             Sidecar — Placement
           </div>
           <div className={s.configBody}>
-            <div className={s.subTabs}>
-              <div className={data.sidecarView === 'patient' ? s.subTabActive : s.subTab} onClick={() => onChange({ sidecarView: 'patient' })}>Patient context view</div>
-              <div className={data.sidecarView === 'global' ? s.subTabActive : s.subTab} onClick={() => onChange({ sidecarView: 'global' })}>Global view (no patient)</div>
+            <div className={s.subTabs} role="tablist">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={data.sidecarView === 'patient'}
+                className={`buttonReset ${data.sidecarView === 'patient' ? s.subTabActive : s.subTab}`}
+                onClick={() => onChange({ sidecarView: 'patient' })}
+              >Patient context view</button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={data.sidecarView === 'global'}
+                className={`buttonReset ${data.sidecarView === 'global' ? s.subTabActive : s.subTab}`}
+                onClick={() => onChange({ sidecarView: 'global' })}
+              >Global view (no patient)</button>
             </div>
             {data.sidecarView === 'patient' ? (
               <>
@@ -472,12 +508,17 @@ function StepSurfaces({ data, onChange }) {
                   {SIDECAR_PATIENT_PLACEMENTS.map(pl => {
                     const active = data.sidecarPlacement === pl.value;
                     return (
-                      <div key={pl.value} className={active ? s.checkItemActive : s.checkItem}
+                      <button
+                        type="button"
+                        key={pl.value}
+                        className={`buttonReset ${active ? s.checkItemActive : s.checkItem}`}
+                        aria-pressed={active}
                         style={{ padding: 12, borderRadius: 8, flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}
-                        onClick={() => onChange({ sidecarPlacement: pl.value })}>
+                        onClick={() => onChange({ sidecarPlacement: pl.value })}
+                      >
                         <div style={{ fontSize: 13, fontWeight: 500 }}>{pl.label}</div>
                         <div style={{ fontSize: 11, opacity: .7 }}>{pl.description}</div>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -525,12 +566,17 @@ function StepSurfaces({ data, onChange }) {
               {MOBILE_PLACEMENTS.map(pl => {
                 const active = data.mobilePlacement === pl.value;
                 return (
-                  <div key={pl.value} className={active ? s.checkItemActive : s.checkItem}
+                  <button
+                    type="button"
+                    key={pl.value}
+                    className={`buttonReset ${active ? s.checkItemActive : s.checkItem}`}
+                    aria-pressed={active}
                     style={{ padding: 12, borderRadius: 8, flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}
-                    onClick={() => onChange({ mobilePlacement: pl.value })}>
+                    onClick={() => onChange({ mobilePlacement: pl.value })}
+                  >
                     <div style={{ fontSize: 13, fontWeight: 500 }}>{pl.label}</div>
                     <div style={{ fontSize: 11, opacity: .7 }}>{pl.description}</div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -590,16 +636,21 @@ function StepContext({ data, onChange }) {
         {CONTEXT_FIELDS.map(field => {
           const active = data.contextFields.includes(field.key);
           return (
-            <div key={field.key}
-              className={field.locked ? s.checkItemLocked : active ? s.checkItemActive : s.checkItem}
+            <button
+              type="button"
+              key={field.key}
+              className={`buttonReset ${field.locked ? s.checkItemLocked : active ? s.checkItemActive : s.checkItem}`}
+              aria-pressed={active}
+              disabled={field.locked}
               onClick={() => {
                 if (field.locked) return;
                 const fields = active ? data.contextFields.filter(f => f !== field.key) : [...data.contextFields, field.key];
                 onChange({ contextFields: fields });
-              }}>
+              }}
+            >
               <div className={s.checkBox}>{active ? '✓' : ''}</div>
               {field.label}{field.description ? ` — ${field.description}` : ''}
-            </div>
+            </button>
           );
         })}
       </div>
@@ -736,16 +787,21 @@ function StepConfigure({ data, onChange, embedDomains }) {
                 {CONTEXT_FIELDS.map(field => {
                   const active = data.contextFields.includes(field.key);
                   return (
-                    <div key={field.key}
-                      className={field.locked ? s.checkItemLocked : active ? s.checkItemActive : s.checkItem}
+                    <button
+                      type="button"
+                      key={field.key}
+                      className={`buttonReset ${field.locked ? s.checkItemLocked : active ? s.checkItemActive : s.checkItem}`}
+                      aria-pressed={active}
+                      disabled={field.locked}
                       onClick={() => {
                         if (field.locked) return;
                         const fields = active ? data.contextFields.filter(f => f !== field.key) : [...data.contextFields, field.key];
                         onChange({ contextFields: fields });
-                      }}>
+                      }}
+                    >
                       <div className={s.checkBox}>{active ? '✓' : ''}</div>
                       {field.label}{field.description ? ` — ${field.description}` : ''}
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -776,17 +832,20 @@ function StepPreview({ data, onChange, embedDomains }) {
       {/* ── Widget Preview (matching Figma node 239:24297) ── */}
       <div style={{ border: '0.5px solid var(--neutral-150)', borderRadius: 8, overflow: 'hidden', marginBottom: 16 }}>
         {/* Widget header — collapsible */}
-        <div
+        <button
+          type="button"
+          className="buttonReset"
           onClick={() => setCollapsed(c => !c)}
+          aria-expanded={!collapsed}
           style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px',
+            display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', width: '100%',
             borderBottom: collapsed ? 'none' : '0.5px solid var(--neutral-100)',
             background: 'var(--neutral-0)', cursor: 'pointer', userSelect: 'none',
           }}
         >
           <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--neutral-400)', flex: 1 }}>{data.name || 'Widget'}</span>
           <Icon name={collapsed ? 'solar:alt-arrow-right-linear' : 'solar:alt-arrow-down-linear'} size={12} color="#8A94A8" />
-        </div>
+        </button>
 
         {/* Collapsible content */}
         {!collapsed && (

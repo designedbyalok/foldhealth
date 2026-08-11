@@ -26,6 +26,26 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Neutralizes native <button> chrome so a semantic button can carry a
+   CSS-module class that fully controls the look — used for clickable
+   cards, tabs, checkbox rows, and toggles that previously used <div onClick>. */
+.buttonReset {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+.buttonReset:disabled { cursor: default; }
+.buttonReset:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 2px;
+}
+
 /* ═══════════════════════════════════════════════════════════
    Iconify Solar stroke normalization
    Solar Linear icons ship at stroke-width 1.5 in their source
