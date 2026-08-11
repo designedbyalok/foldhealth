@@ -216,18 +216,20 @@ export function useTasksView() {
   const filterDefs = useMemo(() => {
     const profileOpts = (taskProfiles || []).map(p => ({ value: p.id, label: p.name }));
     const memberOpts = (allPatients || []).map(p => ({ value: p.name, label: p.name }));
-    return TASK_FILTER_DEFS
-      .map(fd => {
-        if (fd.key === 'assigned_to') return profileOpts.length ? { ...fd, options: profileOpts, searchable: true } : fd;
-        if (fd.key === 'created_by') return profileOpts.length ? { ...fd, options: profileOpts, searchable: true } : fd;
-        return fd;
-      })
-      .flatMap(fd => {
-        if (fd.key === 'created_by' && memberOpts.length) {
-          return [fd, { key: 'member', label: 'Member', options: memberOpts, primary: true, searchable: true }];
-        }
-        return [fd];
-      });
+    // Single pass: swap in the fetched profile options where they apply, and
+    // append the Member filter directly after Created By. The previous
+    // map().flatMap() also allocated a throwaway array per definition.
+    const defs = [];
+    for (const fd of TASK_FILTER_DEFS) {
+      const usesProfiles = fd.key === 'assigned_to' || fd.key === 'created_by';
+      defs.push(usesProfiles && profileOpts.length
+        ? { ...fd, options: profileOpts, searchable: true }
+        : fd);
+      if (fd.key === 'created_by' && memberOpts.length) {
+        defs.push({ key: 'member', label: 'Member', options: memberOpts, primary: true, searchable: true });
+      }
+    }
+    return defs;
   }, [taskProfiles, allPatients]);
 
   const viewBy = tasksFilters.view_by || 'status';
