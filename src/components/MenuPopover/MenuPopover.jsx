@@ -83,7 +83,7 @@ export function MenuPopover({
 
   return createPortal(
     <>
-      <div className={styles.overlay} onClick={onClose} />
+      <div className={styles.overlay} onClick={onClose} aria-hidden="true" />
       <div
         ref={popRef}
         className={styles.menu}

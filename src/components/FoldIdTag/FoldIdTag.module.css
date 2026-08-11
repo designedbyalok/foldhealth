@@ -1,3 +1,24 @@
+/* The tag is a real <button> so it can be reached and copied from the
+   keyboard. This resets the UA button chrome back to the inline span it used
+   to be — typography and color still come from the row, and the caller's
+   own class (cursor/hover) layers on top. */
+.tag {
+  display: inline;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  vertical-align: baseline;
+  cursor: pointer;
+}
+.tag:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 /* Label swap animation: fade + tiny slide in when the tooltip text
    flips between "Click to copy Member ID" and "Copied: #10070", triggered
    by remounting the keyed inner span on state change. Kept subtle — motion

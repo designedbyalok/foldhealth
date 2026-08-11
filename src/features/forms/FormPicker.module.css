@@ -1,10 +1,17 @@
 .scrim {
   position: fixed; inset: 0; z-index: 1000;
-  background: rgba(0,0,0,.32);
   display: flex; align-items: center; justify-content: center;
   font-family: 'Inter', sans-serif;
 }
+/* The dim layer is its own element rather than the scrim's background so the
+   click-to-close target is a bare, aria-hidden node — the dialog itself never
+   carries a click handler that swallows events from its own children. */
+.backdrop {
+  position: absolute; inset: 0;
+  background: var(--surface-overlay);
+}
 .modal {
+  position: relative;
   width: 440px; max-width: calc(100vw - 32px); max-height: 70vh;
   background: var(--neutral-0); border-radius: 16px;
   box-shadow: 0 12px 60px -15px rgba(0,0,0,.25);

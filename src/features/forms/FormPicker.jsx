@@ -2,7 +2,7 @@
  * Modal to pick a form to share into a chat. Lists saved forms with search;
  * onSelect hands back the chosen form. Used by the message composer.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../../lib/supabase';
 import { Icon } from '../../components/Icon/Icon';
@@ -13,6 +13,20 @@ export function FormPicker({ onSelect, onClose }) {
   const [forms, setForms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const titleId = useId();
+
+  // Escape closes, and focus goes back to whatever opened the picker — the
+  // modal moves focus into its search box, so without this a keyboard user is
+  // dropped at the top of the page when it closes.
+  useEffect(() => {
+    const opener = document.activeElement;
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      if (opener instanceof HTMLElement) opener.focus();
+    };
+  }, [onClose]);
 
   useEffect(() => {
     let active = true;
@@ -28,10 +42,11 @@ export function FormPicker({ onSelect, onClose }) {
   const filtered = forms.filter((f) => f.name?.toLowerCase().includes(search.trim().toLowerCase()));
 
   return createPortal(
-    <div className={styles.scrim} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <div className={styles.scrim}>
+      <div className={styles.backdrop} onClick={onClose} aria-hidden="true" />
+      <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <div className={styles.header}>
-          <span className={styles.title}>Share a form</span>
+          <span className={styles.title} id={titleId}>Share a form</span>
           <CloseButton onClick={onClose} />
         </div>
         <div className={styles.search}>

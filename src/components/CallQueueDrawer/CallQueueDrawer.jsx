@@ -594,6 +594,9 @@ export function CallLogTab({ onSelectCall, selectedCallId, searchQuery }) {
 
 /* ── Resizable Dragger ── */
 
+const KEY_RESIZE_STEP = 16;
+const KEY_RESIZE_STEP_LARGE = 48;
+
 export function ResizeDragger({ onDrag }) {
   const [dragging, setDragging] = useState(false);
   const startXRef = useRef(0);
@@ -621,10 +624,25 @@ export function ResizeDragger({ onDrag }) {
     document.body.style.userSelect = 'none';
   }, [onDrag]);
 
+  // Keyboard equivalent of the drag: the handle is a focusable window
+  // splitter, so left/right arrows nudge it by the same relative delta the
+  // pointer path feeds to onDrag. Shift takes a coarser step.
+  const handleKeyDown = useCallback((e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const step = (e.shiftKey ? KEY_RESIZE_STEP_LARGE : KEY_RESIZE_STEP) * (e.key === 'ArrowLeft' ? -1 : 1);
+    onDrag(step);
+  }, [onDrag]);
+
   return (
     <div
       className={`${styles.dragger} ${dragging ? styles.draggerActive : ''}`}
       onMouseDown={handleMouseDown}
+      onKeyDown={handleKeyDown}
+      role="separator"
+      aria-orientation="vertical"
+      aria-label="Resize panel"
+      tabIndex={0}
     >
       <div className={styles.draggerGrip}>
         <span className={styles.draggerDot} />

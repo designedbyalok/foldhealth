@@ -45,9 +45,13 @@ export function FoldIdTag({ id, display, label = 'Click to copy Member ID', clas
 
   return (
     <Tooltip label={tooltipLabel}>
-      <span className={className} onClick={handleClick}>
+      <button
+        type="button"
+        className={[styles.tag, className].filter(Boolean).join(' ')}
+        onClick={handleClick}
+      >
         {shown}
-      </span>
+      </button>
     </Tooltip>
   );
 }

@@ -54,7 +54,7 @@ export function SortPopover({
 
   return createPortal(
     <>
-      <div className={styles.overlay} onClick={onClose} />
+      <div className={styles.overlay} onClick={onClose} aria-hidden="true" />
       <div
         className={styles.popover}
         style={{ top: pos.top, left: pos.left, width }}
