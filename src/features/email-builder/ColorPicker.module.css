@@ -1,8 +1,6 @@
 /* ── Color picker popover ────────────────────────────────────────────── */
 .popover {
   width: 264px;
-  max-height: calc(100vh - 40px);
-  overflow-y: auto;
   padding: 10px;
   background: var(--neutral-0, #fff);
   border: 0.5px solid var(--neutral-150);
@@ -13,27 +11,73 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  /* Custom thin scrollbar so the popover doesn't get a chunky native one. */
-  scrollbar-width: thin;
-  scrollbar-color: var(--neutral-200) transparent;
+  /* No internal scrolling in either axis: the popover sizes to its content,
+     and `visible` lets the action-button tooltips escape the frame instead of
+     widening the box and producing a horizontal scrollbar. */
+  overflow: visible;
 }
-.popover::-webkit-scrollbar { width: 6px; }
-.popover::-webkit-scrollbar-thumb { background: var(--neutral-200); border-radius: 3px; }
-.popover::-webkit-scrollbar-track { background: transparent; }
+
+/* ── Drag handle ─────────────────────────────────────────────────────── */
+.dragHandle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 12px;
+  margin: -2px 0 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: grab;
+}
+.popoverDragging .dragHandle { cursor: grabbing; }
+.dragGrip {
+  width: 28px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--neutral-150);
+  transition: background-color var(--duration-fast) var(--ease-hover);
+}
+.dragHandle:hover .dragGrip,
+.popoverDragging .dragGrip { background: var(--neutral-200); }
+
+/* Mid-drag the popover follows the cursor 1:1 — no transition on transform,
+   and pointer events off inside so a drag can't paint into the SV square. */
+.popoverDragging { user-select: none; }
+.popoverDragging > *:not(.dragHandle) { pointer-events: none; }
+
+/* Solid ↔ Gradient body swap. Keyed on mode in ColorPicker.jsx, so this
+   one-shot runs on every switch. */
+.modeBody {
+  display: flex;
+  flex-direction: column;
+  animation: modeBodyIn var(--duration-fast) var(--ease-out);
+}
+@keyframes modeBodyIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: none; }
+}
 
 .eyedropperBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  /* Spans both ramps so the row reads as one block. */
+  width: 36px;
+  flex: 0 0 36px;
+  align-self: stretch;
   border: 0.5px solid var(--neutral-150);
   background: var(--neutral-0, #fff);
   border-radius: 6px;
   cursor: pointer;
   flex-shrink: 0;
+  transition:
+    background-color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover),
+    transform var(--duration-instant) var(--ease-out);
 }
 .eyedropperBtn:hover { background: var(--neutral-50); border-color: var(--primary-200); }
+.eyedropperBtn:active { transform: scale(0.94); }
 
 /* ── Solid picker ────────────────────────────────────────────────────── */
 .solidPicker {
@@ -71,12 +115,51 @@
   border-radius: 50%;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
   pointer-events: none;
+  /* Glides when the color arrives from elsewhere — a swatch, the hex field,
+     an RGB channel. Position tweening is dropped mid-drag below. */
+  transition:
+    left var(--duration-base) var(--ease-out),
+    top var(--duration-base) var(--ease-out),
+    transform var(--duration-instant) var(--ease-out);
+}
+.svSquare:hover .svPointer { transform: scale(1.12); }
+/* Mid-drag the pointer must sit exactly under the cursor — any position
+   tween reads as lag. Only the grab scale survives. */
+.svSquare.dragging .svPointer {
+  transition: transform var(--duration-instant) var(--ease-out);
+  transform: scale(1.3);
 }
 
-.hueSlider {
+/* ── Hue + opacity ramps ─────────────────────────────────────────────── */
+/* Eyedropper on the left, the two ramps stacked to its right. The button is
+   the same height as the stack so the row has one shared baseline. */
+.rampsRow {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+.rampsCol {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ramp {
   position: relative;
   height: 14px;
   border-radius: 7px;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+}
+.ramp:focus-visible {
+  /* Matches the focus-ring pattern from Input.module.css. */
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-300) 35%, transparent);
+}
+.hueTrack {
   background: linear-gradient(
     to right,
     #ff0000 0%,    #ffff00 17%,
@@ -84,116 +167,145 @@
     #0000ff 67%,   #ff00ff 83%,
     #ff0000 100%
   );
-  cursor: pointer;
-  user-select: none;
 }
-.hueThumb {
+/* Opacity ramp: transparent → the current color, over a checkerboard so the
+   translucent end reads as translucent rather than as a pale tint. */
+.alphaTrack {
+  background-image:
+    linear-gradient(to right, transparent, var(--ramp-to, black)),
+    linear-gradient(45deg, var(--neutral-100) 25%, transparent 25%, transparent 75%, var(--neutral-100) 75%),
+    linear-gradient(45deg, var(--neutral-100) 25%, transparent 25%, transparent 75%, var(--neutral-100) 75%);
+  background-size: 100% 100%, 8px 8px, 8px 8px;
+  background-position: 0 0, 0 0, 4px 4px;
+  background-color: var(--neutral-0);
+  border: 0.5px solid var(--neutral-150);
+}
+
+.rampThumb {
   position: absolute;
   top: 50%;
   width: 14px;
   height: 14px;
   margin: -7px 0 0 -7px;
-  background: #fff;
-  border: 1.5px solid #fff;
+  /* Always-white ring so the thumb reads on any hue or opacity. */
+  border: 2px solid white;
   border-radius: 50%;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18), 0 1px 2px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-card), 0 0 0 1px color-mix(in srgb, var(--neutral-500) 20%, transparent);
   pointer-events: none;
+  box-sizing: border-box;
+  transition:
+    left var(--duration-base) var(--ease-out),
+    background-color var(--duration-base) var(--ease-hover),
+    transform var(--duration-instant) var(--ease-out);
+}
+.ramp:hover .rampThumb { transform: scale(1.1); }
+.ramp.dragging .rampThumb {
+  transition: transform var(--duration-instant) var(--ease-out);
+  transform: scale(1.25);
 }
 
-/* ── Hex + RGB inputs row ────────────────────────────────────────────── */
-.inputsRow {
-  display: flex;
-  gap: 6px;
-  align-items: stretch;
-}
-
-.hexField {
+/* ── Mode select + value + opacity row ───────────────────────────────── */
+/* One 32px row, three controls: the mode select is fixed so the value field
+   is the only thing that flexes, which keeps the % field pinned right. */
+.valueRow {
   display: flex;
   align-items: center;
-  height: 28px;
-  flex: 1.1;
-  min-width: 0;
-  padding: 0 6px;
-  background: var(--neutral-0, #fff);
+  gap: 6px;
+}
+.modeSelect {
+  width: 82px;
+  flex: 0 0 82px;
+}
+.valueInput,
+.alphaField {
+  height: 32px;
+  box-sizing: border-box;
+  background: var(--neutral-0);
   border: 0.5px solid var(--neutral-150);
   border-radius: 6px;
-  transition: border-color .15s, box-shadow .15s;
-}
-.hexField:focus-within {
-  border-color: var(--primary-300);
-  box-shadow: 0 0 0 2px rgba(140, 90, 226, 0.12);
-}
-.hexHash {
   font-size: 12px;
-  color: var(--neutral-200);
-  margin-right: 2px;
+  color: var(--neutral-400);
+  transition:
+    border-color var(--duration-fast) var(--ease-hover),
+    box-shadow var(--duration-fast) var(--ease-hover);
 }
-.hexInput {
+.valueInput {
   flex: 1;
+  min-width: 0;
+  padding: 0 8px;
+  outline: none;
+  letter-spacing: 0.2px;
+}
+.valueInput:focus,
+.alphaField:focus-within {
+  border-color: var(--primary-300);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-300) 12%, transparent);
+}
+.alphaField {
+  display: flex;
+  align-items: center;
+  flex: 0 0 58px;
+  padding: 0 6px 0 4px;
+}
+.alphaInput {
+  width: 100%;
   min-width: 0;
   border: none;
   outline: none;
   background: transparent;
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  color: var(--neutral-400);
-  text-transform: uppercase;
-  letter-spacing: 0.2px;
+  font: inherit;
+  color: inherit;
+  text-align: right;
 }
-
-.rgbField {
-  display: flex;
-  gap: 4px;
-  flex: 1.4;
-  min-width: 0;
-}
-.rgbInput {
-  flex: 1;
-  min-width: 0;
-  height: 28px;
-  padding: 0 4px;
-  text-align: center;
-  border: 0.5px solid var(--neutral-150);
-  border-radius: 6px;
-  background: var(--neutral-0, #fff);
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  color: var(--neutral-400);
-  outline: none;
-  transition: border-color .15s, box-shadow .15s;
-}
-.rgbInput:focus {
-  border-color: var(--primary-300);
-  box-shadow: 0 0 0 2px rgba(140, 90, 226, 0.12);
+.alphaSuffix {
+  margin-left: 3px;
+  color: var(--neutral-200);
+  font-size: 11px;
 }
 
 /* ── Variables / preset swatches ─────────────────────────────────────── */
+/* Label and grid are one unit with their own tighter rhythm, so the label
+   hugs its swatches instead of floating between two sections. */
+.swatchSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 .sectionLabel {
   font-family: 'Inter', sans-serif;
   font-size: 11px;
   font-weight: 500;
+  line-height: 1;
   color: var(--neutral-300);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  margin-top: 2px;
+  letter-spacing: 0.2px;
 }
 
+/* Fixed 8-column grid: Recently used and Variables share one column ruler,
+   so their swatches line up vertically no matter how many each holds. */
 .swatchGrid {
   display: grid;
-  grid-template-columns: repeat(9, 1fr);
-  gap: 4px;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 5px;
 }
 .swatch {
   width: 100%;
   aspect-ratio: 1 / 1;
-  border-radius: 4px;
+  border-radius: 5px;
   border: 0.5px solid var(--neutral-150);
   background: transparent;
   cursor: pointer;
   padding: 0;
-  transition: transform .1s;
+  transition:
+    transform var(--duration-instant) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
 }
-.swatch:hover { transform: scale(1.06); }
+.swatch:hover {
+  transform: scale(1.12);
+  border-color: var(--neutral-200);
+  box-shadow: var(--shadow-card);
+}
+.swatch:active { transform: scale(0.92); }
 
 /* ── Gradient picker ─────────────────────────────────────────────────── */
 .gradientPicker {
@@ -220,8 +332,13 @@
   border-radius: 6px;
   cursor: pointer;
   color: var(--neutral-400);
+  transition:
+    background-color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover),
+    transform var(--duration-instant) var(--ease-out);
 }
 .iconBtn:hover { background: var(--neutral-50); }
+.iconBtn:active { transform: scale(0.94); }
 
 .gradientPreview {
   width: 100%;
@@ -234,6 +351,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  /* Keeps the row's rhythm even though the slider itself is only 16px. */
+  min-height: 20px;
 }
 .fieldLabel {
   font-family: 'Inter', sans-serif;
@@ -241,9 +360,11 @@
   color: var(--neutral-400);
   flex-shrink: 0;
 }
+/* Shared Slider (Radix) — the row owns its width, the component owns its look. */
 .angleSlider {
   flex: 1;
-  accent-color: var(--primary-300);
+  min-width: 0;
+  cursor: pointer;
 }
 .angleValue {
   font-family: 'Inter', sans-serif;
@@ -274,6 +395,9 @@
   border: 0.5px solid transparent;
   border-radius: 6px;
   cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-hover),
+    border-color var(--duration-fast) var(--ease-hover);
 }
 .stopRow:hover { background: var(--neutral-100, #ECEEF0); }
 .stopRowActive {
@@ -305,6 +429,9 @@
   border-radius: 4px;
   border: 0.5px solid var(--neutral-150);
   flex-shrink: 0;
+  /* Chips crossfade while the stop's color is being dragged in the inline
+     solid picker, which reads as one continuous edit. */
+  transition: background-color var(--duration-base) var(--ease-hover);
 }
 .stopHexInput {
   flex: 1;
@@ -331,11 +458,18 @@
   border-radius: 50%;
   cursor: pointer;
   color: var(--neutral-300);
+  transition:
+    background-color var(--duration-fast) var(--ease-hover),
+    color var(--duration-fast) var(--ease-hover),
+    opacity var(--duration-fast) var(--ease-hover),
+    transform var(--duration-instant) var(--ease-out);
 }
 .stopRemove:hover:not(:disabled) {
   background: var(--status-error-light);
   color: var(--status-error);
+  transform: scale(1.12);
 }
+.stopRemove:active:not(:disabled) { transform: scale(0.9); }
 .stopRemove:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .activeStopWrap {
@@ -344,4 +478,28 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+/* Reduced motion — fewer and gentler, not zero. Color and opacity fades
+   stay (they carry state); every position/scale move is dropped. */
+@media (prefers-reduced-motion: reduce) {
+  .modeBody { animation: none; }
+
+  .svPointer,
+  .rampThumb {
+    transition: none;
+  }
+
+  .svSquare:hover .svPointer,
+  .svSquare.dragging .svPointer,
+  .ramp:hover .rampThumb,
+  .ramp.dragging .rampThumb,
+  .swatch:hover,
+  .swatch:active,
+  .eyedropperBtn:active,
+  .iconBtn:active,
+  .stopRemove:hover:not(:disabled),
+  .stopRemove:active:not(:disabled) {
+    transform: none;
+  }
 }

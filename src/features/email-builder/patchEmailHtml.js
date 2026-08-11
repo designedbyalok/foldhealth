@@ -2,7 +2,10 @@
 // the builder canvas exactly across all email clients.
 
 import { getFontStack, getGoogleFontsHref, resolveFont, GOOGLE_FONTS } from './googleFonts';
-import { isGradient, firstStopColor } from './colorHelpers';
+import {
+  isGradient, firstStopColor,
+  splitAlpha, withAlpha, hasTranslucentHex, flattenAlpha, toRgbaCss, mapTranslucentHex,
+} from './colorHelpers';
 import { tintSvgMarkup } from './svgTint';
 
 // ── Dark-mode color transforms ──────────────────────────────────────────
@@ -153,10 +156,12 @@ function perSideBorderCss(borderSides) {
   if (!borderSides || !Object.values(borderSides).some(Boolean)) return null;
   const out = {};
   const side = (k) => borderSides[k];
-  if (side('top'))    out['border-top']    = `${side('top').width || 1}px ${side('top').style || 'solid'} ${side('top').color || '#3A485F'}`;
-  if (side('right'))  out['border-right']  = `${side('right').width || 1}px ${side('right').style || 'solid'} ${side('right').color || '#3A485F'}`;
-  if (side('bottom')) out['border-bottom'] = `${side('bottom').width || 1}px ${side('bottom').style || 'solid'} ${side('bottom').color || '#3A485F'}`;
-  if (side('left'))   out['border-left']   = `${side('left').width || 1}px ${side('left').style || 'solid'} ${side('left').color || '#3A485F'}`;
+  // border shorthand: alpha can't ride inside the shorthand for Outlook, so
+  // every side flattens to opaque before being stitched in.
+  if (side('top'))    out['border-top']    = `${side('top').width || 1}px ${side('top').style || 'solid'} ${opaqueColor(side('top').color || '#3A485F')}`;
+  if (side('right'))  out['border-right']  = `${side('right').width || 1}px ${side('right').style || 'solid'} ${opaqueColor(side('right').color || '#3A485F')}`;
+  if (side('bottom')) out['border-bottom'] = `${side('bottom').width || 1}px ${side('bottom').style || 'solid'} ${opaqueColor(side('bottom').color || '#3A485F')}`;
+  if (side('left'))   out['border-left']   = `${side('left').width || 1}px ${side('left').style || 'solid'} ${opaqueColor(side('left').color || '#3A485F')}`;
   return out;
 }
 
@@ -205,6 +210,57 @@ function nl2br(s) {
   return esc(s).replace(/\n/g, '<br/>');
 }
 
+// ── Translucent colors for email ────────────────────────────────────────
+// The builder stores opacity as an 8-digit hex (#RRGGBBAA). No mail client
+// worth targeting reads that, and Word-engine Outlook (2007–2019, 365
+// desktop) discards any declaration it can't parse — including rgba() — so
+// the element ends up with no color at all rather than a wrong one.
+//
+// Three strategies, by where the color sits:
+//   • a standalone color property → emit twice, opaque hex first as the
+//     Outlook fallback, then rgba() which every modern client prefers
+//   • background-image / background → substitute rgba(); only gradient-
+//     capable clients render these and all of them understand rgba
+//   • anything else (border shorthands, SVG attributes) → flatten to an
+//     opaque hex, because a dropped shorthand would take the width and
+//     style down with it
+//
+// Flattening composites onto white: emails sit on a light canvas by default,
+// and the fallback only has to be plausible for the one engine that needs it.
+const DUAL_DECL_PROPS = new Set([
+  'color', 'background-color', 'border-color', 'outline-color',
+  'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color',
+  '-webkit-text-fill-color',
+]);
+const RGBA_ONLY_PROPS = new Set(['background-image', 'background']);
+
+function emailSafeDecls(prop, value) {
+  const css = String(value).replace(/"/g, "'");
+  if (!hasTranslucentHex(css)) return [`${prop}:${css}`];
+  if (DUAL_DECL_PROPS.has(prop)) {
+    return [
+      `${prop}:${mapTranslucentHex(css, (hex) => flattenAlpha(hex))}`,
+      `${prop}:${mapTranslucentHex(css, (hex) => toRgbaCss(hex))}`,
+    ];
+  }
+  if (RGBA_ONLY_PROPS.has(prop)) {
+    return [`${prop}:${mapTranslucentHex(css, (hex) => toRgbaCss(hex))}`];
+  }
+  return [`${prop}:${mapTranslucentHex(css, (hex) => flattenAlpha(hex))}`];
+}
+
+// For colors interpolated into raw markup rather than a style object.
+// `opaqueColor` is for shorthands, SVG fills and HTML color attributes;
+// `colorDecl` writes the same fallback-then-rgba pair as the serializer.
+function opaqueColor(value) {
+  return mapTranslucentHex(value ?? '', (hex) => flattenAlpha(hex));
+}
+
+function colorDecl(prop, value) {
+  if (value == null || value === '') return '';
+  return emailSafeDecls(prop, value).join(';');
+}
+
 function styleStr(obj) {
   // The serialised string lives inside a double-quoted `style="…"` HTML
   // attribute, so values that contain literal `"` (e.g. font stacks like
@@ -213,7 +269,8 @@ function styleStr(obj) {
   const parts = [];
   for (const [k, v] of Object.entries(obj)) {
     if (v == null || v === '') continue;
-    parts.push(`${k.replace(/([A-Z])/g, '-$1').toLowerCase()}:${String(v).replace(/"/g, "'")}`);
+    const prop = k.replace(/([A-Z])/g, '-$1').toLowerCase();
+    for (const decl of emailSafeDecls(prop, v)) parts.push(decl);
   }
   return parts.join(';');
 }
@@ -250,6 +307,10 @@ function renderBlock(doc, id) {
       // webmail) support background-clip: text. Legacy clients ignore the
       // clip and fall back to the first stop's solid color via `color:`.
       const textGradient = isGradient(style.color);
+      // firstStopColor and gradient strings can both carry 8-digit hex from
+      // the picker. The `color` property gets the dual fallback+rgba treatment
+      // via styleStr, so pass the raw translucent value in — the gradient
+      // background-image below routes through the rgba-aware substitute.
       const textColor = textGradient ? firstStopColor(style.color) : (style.color || 'inherit');
       // Background: gradients render via background-image (the existing
       // formatBackgroundImage path). Solids use background-color.
@@ -293,7 +354,7 @@ function renderBlock(doc, id) {
       if (perSideText) {
         Object.assign(s, perSideText);
       } else if (style.borderWidth) {
-        s.border = `${style.borderWidth}px ${style.borderStyle || 'solid'} ${style.borderColor || '#3A485F'}`;
+        s.border = `${style.borderWidth}px ${style.borderStyle || 'solid'} ${opaqueColor(style.borderColor || '#3A485F')}`;
       }
       if (style.borderRadius) s['border-radius'] = `${style.borderRadius}px`;
       if (isList) s['list-style-position'] = 'inside';
@@ -328,7 +389,7 @@ function renderBlock(doc, id) {
       const presetRadius = { rectangle: 0, rounded: 6, pill: 9999 };
       const sz = sizeStyles[props.size || 'medium'] || sizeStyles.medium;
       const radius = style.borderRadius ?? presetRadius[props.buttonStyle || 'rectangle'] ?? 0;
-      const border = props.borderWidth ? `${props.borderWidth}px solid ${props.borderColor || 'transparent'}` : 'none';
+      const border = props.borderWidth ? `${props.borderWidth}px solid ${opaqueColor(props.borderColor || 'transparent')}` : 'none';
       const wrapS = { margin: '0', padding, 'text-align': style.blockAlign || style.textAlign || 'center' };
       const btnS = {
         display: 'inline-block',
@@ -406,7 +467,9 @@ function renderBlock(doc, id) {
 
     case 'Divider': {
       const thickness = props.lineHeight || 1;
-      const color = props.lineColor || '#E1E4EA';
+      // Stitched into `border` and SVG `stroke`/`fill` shorthands — neither
+      // takes an 8-digit hex, so flatten once at the top.
+      const color = opaqueColor(props.lineColor || '#E1E4EA');
       const lineStyle = props.lineStyle || 'solid';
       const endLeft = props.endLeft || 'none';
       const endRight = props.endRight || 'none';
@@ -449,7 +512,7 @@ function renderBlock(doc, id) {
         'border-radius': style.borderRadius ? `${style.borderRadius}px` : '',
         // Container border — per-side overrides uniform when present.
         ...(perSideC || (style.borderWidth
-          ? { border: `${style.borderWidth}px ${style.borderStyle || 'solid'} ${style.borderColor || '#3A485F'}` }
+          ? { border: `${style.borderWidth}px ${style.borderStyle || 'solid'} ${opaqueColor(style.borderColor || '#3A485F')}` }
           : {})),
       };
       applyBgColor(s, style.backgroundColor);
@@ -610,12 +673,15 @@ function renderBlock(doc, id) {
       const stripedRows = props.stripedRows;
       const stripedColor = props.stripedColor || '#F6F4FF';
 
-      const cellS = `padding:8px 12px;border:1px solid ${borderColor};font-size:${style.fontSize || 13}px;font-family:inherit`;
-      const headerS = `${cellS};background-color:${headerBg};color:${headerColor};font-weight:600`;
+      // Header/border/stripe hexes ride inside CSS declarations. Every
+      // shorthand or attribute-embedded slot flattens; standalone color
+      // properties get the dual fallback + rgba() pair via colorDecl.
+      const cellS = `padding:8px 12px;border:1px solid ${opaqueColor(borderColor)};font-size:${style.fontSize || 13}px;font-family:inherit`;
+      const headerS = `${cellS};${colorDecl('background-color', headerBg)};${colorDecl('color', headerColor)};font-weight:600`;
 
       let thead = '<tr>' + columns.map(c => `<th style="${headerS}">${esc(c.header)}</th>`).join('') + '</tr>';
       let tbody = rows.map((row, ri) => {
-        const bg = stripedRows && ri % 2 === 1 ? `background-color:${stripedColor};` : '';
+        const bg = stripedRows && ri % 2 === 1 ? `${colorDecl('background-color', stripedColor)};` : '';
         return '<tr>' + columns.map(c => `<td style="${cellS};${bg}">${esc(row[c.key] || '')}</td>`).join('') + '</tr>';
       }).join('');
 
@@ -630,7 +696,8 @@ function renderBlock(doc, id) {
 
 function buildDividerSvg(props) {
   const thickness = props.lineHeight || 1;
-  const color = props.lineColor || '#E1E4EA';
+  // SVG stroke/fill can't take an 8-digit hex on all engines; flatten first.
+  const color = opaqueColor(props.lineColor || '#E1E4EA');
   const lineStyle = props.lineStyle || 'solid';
   const endLeft = props.endLeft || 'none';
   const endRight = props.endRight || 'none';

@@ -1334,7 +1334,9 @@
   border: 0.5px solid var(--neutral-150);
   border-radius: 6px;
   box-sizing: border-box;
-  transition: border-color .15s, box-shadow .15s;
+  transition:
+    border-color var(--duration-fast) var(--ease-hover),
+    box-shadow var(--duration-fast) var(--ease-hover);
 }
 
 .colorInputWrap:hover { border-color: var(--neutral-200); }
@@ -1349,6 +1351,11 @@
   border-radius: 50%;
   border: 0.5px solid var(--neutral-150);
   flex-shrink: 0;
+  /* The dot crossfades to the new color as it is being picked, so the field
+     tracks the popover live instead of snapping per commit. */
+  transition:
+    background-color var(--duration-base) var(--ease-hover),
+    border-color var(--duration-base) var(--ease-hover);
 }
 
 .colorHex {
@@ -1385,6 +1392,14 @@
   border: none;
   padding: 0;
   cursor: pointer;
+  transition: transform var(--duration-instant) var(--ease-out);
+}
+.colorDotBtn:hover { transform: scale(1.1); }
+.colorDotBtn:active { transform: scale(0.9); }
+
+@media (prefers-reduced-motion: reduce) {
+  .colorDotBtn:hover,
+  .colorDotBtn:active { transform: none; }
 }
 
 /* Portalled ColorPicker popover. Positioned in document coordinates by
@@ -1393,6 +1408,31 @@
 .colorPickerPortal {
   position: fixed;
   z-index: 1000;
+  opacity: 0;
+  /* Grows out of the field's edge — origin follows the flip in ColorInput.
+     Transition-driven rather than a keyframe so an early re-open interrupts
+     the exit instead of queueing behind it. */
+  transform: scale(0.96) translateY(-4px);
+  transform-origin: top right;
+  transition:
+    opacity var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+.colorPickerPortal[data-placement='top'] {
+  transform: scale(0.96) translateY(4px);
+  transform-origin: bottom right;
+}
+.colorPickerPortalOpen,
+.colorPickerPortalOpen[data-placement='top'] {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .colorPickerPortal,
+  .colorPickerPortal[data-placement='top'] {
+    transform: none;
+  }
 }
 
 /* Variable popover from ColorInput */
