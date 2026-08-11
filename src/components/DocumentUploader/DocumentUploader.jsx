@@ -68,20 +68,24 @@ export function DocumentUploader({
 
   // Simulated upload — progress 0→100 in ~1.2s, then phase='ready'.
   useEffect(() => {
-    if (phase !== 'uploading') return;
+    if (phase !== 'uploading') return undefined;
     let p = 0;
     const id = setInterval(() => {
       p += 8 + Math.random() * 14;
-      if (p >= 100) {
-        setProgress(100);
-        clearInterval(id);
-        setTimeout(() => setPhase('ready'), 120);
-      } else {
-        setProgress(p);
-      }
+      setProgress(p >= 100 ? 100 : p);
+      if (p >= 100) clearInterval(id);
     }, 80);
     return () => clearInterval(id);
   }, [phase]);
+
+  // The hand-off to 'ready' lives in its own effect so its timer is created and
+  // cleared in the same scope — spawned inside the interval callback above, it
+  // outlived the effect's cleanup and could fire after unmount.
+  useEffect(() => {
+    if (phase !== 'uploading' || progress < 100) return undefined;
+    const t = setTimeout(() => setPhase('ready'), 120);
+    return () => clearTimeout(t);
+  }, [phase, progress]);
 
   const reset = () => {
     setFile(null); setProgress(0); setError(''); setCaption('');
