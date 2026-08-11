@@ -203,7 +203,8 @@ export function TaskRow({ task, onToggle, onTaskClick, hideAssignedTo, hideMembe
       {!hideMember && (
         <div className={styles.cellMember}>
           <Icon name="solar:user-linear" size={14} color="var(--neutral-300)" />
-          <span
+          <button
+            type="button"
             className={styles.memberLink}
             onClick={(e) => {
               e.stopPropagation();
@@ -214,7 +215,7 @@ export function TaskRow({ task, onToggle, onTaskClick, hideAssignedTo, hideMembe
             }}
           >
             {task.member}
-          </span>
+          </button>
         </div>
       )}
 

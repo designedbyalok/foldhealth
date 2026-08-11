@@ -43,7 +43,6 @@ export function FilterNameDialog({
             <span className={styles.required} aria-hidden="true" />
           </span>
           <input
-            autoFocus
             type="text"
             value={name}
             placeholder="Enter Filter Name"

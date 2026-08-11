@@ -101,7 +101,11 @@ export function Drawer({
 
   return createPortal(
     <>
-      <div className={styles.overlay} data-closing={closing ? 'true' : 'false'} onClick={requestClose} />
+      {/* Backdrop is a mouse-only convenience for closing. It is hidden from
+          assistive tech on purpose — the header CloseButton is the keyboard and
+          screen-reader path, so the backdrop must not appear as a second,
+          unlabelled control. */}
+      <div className={styles.overlay} data-closing={closing ? 'true' : 'false'} onClick={requestClose} aria-hidden="true" />
       <div ref={panelRef} className={`${styles.panel}${className ? ` ${className}` : ''}`} data-closing={closing ? 'true' : 'false'} style={panelStyle}>
         <div className={styles.header} style={headerStyle}>
           <h2 className={styles.headerTitle} style={titleStyle}>{title}</h2>

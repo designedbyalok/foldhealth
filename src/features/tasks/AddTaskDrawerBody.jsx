@@ -61,7 +61,6 @@ export function AddTaskDrawerBody({
           placeholder="Enter task name..."
           value={name}
           onChange={e => setName(e.target.value)}
-          autoFocus
         />
         <div className={styles.fieldHelper}>
           <span className={styles.fieldError}>

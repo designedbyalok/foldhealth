@@ -81,7 +81,6 @@ function FaqDrawer({ mode, faq, onClose, onSave, saving }) {
           placeholder="e.g. What is Transitional Care Management?"
           value={form.question}
           onChange={e => setForm(f => ({ ...f, question: e.target.value }))}
-          autoFocus
           onFocus={e => e.target.style.borderColor = 'var(--primary-200)'}
           onBlur={e => e.target.style.borderColor = 'var(--neutral-150)'}
         />

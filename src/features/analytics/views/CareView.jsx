@@ -139,14 +139,14 @@ function ProductivityTab({ stripMetrics, cmRows, prodByCmLoading, showToast, edi
   const renderCases = () => (
     <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
       {cases.map((c, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'var(--neutral-0)', border: '1px solid var(--neutral-150)', borderRadius: 8, flex: '1 1 200px', cursor: 'pointer' }}
+        <button key={i} type="button" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'var(--neutral-0)', border: '1px solid var(--neutral-150)', borderRadius: 8, flex: '1 1 200px', cursor: 'pointer', textAlign: 'left' }}
           onClick={() => c.label === 'Overdue Cases' ? showToast?.('Viewing 127 overdue cases') : showToast?.('Loading case list...')}
         >
           <div>
             <div style={{ fontSize: 24, fontWeight: 500, color: c.color }}>{c.value}</div>
             <div style={{ fontSize: 12, color: 'var(--neutral-200)' }}>{c.label}</div>
           </div>
-        </div>
+        </button>
       ))}
     </div>
   );
@@ -279,14 +279,14 @@ function BottlenecksTab({ showToast, editing = false, resetTick = 0 }) {
   const renderAlerts = () => (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
       {alerts.map((a, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', background: 'var(--neutral-0)', border: '1px solid var(--neutral-150)', borderRadius: 8, cursor: 'pointer' }}
+        <button key={i} type="button" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', background: 'var(--neutral-0)', border: '1px solid var(--neutral-150)', borderRadius: 8, cursor: 'pointer', textAlign: 'left' }}
           onClick={() => showToast?.(`Viewing ${a.n} ${a.label.toLowerCase()}`)}
         >
           <div>
             <div style={{ fontSize: 24, fontWeight: 500, color: a.color }}>{a.n}</div>
             <div style={{ fontSize: 12, color: 'var(--neutral-200)' }}>{a.label}</div>
           </div>
-        </div>
+        </button>
       ))}
     </div>
   );
@@ -321,7 +321,7 @@ const StaffCard = ({ staff, isBottom, showToast }) => {
   const rkColor = isBottom ? 'var(--status-warning)' : 'var(--status-success)';
   const trendColor = staff.trend === '↑' ? 'var(--status-success)' : staff.trend === '↓' ? 'var(--status-error)' : 'var(--neutral-200)';
   return (
-    <div style={{ padding: '10px 12px', background: bg, borderRadius: 8, marginBottom: 6, cursor: 'pointer' }}
+    <button type="button" style={{ display: 'block', width: '100%', padding: '10px 12px', background: bg, borderRadius: 8, marginBottom: 6, cursor: 'pointer', textAlign: 'left' }}
       onClick={() => showToast?.(`Viewing ${staff.name} detail`)}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
         <div style={{ width: 28, height: 28, borderRadius: '50%', background: rkColor, color: 'var(--neutral-0)', fontSize: 12, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>#{staff.rank}</div>
@@ -346,7 +346,7 @@ const StaffCard = ({ staff, isBottom, showToast }) => {
         </div>
       </div>
       {isBottom && <div style={{ fontSize: 12, color: 'var(--status-warning)', marginTop: 6 }}>Low contact rate &middot; TCM gaps &middot; High-risk challenges</div>}
-    </div>
+    </button>
   );
 };
 
