@@ -97,7 +97,7 @@ function ContactField({ contact }) {
  */
 export function ProfileTab({ patient }) {
   const patientId = patient?.id;
-  const p360Profile = useAppStore((s) => s.p360Profile);
+  const p360Profile = useAppStore((s) => (patientId ? s.p360ProfilesById[patientId] : null));
   const p360Loading = useAppStore((s) => s.p360Loading);
   const fetchP360Profile = useAppStore((s) => s.fetchP360Profile);
   const openEdit = useAppStore((s) => s.openPatientEdit);

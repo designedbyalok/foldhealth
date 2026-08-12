@@ -222,6 +222,30 @@ function generateProfile(patient) {
 
 const JSONB_COLS = new Set(['programs', 'condition_tags', 'languages', 'emails', 'plan_numbers_primary', 'plan_numbers_secondary', 'chronic_conditions', 'recent_vitals', 'opted_out_comms', 'family_members', 'care_team', 'upcoming_appointments']);
 
+async function upsertProfile(db, patientId, profile) {
+  const cols = Object.keys(profile);
+  const params = [patientId, ...cols.map(c => JSONB_COLS.has(c) ? JSON.stringify(profile[c]) : profile[c])];
+  const placeholders = cols.map((c, i) => JSONB_COLS.has(c) ? `$${i + 2}::jsonb` : `$${i + 2}`);
+  // Only unfilled fields get filled — hand-crafted rows survive re-seeds.
+  // "Unfilled" = NULL, or (for jsonb) an empty array left by column defaults.
+  const setClause = cols.map(c => JSONB_COLS.has(c)
+    ? `${c} = case when p360_profiles.${c} is null or p360_profiles.${c} = '[]'::jsonb then excluded.${c} else p360_profiles.${c} end`
+    : `${c} = coalesce(p360_profiles.${c}, excluded.${c})`);
+  const { rows } = await db.query(
+    `insert into p360_profiles (patient_id, ${cols.join(', ')})
+     values ($1, ${placeholders.join(', ')})
+     on conflict (patient_id) do update
+     set ${setClause.join(', ')}
+     returning (xmax = 0) as was_insert`,
+    params,
+  );
+  return rows[0]?.was_insert;
+}
+
+// Banner fields carried over when an All Patients row mirrors a patients-table
+// member — copying keeps the two entry points showing identical data.
+const BANNER_COLS = ['profile_type', 'health_plan_name', 'health_plan_desc', 'consent_given', 'consent_total', 'acuity', 'raf_score', 'raf_change', 'next_appointment_date', 'last_contact_type', 'last_contact_days', 'programs', 'patient_type', 'condition_tags', 'location', 'location_count', 'languages', 'language_preference', 'emails', 'plan_numbers_primary', 'plan_numbers_secondary', 'chronic_conditions', 'recent_vitals', 'opted_out_comms', 'family_caregiver_count', 'family_members', 'care_team', 'care_team_profile_type', 'upcoming_appointments'];
+
 async function main() {
   console.log('\n🌱  P360 banner seed\n');
   const db = new pg.Client({ host: poolerHost, port: 5432, database: 'postgres', user: poolerUser, password: DB_PASSWORD, ssl: { rejectUnauthorized: false } });
@@ -233,26 +257,56 @@ async function main() {
   let inserted = 0, merged = 0;
   for (const patient of patients) {
     const profile = generateProfile(patient);
-    const cols = Object.keys(profile);
-    const params = [patient.id, ...cols.map(c => JSONB_COLS.has(c) ? JSON.stringify(profile[c]) : profile[c])];
-    const placeholders = cols.map((c, i) => JSONB_COLS.has(c) ? `$${i + 2}::jsonb` : `$${i + 2}`);
-    // Only unfilled fields get filled — hand-crafted rows survive re-seeds.
-    // "Unfilled" = NULL, or (for jsonb) an empty array left by column defaults.
-    const setClause = cols.map(c => JSONB_COLS.has(c)
-      ? `${c} = case when p360_profiles.${c} is null or p360_profiles.${c} = '[]'::jsonb then excluded.${c} else p360_profiles.${c} end`
-      : `${c} = coalesce(p360_profiles.${c}, excluded.${c})`);
-    const { rows } = await db.query(
-      `insert into p360_profiles (patient_id, ${cols.join(', ')})
-       values ($1, ${placeholders.join(', ')})
-       on conflict (patient_id) do update
-       set ${setClause.join(', ')}
-       returning (xmax = 0) as was_insert`,
-      params,
-    );
-    rows[0]?.was_insert ? inserted++ : merged++;
+    (await upsertProfile(db, patient.id, profile)) ? inserted++ : merged++;
     console.log(`  ✓ ${patient.id.padEnd(4)} ${patient.name.padEnd(20)} ${profile.acuity.padEnd(12)} RAF ${profile.raf_score}`);
   }
-  console.log(`\nDone — ${inserted} inserted, ${merged} merged (NULL fields filled, existing values kept).\n`);
+
+  // ── All Patients union members ────────────────────────────────────────────
+  // The banner is keyed by the id the surface passes (all_patients.id for the
+  // All Patients worklist), so those members need their own p360 rows too.
+  // Members mirrored from the patients table get an exact copy of that
+  // profile; the rest are generated, with the row's real contact/clinical
+  // data (email, phone, city/state, chronic conditions, PCP) taking priority
+  // over generated values.
+  const { rows: apMembers } = await db.query(
+    `select id, name, gender, age, language, member_id, email, phone, city, state,
+            chronic_conditions, pcp, pcp_initials
+       from all_patients order by id`,
+  );
+  const { rows: mirrored } = await db.query(
+    `select a.id as ap_id, pp.*
+       from all_patients a
+       join patients p on p.member_id::text = a.member_id::text
+       join p360_profiles pp on pp.patient_id = p.id`,
+  );
+  const mirroredByApId = new Map(mirrored.map(r => [r.ap_id, r]));
+  console.log(`\n${apMembers.length} all_patients members (${mirroredByApId.size} mirror a patients-table row)`);
+
+  let apInserted = 0, apMerged = 0;
+  for (const m of apMembers) {
+    let profile;
+    const source = mirroredByApId.get(m.id);
+    if (source) {
+      profile = Object.fromEntries(BANNER_COLS.map(c => [c, source[c]]));
+    } else {
+      profile = generateProfile(m);
+      if (m.city && m.state) profile.location = `${m.city}, ${m.state}`;
+      if (m.email) profile.emails = [m.email];
+      if (m.phone) profile.plan_numbers_primary = [m.phone];
+      if (m.chronic_conditions?.length) {
+        profile.chronic_conditions = m.chronic_conditions;
+        profile.condition_tags = [...m.chronic_conditions.slice(0, 2), ...profile.condition_tags.slice(-1)];
+      }
+      if (m.pcp) {
+        const pcpInitials = m.pcp_initials || initialsOf(m.pcp);
+        profile.care_team = [{ name: m.pcp, role: 'Plan PCP', title: 'Physician', initials: pcpInitials }, ...profile.care_team.slice(1)];
+      }
+    }
+    (await upsertProfile(db, m.id, profile)) ? apInserted++ : apMerged++;
+  }
+  console.log(`  ✓ all_patients: ${apInserted} inserted, ${apMerged} merged`);
+
+  console.log(`\nDone — patients: ${inserted} inserted / ${merged} merged; all_patients: ${apInserted} inserted / ${apMerged} merged.\n`);
   await db.end();
 }
 

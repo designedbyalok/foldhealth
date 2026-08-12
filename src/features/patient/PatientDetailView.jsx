@@ -54,12 +54,14 @@ export function PatientDetailView() {
   const ccmWorklistMembers = useAppStore(s => s.ccmWorklistMembers);
   const snpWorklistMembers = useAppStore(s => s.snpWorklistMembers);
   const hedisMembers = useAppStore(s => s.hedisMembers);
+  const allPatients = useAppStore(s => s.allPatients);
   const fetchPatients = useAppStore(s => s.fetchPatients);
   const fetchHccMembers = useAppStore(s => s.fetchHccMembers);
   const fetchAwvMembers = useAppStore(s => s.fetchAwvMembers);
   const fetchCcmWorklistMembers = useAppStore(s => s.fetchCcmWorklistMembers);
   const fetchSnpWorklistMembers = useAppStore(s => s.fetchSnpWorklistMembers);
   const fetchHedisMembers = useAppStore(s => s.fetchHedisMembers);
+  const fetchAllPatients = useAppStore(s => s.fetchAllPatients);
   const navigateBackToWorklist = useAppStore(s => s.navigateBackToWorklist);
   // Active profile tab is stored on the store so callers (e.g. the CCM
   // worklist's "View billing" button) can deep-link into a specific tab.
@@ -106,7 +108,8 @@ export function PatientDetailView() {
     || worklistMemberToPatient(awvMembers?.find(matchesId))
     || worklistMemberToPatient(ccmWorklistMembers?.find(matchesId))
     || worklistMemberToPatient(snpWorklistMembers?.find(matchesId))
-    || worklistMemberToPatient(hedisMembers?.find(matchesId));
+    || worklistMemberToPatient(hedisMembers?.find(matchesId))
+    || worklistMemberToPatient(allPatients?.find(matchesId));
 
   // The app assumes we're always inside a real patient's record — if the id
   // doesn't resolve to a patient (e.g. a stale hash from a deleted row, or a
@@ -116,7 +119,7 @@ export function PatientDetailView() {
   // finished yet and a deep-link URL is still waiting for its data.
   const anySliceLoaded = patients.length > 0 || hccMembers.length > 0 || (awvMembers?.length || 0) > 0
     || (ccmWorklistMembers?.length || 0) > 0 || (snpWorklistMembers?.length || 0) > 0
-    || (hedisMembers?.length || 0) > 0;
+    || (hedisMembers?.length || 0) > 0 || (allPatients?.length || 0) > 0;
 
   // Cold-refresh into a patient URL (e.g. #/population/toc/patient/10003)
   // arrives with every worklist slice empty because no table has mounted
@@ -133,6 +136,7 @@ export function PatientDetailView() {
     if ((ccmWorklistMembers?.length || 0) === 0) fetchCcmWorklistMembers?.();
     if ((snpWorklistMembers?.length || 0) === 0) fetchSnpWorklistMembers?.();
     if ((hedisMembers?.length || 0) === 0) fetchHedisMembers?.();
+    if ((allPatients?.length || 0) === 0) fetchAllPatients?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPatientId, patient]);
   useEffect(() => {

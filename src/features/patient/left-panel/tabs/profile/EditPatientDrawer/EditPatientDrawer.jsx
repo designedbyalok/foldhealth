@@ -218,7 +218,7 @@ export function EditPatientDrawer({
 }) {
   const isInvite = mode === 'invite';
   const patientId = patient?.id;
-  const p360Profile = useAppStore((s) => s.p360Profile);
+  const p360Profile = useAppStore((s) => (patientId ? s.p360ProfilesById[patientId] : null));
   const updateP360Profile = useAppStore((s) => s.updateP360Profile);
   const updatePatientCore = useAppStore((s) => s.updatePatientCore);
   const invitePatient = useAppStore((s) => s.invitePatient);

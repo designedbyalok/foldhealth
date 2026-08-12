@@ -39,7 +39,7 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
     return () => ro.disconnect();
   }, [measureBanner]);
 
-  const p360Profile = useAppStore(s => s.p360Profile);
+  const p360Profile = useAppStore(s => (patient?.id ? s.p360ProfilesById[patient.id] : null));
   const fetchP360Profile = useAppStore(s => s.fetchP360Profile);
   useEffect(() => { if (patient?.id) fetchP360Profile(patient.id); }, [patient?.id, fetchP360Profile]);
 

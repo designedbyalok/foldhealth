@@ -1120,8 +1120,12 @@ export const useAppStore = create((set, get) => ({
     get().fetchQuickNoteHistory();
   },
 
-  // P360 Profile data
+  // P360 Profile data. `p360Profile` is the last fetch (legacy singleton);
+  // `p360ProfilesById` is keyed per patient so two banners mounted at once
+  // (profile page + Quick View drawer over it) each show their own patient
+  // instead of whichever fetch resolved last.
   p360Profile: null,
+  p360ProfilesById: {},
   p360Loading: false,
   fetchP360Profile: async (patientId) => {
     set({ p360Loading: true });
@@ -1131,13 +1135,10 @@ export const useAppStore = create((set, get) => ({
         .select('*')
         .eq('patient_id', patientId)
         .maybeSingle();
-      if (!error && data) {
-        set({ p360Profile: data });
-      } else {
-        set({ p360Profile: null });
-      }
+      const profile = !error && data ? data : null;
+      set(s => ({ p360Profile: profile, p360ProfilesById: { ...s.p360ProfilesById, [patientId]: profile } }));
     } catch {
-      set({ p360Profile: null });
+      set(s => ({ p360Profile: null, p360ProfilesById: { ...s.p360ProfilesById, [patientId]: null } }));
     }
     set({ p360Loading: false });
   },
@@ -6128,11 +6129,15 @@ export const useAppStore = create((set, get) => ({
       gender: r.gender,
       age: r.age,
       memberId: r.member_id,
+      dob: r.dob,
       email: r.email,
       phone: r.phone,
       language: r.language || 'en',
       city: r.city,
       state: r.state,
+      zip: r.zip,
+      ipa: r.ipa,
+      hpCode: r.hp_code,
       tags: r.tags || [],
       groupNumber: r.group_number,
       familyId: r.family_id,
