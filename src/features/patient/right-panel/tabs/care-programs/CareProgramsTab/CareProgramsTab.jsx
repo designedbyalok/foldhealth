@@ -9,6 +9,7 @@ import { CareProgramsTabTable } from './CareProgramsTabTable';
 import { CareProgramsTabToolbar, CareProgramsTabMenus } from './CareProgramsTabToolbar';
 import {
   matchesTab,
+  programUrlKey,
   EMPTY_FILTERS,
   SUB_STATUS_OPTIONS,
   DATE_RANGE_OPTIONS,
@@ -22,7 +23,6 @@ function EmptyState() {
 
 export function CareProgramsTab() {
   const [activeSubTab, setActiveSubTab] = useState('All');
-  const [selectedProgram, setSelectedProgram] = useState(null);
   const [searchMode, setSearchMode] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -43,6 +43,9 @@ export function CareProgramsTab() {
   const fetchCareProgramsForPatient = useAppStore(s => s.fetchCareProgramsForPatient);
   const pendingCareProgramCode = useAppStore(s => s.pendingCareProgramCode);
   const clearPendingCareProgramCode = useAppStore(s => s.clearPendingCareProgramCode);
+  const selectedCareProgramKey = useAppStore(s => s.selectedCareProgramKey);
+  const openCareProgram = useAppStore(s => s.openCareProgram);
+  const closeCareProgram = useAppStore(s => s.closeCareProgram);
 
   useEffect(() => {
     if (patientId) fetchCareProgramsForPatient(patientId);
@@ -51,6 +54,13 @@ export function CareProgramsTab() {
   const programs = useMemo(
     () => careProgramsByPatient[patientId] || [],
     [careProgramsByPatient, patientId],
+  );
+
+  // The open program is derived from its URL key, so a refresh restores the
+  // detail view as soon as the patient's programs finish loading.
+  const selectedProgram = useMemo(
+    () => (selectedCareProgramKey ? programs.find(p => programUrlKey(p) === selectedCareProgramKey) : null),
+    [programs, selectedCareProgramKey],
   );
 
   useEffect(() => {
@@ -134,11 +144,11 @@ export function CareProgramsTab() {
     if (!pendingProgram) return;
     const t = setTimeout(() => {
       setStartAtFirstStep(pendingProgram.firstStep);
-      setSelectedProgram(pendingProgram.program);
+      openCareProgram(programUrlKey(pendingProgram.program));
       setPendingProgram(null);
     }, 700);
     return () => clearTimeout(t);
-  }, [pendingProgram]);
+  }, [pendingProgram, openCareProgram]);
 
   const visible = useMemo(() => {
     let list = programs;
@@ -173,8 +183,8 @@ export function CareProgramsTab() {
       <ProgramDetailView
         program={selectedProgram}
         startAtFirstStep={startAtFirstStep}
-        onClose={() => setSelectedProgram(null)}
-        onSwitchProgram={setSelectedProgram}
+        onClose={closeCareProgram}
+        onSwitchProgram={(p) => openCareProgram(programUrlKey(p))}
       />
     );
   }

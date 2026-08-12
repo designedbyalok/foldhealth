@@ -2,6 +2,7 @@
  * Hash-based router for the TOC Worklist prototype.
  * Bidirectional sync between URL hash and Zustand store.
  */
+import { PROFILE_TABS } from '../features/patient/data/programActivityMock';
 
 // ── Parse hash into structured route ──
 export function parseHash() {
@@ -16,6 +17,9 @@ export function parseHash() {
     id: segments[3] || null,
     sub: segments[4] || null,
     extra: segments[5] || null,
+    // Deepest patient URLs need a 7th segment:
+    // #/population/<list>/patient/<memberId>/care-programs/<program>/<step>
+    extra2: segments[6] || null,
   };
 }
 
@@ -28,6 +32,37 @@ export function buildHash(...parts) {
 // Every store slice that can back a patient profile view. Order doesn't
 // matter — memberId is unique across the whole set post-unification.
 const PATIENT_SLICES = ['patients', 'hccMembers', 'awvMembers', 'ccmWorklistMembers', 'snpWorklistMembers', 'hedisMembers', 'allPatients'];
+
+// ── Patient profile tab slugs ──
+// The right-panel tab, the open care program, and its active step each get a
+// URL segment so a refresh restores the exact spot:
+//   #/population/<list>/patient/<memberId>[/<tab>[/<program>[/<step>]]]
+// Slugs are derived from PROFILE_TABS so the two lists can't drift.
+const tabSlug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const SLUG_TO_PROFILE_TAB = Object.fromEntries(PROFILE_TABS.map(t => [tabSlug(t), t]));
+
+// Applies the tab/program/step segments of a patient URL onto a `hashToState`
+// updates object. Unknown tab slugs fall back to Overview; program/step ride
+// along only under the Care Programs tab.
+function applyPatientSubRoute(updates, tabSeg, programSeg, stepSeg) {
+  const tab = (tabSeg && SLUG_TO_PROFILE_TAB[tabSeg]) || 'Overview';
+  updates.patientProfileTab = tab;
+  const inPrograms = tab === 'Care Programs';
+  updates.selectedCareProgramKey = inPrograms ? (programSeg || null) : null;
+  updates.careProgramStep = inPrograms ? (stepSeg || null) : null;
+}
+
+// The tab/program/step tail of a patient URL, from store state.
+function patientSubSegments(state) {
+  const tab = state.patientProfileTab || 'Overview';
+  if (tab === 'Overview') return [];
+  const segs = [tabSlug(tab)];
+  if (tab === 'Care Programs' && state.selectedCareProgramKey) {
+    segs.push(state.selectedCareProgramKey);
+    if (state.careProgramStep) segs.push(state.careProgramStep);
+  }
+  return segs;
+}
 
 // Given a store row id, look up its memberId (Fold ID) across every slice.
 // Returns null when no row matches — the caller falls back to the raw id.
@@ -165,15 +200,16 @@ export function stateToHash(state) {
     const memberId = findPatientMemberId(state, state.selectedPatientId);
     const listSlug = LIST_TO_URL[state.activeSubnavList];
     const patientKey = memberId || state.selectedPatientId;
+    const subSegs = patientSubSegments(state);
     // HEDIS keeps its own top-level path (`#/hedis`) — mirror that for the
     // patient URL so it's not double-prefixed with `population`.
     if (state.activeSubnavList === 'HEDIS') {
-      return buildHash('hedis', 'patient', patientKey);
+      return buildHash('hedis', 'patient', patientKey, ...subSegs);
     }
     if (listSlug) {
-      return buildHash('population', listSlug, 'patient', patientKey);
+      return buildHash('population', listSlug, 'patient', patientKey, ...subSegs);
     }
-    return buildHash('population', 'patient', patientKey);
+    return buildHash('population', 'patient', patientKey, ...subSegs);
   }
 
   if (state.activeSubnavList && state.activeSubnavList !== 'TOC') {
@@ -221,9 +257,10 @@ export function hashToState(route, state = null) {
     updates.activeSubnavList = 'HEDIS';
     updates.activeTab = 'toc-worklist';
     updates._subnavNavigated = true;
-    // #/hedis/patient/<memberId> — patient detail from HEDIS
+    // #/hedis/patient/<memberId>[/<tab>[/<program>[/<step>]]]
     if (route.section === 'patient' && route.tab) {
       updates.selectedPatientId = findPatientIdByMemberId(state, route.tab) || route.tab;
+      applyPatientSubRoute(updates, route.id, route.sub, route.extra);
     }
     return updates;
   }
@@ -368,17 +405,19 @@ export function hashToState(route, state = null) {
     'population-groups-dynamic': 'pg:Dynamic'
   };
 
-  // Legacy patient URL: #/population/patient/<id>
+  // Legacy patient URL: #/population/patient/<id>[/<tab>[/<program>[/<step>]]]
   if (route.section === 'patient' && route.tab) {
     updates.selectedPatientId = findPatientIdByMemberId(state, route.tab) || route.tab;
+    applyPatientSubRoute(updates, route.id, route.sub, route.extra);
     return updates;
   }
-  // New patient URL: #/population/<listSlug>/patient/<memberId>
+  // New patient URL: #/population/<listSlug>/patient/<memberId>[/<tab>[/<program>[/<step>]]]
   if (route.section && URL_TO_LIST[route.section] && route.tab === 'patient' && route.id) {
     updates.activeSubnavList = URL_TO_LIST[route.section];
     updates.activeTab = 'toc-worklist';
     updates._subnavNavigated = true;
     updates.selectedPatientId = findPatientIdByMemberId(state, route.id) || route.id;
+    applyPatientSubRoute(updates, route.sub, route.extra, route.extra2);
     return updates;
   }
   updates.selectedPatientId = null;

@@ -28,7 +28,13 @@ export function useProgramDetailView({ program, onSwitchProgram }) {
     ? Math.round((ALL_STEPS.filter(s => s.status === 'completed').length / ALL_STEPS.length) * 100)
     : 0;
 
-  const [activeStep, setActiveStep] = useState(isCcm ? 'ccm-billing' : firstStep?.id);
+  // The active step lives in the store (mirrored into the URL by the hash
+  // router) so a refresh restores it. null or an id that doesn't belong to
+  // this program falls back to the program's default step.
+  const storedStep = useAppStore(s => s.careProgramStep);
+  const setActiveStep = useAppStore(s => s.setCareProgramStep);
+  const defaultStep = isCcm ? 'ccm-billing' : firstStep?.id;
+  const activeStep = (storedStep && ALL_STEPS.some(s => s.id === storedStep)) ? storedStep : defaultStep;
   const [expandedSections, setExpandedSections] = useState({});
   const [activeLetterTab, setActiveLetterTab] = useState('All');
   const [letterSearchOpen, setLetterSearchOpen] = useState(false);

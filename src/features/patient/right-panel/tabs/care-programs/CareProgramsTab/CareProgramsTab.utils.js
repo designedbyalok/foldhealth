@@ -1,5 +1,14 @@
 import { PROGRAM_STEPS } from '../../../../data/programActivityMock';
 
+// URL key for a program row — code slug plus the trigger ordinal past 1
+// ('awv', 'toc-ip', 'snp-2'). Trigger is derived deterministically from
+// created_at order in the store, so key ↔ program survives a refresh even
+// though row ids never appear in the URL.
+export const programUrlKey = (p) => {
+  const slug = String(p.code || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return (p.trigger || 1) > 1 ? `${slug}-${p.trigger}` : slug;
+};
+
 export const SUB_STATUS_OPTIONS = ['Assigned', 'Unassigned'];
 export const DATE_RANGE_OPTIONS = ['Last 7 days', 'Last 30 days', 'Last 90 days'];
 export const EMPTY_FILTERS = { assignee: [], program: [], status: [], subStatus: [], startDate: [], endDate: [] };

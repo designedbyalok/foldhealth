@@ -1156,6 +1156,14 @@ export const useAppStore = create((set, get) => ({
   // Patient detail view
   selectedPatientId: null,
   patientProfileTab: 'Overview',
+  // Care program open in the Care Programs tab, as its URL key — a slug of
+  // the program code plus the trigger ordinal past 1 ('awv', 'snp-2'). Kept
+  // as the key (not the program object or row id) so the hash router can
+  // write and restore it before the patient's programs have loaded.
+  selectedCareProgramKey: null,
+  // Active step id inside that program ('step-3a', 'ccm-billing'). null means
+  // the program's default step.
+  careProgramStep: null,
   // When set alongside a navigateToPatient({ programCode }) call, the Care
   // Programs tab picks this up, ensures the program is enrolled, and opens
   // its ProgramDetailView on mount. Cleared once consumed.
@@ -1163,7 +1171,7 @@ export const useAppStore = create((set, get) => ({
   navigateToPatient: (patientId, opts = {}) => {
     const from = get().activePage;
     track('nav.patient_opened', { patientId, from });
-    const updates = { selectedPatientId: patientId };
+    const updates = { selectedPatientId: patientId, selectedCareProgramKey: null, careProgramStep: null };
     if (opts.profileTab) updates.patientProfileTab = opts.profileTab;
     if (opts.programCode) updates.pendingCareProgramCode = opts.programCode;
     set(updates);
@@ -1174,13 +1182,29 @@ export const useAppStore = create((set, get) => ({
   navigateBackToWorklist: () => {
     const patientId = get().selectedPatientId;
     track('nav.patient_closed', { patientId });
-    set({ selectedPatientId: null, pendingCareProgramCode: null });
+    set({ selectedPatientId: null, pendingCareProgramCode: null, selectedCareProgramKey: null, careProgramStep: null });
     updateHash?.(get());
   },
   setPatientProfileTab: (tab) => {
     const from = get().patientProfileTab;
     track('nav.patient_tab_changed', { patientId: get().selectedPatientId, from, to: tab });
-    set({ patientProfileTab: tab });
+    // Leaving the tab closes any open program detail (matches the previous
+    // component-local behavior, where unmounting dropped the selection).
+    set({ patientProfileTab: tab, selectedCareProgramKey: null, careProgramStep: null });
+    updateHash?.(get());
+  },
+  openCareProgram: (programKey) => {
+    track('care_program.opened', { patientId: get().selectedPatientId, programKey });
+    set({ selectedCareProgramKey: programKey, careProgramStep: null });
+    updateHash?.(get());
+  },
+  closeCareProgram: () => {
+    set({ selectedCareProgramKey: null, careProgramStep: null });
+    updateHash?.(get());
+  },
+  setCareProgramStep: (stepId) => {
+    set({ careProgramStep: stepId });
+    updateHash?.(get());
   },
   clearPendingCareProgramCode: () => set({ pendingCareProgramCode: null }),
 
