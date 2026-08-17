@@ -41,7 +41,7 @@ export function BulkSelectIcon({ size = 20 }) {
    The structure stays stable (always Tooltip-wrapped) so the measured span node never swaps out;
    the tooltip only opens when the text is actually truncated. */
 const GROUP_NAME_STYLE = {
-  fontSize: 14, fontWeight: 500, color: 'var(--neutral-400)', lineHeight: 1.4, minWidth: 0,
+  fontSize: 14, fontWeight: 400, color: 'var(--neutral-400)', lineHeight: 1.4, minWidth: 0,
   display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', wordBreak: 'break-word',
 };
 

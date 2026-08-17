@@ -20,13 +20,16 @@ const MORE_ITEMS = [
  * hover tint, sticky checkbox + name on the left, sticky actions on the
  * right, L-size action buttons with dividers).
  */
-export function PopulationGroupsRow({ group, selected, onToggle, onEdit, onDelete, onDownload }) {
+export function PopulationGroupsRow({ group, selected, onToggle, onEdit, onDelete, onDownload, onRowClick }) {
   const [moreAnchor, setMoreAnchor] = useState(null);
 
   return (
-    <tr className={[styles.row, selected ? styles.rowSelected : ''].filter(Boolean).join(' ')}>
+    <tr
+      className={[styles.row, selected ? styles.rowSelected : '', onRowClick ? styles.rowClickable : ''].filter(Boolean).join(' ')}
+      onClick={onRowClick}
+    >
       {/* Sticky-left checkbox */}
-      <td className={`${styles.checkTd} ${styles.stickyLeft}`} style={{ left: 0 }}>
+      <td className={`${styles.checkTd} ${styles.stickyLeft}`} style={{ left: 0 }} onClick={(e) => e.stopPropagation()}>
         <Checkbox
           checked={selected}
           onCheckedChange={onToggle}
@@ -56,7 +59,7 @@ export function PopulationGroupsRow({ group, selected, onToggle, onEdit, onDelet
       <td className={styles.td}>{group.updated}</td>
 
       {/* Actions — sticky-right, L-size buttons with dividers */}
-      <td className={`${styles.td} ${styles.stickyRight}`}>
+      <td className={`${styles.td} ${styles.stickyRight}`} onClick={(e) => e.stopPropagation()}>
         <div className={styles.actionsCell}>
           <ActionButton icon="solar:bolt-linear" size="L" tooltip="Run Automation" />
           <span className={styles.actionDivider} />

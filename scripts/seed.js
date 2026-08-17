@@ -874,7 +874,7 @@ async function main() {
   {
     const { data: profiles, error: pErr } = await supabase
       .from('p360_profiles')
-      .select('id, patient_id, problems, diagnoses, diagnosis_groups, immunizations, medication_orders, procedures, lab_results, wearables, forms_submitted, membership_status, past_membership_status, engagement_level');
+      .select('id, patient_id, age, sex_at_birth, gender_identity, state, zipcode, problems, diagnoses, diagnosis_groups, immunizations, medication_orders, procedures, lab_results, wearables, forms_submitted, membership_status, past_membership_status, engagement_level');
     if (pErr) {
       console.log(`  ✗ p360 criteria fields: ${pErr.message} — run supabase/pop_group_rule_builder_migration.sql first`);
     } else {
@@ -897,10 +897,42 @@ async function main() {
       const PAST = ['Active', 'Inactive', 'Churned', 'Pending'];
       const ENGAGEMENT = ['High', 'Medium', 'Low', 'Unreachable'];
 
+      // Core demographic criteria fields (age / sex / gender / state / zip)
+      // derive from the profile's identity row — patients for p# ids,
+      // all_patients for FOLD# / ap-# — falling back to deterministic values.
+      // Without these the rule builder's Personal Info and Location
+      // conditions have nothing to evaluate against.
+      const { data: idPts } = await supabase.from('patients').select('id, age, dob, gender, state');
+      const { data: idAps } = await supabase.from('all_patients').select('id, age, dob, gender, state, zip');
+      const identityById = new Map();
+      (idPts || []).forEach(p => identityById.set(p.id, p));
+      (idAps || []).forEach(p => identityById.set(p.id, p));
+      const STATES = ['CA', 'TX', 'NY', 'FL', 'WA', 'AZ', 'IL', 'CO'];
+      const parseAge = (v) => { const m = String(v ?? '').match(/\d{1,3}/); return m ? Number(m[0]) : null; };
+      const ageFromDob = (dob) => {
+        if (!dob) return null;
+        const d = new Date(dob);
+        if (Number.isNaN(d.getTime())) return null;
+        const now = new Date();
+        let a = now.getFullYear() - d.getFullYear();
+        if (now < new Date(now.getFullYear(), d.getMonth(), d.getDate())) a--;
+        return a > 0 && a < 120 ? a : null;
+      };
+      const mapSex = (g) => {
+        const s = String(g || '').toLowerCase();
+        return s.startsWith('m') ? 'Male' : s.startsWith('f') ? 'Female' : null;
+      };
+
       let filled = 0;
       for (const row of profiles || []) {
         const key = row.patient_id || row.id;
+        const idr = identityById.get(row.patient_id) || {};
         const wants = {
+          age: ageFromDob(idr.dob) ?? parseAge(idr.age) ?? (25 + hash(key) % 65),
+          sex_at_birth: mapSex(idr.gender) || pick(key + 's', ['Male', 'Female'])[0],
+          gender_identity: mapSex(idr.gender) || pick(key + 's', ['Male', 'Female'])[0],
+          state: idr.state || pick(key + 'st', STATES)[0],
+          zipcode: idr.zip || String(90001 + hash(key + 'z') % 9000),
           problems: pick(key, PROBLEMS, 2),
           diagnoses: pick(key, DIAGNOSES, 2),
           diagnosis_groups: pick(key, DX_GROUPS, 1),
@@ -925,6 +957,38 @@ async function main() {
         if (!uErr) filled++;
       }
       console.log(`  ✓ p360 criteria fields (${filled} profiles backfilled)`);
+    }
+  }
+
+  // ── Population group activity log ──
+  // Give every group a "created" entry stamped at its created_at so the
+  // History drawer has a trail from day one. Skips groups that already have
+  // any activity, so re-runs never duplicate and real history is preserved.
+  {
+    const { data: groups, error: gErr } = await supabase
+      .from('population_groups').select('id, name, group_type, created_at');
+    const { data: acts, error: aErr } = gErr ? { data: null, error: gErr }
+      : await supabase.from('pop_group_activity').select('group_id');
+    if (gErr || aErr) {
+      console.log(`  ✗ pop_group_activity: ${(gErr || aErr).message} — run supabase/pop_group_activity_migration.sql first`);
+    } else {
+      const have = new Set((acts || []).map(a => a.group_id));
+      const rows = (groups || [])
+        .filter(g => !have.has(g.id))
+        .map(g => ({
+          group_id: g.id,
+          action: 'create',
+          title: 'Population Group Created',
+          detail: `"${g.name}" (${g.group_type})`,
+          actor: 'Fold Demo',
+          created_at: g.created_at,
+        }));
+      if (rows.length === 0) {
+        console.log('  ✓ pop_group_activity (all groups already have history)');
+      } else {
+        const { error } = await supabase.from('pop_group_activity').insert(rows);
+        console.log(error ? `  ✗ pop_group_activity: ${error.message}` : `  ✓ pop_group_activity (${rows.length} created entries)`);
+      }
     }
   }
 

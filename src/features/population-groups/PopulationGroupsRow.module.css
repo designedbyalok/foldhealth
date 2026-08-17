@@ -3,7 +3,8 @@
    columns, cell padding, actions divider) so the groups table reads as the
    same visual system as TOC / AWV / HCC.
 
-   Row is NOT clickable (no row-click workflow), so we skip `rowClickable`. */
+   Dynamic rows are clickable (opens the rule detail screen); Static rows
+   keep the default cursor. */
 
 .row {
   composes: row from '../../components/WorklistShell/WorklistRow.module.css';
@@ -29,3 +30,10 @@
   gap: 10px;
   min-width: 0;
 }
+
+.rowClickable { composes: rowClickable from '../../components/WorklistShell/WorklistRow.module.css'; }
+
+/* Data cells sit a step lighter than the group name (neutral-400) so the name
+   column reads as the row anchor. Compound selector so this wins over the
+   composed WorklistRow .td regardless of module injection order. */
+.row .td { color: var(--neutral-300); }

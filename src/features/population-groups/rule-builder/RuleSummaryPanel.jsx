@@ -1,0 +1,97 @@
+import { Avatar } from '../../../components/Avatar/Avatar';
+import { ActionButton } from '../../../components/ActionButton/ActionButton';
+import { UnityIcon } from '../../../components/UnityIcon/UnityIcon';
+import { FIELD_BY_KEY } from './fieldCatalog';
+import styles from './ruleBuilder.module.css';
+
+/* Nested plain-text lines of the rule tree for the criteria card — the same
+   copy the node badges show, arranged Figma-style: field heading, indented
+   value line, combinator between conditions. */
+function summaryLines(query) {
+  const rules = (query?.rules || []).filter(r => {
+    const v = r.value || {};
+    return (v.amount ?? v.text ?? '') !== '';
+  });
+  const combinator = (query?.combinator || 'and').toUpperCase();
+  const lines = [];
+  rules.forEach((rule, i) => {
+    const field = FIELD_BY_KEY[rule.field];
+    if (!field) return;
+    if (i > 0) lines.push({ text: combinator, kind: 'combinator' });
+    const op = field.operators.find(o => o.name === rule.operator);
+    const v = rule.value || {};
+    const val = field.valueType === 'number' ? `${v.amount} ${field.unit || ''}`.trim() : v.text;
+    lines.push({ text: field.label, kind: 'field' });
+    lines.push({ text: `${op?.label || rule.operator} ${val}`, kind: 'value' });
+  });
+  return lines;
+}
+
+/**
+ * RuleSummaryPanel — the 320px left rail of the dynamic group detail screen
+ * (Figma 1:13951): group identity + description, qualified-member count, and
+ * the Applied Filtration Criteria card with the Unity footer.
+ */
+export function RuleSummaryPanel({ session, query, qualifiedCount, onEdit, onHistory, onRefresh, showToast }) {
+  const lines = summaryLines(query);
+  const copyText = () => {
+    const text = lines.map(l => (l.kind === 'value' ? `  • ${l.text}` : l.text)).join('\n');
+    navigator.clipboard?.writeText(text).then(
+      () => showToast('Criteria copied'),
+      () => showToast('Copy failed'),
+    );
+  };
+
+  return (
+    <aside className={styles.rail}>
+      <div className={styles.railHeader}>
+        <div className={styles.railHeaderTop}>
+          <Avatar type="icon" variant="patient" iconName="solar:users-group-rounded-linear" size="L" />
+          <div className={styles.railHeaderActions}>
+            <ActionButton icon="solar:pen-linear" size="L" tooltip="Edit" onClick={onEdit} />
+            <span className={styles.headerDivider} />
+            <ActionButton icon="custom:history" size="L" tooltip="History" onClick={onHistory} />
+          </div>
+        </div>
+        <div className={styles.railTitle}>{session.name}</div>
+        {session.description ? <div className={styles.railDescription}>{session.description}</div> : null}
+      </div>
+
+      <div className={styles.railScroll}>
+        <div className={styles.railCount}>
+          <span className={styles.railSectionLabel}>Qualified Members</span>
+          <span className={styles.railCountValue}>{qualifiedCount ?? '-'}</span>
+        </div>
+
+        <div className={styles.railCriteria}>
+          <span className={styles.railSectionLabel}>Applied Filtration Criteria</span>
+          <div className={styles.criteriaCard}>
+            <div className={styles.criteriaBody}>
+              {lines.length === 0
+                ? <span className={styles.criteriaEmpty}>No conditions defined yet.</span>
+                : lines.map((l, i) => (
+                  <div
+                    key={`${l.text}-${i}`}
+                    className={l.kind === 'value' ? styles.criteriaValue : styles.criteriaLine}
+                  >
+                    {l.kind === 'value' ? `• ${l.text}` : l.text}
+                  </div>
+                ))}
+            </div>
+            <div className={styles.criteriaFooter}>
+              <span className={styles.unityBrand}>
+                <UnityIcon size={16} color="var(--primary-300)" />
+                <span className={styles.unityText}>Powered by Unity</span>
+                <span className={styles.unityAlpha}>ALPHA</span>
+              </span>
+              <span className={styles.criteriaFooterActions}>
+                <ActionButton icon="solar:copy-linear" size="S" tooltip="Copy Text" onClick={copyText} />
+                <ActionButton icon="solar:refresh-linear" size="S" tooltip="Refresh" onClick={onRefresh} />
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}

@@ -37,6 +37,22 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **Dynamic group detail screen + qualified members + activity log** —
+  clicking a Dynamic group row opens its read-only detail screen (Figma
+  1-13951): left rail with the group summary, live qualified-member count and
+  an Applied Filtration Criteria card (Powered by Unity), plus TabStrip tabs.
+  The Qualified Members tab is a `WorklistShell` table of every patient whose
+  `p360_profiles` row satisfies the rule, evaluated client-side by
+  `rule-builder/useQualifiedMembers.js` and joined to `patients` /
+  `all_patients` for display. Edit (rail pencil or the row's pencil) switches
+  into the editable builder; Cancel reverts, Next saves back to view. The
+  rail's History button opens a Drawer with the shared ActivityLog backed by
+  the new `pop_group_activity` table
+  (`supabase/pop_group_activity_migration.sql`) — the store logs every
+  create / rule update / details update / delete. The seed also backfills the
+  core profile criteria fields (age / sex / gender / state / zip) from each
+  patient's identity row.
+
 - **Dynamic group rule builder** — choosing the Dynamic filter in Create Group
   now opens a full-page rule builder (Figma Pop Group Rule Builder) instead of
   inserting a rule-less group: IF canvas, an Add Condition picker with 22

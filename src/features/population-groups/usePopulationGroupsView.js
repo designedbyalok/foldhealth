@@ -188,11 +188,14 @@ export function usePopulationGroupsView({
      The edit flow is being rebuilt as a dedicated "Update Population Group"
      drawer (<UpdatePopGroupDrawer>). The old approach reused the create
      drawer's CSV review state — kept here, commented out, for reference. */
-  const openEditModal = (group) => {
+  const openEditModal = (group, { startInEdit = false } = {}) => {
     // Dynamic groups are defined by a rule, so editing one opens the rule
     // builder with its saved rule; the drawer only fits CSV/static groups.
+    // Row click lands on the read-only detail screen; the Edit pencil jumps
+    // straight into edit mode.
     if (group.type === 'Dynamic') {
       openPgRuleBuilder({
+        startInEdit,
         groupId: group.id,
         name: group.name,
         description: group.description,

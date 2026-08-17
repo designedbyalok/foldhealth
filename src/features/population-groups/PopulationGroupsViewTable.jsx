@@ -131,7 +131,8 @@ export function PopulationGroupsViewTable({ vm, onToggleSidebar }) {
           group={g}
           selected={checkedRows.has(g.id)}
           onToggle={() => setCheckedRows(prev => { const n = new Set(prev); if (n.has(g.id)) n.delete(g.id); else n.add(g.id); return n; })}
-          onEdit={() => openEditModal(g)}
+          onEdit={() => openEditModal(g, { startInEdit: true })}
+          onRowClick={g.type === 'Dynamic' ? () => openEditModal(g) : undefined}
           onDelete={() => setDeleteTargets([g])}
           onDownload={() => downloadMemberList(g, showToast)}
         />
