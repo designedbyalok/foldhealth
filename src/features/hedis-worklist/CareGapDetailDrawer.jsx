@@ -172,7 +172,7 @@ export function CareGapDetailDrawer({ member, gapCode, year, onClose }) {
 
       {assigneePos && createPortal(
         <>
-          <div className={styles.assigneeMenuOverlay} onClick={closeAssignee} />
+          <div aria-hidden="true" className={styles.assigneeMenuOverlay} onClick={closeAssignee} />
           <div className={styles.assigneeMenu} style={{ top: assigneePos.top, right: assigneePos.right }} role="menu">
             <div className={styles.assigneeMenuHeader}>{gap.assignee ? 'Change Assignee' : 'Assign to'}</div>
             <div className={styles.assigneeMenuSearch}>
@@ -206,7 +206,7 @@ export function CareGapDetailDrawer({ member, gapCode, year, onClose }) {
 
       {moreMenuRect && createPortal(
         <>
-          <div className={styles.moreMenuOverlay} onClick={closeMoreMenu} />
+          <div aria-hidden="true" className={styles.moreMenuOverlay} onClick={closeMoreMenu} />
           <div className={styles.moreMenu} style={{ top: moreMenuRect.bottom + 6, left: Math.min(moreMenuRect.right - 220, window.innerWidth - 220 - 8) }}>
             {MORE_ACTIONS.map(a => (
               <button key={a.key} type="button" className={styles.moreMenuItem} onClick={() => runMoreAction(a)}>

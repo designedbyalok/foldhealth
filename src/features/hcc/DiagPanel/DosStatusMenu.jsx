@@ -109,7 +109,7 @@ function Menu({ pos, value, items, gates, onSelect, onClose }) {
 
   return createPortal(
     <>
-      <div className={styles.overlay} onClick={onClose} />
+      <div aria-hidden="true" className={styles.overlay} onClick={onClose} />
       <div
         className={styles.menu}
         style={{ top: pos.top, right: pos.right, maxHeight: pos.maxHeight, overflowY: 'auto' }}

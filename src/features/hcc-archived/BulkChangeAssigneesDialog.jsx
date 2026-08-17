@@ -201,7 +201,7 @@ export function BulkChangeAssigneesDialog({ open, selectedIds, onClose, onApplie
 
   return createPortal(
     <>
-      <div className={styles.overlay} onClick={onClose} />
+      <div aria-hidden="true" className={styles.overlay} onClick={onClose} />
       <div
         className={styles.dialog}
         role="dialog"

@@ -90,7 +90,7 @@ export function ColumnConfigPopover({
 
   return createPortal(
     <>
-      <div className={styles.overlay} onClick={onClose} />
+      <div aria-hidden="true" className={styles.overlay} onClick={onClose} />
       <div
         className={styles.popover}
         style={{ top, right, width }}

@@ -127,7 +127,7 @@ export function VisitsPopover({ anchorRect, name, visits, onClose, onSelect }) {
 
   return createPortal(
     <>
-      <div className={styles.overlay} onClick={onClose} />
+      <div aria-hidden="true" className={styles.overlay} onClick={onClose} />
       <div
         className={styles.popover}
         style={{ top, left, width: W }}
@@ -203,7 +203,7 @@ export function ChartPopover({ anchorRect, member, onClose, onUpload }) {
 
   return createPortal(
     <>
-      <div className={styles.overlay} onClick={onClose} />
+      <div aria-hidden="true" className={styles.overlay} onClick={onClose} />
       <div
         className={styles.chartPopover}
         style={{ top, left, width: W }}
@@ -294,7 +294,7 @@ export function ActionsMenuPopover({ anchorRect, onClose, onAction }) {
 
   return createPortal(
     <>
-      <div className={styles.overlay} onClick={onClose} />
+      <div aria-hidden="true" className={styles.overlay} onClick={onClose} />
       <div
         className={styles.actionsMenu}
         style={{ top, right, width: W }}
