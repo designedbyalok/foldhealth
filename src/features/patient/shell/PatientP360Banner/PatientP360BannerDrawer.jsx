@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Icon } from '../../../../components/Icon/Icon';
 import { DownChevronIcon } from '../../../../components/Icon/DownChevronIcon';
 import { PhoneVerifiedIcon } from '../../../../components/Icon/PhoneVerifiedIcon';
@@ -43,6 +43,17 @@ export function PatientP360BannerDrawer({ patient, p, programCodes }) {
     setConsentPos({ top: rect.bottom + 4, left });
   };
 
+  // The dropdown's scrim is aria-hidden, so Escape is the keyboard dismiss path.
+  // Before this there was none at all.
+  useEffect(() => {
+    if (!showProfileDropdown) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') { setShowProfileDropdown(false); setDrawerDropdownStyle(null); }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [showProfileDropdown]);
+
   const handleProfileClick = () => {
     if (showProfileDropdown) { setShowProfileDropdown(false); setDrawerDropdownStyle(null); return; }
     const rect = profileCardRef.current?.getBoundingClientRect();
@@ -74,10 +85,10 @@ export function PatientP360BannerDrawer({ patient, p, programCodes }) {
           </div>
         </div>
         <span className={styles.drawerBannerDivider} />
-        <div ref={profileCardRef} className={styles.drawerProfileCard} onClick={handleProfileClick} style={{ cursor: 'pointer' }}>
+        <div ref={profileCardRef} className={styles.drawerProfileCard}>
           <div className={styles.drawerProfileRow}>
             <Icon name="solar:hospital-linear" size={14} color="var(--neutral-300)" />
-            <button className={styles.drawerProfileSelector} tabIndex={-1}>
+            <button type="button" aria-expanded={showProfileDropdown} className={styles.drawerProfileSelector} onClick={handleProfileClick}>
               {activeProfileName}
               <DownChevronIcon size={14} />
             </button>
@@ -185,11 +196,11 @@ export function PatientP360BannerDrawer({ patient, p, programCodes }) {
       {consentPos && <ConsentPopover pos={consentPos} onClose={() => setConsentPos(null)} />}
       {showProfileDropdown && drawerDropdownStyle && (
         <>
-          <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={() => { setShowProfileDropdown(false); setDrawerDropdownStyle(null); }} />
+          <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={() => { setShowProfileDropdown(false); setDrawerDropdownStyle(null); }} />
           <div className={styles.profileDropdown} style={drawerDropdownStyle}>
             <div className={styles.profileDropdownTitle}>Member Insurance Profiles</div>
             {(p.insurance_profiles || FALLBACK_P360.insurance_profiles).map(prof => (
-              <div key={prof.id} className={`${styles.profileOption} ${selectedProfileId === prof.id ? styles.profileOptionSelected : ''}`}
+              <button type="button" key={prof.id} aria-pressed={selectedProfileId === prof.id} className={`${styles.profileOption} ${selectedProfileId === prof.id ? styles.profileOptionSelected : ''}`}
                 onClick={() => { setSelectedProfileId(prof.id); setShowProfileDropdown(false); setDrawerDropdownStyle(null); }}>
                 <div className={styles.profileOptionHeader}>
                   {/* Central Profile IS the FoldHealth identity — show the real
@@ -197,7 +208,7 @@ export function PatientP360BannerDrawer({ patient, p, programCodes }) {
                   <div><div className={styles.profileOptionName}>{prof.name}</div><div className={styles.profileOptionSub}>{prof.id === 'central' ? `Fold ID: ${formatFoldId(patient.memberId)}` : prof.subtitle}</div></div>
                   {selectedProfileId === prof.id ? <Icon name="solar:check-circle-bold" size={20} color="var(--status-success)" /> : <span className={styles.profileOptionRadio} />}
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </>

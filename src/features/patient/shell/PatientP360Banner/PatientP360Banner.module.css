@@ -173,12 +173,18 @@
 .mainInfo { display: flex; flex: 1; align-items: center; gap: 24px; min-width: 0; }
 
 /* Profile card (Central Profile + FoldHealth) */
+/* A <button> so the insurance-profile dropdown opens from the keyboard. The
+   class already pins width: 225px, so no width restoration is needed — only
+   text alignment and font inheritance, which a button would otherwise override.
+   The border here is decorative and deliberately kept. */
 .profileCard {
   display: flex; flex-direction: column; gap: 4px; padding: 4px 8px;
   border: 0.5px solid color-mix(in srgb, var(--status-info) 25%, transparent); border-radius: 4px;
   background: radial-gradient(ellipse at center, var(--neutral-0) 53%, var(--status-success-light));
   width: 225px; flex-shrink: 0; overflow: hidden;
+  text-align: left; font: inherit; color: inherit;
 }
+.profileCard:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 2px; }
 .profileCardTop { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
 .profileLink { display: flex; align-items: center; gap: 4px; font-size: 14px; color: var(--neutral-400); font-family: 'Inter', sans-serif; background: none; border: none; cursor: pointer; padding: 0; white-space: nowrap; }
 .profileCardBottom { display: flex; align-items: center; gap: 4px; font-size: 12px; font-family: 'Inter', sans-serif; white-space: nowrap; }
@@ -193,10 +199,16 @@
   padding: 12px; display: flex; flex-direction: column; gap: 8px;
 }
 .profileDropdownTitle { font-size: 14px; font-weight: 500; color: var(--neutral-500); font-family: 'Inter', sans-serif; padding: 0 4px 4px; }
+/* A <button> so each insurance profile is selectable by keyboard. Both consumers
+   (banner and drawer dropdowns) are promoted together. width: 100% because a form
+   control sizes to fit-content even with display: flex; the decorative border is
+   kept, so no border reset. */
 .profileOption {
   border: 0.5px solid var(--neutral-100); border-radius: 8px; padding: 10px 12px;
   cursor: pointer; display: flex; flex-direction: column; gap: 6px; transition: background var(--duration-instant) var(--ease-hover), color var(--duration-instant) var(--ease-hover), border-color var(--duration-instant) var(--ease-hover);
+  width: 100%; text-align: left; font: inherit; color: inherit; background: none;
 }
+.profileOption:focus-visible { outline: 2px solid var(--primary-300); outline-offset: -2px; }
 .profileOption:hover { border-color: var(--neutral-200); }
 .profileOptionSelected { border-color: var(--primary-300); background: var(--primary-50); }
 .profileOptionHeader { display: flex; align-items: flex-start; justify-content: space-between; }

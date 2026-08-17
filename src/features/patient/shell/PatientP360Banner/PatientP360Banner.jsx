@@ -16,6 +16,16 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
   const [expanded, setExpanded] = useState(false);
   const [tags, setTags] = useState([]);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+
+  // The dropdown's scrim is aria-hidden, so Escape is the keyboard dismiss path.
+  // Before this there was none at all — the only way out was a mouse click on
+  // the scrim, which a keyboard user cannot reach.
+  useEffect(() => {
+    if (!showProfileDropdown) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') setShowProfileDropdown(false); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [showProfileDropdown]);
   const [selectedProfileId, setSelectedProfileId] = useState('central');
   const [moreMenuRect, setMoreMenuRect] = useState(null);
   const bannerRef = useRef(null);
@@ -93,7 +103,7 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
 
         <div className={styles.mainInfo}>
           <div style={{ position: 'relative' }}>
-            <div className={styles.profileCard} onClick={() => setShowProfileDropdown(v => !v)} style={{ cursor: 'pointer' }}>
+            <button type="button" aria-expanded={showProfileDropdown} className={styles.profileCard} onClick={() => setShowProfileDropdown(v => !v)} style={{ cursor: 'pointer' }}>
               <div className={styles.profileCardTop}>
                 <Icon name="solar:hospital-linear" size={14} color="var(--neutral-300)" />
                 <span className={styles.profileLink}>{(p.insurance_profiles || FALLBACK_P360.insurance_profiles).find(pr => pr.id === selectedProfileId)?.name || p.profile_type} <Icon name="solar:alt-arrow-down-linear" size={12} color="var(--neutral-300)" /></span>
@@ -102,14 +112,14 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
                 <strong>{selectedProfileId === 'central' ? p.health_plan_name : (p.insurance_profiles || FALLBACK_P360.insurance_profiles).find(pr => pr.id === selectedProfileId)?.name}</strong> <span>({p.health_plan_id || formatFoldId(patient.memberId)})</span>
                 <span className={`${styles.badge} ${styles.badgeGrey}`} style={{ height: 18, fontSize: 12, padding: '0 4px', marginLeft: 4 }}>+{((p.insurance_profiles || FALLBACK_P360.insurance_profiles).length - 1)}</span>
               </div>
-            </div>
+            </button>
             {showProfileDropdown && (
               <>
-                <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={() => setShowProfileDropdown(false)} />
+                <div aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={() => setShowProfileDropdown(false)} />
                 <div className={styles.profileDropdown}>
                   <div className={styles.profileDropdownTitle}>Member Insurance Profiles</div>
                   {(p.insurance_profiles || FALLBACK_P360.insurance_profiles).map(prof => (
-                    <div key={prof.id} className={`${styles.profileOption} ${selectedProfileId === prof.id ? styles.profileOptionSelected : ''}`} onClick={() => { setSelectedProfileId(prof.id); setShowProfileDropdown(false); }}>
+                    <button type="button" key={prof.id} aria-pressed={selectedProfileId === prof.id} className={`${styles.profileOption} ${selectedProfileId === prof.id ? styles.profileOptionSelected : ''}`} onClick={() => { setSelectedProfileId(prof.id); setShowProfileDropdown(false); }}>
                       <div className={styles.profileOptionHeader}>
                         {/* Central Profile IS the FoldHealth identity — its id is the
                             patient's real Fold ID, not the mock's sample Athena id.
@@ -117,7 +127,7 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
                         <div><div className={styles.profileOptionName}>{prof.name}</div><div className={styles.profileOptionSub}>{prof.id === 'central' ? `Fold ID: ${formatFoldId(patient.memberId)}` : prof.subtitle}</div></div>
                         {selectedProfileId === prof.id ? <Icon name="solar:check-circle-bold" size={20} color="var(--status-success)" /> : <span className={styles.profileOptionRadio} />}
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </>
