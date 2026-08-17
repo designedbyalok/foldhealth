@@ -10,9 +10,35 @@
 --                    when auto_page_size is false, but stored either way so
 --                    toggling back to manual restores the last choice.
 --
--- The table already exists with RLS enabled and an authenticated-only
--- "Allow all" policy (see narrow_public_policies_to_authenticated.sql), so
--- this only adds columns — no policy changes needed.
+-- In deployed environments the table already exists with RLS enabled and an
+-- authenticated-only "Allow all" policy (see
+-- narrow_public_policies_to_authenticated.sql). Its CREATE was never checked
+-- in, so guard it here to keep this runnable against a fresh database — on
+-- an existing one every statement below is a no-op.
+CREATE TABLE IF NOT EXISTS public.user_worklist_prefs (
+  user_id        text PRIMARY KEY,
+  worklist_order jsonb,
+  updated_at     timestamptz DEFAULT now()
+);
+
+ALTER TABLE public.user_worklist_prefs ENABLE ROW LEVEL SECURITY;
+
+-- Created only when absent — never redefined, so this can't widen the
+-- existing production policy.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'user_worklist_prefs'
+  ) THEN
+    CREATE POLICY "Allow all"
+      ON public.user_worklist_prefs
+      FOR ALL
+      TO authenticated
+      USING (true)
+      WITH CHECK (true);
+  END IF;
+END $$;
 
 ALTER TABLE public.user_worklist_prefs
   ADD COLUMN IF NOT EXISTS auto_page_size boolean NOT NULL DEFAULT true;
