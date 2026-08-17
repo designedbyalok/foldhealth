@@ -171,6 +171,15 @@ function initialForm(patient, p) {
   };
 }
 
+/** The "+ Add …" link under a repeatable section. Depends on nothing from the
+ *  drawer's scope, so it lives here rather than being rebuilt every render. */
+const linkBtn = (text, onClick) => (
+  <button type="button" className={styles.linkBtn} onClick={onClick}>
+    <Icon name="solar:add-square-linear" size={14} color="currentColor" />
+    <span>{text}</span>
+  </button>
+);
+
 /**
  * A single label-above-control cell used everywhere in the drawer body.
  * Keeps label typography and vertical spacing consistent between Input,
@@ -347,13 +356,6 @@ export function EditPatientDrawer({
     { key: 'member',    label: 'Member Details' },
     { key: 'insurance', label: 'Insurance Details' },
   ]), []);
-
-  const linkBtn = (text, onClick) => (
-    <button type="button" className={styles.linkBtn} onClick={onClick}>
-      <Icon name="solar:add-square-linear" size={14} color="currentColor" />
-      <span>{text}</span>
-    </button>
-  );
 
   return (
     <Drawer

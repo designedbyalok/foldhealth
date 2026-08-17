@@ -118,15 +118,19 @@ export function MedicationReconciliation() {
   const saveDraft = async () => {
     if (!draft.name.trim() || !patientId) return;
     setSaving(true);
-    const id = await addPatientMedication(patientId, {
-      name: draft.name.trim(),
-      start: draft.start.trim(),
-      stop: draft.stop.trim(),
-      sig: draft.sig.trim(),
-      source: draft.openfdaMeta ? 'openfda' : 'manual',
-      openfdaMeta: draft.openfdaMeta,
-    });
-    setSaving(false);
+    let id;
+    try {
+      id = await addPatientMedication(patientId, {
+        name: draft.name.trim(),
+        start: draft.start.trim(),
+        stop: draft.stop.trim(),
+        sig: draft.sig.trim(),
+        source: draft.openfdaMeta ? 'openfda' : 'manual',
+        openfdaMeta: draft.openfdaMeta,
+      });
+    } finally {
+      setSaving(false);
+    }
     if (id) discard();
   };
 
