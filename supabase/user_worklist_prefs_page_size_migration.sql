@@ -23,22 +23,27 @@ CREATE TABLE IF NOT EXISTS public.user_worklist_prefs (
 
 ALTER TABLE public.user_worklist_prefs ENABLE ROW LEVEL SECURITY;
 
--- Created only when absent — never redefined, so this can't widen the
--- existing production policy.
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE schemaname = 'public' AND tablename = 'user_worklist_prefs'
-  ) THEN
-    CREATE POLICY "Allow all"
-      ON public.user_worklist_prefs
-      FOR ALL
-      TO authenticated
-      USING (true)
-      WITH CHECK (true);
-  END IF;
-END $$;
+-- These rows are per-user preferences, so the policy is ownership rather than a
+-- blanket allow. The previous "Allow all" (FOR ALL USING (true)) let any
+-- authenticated user read — and overwrite — every other user's saved worklist
+-- order and page size.
+--
+-- This replaces that policy unconditionally. The earlier guarded version only
+-- created a policy when none existed, which meant it could never narrow the
+-- permissive one already live in production.
+--
+-- user_id is `text` while auth.uid() returns uuid, hence the cast. Legacy rows
+-- keyed 'local-dev' (written by the localhost dev-bypass, which is an anonymous
+-- session) match no authenticated user and become invisible — they were already
+-- unreachable once this table was scoped to `authenticated`.
+DROP POLICY IF EXISTS "Allow all" ON public.user_worklist_prefs;
+DROP POLICY IF EXISTS user_worklist_prefs_own ON public.user_worklist_prefs;
+CREATE POLICY user_worklist_prefs_own
+  ON public.user_worklist_prefs
+  FOR ALL
+  TO authenticated
+  USING (user_id = auth.uid()::text)
+  WITH CHECK (user_id = auth.uid()::text);
 
 ALTER TABLE public.user_worklist_prefs
   ADD COLUMN IF NOT EXISTS auto_page_size boolean NOT NULL DEFAULT true;

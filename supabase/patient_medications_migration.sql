@@ -37,14 +37,42 @@ CREATE INDEX IF NOT EXISTS idx_patient_medications_patient_id
 
 ALTER TABLE public.patient_medications ENABLE ROW LEVEL SECURITY;
 
--- Same shape as the rest of the recently-narrowed policies — authenticated only.
+-- This is PHI — a patient's medication list. Reads are open to any signed-in
+-- staff member (whoever is looking at the patient), but writes require an
+-- active staff profile. `FOR ALL USING (true)` let any authenticated session
+-- add, alter or delete medications for any patient, including an `Invited`
+-- account that had never been activated. Same shape as
+-- program_documents_migration.sql.
 DROP POLICY IF EXISTS "Allow all for authenticated" ON public.patient_medications;
-CREATE POLICY "Allow all for authenticated"
-  ON public.patient_medications
-  FOR ALL
-  TO authenticated
-  USING (true)
-  WITH CHECK (true);
+
+DROP POLICY IF EXISTS patient_medications_select ON public.patient_medications;
+CREATE POLICY patient_medications_select
+  ON public.patient_medications FOR SELECT TO authenticated
+  USING (true);
+
+DROP POLICY IF EXISTS patient_medications_insert ON public.patient_medications;
+CREATE POLICY patient_medications_insert
+  ON public.patient_medications FOR INSERT TO authenticated
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.status = 'Active'
+  ));
+
+DROP POLICY IF EXISTS patient_medications_update ON public.patient_medications;
+CREATE POLICY patient_medications_update
+  ON public.patient_medications FOR UPDATE TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.status = 'Active'
+  ))
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.status = 'Active'
+  ));
+
+DROP POLICY IF EXISTS patient_medications_delete ON public.patient_medications;
+CREATE POLICY patient_medications_delete
+  ON public.patient_medications FOR DELETE TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.status = 'Active'
+  ));
 
 -- Seed: mirror MED_RECON_MOCK.medications for Ralph Halvorson (p1). Fixed
 -- UUIDs so re-running the migration is idempotent (nothing depends on these

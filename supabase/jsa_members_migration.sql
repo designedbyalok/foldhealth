@@ -28,13 +28,41 @@ CREATE TABLE IF NOT EXISTS public.jsa_members (
 
 ALTER TABLE public.jsa_members ENABLE ROW LEVEL SECURITY;
 
+-- Reads are open to any signed-in staff member (a worklist is a shared roster),
+-- but writes require an active staff profile. `FOR ALL USING (true)` let any
+-- authenticated session insert, rewrite or delete the whole roster — including
+-- an `Invited` account that had never been activated. Same shape as
+-- program_documents_migration.sql.
 DROP POLICY IF EXISTS "Allow all for jsa_members" ON public.jsa_members;
-CREATE POLICY "Allow all for jsa_members"
-  ON public.jsa_members
-  FOR ALL
-  TO authenticated
-  USING (true)
-  WITH CHECK (true);
+
+DROP POLICY IF EXISTS jsa_members_select ON public.jsa_members;
+CREATE POLICY jsa_members_select
+  ON public.jsa_members FOR SELECT TO authenticated
+  USING (true);
+
+DROP POLICY IF EXISTS jsa_members_insert ON public.jsa_members;
+CREATE POLICY jsa_members_insert
+  ON public.jsa_members FOR INSERT TO authenticated
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.status = 'Active'
+  ));
+
+DROP POLICY IF EXISTS jsa_members_update ON public.jsa_members;
+CREATE POLICY jsa_members_update
+  ON public.jsa_members FOR UPDATE TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.status = 'Active'
+  ))
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.status = 'Active'
+  ));
+
+DROP POLICY IF EXISTS jsa_members_delete ON public.jsa_members;
+CREATE POLICY jsa_members_delete
+  ON public.jsa_members FOR DELETE TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.status = 'Active'
+  ));
 
 INSERT INTO public.jsa_members (
   id, member_id, name, initials, gender, age,
