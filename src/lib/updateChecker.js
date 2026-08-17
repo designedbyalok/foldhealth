@@ -58,12 +58,16 @@ export function startUpdateChecker() {
   // symptom. Flag the banner so users see it before the app blanks out.
   const onChunkError = (e) => {
     const msg = String(e?.reason?.message || e?.message || '');
-    if (/Loading chunk|Failed to fetch dynamically imported module|ChunkLoadError/i.test(msg)) {
+    if (/Loading chunk|(Failed to fetch|[Ee]rror loading) dynamically imported module|Unable to preload CSS|ChunkLoadError/i.test(msg)) {
       markNewBuild();
     }
   };
   window.addEventListener('error', onChunkError);
   window.addEventListener('unhandledrejection', onChunkError);
+  // Vite's own signal from its preload helper. Fires even when a router
+  // error boundary swallows the rejection, so it catches the cases the
+  // two listeners above never see.
+  window.addEventListener('vite:preloadError', () => markNewBuild());
 
   // Dev — no /version.json is emitted, so polling would 404 every minute.
   // Skip the poll but keep the chunk-error backstop in place.

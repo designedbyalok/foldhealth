@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { sanitizeRichText } from '../../lib/sanitizeHtml';
 import { Icon } from '../../components/Icon/Icon';
 import { Input } from '../../components/Input/Input';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
@@ -188,8 +189,12 @@ export function RichTextNote({ value, onChange, placeholder = 'Add Additional No
   useEffect(() => {
     const el = editorRef.current;
     if (!el) return;
-    if (value && el.innerHTML !== value) {
-      el.innerHTML = value;
+    // `value` is stored rich text read back from Supabase, so it is sanitized
+    // on the way in — the same treatment InsuranceCardPreview already gives it
+    // on the way out.
+    const clean = sanitizeRichText(value);
+    if (clean && el.innerHTML !== clean) {
+      el.innerHTML = clean;
       setCharCount(el.textContent?.length || 0);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

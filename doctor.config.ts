@@ -143,6 +143,29 @@ export default {
         rules: ['react-doctor/supabase-client-owned-authz-field'],
       },
 
+      // App.jsx's dev-login password env var reads like a shipped credential,
+      // and any VITE_-prefixed var normally would be — but this one is only ever
+      // read inside `import.meta.env.DEV ? … : null`, which Vite replaces with
+      // `false` in a production build and then eliminates along with the branch.
+      //
+      // The variable is deliberately not named in full here: this rule matches
+      // the identifier itself, so spelling it out made THIS file trip the very
+      // finding the entry documents.
+      //
+      // Verified against a real `bun run build` rather than assumed: neither
+      // the variable name nor its value appears anywhere in dist/. The same
+      // grep does find vars that genuinely ship (VITE_SUPABASE_URL resolves in
+      // dist/assets/), so the check is sound and not a false negative.
+      //
+      // Renaming the variable would satisfy the detector without changing one
+      // byte of what reaches the browser, so the name stays and the finding is
+      // recorded here instead. If this credential is ever read outside a DEV
+      // guard, delete this entry — the rule would then be correct.
+      {
+        files: ['src/App.jsx'],
+        rules: ['react-doctor/public-env-secret-name'],
+      },
+
       // The iframe editor's cleanup IS total — it removes the `load` listener,
       // removes the current document's input/click listeners via
       // unsubscribeDoc(), and clears the debounce timer, all from one cleanup

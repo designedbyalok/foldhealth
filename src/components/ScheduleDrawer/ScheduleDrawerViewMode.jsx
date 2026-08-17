@@ -1,3 +1,4 @@
+import { sanitizeRichText } from '../../lib/sanitizeHtml';
 import { Icon } from '../Icon/Icon';
 import { Drawer } from '../Drawer/Drawer';
 import { Avatar } from '../Avatar/Avatar';
@@ -170,7 +171,7 @@ export function ScheduleDrawerViewMode({
                 className={styles.instructionEditable}
                 contentEditable
                 suppressContentEditableWarning
-                dangerouslySetInnerHTML={{ __html: instructionDraft }}
+                dangerouslySetInnerHTML={{ __html: sanitizeRichText(instructionDraft) }}
                 onInput={e => setInstructionDraft(e.currentTarget.innerHTML)}
               />
               <div className={styles.instructionToolbar}>
@@ -206,7 +207,7 @@ export function ScheduleDrawerViewMode({
                   className={styles.instructionEditable}
                   contentEditable
                   suppressContentEditableWarning
-                  dangerouslySetInnerHTML={{ __html: staffInstructionDraft }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeRichText(staffInstructionDraft) }}
                   onInput={e => setStaffInstructionDraft(e.currentTarget.innerHTML)}
                 />
                 <div className={styles.instructionToolbar}>

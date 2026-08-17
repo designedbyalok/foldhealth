@@ -1,3 +1,4 @@
+import { sanitizeRichText } from '../../lib/sanitizeHtml';
 import { Icon } from '../../components/Icon/Icon';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Button } from '../../components/Button/Button';
@@ -185,7 +186,7 @@ export function TaskDetailDrawerDetails({
                 className={styles.descEditable}
                 contentEditable
                 suppressContentEditableWarning
-                dangerouslySetInnerHTML={{ __html: descDraft }}
+                dangerouslySetInnerHTML={{ __html: sanitizeRichText(descDraft) }}
                 onInput={e => setDescDraft(e.currentTarget.innerHTML)}
               />
               <div className={styles.descToolbar}>
@@ -206,7 +207,7 @@ export function TaskDetailDrawerDetails({
             <div
               className={styles.descriptionBox}
               onClick={() => { setDescDraft(task.description || ''); setEditingDesc(true); }}
-              dangerouslySetInnerHTML={{ __html: task.description || '<span style="color: var(--neutral-200);">Click to add description...</span>' }}
+              dangerouslySetInnerHTML={{ __html: task.description ? sanitizeRichText(task.description) : '<span style="color: var(--neutral-200);">Click to add description...</span>' }}
             />
           )}
         </div>

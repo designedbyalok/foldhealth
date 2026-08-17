@@ -39,6 +39,17 @@ if (isDeployedProd) {
     // recordOutputs }` on each call so spans land in Sentry's Agents tab.
     streamGenAiSpans: true,
     sendDefaultPii: true,
+    // Noise that isn't ours and isn't actionable:
+    //   • navigator.locks contention on the Supabase auth token — expected
+    //     whenever a user has the app open in more than one tab; the losing
+    //     tab retries and recovers on its own.
+    //   • "Object Not Found Matching Id…" comes from the Outlook SafeLinks
+    //     scanner injecting script into the page, not from our bundle.
+    ignoreErrors: [
+      /Lock ".*" was released because another request stole it/,
+      /Lock broken by another request with the 'steal' option/,
+      /Object Not Found Matching Id:/,
+    ],
   })
 }
 

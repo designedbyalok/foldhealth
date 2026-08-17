@@ -16,12 +16,17 @@ import DOMPurify from 'dompurify';
 
 // Rich text: formatting, links, lists, tables and images, but no scripts, no
 // event handlers, no <iframe>/<object>/<embed>, no <style>.
+//
+// `strike` is deprecated but kept deliberately: document.execCommand
+// ('strikeThrough') still emits <strike> in Chrome, so the rich-text editors
+// that round-trip their own output through here would lose a user's existing
+// strikethrough without it. Purely presentational, no attack surface.
 const RICH_TEXT = {
   ALLOWED_TAGS: [
     'a', 'b', 'blockquote', 'br', 'caption', 'code', 'div', 'em', 'h1', 'h2',
     'h3', 'h4', 'h5', 'h6', 'hr', 'i', 'img', 'li', 'ol', 'p', 'pre', 's',
-    'small', 'span', 'strong', 'sub', 'sup', 'table', 'tbody', 'td', 'tfoot',
-    'th', 'thead', 'tr', 'u', 'ul',
+    'small', 'span', 'strike', 'strong', 'sub', 'sup', 'table', 'tbody', 'td',
+    'tfoot', 'th', 'thead', 'tr', 'u', 'ul',
   ],
   ALLOWED_ATTR: ['href', 'title', 'alt', 'src', 'width', 'height', 'colspan', 'rowspan', 'align', 'style'],
   // Block javascript:/vbscript: URLs; data: is kept for inline document images.
