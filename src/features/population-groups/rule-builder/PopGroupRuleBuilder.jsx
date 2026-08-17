@@ -67,7 +67,7 @@ function RuleNode({ rule, readOnly, combinator, onOpenEditor, onToggleCombinator
         </button>
       )}
       <span className={styles.nodeBadges}>
-        {summary.map(text => <Badge key={text} tone="grey" size="S" label={text} />)}
+        {summary.map(text => <Badge key={text} tone="grey" size="S" label={text} className={styles.nodeBadge} />)}
       </span>
       {!readOnly && (
         <span className={styles.nodeRight}>
@@ -123,6 +123,7 @@ export function PopGroupRuleBuilder() {
   const closePgRuleBuilder = useAppStore(s => s.closePgRuleBuilder);
   const createPopGroup = useAppStore(s => s.createPopGroup);
   const updatePopGroup = useAppStore(s => s.updatePopGroup);
+  const setPgRuleBuilderName = useAppStore(s => s.setPgRuleBuilderName);
   const fetchPopGroupActivity = useAppStore(s => s.fetchPopGroupActivity);
   const showToast = useAppStore(s => s.showToast);
 
@@ -216,6 +217,26 @@ export function PopGroupRuleBuilder() {
     setMode('view');
   };
 
+  /* Inline rename from the rail — persists against the SAVED rule (not the
+     draft) so renaming mid-edit can't leak unsaved conditions. */
+  const handleRename = async (name) => {
+    const saved = await updatePopGroup(groupId, {
+      name,
+      description: session.description || '',
+      type: 'Dynamic',
+      filterType: 'dynamic',
+      memberStatus: session.memberStatus || 'All Status',
+      memberIds: [],
+      count: session.count ?? 0,
+      inactive: session.inactive ?? 0,
+      rule: savedQuery,
+    });
+    if (!saved) return false;
+    setPgRuleBuilderName(name);
+    setActivity(null); // rename is logged — refetch on next open
+    return true;
+  };
+
   const canvas = (
     <div className={styles.canvas}>
       <div className={styles.ifChip}>
@@ -286,6 +307,7 @@ export function PopGroupRuleBuilder() {
             query={query}
             qualifiedCount={membersLoading ? null : count}
             onEdit={() => { setMode('edit'); setActiveTab('design'); }}
+            onRename={handleRename}
             onHistory={() => setHistoryOpen(true)}
             onRefresh={refresh}
             showToast={showToast}
@@ -294,6 +316,7 @@ export function PopGroupRuleBuilder() {
         <div className={styles.tabPane}>
           {isView && (
             <TabStrip
+              fullWidth={false}
               items={[
                 { key: 'members', label: 'Qualified Members', count: membersLoading ? '…' : count },
                 { key: 'design', label: 'Rule Design' },

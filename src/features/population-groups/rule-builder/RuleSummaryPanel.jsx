@@ -1,4 +1,6 @@
+import { useEffect, useRef, useState } from 'react';
 import { Avatar } from '../../../components/Avatar/Avatar';
+import { Input } from '../../../components/Input/Input';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { UnityIcon } from '../../../components/UnityIcon/UnityIcon';
 import { FIELD_BY_KEY } from './fieldCatalog';
@@ -32,7 +34,31 @@ function summaryLines(query) {
  * (Figma 1:13951): group identity + description, qualified-member count, and
  * the Applied Filtration Criteria card with the Unity footer.
  */
-export function RuleSummaryPanel({ session, query, qualifiedCount, onEdit, onHistory, onRefresh, showToast }) {
+export function RuleSummaryPanel({ session, query, qualifiedCount, onEdit, onRename, onHistory, onRefresh, showToast }) {
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState(session.name);
+  const nameInputRef = useRef(null);
+  // The shared Input doesn't reliably forward autoFocus, and without focus a
+  // blur can never fire — so commit would silently never run. Focus by ref.
+  useEffect(() => { if (editingName) nameInputRef.current?.focus(); }, [editingName]);
+
+  const startRename = () => { setNameDraft(session.name); setEditingName(true); };
+  // Enter commits directly and blur commits too — the guard keeps the pair
+  // from double-saving when Enter's blur follows the explicit commit.
+  const committingRef = useRef(false);
+  const commitRename = async () => {
+    if (committingRef.current) return;
+    committingRef.current = true;
+    try {
+      const next = nameDraft.trim();
+      setEditingName(false);
+      if (!next || next === session.name) return;
+      const ok = await onRename?.(next);
+      if (ok) showToast('Group renamed');
+    } finally {
+      committingRef.current = false;
+    }
+  };
   const lines = summaryLines(query);
   const copyText = () => {
     const text = lines.map(l => (l.kind === 'value' ? `  • ${l.text}` : l.text)).join('\n');
@@ -53,7 +79,24 @@ export function RuleSummaryPanel({ session, query, qualifiedCount, onEdit, onHis
             <ActionButton icon="custom:history" size="L" tooltip="History" onClick={onHistory} />
           </div>
         </div>
-        <div className={styles.railTitle}>{session.name}</div>
+        {editingName ? (
+          <Input
+            ref={nameInputRef}
+            value={nameDraft}
+            onChange={e => setNameDraft(e.target.value)}
+            onBlur={commitRename}
+            onKeyDown={e => {
+              if (e.key === 'Enter') commitRename();
+              if (e.key === 'Escape') { setNameDraft(session.name); setEditingName(false); }
+            }}
+            className={styles.railTitleInput}
+            aria-label="Group name"
+          />
+        ) : (
+          <button type="button" className={styles.railTitleButton} onClick={startRename} title="Click to rename">
+            {session.name}
+          </button>
+        )}
         {session.description ? <div className={styles.railDescription}>{session.description}</div> : null}
       </div>
 

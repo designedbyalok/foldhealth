@@ -2724,8 +2724,23 @@ export const useAppStore = create((set, get) => ({
   // group's rule; groupId:null is the create flow, carrying the metadata the
   // Create Group drawer collected so save can insert the full row.
   pgRuleBuilder: null,
-  openPgRuleBuilder: (session) => set({ pgRuleBuilder: session }),
-  closePgRuleBuilder: () => set({ pgRuleBuilder: null }),
+  // Deep-link restore: hashToState records the group id here when the URL is
+  // #/population/<pgSlug>/rule/<id>; the pop-groups view opens the builder
+  // once the groups have been fetched.
+  pgRuleRestoreId: null,
+  openPgRuleBuilder: (session) => {
+    set({ pgRuleBuilder: session, pgRuleRestoreId: null });
+    updateHash?.(get());
+  },
+  closePgRuleBuilder: () => {
+    set({ pgRuleBuilder: null, pgRuleRestoreId: null });
+    updateHash?.(get());
+  },
+  // Inline rename from the detail rail — keeps the open session's name in
+  // step so the breadcrumb / rail / sub-bar all update together.
+  setPgRuleBuilderName: (name) => set(s => (
+    s.pgRuleBuilder ? { pgRuleBuilder: { ...s.pgRuleBuilder, name } } : {}
+  )),
 
   deletePopGroup: async (id) => {
     const name = get().popGroups.find(g => g.id === id)?.name;

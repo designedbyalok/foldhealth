@@ -194,6 +194,14 @@ export function stateToHash(state) {
     'pg:Dynamic': 'population-groups-dynamic'
   };
 
+  // Dynamic group rule/detail screen — survives refresh:
+  // #/population/<pgSlug>/rule/<groupId>
+  if (state.pgRuleBuilder?.groupId) {
+    const listSlug = LIST_TO_URL[state.activeSubnavList];
+    const pgSlug = listSlug && listSlug.startsWith('population-groups') ? listSlug : 'population-groups';
+    return buildHash('population', pgSlug, 'rule', state.pgRuleBuilder.groupId);
+  }
+
   // Patient detail view
   if (state.selectedPatientId) {
     // Prefer the fold/member id in the URL — it survives worklist ids
@@ -413,6 +421,18 @@ export function hashToState(route, state = null) {
     applyPatientSubRoute(updates, route.id, route.sub, route.extra);
     return updates;
   }
+  // Dynamic group detail deep link: #/population/<pgSlug>/rule/<groupId>.
+  // The group row may not be fetched yet, so this only records the id —
+  // usePopulationGroupsView opens the builder once popGroups arrive.
+  if (route.section && URL_TO_LIST[route.section] && route.tab === 'rule' && route.id) {
+    updates.activePage = 'population';
+    updates.activeSubnavList = URL_TO_LIST[route.section];
+    updates.activeTab = 'toc-worklist';
+    updates._subnavNavigated = true;
+    updates.pgRuleRestoreId = route.id;
+    return updates;
+  }
+
   // New patient URL: #/population/<listSlug>/patient/<memberId>[/<tab>[/<program>[/<step>]]]
   if (route.section && URL_TO_LIST[route.section] && route.tab === 'patient' && route.id) {
     updates.activeSubnavList = URL_TO_LIST[route.section];
