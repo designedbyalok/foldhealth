@@ -37,6 +37,26 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **Tables fill the viewport — auto page size** — every table now sizes its
+  page to the space available instead of always showing 10 rows, so a tall
+  screen fills with data rather than white space (TOC 10 → 20 rows at 1440×1000).
+  Sizes step in multiples of 5 with a floor of 10 and always round up, so the
+  last row runs past the fold — a little scroll, never a gap. The per-page
+  selector gained an **Auto** default (`Auto (20)`); picking an explicit
+  10/25/50 pins it. The choice is a per-user preference persisted in
+  `user_worklist_prefs`
+  (`supabase/user_worklist_prefs_page_size_migration.sql`), mirrored to
+  localStorage so it survives a reload before the fetch lands. Logic lives in
+  `src/components/Pagination/useAutoPageSize.js` and applies to every table
+  through the shared `Pagination`. Also fixed CCM/SNP passing
+  `pageSize`/`onPageSizeChange` where `Pagination` declares
+  `perPage`/`onPerPageChange` — their page-size selector had been a no-op.
+
+- **Population Groups on WorklistShell** — the groups table now renders through
+  the shared `WorklistShell` (sticky Group Name + Actions columns, working
+  select-all with BulkBar, loading skeleton) instead of a hand-rolled table and
+  its own `PaginationBar`, which was deleted.
+
 - **P360 banner — real data for every patient** — all 28 patients now have a
   seeded `p360_profiles` row (acuity/RAF, consent, next appt, chronic
   conditions, vitals, family, care team) generated deterministically per

@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { Icon } from '../Icon/Icon';
 import { Select } from '../Select/Select';
+import { useAutoPageSize } from './useAutoPageSize';
 import styles from './Pagination.module.css';
 
 /**
@@ -106,6 +107,39 @@ export function Pagination({
   const totalItems = totalItemsProp != null ? totalItemsProp : totalItemsComputed;
   const [goToInput, setGoToInput] = useState('');
 
+  // Page size follows the viewport until the user picks an explicit size,
+  // so a tall screen fills with rows instead of white space. The choice is
+  // a per-user preference persisted in Supabase, not view-local state, so
+  // it holds across tables, reloads, and devices.
+  const autoPageSize = useAppStore(s => s.autoPageSize);
+  const manualPageSize = useAppStore(s => s.manualPageSize);
+  const pageSizePrefLoaded = useAppStore(s => s.pageSizePrefLoaded);
+  const fetchPageSizePref = useAppStore(s => s.fetchPageSizePref);
+  const savePageSizePref = useAppStore(s => s.savePageSizePref);
+
+  useEffect(() => { fetchPageSizePref(); }, [fetchPageSizePref]);
+
+  // Apply a saved manual size to whichever table just mounted. Controlled
+  // callers each start from their own useState default, so without this the
+  // stored preference would only ever apply to the table it was set on.
+  useEffect(() => {
+    if (pageSizePrefLoaded && !autoPageSize && perPage !== manualPageSize) {
+      setPerPage(manualPageSize);
+    }
+    // Runs on mount and when the preference changes — deliberately not on
+    // every perPage change, which would fight the user mid-interaction.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageSizePrefLoaded, autoPageSize, manualPageSize]);
+
+  const barRef = useRef(null);
+  useAutoPageSize({
+    anchorRef: barRef,
+    enabled: autoPageSize,
+    perPage,
+    totalItems,
+    onFit: setPerPage,
+  });
+
   const totalPages = Math.max(1, Math.ceil(totalItems / perPage));
 
   const goTo = (page) => {
@@ -114,7 +148,13 @@ export function Pagination({
   };
 
   const handlePerPageChange = (val) => {
-    setPerPage(Number(val));
+    if (val === 'auto') {
+      savePageSizePref({ auto: true }); // next measure re-fits to the viewport
+      return;
+    }
+    const size = Number(val);
+    savePageSizePref({ auto: false, size });
+    setPerPage(size);
   };
 
   const handleGoToPage = () => {
@@ -153,7 +193,7 @@ export function Pagination({
   if (!controlled && activeTab === 'toc-worklist' && viewBy === 'status') return null;
 
   return (
-    <div className={styles.pagination}>
+    <div className={styles.pagination} ref={barRef}>
       <button
         className={styles.btn}
         onClick={() => goTo(currentPage - 1)}
@@ -191,11 +231,12 @@ export function Pagination({
       <Select
         className={styles.perPage}
         options={[
+          { value: 'auto', label: autoPageSize ? `Auto (${perPage})` : 'Auto' },
           { value: '10', label: '10 / Page' },
           { value: '25', label: '25 / Page' },
           { value: '50', label: '50 / Page' },
         ]}
-        value={String(perPage)}
+        value={autoPageSize ? 'auto' : String(perPage)}
         onChange={handlePerPageChange}
       />
 

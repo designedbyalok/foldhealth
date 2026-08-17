@@ -10,7 +10,6 @@ import { Badge } from '../../components/Badge/Badge';
 import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { TableIcon, MiniCloseIcon, Spinner, ReplaceIcon, FileErrorIllustration } from './components/icons.jsx';
-import PaginationBar from './components/PaginationBar.jsx';
 import SectionAccordion from './components/SectionAccordion.jsx';
 import FileChipCard from './components/FileChipCard.jsx';
 import { FOLD_DB, FOLD_DB_MAP } from './data/fold-db.js';
@@ -310,13 +309,6 @@ const FIGMA_INCORRECT_INPUT_ST = {
 };
 const FIGMA_INCORRECT_HDR_COLS = ['Patient ID', 'First Name', 'Last Name', 'Date of Birth', 'Actions'];
 const DUPLICATE_COL_HDR = { fontSize: 12, fontWeight: 500, color: 'var(--neutral-300)', fontFamily: 'Inter,sans-serif' };
-export const TABLE_TH_STYLE = {
-  padding: '8px 16px', fontSize: 12, fontWeight: 500, color: 'var(--neutral-300)',
-  borderBottom: '0.5px solid var(--neutral-150)', background: 'var(--neutral-0)',
-  position: 'sticky', top: 0, zIndex: 2, textAlign: 'left',
-  whiteSpace: 'nowrap', userSelect: 'none',
-};
-export const TABLE_TD_STYLE = { padding: '12px 16px', fontSize: 14, fontWeight: 400, color: 'var(--neutral-300)', verticalAlign: 'middle' };
 
 export function FigmaIncorrectRow({ row, onAdd, onRemove, isLast, onToast, matchedIds }) {
   const [foldId,    setFoldId]    = React.useState(row.rawId    || '');

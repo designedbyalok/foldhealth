@@ -436,9 +436,9 @@ export function CcmWorklistTable() {
       <Pagination
         currentPage={page}
         totalItems={filtered.length}
-        pageSize={perPage}
+        perPage={perPage}
         onPageChange={setPage}
-        onPageSizeChange={(n) => { setPerPage(n); setPage(1); }}
+        onPerPageChange={(n) => { setPerPage(n); setPage(1); }}
       />
 
       {/* Feed CCM's local selection (a Set) into the shared BulkBar so

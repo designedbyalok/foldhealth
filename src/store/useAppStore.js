@@ -1998,6 +1998,67 @@ export const useAppStore = create((set, get) => ({
     }
   },
 
+  // ── Table page-size preference (Supabase-backed) ──
+  // Shares the user_worklist_prefs row with worklistOrder. Seeded from
+  // localStorage so the first paint uses the right size instead of
+  // flashing the default and re-fitting once the fetch lands.
+  autoPageSize: (() => {
+    try { return localStorage.getItem('autoPageSize') !== 'false'; } catch { return true; }
+  })(),
+  manualPageSize: (() => {
+    try { return Number(localStorage.getItem('manualPageSize')) || 10; } catch { return 10; }
+  })(),
+  pageSizePrefLoaded: false,
+
+  fetchPageSizePref: async () => {
+    if (get().pageSizePrefLoaded) return;
+    try {
+      const userId = await get()._resolveWorklistUser();
+      const { data, error } = await supabase
+        .from('user_worklist_prefs')
+        .select('auto_page_size, per_page')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (!error && data) {
+        const auto = data.auto_page_size !== false;
+        const size = Number(data.per_page) || 10;
+        set({ autoPageSize: auto, manualPageSize: size });
+        try {
+          localStorage.setItem('autoPageSize', String(auto));
+          localStorage.setItem('manualPageSize', String(size));
+        } catch { /* private mode — DB stays the source of truth */ }
+      }
+    } catch { /* columns may not exist yet — keep the local defaults */ }
+    set({ pageSizePrefLoaded: true });
+  },
+
+  savePageSizePref: async ({ auto, size }) => {
+    const next = { autoPageSize: auto };
+    if (size != null) next.manualPageSize = size;
+    set(next); // optimistic
+    try {
+      localStorage.setItem('autoPageSize', String(auto));
+      if (size != null) localStorage.setItem('manualPageSize', String(size));
+    } catch { /* */ }
+    try {
+      const userId = await get()._resolveWorklistUser();
+      const { error } = await supabase
+        .from('user_worklist_prefs')
+        .upsert(
+          {
+            user_id: userId,
+            auto_page_size: auto,
+            per_page: size ?? get().manualPageSize,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' },
+        );
+      if (error) console.warn('[store] savePageSizePref failed — run supabase/user_worklist_prefs_page_size_migration.sql:', error.message);
+    } catch (e) {
+      console.warn('[store] savePageSizePref failed:', e?.message);
+    }
+  },
+
   saveWorklistOrder: async (order) => {
     set({ worklistOrder: order }); // optimistic
     try { localStorage.setItem('worklistOrder', JSON.stringify(order)); } catch { /* */ }

@@ -448,9 +448,9 @@ export function SnpWorklistTable() {
       <Pagination
         currentPage={page}
         totalItems={filtered.length}
-        pageSize={perPage}
+        perPage={perPage}
         onPageChange={setPage}
-        onPageSizeChange={(n) => { setPerPage(n); setPage(1); }}
+        onPerPageChange={(n) => { setPerPage(n); setPage(1); }}
       />
     </div>
   );

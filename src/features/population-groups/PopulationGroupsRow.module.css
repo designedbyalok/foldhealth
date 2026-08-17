@@ -1,0 +1,31 @@
+/* Population Groups row — composes the shared worklist row shell from
+   WorklistShell's WorklistRow.module.css (row divider, hover tint, sticky
+   columns, cell padding, actions divider) so the groups table reads as the
+   same visual system as TOC / AWV / HCC.
+
+   Row is NOT clickable (no row-click workflow), so we skip `rowClickable`. */
+
+.row {
+  composes: row from '../../components/WorklistShell/WorklistRow.module.css';
+}
+
+.rowSelected {
+  composes: rowSelected from '../../components/WorklistShell/WorklistRow.module.css';
+}
+
+.stickyLeft  { composes: stickyLeft  from '../../components/WorklistShell/WorklistRow.module.css'; }
+.stickyRight { composes: stickyRight from '../../components/WorklistShell/WorklistRow.module.css'; }
+.td          { composes: td          from '../../components/WorklistShell/WorklistRow.module.css'; }
+.checkTd     { composes: checkTd     from '../../components/WorklistShell/WorklistRow.module.css'; }
+.membersTd   { composes: membersTd   from '../../components/WorklistShell/WorklistRow.module.css'; }
+
+.actionsCell   { composes: actionsCell   from '../../components/WorklistShell/WorklistRow.module.css'; }
+.actionDivider { composes: actionDivider from '../../components/WorklistShell/WorklistRow.module.css'; }
+
+/* Group avatar + clamped name (GroupName handles the 2-line clamp). */
+.groupCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}

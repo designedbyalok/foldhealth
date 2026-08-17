@@ -19,6 +19,7 @@ export function usePopulationGroupsView({
   onMemberAdded,
 }) {
   const popGroups      = useAppStore(s => s.popGroups);
+  const popGroupsLoading = useAppStore(s => s.popGroupsLoading);
   const fetchPopGroups = useAppStore(s => s.fetchPopGroups);
   const createPopGroup = useAppStore(s => s.createPopGroup);
   const updatePopGroup = useAppStore(s => s.updatePopGroup);
@@ -41,10 +42,8 @@ export function usePopulationGroupsView({
   const [searchQuery,   setSearchQuery]   = useState('');
   const [searchOpen,    setSearchOpen]    = useState(false);
   const [checkedRows,   setCheckedRows]   = useState(new Set());
-  const [hoveredRow,    setHoveredRow]    = useState(null);
   const [popPage,       setPopPage]       = useState(1);
   const [popPageSize,   setPopPageSize]   = useState(10);
-  const [popGoToInput,  setPopGoToInput]  = useState('');
 
   /* ── modal state ── */
   const [modalOpen,     setModalOpen]     = useState(false);
@@ -388,13 +387,6 @@ export function usePopulationGroupsView({
   /* reset to page 1 whenever filter/search changes */
   useEffect(() => { setPopPage(1); }, [activeFilter, searchQuery, pgSortKey, pgSortDir]);
 
-  const buildPopPages = () => {
-    if (popTotalPages <= 7) return Array.from({ length: popTotalPages }, (_, i) => i + 1);
-    if (safePg <= 4)        return [1, 2, 3, 4, 5, '...', popTotalPages];
-    if (safePg >= popTotalPages - 3) return [1, '...', popTotalPages-4, popTotalPages-3, popTotalPages-2, popTotalPages-1, popTotalPages];
-    return [1, '...', safePg - 1, safePg, safePg + 1, '...', popTotalPages];
-  };
-
   const isCsvMode    = chosenFilter === 'static-csv';
   const canCreate    = segmentName.trim() && chosenFilter && (chosenFilter !== 'static-csv' || uploadState === 'complete');
   /* Edit mode: only "dirty" once name/description/status/members differ from the loaded group. */
@@ -424,10 +416,10 @@ export function usePopulationGroupsView({
   return {
     // table
     searchQuery, setSearchQuery, searchOpen, setSearchOpen,
-    checkedRows, setCheckedRows, hoveredRow, setHoveredRow,
-    popPage, setPopPage, popPageSize, setPopPageSize, popGoToInput, setPopGoToInput,
+    checkedRows, setCheckedRows,
+    popPage, setPopPage, popPageSize, setPopPageSize,
     sortedGroups, pgSortKey, pgSortDir, pgRequestSort,
-    popTotalPages, safePg, pagedGroups, buildPopPages,
+    safePg, pagedGroups, totalGroups, popGroupsLoading,
     openEditModal, openNewModal,
     // modal
     modalOpen, setModalOpen, segmentName, setSegmentName, description, setDescription,
