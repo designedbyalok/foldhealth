@@ -11,6 +11,25 @@
 #   2. mail-security scanners prefetch links, consuming one-time verify
 #      tokens — with token_hash links the token is only redeemed when the
 #      user submits the Set Password form (see ResetPasswordPage.jsx).
+#
+# ── If you ever re-enable Supabase Branching, read this first ──────────────
+# Branching applies everything at the ROOT of this file to the ephemeral
+# preview database it creates per PR. Those branches are FREE TIER, so the
+# two [auth.email.template.*] blocks below fail the whole "Supabase Preview"
+# check with:
+#   400 "Email template modification is not available for free tier projects
+#        using the default email provider."
+# That failed every PR that touched supabase/ until branching was turned off
+# (see PRs #179/#181/#184/#185). The fix is to move paid-tier-only settings
+# under a [remotes.production] block, which targets the production project
+# ref only — but verify afterwards that `supabase config push` still applies
+# them to production, since the CLI's merge order for [remotes] is not
+# documented and a miss would silently reset these templates to defaults.
+#
+# Branching also needs a real supabase/migrations/ history, which this repo
+# has never had (the *_migration.sql files here are applied by hand, and the
+# older HCC ones were deleted in bbd82ef). Without it the preview branch
+# replays an incomplete history and dies on a missing relation.
 
 project_id = "osnihfqqrcchsaqhagcx"
 
