@@ -104,11 +104,11 @@ function StepTemplateSelect({ agentName, setAgentName, selectedTemplate, setSele
         <input aria-label="Search templates" className={styles.searchInput} type="text" placeholder="Search Templates" value={search} onChange={e => setSearch(e.target.value)} />
         <div className={styles.templateGrid}>
           {filtered.map(t => (
-            <div key={t.id} className={[styles.templateCard, selectedTemplate === t.id ? styles.templateCardSelected : ''].filter(Boolean).join(' ')} onClick={() => setSelectedTemplate(t.id === selectedTemplate ? null : t.id)}>
+            <button type="button" key={t.id} aria-pressed={selectedTemplate === t.id} className={[styles.templateCard, selectedTemplate === t.id ? styles.templateCardSelected : ''].filter(Boolean).join(' ')} onClick={() => setSelectedTemplate(t.id === selectedTemplate ? null : t.id)}>
               <div className={styles.templateCardName}>{t.name}</div>
               <div className={styles.templateCardDesc}>{t.desc}</div>
               {selectedTemplate === t.id && <div className={styles.templateCheck}><Icon name="solar:check-read-linear" size={10} color="#fff" /></div>}
-            </div>
+            </button>
           ))}
           {filtered.length === 0 && (
             <div className={styles.emptyState}>
@@ -399,9 +399,9 @@ function StepPrompt({ agentName, setAgentName, onBack, prompt, setPrompt }) {
               {showTzDropdown && (
                 <div className={styles.tzDropdown}>
                   {TIMEZONES.map(tz => (
-                    <div key={tz} className={[styles.tzDropdownItem, tz === timezone ? styles.tzDropdownItemActive : ''].filter(Boolean).join(' ')} onClick={() => { setTimezone(tz); setShowTzDropdown(false); }}>
+                    <button type="button" key={tz} aria-pressed={tz === timezone} className={[styles.tzDropdownItem, tz === timezone ? styles.tzDropdownItemActive : ''].filter(Boolean).join(' ')} onClick={() => { setTimezone(tz); setShowTzDropdown(false); }}>
                       {tz}
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}

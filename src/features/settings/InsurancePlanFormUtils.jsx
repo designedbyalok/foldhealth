@@ -158,7 +158,9 @@ export function CollapsibleSection({ icon, title, children }) {
   const [collapsed, setCollapsed] = useState(false);
   return (
     <div className={styles.sectionCard}>
-      <div
+      <button
+        type="button"
+        aria-expanded={!collapsed}
         className={`${styles.sectionHeader} ${collapsed ? styles.collapsed : ''}`}
         onClick={() => setCollapsed(v => !v)}
       >
@@ -169,7 +171,7 @@ export function CollapsibleSection({ icon, title, children }) {
           size={12}
           color="var(--neutral-300)"
         />
-      </div>
+      </button>
       <div className={`${styles.collapseOuter} ${collapsed ? styles.collapsed : ''}`}>
         <div className={styles.collapseInner}>
           <div className={styles.sectionBody}>

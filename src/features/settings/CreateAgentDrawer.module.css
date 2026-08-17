@@ -198,17 +198,29 @@
   gap: 8px;
 }
 
+/* A <button> so the card is keyboard-selectable. `width: 100%` and
+   `text-align: left` restore what the <div> had: a form control sizes to
+   fit-content even with display:flex (measured: 600px -> 111px without it) and
+   centres its text. The class keeps its own border — Tailwind preflight already
+   removed the button default, so no `border: none` is needed here. */
 .templateCard {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  width: 100%;
   padding: 14px 16px;
   background: var(--neutral-0);
   border: 0.5px solid var(--neutral-150);
   border-radius: 8px;
+  text-align: left;
   cursor: pointer;
   transition: border-color .15s, background .15s;
   position: relative;
+}
+
+.templateCard:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 2px;
 }
 
 .templateCard:hover {
@@ -459,14 +471,27 @@
   padding: 4px;
 }
 
+/* A <button> so the timezone list is keyboard-navigable. Same restorations as
+   .templateCard (measured: 600px -> 96px without width), plus an explicit
+   `display: block` — the class never declared one, so as a button it fell back
+   to inline-block and the stacked items would pick up whitespace gaps. */
 .tzDropdownItem {
+  display: block;
+  width: 100%;
   padding: 8px 12px;
   font-size: 13px;
   color: var(--neutral-400);
+  text-align: left;
+  background: none;
   cursor: pointer;
   border-radius: 4px;
   font-family: 'Inter', sans-serif;
   white-space: nowrap;
+}
+
+.tzDropdownItem:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: -2px;
 }
 
 .tzDropdownItem:hover { background: var(--primary-100); }

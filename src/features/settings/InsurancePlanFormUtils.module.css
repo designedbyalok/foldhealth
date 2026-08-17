@@ -259,15 +259,27 @@
   flex-shrink: 0;
 }
 
+/* A <button> so the section can be collapsed from the keyboard. `width: 100%`
+   and `text-align: left` restore what the <div> had — a form control sizes to
+   fit-content even with display:flex (measured: 600px -> 102px without it).
+   `border: none` sits before border-bottom so the divider survives. */
 .sectionHeader {
   display: flex;
   align-items: center;
   gap: 6px;
+  width: 100%;
   padding: 8px 12px;
+  text-align: left;
+  border: none;
   border-bottom: 0.5px solid var(--neutral-150);
   cursor: pointer;
   background: var(--neutral-0);
   user-select: none;
+}
+
+.sectionHeader:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: -2px;
 }
 
 .sectionHeader.collapsed {
