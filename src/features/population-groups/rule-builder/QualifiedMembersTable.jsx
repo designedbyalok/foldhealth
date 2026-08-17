@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { WorklistShell } from '../../../components/WorklistShell/WorklistShell';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../../store/useAppStore';
 import styles from './ruleBuilder.module.css';
 
@@ -41,6 +42,17 @@ export function QualifiedMembersTable({ members, loading }) {
   /* Quick View only understands the TOC patient shape, so the name is a
      link just for members that exist in that store slice. */
   const quickViewable = useMemo(() => new Set((patients || []).map(p => p.id)), [patients]);
+
+  // No qualifying patients — a proper empty state beats a headers-only table.
+  if (!loading && members.length === 0) {
+    return (
+      <EmptyState
+        icon="solar:users-group-rounded-linear"
+        title="No qualified members"
+        description="No patients match this group's rule yet. Adjust the conditions in Rule Design, or refresh after profile data changes."
+      />
+    );
+  }
 
   return (
     <WorklistShell

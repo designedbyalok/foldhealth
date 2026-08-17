@@ -62,6 +62,28 @@ function removeRuleById(node, id) {
   };
 }
 
+/* Insert `newRule` joined to the rule with `targetId` by `combinator`:
+   same combinator as the parent group (or single-child parent) → insert as a
+   sibling right after it; different combinator → wrap the pair in a new
+   subgroup, which is how a mixed AND/OR chain becomes a tree. */
+function addJoinedRule(node, targetId, combinator, newRule) {
+  const idx = (node.rules || []).findIndex(child => child.id === targetId);
+  if (idx >= 0) {
+    if (node.combinator === combinator || node.rules.length === 1) {
+      const rules = [...node.rules];
+      rules.splice(idx + 1, 0, newRule);
+      return { ...node, combinator: node.rules.length === 1 ? combinator : node.combinator, rules };
+    }
+    const rules = [...node.rules];
+    rules[idx] = { id: `${targetId}-g`, combinator, rules: [node.rules[idx], newRule] };
+    return { ...node, rules };
+  }
+  return {
+    ...node,
+    rules: (node.rules || []).map(child => (isGroup(child) ? addJoinedRule(child, targetId, combinator, newRule) : child)),
+  };
+}
+
 function everyLeaf(node, pred) {
   return (node.rules || []).every(child => (isGroup(child) ? everyLeaf(child, pred) : pred(child)));
 }
@@ -84,7 +106,7 @@ function GripIcon() {
 
 /* One rule row. `readOnly` strips every actionable trigger — no chip click,
    no AND/OR toggle, no add/remove — leaving the same visual anatomy. */
-function RuleNode({ rule, readOnly, combinator, onOpenEditor, onToggleCombinator, onAddCondition, onRemove }) {
+function RuleNode({ rule, readOnly, combinator, onOpenEditor, onJoin, onRemove }) {
   const field = FIELD_BY_KEY[rule.field];
   if (!field) return null;
   const summary = ruleSummary(rule);
@@ -122,21 +144,14 @@ function RuleNode({ rule, readOnly, combinator, onOpenEditor, onToggleCombinator
             <button
               type="button"
               className={`${styles.comboBtn} ${combinator === 'and' ? styles.comboBtnActive : ''}`}
-              onClick={() => onToggleCombinator('and')}
+              onClick={() => onJoin('and')}
             >AND</button>
             <span className={styles.comboDivider} />
             <button
               type="button"
               className={`${styles.comboBtn} ${combinator === 'or' ? styles.comboBtnActive : ''}`}
-              onClick={() => onToggleCombinator('or')}
+              onClick={() => onJoin('or')}
             >OR</button>
-            <span className={styles.comboDivider} />
-            <button
-              type="button"
-              className={styles.comboBtn}
-              aria-label="Add condition"
-              onClick={onAddCondition}
-            ><Icon name="solar:add-circle-linear" size={14} color="currentColor" /></button>
           </span>
           <ActionButton
             icon="solar:trash-bin-minimalistic-linear"
@@ -179,6 +194,9 @@ export function PopGroupRuleBuilder() {
   const [mode, setMode] = useState(() => (session?.groupId ? (session.startInEdit ? 'edit' : 'view') : 'create'));
   const [editingRuleId, setEditingRuleId] = useState(null);
   const [pickerRect, setPickerRect] = useState(null);
+  // { ruleId, combinator } while an AND/OR click is waiting for a field pick —
+  // the picker renders inline below that row (Figma 9:73965).
+  const [pendingJoin, setPendingJoin] = useState(null);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('design');
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -200,8 +218,13 @@ export function PopGroupRuleBuilder() {
 
   const addCondition = (field) => {
     const rule = { id: nextRuleId(), field: field.key, operator: field.operators[0].name, value: {} };
-    setQuery(q => add(q, rule, []));
-    setPickerRect(null);
+    if (pendingJoin) {
+      setQuery(q => addJoinedRule(q, pendingJoin.ruleId, pendingJoin.combinator, rule));
+      setPendingJoin(null);
+    } else {
+      setQuery(q => add(q, rule, []));
+      setPickerRect(null);
+    }
     setEditingRuleId(rule.id);
   };
 
@@ -210,8 +233,6 @@ export function PopGroupRuleBuilder() {
     // badges with the derived operator+value form.
     setQuery(q => updateRuleById(q, id, { operator: patch.operator, value: patch.value, display: undefined }));
   };
-
-  const setCombinator = (value) => setQuery(q => ({ ...q, combinator: value }));
 
   const isComplete = (r) => {
     const v = r.value || {};
@@ -299,11 +320,17 @@ export function PopGroupRuleBuilder() {
         <RuleNode
           rule={child}
           readOnly={isView}
-          combinator={query.combinator}
+          combinator={group.combinator}
           onOpenEditor={() => setEditingRuleId(child.id)}
-          onToggleCombinator={setCombinator}
-          onAddCondition={(e) => setPickerRect(e.currentTarget.getBoundingClientRect())}
+          onJoin={(comb) => setPendingJoin({ ruleId: child.id, combinator: comb })}
           onRemove={() => setQuery(q => removeRuleById(q, child.id))}
+        />
+      )}
+      {pendingJoin?.ruleId === child.id && (
+        <AddConditionPopover
+          inline
+          onSelect={addCondition}
+          onClose={() => setPendingJoin(null)}
         />
       )}
     </div>
@@ -317,6 +344,19 @@ export function PopGroupRuleBuilder() {
       </div>
 
       {renderChildren(query, 0)}
+
+      {!isView && query.rules.length > 0 && (
+        <div className={styles.canvasJoin}>
+          <span className={styles.ifTail} />
+          <span className={styles.combo}>
+            <button type="button" className={styles.comboBtn}
+              onClick={() => setPendingJoin({ ruleId: query.rules[query.rules.length - 1].id, combinator: 'and' })}>AND</button>
+            <span className={styles.comboDivider} />
+            <button type="button" className={styles.comboBtn}
+              onClick={() => setPendingJoin({ ruleId: query.rules[query.rules.length - 1].id, combinator: 'or' })}>OR</button>
+          </span>
+        </div>
+      )}
 
       {countLeaves(query) === 0 && !isView && (
         <Button

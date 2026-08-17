@@ -587,3 +587,27 @@
   flex: 1;
   min-width: 0;
 }
+
+/* Inline Add Condition card — rendered in flow below the row whose AND/OR
+   started the join (Figma 9:73965), same body as the portal popover. */
+.popoverInline {
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 8px;
+  box-shadow: var(--shadow-popover);
+  overflow: hidden;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 4px;
+}
+
+/* Bottom-of-canvas AND | OR — appends the next condition joined to the last
+   top-level block. */
+.canvasJoin {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: fit-content;
+}
+.canvasJoin .ifTail { margin-left: 13px; }
+.canvasJoin .combo { background: var(--neutral-0); }
