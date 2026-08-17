@@ -28,12 +28,17 @@
 .section { display: contents; }
 
 /* Section labels. Title-case by default in JSX; the uppercase variant is a
-   modifier so comm panels / analytics keep their small-caps look. */
+   modifier so comm panels / analytics keep their small-caps look.
+
+   The label is the darkest, heaviest text in the rail. It has to outrank the
+   items below it, which are larger (14px) — so at 12px it can only win on
+   weight and colour. Anything lighter than the items inverts the hierarchy
+   and the heading reads as a caption. */
 .sectionLabel {
   padding: 16px 16px 8px;
   font-size: 12px;
-  font-weight: 500;
-  color: var(--neutral-300);
+  font-weight: 600;
+  color: var(--neutral-500);
   white-space: nowrap;
   position: relative;
   z-index: 1;

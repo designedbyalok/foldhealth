@@ -5,21 +5,51 @@ import { SearchIconButton } from '../../components/SearchIconButton/SearchIconBu
 import { WorklistShell } from '../../components/WorklistShell/WorklistShell';
 import { PopulationGroupsRow } from './PopulationGroupsRow.jsx';
 import { BulkSelectIcon } from './PopulationGroupsViewPanels.jsx';
+import { ConfirmDialog } from '../../components/ConfirmDialog/ConfirmDialog';
+import { FOLD_DB_MAP } from './data/fold-db.js';
+
+/* Export a group's members as CSV — same columns the edit drawer's download
+   produces, so a list exported here can be re-uploaded by the create flow. */
+function downloadMemberList(group, showToast) {
+  const members = (group.memberIds || []).flatMap(id => {
+    const p = FOLD_DB_MAP[String(id).toUpperCase()];
+    return p ? [p] : [];
+  });
+  if (members.length === 0) {
+    showToast(`${group.name} has no member list to download`);
+    return;
+  }
+  const rows = members.map(m => {
+    const [first, ...rest] = (m.name || '').split(' ');
+    return [m.id, first || '', rest.join(' '), m.dob || ''].join(',');
+  });
+  const blob = new Blob([['Patient ID,First Name,Last Name,DOB', ...rows].join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${group.name.replace(/[^\w\s-]/g, '').trim() || 'population-group'}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 const Input = (props) => <FoldInput {...props} />;
 
 // WorklistShell column defs — sticky checkbox + Group Name on the left,
 // sticky Action column on the right, sortable member counts + dates.
 // Same shape TOC / AWV use so the sticky-column scroll behaviour matches.
+// Group names are long enough to wrap to the clamped second line, so the name
+// column takes the width freed by the member-count columns — those hold 2–3
+// digits and only need room for their own headers. Dates are date-only now,
+// so they need less than the old timestamp width too.
 const POP_COLUMNS = [
   { key: 'select',   showCheckbox: true, sticky: 'left', left: 0, width: 36 },
-  { key: 'name',     label: 'Group Name', sticky: 'left', left: 36, width: 260 },
-  { key: 'count',    label: 'Active Members',   sortKey: 'count',      sortType: 'number' },
-  { key: 'inactive', label: 'Inactive Members', sortKey: 'inactive',   sortType: 'number' },
-  { key: 'type',     label: 'Type' },
-  { key: 'created',  label: 'Created Date',     sortKey: '_createdTs', sortType: 'date', width: 160 },
-  { key: 'updated',  label: 'Updated Date',     sortKey: '_updatedTs', sortType: 'date', width: 160 },
-  { key: 'actions',  label: 'Action', sticky: 'right', width: 180 },
+  { key: 'name',     label: 'Group Name', sticky: 'left', left: 36, width: 420 },
+  { key: 'count',    label: 'Active Members',   sortKey: 'count',      sortType: 'number', width: 130 },
+  { key: 'inactive', label: 'Inactive Members', sortKey: 'inactive',   sortType: 'number', width: 140 },
+  { key: 'type',     label: 'Type', width: 110 },
+  { key: 'created',  label: 'Created Date',     sortKey: '_createdTs', sortType: 'date', width: 130 },
+  { key: 'updated',  label: 'Updated Date',     sortKey: '_updatedTs', sortType: 'date', width: 130 },
+  { key: 'actions',  label: 'Action', sticky: 'right', width: 150 },
 ];
 
 export function PopulationGroupsViewTable({ vm, onToggleSidebar }) {
@@ -30,6 +60,7 @@ export function PopulationGroupsViewTable({ vm, onToggleSidebar }) {
     pgSortKey, pgSortDir, pgRequestSort,
     safePg, pagedGroups, totalGroups, popGroupsLoading,
     openEditModal, openNewModal, showToast,
+    deleteTargets, setDeleteTargets, deleting, confirmDelete,
   } = vm;
 
   const selectedIds = [...checkedRows];
@@ -83,7 +114,10 @@ export function PopulationGroupsViewTable({ vm, onToggleSidebar }) {
     </div>
   );
 
+  const deleteCount = deleteTargets.length;
+
   return (
+    <>
     <WorklistShell
       header={header}
       columns={POP_COLUMNS}
@@ -98,6 +132,8 @@ export function PopulationGroupsViewTable({ vm, onToggleSidebar }) {
           selected={checkedRows.has(g.id)}
           onToggle={() => setCheckedRows(prev => { const n = new Set(prev); if (n.has(g.id)) n.delete(g.id); else n.add(g.id); return n; })}
           onEdit={() => openEditModal(g)}
+          onDelete={() => setDeleteTargets([g])}
+          onDownload={() => downloadMemberList(g, showToast)}
         />
       )}
       loading={popGroupsLoading && pagedGroups.length === 0}
@@ -107,7 +143,7 @@ export function PopulationGroupsViewTable({ vm, onToggleSidebar }) {
       onClearSelection={() => setCheckedRows(new Set())}
       bulkActions={[
         { label: 'Run Automation', icon: 'solar:bolt-linear', onClick: () => showToast('Run Automation — coming soon') },
-        { label: 'Delete', icon: 'solar:trash-bin-minimalistic-linear', variant: 'destructive', onClick: () => showToast('Delete Groups — coming soon') },
+        { label: 'Delete', icon: 'solar:trash-bin-minimalistic-linear', variant: 'destructive', onClick: () => setDeleteTargets(pagedGroups.filter(g => checkedRows.has(g.id))) },
       ]}
       page={safePg}
       perPage={popPageSize}
@@ -116,5 +152,20 @@ export function PopulationGroupsViewTable({ vm, onToggleSidebar }) {
       onPageSizeChange={(n) => { setPopPageSize(n); setPopPage(1); }}
       minTableWidth={900}
     />
+
+    {deleteCount > 0 && (
+      <ConfirmDialog
+        variant="destructive"
+        title={deleteCount === 1 ? 'Delete this population group?' : `Delete ${deleteCount} population groups?`}
+        description={deleteCount === 1
+          ? `"${deleteTargets[0].name}" and its member list will be permanently removed. This can't be undone.`
+          : `These groups and their member lists will be permanently removed. This can't be undone.`}
+        confirmLabel={deleting ? 'Deleting…' : 'Delete'}
+        loading={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTargets([])}
+      />
+    )}
+    </>
   );
 }

@@ -23,6 +23,7 @@ export function usePopulationGroupsView({
   const fetchPopGroups = useAppStore(s => s.fetchPopGroups);
   const createPopGroup = useAppStore(s => s.createPopGroup);
   const updatePopGroup = useAppStore(s => s.updatePopGroup);
+  const deletePopGroup = useAppStore(s => s.deletePopGroup);
   useEffect(() => { fetchPopGroups(); }, [fetchPopGroups]);
 
   /* Load the real patient directory (all_patients) so CSV uploads are matched
@@ -102,6 +103,10 @@ export function usePopulationGroupsView({
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   /* edit phase 2 — new "Update Population Group" drawer (replaces the in-create edit reuse) */
   const [editingGroup, setEditingGroup] = useState(null);
+  /* Groups staged for deletion — non-empty opens the confirm dialog. Holds an
+     array so the row action and the BulkBar action share one path. */
+  const [deleteTargets, setDeleteTargets] = useState([]);
+  const [deleting, setDeleting] = useState(false);
 
   const fileInputRef  = useRef(null);
   const parsedRef        = useRef(null); // stores parsed match results while loading timer runs
@@ -184,6 +189,29 @@ export function usePopulationGroupsView({
      drawer's CSV review state — kept here, commented out, for reference. */
   const openEditModal = (group) => {
     setEditingGroup(group);
+  };
+
+  /* ── delete ──
+     Two-step: the row/bulk action stages the target(s), ConfirmDialog commits.
+     Deleting is irreversible, so it never fires straight off a row click. */
+  const confirmDelete = async () => {
+    const targets = deleteTargets;
+    if (targets.length === 0) return;
+    setDeleting(true);
+    const results = await Promise.all(targets.map(g => deletePopGroup(g.id)));
+    setDeleting(false);
+    setDeleteTargets([]);
+    const removed = results.filter(Boolean).length;
+    if (removed > 0) {
+      // Drop any deleted ids from the selection so BulkBar doesn't keep
+      // counting rows that no longer exist.
+      setCheckedRows(prev => {
+        const next = new Set(prev);
+        targets.forEach(g => next.delete(g.id));
+        return next;
+      });
+      showToast(removed === 1 ? 'Population Group Deleted' : `${removed} Population Groups Deleted`);
+    }
   };
   // const openEditModal = (group) => {
   //   resetModalState();
@@ -362,9 +390,16 @@ export function usePopulationGroupsView({
   const removeCriterion = idx       => setCriteria(p => p.filter((_,i) => i !== idx));
   const updateCriterion = (i,k,v)   => setCriteria(p => p.map((c,ci) => ci===i ? { ...c,[k]:v } : c));
 
-  /* ── filtered list ── */
+  /* ── filtered list ──
+     The bundled POP_GROUPS are a FALLBACK, not extra rows: they render only
+     when Supabase returns nothing (offline / un-seeded / fetch error). They
+     were previously concatenated onto the DB rows, which put ~29 phantom
+     groups in the table that no Edit or Delete could ever persist — they
+     have no row to write to — and whose dates were fabricated. Every row
+     the table shows must be a real record, so the two never mix. */
+  const sourceGroups = popGroups.length > 0 ? popGroups : (popGroupsLoading ? [] : POP_GROUPS);
   const activeType = activeFilter === 'Static' || activeFilter === 'Dynamic' ? activeFilter : null;
-  const displayedGroups = [...popGroups, ...POP_GROUPS].flatMap(g => {
+  const displayedGroups = sourceGroups.flatMap(g => {
     if (activeType && g.type !== activeType) return [];
     if (searchQuery && !g.name.toLowerCase().includes(searchQuery.toLowerCase())) return [];
     return [{
@@ -431,6 +466,7 @@ export function usePopulationGroupsView({
     patDDOpen, setPatDDOpen, showPreview, setShowPreview,
     criteria, setCriteria, newMode, editGroupId, showSaveConfirm, setShowSaveConfirm,
     editingGroup, setEditingGroup,
+    deleteTargets, setDeleteTargets, deleting, confirmDelete,
     fileInputRef, procStepRef, manualSelRef, patSearchRef, parsedRef, loadingStartRef,
     closeModal, saveGroup, handleFile,
     addCriterion, removeCriterion, updateCriterion,

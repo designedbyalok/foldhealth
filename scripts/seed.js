@@ -18,6 +18,7 @@ import { FALLBACK_ICDS } from '../src/lib/icd/catalog.js';
 import { POS_CODES } from '../src/features/hcc/data/posCodes.js';
 import { ICDS, NOT_LINKED, getIcdsForMember, getNotLinkedForMember } from '../src/features/hcc/data/icds.js';
 import { HCC_MEMBER_BY_NAME } from '../src/features/hcc/data/mock.js';
+import { POP_GROUPS } from '../src/features/population-groups/PopulationGroupsView.utils.js';
 import { CCM_BILLING_PERIODS, CCM_BILLABLE_ACTIVITIES, CCM_BILLING_REPORTS } from '../src/features/patient/data/ccmBillingMock.js';
 import { CCM_WORKLIST_MEMBERS } from '../src/features/ccm-worklist/data/mock.js';
 import { SNP_WORKLIST_MEMBERS } from '../src/features/snp-worklist/data/mock.js';
@@ -821,6 +822,49 @@ async function main() {
   console.log(lettersErr
     ? `  ✗ letters: ${lettersErr.message}`
     : `  ✓ letters (${letterRows.length})`);
+
+  // ── Population Groups ──
+  // The demo groups used to be concatenated onto the DB rows at render time,
+  // which put rows in the table that Edit and Delete could never persist —
+  // they had no row to write to. They live here instead so every group on
+  // screen is a real record. Matched on name (id is a generated uuid), so
+  // re-running never duplicates and never clobbers edits to other columns.
+  {
+    const { data: existing, error: exErr } = await supabase
+      .from('population_groups')
+      .select('name');
+    if (exErr) {
+      console.log(`  ✗ population_groups: ${exErr.message}`);
+    } else {
+      const have = new Set((existing || []).map(r => r.name));
+      const missing = POP_GROUPS.filter(g => !have.has(g.name));
+      if (missing.length === 0) {
+        console.log(`  ✓ population_groups (all ${POP_GROUPS.length} demo groups already present)`);
+      } else {
+        // created_at comes from the mock's own date so the demo keeps its
+        // spread of dates; updated_at matches it because a freshly seeded
+        // group has never been edited. (The mock's own `updated` predates its
+        // `created`, which is impossible — don't carry that over.)
+        const rows = missing.map(g => {
+          const createdIso = new Date(g.created).toISOString();
+          return {
+            name: g.name,
+            group_type: g.type || 'Static',
+            member_status: 'All Status',
+            member_ids: [],
+            active_count: g.count ?? 0,
+            inactive_count: g.inactive ?? 0,
+            created_at: createdIso,
+            updated_at: createdIso,
+          };
+        });
+        const { error: pgErr } = await supabase.from('population_groups').insert(rows);
+        console.log(pgErr
+          ? `  ✗ population_groups: ${pgErr.message}`
+          : `  ✓ population_groups (${rows.length} added)`);
+      }
+    }
+  }
 
   console.log('\n✅  Seed complete. Run `bun run dev` to verify.\n');
 }

@@ -2667,6 +2667,19 @@ export const useAppStore = create((set, get) => ({
     set(s => ({ popGroups: s.popGroups.map(g => g.id === id ? saved : g) }));
     return saved;
   },
+  deletePopGroup: async (id) => {
+    const { error } = await supabase
+      .from('population_groups')
+      .delete()
+      .eq('id', id);
+    if (error) {
+      console.warn('[store] deletePopGroup failed:', error.message);
+      get().showToast(`Failed to delete group: ${error.message}`);
+      return false;
+    }
+    set(s => ({ popGroups: s.popGroups.filter(g => g.id !== id) }));
+    return true;
+  },
 
   // ── Embed Domains (Supabase-backed) ──
   embedDomains: [],

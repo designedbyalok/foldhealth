@@ -60,15 +60,28 @@ export function PopulationGroupsCreateDrawer({ vm, onMemberAdded, onGroupCreated
           group={editingGroup}
           onClose={() => setEditingGroup(null)}
           onSubmit={async ({ name, description, members }) => {
+            // Only the fields this drawer actually edits may change. It used
+            // to hardcode filterType to 'static-csv' and derive the counts
+            // from the chips, so renaming a Dynamic group silently converted
+            // it to a CSV group and zeroed its active/inactive counts — the
+            // edit persisted, but persisted the wrong row. A Dynamic group's
+            // membership comes from its rule, not from this drawer.
+            const isStatic = (editingGroup.type || 'Static') === 'Static';
+            // The chips only own membership when there is a member list to
+            // edit, or the user actually picked some. Otherwise a group whose
+            // count came from elsewhere (a rule, an import) would have it
+            // zeroed just by opening the drawer and pressing Submit.
+            const hasMemberList = (editingGroup.memberIds || []).length > 0;
+            const chipsOwnMembership = isStatic && (hasMemberList || members.length > 0);
             const saved = await updatePopGroup(editingGroup.id, {
               name,
               description,
               type: editingGroup.type || 'Static',
-              filterType: 'static-csv',
+              filterType: editingGroup.filterType || null,
               memberStatus: editingGroup.memberStatus || 'All Status',
-              memberIds: members.map(m => m.id),
-              count: members.length,
-              inactive: 0,
+              memberIds: chipsOwnMembership ? members.map(m => m.id) : (editingGroup.memberIds || []),
+              count: chipsOwnMembership ? members.length : (editingGroup.count ?? 0),
+              inactive: editingGroup.inactive ?? 0,
             });
             if (!saved) return;
             onGroupCreated?.(name);

@@ -1,8 +1,17 @@
+import { useState } from 'react';
 import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
+import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
 import { GroupName, UsersGroupRoundedLinear } from './PopulationGroupsViewPanels.jsx';
 import styles from './PopulationGroupsRow.module.css';
+
+// Destructive and rarely-reached actions live behind the ⋯ menu, so the
+// always-visible row keeps only Run Automation and Edit.
+const MORE_ITEMS = [
+  { key: 'download', icon: 'solar:download-minimalistic-linear', label: 'Download member list' },
+  { key: 'delete', icon: 'solar:trash-bin-minimalistic-linear', label: 'Delete Group', danger: true },
+];
 
 /**
  * Single Population Groups row rendered inside WorklistShell. Base styling
@@ -11,7 +20,9 @@ import styles from './PopulationGroupsRow.module.css';
  * hover tint, sticky checkbox + name on the left, sticky actions on the
  * right, L-size action buttons with dividers).
  */
-export function PopulationGroupsRow({ group, selected, onToggle, onEdit }) {
+export function PopulationGroupsRow({ group, selected, onToggle, onEdit, onDelete, onDownload }) {
+  const [moreAnchor, setMoreAnchor] = useState(null);
+
   return (
     <tr className={[styles.row, selected ? styles.rowSelected : ''].filter(Boolean).join(' ')}>
       {/* Sticky-left checkbox */}
@@ -51,10 +62,27 @@ export function PopulationGroupsRow({ group, selected, onToggle, onEdit }) {
           <span className={styles.actionDivider} />
           <ActionButton icon="solar:pen-linear" size="L" tooltip="Edit Group" onClick={onEdit} />
           <span className={styles.actionDivider} />
-          <ActionButton icon="solar:trash-bin-minimalistic-linear" size="L" tooltip="Delete Group" />
-          <span className={styles.actionDivider} />
-          <ActionButton icon="solar:menu-dots-linear" size="L" tooltip="More Options" />
+          <ActionButton
+            icon="solar:menu-dots-linear"
+            size="L"
+            tooltip="More Options"
+            onClick={(e) => setMoreAnchor(e.currentTarget)}
+          />
         </div>
+        {moreAnchor && (
+          <MenuPopover
+            anchorRef={{ current: moreAnchor }}
+            items={MORE_ITEMS}
+            width={220}
+            ariaLabel={`More actions for ${group.name}`}
+            onSelect={(key) => {
+              setMoreAnchor(null);
+              if (key === 'download') onDownload?.();
+              if (key === 'delete') onDelete?.();
+            }}
+            onClose={() => setMoreAnchor(null)}
+          />
+        )}
       </td>
     </tr>
   );

@@ -154,7 +154,11 @@ export function UpdatePopGroupDrawer({ group, onClose, onSubmit }) {
     URL.revokeObjectURL(url);
   };
 
-  const canSubmit = name.trim() && members.length > 0;
+  // Name is the only genuine requirement. Requiring members too made every
+  // group without a CSV member list uneditable — Dynamic groups are defined
+  // by a rule and carry none, so their Submit button could never enable and
+  // a rename or description edit was impossible to save.
+  const canSubmit = Boolean(name.trim());
 
   return (
     <Drawer

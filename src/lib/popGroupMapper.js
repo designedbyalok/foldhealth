@@ -1,12 +1,11 @@
 // Maps population_groups DB rows ↔ the group objects the Population Groups
 // table renders. The table shows pre-formatted `created` / `updated` strings,
-// so we derive those from the timestamptz columns here.
+// so we derive those from the timestamptz columns here. Both are date-only:
+// the time of day added noise to the column without telling anyone anything
+// they acted on.
 
 const fmtDate = (iso) =>
   iso ? new Date(iso).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : '';
-
-const fmtDateTime = (iso) =>
-  iso ? new Date(iso).toLocaleString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : '';
 
 export function popGroupRowToJs(row) {
   return {
@@ -20,7 +19,7 @@ export function popGroupRowToJs(row) {
     count: row.active_count ?? 0,
     inactive: row.inactive_count ?? 0,
     created: fmtDate(row.created_at),
-    updated: fmtDateTime(row.updated_at),
+    updated: fmtDate(row.updated_at),
   };
 }
 
