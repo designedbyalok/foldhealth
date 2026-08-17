@@ -47,7 +47,7 @@ export function GoalWizardDescribeStep({ active, isEdit, nlInput, setNlInput, ai
             Try Example
           </Button>
         </div>
-        <textarea
+        <textarea aria-label="Goal instructions"
           value={nlInput}
           onChange={e => setNlInput(e.target.value)}
           placeholder="Describe what the agent should accomplish. Be specific about step order, mandatory requirements, and dependencies..."
@@ -114,7 +114,7 @@ export function GoalWizardConfigureStep({ active, isEdit, name, setName, nameErr
       </div>
       <div className={s.formGroup}>
         <div className={s.formLabel}>Description</div>
-        <textarea className={s.formTextarea} value={desc} onChange={e => setDesc(e.target.value)}
+        <textarea aria-label="Description" className={s.formTextarea} value={desc} onChange={e => setDesc(e.target.value)}
           placeholder="What is this goal about?" />
       </div>
     </div>
@@ -192,7 +192,7 @@ export function GoalWizardStepsStep({
                   onChange={e => updateStep(i, { score: parseInt(e.target.value) || 0 })} />
               )}
             </div>
-            <textarea className={s.formTextarea} style={{ minHeight: 52, marginBottom: 8 }} value={st.desc || ''}
+            <textarea aria-label="Step description" className={s.formTextarea} style={{ minHeight: 52, marginBottom: 8 }} value={st.desc || ''}
               onChange={e => updateStep(i, { desc: e.target.value })} placeholder="Step description" />
             <Input type="text" style={{ marginBottom: 8 }} value={st.condition || ''}
               onChange={e => updateStep(i, { condition: e.target.value })} placeholder="Dependency condition (optional)" />
@@ -242,7 +242,7 @@ export function GoalWizardStepsStep({
                 onChange={e => setNewStep({ ...newStep, score: parseInt(e.target.value) || 0 })} />
             )}
           </div>
-          <textarea className={s.formTextarea} style={{ minHeight: 52, marginBottom: 8 }} placeholder="What does this step require?"
+          <textarea aria-label="Step requirements" className={s.formTextarea} style={{ minHeight: 52, marginBottom: 8 }} placeholder="What does this step require?"
             value={newStep.desc} onChange={e => setNewStep({ ...newStep, desc: e.target.value })} />
           <Input type="text" style={{ marginBottom: 8 }} placeholder="Dependency condition (optional)"
             value={newStep.condition} onChange={e => setNewStep({ ...newStep, condition: e.target.value })} />

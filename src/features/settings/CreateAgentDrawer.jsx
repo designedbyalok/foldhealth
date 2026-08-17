@@ -101,7 +101,7 @@ function StepTemplateSelect({ agentName, setAgentName, selectedTemplate, setSele
       </div>
       <div className={styles.templateSection}>
         <div className={styles.sectionTitle}>Select from Agent Templates</div>
-        <input className={styles.searchInput} type="text" placeholder="Search Templates" value={search} onChange={e => setSearch(e.target.value)} />
+        <input aria-label="Search templates" className={styles.searchInput} type="text" placeholder="Search Templates" value={search} onChange={e => setSearch(e.target.value)} />
         <div className={styles.templateGrid}>
           {filtered.map(t => (
             <div key={t.id} className={[styles.templateCard, selectedTemplate === t.id ? styles.templateCardSelected : ''].filter(Boolean).join(' ')} onClick={() => setSelectedTemplate(t.id === selectedTemplate ? null : t.id)}>
@@ -328,8 +328,8 @@ function StepPrompt({ agentName, setAgentName, onBack, prompt, setPrompt }) {
               <option value="">Select Type</option>
               {UTILITY_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
-            <input className={styles.utilityInput} placeholder="Enter Key" value={row.key} onChange={e => updateRow(i, 'key', e.target.value)} />
-            <input className={styles.utilityDefaultInput} placeholder="Select Default" value={row.defaultVal} onChange={e => updateRow(i, 'defaultVal', e.target.value)} />
+            <input aria-label="Variable key" className={styles.utilityInput} placeholder="Enter Key" value={row.key} onChange={e => updateRow(i, 'key', e.target.value)} />
+            <input aria-label="Variable default value" className={styles.utilityDefaultInput} placeholder="Select Default" value={row.defaultVal} onChange={e => updateRow(i, 'defaultVal', e.target.value)} />
             <button className={styles.utilityDeleteBtn} onClick={() => removeRow(i)} aria-label="Remove utility">
               <Icon name="solar:trash-bin-minimalistic-linear" size={16} color="var(--neutral-300)" />
             </button>
@@ -345,7 +345,7 @@ function StepPrompt({ agentName, setAgentName, onBack, prompt, setPrompt }) {
 
       <div className={styles.promptBox}>
         <div className={styles.promptTextareaWrap}>
-          <textarea
+          <textarea aria-label="Workflow prompt"
             ref={textareaRef}
             className={styles.promptTextarea}
             placeholder="Add Prompt to generate workflow"

@@ -828,7 +828,7 @@ export function AddPatientSearch({ matched, onAdd }) {
     <div ref={ref} style={{ position:'relative', flexShrink:0 }}>
       <div style={{ display:'flex', alignItems:'center', gap:8, height:36, padding:'0 10px', border:'0.5px solid var(--neutral-200)', borderRadius:6, background:'var(--neutral-0)' }}>
         <Icon name="solar:magnifer-linear" size={15} color="var(--neutral-300)" />
-        <input
+        <input aria-label="Search and add patients"
           value={q}
           onChange={e => { setQ(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}

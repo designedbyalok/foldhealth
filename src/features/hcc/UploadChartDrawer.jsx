@@ -253,7 +253,7 @@ export function UploadChartDrawer() {
                 Caption
                 <span className={styles.required} aria-hidden="true" />
               </span>
-              <input
+              <input aria-label="Caption"
                 type="text"
                 value={caption}
                 placeholder="Add caption"

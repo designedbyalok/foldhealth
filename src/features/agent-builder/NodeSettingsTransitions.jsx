@@ -142,7 +142,7 @@ export function NodeSettingsTransitions({
                   <div className={styles.ruleRows}>
                     {(t.rules || []).map((r, ri) => (
                       <div key={ri} className={styles.ruleRow}>
-                        <input
+                        <input aria-label="Rule variable"
                           className={styles.ruleVarInput}
                           value={r.variable}
                           onChange={e => onUpdateRule(i, ri, 'variable', e.target.value)}
@@ -161,7 +161,7 @@ export function NodeSettingsTransitions({
                           <option value="<=">&lt;=</option>
                           <option value="!=">!=</option>
                         </select>
-                        <input
+                        <input aria-label="Rule value"
                           className={styles.ruleValInput}
                           value={r.value}
                           onChange={e => onUpdateRule(i, ri, 'value', e.target.value)}
@@ -176,7 +176,7 @@ export function NodeSettingsTransitions({
                 </div>
               ) : (
                 /* ── Prompt condition input ── */
-                <input
+                <input aria-label="Transition condition"
                   className={styles.fieldInput}
                   value={t.condition || ''}
                   onChange={e => onUpdateTransition(i, 'condition', e.target.value)}

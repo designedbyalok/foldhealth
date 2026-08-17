@@ -205,7 +205,7 @@ export function SelectionToolbar() {
         </>
       ) : (
         <>
-          <input
+          <input aria-label="Link URL"
             autoFocus
             className={styles.selectionToolbarLinkInput}
             value={linkValue}

@@ -16,7 +16,7 @@ export function GlobalSettingsIdentitySection({ settings, update, errors, markTo
     >
       <StaticField label="Agent type" value={settings.agentType} />
       <Field label="Agent Name" required>
-        <input
+        <input aria-label="Agent Name"
           type="text"
           className={`${styles.input} ${showAgentNameError ? styles.inputError : ''}`}
           value={settings.agentName}
@@ -39,7 +39,7 @@ export function GlobalSettingsIdentitySection({ settings, update, errors, markTo
           </>
         }
       >
-        <textarea
+        <textarea aria-label="Use case name"
           className={`${styles.textarea} ${showUseCaseError ? styles.inputError : ''}`}
           value={settings.useCaseName}
           onChange={e => update('useCaseName', e.target.value.slice(0, 500))}
@@ -70,7 +70,7 @@ export function GlobalSettingsPromptAndUtilitySection({ settings, update }) {
             onChange={v => update('llmModel', v)}
           />
         </Field>
-        <textarea
+        <textarea aria-label="Global prompt"
           className={styles.textarea}
           value={settings.globalPrompt}
           onChange={e => update('globalPrompt', e.target.value)}
@@ -86,7 +86,7 @@ export function GlobalSettingsPromptAndUtilitySection({ settings, update }) {
         description="Reusable variables and dynamic context available to every node. Reference with {{variable_name}} from any prompt."
       >
         <Field label="Utility Variables">
-          <textarea
+          <textarea aria-label="Utility Variables"
             className={styles.textarea}
             value={(settings.utilityVariables || []).join('\n')}
             onChange={e => update('utilityVariables', e.target.value.split('\n').filter(Boolean))}
@@ -364,7 +364,7 @@ export function GlobalSettingsSecurityAndMessagesSection({ settings, update }) {
           onChange={v => update('optOutSensitive', v)}
         />
         <Field label="Webhook URL" hint="POST event payloads here.">
-          <input
+          <input aria-label="Webhook URL"
             type="url"
             className={styles.input}
             value={settings.webhookUrl}
@@ -387,7 +387,7 @@ export function GlobalSettingsSecurityAndMessagesSection({ settings, update }) {
         defaultOpen={false}
         description="Format the post-call summary the agent generates. Use {{variable}} placeholders."
       >
-        <textarea
+        <textarea aria-label="Summary template"
           className={styles.textarea}
           value={settings.summaryTemplate}
           onChange={e => update('summaryTemplate', e.target.value)}
@@ -402,7 +402,7 @@ export function GlobalSettingsSecurityAndMessagesSection({ settings, update }) {
         defaultOpen={false}
         description="First thing the agent says when the call connects."
       >
-        <textarea
+        <textarea aria-label="Welcome message"
           className={styles.textarea}
           value={settings.welcomeMessage}
           onChange={e => update('welcomeMessage', e.target.value)}

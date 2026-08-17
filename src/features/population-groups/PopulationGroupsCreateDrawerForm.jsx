@@ -154,7 +154,7 @@ export function PopulationGroupsCreateDrawerForm({ vm }) {
                                   {attrDef.opts.map(o => <option key={o} value={o}>{o}</option>)}
                                 </select>
                               ) : (
-                                <input className="pg-input" value={c.val} onChange={e => updateCriterion(idx,'val',e.target.value)}
+                                <input aria-label="Criterion value" className="pg-input" value={c.val} onChange={e => updateCriterion(idx,'val',e.target.value)}
                                   placeholder="Value"
                                   style={{ flex:2, padding:'7px 8px', border:'0.5px solid var(--neutral-150)', borderRadius:6, fontSize:14, color:'var(--neutral-400)', fontFamily:'Inter, sans-serif', outline:'none' }} />
                               )}

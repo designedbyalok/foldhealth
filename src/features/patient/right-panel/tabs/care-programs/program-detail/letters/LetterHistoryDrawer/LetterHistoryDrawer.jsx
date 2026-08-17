@@ -24,7 +24,7 @@ export function LetterHistoryDrawer({ letters = [], onOpen, onClose }) {
     <Drawer title="Letter Sent Log" onClose={onClose} bodyClassName={styles.body}>
       <div className={styles.searchBox}>
         <Icon name="solar:magnifer-linear" size={16} color="var(--neutral-200)" />
-        <input placeholder="Search History" value={search} onChange={e => setSearch(e.target.value)} />
+        <input aria-label="Search letter history" placeholder="Search History" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       {entries.length === 0 ? (

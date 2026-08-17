@@ -249,7 +249,7 @@ function TemplateTab({ block }) {
                 onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setSaveOpen(false); }}
                 maxLength={60}
               />
-              <input
+              <input aria-label="Preset description"
                 className={styles.presetSaveInput}
                 placeholder="Short description (optional)"
                 value={saveDesc}
@@ -382,7 +382,7 @@ function TemplatePresetCard({
       </button>
       {isRenaming && (
         <div className={styles.presetCardEditForm}>
-          <input
+          <input aria-label="Preset name"
             autoFocus
             className={styles.presetCardEditInput}
             placeholder="Name"
@@ -391,7 +391,7 @@ function TemplatePresetCard({
             onKeyDown={(e) => { if (e.key === 'Enter') onCommitRename(); if (e.key === 'Escape') onCancelRename(); }}
             maxLength={60}
           />
-          <input
+          <input aria-label="Preset description"
             className={styles.presetCardEditInput}
             placeholder="Description (optional)"
             value={draftDesc}

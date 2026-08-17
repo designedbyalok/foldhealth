@@ -36,7 +36,7 @@ export function TaskDetailDrawerSubtasks({
             )}
             {showAddSubtask && (
               <div className={styles.subtaskAddRow}>
-                <input
+                <input aria-label="Subtask name"
                   className={styles.subtaskAddInput}
                   placeholder="Enter subtask name..."
                   maxLength={TITLE_MAX}

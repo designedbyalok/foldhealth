@@ -104,7 +104,7 @@ export function ConfigureAgentUseCaseSection({ form, expanded, toggleExpanded, u
             <Icon name="solar:maximize-linear" size={16} color="#6F7A90" />
           </button>
         </div>
-        <textarea
+        <textarea aria-label="System prompt"
           className={`${styles.textarea} ${styles.textareaLarge}`}
           value={form.systemPrompt}
           onChange={e => updateField('systemPrompt', e.target.value)}

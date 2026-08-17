@@ -221,7 +221,7 @@ export function ChatPanel({ nodes, edges, onApplyFlow, agentName }) {
           <button className={styles.attachBtn} aria-label="Attach file">
             <Icon name="solar:paperclip-linear" size={16} color="var(--neutral-300)" />
           </button>
-          <input
+          <input aria-label="Describe the changes you want"
             ref={inputRef}
             className={styles.input}
             value={input}

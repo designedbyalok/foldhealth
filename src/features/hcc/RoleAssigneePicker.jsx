@@ -153,7 +153,7 @@ export function RoleAssigneePicker({
           </div>
           <div className={styles.search}>
             <Icon name="solar:magnifer-linear" size={14} color="var(--neutral-300)" />
-            <input
+            <input aria-label="Search users"
               ref={searchRef}
               type="text"
               className={styles.input}

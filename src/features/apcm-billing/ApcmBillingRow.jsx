@@ -269,7 +269,7 @@ export function ApcmBillingRow({ patient, isSelected, isActive, onSelect, onTrig
           field-sizing on modern browsers; onInput height nudge below
           covers Firefox + Safari <17.4 as a fallback. */}
       <td className={styles.commentTd}>
-        <textarea
+        <textarea aria-label="Billing comment"
           className={styles.commentTextarea}
           placeholder="Add comment…"
           value={patient.comment}

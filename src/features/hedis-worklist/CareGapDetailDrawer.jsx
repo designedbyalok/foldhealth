@@ -141,7 +141,7 @@ export function CareGapDetailDrawer({ member, gapCode, year, onClose }) {
               <div className={styles.activityLog}>
                 <div className={styles.commentInput}>
                   {commentExpanded ? (
-                    <textarea autoFocus className={styles.commentTextarea} placeholder="Add a comment, use @ to mention someone" rows={3}
+                    <textarea aria-label="Add a comment" autoFocus className={styles.commentTextarea} placeholder="Add a comment, use @ to mention someone" rows={3}
                       value={commentText} onChange={e => setCommentText(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Escape') { setCommentExpanded(false); setCommentText(''); } }} />
                   ) : (
@@ -177,7 +177,7 @@ export function CareGapDetailDrawer({ member, gapCode, year, onClose }) {
             <div className={styles.assigneeMenuHeader}>{gap.assignee ? 'Change Assignee' : 'Assign to'}</div>
             <div className={styles.assigneeMenuSearch}>
               <Icon name="solar:magnifer-linear" size={14} color="var(--neutral-300)" />
-              <input autoFocus type="text" className={styles.assigneeMenuInput} placeholder="Search users…"
+              <input aria-label="Search users" autoFocus type="text" className={styles.assigneeMenuInput} placeholder="Search users…"
                 value={assigneeQuery} onChange={(e) => setAssigneeQuery(e.target.value)} />
             </div>
             <div className={styles.assigneeMenuList}>

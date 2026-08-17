@@ -38,7 +38,7 @@ export function SecondaryUserPicker({ selected, onChange, profileUsers, primary 
         {open && createPortal(
           <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={() => setOpen(false)}>
             <div className={styles.providerDropdown} style={{ position: 'fixed', top: btnRef.current?.getBoundingClientRect().bottom + 4, left: btnRef.current?.getBoundingClientRect().left, zIndex: 9999 }} onClick={e => e.stopPropagation()}>
-              <div className={styles.apptSearchWrap}><Icon name="solar:magnifer-linear" size={14} color="var(--neutral-200)" /><input className={styles.apptSearchInput} placeholder="Search" value={search} onChange={e => setSearch(e.target.value)} autoFocus /></div>
+              <div className={styles.apptSearchWrap}><Icon name="solar:magnifer-linear" size={14} color="var(--neutral-200)" /><input aria-label="Search users" className={styles.apptSearchInput} placeholder="Search" value={search} onChange={e => setSearch(e.target.value)} autoFocus /></div>
               {filtered.map(name => (
                 <button key={name} type="button" role="menuitemcheckbox" aria-checked={selectedSet.has(name)} className={styles.providerItem} onClick={() => toggle(name)} style={{ background: selectedSet.has(name) ? 'var(--primary-25)' : undefined }}>
                   <CheckboxTick checked={selectedSet.has(name)} size={15} />

@@ -71,7 +71,7 @@ export function NotePanel({ title, expanded, outcomes, note, syncText, outcomeOp
               ))}
             </div>
           )}
-          <textarea
+          <textarea aria-label="Outreach note"
             className={styles.noteTextarea}
             placeholder="Write note"
             value={note}

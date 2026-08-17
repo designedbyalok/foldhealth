@@ -150,7 +150,7 @@ function StepIdentity({ data, onChange }) {
           </FormField>
         </div>
         <FormField label={<>Description <span style={{ fontWeight: 400, color: 'var(--neutral-200)' }}>(shown to providers in About popup)</span></>} hint={`${data.description.length}/200`}>
-          <textarea className={s.textarea} value={data.description} onChange={e => onChange({ description: e.target.value.slice(0, 200) })} maxLength={200} placeholder="What does this component do?" />
+          <textarea aria-label="Component description" className={s.textarea} value={data.description} onChange={e => onChange({ description: e.target.value.slice(0, 200) })} maxLength={200} placeholder="What does this component do?" />
         </FormField>
         <FormField label="Activation">
           <Select
@@ -698,7 +698,7 @@ function StepConfigure({ data, onChange, embedDomains }) {
 
       {/* 2. Description */}
       <FormField label={<>Description <span style={{ fontWeight: 400, color: 'var(--neutral-200)' }}>(shown to providers)</span></>} hint={`${data.description.length}/800`}>
-        <textarea className={s.textarea} value={data.description} onChange={e => onChange({ description: e.target.value.slice(0, 800) })} maxLength={800} placeholder="What does this component do?" style={{ resize: 'vertical' }} />
+        <textarea aria-label="Component description" className={s.textarea} value={data.description} onChange={e => onChange({ description: e.target.value.slice(0, 800) })} maxLength={800} placeholder="What does this component do?" style={{ resize: 'vertical' }} />
       </FormField>
 
       {/* 3. Domain & Path */}

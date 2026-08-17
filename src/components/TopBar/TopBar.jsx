@@ -471,7 +471,7 @@ export function TopBar() {
         <div className={styles.searchWrap} ref={searchRef}>
           <div className={styles.searchBox}>
             <Icon name="solar:magnifer-linear" size={18} color="var(--neutral-200)" />
-            <input
+            <input aria-label="Search members"
               type="text"
               placeholder="Search Members"
               value={searchQuery}

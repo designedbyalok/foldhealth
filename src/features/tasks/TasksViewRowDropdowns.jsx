@@ -215,7 +215,7 @@ export function RowAssignDropdown({ task }) {
           >
             <div className={styles.dropdownSearch}>
               <Icon name="solar:magnifer-linear" size={14} color="var(--neutral-200)" />
-              <input
+              <input aria-label="Search assignees"
                 className={styles.dropdownSearchInput}
                 placeholder="Search assignees..."
                 value={search}

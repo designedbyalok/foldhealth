@@ -171,7 +171,7 @@ export function EditDocInline({ doc, onCancel, onSave }) {
     <div className={styles.failInline} onClick={(e) => e.stopPropagation()}>
       <div className={styles.failBody}>
         <div className={styles.failNoteLabel}>Caption</div>
-        <input
+        <input aria-label="Caption"
           type="text"
           className={styles.editInput}
           value={caption}

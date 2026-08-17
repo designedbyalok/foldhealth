@@ -123,7 +123,7 @@ export function StickyNote({ notes = [], onSave, onCreate, onDelete, onAuditLog,
       {/* Body */}
       <div className={styles.body}>
         {editing ? (
-          <textarea
+          <textarea aria-label="Sticky note text"
             ref={textareaRef}
             className={styles.textarea}
             value={editText}

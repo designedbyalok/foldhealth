@@ -117,7 +117,7 @@ export function CreatableLabelDropdown({ selectedLabels, onToggle, children }) {
           >
             <div className={styles.dropdownSearch}>
               <Icon name="solar:magnifer-linear" size={14} color="var(--neutral-200)" />
-              <input
+              <input aria-label="Search or create a label"
                 className={styles.dropdownSearchInput}
                 placeholder="Search or create..."
                 value={search}
@@ -176,7 +176,7 @@ export function DetailDropdown({ value, options, onSelect, icon, renderOption, c
             {searchable && options.length > 3 && (
               <div className={styles.dropdownSearch}>
                 <Icon name="solar:magnifer-linear" size={14} color="var(--neutral-200)" />
-                <input className={styles.dropdownSearchInput} placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} autoFocus />
+                <input aria-label="Search options" className={styles.dropdownSearchInput} placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} autoFocus />
               </div>
             )}
             {filtered.map(opt => {

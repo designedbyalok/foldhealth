@@ -106,7 +106,7 @@ export function ColumnConfigPopover({
 
           <div className={styles.searchRow}>
             <Icon name="solar:magnifer-linear" size={16} color="var(--neutral-200)" />
-            <input
+            <input aria-label="Search columns"
               type="text"
               value={search}
               placeholder="Search"

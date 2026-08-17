@@ -29,7 +29,7 @@ export function AppointmentsDrawer({ onClose }) {
         </div>
         <div className={styles.searchWrap}>
           <Icon name="solar:magnifer-linear" size={16} color="var(--neutral-200)" />
-          <input
+          <input aria-label="Search appointments"
             className={styles.searchInput}
             placeholder="Search Appointments"
             value={search}

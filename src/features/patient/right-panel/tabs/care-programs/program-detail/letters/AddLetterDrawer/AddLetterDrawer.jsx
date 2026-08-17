@@ -84,7 +84,7 @@ export function AddLetterDrawer({ letters = EMPTY_LETTERS, addedIds, onAdd, onPr
         <span className={styles.toolbarDivider} />
         <div className={styles.searchBox}>
           <Icon name="solar:magnifer-linear" size={16} color="var(--neutral-200)" />
-          <input placeholder="Search Letters" value={search} onChange={e => setSearch(e.target.value)} />
+          <input aria-label="Search letters" placeholder="Search Letters" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
       </div>
 

@@ -214,7 +214,7 @@ export function ChartDetailDrawerViewRightPane(p) {
                   <UploadDropField key={uploadKey} onChange={setUpFile} />
                   <div className={styles.uploadField}>
                     <span className={styles.uploadLabel}>Caption<span className={styles.uploadReq} aria-hidden="true" /></span>
-                    <input
+                    <input aria-label="Caption"
                       type="text"
                       className={styles.uploadInput}
                       placeholder="Add caption"

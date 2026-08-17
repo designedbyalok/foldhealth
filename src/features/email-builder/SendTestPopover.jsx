@@ -132,7 +132,7 @@ export function SendTestPopover({ onClose, campaignId }) {
   return (
     <div ref={popoverRef} className={styles.testEmailPopover}>
       <div className={styles.testEmailLabel}>Send test email</div>
-      <input
+      <input aria-label="Send test email to"
         ref={inputRef}
         type="text"
         className={styles.testEmailInput}

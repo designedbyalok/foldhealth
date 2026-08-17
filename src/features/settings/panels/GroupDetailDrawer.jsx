@@ -170,7 +170,7 @@ export function GroupDetailDrawer() {
       <div style={{ marginBottom: 4 }}>
         <div style={labelStyle}>Group Name {reqDot}</div>
         <div style={{ position: 'relative' }}>
-          <input value={groupName} onChange={e => setGroupName(e.target.value.slice(0, 50))}
+          <input aria-label="Group name" value={groupName} onChange={e => setGroupName(e.target.value.slice(0, 50))}
             placeholder="Enter group name e.g. ortho group" style={inputStyle} />
           <span style={{ position: 'absolute', right: 12, top: 9, fontSize: 12, color: 'var(--neutral-200)' }}>
             {groupName.length}/50
@@ -226,7 +226,7 @@ export function GroupDetailDrawer() {
       <div style={{ marginBottom: 20 }}>
         <div style={labelStyle}>Welcome Message <Icon name="solar:info-circle-linear" size={13} color="var(--neutral-200)" /></div>
         <div style={{ position: 'relative' }}>
-          <textarea value={welcomeMsg} onChange={e => setWelcomeMsg(e.target.value.slice(0, 300))}
+          <textarea aria-label="Group welcome message" value={welcomeMsg} onChange={e => setWelcomeMsg(e.target.value.slice(0, 300))}
             placeholder="Write a welcome message for this group"
             style={{ ...inputStyle, minHeight: 80, resize: 'vertical', lineHeight: 1.5 }} />
           <span style={{ position: 'absolute', right: 12, bottom: 8, fontSize: 11, color: 'var(--neutral-200)' }}>
@@ -239,7 +239,7 @@ export function GroupDetailDrawer() {
       <div style={{ marginBottom: 20 }}>
         <div style={{ ...labelStyle, color: 'var(--neutral-200)' }}>Out Of Office - Auto Reply <Icon name="solar:info-circle-linear" size={13} color="var(--neutral-200)" /></div>
         <div style={{ position: 'relative' }}>
-          <textarea value={oooMsg} onChange={e => setOooMsg(e.target.value.slice(0, 300))}
+          <textarea aria-label="Automatic reply" value={oooMsg} onChange={e => setOooMsg(e.target.value.slice(0, 300))}
             placeholder="Set up an automatic reply"
             style={{ ...inputStyle, minHeight: 80, resize: 'vertical', lineHeight: 1.5 }} />
           <span style={{ position: 'absolute', right: 12, bottom: 8, fontSize: 11, color: 'var(--neutral-200)' }}>

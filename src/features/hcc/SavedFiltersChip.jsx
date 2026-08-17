@@ -125,7 +125,7 @@ function SavedFiltersPopover({ pos, savedFilters, activeId, onSelect, onClear, o
           <span className={styles.searchIcon}>
             <Icon name="solar:magnifer-linear" size={14} />
           </span>
-          <input
+          <input aria-label="Search saved filters"
             type="text"
             className={styles.searchInput}
             placeholder="Search"

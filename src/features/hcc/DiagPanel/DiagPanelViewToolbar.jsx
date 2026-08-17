@@ -58,7 +58,7 @@ export function DiagPanelViewToolbar(p) {
             )}
             <div className={styles.toolbarSearch}>
               <Icon name="solar:magnifer-linear" size={14} color="var(--neutral-300)" />
-              <input
+              <input aria-label="Search by code or description"
                 type="text"
                 placeholder="Search by code or description"
                 value={searchQuery}

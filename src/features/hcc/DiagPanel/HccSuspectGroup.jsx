@@ -437,7 +437,7 @@ function IcdComboPopover({ anchorRef, currentCode, currentDesc, onSelect, onClos
       >
         <div className={styles.comboSearch}>
           <Icon name="solar:magnifer-linear" size={13} color="var(--neutral-300)" />
-          <input
+          <input aria-label="Search ICD code or description"
             autoFocus
             type="text"
             placeholder="Search ICD code or description…"

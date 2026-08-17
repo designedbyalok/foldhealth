@@ -118,7 +118,7 @@ export function ClinicalNotePanel({ member, gapCode, year, onClose, editingTaskI
             <p className={styles.medsEmptyTitle}>No Medications</p>
           </div>
           <div className={styles.medSearchWrap}>
-            <input className={styles.medSearchInput} placeholder="Search and add new medication (min 3 characters)"
+            <input aria-label="Search and add new medication" className={styles.medSearchInput} placeholder="Search and add new medication (min 3 characters)"
               onChange={() => v.showToast('Medication search — coming soon')} />
             <span className={styles.medSearchIcon}><Icon name="solar:magnifer-linear" size={15} color="var(--neutral-200)" /></span>
           </div>

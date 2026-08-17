@@ -55,7 +55,7 @@ export function AddTaskDrawerBody({
 
       <div className={styles.drawerSection}>
         <span className={styles.drawerSectionLabel}>Task Name</span>
-        <input
+        <input aria-label="Task Name"
           className={`${styles.drawerTaskTitleInput} ${name.length > TITLE_MAX ? styles.inputInvalid : ''}`}
           style={{ margin: 0, width: '100%' }}
           placeholder="Enter task name..."
@@ -207,7 +207,7 @@ export function AddTaskDrawerBody({
         </div>
         {showAddSubtask && (
           <div className={styles.subtaskAddRow}>
-            <input
+            <input aria-label="Subtask name"
               className={styles.subtaskAddInput}
               placeholder="Enter subtask name..."
               maxLength={TITLE_MAX}

@@ -641,7 +641,7 @@ export function SocialEditor({ platforms, onChange }) {
             onChange={e => updatePlatform(i, 'label', e.target.value)}
             style={{ fontWeight: 500, flex: '0 0 70px' }}
           />
-          <input
+          <input aria-label="Social link URL"
             className={styles.tableEditorInput}
             value={p.url || ''}
             onChange={e => updatePlatform(i, 'url', e.target.value)}
@@ -677,14 +677,14 @@ export function NavLinkEditor({ links, onChange }) {
     <div className={styles.tableEditor}>
       {links.map((link, i) => (
         <div key={i} className={styles.socialRow}>
-          <input
+          <input aria-label="Nav link label"
             className={styles.tableEditorInput}
             value={link.label}
             onChange={e => updateLink(i, 'label', e.target.value)}
             placeholder="Label"
             style={{ fontWeight: 500, flex: '0 0 80px' }}
           />
-          <input
+          <input aria-label="Nav link URL"
             className={styles.tableEditorInput}
             value={link.url || ''}
             onChange={e => updateLink(i, 'url', e.target.value)}

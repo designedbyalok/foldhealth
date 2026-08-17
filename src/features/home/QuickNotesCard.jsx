@@ -65,7 +65,7 @@ function QuickNoteItem({ note, onSave, onDelete, onAuditLog }) {
       <div className={styles.quickNote}>
         {editing ? (
           <>
-            <textarea
+            <textarea aria-label="Quick note"
               ref={textareaRef}
               className={styles.quickNoteTextarea}
               value={editText}
@@ -131,7 +131,7 @@ function NewNoteEditor({ onCreate, onCancel }) {
 
   return (
     <div className={styles.quickNote}>
-      <textarea
+      <textarea aria-label="Quick note"
         ref={textareaRef}
         className={styles.quickNoteTextarea}
         value={text}

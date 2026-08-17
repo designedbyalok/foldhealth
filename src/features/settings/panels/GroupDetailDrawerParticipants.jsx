@@ -27,7 +27,7 @@ export function GroupDetailDrawerParticipants(props) {
           <div style={{ ...inputStyle, display: 'flex', alignItems: 'center', gap: 8, cursor: 'text' }}
             onClick={() => setSearchOpen(true)}>
             <Icon name="solar:magnifer-linear" size={14} color="var(--neutral-200)" />
-            <input
+            <input aria-label="Search users and care team roles"
               value={searchQuery}
               onChange={e => { setSearchQuery(e.target.value); setSearchOpen(true); }}
               onFocus={() => setSearchOpen(true)}

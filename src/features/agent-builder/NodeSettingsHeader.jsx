@@ -26,7 +26,7 @@ export function NodeSettingsHeader({
           {config.CustomIcon ? <config.CustomIcon size={16} color="#fff" /> : <Icon name={config.icon} size={16} color="#fff" />}
         </div>
         {isEditing ? (
-          <input
+          <input aria-label="Node name"
             ref={nameInputRef}
             className={styles.nodeNameInputEditing}
             value={label}

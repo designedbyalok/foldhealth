@@ -51,7 +51,7 @@ export function FormPicker({ onSelect, onClose }) {
         </div>
         <div className={styles.search}>
           <Icon name="solar:magnifer-linear" size={15} color="var(--neutral-300)" />
-          <input autoFocus placeholder="Search forms…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input aria-label="Search forms" autoFocus placeholder="Search forms…" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <div className={styles.list}>
           {loading ? (
