@@ -69,12 +69,21 @@ export function ChatMessagesList({
                 )}
                 <div className={[styles.msgBubble, isOwn ? styles.mine : styles.other].join(' ')}>
                   {msg.media_url && msg.media_type === 'image' && (
-                    <img
-                      src={msg.media_url}
-                      alt={msg.media_name || 'image'}
-                      className={styles.msgImage}
-                      onClick={() => window.open(msg.media_url, '_blank', 'noopener,noreferrer')}
-                    />
+                    /* A link, not an <img onClick>: opening the full image in a new
+                       tab is exactly what an anchor does, it is keyboard-reachable,
+                       and it matches the file/form attachments below. */
+                    <a
+                      href={msg.media_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.msgImageLink}
+                    >
+                      <img
+                        src={msg.media_url}
+                        alt={msg.media_name || 'image'}
+                        className={styles.msgImage}
+                      />
+                    </a>
                   )}
                   {msg.media_url && msg.media_type === 'file' && (
                     <a href={msg.media_url} target="_blank" rel="noreferrer" className={styles.msgFile}>

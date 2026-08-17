@@ -113,8 +113,10 @@ export function ConversationListPanel({
             const profile = profiles[conv.userId];
             const isSelected = selectedUserId === conv.userId;
             return (
-              <div
+              <button
+                type="button"
                 key={conv.userId}
+                aria-current={isSelected ? 'true' : undefined}
                 className={[styles.convItem, isSelected ? styles.selected : ''].join(' ')}
                 onClick={() => onSelectConversation(conv.userId)}
               >
@@ -131,7 +133,7 @@ export function ConversationListPanel({
                     {conv.unreadCount > 0 && <span className={styles.convUnread}>{conv.unreadCount}</span>}
                   </div>
                 </div>
-              </div>
+              </button>
             );
           })
         )}

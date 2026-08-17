@@ -172,15 +172,32 @@
   min-height: 0;
 }
 
+/* A <button> so a conversation can be opened from the keyboard. Mirrors the
+   reset CallsView.module.css already uses for its own .convItem button: the
+   top/right borders are cleared individually rather than with `border: none`,
+   because border-bottom is the row divider and border-left is the selected
+   indicator that .convItem.selected recolours. */
 .convItem {
+  width: 100%;
   display: flex;
   align-items: flex-start;
   gap: 8px;
   padding: 8px 12px;
   cursor: pointer;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  border-top: none;
+  border-right: none;
   border-bottom: 0.5px solid var(--neutral-150);
   border-left: 3px solid transparent;
   transition: background 0.1s;
+}
+
+.convItem:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: -2px;
 }
 
 .convItem:hover {
@@ -880,14 +897,29 @@
   flex: 1;
 }
 
+/* Same treatment as .convItem — border-bottom is the row divider, so only the
+   other three sides are cleared. */
 .newChatUser {
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 10px 16px;
   cursor: pointer;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  border-top: none;
+  border-right: none;
+  border-left: none;
   border-bottom: 0.5px solid var(--neutral-100);
   transition: background 0.1s;
+}
+
+.newChatUser:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: -2px;
 }
 
 .newChatUser:hover {
@@ -974,7 +1006,16 @@
   margin-bottom: 2px;
 }
 
-.msgImage:only-child {
+/* The image is wrapped in an <a> so it can be opened from the keyboard, which
+   means the img is now always the only child of that link. The "no bottom
+   margin when this is the bubble's only content" rule therefore has to key off
+   the LINK's position, not the img's — otherwise it would match every time and
+   the gap above message text would disappear. */
+.msgImageLink {
+  display: block;
+}
+
+.msgImageLink:only-child .msgImage {
   margin-bottom: 0;
 }
 

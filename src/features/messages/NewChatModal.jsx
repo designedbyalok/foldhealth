@@ -36,7 +36,8 @@ export function NewChatModal({
             </div>
           ) : (
             filteredNewUsers.map(p => (
-              <div
+              <button
+                type="button"
                 key={p.id}
                 className={styles.newChatUser}
                 onClick={() => onSelectUser(p)}
@@ -46,7 +47,7 @@ export function NewChatModal({
                   <div className={styles.newChatUserName}>{getDisplayName(p)}</div>
                   <div className={styles.newChatUserEmail}>{p.email}</div>
                 </div>
-              </div>
+              </button>
             ))
           )}
         </div>
