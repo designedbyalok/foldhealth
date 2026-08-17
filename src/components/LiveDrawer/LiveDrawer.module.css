@@ -103,14 +103,31 @@
 .actionBtn.active { background: #ede5fb; color: var(--primary-300); border-color: #c4b5fd; }
 
 /* ── Section Headers (shared pattern with DetailDrawer) ── */
+/* Both consumers are <button> so the collapse is keyboard-reachable. The reset
+   undoes what a button brings and a div did not: `width: 100%` because form
+   controls size to fit-content even with display:flex (measured — without it
+   this header collapses from 600px to 49px), and text-align because buttons
+   centre. `border: none` sits BEFORE border-bottom so the divider survives. */
 .sectionHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
   padding: 12px 0;
   cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: none;
   border-bottom: 0.5px solid var(--neutral-100);
   user-select: none;
+}
+
+.sectionHeader:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .sectionTitle {

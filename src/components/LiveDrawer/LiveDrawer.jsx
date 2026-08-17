@@ -151,7 +151,7 @@ export function LiveDrawer() {
       )}
 
       {/* Goals Section — collapsible */}
-      <div className={styles.sectionHeader} onClick={() => toggleSection('goals')}>
+      <button type="button" className={styles.sectionHeader} onClick={() => toggleSection('goals')}>
         <span className={styles.sectionTitle}>
           <Icon name="solar:target-bold" size={15} color="var(--primary-300)" />
           Goals Tracking
@@ -159,7 +159,7 @@ export function LiveDrawer() {
         <span className={`${styles.chevron} ${openSections.goals ? styles.chevronOpen : ''}`}>
           <Icon name="solar:alt-arrow-right-linear" size={16} />
         </span>
-      </div>
+      </button>
       {openSections.goals && (
         <div className={styles.goalsSection}>
           {goals.length > 0 ? goals.map((g, i) => (
@@ -185,7 +185,7 @@ export function LiveDrawer() {
       )}
 
       {/* Transcript — collapsible */}
-      <div className={styles.sectionHeader} onClick={() => toggleSection('transcript')}>
+      <button type="button" className={styles.sectionHeader} onClick={() => toggleSection('transcript')}>
         <span className={styles.sectionTitle}>
           <Icon name="solar:chat-round-dots-bold" size={15} color="var(--primary-300)" />
           Live Transcript
@@ -193,7 +193,7 @@ export function LiveDrawer() {
         <span className={`${styles.chevron} ${openSections.transcript ? styles.chevronOpen : ''}`}>
           <Icon name="solar:alt-arrow-right-linear" size={16} />
         </span>
-      </div>
+      </button>
       {openSections.transcript && (
         <div className={styles.transcriptSection}>
           {transcript.map((msg, i) => (
