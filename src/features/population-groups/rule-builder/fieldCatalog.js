@@ -115,9 +115,16 @@ export const FIELD_BY_KEY = Object.fromEntries(RULE_FIELDS.map(f => [f.key, f]))
 export const groupAccent = (groupKey) =>
   FIELD_GROUPS.find(g => g.key === groupKey)?.accent || 'var(--neutral-50)';
 
-/* Human summary of a rule for the node row badges, e.g.
-   ["is more than and equal to 50 Years", "as of 05-27-2024"]. */
+/* Badge descriptors for a rule's node row: [{ text, tone }]. Complex
+   conditions (metrics, negations, qualifiers — e.g. "Vital · Blood Pressure ·
+   is more than 140/90 mmHg") carry an explicit `display` array authored when
+   the rule was built; simple builder-authored rules derive their badges from
+   operator + value. Editing a display-carrying rule through the generic
+   editor replaces it with the derived form. */
 export function ruleSummary(rule) {
+  if (Array.isArray(rule.display)) {
+    return rule.display.map(d => (typeof d === 'string' ? { text: d, tone: 'grey' } : { text: d.text, tone: d.tone || 'grey' }));
+  }
   const field = FIELD_BY_KEY[rule.field];
   if (!field) return [];
   const op = field.operators.find(o => o.name === rule.operator);
@@ -125,10 +132,10 @@ export function ruleSummary(rule) {
   const parts = [];
   if (op && (v.amount ?? v.text ?? '') !== '') {
     const val = field.valueType === 'number' ? `${v.amount} ${field.unit || ''}`.trim() : v.text;
-    parts.push(`${op.label} ${val}`);
+    parts.push({ text: `${op.label} ${val}`, tone: 'grey' });
   }
   if (field.supportsAsOf && (v.asOfMode === 'today' || v.asOfDate)) {
-    parts.push(`as of ${v.asOfMode === 'today' ? todayLabel() : v.asOfDate}`);
+    parts.push({ text: `as of ${v.asOfMode === 'today' ? todayLabel() : v.asOfDate}`, tone: 'grey' });
   }
   return parts;
 }

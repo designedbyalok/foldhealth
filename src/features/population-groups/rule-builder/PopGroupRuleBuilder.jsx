@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { add, remove, update } from 'react-querybuilder';
+import { add } from 'react-querybuilder';
 import { useAppStore } from '../../../store/useAppStore';
 import { Button } from '../../../components/Button/Button';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
@@ -23,6 +23,53 @@ const nextRuleId = () => `rb-${Date.now()}-${ruleSeq++}`;
 
 const EMPTY_QUERY = { combinator: 'and', rules: [] };
 
+/* ── Recursive tree helpers ──
+   Rules can nest ({ combinator, rules }) — the Figma's flagship example is a
+   tree of OR groups under a top-level AND. The rqb add/remove/update helpers
+   are path-based; these id-based equivalents keep the editor working on
+   leaves at any depth. */
+const isGroup = (node) => Array.isArray(node?.rules);
+
+function findRuleById(node, id) {
+  for (const child of node.rules || []) {
+    if (child.id === id) return child;
+    if (isGroup(child)) {
+      const hit = findRuleById(child, id);
+      if (hit) return hit;
+    }
+  }
+  return null;
+}
+
+function updateRuleById(node, id, patch) {
+  return {
+    ...node,
+    rules: (node.rules || []).map(child => {
+      if (child.id === id) return { ...child, ...patch };
+      return isGroup(child) ? updateRuleById(child, id, patch) : child;
+    }),
+  };
+}
+
+function removeRuleById(node, id) {
+  return {
+    ...node,
+    rules: (node.rules || [])
+      .filter(child => child.id !== id)
+      .map(child => (isGroup(child) ? removeRuleById(child, id) : child))
+      // drop groups emptied by the removal
+      .filter(child => !isGroup(child) || child.rules.length > 0),
+  };
+}
+
+function everyLeaf(node, pred) {
+  return (node.rules || []).every(child => (isGroup(child) ? everyLeaf(child, pred) : pred(child)));
+}
+
+function countLeaves(node) {
+  return (node.rules || []).reduce((n, child) => n + (isGroup(child) ? countLeaves(child) : 1), 0);
+}
+
 /* Six-dot grip — Solar has no drag-handle glyph, so this is the one custom
    SVG in the builder (dots, so fill rather than stroke). */
 function GripIcon() {
@@ -44,7 +91,7 @@ function RuleNode({ rule, readOnly, combinator, onOpenEditor, onToggleCombinator
   const chipInner = (
     <>
       <span className={styles.fieldChipIcon} style={{ background: groupAccent(field.group) }}>
-        <Icon name={field.icon} size={16} color="var(--neutral-400)" />
+        <Icon name={field.icon} size={12} color="var(--neutral-400)" />
       </span>
       {field.label}
     </>
@@ -67,7 +114,7 @@ function RuleNode({ rule, readOnly, combinator, onOpenEditor, onToggleCombinator
         </button>
       )}
       <span className={styles.nodeBadges}>
-        {summary.map(text => <Badge key={text} tone="grey" size="S" label={text} className={styles.nodeBadge} />)}
+        {summary.map(b => <Badge key={b.text} tone={b.tone} size="S" label={b.text} className={styles.nodeBadge} />)}
       </span>
       {!readOnly && (
         <span className={styles.nodeRight}>
@@ -149,9 +196,7 @@ export function PopGroupRuleBuilder() {
   if (!session) return null;
 
   const isView = mode === 'view';
-  const rules = query.rules;
-  const editingIndex = rules.findIndex(r => r.id === editingRuleId);
-  const editingRule = editingIndex >= 0 ? rules[editingIndex] : null;
+  const editingRule = editingRuleId ? findRuleById(query, editingRuleId) : null;
 
   const addCondition = (field) => {
     const rule = { id: nextRuleId(), field: field.key, operator: field.operators[0].name, value: {} };
@@ -160,27 +205,19 @@ export function PopGroupRuleBuilder() {
     setEditingRuleId(rule.id);
   };
 
-  const removeRule = (index) => {
-    const removed = rules[index];
-    setQuery(q => remove(q, [index]));
-    if (removed?.id === editingRuleId) setEditingRuleId(null);
+  const commitRule = (id, patch) => {
+    // Editing through the generic panel replaces any authored `display`
+    // badges with the derived operator+value form.
+    setQuery(q => updateRuleById(q, id, { operator: patch.operator, value: patch.value, display: undefined }));
   };
 
-  const commitRule = (index, patch) => {
-    setQuery(q => {
-      let next = update(q, 'operator', patch.operator, [index]);
-      next = update(next, 'value', patch.value, [index]);
-      return next;
-    });
-  };
-
-  const setCombinator = (value) => setQuery(q => update(q, 'combinator', value, []));
+  const setCombinator = (value) => setQuery(q => ({ ...q, combinator: value }));
 
   const isComplete = (r) => {
     const v = r.value || {};
     return (v.amount ?? v.text ?? '') !== '';
   };
-  const canSaveGroup = rules.length > 0 && rules.every(isComplete);
+  const canSaveGroup = countLeaves(query) > 0 && everyLeaf(query, isComplete);
 
   const handleCancel = () => {
     if (mode === 'create') { closePgRuleBuilder(); return; }
@@ -237,35 +274,51 @@ export function PopGroupRuleBuilder() {
     return true;
   };
 
+  /* Recursively render a group's children: leaves as RuleNodes, subgroups as
+     an indented block with a bracket carrying the group's combinator (the
+     Figma's OR brackets). Combinator chips sit between siblings. */
+  const renderChildren = (group, depth) => group.rules.map((child, index) => (
+    <div key={child.id || index} className={styles.nodeStack}>
+      {/* Inside a bracketed group the bracket already names the combinator —
+          chips between siblings only at the top level, like the Figma. */}
+      {index > 0 && depth === 0 && (
+        <div className={styles.combinatorChip}>
+          <span className={styles.ifTail} />
+          <span className={styles.combinatorLabel}>{(group.combinator || 'and').toUpperCase()}</span>
+          <span className={styles.ifTail} />
+        </div>
+      )}
+      {isGroup(child) ? (
+        <div className={styles.groupNode}>
+          <div className={styles.groupBracket}>
+            {(child.combinator || 'and').toUpperCase()}
+          </div>
+          <div className={styles.groupChildren}>{renderChildren(child, depth + 1)}</div>
+        </div>
+      ) : (
+        <RuleNode
+          rule={child}
+          readOnly={isView}
+          combinator={query.combinator}
+          onOpenEditor={() => setEditingRuleId(child.id)}
+          onToggleCombinator={setCombinator}
+          onAddCondition={(e) => setPickerRect(e.currentTarget.getBoundingClientRect())}
+          onRemove={() => setQuery(q => removeRuleById(q, child.id))}
+        />
+      )}
+    </div>
+  ));
+
   const canvas = (
     <div className={styles.canvas}>
       <div className={styles.ifChip}>
-        <Button variant="secondary" size="S">IF</Button>
+        <Button variant="secondary" size="S" className={styles.ifButton}>IF</Button>
         <span className={styles.ifTail} />
       </div>
 
-      {rules.map((rule, index) => (
-        <div key={rule.id} className={styles.nodeStack}>
-          {index > 0 && (
-            <div className={styles.combinatorChip}>
-              <span className={styles.ifTail} />
-              <span className={styles.combinatorLabel}>{(query.combinator || 'and').toUpperCase()}</span>
-              <span className={styles.ifTail} />
-            </div>
-          )}
-          <RuleNode
-            rule={rule}
-            readOnly={isView}
-            combinator={query.combinator}
-            onOpenEditor={() => setEditingRuleId(rule.id)}
-            onToggleCombinator={setCombinator}
-            onAddCondition={(e) => setPickerRect(e.currentTarget.getBoundingClientRect())}
-            onRemove={() => removeRule(index)}
-          />
-        </div>
-      ))}
+      {renderChildren(query, 0)}
 
-      {rules.length === 0 && !isView && (
+      {countLeaves(query) === 0 && !isView && (
         <Button
           variant="tertiary"
           size="S"
@@ -276,7 +329,7 @@ export function PopGroupRuleBuilder() {
           Add Condition
         </Button>
       )}
-      {rules.length === 0 && isView && (
+      {countLeaves(query) === 0 && isView && (
         <span className={styles.criteriaEmpty}>No conditions defined yet — use Edit to add some.</span>
       )}
     </div>
@@ -334,7 +387,7 @@ export function PopGroupRuleBuilder() {
                 <ConditionEditorPanel
                   key={editingRule.id}
                   rule={editingRule}
-                  onSave={(patch) => commitRule(editingIndex, patch)}
+                  onSave={(patch) => commitRule(editingRule.id, patch)}
                   onClose={() => setEditingRuleId(null)}
                 />
               )}
@@ -353,22 +406,20 @@ export function PopGroupRuleBuilder() {
 
       {historyOpen && (
         <Drawer title="Activity Log" onClose={() => setHistoryOpen(false)}>
-          <div className={styles.activityBody}>
-            {activity === null
-              ? <span className={styles.criteriaEmpty}>Loading activity…</span>
-              : (
-                <ActivityLog
-                  entries={toActivityLogEntries(activity.map(a => ({
-                    when: a.created_at,
-                    actor: a.actor,
-                    t: a.action,
-                    title: a.title,
-                    note: a.detail || undefined,
-                  })))}
-                  emptyLabel="No changes recorded for this group yet."
-                />
-              )}
-          </div>
+          {activity === null
+            ? <span className={styles.criteriaEmpty}>Loading activity…</span>
+            : (
+              <ActivityLog
+                entries={toActivityLogEntries(activity.map(a => ({
+                  when: a.created_at,
+                  actor: a.actor,
+                  t: a.action,
+                  title: a.title,
+                  note: a.detail || undefined,
+                })))}
+                emptyLabel="No changes recorded for this group yet."
+              />
+            )}
         </Drawer>
       )}
     </div>

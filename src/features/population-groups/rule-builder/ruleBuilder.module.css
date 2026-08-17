@@ -57,16 +57,24 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  /* Zero gap — the connector tails on the IF and combinator chips must touch
+     the node cards above and below; all breathing room comes from the tails
+     themselves. */
+  gap: 0;
 }
 
-/* IF chip with the little tail divider under it */
+/* IF chip with the little tail divider under it. Chips left-align on one
+   axis and the connector tails sit at a fixed offset (the IF chip's center)
+   so the line runs straight through every chip. */
 .ifChip {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   width: fit-content;
 }
+.ifChip .ifTail,
+.combinatorChip .ifTail { margin-left: 13px; }
+.ifButton { font-size: 14px; }
 .addConditionBtn { align-self: flex-start; }
 
 .ifTail {
@@ -100,19 +108,26 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 12px 4px 4px;
+  height: 24px;
+  box-sizing: border-box;
+  /* Hairline border like the IF / combinator chips; the extra right padding
+     optically balances the icon box on the left so the text doesn't hug the
+     trailing edge. */
+  padding: 4px 8px 4px 4px;
   border-radius: 4px;
   flex-shrink: 0;
   cursor: pointer;
-  border: none;
+  border: 0.5px solid var(--neutral-150);
   font-size: 14px;
-  color: var(--neutral-300);
+  color: var(--neutral-400);
 }
+/* 12px glyph in a 16px box — with the chip's 4px vertical padding that pins
+   the whole chip to 24px, matching the summary badges beside it. */
 .fieldChipIcon {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
+  padding: 2px;
   border-radius: 4px;
 }
 .nodeBadges {
@@ -488,36 +503,32 @@
 .qmPatientDemo { composes: patientDemo from '../../../components/WorklistShell/WorklistRow.module.css'; }
 .qmPatientMeta { composes: patientMeta from '../../../components/WorklistShell/WorklistRow.module.css'; }
 
-/* Stacked nodes with the static combinator chip between them (view + edit) */
+/* Stacked nodes with the static combinator chip between them (view + edit).
+   Zero gap for the same reason as .canvas — tails must touch the cards. */
 .nodeStack {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0;
   width: 100%;
 }
 .combinatorChip {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   width: fit-content;
-  margin-left: 8px;
 }
+/* Equal padding on all sides; 16px line box matches the IF Button's 24px
+   height exactly so the two chip kinds read as one family. */
 .combinatorLabel {
-  padding: 3px 8px;
+  padding: 4px;
   border: 0.5px solid var(--neutral-150);
   border-radius: 4px;
   background: var(--neutral-0);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--neutral-300);
-  line-height: 1.2;
-}
-
-/* Activity Log drawer body */
-.activityBody {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
+  line-height: 16px;
+  box-sizing: border-box;
 }
 
 /* Node summary badges pinned to a 24px box so they read as one row with the
@@ -527,6 +538,7 @@
   display: inline-flex;
   align-items: center;
   box-sizing: border-box;
+  font-size: 14px;
 }
 
 /* Inline-editable group name in the rail */
@@ -546,3 +558,32 @@
   width: 100%;
 }
 .railTitleButton:hover { color: var(--neutral-400); }
+
+/* Nested rule group — bracket rail carrying the group combinator, children
+   indented beside it (the Figma's OR/AND brackets). */
+.groupNode {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+}
+.groupBracket {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 4px;
+  background: var(--neutral-0);
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--neutral-300);
+}
+.groupChildren {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}

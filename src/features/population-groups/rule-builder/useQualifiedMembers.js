@@ -56,16 +56,27 @@ function matchesRule(profile, rule) {
   }
 }
 
+/* Recursive over nested groups; a leaf with `not: true` inverts its match
+   (the Figma's "is not Tobacco Use" exclusions). Incomplete leaves are
+   ignored rather than failing the whole group. */
+function matchesNode(profile, node) {
+  if (Array.isArray(node.rules)) {
+    const children = node.rules.filter(child => Array.isArray(child.rules) || (((child.value || {}).amount ?? (child.value || {}).text ?? '') !== ''));
+    if (children.length === 0) return true; // empty group constrains nothing
+    const or = node.combinator === 'or';
+    return or
+      ? children.some(child => matchesNode(profile, child))
+      : children.every(child => matchesNode(profile, child));
+  }
+  const hit = matchesRule(profile, node);
+  return node.not ? !hit : hit;
+}
+
 function evaluate(profiles, query) {
-  const rules = (query?.rules || []).filter(r => {
-    const val = r.value || {};
-    return (val.amount ?? val.text ?? '') !== '';
-  });
-  if (rules.length === 0) return [];
-  const or = query.combinator === 'or';
-  return profiles.filter(p => (or
-    ? rules.some(r => matchesRule(p, r))
-    : rules.every(r => matchesRule(p, r))));
+  const hasLeaf = (node) => (node.rules || []).some(child =>
+    Array.isArray(child.rules) ? hasLeaf(child) : (((child.value || {}).amount ?? (child.value || {}).text ?? '') !== ''));
+  if (!query || !hasLeaf(query)) return [];
+  return profiles.filter(p => matchesNode(p, query));
 }
 
 /**

@@ -3,29 +3,27 @@ import { Avatar } from '../../../components/Avatar/Avatar';
 import { Input } from '../../../components/Input/Input';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { UnityIcon } from '../../../components/UnityIcon/UnityIcon';
-import { FIELD_BY_KEY } from './fieldCatalog';
+import { FIELD_BY_KEY, ruleSummary } from './fieldCatalog';
 import styles from './ruleBuilder.module.css';
 
 /* Nested plain-text lines of the rule tree for the criteria card — the same
    copy the node badges show, arranged Figma-style: field heading, indented
    value line, combinator between conditions. */
 function summaryLines(query) {
-  const rules = (query?.rules || []).filter(r => {
-    const v = r.value || {};
-    return (v.amount ?? v.text ?? '') !== '';
-  });
-  const combinator = (query?.combinator || 'and').toUpperCase();
   const lines = [];
-  rules.forEach((rule, i) => {
-    const field = FIELD_BY_KEY[rule.field];
-    if (!field) return;
-    if (i > 0) lines.push({ text: combinator, kind: 'combinator' });
-    const op = field.operators.find(o => o.name === rule.operator);
-    const v = rule.value || {};
-    const val = field.valueType === 'number' ? `${v.amount} ${field.unit || ''}`.trim() : v.text;
-    lines.push({ text: field.label, kind: 'field' });
-    lines.push({ text: `${op?.label || rule.operator} ${val}`, kind: 'value' });
-  });
+  const walk = (group, depth) => {
+    const combinator = (group.combinator || 'and').toUpperCase();
+    (group.rules || []).forEach((node, i) => {
+      if (i > 0) lines.push({ text: combinator, kind: 'combinator', depth });
+      if (Array.isArray(node.rules)) { walk(node, depth + 1); return; }
+      const field = FIELD_BY_KEY[node.field];
+      if (!field) return;
+      lines.push({ text: field.label, kind: 'field', depth });
+      const badges = ruleSummary(node);
+      badges.forEach(b => lines.push({ text: b.text, kind: 'value', depth }));
+    });
+  };
+  if (query) walk(query, 0);
   return lines;
 }
 
@@ -116,6 +114,7 @@ export function RuleSummaryPanel({ session, query, qualifiedCount, onEdit, onRen
                   <div
                     key={`${l.text}-${i}`}
                     className={l.kind === 'value' ? styles.criteriaValue : styles.criteriaLine}
+                    style={l.depth ? { paddingLeft: l.depth * 14 + (l.kind === 'value' ? 16 : 0) } : undefined}
                   >
                     {l.kind === 'value' ? `• ${l.text}` : l.text}
                   </div>
