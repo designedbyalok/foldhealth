@@ -37,6 +37,21 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **Dynamic group rule builder** — choosing the Dynamic filter in Create Group
+  now opens a full-page rule builder (Figma Pop Group Rule Builder) instead of
+  inserting a rule-less group: IF canvas, an Add Condition picker with 22
+  patient-profile fields across 5 groups, per-condition editor panel
+  (operator / value / as-of), AND/OR combinator, and drag/trash affordances.
+  Built on `react-querybuilder`'s rule model (`{ combinator, rules }`) via its
+  `add`/`remove`/`update` helpers so stored rules stay portable to
+  `formatQuery` when evaluation lands. Editing a Dynamic group reopens the
+  builder with its saved rule. Every condition maps to a `p360_profiles`
+  column (`rule-builder/fieldCatalog.js` is the contract); the rule persists
+  in `population_groups.rule`
+  (`supabase/pop_group_rule_builder_migration.sql` adds it plus the 12
+  profile columns that didn't exist yet, and `bun run seed` backfills demo
+  values).
+
 - **Tables fill the viewport — auto page size** — every table now sizes its
   page to the space available instead of always showing 10 rows, so a tall
   screen fills with data rather than white space (TOC 10 → 20 rows at 1440×1000).

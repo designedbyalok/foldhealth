@@ -24,6 +24,7 @@ export function usePopulationGroupsView({
   const createPopGroup = useAppStore(s => s.createPopGroup);
   const updatePopGroup = useAppStore(s => s.updatePopGroup);
   const deletePopGroup = useAppStore(s => s.deletePopGroup);
+  const openPgRuleBuilder = useAppStore(s => s.openPgRuleBuilder);
   useEffect(() => { fetchPopGroups(); }, [fetchPopGroups]);
 
   /* Load the real patient directory (all_patients) so CSV uploads are matched
@@ -188,6 +189,20 @@ export function usePopulationGroupsView({
      drawer (<UpdatePopGroupDrawer>). The old approach reused the create
      drawer's CSV review state — kept here, commented out, for reference. */
   const openEditModal = (group) => {
+    // Dynamic groups are defined by a rule, so editing one opens the rule
+    // builder with its saved rule; the drawer only fits CSV/static groups.
+    if (group.type === 'Dynamic') {
+      openPgRuleBuilder({
+        groupId: group.id,
+        name: group.name,
+        description: group.description,
+        memberStatus: group.memberStatus,
+        count: group.count,
+        inactive: group.inactive,
+        rule: group.rule || null,
+      });
+      return;
+    }
     setEditingGroup(group);
   };
 
@@ -243,6 +258,20 @@ export function usePopulationGroupsView({
 
   /* Persist the current group (insert on create, update on edit). Returns true on success. */
   const saveGroup = async () => {
+    // Dynamic groups aren't created from the drawer — the drawer collects the
+    // metadata, then hands off to the full-page rule builder which owns the
+    // actual insert once the rule is defined.
+    if (chosenFilter === 'dynamic' && !editGroupId) {
+      openPgRuleBuilder({
+        groupId: null,
+        name: segmentName.trim(),
+        description: description.trim(),
+        memberStatus,
+        rule: null,
+      });
+      closeModal();
+      return true;
+    }
     const groupType = chosenFilter === 'dynamic' ? 'Dynamic' : 'Static';
     const newName = segmentName.trim();
     const memberIds = matchSummary.matched.flatMap(m => m.id ? [m.id] : []);

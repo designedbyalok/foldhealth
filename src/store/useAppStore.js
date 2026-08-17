@@ -2667,6 +2667,14 @@ export const useAppStore = create((set, get) => ({
     set(s => ({ popGroups: s.popGroups.map(g => g.id === id ? saved : g) }));
     return saved;
   },
+  // ── Dynamic group rule builder (full-page takeover) ──
+  // Non-null while the builder is open. { groupId } edits a saved Dynamic
+  // group's rule; groupId:null is the create flow, carrying the metadata the
+  // Create Group drawer collected so save can insert the full row.
+  pgRuleBuilder: null,
+  openPgRuleBuilder: (session) => set({ pgRuleBuilder: session }),
+  closePgRuleBuilder: () => set({ pgRuleBuilder: null }),
+
   deletePopGroup: async (id) => {
     const { error } = await supabase
       .from('population_groups')

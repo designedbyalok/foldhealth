@@ -307,6 +307,7 @@ export function TopBar() {
   const isCampaign = activePage === 'campaign';
   const settingsNavItem = useAppStore(s => s.settingsNavItem);
   const selectedPatientId = useAppStore(s => s.selectedPatientId);
+  const pgRuleBuilder = useAppStore(s => s.pgRuleBuilder);
   const navigateBackToWorklist = useAppStore(s => s.navigateBackToWorklist);
   const navigateToPatient = useAppStore(s => s.navigateToPatient);
   const patients = useAppStore(s => s.patients);
@@ -455,7 +456,15 @@ export function TopBar() {
             <>
               <span className={styles.breadcrumbLink}>Population</span>
               <span className={styles.sep}>/</span>
-              <span className={styles.breadcrumbCurrent}>Pop groups</span>
+              {pgRuleBuilder ? (
+                <>
+                  <button type="button" className={styles.breadcrumbLink} onClick={() => useAppStore.getState().closePgRuleBuilder()}>Pop groups</button>
+                  <span className={styles.sep}>/</span>
+                  <span className={styles.breadcrumbCurrent}>{pgRuleBuilder.name}</span>
+                </>
+              ) : (
+                <span className={styles.breadcrumbCurrent}>Pop groups</span>
+              )}
             </>
           ) : (
             <>

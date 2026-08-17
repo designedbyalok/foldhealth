@@ -32,6 +32,7 @@ import styles from './AppLayout.module.css';
 const lz = (importer, name) => lazy(() => importer().then(m => ({ default: m[name] })));
 
 const PatientDetailView = lz(() => import('../features/patient/PatientDetailView'), 'PatientDetailView');
+const PopGroupRuleBuilder = lz(() => import('../features/population-groups/rule-builder/PopGroupRuleBuilder'), 'PopGroupRuleBuilder');
 const CalendarPageView  = lz(() => import('../features/calendar/CalendarView'),     'CalendarView');
 const HomeView          = lz(() => import('../features/home/HomeView'),             'HomeView');
 const MessagesView      = lz(() => import('../features/messages/MessagesView'),     'MessagesView');
@@ -105,10 +106,25 @@ function PopulationView() {
   const activeSubnavList = useAppStore(s => s.activeSubnavList);
 
   const selectedPatientId = useAppStore(s => s.selectedPatientId);
+  const pgRuleBuilder = useAppStore(s => s.pgRuleBuilder);
   const setHccFilter = useAppStore(s => s.setHccFilter);
 
   const isAwv = activeSubnavList === 'Annual Visit';
   const isJsa = activeSubnavList === 'JSA';
+
+  // Dynamic group rule builder — full-page takeover, no subnav
+  if (pgRuleBuilder) {
+    return (
+      <div className={styles.main}>
+        <TopBar />
+        <div className={styles.content}>
+          <Suspense fallback={<LazyFallback />}>
+            <PopGroupRuleBuilder />
+          </Suspense>
+        </div>
+      </div>
+    );
+  }
 
   // Patient detail view — full-page, no subnav
   if (selectedPatientId) {
