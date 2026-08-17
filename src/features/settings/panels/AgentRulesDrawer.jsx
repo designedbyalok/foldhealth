@@ -59,9 +59,9 @@ export function AgentRulesDrawer() {
     <Drawer title="Agent Rules Configuration" onClose={() => setAgentRulesGroupId(null)} headerRight={headerRight}>
       {/* Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16, fontSize: 12, color: 'var(--neutral-200)' }}>
-        <span style={{ cursor: 'pointer', color: 'var(--primary-300)' }} onClick={() => setAgentRulesGroupId(null)}>Chat Settings</span>
+        <button type="button" style={{ cursor: 'pointer', color: 'var(--primary-300)', font: 'inherit' }} onClick={() => setAgentRulesGroupId(null)}>Chat Settings</button>
         <Icon name="solar:alt-arrow-right-linear" size={12} color="var(--neutral-200)" />
-        <span style={{ cursor: 'pointer', color: 'var(--primary-300)' }} onClick={() => setAgentRulesGroupId(null)}>{group.name}</span>
+        <button type="button" style={{ cursor: 'pointer', color: 'var(--primary-300)', font: 'inherit' }} onClick={() => setAgentRulesGroupId(null)}>{group.name}</button>
         <Icon name="solar:alt-arrow-right-linear" size={12} color="var(--neutral-200)" />
         <span style={{ color: 'var(--neutral-400)', fontWeight: 500 }}>Care Assistant — Rules</span>
       </div>

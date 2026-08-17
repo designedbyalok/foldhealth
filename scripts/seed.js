@@ -866,6 +866,68 @@ async function main() {
     }
   }
 
+  // ── Rule-builder patient-profile criteria fields ──
+  // The dynamic group rule builder filters on p360_profiles columns added by
+  // supabase/pop_group_rule_builder_migration.sql. Backfill deterministic
+  // demo values per patient, but only where NULL/empty so hand-crafted rows
+  // survive re-runs (same contract as seed_p360_banner.js).
+  {
+    const { data: profiles, error: pErr } = await supabase
+      .from('p360_profiles')
+      .select('id, patient_id, problems, diagnoses, diagnosis_groups, immunizations, medication_orders, procedures, lab_results, wearables, forms_submitted, membership_status, past_membership_status, engagement_level');
+    if (pErr) {
+      console.log(`  ✗ p360 criteria fields: ${pErr.message} — run supabase/pop_group_rule_builder_migration.sql first`);
+    } else {
+      // Deterministic pick: hash the patient id so re-runs are stable.
+      const hash = (s) => [...String(s)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+      const pick = (id, arr, n = 1) => {
+        const h = hash(id);
+        return Array.from({ length: n }, (_, i) => arr[(h + i * 13) % arr.length]);
+      };
+      const PROBLEMS = ['Hypertension', 'Obesity', 'Chronic pain', 'Insomnia', 'Anxiety', 'Hyperlipidemia'];
+      const DIAGNOSES = ['E11.9 Type 2 diabetes', 'I10 Essential hypertension', 'E78.5 Hyperlipidemia', 'J44.9 COPD', 'N18.3 CKD stage 3', 'F32.9 Major depressive disorder'];
+      const DX_GROUPS = ['Cardiometabolic', 'Respiratory', 'Behavioral Health', 'Renal', 'Musculoskeletal'];
+      const IMMUNIZATIONS = ['Influenza', 'COVID-19', 'Pneumococcal', 'Shingles', 'Tdap'];
+      const MED_ORDERS = ['Metformin 500mg', 'Lisinopril 10mg', 'Atorvastatin 20mg', 'Albuterol inhaler', 'Sertraline 50mg'];
+      const PROCEDURES = ['Colonoscopy', 'Echocardiogram', 'Knee arthroscopy', 'Cataract surgery', 'Skin biopsy'];
+      const LABS = ['HbA1c 8.2%', 'LDL 130 mg/dL', 'eGFR 52', 'TSH 3.1', 'HbA1c 6.4%'];
+      const WEARABLES = ['Fitbit', 'Apple Watch', 'Oura Ring', 'Dexcom G7'];
+      const FORMS = ['PHQ-9', 'Annual Wellness HRA', 'GAD-7', 'Fall Risk Assessment'];
+      const MEMBERSHIP = ['Active', 'Active', 'Active', 'Inactive', 'Pending']; // weighted toward Active
+      const PAST = ['Active', 'Inactive', 'Churned', 'Pending'];
+      const ENGAGEMENT = ['High', 'Medium', 'Low', 'Unreachable'];
+
+      let filled = 0;
+      for (const row of profiles || []) {
+        const key = row.patient_id || row.id;
+        const wants = {
+          problems: pick(key, PROBLEMS, 2),
+          diagnoses: pick(key, DIAGNOSES, 2),
+          diagnosis_groups: pick(key, DX_GROUPS, 1),
+          immunizations: pick(key, IMMUNIZATIONS, 2),
+          medication_orders: pick(key, MED_ORDERS, 2),
+          procedures: pick(key, PROCEDURES, 1),
+          lab_results: pick(key, LABS, 1),
+          wearables: pick(key + 'w', WEARABLES, 1),
+          forms_submitted: pick(key + 'f', FORMS, 1),
+          membership_status: pick(key + 'm', MEMBERSHIP, 1)[0],
+          past_membership_status: pick(key + 'p', PAST, 1)[0],
+          engagement_level: pick(key + 'e', ENGAGEMENT, 1)[0],
+        };
+        // Only fill columns that are still empty on this row.
+        const patch = {};
+        for (const [col, val] of Object.entries(wants)) {
+          const cur = row[col];
+          if (cur == null || (Array.isArray(cur) && cur.length === 0) || cur === '') patch[col] = val;
+        }
+        if (Object.keys(patch).length === 0) { continue; }
+        const { error: uErr } = await supabase.from('p360_profiles').update(patch).eq('id', row.id);
+        if (!uErr) filled++;
+      }
+      console.log(`  ✓ p360 criteria fields (${filled} profiles backfilled)`);
+    }
+  }
+
   console.log('\n✅  Seed complete. Run `bun run dev` to verify.\n');
 }
 

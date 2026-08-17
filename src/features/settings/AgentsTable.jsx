@@ -242,7 +242,7 @@ function AgentRow({ agent, isFirst }) {
           const displayName = raw === 'Current User' && currentUserName ? currentUserName : raw;
           return (
             <div className={rowStyles.updatedStack}>
-              <span
+              <button type="button"
                 className={rowStyles.userLink}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -261,7 +261,7 @@ function AgentRow({ agent, isFirst }) {
               >
                 {displayName}
                 {isSelf && <span className={rowStyles.youTag}> (You)</span>}
-              </span>
+              </button>
               {agent.last_updated && <span className={rowStyles.updatedDate}>{agent.last_updated}</span>}
             </div>
           );

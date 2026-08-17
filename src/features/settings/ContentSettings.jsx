@@ -728,13 +728,14 @@ export function ContentSettings() {
                   }}
                 />
                 {statusBadge && (
-                  <span
+                  <button
+                    type="button"
                     className={styles.filterChip}
                     onClick={() => setStatusFilter('all')}
-                    title="Clear filter"
+                    aria-label="Clear status filter"
                   >
                     <Badge variant={statusBadge.variant} label={statusBadge.label} />
-                  </span>
+                  </button>
                 )}
               </>
             )}

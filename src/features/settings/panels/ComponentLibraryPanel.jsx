@@ -211,10 +211,14 @@ function PreviewDrawer({ comp, onClose }) {
     <Drawer title={`Preview — ${comp.name}`} onClose={onClose}>
       <div style={{ border: '0.5px solid var(--neutral-150)', borderRadius: 8, overflow: 'hidden' }}>
         {/* Collapsible header */}
-        <div
+        <button
+          type="button"
+          aria-expanded={!collapsed}
           onClick={() => setCollapsed(c => !c)}
           style={{
             display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px',
+            width: '100%', textAlign: 'left', font: 'inherit', color: 'inherit',
+            border: 'none',
             borderBottom: collapsed ? 'none' : '0.5px solid var(--neutral-100)',
             background: 'var(--neutral-0)', cursor: 'pointer', userSelect: 'none',
           }}
@@ -222,7 +226,7 @@ function PreviewDrawer({ comp, onClose }) {
           <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--neutral-400)', flex: 1 }}>{comp.name}</span>
           <Badge variant="compliance-warn" label="External" />
           <Icon name={collapsed ? 'solar:alt-arrow-right-linear' : 'solar:alt-arrow-down-linear'} size={12} color="var(--neutral-200)" />
-        </div>
+        </button>
 
         {!collapsed && (
           <>

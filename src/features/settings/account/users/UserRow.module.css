@@ -12,12 +12,22 @@
 .actionDivider { composes: actionDivider from '../../../../components/WorklistShell/WorklistRow.module.css'; }
 
 /* User cell — avatar + name/email stack. */
+/* A <button> so the row's member cell opens the profile from the keyboard.
+   width/text-align restore what the <div> had inside its <td>. */
 .userCell {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
   cursor: pointer;
 }
+.userCell:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 2px; }
 .userInfo {
   display: flex;
   flex-direction: column;

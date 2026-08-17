@@ -8,11 +8,20 @@
   font-family: 'Inter', sans-serif;
 }
 
+/* A <button> so the filter can be cleared from the keyboard. text-align keeps
+   the chip's content left-aligned; buttons centre by default. */
 .filterChip {
   display: inline-flex;
   align-items: center;
+  text-align: left;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
   cursor: pointer;
 }
+.filterChip:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 2px; border-radius: 4px; }
 
 /* ── Content area (scrollable) ── */
 .content {

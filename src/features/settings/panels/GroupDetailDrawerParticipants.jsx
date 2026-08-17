@@ -49,14 +49,16 @@ export function GroupDetailDrawerParticipants(props) {
                 {/* Tabs */}
                 <div style={{ display: 'flex', borderBottom: '0.5px solid var(--neutral-150)' }}>
                   {['users', 'roles'].map(tab => (
-                    <div key={tab} onClick={() => setSearchTab(tab)} style={{
+                    <button key={tab} type="button" aria-pressed={searchTab === tab} onClick={() => setSearchTab(tab)} style={{
                       flex: 1, textAlign: 'center', padding: '10px 0', fontSize: 13, cursor: 'pointer',
+                      background: 'none', fontFamily: 'inherit',
                       color: searchTab === tab ? 'var(--neutral-500)' : 'var(--neutral-200)',
                       fontWeight: searchTab === tab ? 600 : 400,
+                      border: 'none',
                       borderBottom: searchTab === tab ? '2px solid var(--neutral-500)' : '2px solid transparent',
                     }}>
                       {tab === 'users' ? 'Users' : 'Care Team Roles'}
-                    </div>
+                    </button>
                   ))}
                 </div>
 

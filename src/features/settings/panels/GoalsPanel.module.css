@@ -197,7 +197,7 @@
 
 /* ── Wizard Drawer ── */
 .stepper { display: flex; align-items: center; gap: 0; margin-bottom: 10px; padding: 0 4px; }
-.wizStep { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--neutral-200); cursor: pointer; padding: 6px 0; transition: background var(--duration-fast) var(--ease-hover), color var(--duration-fast) var(--ease-hover), border-color var(--duration-fast) var(--ease-hover); }
+.wizStep { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--neutral-200); cursor: pointer; padding: 6px 0; text-align: left; transition: background var(--duration-fast) var(--ease-hover), color var(--duration-fast) var(--ease-hover), border-color var(--duration-fast) var(--ease-hover); }
 .wizStepActive { color: var(--primary-300); }
 .wizStepDone { color: var(--neutral-400); }
 .wizStepNum {
@@ -235,10 +235,14 @@
 
 /* Templates */
 .templateGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+/* A <button> so a template is selectable by keyboard. width/text-align restore
+   what the <div> had — a form control sizes to fit-content and centres text. */
 .templateCard {
+  display: block; width: 100%; text-align: left; font: inherit; color: inherit;
   background: var(--neutral-0); border: 0.5px solid var(--neutral-150); border-radius: 8px; padding: 12px;
   cursor: pointer; transition: background var(--duration-fast) var(--ease-hover), color var(--duration-fast) var(--ease-hover), border-color var(--duration-fast) var(--ease-hover);
 }
+.templateCard:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 2px; }
 .templateCard:hover { border-color: var(--primary-200); background: var(--primary-50); }
 .templateCardTitle { font-size: 12px; font-weight: 500; color: var(--neutral-500); margin-bottom: 3px; }
 .templateCardDesc { font-size: 11px; color: var(--neutral-300); line-height: 1.4; }

@@ -21,13 +21,13 @@ export function UsersTabRow({
   return (
     <tr key={user.id} className={styles.row}>
       <td className={`${styles.membersTd} ${styles.stickyLeft}`} style={{ left: 0 }}>
-        <div className={styles.userCell} onClick={() => onView(user)}>
+        <button type="button" className={styles.userCell} onClick={() => onView(user)}>
           <Avatar variant="staff" size="M" initials={user.initials} />
           <div className={styles.userInfo}>
             <span className={styles.userName}>{user.name}</span>
             <span className={styles.userEmail}>{user.email}</span>
           </div>
-        </div>
+        </button>
       </td>
       <td className={styles.td}>
         <Badge variant={sb.variant} icon={sb.icon} label={user.status} />

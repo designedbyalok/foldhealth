@@ -15,14 +15,16 @@ export function GoalWizardStepper({ step, setStep }) {
     <div className={s.stepper}>
       {WIZARD_LABELS.map((label, i) => (
         <div key={label} style={{ display: 'contents' }}>
-          <div
+          <button
+            type="button"
+            aria-current={i === step ? 'step' : undefined}
             className={`${s.wizStep} ${i === step ? s.wizStepActive : i < step ? s.wizStepDone : ''}`}
             onClick={() => setStep(i)}
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: 'pointer', background: 'none', border: 'none', font: 'inherit', color: 'inherit' }}
           >
             <div className={s.wizStepNum}>{i < step ? <CheckIcon size={12} color="var(--primary-300)" /> : i + 1}</div>
             <span className={s.wizStepLabel}>{label}</span>
-          </div>
+          </button>
           {i < WIZARD_LABELS.length - 1 && (
             <div className={`${s.wizConnector} ${i < step ? s.wizConnectorDone : ''}`} />
           )}
@@ -72,10 +74,10 @@ export function GoalWizardDescribeStep({ active, isEdit, nlInput, setNlInput, ai
               { key: 'onboarding', icon: 'solar:smartphone-linear', title: 'App Onboarding', desc: 'Invite → Register → Walkthrough → First Action' },
               { key: 'monitoring', icon: 'solar:heart-pulse-linear', title: 'Chronic Monitoring', desc: 'Engage → Vitals → Medication → Alert' },
             ].map(t => (
-              <div key={t.key} className={s.templateCard} onClick={() => useTemplate(t.key)}>
+              <button key={t.key} type="button" className={s.templateCard} onClick={() => useTemplate(t.key)}>
                 <div className={s.templateCardTitle}><Icon name={t.icon} size={14} /> {t.title}</div>
                 <div className={s.templateCardDesc}>{t.desc}</div>
-              </div>
+              </button>
             ))}
           </div>
         </>
