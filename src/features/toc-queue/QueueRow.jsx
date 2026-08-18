@@ -276,12 +276,6 @@ export function QueueRow({ patient, isSelected, onSelect, voicemailCalls, comple
           </div>
         </div>
       </td>
-      <td className={rowStyles.td}>
-        <Badge size="M"
-          variant={`outreach-${p.outreachCategory || 'post-visit'}`}
-          label={(p.outreachCategory || 'post-visit').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
-        />
-      </td>
       <td className={rowStyles.td}><Badge size="M" variant={`lace-${p.lace.toLowerCase()}`} label={p.lace} /></td>
       <td className={rowStyles.td}>
         <div className={rowStyles.outreachCell}>

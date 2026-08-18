@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActionButton } from '../ActionButton/ActionButton';
 import { SearchIconButton } from '../SearchIconButton/SearchIconButton';
 import { SearchBar } from '../SearchBar/SearchBar';
@@ -7,6 +7,8 @@ import { HeaderCell } from '../HeaderCell/HeaderCell';
 import { Pagination } from '../Pagination/Pagination';
 import { BulkBar } from '../BulkBar/BulkBar';
 import { TableSkeleton } from '../TableSkeleton/TableSkeleton';
+import { ColumnsHeaderButton } from '../WorklistColumns/ColumnsHeaderButton';
+import { useWorklistColumns } from '../WorklistColumns/useWorklistColumns';
 import styles from './WorklistShell.module.css';
 
 const EMPTY_SELECTED_IDS = [];
@@ -87,8 +89,49 @@ export function WorklistShell({
   onPageChange,
   onPageSizeChange,
   minTableWidth = 900,
+  // When provided, WorklistShell handles column preferences end-to-end:
+  //   • orders/filters `columns` per the user's saved prefs
+  //   • injects a "Show / hide columns" button into the last column's header
+  //     (typically the sticky-right "Actions" column)
+  //   • passes { visibleColumns, hiddenSet } to renderRow so callers can
+  //     skip hidden cells / render cells in the ordered sequence
+  // Sticky columns (checkbox, sticky-left member, sticky-right actions) are
+  // never reordered/hidden — they're locked in the popover.
+  worklistKey,
 }) {
   const [searchOpen, setSearchOpen] = useState(false);
+
+  // Only non-sticky columns are user-customisable. The sticky columns keep
+  // their fixed position around the customisable band.
+  const { customisableColumns, lockedTop, lockedBottom } = useMemo(() => {
+    const top = [];
+    const bot = [];
+    const mid = [];
+    for (const c of columns) {
+      if (c.sticky === 'left' && !c.showCheckbox) top.push(c);
+      else if (c.sticky === 'right') bot.push(c);
+      else if (!c.showCheckbox) mid.push(c);
+    }
+    return {
+      customisableColumns: mid,
+      lockedTop: top.map(c => ({ k: c.key, lb: c.label })),
+      lockedBottom: bot.map(c => ({ k: c.key, lb: c.label })),
+    };
+  }, [columns]);
+
+  // `prefs` is only wired when the caller opts in with worklistKey. Otherwise
+  // pass through the raw column list so existing worklists keep working.
+  const prefs = useWorklistColumns(worklistKey || '__off__', customisableColumns);
+  const activeCustomisable = worklistKey ? prefs.visibleColumns : customisableColumns;
+  const hiddenSet = worklistKey ? prefs.hiddenSet : null;
+  const orderedColumnsForRow = worklistKey
+    ? [
+        ...columns.filter(c => c.showCheckbox),
+        ...columns.filter(c => c.sticky === 'left' && !c.showCheckbox),
+        ...activeCustomisable,
+        ...columns.filter(c => c.sticky === 'right'),
+      ]
+    : columns;
 
   const allIds = rows.map((r) => r.id);
   const selectedIdSet = new Set(selectedIds);
@@ -96,6 +139,15 @@ export function WorklistShell({
   const someSelected = selectedIds.length > 0 && !allSelected;
 
   const checkboxCol = columns.find((c) => c.showCheckbox);
+
+  const columnsToRender = orderedColumnsForRow;
+  // The last sticky-right column hosts the columns button when worklistKey
+  // is provided. If none, we still let the caller pass one manually via
+  // their header render (existing HCC pattern).
+  const actionsColKey = worklistKey
+    ? [...columns].reverse().find(c => c.sticky === 'right')?.key
+    : null;
+  const rowCtx = { visibleColumns: activeCustomisable, hiddenSet, orderedColumns: orderedColumnsForRow };
 
   return (
     <div className={styles.shell}>
@@ -166,7 +218,7 @@ export function WorklistShell({
           <table className={styles.table} style={{ minWidth: minTableWidth }}>
             <thead>
               <tr className={styles.headRow}>
-                {columns.map((col, idx) => {
+                {columnsToRender.map((col, idx) => {
                   const stickyStyle = col.sticky === 'left'
                     ? { position: 'sticky', left: col.left || 0, background: 'var(--neutral-0)', zIndex: 4 }
                     : col.sticky === 'right'
@@ -215,6 +267,11 @@ export function WorklistShell({
                     );
                   }
 
+                  // Sticky-right "Actions" column hosts the columns button
+                  // whenever the caller opted into column prefs. Replaces the
+                  // plain label with a { label · button } cluster so every
+                  // WorklistShell caller gets the popover for free.
+                  const isColumnsAnchor = worklistKey && col.key === actionsColKey;
                   return (
                     <th
                       key={col.key || idx}
@@ -224,7 +281,18 @@ export function WorklistShell({
                       // shell fork.
                       style={{ ...stickyStyle, width: col.width, textAlign: col.align || 'left', ...col.thStyle }}
                     >
-                      {col.label}
+                      {isColumnsAnchor ? (
+                        <ColumnsHeaderButton
+                          columns={prefs.orderedColumns}
+                          hiddenSet={prefs.hiddenSet}
+                          onToggle={prefs.onToggle}
+                          onReorder={prefs.onReorder}
+                          onReset={prefs.onReset}
+                          label={col.label}
+                          lockedTop={lockedTop}
+                          lockedBottom={lockedBottom}
+                        />
+                      ) : col.label}
                     </th>
                   );
                 })}
@@ -232,8 +300,8 @@ export function WorklistShell({
             </thead>
             <tbody>
               {rows.length === 0 && emptyState
-                ? (<tr><td colSpan={columns.length}>{emptyState}</td></tr>)
-                : rows.map((row, i) => renderRow(row, i))}
+                ? (<tr><td colSpan={columnsToRender.length}>{emptyState}</td></tr>)
+                : rows.map((row, i) => renderRow(row, i, rowCtx))}
             </tbody>
           </table>
         )}

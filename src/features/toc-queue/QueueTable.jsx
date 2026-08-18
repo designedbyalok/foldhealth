@@ -19,7 +19,6 @@ const agentLabel = (icon, text) => (
 const QUEUE_COLUMNS = [
   { key: 'select', showCheckbox: true, sticky: 'left', left: 0, width: 36 },
   { key: 'members', label: 'Members', sticky: 'left', left: 36, width: 240, thStyle: { borderRight: '0.5px solid var(--neutral-150)' } },
-  { key: 'outreachType', label: 'Outreach Type' },
   { key: 'lace', label: 'LACE Acuity' },
   { key: 'outreachWindow', label: 'Outreach Window' },
   {
@@ -35,7 +34,7 @@ const QUEUE_COLUMNS = [
     label: agentLabel(<Icon name="solar:calendar-linear" size={14} />, 'Due On'),
     thStyle: { ...agentTh, minWidth: 140, borderRight: '2px solid var(--primary-200)' },
   },
-  { key: 'assessment', label: 'Assessment', thStyle: { minWidth: 160 } },
+  { key: 'assessment', label: 'AI Assessment', thStyle: { minWidth: 160 } },
   { key: 'outreachStatus', label: 'Outreach Status', thStyle: { minWidth: 160 } },
   { key: 'tocStatus', label: 'TOC Status' },
   { key: 'dueOn', label: 'Due On' },

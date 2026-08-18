@@ -100,7 +100,6 @@ function ComingSoonState({ listName }) {
 
 function PopulationView() {
   const subnavCollapsed = useAppStore(s => s.subnavCollapsed);
-  const toggleSubnav = useAppStore(s => s.toggleSubnav);
   const activeTab = useAppStore(s => s.activeTab);
   const showFilterBar = useAppStore(s => s.showFilterBar);
   const activeSubnavList = useAppStore(s => s.activeSubnavList);
@@ -184,7 +183,7 @@ function PopulationView() {
                   : isAllPatients
                     ? <AllPatientsTable />
                     : isPopulationGroup
-                      ? <PopulationGroupsView activeFilter={pgFilter} onToggleSidebar={toggleSubnav} />
+                      ? <PopulationGroupsView activeFilter={pgFilter} />
                       : isComingSoon
                         ? <ComingSoonState listName={activeSubnavList} />
                         : (activeTab === 'toc-worklist' ? <WorklistTable /> : <QueueTable />)}

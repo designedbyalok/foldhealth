@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
-import { Badge } from '../../components/Badge/Badge';
 import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
 import { GroupName, UsersGroupRoundedLinear } from './PopulationGroupsViewPanels.jsx';
 import styles from './PopulationGroupsRow.module.css';
@@ -21,8 +20,16 @@ const MORE_ITEMS = [
  * hover tint, sticky checkbox + name on the left, sticky actions on the
  * right, L-size action buttons with dividers).
  */
-export function PopulationGroupsRow({ group, selected, onToggle, onEdit, onDelete, onDownload, onRowClick }) {
+export function PopulationGroupsRow({ group, columns, hiddenSet, selected, onToggle, onEdit, onDelete, onDownload, onRowClick }) {
   const [moreAnchor, setMoreAnchor] = useState(null);
+
+  // Middle columns come from the shared column defs so hide/reorder in the
+  // Show Columns popover ripple through the body. `columns` (from
+  // WorklistShell's row ctx) contains sticky-left + middle + sticky-right in
+  // display order; sticky cells stay hardcoded below and only the
+  // customisable middle band is iterated.
+  const middleCols = (columns || []).filter(c => !c.sticky && !c.showCheckbox && c.renderCell);
+  const visibleMiddle = hiddenSet ? middleCols.filter(c => !hiddenSet.has(c.key)) : middleCols;
 
   return (
     <tr
@@ -46,23 +53,11 @@ export function PopulationGroupsRow({ group, selected, onToggle, onEdit, onDelet
         </div>
       </td>
 
-      {/* Active members */}
-      <td className={styles.td}>{group.count != null ? group.count : '–'}</td>
-
-      {/* Inactive members */}
-      <td className={styles.td}>{group.inactive != null ? group.inactive : '–'}</td>
-
-      {/* Type + optional Draft badge */}
-      <td className={styles.td}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {group.type}
-          {group.status === 'draft' && <Badge tone="warning" size="S" label="Draft" />}
-        </span>
-      </td>
-
-      {/* Created / updated dates */}
-      <td className={styles.td}>{group.created}</td>
-      <td className={styles.td}>{group.updated}</td>
+      {visibleMiddle.map(col => (
+        <td key={col.key} data-col-key={col.key} className={styles.td}>
+          {col.renderCell(group)}
+        </td>
+      ))}
 
       {/* Actions — sticky-right, L-size buttons with dividers */}
       <td className={`${styles.td} ${styles.stickyRight}`} onClick={(e) => e.stopPropagation()}>

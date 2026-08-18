@@ -4,9 +4,13 @@
  */
 
 .rail {
-  transition: width 0.2s ease;
+  /* Slightly longer duration + Apple-style deceleration curve so the width
+     collapse reads as one smooth slide instead of a snap. */
+  transition: width 280ms cubic-bezier(0.32, 0.72, 0, 1),
+              border-color 200ms ease;
+  will-change: width;
 }
 
 .rail.collapsed {
-  border-right: none;
+  border-right-color: transparent;
 }

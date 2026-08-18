@@ -3,11 +3,12 @@ import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { Icon } from '../../components/Icon/Icon';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { SectionTitleBar } from '../../components/SectionTitleBar/SectionTitleBar';
+import { SubnavToggle } from '../../components/SubnavToggle/SubnavToggle';
 import { SortPopover } from '../../components/SortPopover/SortPopover';
 import { DUE_OPTIONS } from './DueDateChip.utils';
 import { FilterChipBar } from './FilterChipBar';
 import { FilterNameDialog } from './FilterNameDialog';
-import { ColumnConfigPopover } from './ColumnConfigPopover';
+import { ColumnConfigPopover } from '../../components/ColumnConfigPopover/ColumnConfigPopover';
 import { MEMBER_SORT_ITEMS } from './columns';
 import { Pagination } from '../../components/Pagination/Pagination';
 import { BulkBar } from '../../components/BulkBar/BulkBar';
@@ -37,6 +38,7 @@ export function HccWorklistTableView({
           the main HCC worklist so both HCC surfaces share one chrome. */}
       <SectionTitleBar
         variant="titleWithDropdown"
+        leadingElement={<SubnavToggle />}
         title={activeSubnavList}
         dropdownLabel="Due Date"
         dropdownOptions={DUE_OPTIONS}

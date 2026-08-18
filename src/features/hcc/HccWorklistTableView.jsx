@@ -5,12 +5,13 @@ import { Icon } from '../../components/Icon/Icon';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Button } from '../../components/Button/Button';
 import { SectionTitleBar } from '../../components/SectionTitleBar/SectionTitleBar';
+import { SubnavToggle } from '../../components/SubnavToggle/SubnavToggle';
 import { SortPopover } from '../../components/SortPopover/SortPopover';
 import { DUE_OPTIONS } from './DueDateChip.utils';
 import { SavedFiltersChip } from './SavedFiltersChip';
 import { FilterChipBar } from './FilterChipBar';
 import { FilterNameDialog } from './FilterNameDialog';
-import { ColumnConfigPopover } from './ColumnConfigPopover';
+import { ColumnConfigPopover } from '../../components/ColumnConfigPopover/ColumnConfigPopover';
 import { MEMBER_SORT_ITEMS } from './columns';
 import { Pagination } from '../../components/Pagination/Pagination';
 import { BulkBar } from '../../components/BulkBar/BulkBar';
@@ -46,6 +47,7 @@ export function HccWorklistTableView({
           keep their HCC-specific popovers via rightExtras. */}
       <SectionTitleBar
         variant="titleWithDropdown"
+        leadingElement={<SubnavToggle />}
         title={activeSubnavList}
         dropdownLabel="Due Date"
         dropdownOptions={DUE_OPTIONS}

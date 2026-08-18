@@ -1,0 +1,2 @@
+/* SubnavToggle currently delegates all visuals to ActionButton — this file
+   exists to keep the folder complete so Storybook picks the component up. */

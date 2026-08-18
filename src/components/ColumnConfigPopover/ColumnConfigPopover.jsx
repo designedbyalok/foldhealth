@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Icon } from '../../components/Icon/Icon';
+import { Icon } from '../Icon/Icon';
+import { CloseButton } from '../CloseButton/CloseButton';
 import styles from './ColumnConfigPopover.module.css';
 
 /**
@@ -100,9 +101,7 @@ export function ColumnConfigPopover({
         <div className={styles.header}>
           <div className={styles.titleRow}>
             <span className={styles.title}>Show Columns</span>
-            <button type="button" className={styles.close} onClick={onClose} aria-label="Close">
-              <Icon name="solar:close-linear" size={14} color="var(--neutral-300)" />
-            </button>
+            <CloseButton size={14} onClick={onClose} className={styles.close} />
           </div>
 
           <div className={styles.searchRow}>

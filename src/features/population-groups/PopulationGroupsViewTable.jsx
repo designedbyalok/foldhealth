@@ -1,6 +1,7 @@
 import { Input as FoldInput } from '../../components/Input/Input';
 import { Button } from '../../components/Button/Button';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
+import { Badge } from '../../components/Badge/Badge';
 import { SearchIconButton } from '../../components/SearchIconButton/SearchIconButton';
 import { SubnavToggle } from '../../components/SubnavToggle/SubnavToggle';
 import { WorklistShell } from '../../components/WorklistShell/WorklistShell';
@@ -46,11 +47,31 @@ const Input = (props) => <FoldInput {...props} />;
 const POP_COLUMNS = [
   { key: 'select',   showCheckbox: true, sticky: 'left', left: 0, width: 36 },
   { key: 'name',     label: 'Group Name', sticky: 'left', left: 36, width: 420 },
-  { key: 'count',    label: 'Active Members',   sortKey: 'count',      sortType: 'number', width: 130 },
-  { key: 'inactive', label: 'Inactive Members', sortKey: 'inactive',   sortType: 'number', width: 140 },
-  { key: 'type',     label: 'Type', width: 110 },
-  { key: 'created',  label: 'Created Date',     sortKey: '_createdTs', sortType: 'date', width: 130 },
-  { key: 'updated',  label: 'Updated Date',     sortKey: '_updatedTs', sortType: 'date', width: 130 },
+  {
+    key: 'count', label: 'Active Members', sortKey: 'count', sortType: 'number', width: 130,
+    renderCell: (g) => (g.count != null ? g.count : '–'),
+  },
+  {
+    key: 'inactive', label: 'Inactive Members', sortKey: 'inactive', sortType: 'number', width: 140,
+    renderCell: (g) => (g.inactive != null ? g.inactive : '–'),
+  },
+  {
+    key: 'type', label: 'Type', width: 110,
+    renderCell: (g) => (
+      <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        {g.type}
+        {g.status === 'draft' && <Badge tone="warning" size="S" label="Draft" />}
+      </span>
+    ),
+  },
+  {
+    key: 'created', label: 'Created Date', sortKey: '_createdTs', sortType: 'date', width: 130,
+    renderCell: (g) => g.created,
+  },
+  {
+    key: 'updated', label: 'Updated Date', sortKey: '_updatedTs', sortType: 'date', width: 130,
+    renderCell: (g) => g.updated,
+  },
   { key: 'actions',  label: 'Action', sticky: 'right', width: 150 },
 ];
 
@@ -122,15 +143,18 @@ export function PopulationGroupsViewTable({ vm, onImportRule }) {
     <>
     <WorklistShell
       header={header}
+      worklistKey="population-groups"
       columns={POP_COLUMNS}
       sortKey={pgSortKey}
       sortDir={pgSortDir}
       onSort={pgRequestSort}
       rows={pagedGroups}
-      renderRow={(g) => (
+      renderRow={(g, _i, ctx) => (
         <PopulationGroupsRow
           key={g.id}
           group={g}
+          columns={ctx.orderedColumns}
+          hiddenSet={ctx.hiddenSet}
           selected={checkedRows.has(g.id)}
           onToggle={() => setCheckedRows(prev => { const n = new Set(prev); if (n.has(g.id)) n.delete(g.id); else n.add(g.id); return n; })}
           onEdit={() => openEditModal(g, { startInEdit: true })}

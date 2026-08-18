@@ -4,6 +4,7 @@ import { Icon } from '../../components/Icon/Icon';
 import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { SectionTitleBar } from '../../components/SectionTitleBar/SectionTitleBar';
+import { SubnavToggle } from '../../components/SubnavToggle/SubnavToggle';
 import { FilterBar } from '../../components/FilterBar/FilterBar';
 import { Pagination } from '../../components/Pagination/Pagination';
 import { TableSkeleton } from '../../components/TableSkeleton/TableSkeleton';
@@ -280,6 +281,7 @@ export function SnpWorklistTable() {
           rightExtras (SavedFiltersChip + Upload) → Search → Filter → History. */}
       <SectionTitleBar
         variant="titleWithToggle"
+        leadingElement={<SubnavToggle />}
         title="SNP"
         toggleItems={[]}
         actions={['search', 'filter', 'history']}

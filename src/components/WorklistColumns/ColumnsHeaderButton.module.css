@@ -1,0 +1,44 @@
+/* ColumnsHeaderButton — the "Actions" cell that hosts the 3-panel icon
+   opening ColumnConfigPopover. Matches HCC's inline actionsHeader treatment
+   so the swap-in is visually identical across worklists. */
+
+.wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--neutral-300);
+  white-space: nowrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--neutral-300);
+  flex-shrink: 0;
+  transition: background 0.12s, color 0.12s;
+}
+
+.btn:hover {
+  background: var(--primary-50);
+  color: var(--primary-300);
+}
+
+.btnActive {
+  background: var(--primary-100);
+  color: var(--primary-300);
+}

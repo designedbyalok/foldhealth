@@ -5923,6 +5923,113 @@ export const useAppStore = create((set, get) => ({
     set({ hccColumnOrder: [] });
   },
 
+  // ── Generic per-worklist column prefs (Supabase + localStorage) ──
+  // Every worklist in the app shares one ColumnConfigPopover; the per-user
+  // hide/reorder state lives here keyed by worklist_key (e.g. 'toc-queue',
+  // 'awv', 'population-groups'). Supabase table: user_worklist_column_prefs
+  // (see supabase/user_worklist_column_prefs_migration.sql). Local storage
+  // seeds the first paint before the DB fetch resolves, matching the
+  // worklistOrder / autoPageSize patterns already in the store.
+  worklistColumnPrefs: (() => {
+    try {
+      const cached = JSON.parse(localStorage.getItem('worklistColumnPrefs') || 'null');
+      return (cached && typeof cached === 'object') ? cached : {};
+    } catch { return {}; }
+  })(),
+  worklistColumnPrefsLoaded: false,
+  // Stash per-worklist default key orders once (matches _hccDefaultColumnKeys)
+  // so reorder can seed itself the first time the user drags a row.
+  _worklistDefaultColumnKeys: {},
+  setWorklistDefaultColumnKeys: (worklistKey, keys) => set(s => {
+    if (s._worklistDefaultColumnKeys[worklistKey]?.length) return {};
+    return { _worklistDefaultColumnKeys: { ...s._worklistDefaultColumnKeys, [worklistKey]: keys } };
+  }),
+
+  fetchWorklistColumnPrefs: async () => {
+    if (get().worklistColumnPrefsLoaded) return;
+    try {
+      const userId = await get()._resolveWorklistUser();
+      const { data, error } = await supabase
+        .from('user_worklist_column_prefs')
+        .select('worklist_key, column_order, hidden_cols')
+        .eq('user_id', userId);
+      if (!error && Array.isArray(data)) {
+        const merged = { ...get().worklistColumnPrefs };
+        for (const row of data) {
+          merged[row.worklist_key] = {
+            order: Array.isArray(row.column_order) ? row.column_order : [],
+            hidden: Array.isArray(row.hidden_cols) ? row.hidden_cols : [],
+          };
+        }
+        set({ worklistColumnPrefs: merged });
+        try { localStorage.setItem('worklistColumnPrefs', JSON.stringify(merged)); } catch { /* */ }
+      }
+    } catch { /* table may not exist yet — keep local cache */ }
+    set({ worklistColumnPrefsLoaded: true });
+  },
+
+  _persistWorklistColumnPref: async (worklistKey) => {
+    const prefs = get().worklistColumnPrefs[worklistKey];
+    if (!prefs) return;
+    try { localStorage.setItem('worklistColumnPrefs', JSON.stringify(get().worklistColumnPrefs)); } catch { /* */ }
+    try {
+      const userId = await get()._resolveWorklistUser();
+      const { error } = await supabase
+        .from('user_worklist_column_prefs')
+        .upsert(
+          {
+            user_id: userId,
+            worklist_key: worklistKey,
+            column_order: prefs.order || [],
+            hidden_cols: prefs.hidden || [],
+          },
+          { onConflict: 'user_id,worklist_key' },
+        );
+      if (error) console.warn('[store] persist column prefs failed — run supabase/user_worklist_column_prefs_migration.sql:', error.message);
+    } catch (e) {
+      console.warn('[store] persist column prefs failed:', e?.message);
+    }
+  },
+
+  toggleWorklistColumn: (worklistKey, colKey) => {
+    track('worklist.column_toggled', { worklist: worklistKey, column: colKey });
+    set(s => {
+      const cur = s.worklistColumnPrefs[worklistKey] || { order: [], hidden: [] };
+      const nextHidden = new Set(cur.hidden);
+      if (nextHidden.has(colKey)) nextHidden.delete(colKey); else nextHidden.add(colKey);
+      const next = { ...s.worklistColumnPrefs, [worklistKey]: { ...cur, hidden: [...nextHidden] } };
+      return { worklistColumnPrefs: next };
+    });
+    get()._persistWorklistColumnPref(worklistKey);
+  },
+
+  reorderWorklistColumn: (worklistKey, fromKey, toKey) => {
+    if (!fromKey || !toKey || fromKey === toKey) return;
+    track('worklist.columns_reordered', { worklist: worklistKey, from: fromKey, to: toKey });
+    set(s => {
+      const cur = s.worklistColumnPrefs[worklistKey] || { order: [], hidden: [] };
+      const base = cur.order.length
+        ? [...cur.order]
+        : (s._worklistDefaultColumnKeys[worklistKey] || []);
+      if (!base.length) return {};
+      const from = base.indexOf(fromKey);
+      const to = base.indexOf(toKey);
+      if (from < 0 || to < 0) return {};
+      base.splice(to, 0, base.splice(from, 1)[0]);
+      const next = { ...s.worklistColumnPrefs, [worklistKey]: { ...cur, order: base } };
+      return { worklistColumnPrefs: next };
+    });
+    get()._persistWorklistColumnPref(worklistKey);
+  },
+
+  resetWorklistColumns: (worklistKey) => {
+    track('worklist.columns_reset', { worklist: worklistKey });
+    set(s => ({
+      worklistColumnPrefs: { ...s.worklistColumnPrefs, [worklistKey]: { order: [], hidden: [] } },
+    }));
+    get()._persistWorklistColumnPref(worklistKey);
+  },
+
   // ─── HCC DOS-level assignment engine ─────────────────────────────────
   // Per-(patient, DOS) assignment state keyed as `${patientId}::${dosDate}`.
   // The shape is defined in features/hcc/assignment/dosState.js. Lifecycle

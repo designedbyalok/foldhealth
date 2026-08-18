@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { WorklistShell } from '../../components/WorklistShell/WorklistShell';
 import { SectionTitleBar } from '../../components/SectionTitleBar/SectionTitleBar';
+import { SubnavToggle } from '../../components/SubnavToggle/SubnavToggle';
 import { FilterBar } from '../../components/FilterBar/FilterBar';
 import { useTableSort } from '../../components/HeaderCell/useTableSort';
 import { AwvWorklistRow } from './AwvWorklistRow';
@@ -168,6 +169,7 @@ export function AwvWorklistTable() {
   const header = (
     <SectionTitleBar
       variant="titleOnly"
+      leadingElement={<SubnavToggle />}
       title="Annual Visit"
       actions={['search', 'filter', 'history', 'download']}
       searchPlaceholder="Search by name or member ID…"

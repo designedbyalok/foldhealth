@@ -38,6 +38,7 @@ export function SubNav({ collapsed }) {
   const fetchCallDetails = useAppStore(s => s.fetchCallDetails);
   const fetchWorklistOrder = useAppStore(s => s.fetchWorklistOrder);
   const saveWorklistOrder = useAppStore(s => s.saveWorklistOrder);
+  const fetchWorklistColumnPrefs = useAppStore(s => s.fetchWorklistColumnPrefs);
   const worklistOrder = useAppStore(s => s.worklistOrder);
   const clearSelected = useAppStore(s => s.clearSelected);
   const clearHccSelected = useAppStore(s => s.clearHccSelected);
@@ -57,6 +58,7 @@ export function SubNav({ collapsed }) {
     fetchPatients();
     fetchCallDetails();
     fetchWorklistOrder(WORKLIST_LABELS);
+    fetchWorklistColumnPrefs();
   }, []);
 
   // User-ordered worklists — store order or the default until the fetch

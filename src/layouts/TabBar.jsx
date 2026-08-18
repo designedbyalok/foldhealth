@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Icon } from '../components/Icon/Icon';
 import { Button } from '../components/Button/Button';
 import { SectionTitleBar } from '../components/SectionTitleBar/SectionTitleBar';
+import { SubnavToggle } from '../components/SubnavToggle/SubnavToggle';
 import { SavedFiltersChip } from '../features/hcc/SavedFiltersChip';
 import { useAppStore } from '../store/useAppStore';
 import styles from './TabBar.module.css';
@@ -125,6 +126,7 @@ export function TabBar() {
     <>
       <SectionTitleBar
         variant="titleWithToggle"
+        leadingElement={<SubnavToggle />}
         title={title}
         toggleItems={toggleItems}
         toggleActive={activeTab}

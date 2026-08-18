@@ -6,6 +6,7 @@ import { TableSkeleton } from '../../components/TableSkeleton/TableSkeleton';
 import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { Icon } from '../../components/Icon/Icon';
 import { SectionTitleBar } from '../../components/SectionTitleBar/SectionTitleBar';
+import { SubnavToggle } from '../../components/SubnavToggle/SubnavToggle';
 import { HeaderCell } from '../../components/HeaderCell/HeaderCell';
 import { useTableSort } from '../../components/HeaderCell/useTableSort';
 import { Pagination } from '../../components/Pagination/Pagination';
@@ -138,6 +139,7 @@ export function HedisWorklistTable() {
       {/* ── Header bar (SectionTitleBar · variant 2 · titleWithDropdown) ── */}
       <SectionTitleBar
         variant="titleWithDropdown"
+        leadingElement={<SubnavToggle />}
         title="HEDIS"
         dropdownLabel="Year"
         dropdownOptions={YEARS.map(String)}
