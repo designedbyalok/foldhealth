@@ -46,7 +46,14 @@
   align-items: stretch;
   width: 100%;
 }
-.cardWrap { flex: 1; min-width: 0; }
+/* padding-bottom (not margin) so the row's flex-stretch carries the rail
+   line down through the between-row space instead of leaving a gap. */
+.cardWrap {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: var(--space-3);
+}
+.row:last-child .cardWrap { padding-bottom: 0; }
 
 /* Timeline column — vertical line runs through the icon square */
 .rail {
@@ -95,7 +102,6 @@
   background: var(--neutral-0);
   border: none;
   border-radius: 8px;
-  margin-bottom: 4px;
   align-self: flex-start;
   transition: background 0.15s;
   text-align: left;
@@ -112,10 +118,11 @@
 .body {
   display: flex;
   flex-direction: column;
-  /* One canonical rhythm — 8px between every direct child (meta,
-     title, transition/avatar/detail/comment/attachment/expanded).
-     Nested elements no longer stack margin-top ON TOP of this gap. */
-  gap: var(--space-2);
+  /* 4px between lines INSIDE a single activity (meta, title,
+     transition/avatar/detail/comment/attachment/expanded). The larger
+     12px between separate activities lives on .cardWrap's
+     padding-bottom, so the rail line runs through it. */
+  gap: var(--space-1);
   padding: var(--space-1) var(--space-3);
 }
 
