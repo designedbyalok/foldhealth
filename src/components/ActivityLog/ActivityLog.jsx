@@ -114,7 +114,7 @@ const statusTone = (label) => STATUS_TONE[label] || 'grey';
  * uploads render the HCC attachment file card; assignee changes render a
  * from → to avatar transition.
  */
-export function ActivityLog({ entries, emptyLabel = 'No activity recorded yet.' }) {
+export function ActivityLog({ entries, emptyLabel = 'No activity recorded yet.', hideCommentTitle = false }) {
   const [collapsed, setCollapsed] = useState(() => new Set());
   const toggleGroup = (label) => setCollapsed(prev => {
     const next = new Set(prev);
@@ -166,7 +166,7 @@ export function ActivityLog({ entries, emptyLabel = 'No activity recorded yet.' 
           </span>
         </button>
       ) : (
-        <ActivityLogEntry key={it.key} entry={it.entry} isLast={it.isLast} />
+        <ActivityLogEntry key={it.key} entry={it.entry} isLast={it.isLast} hideCommentTitle={hideCommentTitle} />
       ))}
     </div>
   );
@@ -211,11 +211,16 @@ function Rail({ iconName, isLast }) {
 }
 
 /* ── Type-branched entry ─────────────────────────────────────────────── */
-function ActivityLogEntry({ entry, isLast }) {
+function ActivityLogEntry({ entry, isLast, hideCommentTitle = false }) {
   const iconName = TYPE_ICON[entry.t] || 'solar:document-text-linear';
+  // Comment-only tab hides the "…added a Comment" title, collapsing the
+  // card to two lines (meta + body). Without the title, the rail icon
+  // no longer has a title line to align with — .rowNoTitle drops the
+  // railTop offset so the icon sits next to the meta line instead.
+  const noTitle = entry.t === 'comment' && hideCommentTitle;
 
   return (
-    <div className={styles.row}>
+    <div className={`${styles.row} ${noTitle ? styles.rowNoTitle : ''}`}>
       <Rail iconName={iconName} isLast={isLast} />
       <div className={styles.cardWrap}>
         {(() => {
@@ -239,7 +244,7 @@ function ActivityLogEntry({ entry, isLast }) {
             case 'document':
               return <UploadEntryBody entry={entry} />;
             case 'comment':
-              return <CommentEntryBody entry={entry} />;
+              return <CommentEntryBody entry={entry} hideTitle={hideCommentTitle} />;
             default:
               return <GenericEntryBody entry={entry} />;
           }
@@ -543,15 +548,20 @@ function UploadEntryBody({ entry }) {
 }
 
 /* ── Variant: Comment (HCC .tlCommentBody inline paragraph) ──────────── */
-function CommentEntryBody({ entry }) {
+/* `hideTitle` drops the "…added a Comment" line when the caller already
+   scopes the log to comments only (e.g. the Comments tab), since the
+   title just restates what the surface already implies. */
+function CommentEntryBody({ entry, hideTitle = false }) {
   const meName = useAppStore(s => s.currentUserProfile?.name);
   return (
     <div className={`${styles.card} ${styles.cardStatic}`}>
       <div className={styles.body}>
         <MetaLine entry={entry} />
-        <div className={styles.titleRow}>
-          <span className={styles.title}>{entry.title || 'Added a Comment'}</span>
-        </div>
+        {!hideTitle && (
+          <div className={styles.titleRow}>
+            <span className={styles.title}>{entry.title || 'Added a Comment'}</span>
+          </div>
+        )}
         {entry.commentBody && (
           <div className={styles.commentBody}>
             {renderCommentBodyWithMentions(entry.commentBody, meName)}

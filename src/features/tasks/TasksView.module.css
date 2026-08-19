@@ -1357,6 +1357,31 @@
   align-items: center;
 }
 
+/* Sticky tab-strip wrap — pins the All/Comments/History row at the top
+   of the drawer body while the log scrolls beneath. Sides bleed to the
+   drawer body's border edges (drawer body has 16px padding). Height +
+   horizontal padding match SectionTitleBar's page-level tab row so the
+   embedded TabStrip picks up the same rhythm.
+
+   `top: -16px` pins the wrap flush with the drawer body's border-top edge
+   (16px above the padding edge). Without that offset, timeline rows in
+   natural flow leak into the 16px padding zone above the pinned block. */
+.activityStickyHead {
+  display: flex;
+  align-items: stretch;
+  /* Explicit height (not min-height) so the embedded TabStrip's inner
+     `height: 100%` resolves and its tab items stretch to fill the row —
+     mirroring the 48px page-level tab bar. */
+  height: var(--space-12);
+  position: sticky;
+  top: calc(-1 * var(--space-4));
+  z-index: 2;
+  margin: 0 calc(-1 * var(--space-4));
+  padding: 0 var(--space-4);
+  background: var(--neutral-0);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
 .activityTabs {
   display: flex;
   align-items: center;

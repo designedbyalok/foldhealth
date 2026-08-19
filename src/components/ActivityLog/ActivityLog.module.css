@@ -405,12 +405,21 @@
 }
 
 /* ── Comment (HCC .tlCommentBody inline paragraph) ──────────────────── */
+/* Comment body reads as the primary content of the entry (esp. in the
+   Comments tab where the "…added a Comment" title is hidden), so it
+   mirrors .title's font-base + neutral-500 rather than the muted
+   secondary treatment used for supporting outreach notes. */
 .commentBody {
-  font-size: var(--font-md);
+  font-size: var(--font-base);
   font-weight: 400;
-  color: var(--neutral-300);
+  color: var(--neutral-500);
   line-height: 1.5;
 }
+
+/* Two-line comment layout (meta + body, no title). With no title line,
+   the rail icon has nothing to align with mid-card — drop the railTop
+   offset so it sits at the top of the card, next to the meta line. */
+.rowNoTitle .railTop { height: 0; }
 
 /* Signed-in user's @-mention inside a comment body — highlighted so a
    reader can spot at a glance that they were tagged. Other users'
