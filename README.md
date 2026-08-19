@@ -37,6 +37,31 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **Typography: root font size now scales with the viewport** — the root
+  font-size was a hard-coded `16px`, so a 13" laptop and a 27" 4K panel got
+  identical CSS px and wildly different apparent text size. It's now
+  `clamp(1rem, 0.866rem + 0.134vw, 1.1875rem)`: flat 16px through every laptop
+  width (≤1600px — no regression), then 16.4px at 1920, 17.3px at 2560, capped
+  at 19px from 3840 up. Every `--font-*` and `--space-*` token is rem-based, so
+  the whole type ramp and token spacing move together. The 5 `data-font-scale`
+  accessibility levels became *multipliers* (0.875 → 1.25) instead of absolute
+  px, so they compose with the fluid base rather than overriding it — at laptop
+  widths they still resolve to exactly 14/15/16/18/20px. Deliberately keyed to
+  viewport width, not `devicePixelRatio`: a CSS px is already
+  density-independent, so DPR says nothing about apparent size. Each clamp arm
+  keeps a `rem` term so the browser's own font-size preference still wins
+  (WCAG 1.4.4).
+
+- **Tasks: "Assigned to Me" dropped tasks that were yours** — `matchAssignee`
+  short-circuited on `assigned_to_id`, so it never fell back to a name match.
+  `profiles` holds one row per email a person signed up with (three are named
+  "Alok Kumar"), so a task carrying a different profile id for the same human
+  was silently excluded. Now matches id **or** display name; same for
+  `matchCreator`. Also made pool and assignee mutually exclusive: pooling a task
+  clears its assignee and assigning an owner clears the pool (what `claimTask`
+  already did), so a pooled-and-assigned task can no longer end up invisible in
+  both the pool tab and the Claim button.
+
 - **Calendar: slot clicks snap to 30-min slots + faster load** — clicking a
   timeslot now books the slot the hover preview shows (schedule-x reports the
   raw pixel time, e.g. 3:13; we snap it down to :00/:30 before it reaches the
