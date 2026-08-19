@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Icon } from '../Icon/Icon';
+import { DownChevronIcon } from '../Icon/DownChevronIcon';
 import { Badge } from '../Badge/Badge';
 import { Avatar } from '../Avatar/Avatar';
 import { useAppStore } from '../../store/useAppStore';
@@ -161,7 +162,7 @@ export function ActivityLog({ entries, emptyLabel = 'No activity recorded yet.' 
         >
           <span>{it.entry.label}</span>
           <span className={styles.groupChevron}>
-            <Icon name="solar:alt-arrow-down-linear" size={12} color="var(--neutral-400)" />
+            <DownChevronIcon size={12} color="var(--neutral-400)" />
           </span>
         </button>
       ) : (
