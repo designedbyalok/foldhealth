@@ -205,26 +205,76 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Font-scale accessibility levels
-   Applied via `data-font-scale` attribute on <html>. Each
-   level adjusts the root font-size; all rem tokens scale
-   proportionally. The 5 levels mirror Apple's Dynamic Type
-   non-accessibility range (xSmall → xxLarge), mapped to
-   clean percentage steps.
+   Root font size = fluid base × accessibility multiplier
 
-   Level      root-px  scale
-   ─────────  ───────  ─────
-   smaller    14px     87.5%
-   small      15px     93.75%
-   default    16px     100%
-   large      18px     112.5%
-   larger     20px     125%
+   Every --font-* and --space-* token is rem-based, so the root
+   font-size is the single dial that scales the type ramp and
+   token spacing together.
+
+   ── The fluid base ──
+   Holds at today's 16px through every laptop width, then grows
+   on large desktop panels:
+
+     viewport   root     --font-base
+     ─────────  ───────  ───────────
+     ≤1600px    16px     14px      (unchanged — no regression)
+      1920px    16.4px   14.4px
+      2560px    17.3px   15.1px
+     ≥3840px    19px     16.6px    (capped)
+
+   Why viewport width, and not devicePixelRatio: a CSS px is
+   already density-independent, so DPR says nothing about how
+   big text *looks* — 14px is the same physical size on a 2x
+   Retina panel as on a 1x panel of equal CSS width. Two things
+   do vary, and width tracks both:
+
+     1. CSS px per physical inch. A 27" 2560px panel packs ~109
+        CSS px/in; a 27" 4K driven at 1x packs ~163, which is
+        why everything on it reads tiny. Wider viewport at a
+        given physical size ⇒ smaller text.
+     2. Viewing distance. Desktop panels sit farther from the
+        eye than laptops, so equal angular size needs more
+        physical size.
+
+   The curve is deliberately gentle — external monitors at
+   native scaling (92–109 CSS px/in) already render text
+   physically *larger* than a laptop (~126 CSS px/in), so the
+   bump only has to cover viewing distance. The steep case,
+   4K-at-1x, is what the upper end of the range is for.
+
+   Why the rem term rather than a bare vw: a root font-size
+   built only from viewport units cannot be overridden by the
+   browser's own font-size preference, failing WCAG 1.4.4
+   (Resize Text). Inside this declaration `rem` resolves against
+   the browser default — not our own computed value, so there is
+   no circularity — which keeps a user who sets 20px at 20px+.
+
+   ── The accessibility multiplier ──
+   The 5 `data-font-scale` levels mirror Apple's Dynamic Type
+   non-accessibility range (xSmall → xxLarge). They are now
+   multipliers rather than absolute px, so they compose with the
+   fluid base instead of overriding it. At ≤1600px each level
+   lands on exactly the px value it used to hard-code.
+
+   Level     multiplier  root @≤1600px
+   ────────  ──────────  ─────────────
+   smaller   0.875       14px
+   small     0.9375      15px
+   default   1           16px
+   large     1.125       18px
+   larger    1.25        20px
    ═══════════════════════════════════════════════════════════ */
-html { font-size: 16px; }
-html[data-font-scale="smaller"] { font-size: 14px; }
-html[data-font-scale="small"]   { font-size: 15px; }
-html[data-font-scale="large"]   { font-size: 18px; }
-html[data-font-scale="larger"]  { font-size: 20px; }
+:root {
+  --root-font-fluid: clamp(1rem, 0.866rem + 0.134vw, 1.1875rem);
+  --root-font-scale: 1;
+}
+
+html { font-size: calc(var(--root-font-fluid) * var(--root-font-scale)); }
+
+html[data-font-scale="smaller"] { --root-font-scale: 0.875; }
+html[data-font-scale="small"]   { --root-font-scale: 0.9375; }
+html[data-font-scale="large"]   { --root-font-scale: 1.125; }
+html[data-font-scale="larger"]  { --root-font-scale: 1.25; }
 
 /* ═══════════════════════════════════════════════════════════
    Motion tokens

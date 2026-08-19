@@ -117,11 +117,16 @@ export function initContrast() {
  * tokens scale proportionally. Mirrors Apple's Dynamic Type non-accessibility
  * range (xSmall → xxLarge), mapped to clean percentage steps.
  *
- *   smaller  → 14px (87.5%)
- *   small    → 15px (93.75%)
- *   default  → 16px (100%)
- *   large    → 18px (112.5%)
- *   larger   → 20px (125%)
+ *   smaller  → 87.5%
+ *   small    → 93.75%
+ *   default  → 100%
+ *   large    → 112.5%
+ *   larger   → 125%
+ *
+ * These are multipliers, not absolute px — they compose with the fluid base
+ * root size (which grows with viewport width on large desktop panels). The
+ * px each level resolves to therefore depends on screen size; on laptop
+ * widths it is 14/15/16/18/20px. See `--root-font-fluid` in tokens.css.
  */
 export const FONT_SCALE_STORAGE_KEY = 'fontScale';
 export const FONT_SCALE_VALUES = ['smaller', 'small', 'default', 'large', 'larger'];
