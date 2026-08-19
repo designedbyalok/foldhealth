@@ -266,7 +266,7 @@ function OutreachEntryBody({ entry }) {
         <MetaLine entry={entry} />
         <div className={styles.titleRow}>
           <span className={styles.title}>{entry.title}</span>
-          {(entry.badges || []).map(b => <Badge key={b} tone="primary" size="S" label={b} />)}
+          {(entry.badges || []).map(b => <Badge key={b} tone="primary" size="M" label={b} />)}
         </div>
         <div className={styles.outcomeRow}>
           {entry.outcome && (
@@ -364,9 +364,9 @@ function StatusChangeEntryBody({ entry }) {
         </div>
         {entry.from && entry.to && (
           <div className={styles.transition}>
-            <Badge tone={statusTone(entry.from)} size="S" label={entry.from} />
+            <Badge tone={statusTone(entry.from)} size="M" label={entry.from} />
             <Icon name="solar:arrow-right-linear" size={12} color="var(--neutral-300)" />
-            <Badge tone={statusTone(entry.to)} size="S" label={entry.to} />
+            <Badge tone={statusTone(entry.to)} size="M" label={entry.to} />
           </div>
         )}
       </div>
@@ -430,7 +430,7 @@ function DetailCardEntryBody({ entry, variant }) {
                   )}
                 </div>
                 <div className={styles.detailCardTrailing}>
-                  {dc.status && <Badge tone={statusTone(dc.status)} size="S" label={dc.status} />}
+                  {dc.status && <Badge tone={statusTone(dc.status)} size="M" label={dc.status} />}
                   <button type="button" className={styles.detailCardIconBtn} onClick={(e) => e.stopPropagation()} aria-label="Open">
                     <Icon name="solar:arrow-right-up-linear" size={14} color="var(--neutral-400)" />
                   </button>
@@ -443,12 +443,12 @@ function DetailCardEntryBody({ entry, variant }) {
                   <div className={styles.detailCardText}>
                     <div className={styles.detailCardTitleRow}>
                       <span className={styles.detailCardTitle}>{dc.title}</span>
-                      {dc.chip && <Badge tone="grey" size="S" label={dc.chip} />}
+                      {dc.chip && <Badge tone="grey" size="M" label={dc.chip} />}
                     </div>
                     {dc.subtitle && <div className={styles.detailCardSubtitle}>{dc.subtitle}</div>}
                   </div>
                   <div className={styles.detailCardTrailing}>
-                    {dc.status && <Badge tone={statusTone(dc.status)} size="S" label={dc.status} />}
+                    {dc.status && <Badge tone={statusTone(dc.status)} size="M" label={dc.status} />}
                     <button type="button" className={styles.detailCardIconBtn} onClick={(e) => e.stopPropagation()} aria-label="Preview">
                       <Icon name="solar:eye-linear" size={14} color="var(--neutral-300)" />
                     </button>
