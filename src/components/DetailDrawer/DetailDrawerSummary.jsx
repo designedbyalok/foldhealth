@@ -45,7 +45,7 @@ function SummaryContent({ data, animate }) {
             margin: l.kind === 'heading' ? (i === 0 ? '0 0 6px' : '12px 0 6px') : '3px 0',
             paddingLeft: l.kind === 'item' ? 16 : 0,
             position: 'relative',
-            fontSize: 'var(--font-md)'.5,
+            fontSize: 'var(--font-md)',
             fontWeight: l.kind === 'heading' ? 600 : 400,
             color: 'var(--neutral-400)',
             lineHeight: 1.5,
