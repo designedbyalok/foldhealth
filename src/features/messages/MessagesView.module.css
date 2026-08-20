@@ -279,7 +279,11 @@
 
 .convUnread {
   background: var(--secondary-300);
-  color: var(--neutral-500);
+  /* Was --neutral-500 (#16181D, near-black) on the orange fill — it read as
+     grey and did not match the sidebar nav badge, which is the same pill in
+     the same colour. --neutral-0 is what that badge uses, so the two now
+     agree and both invert together in dark themes. */
+  color: var(--neutral-0);
   font-size: var(--font-2xs);
   font-weight: 500;
   padding: 1px 4px;
