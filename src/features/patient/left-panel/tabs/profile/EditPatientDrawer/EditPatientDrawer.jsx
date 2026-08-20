@@ -250,6 +250,12 @@ export function EditPatientDrawer({
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
   const bodyRef = useRef(null);
+  // Object URL for the insurance-card preview, so it can be revoked when
+  // replaced or when the drawer closes.
+  const cardPreviewUrlRef = useRef(null);
+  useEffect(() => () => {
+    if (cardPreviewUrlRef.current) URL.revokeObjectURL(cardPreviewUrlRef.current);
+  }, []);
   const sectionRefs = {
     basic:   useRef(null),
     contact: useRef(null),
@@ -399,7 +405,14 @@ export function EditPatientDrawer({
                       if (!file) return;
                       // Preview via object URL; a follow-up will push the
                       // file to Supabase Storage and store the returned path.
-                      set('insurance_card_url', URL.createObjectURL(file));
+                      // Revoke the previous preview first — picking a second
+                      // card would otherwise leak the first blob for the
+                      // lifetime of the document. Only URLs created here are
+                      // revoked, never a stored https path.
+                      if (cardPreviewUrlRef.current) URL.revokeObjectURL(cardPreviewUrlRef.current);
+                      const previewUrl = URL.createObjectURL(file);
+                      cardPreviewUrlRef.current = previewUrl;
+                      set('insurance_card_url', previewUrl);
                     }}
                   />
                 </label>

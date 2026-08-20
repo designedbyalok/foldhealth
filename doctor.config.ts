@@ -216,6 +216,31 @@ export default {
       // proxy that forwards upstream status + body verbatim.
       { files: ['src/features/email-builder/SendTestPopover.jsx', 'vite-plugin-dev-api.js'], rules: ['react-doctor/no-fetch-response-used-without-status-check'] },
 
+      // no-create-object-url-without-revoke: both of these DO revoke, but not in
+      // a shape the rule can pair. It models "create and release in one scope",
+      // which is structurally unsatisfiable for a *preview* URL — the URL has to
+      // outlive the handler that made it or there is nothing to show.
+      //
+      //   ImagePreviewOverlay  creates the URL only when there is no stored
+      //     fileUrl and revokes it under the same `if (!fileUrl)` condition, so
+      //     the pair is exact; the rule cannot evaluate the guard.
+      //   EditPatientDrawer    holds the insurance-card preview URL in a ref,
+      //     revokes the previous one before creating a replacement, and revokes
+      //     the outstanding one in an unmount effect. Only URLs created there are
+      //     revoked, never a stored https path.
+      //
+      // The EditPatientDrawer pattern was verified in the browser rather than
+      // reasoned about: the first URL is fetchable, stops being fetchable once a
+      // replacement is picked, and the replacement stops being fetchable after
+      // the unmount cleanup runs.
+      {
+        files: [
+          'src/components/ImagePreviewOverlay/ImagePreviewOverlay.jsx',
+          'src/features/patient/left-panel/tabs/profile/EditPatientDrawer/EditPatientDrawer.jsx',
+        ],
+        rules: ['react-doctor/no-create-object-url-without-revoke'],
+      },
+
       // no-fetch-in-effect: WelcomeCard's geolocation→weather lookup is a
       // self-contained widget fetch with cancellation + fallback; the repo has
       // no data-fetching layer to move it into.

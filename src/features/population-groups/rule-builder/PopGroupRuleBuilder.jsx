@@ -386,10 +386,14 @@ export function PopGroupRuleBuilder() {
       rule: query,
       status,
     };
-    const saved = groupId
-      ? await updatePopGroup(groupId, payload)
-      : await createPopGroup(payload);
-    setSaving(false);
+    let saved;
+    try {
+      saved = groupId
+        ? await updatePopGroup(groupId, payload)
+        : await createPopGroup(payload);
+    } finally {
+      setSaving(false);
+    }
     if (!saved) return; // store already toasted the failure
     showToast(status === 'draft'
       ? 'Population Group Saved as Draft'

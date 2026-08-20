@@ -64,11 +64,15 @@ export function TriggersTab({ groupId, showToast }) {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    const { error: err } = await supabase
-      .from('pop_group_triggers')
-      .delete()
-      .eq('id', deleteTarget.id);
-    setDeleting(false);
+    let err;
+    try {
+      ({ error: err } = await supabase
+        .from('pop_group_triggers')
+        .delete()
+        .eq('id', deleteTarget.id));
+    } finally {
+      setDeleting(false);
+    }
     if (err) { showToast?.(`Delete failed: ${err.message}`); return; }
     setTriggers(ts => ts.filter(t => t.id !== deleteTarget.id));
     setDeleteTarget(null);
@@ -178,10 +182,14 @@ function TriggerEditorDrawer({ triggerId, groupId, triggers, onClose, onSaved })
       action_type: actionType,
       action_config: config,
     };
-    const { error } = triggerId
-      ? await supabase.from('pop_group_triggers').update(payload).eq('id', triggerId)
-      : await supabase.from('pop_group_triggers').insert(payload);
-    setSaving(false);
+    let error;
+    try {
+      ({ error } = triggerId
+        ? await supabase.from('pop_group_triggers').update(payload).eq('id', triggerId)
+        : await supabase.from('pop_group_triggers').insert(payload));
+    } finally {
+      setSaving(false);
+    }
     if (error) return;
     onSaved();
   };

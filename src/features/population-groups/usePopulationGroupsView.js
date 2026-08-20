@@ -237,8 +237,12 @@ export function usePopulationGroupsView({
     const targets = deleteTargets;
     if (targets.length === 0) return;
     setDeleting(true);
-    const results = await Promise.all(targets.map(g => deletePopGroup(g.id)));
-    setDeleting(false);
+    let results;
+    try {
+      results = await Promise.all(targets.map(g => deletePopGroup(g.id)));
+    } finally {
+      setDeleting(false);
+    }
     setDeleteTargets([]);
     const removed = results.filter(Boolean).length;
     if (removed > 0) {
