@@ -212,7 +212,7 @@ export function HccWorklistTableView({
             </tr>
           </thead>
           <tbody className={rowStyles.tbody}>
-            {paginated.map(row => {
+            {paginated.map((row, index) => {
               if (row.kind === 'primary') {
                 return (
                   <HccWorklistRow
@@ -220,6 +220,7 @@ export function HccWorklistTableView({
                     member={row.member}
                     hiddenCols={hiddenSet}
                     columns={orderedColumns}
+                    staggerIndex={index}
                   />
                 );
               }
@@ -230,6 +231,7 @@ export function HccWorklistTableView({
                   patient={row.patient}
                   hiddenCols={hiddenSet}
                   columns={orderedColumns}
+                  staggerIndex={index}
                 />
               );
             })}

@@ -26,7 +26,7 @@ export {
   resolveCurrentAssignee,
 } from './HccWorklistRow.utils';
 
-function HccWorklistRowImpl({ member, hiddenCols, columns }) {
+function HccWorklistRowImpl({ member, hiddenCols, columns, staggerIndex = 0 }) {
   const selectedHccIds = useAppStore(s => s.selectedHccIds);
   const selectHccMember = useAppStore(s => s.selectHccMember);
   const openDiagPanel = useAppStore(s => s.openDiagPanel);
@@ -143,6 +143,7 @@ function HccWorklistRowImpl({ member, hiddenCols, columns }) {
         isRecordRejected ? styles.rowRejected : '',
         justAdded ? styles.rowJustAdded : '',
       ].filter(Boolean).join(' ')}
+      style={{ '--stagger-index': staggerIndex }}
       aria-disabled={isRecordRejected || undefined}
       title={rejectedTooltip}
     >
@@ -325,9 +326,10 @@ export const HccWorklistRow = memo(HccWorklistRowImpl, (prev, next) => (
   prev.member === next.member
   && prev.hiddenCols === next.hiddenCols
   && prev.columns === next.columns
+  && prev.staggerIndex === next.staggerIndex
 ));
 
-function HccEmptyPatientRowImpl({ patient, hiddenCols, columns }) {
+function HccEmptyPatientRowImpl({ patient, hiddenCols, columns, staggerIndex = 0 }) {
   const openAddDos = useAppStore(s => s.openHccAddDos);
   const showToast = useAppStore(s => s.showToast);
   const openQuickView = useAppStore(s => s.openQuickView);
@@ -349,7 +351,7 @@ function HccEmptyPatientRowImpl({ patient, hiddenCols, columns }) {
   };
 
   return (
-    <tr className={`${styles.row} ${styles.emptyRow}`}>
+    <tr className={`${styles.row} ${styles.emptyRow}`} style={{ '--stagger-index': staggerIndex }}>
       <td className={`${styles.checkTd} ${styles.stickyLeft} ${styles.stickyCheck}`} onClick={(e) => e.stopPropagation()}>
         <div className={styles.checkAlign}>
           <Checkbox checked={false} disabled aria-label={`Select ${patient.name}`} />
@@ -413,4 +415,5 @@ export const HccEmptyPatientRow = memo(HccEmptyPatientRowImpl, (prev, next) => (
   prev.patient === next.patient
   && prev.hiddenCols === next.hiddenCols
   && prev.columns === next.columns
+  && prev.staggerIndex === next.staggerIndex
 ));
