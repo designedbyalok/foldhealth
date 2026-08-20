@@ -35,7 +35,15 @@ export const PROFILE_FIELD_TYPES = {
 };
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-const PHONE = /^[+]?[\d\s().-]{7,20}$/;
+// Shape only — allowed characters, not length. The `{7,20}` quantifier used to
+// carry the length rule too, but it applies to the characters AFTER the
+// optional `+`, so a leading-plus number could reach 21 characters and still
+// match. `profiles_mobile_check` caps char_length at 20, so "+" plus 20 digits
+// passed here and was then rejected by Postgres — surfacing as a raw DB error
+// toast instead of the inline field message. Length is asserted explicitly in
+// isValidPhone() against the same bounds as the constraint.
+const PHONE_SHAPE = /^[+]?[\d\s().-]+$/;
+const PHONE_MIN = 7;    // matches profiles_mobile_check's lower bound
 const US_ZIP = /^\d{5}(-\d{4})?$/;
 
 export function isValidIsoDate(str) {
@@ -50,7 +58,13 @@ export function isValidIsoDate(str) {
 export function isValidPhone(str) {
   const v = (str || '').trim();
   if (!v) return true;
-  return PHONE.test(v);
+  // Length checked on the whole string, exactly as the DB checks char_length,
+  // so the client can never accept a number Postgres will refuse. The upper
+  // bound reads from PROFILE_FIELD_TYPES rather than a second local constant —
+  // one number to keep in step with the constraint, not two.
+  return v.length >= PHONE_MIN
+    && v.length <= PROFILE_FIELD_TYPES.mobile.maxLength
+    && PHONE_SHAPE.test(v);
 }
 
 export function isValidZipCode(str) {
