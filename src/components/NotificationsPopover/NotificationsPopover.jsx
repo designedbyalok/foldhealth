@@ -58,6 +58,7 @@ export function NotificationsPopover({ onClose, anchorRef }) {
   const openTaskFromNotification = useAppStore(s => s.openTaskFromNotification);
   const openAppointmentFromNotification = useAppStore(s => s.openAppointmentFromNotification);
   const setPendingChatUserEmail = useAppStore(s => s.setPendingChatUserEmail);
+  const openPreferencesFromNotification = useAppStore(s => s.openPreferencesFromNotification);
 
   // Refetch on open. The realtime subscription is the fast path, not the
   // source of truth: a binding created before the table was published — or
@@ -95,6 +96,10 @@ export function NotificationsPopover({ onClose, anchorRef }) {
     } else if (n.action === 'openChat' && n.chatUserEmail) {
       setActivePage?.('messages');
       setPendingChatUserEmail?.(n.chatUserEmail);
+    } else if (n.action === 'openProfileName') {
+      // Land the user on the form that fixes it, rather than telling them to
+      // go find it.
+      openPreferencesFromNotification?.();
     }
     onClose?.();
   };
@@ -183,6 +188,7 @@ function iconForType(type) {
   if (type === 'appointment.assigned') return 'solar:calendar-linear';
   if (type === 'message.received') return 'solar:chat-round-linear';
   if (type === 'hcc.extraction_complete') return 'solar:document-text-linear';
+  if (type === 'profile.name_incomplete') return 'solar:user-id-linear';
   return 'solar:bell-linear';
 }
 

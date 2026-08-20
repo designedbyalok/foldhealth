@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useId } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAppStore } from '../../store/useAppStore';
+import { isCapitalizedName, isValidNamePart } from '../../lib/nameValidation';
 import { Icon } from '../Icon/Icon';
 import { Drawer } from '../Drawer/Drawer';
 import { Input } from '../Input/Input';
@@ -108,6 +109,13 @@ export function PreferencesDrawer({ onClose }) {
 
   const handleSave = async () => {
     if (!profile) return;
+    // This form was the one unguarded write path for a user's own name — the
+    // Invite drawer and Account panel already validated, so a self-edit here
+    // could clear or lowercase a name that those flows would have rejected.
+    if (!isValidNamePart(form.first_name) || !isValidNamePart(form.last_name)) {
+      showToast('First and last name are required and must start with a capital letter');
+      return;
+    }
     const updates = {
       full_name: `${form.first_name} ${form.last_name}`.trim(),
       ...form,
@@ -212,11 +220,29 @@ export function PreferencesDrawer({ onClose }) {
                 <div className={styles.formGrid}>
                   <div className={styles.formField}>
                     <label className={styles.formLabel} htmlFor={`${uid}-first-name`}>First Name *</label>
-                    <Input id={`${uid}-first-name`} value={form.first_name} onChange={e => set('first_name', e.target.value)} placeholder="First name" />
+                    <Input
+                      id={`${uid}-first-name`}
+                      value={form.first_name}
+                      onChange={e => set('first_name', e.target.value)}
+                      placeholder="First name"
+                      variant={form.first_name && !isCapitalizedName(form.first_name) ? 'error' : 'default'}
+                    />
+                    {form.first_name && !isCapitalizedName(form.first_name) && (
+                      <span className={styles.fieldError}>Must start with a capital letter</span>
+                    )}
                   </div>
                   <div className={styles.formField}>
                     <label className={styles.formLabel} htmlFor={`${uid}-last-name`}>Last Name *</label>
-                    <Input id={`${uid}-last-name`} value={form.last_name} onChange={e => set('last_name', e.target.value)} placeholder="Last name" />
+                    <Input
+                      id={`${uid}-last-name`}
+                      value={form.last_name}
+                      onChange={e => set('last_name', e.target.value)}
+                      placeholder="Last name"
+                      variant={form.last_name && !isCapitalizedName(form.last_name) ? 'error' : 'default'}
+                    />
+                    {form.last_name && !isCapitalizedName(form.last_name) && (
+                      <span className={styles.fieldError}>Must start with a capital letter</span>
+                    )}
                   </div>
                   <div className={styles.formField}>
                     <label className={styles.formLabel} htmlFor={`${uid}-gender`}>Gender</label>

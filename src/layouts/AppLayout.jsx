@@ -24,6 +24,7 @@ import { PgProcessingHost } from '../features/population-groups/PgProcessingHost
 import { Icon } from '../components/Icon/Icon';
 import { useAppStore } from '../store/useAppStore';
 import { useNotificationsFeed } from '../components/NotificationsPopover/useNotificationsFeed';
+import { splitFullName } from '../lib/nameValidation';
 import { Toaster } from '../components/Toast/Toast';
 import { supabase } from '../lib/supabase';
 import styles from './AppLayout.module.css';
@@ -257,9 +258,21 @@ export function AppLayout() {
       const user = data?.user;
       if (!user) return;
       const meta = user.user_metadata || {};
-      const firstName = meta.first_name || null;
-      const lastName  = meta.last_name  || null;
-      const fullName  = meta.full_name  || [firstName, lastName].filter(Boolean).join(' ') || null;
+      const fullName = meta.full_name
+        || [meta.first_name, meta.last_name].filter(Boolean).join(' ')
+        || null;
+      // Derive the parts from full_name when the provider only gave us a
+      // single name. This used to run one way only — full_name FROM the parts
+      // — so an OAuth signup (Google et al. supply just a full name) wrote
+      // first_name/last_name NULL, and every later login refreshed the row
+      // without ever filling them in. That is where 25 of the 27 broken
+      // profiles came from. The DB trigger in
+      // supabase/profiles_name_parts_migration.sql is the real guarantee;
+      // doing it here too means the client sends correct data rather than
+      // relying on the database to repair every write.
+      const derived = splitFullName(fullName);
+      const firstName = meta.first_name || derived.first || null;
+      const lastName  = meta.last_name  || derived.last  || null;
 
       const identity = {
         id: user.id,

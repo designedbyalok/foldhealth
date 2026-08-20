@@ -1089,6 +1089,14 @@ export const useAppStore = create((set, get) => ({
   },
   clearPendingOpenTaskId: () => set({ pendingOpenTaskId: null }),
 
+  // One-shot signal for "open Preferences on the profile fields". The
+  // `profile.name_incomplete` notification needs to land the user on the form
+  // that fixes it; PreferencesDrawer's open state is local to TopBar, so the
+  // store carries the request the same way pendingOpenTaskId does.
+  pendingOpenPreferences: false,
+  openPreferencesFromNotification: () => set({ pendingOpenPreferences: true }),
+  clearPendingOpenPreferences: () => set({ pendingOpenPreferences: false }),
+
   // Top-level navigation (sidebar) — restored from sessionStorage
   activePage: _savedPage === 'builder' ? 'settings' : _savedPage,
   // Tab navigation within pages

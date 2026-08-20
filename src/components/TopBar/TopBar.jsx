@@ -280,6 +280,10 @@ export function TopBar() {
   const searchRef = useRef(null);
   const [showProfile, setShowProfile] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
+  // A `profile.name_incomplete` notification click sets this in the store;
+  // consume it once and open Preferences, where the name fields live.
+  const pendingOpenPreferences = useAppStore(s => s.pendingOpenPreferences);
+  const clearPendingOpenPreferences = useAppStore(s => s.clearPendingOpenPreferences);
   const [showSchedule, setShowSchedule] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const bellRef = useRef(null);
@@ -288,6 +292,18 @@ export function TopBar() {
   const [user, setUser] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
+
+  /* eslint-disable react-hooks/set-state-in-effect --
+   * One-shot external signal from the store: the notification click sets it,
+   * we consume it and clear it. Matches the rule's own "subscribe to external
+   * state, setState in the callback that reacts" carve-out, and the same
+   * pattern useTasksView uses for pendingAddTask / pendingOpenTaskId. */
+  useEffect(() => {
+    if (!pendingOpenPreferences) return;
+    setShowPreferences(true);
+    clearPendingOpenPreferences();
+  }, [pendingOpenPreferences, clearPendingOpenPreferences]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data?.user || null));

@@ -338,3 +338,12 @@
   color: var(--neutral-300);
   font-size: var(--font-base);
 }
+
+/* Inline validation message under the first/last name inputs. Mirrors
+   AccountPanel.module.css's .fieldError so the same rule reads identically
+   wherever it is enforced. */
+.fieldError {
+  font-size: var(--font-xs);
+  color: var(--status-error);
+  margin-top: var(--space-1);
+}

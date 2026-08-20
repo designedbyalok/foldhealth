@@ -1,10 +1,12 @@
 import { supabase } from '../../../lib/supabase';
 import { ROLE_COLORS } from './AccountPanel.constants';
 
-export const NAME_CAPITALIZED = /^[A-Z]/;
-export function isCapitalizedName(str) {
-  return NAME_CAPITALIZED.test((str || '').trim());
-}
+// Imported AND re-exported: this module calls isCapitalizedName itself, and a
+// bare `export { … } from` would satisfy importers while leaving the name
+// undefined in local scope here.
+import { NAME_CAPITALIZED, isCapitalizedName } from '../../../lib/nameValidation';
+
+export { NAME_CAPITALIZED, isCapitalizedName };
 
 export function preventDefaultDrag(e) {
   e.preventDefault();
