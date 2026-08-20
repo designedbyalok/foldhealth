@@ -34,9 +34,50 @@ CREATE INDEX IF NOT EXISTS idx_pce_patient_code
 
 ALTER TABLE public.patient_clinical_events ENABLE ROW LEVEL SECURITY;
 
+-- RLS. The previous policy was `FOR ALL USING (true)` with NO `TO` clause, which
+-- defaults to PUBLIC — and PUBLIC includes `anon`, the key that ships in the
+-- browser bundle. This table holds PHI — diagnoses, procedures,
+-- medications, labs, encounters and immunizations, keyed to a patient.
+-- Verified against production as the anon role before this change: SELECT,
+-- INSERT, UPDATE and DELETE were all ALLOWED.
 DROP POLICY IF EXISTS "Allow all" ON public.patient_clinical_events;
-CREATE POLICY "Allow all" ON public.patient_clinical_events
-  FOR ALL USING (true);
+
+-- Reads: any signed-in staff member, matching every other clinical table here.
+-- Deliberately FOR SELECT alone so widening reads can never widen writes.
+DROP POLICY IF EXISTS patient_clinical_events_select ON public.patient_clinical_events;
+CREATE POLICY patient_clinical_events_select
+  ON public.patient_clinical_events FOR SELECT TO authenticated
+  USING (true);
+
+-- Writes: the caller must match an Active row in `profiles`, a server-owned
+-- membership table rather than anything the browser supplies.
+DROP POLICY IF EXISTS patient_clinical_events_insert ON public.patient_clinical_events;
+CREATE POLICY patient_clinical_events_insert
+  ON public.patient_clinical_events FOR INSERT TO authenticated
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.profiles pr
+     WHERE pr.id = auth.uid() AND pr.status = 'Active'
+  ));
+
+DROP POLICY IF EXISTS patient_clinical_events_update ON public.patient_clinical_events;
+CREATE POLICY patient_clinical_events_update
+  ON public.patient_clinical_events FOR UPDATE TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.profiles pr
+     WHERE pr.id = auth.uid() AND pr.status = 'Active'
+  ))
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.profiles pr
+     WHERE pr.id = auth.uid() AND pr.status = 'Active'
+  ));
+
+DROP POLICY IF EXISTS patient_clinical_events_delete ON public.patient_clinical_events;
+CREATE POLICY patient_clinical_events_delete
+  ON public.patient_clinical_events FOR DELETE TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.profiles pr
+     WHERE pr.id = auth.uid() AND pr.status = 'Active'
+  ));
 
 
 -- pop_group_triggers: Automation triggers fired when population group
@@ -58,9 +99,50 @@ CREATE TABLE IF NOT EXISTS public.pop_group_triggers (
 
 ALTER TABLE public.pop_group_triggers ENABLE ROW LEVEL SECURITY;
 
+-- RLS. The previous policy was `FOR ALL USING (true)` with NO `TO` clause, which
+-- defaults to PUBLIC — and PUBLIC includes `anon`, the key that ships in the
+-- browser bundle. These rows configure automation that fires on
+-- group membership changes, so a forged write could drive outreach.
+-- Verified against production as the anon role before this change: SELECT,
+-- INSERT, UPDATE and DELETE were all ALLOWED.
 DROP POLICY IF EXISTS "Allow all" ON public.pop_group_triggers;
-CREATE POLICY "Allow all" ON public.pop_group_triggers
-  FOR ALL USING (true);
+
+-- Reads: any signed-in staff member, matching every other clinical table here.
+-- Deliberately FOR SELECT alone so widening reads can never widen writes.
+DROP POLICY IF EXISTS pop_group_triggers_select ON public.pop_group_triggers;
+CREATE POLICY pop_group_triggers_select
+  ON public.pop_group_triggers FOR SELECT TO authenticated
+  USING (true);
+
+-- Writes: the caller must match an Active row in `profiles`, a server-owned
+-- membership table rather than anything the browser supplies.
+DROP POLICY IF EXISTS pop_group_triggers_insert ON public.pop_group_triggers;
+CREATE POLICY pop_group_triggers_insert
+  ON public.pop_group_triggers FOR INSERT TO authenticated
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.profiles pr
+     WHERE pr.id = auth.uid() AND pr.status = 'Active'
+  ));
+
+DROP POLICY IF EXISTS pop_group_triggers_update ON public.pop_group_triggers;
+CREATE POLICY pop_group_triggers_update
+  ON public.pop_group_triggers FOR UPDATE TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.profiles pr
+     WHERE pr.id = auth.uid() AND pr.status = 'Active'
+  ))
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.profiles pr
+     WHERE pr.id = auth.uid() AND pr.status = 'Active'
+  ));
+
+DROP POLICY IF EXISTS pop_group_triggers_delete ON public.pop_group_triggers;
+CREATE POLICY pop_group_triggers_delete
+  ON public.pop_group_triggers FOR DELETE TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.profiles pr
+     WHERE pr.id = auth.uid() AND pr.status = 'Active'
+  ));
 
 
 -- pop_group_memberships: Snapshot of which patients belong to which
@@ -76,6 +158,47 @@ CREATE TABLE IF NOT EXISTS public.pop_group_memberships (
 
 ALTER TABLE public.pop_group_memberships ENABLE ROW LEVEL SECURITY;
 
+-- RLS. The previous policy was `FOR ALL USING (true)` with NO `TO` clause, which
+-- defaults to PUBLIC — and PUBLIC includes `anon`, the key that ships in the
+-- browser bundle. These rows record which patients belong to which
+-- population group, which is itself patient information.
+-- Verified against production as the anon role before this change: SELECT,
+-- INSERT, UPDATE and DELETE were all ALLOWED.
 DROP POLICY IF EXISTS "Allow all" ON public.pop_group_memberships;
-CREATE POLICY "Allow all" ON public.pop_group_memberships
-  FOR ALL USING (true);
+
+-- Reads: any signed-in staff member, matching every other clinical table here.
+-- Deliberately FOR SELECT alone so widening reads can never widen writes.
+DROP POLICY IF EXISTS pop_group_memberships_select ON public.pop_group_memberships;
+CREATE POLICY pop_group_memberships_select
+  ON public.pop_group_memberships FOR SELECT TO authenticated
+  USING (true);
+
+-- Writes: the caller must match an Active row in `profiles`, a server-owned
+-- membership table rather than anything the browser supplies.
+DROP POLICY IF EXISTS pop_group_memberships_insert ON public.pop_group_memberships;
+CREATE POLICY pop_group_memberships_insert
+  ON public.pop_group_memberships FOR INSERT TO authenticated
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.profiles pr
+     WHERE pr.id = auth.uid() AND pr.status = 'Active'
+  ));
+
+DROP POLICY IF EXISTS pop_group_memberships_update ON public.pop_group_memberships;
+CREATE POLICY pop_group_memberships_update
+  ON public.pop_group_memberships FOR UPDATE TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.profiles pr
+     WHERE pr.id = auth.uid() AND pr.status = 'Active'
+  ))
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.profiles pr
+     WHERE pr.id = auth.uid() AND pr.status = 'Active'
+  ));
+
+DROP POLICY IF EXISTS pop_group_memberships_delete ON public.pop_group_memberships;
+CREATE POLICY pop_group_memberships_delete
+  ON public.pop_group_memberships FOR DELETE TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.profiles pr
+     WHERE pr.id = auth.uid() AND pr.status = 'Active'
+  ));
