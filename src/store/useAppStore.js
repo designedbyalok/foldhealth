@@ -10582,11 +10582,28 @@ export const useAppStore = create((set, get) => ({
 
     set(s => ({ tasks: s.tasks.map(t => t.id === id ? { ...t, ...final } : t) }));
 
-    // Try DB update; gracefully retry without unknown columns
+    // Try DB update; gracefully retry without unknown columns.
+    //
+    // The retry drops ONLY the column PostgREST actually named, which it does
+    // in the error ("Could not find the 'mention_ids' column of 'tasks' in the
+    // schema cache"). The previous retry stripped a fixed list of
+    // maybe-missing columns, so introducing one new column silently dropped
+    // every other name on that list too — adding `mention_ids` to it meant an
+    // @mention write lost its `mentions` names as collateral damage on any DB
+    // that hadn't run the migration yet, with no error surfaced. Falls back to
+    // the blunt list when the message names nothing parseable.
     let { error } = await supabase.from('tasks').update({ ...final, updated_at: new Date().toISOString() }).eq('id', id);
     if (error && /column .* does not exist|schema cache/.test(error.message || '')) {
-      const { parent_task_id, pool, mentions, completed_at, description, assigned_to_id, created_by_id, program_code, patient_id, source_key, ...legacy } = final;
-      ({ error } = await supabase.from('tasks').update({ ...legacy, updated_at: new Date().toISOString() }).eq('id', id));
+      const named = /'([a-z0-9_]+)' column/i.exec(error.message || '')?.[1];
+      let retry;
+      if (named && named in final) {
+        retry = { ...final };
+        delete retry[named];
+      } else {
+        const { parent_task_id, pool, mentions, mention_ids, completed_at, description, assigned_to_id, created_by_id, program_code, patient_id, source_key, ...legacy } = final;
+        retry = legacy;
+      }
+      ({ error } = await supabase.from('tasks').update({ ...retry, updated_at: new Date().toISOString() }).eq('id', id));
     }
     if (error) {
       console.warn('Update task error (optimistic update kept):', error.message);

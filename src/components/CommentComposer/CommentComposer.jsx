@@ -28,9 +28,15 @@ function handlePastePlainText(e) {
  * plain string.
  *
  * Props:
- *  - onSubmit(text)  Fires on Comment. Serialized body — mention chips
- *                    become "@Name " tokens — is passed; parent clears its
- *                    own state and the composer resets.
+ *  - onSubmit(text, mentions)
+ *                    Fires on Comment. `text` is the serialized body —
+ *                    mention chips become "@Name " tokens. `mentions` is the
+ *                    structured list of chips actually left in the editor,
+ *                    `[{ id, name }]`, where `id` is a profiles.id (null when
+ *                    the picker was running off the SYSTEM_USERS fixture).
+ *                    Prefer `mentions` over re-parsing `text`: the string
+ *                    cannot tell you who was meant, only what was typed.
+ *                    Parent clears its own state and the composer resets.
  *  - placeholder     Overrides the default placeholder.
  *  - autoFocus       Focus the input on mount.
  *  - statusChange    When set the composer morphs into the "Status
@@ -64,16 +70,46 @@ function serialize(root) {
 // than via <Badge/>) keeps the chip out of React's reconciliation path —
 // which would otherwise fight the contenteditable's own DOM mutations —
 // and lets us reuse Badge's CSS module classes for pixel-identical styling.
-function createMentionChip(name) {
+//
+// The chip carries the picked profile id alongside the name. The id is the
+// point: it means downstream storage never has to re-derive who was meant by
+// regexing the submitted string, which cannot distinguish "@Fold Demo" from
+// "@fold demo", loses anyone whose name is followed by punctuation, and
+// silently drops a mention if the display name is later edited.
+function createMentionChip(user) {
   const chip = document.createElement('span');
   chip.contentEditable = 'false';
   chip.className = styles.mentionChip;
-  chip.dataset.mentionName = name;
+  chip.dataset.mentionName = user.name;
+  // Only real profiles rows carry an id worth persisting. When the picker is
+  // running off the SYSTEM_USERS mock (profiles fetch failed) the ids are
+  // fixtures, not uuids, so they are deliberately left off the chip and the
+  // name remains the only resolvable signal.
+  if (user.realProfile && user.id) chip.dataset.mentionId = user.id;
   const badge = document.createElement('span');
   badge.className = `${badgeStyles.badge} ${badgeStyles.mention}`;
-  badge.textContent = `@${name}`;
+  badge.textContent = `@${user.name}`;
   chip.appendChild(badge);
   return chip;
+}
+
+// Collect the mention chips actually present in the editor, in document
+// order, deduped. Reading the DOM rather than re-parsing the serialized text
+// is the whole point of the chips being atoms: if the user backspaced a chip
+// away, it is not in here.
+function collectMentions(root) {
+  if (!root) return [];
+  const seen = new Set();
+  const out = [];
+  root.querySelectorAll('[data-mention-name]').forEach((el) => {
+    const name = el.dataset.mentionName;
+    const id = el.dataset.mentionId || null;
+    const key = id || name;
+    if (!name || seen.has(key)) return;
+    seen.add(key);
+    out.push({ id, name });
+  });
+  return out;
 }
 
 // Detect the "@query" fragment before the caret inside the editor. Walks
@@ -135,12 +171,19 @@ export function CommentComposer({
   // Always include the signed-in user so someone can @-mention themselves
   // (or write a note visible in their own Mentions tab). Deduped by id.
   const users = useMemo(() => {
-    const base = platformUsers?.length ? platformUsers : SYSTEM_USERS;
+    // `realProfile` marks entries whose `id` is an actual profiles.id, so
+    // createMentionChip knows which ids are safe to persist. platformUsers is
+    // read straight from `profiles`; SYSTEM_USERS is a fixture roster whose
+    // ids are not uuids and must never be stored as a mention target.
+    const hasReal = !!platformUsers?.length;
+    const base = hasReal
+      ? platformUsers.map(u => ({ ...u, realProfile: true }))
+      : SYSTEM_USERS;
     if (!currentUserProfile?.name) return base;
     if (base.some(u => u.id === currentUserProfile.id || u.name === currentUserProfile.name)) return base;
     const initials = currentUserProfile.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     return [
-      { id: currentUserProfile.id, name: currentUserProfile.name, initials, role: currentUserProfile.role, source: 'self' },
+      { id: currentUserProfile.id, name: currentUserProfile.name, initials, role: currentUserProfile.role, source: 'self', realProfile: true },
       ...base,
     ];
   }, [platformUsers, currentUserProfile]);
@@ -175,14 +218,14 @@ export function CommentComposer({
     setMention(detectMention(editor));
   };
 
-  const insertMention = (name) => {
+  const insertMention = (user) => {
     const editor = editorRef.current;
     if (!editor || !mention) return;
     editor.focus();
     // Delete the "@query" fragment, insert the chip + a trailing space,
     // then park the caret after the space.
     mention.range.deleteContents();
-    const chip = createMentionChip(name);
+    const chip = createMentionChip(user);
     const space = document.createTextNode(' ');
     mention.range.insertNode(space);
     mention.range.insertNode(chip);
@@ -202,7 +245,8 @@ export function CommentComposer({
   const submit = () => {
     const body = text.trim();
     if (!body) return;
-    onSubmit?.(body);
+    // Second arg is additive — callers that only want the body ignore it.
+    onSubmit?.(body, collectMentions(editorRef.current));
     resetEditor();
     setExpanded(false);
   };
@@ -228,7 +272,7 @@ export function CommentComposer({
       }
       if (e.key === 'Enter' || e.key === 'Tab') {
         e.preventDefault();
-        insertMention(matches[mentionIdx].name);
+        insertMention(matches[mentionIdx]);
         return;
       }
       if (e.key === 'Escape') {
@@ -333,7 +377,7 @@ function MentionMenu({ anchor, matches, activeIdx, onPick }) {
           key={u.id || u.name}
           type="button"
           className={[styles.mentionItem, i === activeIdx ? styles.mentionItemActive : ''].join(' ')}
-          onMouseDown={(e) => { e.preventDefault(); onPick(u.name); }}
+          onMouseDown={(e) => { e.preventDefault(); onPick(u); }}
         >
           <Avatar variant="staff" size={24} initials={u.initials || (u.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2)} />
           <span className={styles.mentionName}>{u.name}</span>

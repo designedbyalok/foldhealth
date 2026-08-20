@@ -158,6 +158,19 @@ export function useTasksView() {
     [meId, meName],
   );
 
+  // Mentions now carry a picked profile id (`mention_ids`, written by
+  // CommentComposer) as well as the display name. Match on either: the id is
+  // exact, and the name still covers rows written before ids were captured.
+  // The name compare is case-insensitive because the legacy regex path stored
+  // whatever the user typed — real rows contain both "fold demo" and
+  // "Fold Demo", and the old exact compare silently missed the lowercase one.
+  const matchMentioned = useCallback((t) => {
+    if (meId && Array.isArray(t.mention_ids) && t.mention_ids.includes(meId)) return true;
+    if (!meName || !Array.isArray(t.mentions)) return false;
+    const meLower = meName.toLowerCase();
+    return t.mentions.some(m => (m || '').toLowerCase() === meLower);
+  }, [meId, meName]);
+
   const matchCreator = useCallback(
     (t) => (!!meId && t.created_by_id === meId) || (!!meName && t.created_by === meName),
     [meId, meName],
@@ -169,7 +182,7 @@ export function useTasksView() {
     if (tasksTab === 'assigned') result = result.filter(matchAssignee);
     else if (tasksTab === 'pool') result = result.filter(t => t.pool && !t.assigned_to && !t.assigned_to_id);
     else if (tasksTab === 'created') result = result.filter(matchCreator);
-    else if (tasksTab === 'mentions') result = meName ? result.filter(t => Array.isArray(t.mentions) && t.mentions.includes(meName)) : [];
+    else if (tasksTab === 'mentions') result = result.filter(matchMentioned);
 
     Object.entries(tasksFilters).forEach(([key, value]) => {
       if (!value) return;
@@ -186,15 +199,15 @@ export function useTasksView() {
     });
 
     return result;
-  }, [tasks, tasksTab, tasksFilters, meName, taskProfiles, matchAssignee, matchCreator]);
+  }, [tasks, tasksTab, tasksFilters, taskProfiles, matchAssignee, matchCreator, matchMentioned]);
 
   const tabCounts = useMemo(() => ({
     all: tasks.length,
     assigned: tasks.filter(matchAssignee).length,
     pool: tasks.filter(t => t.pool && !t.assigned_to && !t.assigned_to_id).length,
     created: tasks.filter(matchCreator).length,
-    mentions: meName ? tasks.filter(t => Array.isArray(t.mentions) && t.mentions.includes(meName)).length : 0,
-  }), [tasks, meName, matchAssignee, matchCreator]);
+    mentions: tasks.filter(matchMentioned).length,
+  }), [tasks, matchAssignee, matchCreator, matchMentioned]);
 
   const handleToggle = useCallback((task) => {
     const newStatus = task.status === 'completed' ? 'pending' : 'completed';

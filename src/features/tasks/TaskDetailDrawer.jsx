@@ -139,14 +139,40 @@ export function TaskDetailDrawer({ task, onClose, onSelectTask }) {
     onClose();
   };
 
-  const handleAddComment = (text) => {
+  // `picked` comes from CommentComposer as [{ id, name }] — the chips the
+  // user actually accepted from the picker. It replaces regexing the body for
+  // `@(\w+(?:\s+\w+)?)`, which guessed at intent from the raw string and got
+  // it wrong in ordinary cases: it matched a bare "@handle" nobody is named,
+  // truncated at punctuation ("@Fold Demo, please" → "Fold Demo" only by
+  // luck, "@Ana-Maria Cruz" → "Ana"), and had no way to tell which of the
+  // several profiles rows sharing a display name was meant.
+  //
+  // Falls back to the old parse when `picked` is absent, so a caller that
+  // hasn't been updated (or a paste of literal "@Name" text with no chip)
+  // still records something rather than silently dropping the mention.
+  const handleAddComment = (text, picked) => {
     if (!text) return;
-    const mentions = (text.match(/@(\w+(?:\s+\w+)?)/g) || []).map(m => m.slice(1).trim());
     logTaskAudit(task.id, 'comment_added', { to: text });
-    if (mentions.length > 0) {
-      const existingMentions = Array.isArray(task.mentions) ? task.mentions : [];
-      const newMentions = [...new Set([...existingMentions, ...mentions])];
-      updateTask(task.id, { mentions: newMentions });
+
+    const fromChips = Array.isArray(picked) ? picked : null;
+    const names = fromChips
+      ? fromChips.map(m => m.name).filter(Boolean)
+      : (text.match(/@(\w+(?:\s+\w+)?)/g) || []).map(m => m.slice(1).trim());
+    const ids = fromChips ? fromChips.map(m => m.id).filter(Boolean) : [];
+
+    if (names.length > 0 || ids.length > 0) {
+      const patch = {};
+      if (names.length) {
+        // `mentions` stays names: it is what the Mentions tab and the
+        // notification trigger's legacy path read, and what renders.
+        const existing = Array.isArray(task.mentions) ? task.mentions : [];
+        patch.mentions = [...new Set([...existing, ...names])];
+      }
+      if (ids.length) {
+        const existingIds = Array.isArray(task.mention_ids) ? task.mention_ids : [];
+        patch.mention_ids = [...new Set([...existingIds, ...ids])];
+      }
+      updateTask(task.id, patch);
     }
     showToast('Comment added');
   };
