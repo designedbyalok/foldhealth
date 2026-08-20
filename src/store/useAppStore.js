@@ -14,6 +14,7 @@ import { toast } from '../components/Toast/sonnerToast';
 // inside the fetch actions that consume them, so they don't bloat the entry
 // chunk. They're only needed when Supabase returns empty or errors.
 import { updateHash } from '../lib/router';
+import { showBrowserNotification } from '../lib/browserNotifications';
 import { track } from '../lib/tracking';
 import { applyTheme, getResolvedTheme, getStoredTheme, subscribeToSystem, applyNavStyle, getStoredNavStyle, applyContrast, getStoredContrast, applyFontScale, getStoredFontScale } from '../lib/theme';
 import { createBlock, createBlockTree, collectBlockTree, buildParentMap, cloneBlockTree, extractSubtree, cloneStoredTree } from '../features/email-builder/blockHelpers';
@@ -2460,11 +2461,26 @@ export const useAppStore = create((set, get) => ({
       }, (payload) => {
         if (!payload?.new) return;
         const row = mapNotificationRow(payload.new);
+        const known = (get().notifications || []).some(n => n.id === row.id);
         set(s => ({
           // Realtime can redeliver, and a refetch may have already inserted
           // this id — dedupe rather than showing the same thing twice.
           notifications: mergeNotifications([row], (s.notifications || []).filter(n => n.id !== row.id)),
         }));
+        // OS-level banner for when the app isn't the visible tab. Guarded on
+        // `known` so a redelivery (or a row a refetch already surfaced) does
+        // not re-banner something the user has seen.
+        if (known) return;
+        showBrowserNotification({
+          title: row.title,
+          body: row.actorName ? `${row.actorName} · ${row.body}` : row.body,
+          tag: `notification-${row.id}`,
+          onClick: () => {
+            if (row.action === 'openTask' && row.taskId != null) {
+              get().openTaskFromNotification?.(row.taskId);
+            }
+          },
+        });
       })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') get().fetchNotifications();
@@ -2833,7 +2849,27 @@ export const useAppStore = create((set, get) => ({
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'direct_messages',
         filter: `recipient_id=eq.${me.id}`,
-      }, recount)
+      }, (payload) => {
+        recount();
+        const row = payload?.new;
+        if (!row || row.read_at) return;
+        // Sender's display name, best-effort from whichever roster is loaded.
+        const s = get();
+        const from = (s.platformUsers || []).find(u => u.id === row.sender_id)
+          || (s.taskProfiles || []).find(u => u.id === row.sender_id);
+        showBrowserNotification({
+          title: from?.name ? `New message from ${from.name}` : 'New message',
+          body: (row.content || '').slice(0, 120) || 'Sent an attachment',
+          // Tag by sender so a burst from one person collapses to the latest
+          // banner instead of stacking one per message.
+          tag: `message-${row.sender_id}`,
+          onClick: () => {
+            const email = from?.email || null;
+            get().setActivePage?.('messages');
+            if (email) get().setPendingChatUserEmail?.(email);
+          },
+        });
+      })
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'direct_messages',
         filter: `recipient_id=eq.${me.id}`,

@@ -4,7 +4,29 @@ import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Input } from '../../components/Input/Input';
 import { Toggle } from '../../components/Toggle/Toggle';
 import { getInitials, getDisplayName, formatTime } from './messageUtils';
+import boneStyles from '../../components/TableSkeleton/TableSkeleton.module.css';
 import styles from './MessagesView.module.css';
+
+/**
+ * Placeholder rows shaped like `.convItem` — avatar circle, name line,
+ * preview line. Reuses the shared `.bone` shimmer rather than defining
+ * another one.
+ */
+function ConversationSkeleton({ count = 6 }) {
+  return (
+    <>
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className={styles.convItem} style={{ cursor: 'default' }} aria-hidden>
+          <span className={boneStyles.bone} style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0 }} />
+          <div className={styles.convInfo}>
+            <span className={boneStyles.bone} style={{ width: '55%', height: 12, display: 'block' }} />
+            <span className={boneStyles.bone} style={{ width: '80%', height: 10, display: 'block', marginTop: 6 }} />
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
 
 export function ConversationListPanel({
   activeChannel,
@@ -14,6 +36,7 @@ export function ConversationListPanel({
   searchQuery,
   filterTab,
   filteredConversations,
+  loading,
   profiles,
   selectedUserId,
   onShowNewChat,
@@ -94,6 +117,14 @@ export function ConversationListPanel({
             </div>
             <div className={styles.emptyConvText}>Coming soon</div>
           </div>
+        ) : loading ? (
+          /* Loading, not empty. Rendering the "No conversations yet" empty
+             state while the first fetch is still in flight told the user
+             they had no chats and offered them a Start-a-chat button — a
+             wrong answer, stated confidently, for as long as the round-trip
+             took. The skeleton is shaped like `.convItem` so the list does
+             not jump when real rows replace it. */
+          <ConversationSkeleton />
         ) : filteredConversations.length === 0 ? (
           <div className={styles.emptyConv}>
             <div className={styles.emptyConvIcon}>

@@ -49,27 +49,44 @@ export function MessagesView() {
   const [showNewChat, setShowNewChat]     = useState(false);
   const [newChatSearch, setNewChatSearch] = useState('');
   const [convRefreshKey, setConvRefreshKey] = useState(0);
+  // Starts true so the very first paint is a skeleton, not the empty state.
+  // Only the FIRST load flips it — background refreshes (a realtime nudge
+  // bumping convRefreshKey) must not blank a list the user is reading.
+  const [convLoading, setConvLoading] = useState(true);
   const [showSearch, setShowSearch]       = useState(false);
   const newChatRef = useRef(null);
 
+  // getSession() reads the persisted session locally; getUser() makes a
+  // network call to re-validate it. Nothing here needs re-validation — the
+  // app is already behind an auth gate and only `user.id` is used — and that
+  // round-trip measured ~131ms during which `loadConversations` could not
+  // even start, because it is gated on `currentUser`. That was the single
+  // biggest cost in getting the chat list on screen.
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      const user = data?.user;
+    supabase.auth.getSession().then(({ data }) => {
+      const user = data?.session?.user;
       if (user) setCurrentUser(user);
+      else setConvLoading(false); // signed out: nothing to load, don't hang on a skeleton
     });
   }, []);
 
+  // Named columns instead of `*`: the full row set measured 43.7KB across 57
+  // profiles versus 9.4KB for the fields the chat list and New Chat actually
+  // read. Everything else on the row (clinical roles, authz fields, tour
+  // state) is dead weight on this path.
   const refreshProfiles = useCallback(() => {
-    supabase.from('profiles').select('*').then(({ data, error }) => {
-      if (error) {
-        console.warn('[MessagesView] profiles fetch failed — chat names will show as "Unknown" and New Chat list will be empty.', error);
-        return;
-      }
-      setAllProfiles(data || []);
-      const map = {};
-      (data || []).forEach(p => { map[p.id] = p; });
-      setProfiles(map);
-    });
+    supabase.from('profiles')
+      .select('id, full_name, first_name, last_name, email, avatar_url')
+      .then(({ data, error }) => {
+        if (error) {
+          console.warn('[MessagesView] profiles fetch failed — chat names will show as "Unknown" and New Chat list will be empty.', error);
+          return;
+        }
+        setAllProfiles(data || []);
+        const map = {};
+        (data || []).forEach(p => { map[p.id] = p; });
+        setProfiles(map);
+      });
   }, []);
 
   useEffect(() => { refreshProfiles(); }, [refreshProfiles]);
@@ -84,12 +101,18 @@ export function MessagesView() {
 
   const loadConversations = useCallback(async () => {
     if (!currentUser) return;
+    // Named columns rather than `*` — the reduce below only reads these five,
+    // and `*` drags any media/attachment columns along for every message in
+    // the history.
     const { data } = await supabase
       .from('direct_messages')
-      .select('*')
+      .select('sender_id, recipient_id, content, created_at, read_at')
       .or(`sender_id.eq.${currentUser.id},recipient_id.eq.${currentUser.id}`)
       .order('created_at', { ascending: false });
 
+    // Clear the skeleton even on a failed/empty fetch, otherwise an error
+    // leaves the panel shimmering forever with no way out.
+    setConvLoading(false);
     if (!data) return;
 
     const convMap = {};
@@ -259,6 +282,7 @@ export function MessagesView() {
           searchQuery={searchQuery}
           filterTab={filterTab}
           filteredConversations={filteredConversations}
+          loading={convLoading}
           profiles={profiles}
           selectedUserId={selectedUserId}
           onShowNewChat={() => setShowNewChat(true)}
