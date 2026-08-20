@@ -33,7 +33,7 @@ export function QualifiedMembersTable({ members, loading, error, onRetry }) {
 
   const sorted = useMemo(() => {
     if (!sortDir) return members;
-    return [...members].sort((a, b) => (sortDir === 'asc' ? 1 : -1) * (Number(a.age) - Number(b.age)));
+    return members.toSorted((a, b) => (sortDir === 'asc' ? 1 : -1) * (Number(a.age) - Number(b.age)));
   }, [members, sortDir]);
 
   const safePage = Math.min(page, Math.max(1, Math.ceil(sorted.length / perPage)));

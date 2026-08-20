@@ -20,11 +20,15 @@ import styles from './ruleBuilder.module.css';
  * @param {string}   [props.placeholder]
  * @param {string[]} [props.excludeCodes] — codes to hide (already selected)
  */
+// Stable identity for the omitted prop — an inline `= []` default would rebuild
+// the excludeSet memo below on every render.
+const EMPTY_CODES = [];
+
 export function TerminologySearch({
   terminology = 'icd10',
   onSelect,
   placeholder,
-  excludeCodes = [],
+  excludeCodes = EMPTY_CODES,
   autoFocus = false,
 }) {
   const isIcd = terminology === 'icd10';

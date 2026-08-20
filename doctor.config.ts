@@ -241,6 +241,65 @@ export default {
         rules: ['react-doctor/no-create-object-url-without-revoke'],
       },
 
+      // ── Performance findings assessed and REJECTED (2026-08) ─────────────
+      // All three rules below are classed "evidence-required risk" by their own
+      // canonical docs, which state the diagnostic "does not prove runtime
+      // impact" and ask for a measured hot path before editing. None of these
+      // sites is one.
+      //
+      // js-flatmap-filter — the rule suggests .flatMap(), but its OWN doc warns
+      // "a flatMap callback that returns empty or singleton arrays is not
+      // allocation-free and is not automatically faster". Every site here is a
+      // small collection: a mention-picker selection (TaskDetailDrawer), a
+      // document list (ProgramRelatedFiles), and task due dates (AiTasksDrawer).
+      // Rewriting them trades a readable chain for per-item array allocation.
+      {
+        files: [
+          'src/features/patient/right-panel/tabs/care-programs/program-detail/related/ProgramRelatedFiles/ProgramRelatedFiles.jsx',
+          'src/features/tasks/TaskDetailDrawer.jsx',
+          'src/features/toc/AiTasksDrawer.jsx',
+        ],
+        rules: ['react-doctor/js-flatmap-filter'],
+      },
+
+      // js-combine-iterations — .filter().map() over ordinary collections. The
+      // doc is explicit that "for ordinary collections, the readable chain is
+      // often the better tradeoff". evaluateRules.js is the clearest case: it
+      // runs once at module load. The others walk a static field catalog, a
+      // small rule tree, and the notification list.
+      {
+        files: [
+          'src/features/population-groups/rule-builder/AddConditionPopover.jsx',
+          'src/features/population-groups/rule-builder/PopGroupRuleBuilder.jsx',
+          'src/features/population-groups/rule-builder/evaluateRules.js',
+          'src/store/useAppStore.js',
+        ],
+        rules: ['react-doctor/js-combine-iterations'],
+      },
+
+      // async-await-in-loop — MedicationReconciliation's two loops are
+      // deliberately sequential and already carry eslint-disable-next-line
+      // no-await-in-loop. ocrPdf drives a SINGLE Tesseract worker, which
+      // processes one image at a time, and reports "Reading page N of M" as it
+      // goes; renderPdfPagesToCanvases rasterises at scale 2, so rendering every
+      // page of a large scan at once would spike memory. Parallelising either
+      // makes the feature worse, not faster.
+      {
+        files: ['src/features/patient/right-panel/tabs/care-programs/program-detail/steps/MedicationReconciliation/MedicationReconciliation.jsx'],
+        rules: ['react-doctor/async-await-in-loop'],
+      },
+
+      // rerender-state-only-in-handlers — savedQuery is indeed only read in
+      // handlers, so a ref would avoid one re-render when a group is saved. Left
+      // as state deliberately: converting state to a ref is the kind of change
+      // that silently stops working the moment someone adds it to a dependency
+      // array or renders from it, and the payoff is a single avoided re-render
+      // on an explicit user action.
+      {
+        files: ['src/features/population-groups/rule-builder/PopGroupRuleBuilder.jsx'],
+        rules: ['react-doctor/rerender-state-only-in-handlers'],
+      },
+
       // no-fetch-in-effect: WelcomeCard's geolocation→weather lookup is a
       // self-contained widget fetch with cancellation + fallback; the repo has
       // no data-fetching layer to move it into.

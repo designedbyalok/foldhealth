@@ -140,8 +140,13 @@ async function renderPdfPagesToCanvases(file) {
 // OCRs a scanned PDF page-by-page with Tesseract.js. Slow (real recognition,
 // not a mock) — callers should show progress via `onProgress`.
 async function ocrPdf(file, onProgress) {
-  const { createWorker } = await import('tesseract.js');
-  const canvases = await renderPdfPagesToCanvases(file);
+  // Loading tesseract.js and rasterising the PDF are independent, and both are
+  // slow — the import is a network/parse cost, the rasterisation walks every
+  // page. Run them concurrently; createWorker still has to wait for the import.
+  const [{ createWorker }, canvases] = await Promise.all([
+    import('tesseract.js'),
+    renderPdfPagesToCanvases(file),
+  ]);
   const worker = await createWorker('eng');
   try {
     let text = '';

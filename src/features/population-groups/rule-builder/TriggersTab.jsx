@@ -39,18 +39,29 @@ export function TriggersTab({ groupId, showToast }) {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  const load = async () => {
-    const { data, error: err } = await supabase
-      .from('pop_group_triggers')
-      .select('*')
-      .eq('group_id', groupId)
-      .order('created_at');
-    if (err) { setError(err.message); setTriggers([]); return; }
-    setTriggers(data || []);
-    setError(null);
-  };
+  // Refetch is driven by a token rather than by calling a shared loader, so the
+  // fetch and its state writes live in one place and the `cancelled` guard sits
+  // directly in front of them. Without that guard a slow first request could
+  // land after groupId moved on and overwrite the newer group's triggers.
+  // Same pattern as useQualifiedMembers' refreshToken.
+  const [refreshToken, setRefreshToken] = useState(0);
 
-  useEffect(() => { if (groupId) load(); }, [groupId]);
+  useEffect(() => {
+    if (!groupId) return undefined;
+    let cancelled = false;
+    (async () => {
+      const { data, error: err } = await supabase
+        .from('pop_group_triggers')
+        .select('*')
+        .eq('group_id', groupId)
+        .order('created_at');
+      if (cancelled) return;
+      if (err) { setError(err.message); setTriggers([]); return; }
+      setTriggers(data || []);
+      setError(null);
+    })();
+    return () => { cancelled = true; };
+  }, [groupId, refreshToken]);
 
   const handleToggle = async (trigger) => {
     const { error: err } = await supabase
@@ -143,7 +154,7 @@ export function TriggersTab({ groupId, showToast }) {
           groupId={groupId}
           triggers={triggers}
           onClose={() => setEditId(null)}
-          onSaved={() => { setEditId(null); load(); showToast?.('Trigger saved'); }}
+          onSaved={() => { setEditId(null); setRefreshToken(t => t + 1); showToast?.('Trigger saved'); }}
         />
       )}
 

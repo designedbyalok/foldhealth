@@ -54,6 +54,12 @@ const EMPTY_SELECTED_IDS = [];
  *  - minTableWidth        Minimum table width in px so wide column sets
  *                          get a horizontal scroll instead of squishing.
  */
+// Stable identities for omitted array props. An inline `= []` default allocates
+// a fresh array on every render, which breaks the referential-equality checks
+// in the memos below that list these in their dependency arrays.
+const EMPTY_COLUMNS = [];
+const EMPTY_ROWS = [];
+
 export function WorklistShell({
   title,
   onHistory,
@@ -71,11 +77,11 @@ export function WorklistShell({
   showFilters,
   onToggleFilters,
   filters,
-  columns = [],
+  columns = EMPTY_COLUMNS,
   sortKey,
   sortDir,
   onSort,
-  rows = [],
+  rows = EMPTY_ROWS,
   renderRow,
   loading,
   emptyState,

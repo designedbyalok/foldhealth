@@ -92,12 +92,16 @@ export function ProgramRelatedFiles({ programCode, patientId }) {
 
   const fileTypeOptions = useMemo(() => [...new Set(docs.map(d => d.type).filter(Boolean))], [docs]);
 
+  // Set, not includes(): the lookup runs once per doc, so an array scan makes
+  // this O(docs x selectedTypes).
+  const fileTypeSet = useMemo(() => new Set(filters.fileType), [filters.fileType]);
+
   const filtered = useMemo(() => docs.filter(d => {
-    if (filters.fileType.length > 0 && !filters.fileType.includes(d.type)) return false;
+    if (fileTypeSet.size > 0 && !fileTypeSet.has(d.type)) return false;
     if (filters.lastUpdated.length === 2 && !inRange(parseMMDDYYYY(d.updatedDate), filters.lastUpdated)) return false;
     if (filters.dateAdded.length === 2 && !inRange(d.createdAt ? new Date(d.createdAt) : null, filters.dateAdded)) return false;
     return true;
-  }), [docs, filters]);
+  }), [docs, filters, fileTypeSet]);
 
   const q = searchText.trim().toLowerCase();
   const rows = useMemo(

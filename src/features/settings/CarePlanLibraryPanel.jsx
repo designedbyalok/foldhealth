@@ -215,7 +215,7 @@ export function CarePlanLibraryPanel() {
       templateSort.key === 'updatedAt' ? t.updatedAt :
       t.name
     );
-    return [...base].sort((a, b) => valueOf(a).localeCompare(valueOf(b)) * dir);
+    return base.toSorted((a, b) => valueOf(a).localeCompare(valueOf(b)) * dir);
   }, [templates, searchValue, templateSort]);
 
   const filteredGoals = useMemo(() => filterByTitleAndDescription(goals, searchValue), [goals, searchValue]);
