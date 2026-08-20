@@ -200,15 +200,34 @@
   position: relative;
   display: inline-flex;
 }
+/* Numeric count, not a bare dot — a dot says "something happened", a number
+   says how much, which is the difference between glancing and opening the
+   panel. Sized for two digits plus the "99+" overflow that
+   formatBadgeCount() clamps to; `min-width` with horizontal padding lets a
+   single digit stay a circle and wider values grow into a pill.
+
+   Offset up and to the right so it clears the 20px bell glyph rather than
+   sitting on top of it. The ring is the surface colour, not white, so the
+   badge reads as lifted in dark themes too — the old rule hardcoded #fff
+   and a #e54848 fallback. */
 .bellBadge {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--status-error, #e54848);
-  border: 1.5px solid #fff;
+  top: 0;
+  right: 0;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 var(--space-1);
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: var(--status-error);
+  border: 1.5px solid var(--neutral-0);
+  color: var(--neutral-0);
+  font-size: var(--font-2xs);
+  font-weight: 500;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   pointer-events: none;
 }
 

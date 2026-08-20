@@ -3,6 +3,7 @@ import { Icon } from '../Icon/Icon';
 import { HelpPopover } from '../HelpPopover/HelpPopover';
 import { WhatsNewDrawer } from '../WhatsNewDrawer/WhatsNewDrawer';
 import { useAppStore } from '../../store/useAppStore';
+import { formatBadgeCount } from '../../lib/formatBadgeCount';
 import styles from './Sidebar.module.css';
 
 const NAV_ITEMS = [
@@ -10,7 +11,10 @@ const NAV_ITEMS = [
   { icon: 'solar:users-group-rounded-linear', filledIcon: 'solar:users-group-rounded-bold', label: 'Population', page: 'population' },
   { icon: 'solar:calendar-linear', filledIcon: 'solar:calendar-bold', label: 'Calendar', page: 'calendar' },
   { icon: 'solar:checklist-minimalistic-linear', filledIcon: 'solar:checklist-minimalistic-bold', label: 'Tasks', page: 'tasks' },
-  { icon: 'solar:chat-round-dots-linear', filledIcon: 'solar:chat-round-dots-bold', label: 'Messages', badge: 8, page: 'messages' },
+  // No hardcoded `badge` here any more — Messages and Tasks both read live
+  // counts (see navBadges below). The old `badge: 8` was already unreachable
+  // once Messages switched to the store count, and read as a real number.
+  { icon: 'solar:chat-round-dots-linear', filledIcon: 'solar:chat-round-dots-bold', label: 'Messages', page: 'messages' },
   { icon: 'solar:phone-linear', filledIcon: 'solar:phone-bold', label: 'Calls', page: 'calls' },
   { icon: 'solar:user-speak-linear', filledIcon: 'solar:user-speak-bold', label: 'Leads', page: 'leads' },
   { icon: 'custom:campaign', filledIcon: 'custom:campaign-bold', label: 'Campaign', page: 'campaign' },
@@ -54,6 +58,14 @@ export function Sidebar() {
 
   const showToast = useAppStore(s => s.showToast);
   const messagesUnreadCount = useAppStore(s => s.messagesUnreadCount);
+  // Unread task notifications (assignment + @mention), so the Tasks tab
+  // carries the same signal as the bell without opening it. Selecting the
+  // `.length` rather than the filtered array keeps this a primitive, so
+  // Zustand's Object.is check doesn't re-render on every store write.
+  const taskNotificationsUnread = useAppStore(
+    s => (s.notifications || []).filter(n => !n.read && (n.type || '').startsWith('task.')).length,
+  );
+  const navBadges = { tasks: taskNotificationsUnread, messages: messagesUnreadCount };
   const implementedPages = ['home', 'population', 'settings', 'analytics', 'calendar', 'messages', 'calls', 'tasks', 'campaign'];
 
   // ── Sliding-pill motion for tab switching ──
@@ -166,10 +178,14 @@ export function Sidebar() {
               title={item.label}
               onClick={e => handleClick(e, item.page)}
             >
-              {item.page === 'messages'
-                ? (messagesUnreadCount > 0 && <span className={styles.badge}>{messagesUnreadCount}</span>)
-                : (item.badge && <span className={styles.badge}>{item.badge}</span>)
-              }
+              {navBadges[item.page] > 0 && (
+                <span
+                  className={styles.badge}
+                  aria-label={`${navBadges[item.page]} unread`}
+                >
+                  {formatBadgeCount(navBadges[item.page])}
+                </span>
+              )}
               <div
                 ref={(el) => { innerRefs.current[item.label] = el; }}
                 className={styles.itemInner}

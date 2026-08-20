@@ -2788,6 +2788,64 @@ export const useAppStore = create((set, get) => ({
 
   // Chat Groups actions
   setMessagesUnreadCount: (n) => set({ messagesUnreadCount: n }),
+
+  /**
+   * Unread direct-message count for the Messages nav badge.
+   *
+   * `messagesUnreadCount` has existed with a setter for a while and nothing
+   * ever called it, so the badge was permanently 0 — the Sidebar was reading
+   * state no writer produced. This is that writer.
+   *
+   * Counted server-side (head + exact) rather than by pulling rows: the badge
+   * only needs a number, and the inbox can be long.
+   */
+  fetchMessagesUnreadCount: async () => {
+    const me = get().currentUserProfile;
+    if (!me?.id) return;
+    const { count, error } = await supabase
+      .from('direct_messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('recipient_id', me.id)
+      .is('read_at', null);
+    if (error) {
+      console.warn('unread message count failed:', error.message);
+      return;
+    }
+    set({ messagesUnreadCount: count || 0 });
+  },
+
+  /**
+   * Keep that count live. Subscribes to both INSERT (a message arrives) and
+   * UPDATE (ChatArea stamps `read_at` when a conversation is opened, which
+   * has to make the badge go down as well as up), and recounts on either.
+   *
+   * Recounting instead of incrementing/decrementing locally: the same account
+   * can be open in another tab or device marking things read, and a counter
+   * that drifts on a badge is worse than one extra cheap query.
+   */
+  subscribeUnreadMessages: () => {
+    const me = get().currentUserProfile;
+    if (!me?.id) return () => {};
+    get()._unreadMessagesChannel?.unsubscribe();
+    const recount = () => get().fetchMessagesUnreadCount();
+    const ch = supabase
+      .channel(`unread-messages:${me.id}`)
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'direct_messages',
+        filter: `recipient_id=eq.${me.id}`,
+      }, recount)
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'direct_messages',
+        filter: `recipient_id=eq.${me.id}`,
+      }, recount)
+      // Same reasoning as the notifications channel: a postgres_changes
+      // binding delivers nothing for the window it was disconnected, so
+      // recount on every (re)subscribe rather than trusting the socket.
+      .subscribe((status) => { if (status === 'SUBSCRIBED') recount(); });
+    set({ _unreadMessagesChannel: ch });
+    return () => { ch.unsubscribe(); set({ _unreadMessagesChannel: null }); };
+  },
+  _unreadMessagesChannel: null,
   setPendingChatUserEmail: (email) => set({ pendingChatUserEmail: email }),
   setMessageTab: (tab) => { set({ messageTab: tab }); updateHash(get); },
   setChatGroupDetailId: (id) => {

@@ -11,6 +11,7 @@ import { ThemePicker } from '../ThemePicker/ThemePicker';
 import { NotificationsPopover } from '../NotificationsPopover/NotificationsPopover';
 import { useAppStore } from '../../store/useAppStore';
 import { formatFoldId, matchesFoldId } from '../../lib/foldId';
+import { formatBadgeCount } from '../../lib/formatBadgeCount';
 import { supabase } from '../../lib/supabase';
 import styles from './TopBar.module.css';
 
@@ -526,7 +527,11 @@ export function TopBar() {
             tooltip="Notifications"
             onClick={() => setShowNotifications(v => !v)}
           />
-          {unreadCount > 0 && <span className={styles.bellBadge} aria-label={`${unreadCount} unread`} />}
+          {unreadCount > 0 && (
+            <span className={styles.bellBadge} aria-label={`${unreadCount} unread`}>
+              {formatBadgeCount(unreadCount)}
+            </span>
+          )}
           {showNotifications && (
             <NotificationsPopover
               anchorRef={bellRef}

@@ -25,6 +25,8 @@ export function useNotificationsFeed() {
   const fetchTaskProfiles = useAppStore(s => s.fetchTaskProfiles);
   const fetchNotifications = useAppStore(s => s.fetchNotifications);
   const subscribeNotifications = useAppStore(s => s.subscribeNotifications);
+  const fetchMessagesUnreadCount = useAppStore(s => s.fetchMessagesUnreadCount);
+  const subscribeUnreadMessages = useAppStore(s => s.subscribeUnreadMessages);
 
   useEffect(() => { fetchTaskProfiles?.(); }, [fetchTaskProfiles]);
 
@@ -35,10 +37,21 @@ export function useNotificationsFeed() {
     return subscribeNotifications?.();
   }, [meId, subscribeNotifications]);
 
+  // The Messages nav badge needs the same treatment, and for the same reason
+  // it has to live here rather than in MessagesView: MessagesView only mounts
+  // while you are ON the Messages page, which is exactly when you do not need
+  // to be told a message arrived.
+  useEffect(() => {
+    if (!meId) return undefined;
+    return subscribeUnreadMessages?.();
+  }, [meId, subscribeUnreadMessages]);
+
   useEffect(() => {
     if (!meId) return undefined;
     const resync = () => {
-      if (document.visibilityState === 'visible') fetchNotifications?.();
+      if (document.visibilityState !== 'visible') return;
+      fetchNotifications?.();
+      fetchMessagesUnreadCount?.();
     };
     document.addEventListener('visibilitychange', resync);
     window.addEventListener('online', resync);
@@ -46,5 +59,5 @@ export function useNotificationsFeed() {
       document.removeEventListener('visibilitychange', resync);
       window.removeEventListener('online', resync);
     };
-  }, [meId, fetchNotifications]);
+  }, [meId, fetchNotifications, fetchMessagesUnreadCount]);
 }
