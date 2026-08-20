@@ -260,6 +260,10 @@ export const HEDIS_MIDDLE_COLUMNS = [
 export function HedisWorklistRow({ member, columns, hiddenSet, isSelected, onSelect, onOpenGap }) {
   const showToast = useAppStore(s => s.showToast);
   const openQuickView = useAppStore(s => s.openQuickView);
+  // useState must sit above the early return: a row whose member loses its last
+  // gap would otherwise render two hooks where it previously rendered three, and
+  // React throws "rendered fewer hooks than expected".
+  const [expanded, setExpanded] = useState(false);
   const gaps = Array.isArray(member.gaps) ? member.gaps : [];
   if (gaps.length === 0) return null;
   const primaryGap = gaps[0];
@@ -271,7 +275,6 @@ export function HedisWorklistRow({ member, columns, hiddenSet, isSelected, onSel
   // Collapse to the first 2 gaps and surface a "View More N" toggle in the
   // Total Gaps column, mirroring the HCC worklist's DOS collapse pattern.
   const MAX_INLINE_GAPS = 2;
-  const [expanded, setExpanded] = useState(false);
   const visibleGaps = expanded ? gaps : gaps.slice(0, MAX_INLINE_GAPS);
   const extraCount = Math.max(0, gaps.length - MAX_INLINE_GAPS);
 

@@ -302,9 +302,23 @@ export default {
       {
         files: [
           'src/components/CreateNewPopover/CreateNewPopover.jsx',
+          // DatePickerPopover adds its mousedown listener inside a
+          // setTimeout(…, 0) so the click that opened the popover does not
+          // immediately close it. The cleanup covers both paths: clearTimeout
+          // if it has not fired, removeEventListener if it has. Same for the
+          // keydown listener, which is added directly.
+          'src/components/DatePicker/DatePickerPopover.jsx',
           'src/components/HelpPopover/HelpPopover.jsx',
           'src/features/agent-builder/AgentCanvas.jsx',
           'src/features/calendar/CalendarView.jsx',
+          // useCalendarView's hover effect polls with a self-rescheduling
+          // setTimeout until schedule-x has rendered the grid, then subscribes.
+          // `timer` is reassigned on each retry and the cleanup clears the
+          // latest one; the listeners are removed from the exact nodes captured
+          // in `subscribedDays` (see #154 — re-querying at cleanup time was the
+          // original bug). A recursive timer is simply not something the
+          // detector can follow.
+          'src/features/calendar/useCalendarView.js',
           'src/features/ccm-worklist/TimeFilterChip.jsx',
           'src/features/email-builder/PreviewCanvas.jsx',
           'src/features/hcc/DiagPanel/LeftWorkspace.jsx',

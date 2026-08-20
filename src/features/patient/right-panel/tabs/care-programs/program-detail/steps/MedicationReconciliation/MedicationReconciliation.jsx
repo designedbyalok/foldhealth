@@ -610,16 +610,21 @@ export function MedicationReconciliation() {
   const [noteDrafts, setNoteDrafts] = useState({});
 
   const toggleNote = (m) => {
+    // Both updaters are called from the event, not nested. A state updater must
+    // be pure: React can invoke it more than once for a single update (Strict
+    // Mode does this deliberately), which would have run the seeding twice.
+    // Seeding is idempotent either way, but the nesting also meant the draft was
+    // set while React was mid-way through computing another piece of state.
+    const isOpen = openNoteIds.has(m.id);
     setOpenNoteIds(prev => {
       const next = new Set(prev);
-      if (next.has(m.id)) {
-        next.delete(m.id);
-      } else {
-        next.add(m.id);
-        setNoteDrafts(d => (m.id in d ? d : { ...d, [m.id]: m.note || '' }));
-      }
+      if (next.has(m.id)) next.delete(m.id);
+      else next.add(m.id);
       return next;
     });
+    if (!isOpen) {
+      setNoteDrafts(d => (m.id in d ? d : { ...d, [m.id]: m.note || '' }));
+    }
   };
 
   const commitNote = (m) => {
