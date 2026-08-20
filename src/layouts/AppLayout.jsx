@@ -23,6 +23,7 @@ import { PopulationGroupsView } from '../features/population-groups/PopulationGr
 import { PgProcessingHost } from '../features/population-groups/PgProcessingHost';
 import { Icon } from '../components/Icon/Icon';
 import { useAppStore } from '../store/useAppStore';
+import { useNotificationsFeed } from '../components/NotificationsPopover/useNotificationsFeed';
 import { Toaster } from '../components/Toast/Toast';
 import { supabase } from '../lib/supabase';
 import styles from './AppLayout.module.css';
@@ -242,6 +243,10 @@ function CalendarViewPage() {
 export function AppLayout() {
   const activePage = useAppStore(s => s.activePage);
   const builderAgent = useAppStore(s => s.builderAgent);
+
+  // Bell feed: resolves the signed-in profile, subscribes to this user's
+  // notification rows, and resyncs after the tab/socket comes back.
+  useNotificationsFeed();
 
   // Keep profiles in sync with auth.users. Self-signups and OAuth logins don't
   // go through the Invite flow, so profiles would otherwise stay empty for them.

@@ -37,6 +37,26 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **Real-time task notifications (assignment + @mention)** — the bell never
+  worked, for three independent reasons. The two producers lived in
+  `updateTask`/`createTask` and read `currentUserProfile` — the *actor* — then
+  asked "is the new assignee me?", so assigning a task to someone else
+  notified nobody and the only case that ever fired was assigning to yourself.
+  `notifications` was also an in-memory array, so even a correct notification
+  died on reload and could never reach another device; and `pendingOpenTaskId`
+  was written but never consumed, so clicking a notification navigated to
+  Tasks without opening the task. Notifications are now rows in
+  `public.notifications`, emitted by a `tasks_emit_notifications` trigger
+  addressed to the assignee or the mentioned profile (the producer belongs
+  below the client for the same reason task attribution does), delivered over
+  Supabase Realtime on a per-user channel that RLS self-filters. Mentions
+  resolve by case-insensitive name because that is what `tasks.mentions`
+  stores. Read/dismiss persist; the unread badge is DB-truth. Three recovery
+  paths keep it honest — refetch on (re)subscribe, on tab refocus/`online`,
+  and on popover open — because a `postgres_changes` binding that dies (or is
+  created before the table is published) delivers silence forever and none of
+  the socket-level triggers fire in that state.
+
 - **Typography: root font size now scales with the viewport** — the root
   font-size was a hard-coded `16px`, so a 13" laptop and a 27" 4K panel got
   identical CSS px and wildly different apparent text size. It's now

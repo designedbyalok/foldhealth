@@ -84,6 +84,8 @@ export function useTasksView() {
   const setTasksViewMode = useAppStore(s => s.setTasksViewMode);
   const pendingAddTask = useAppStore(s => s.pendingAddTask);
   const clearPendingAddTask = useAppStore(s => s.clearPendingAddTask);
+  const pendingOpenTaskId = useAppStore(s => s.pendingOpenTaskId);
+  const clearPendingOpenTaskId = useAppStore(s => s.clearPendingOpenTaskId);
   const fetchTaskProfiles = useAppStore(s => s.fetchTaskProfiles);
   const fetchTaskLabels = useAppStore(s => s.fetchTaskLabels);
   const fetchTaskPools = useAppStore(s => s.fetchTaskPools);
@@ -125,6 +127,22 @@ export function useTasksView() {
     setShowAddDrawer(true);
     clearPendingAddTask();
   }, [pendingAddTask, clearPendingAddTask]);
+
+  // Clicking a task notification in the bell sets `pendingOpenTaskId` and
+  // navigates here. Nothing consumed it before, so the click landed on the
+  // Tasks page but never opened the task it was about.
+  //
+  // Deliberately does NOT clear the signal until the task is found: arriving
+  // from another page means this runs before `fetchTasks` has resolved, and
+  // clearing on a miss would drop the request on the floor. Leaving it set
+  // makes the effect re-run when `tasks` lands.
+  useEffect(() => {
+    if (pendingOpenTaskId == null) return;
+    const match = tasks.find(t => String(t.id) === String(pendingOpenTaskId));
+    if (!match) return;
+    setSelectedTask(match);
+    clearPendingOpenTaskId();
+  }, [pendingOpenTaskId, tasks, clearPendingOpenTaskId]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const meId = currentUserProfile?.id || null;

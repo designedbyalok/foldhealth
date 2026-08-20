@@ -1,7 +1,31 @@
 import { useEffect, useRef } from 'react';
 import { Icon } from '../Icon/Icon';
 import { useAppStore } from '../../store/useAppStore';
+import boneStyles from '../TableSkeleton/TableSkeleton.module.css';
 import styles from './NotificationsPopover.module.css';
+
+/**
+ * Cold-load placeholder. Shaped like `.entry` (icon square + title line +
+ * sub line) so the list doesn't jump when real rows replace it. Reuses the
+ * shared `.bone` shimmer rather than defining another one.
+ */
+function NotificationSkeleton({ count = 3 }) {
+  return (
+    <div className={styles.list} aria-hidden>
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className={styles.entry} style={{ cursor: 'default' }}>
+          <span className={styles.entryIcon}>
+            <span className={boneStyles.bone} style={{ width: 16, height: 16, borderRadius: 4 }} />
+          </span>
+          <span className={styles.entryBody}>
+            <span className={boneStyles.bone} style={{ width: '70%', height: 12 }} />
+            <span className={boneStyles.bone} style={{ width: '45%', height: 10 }} />
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /**
  * NotificationsPopover — bell-icon dropdown.
@@ -18,6 +42,9 @@ import styles from './NotificationsPopover.module.css';
 export function NotificationsPopover({ onClose, anchorRef }) {
   const ref = useRef(null);
   const notifications = useAppStore(s => s.notifications) || [];
+  const loading = useAppStore(s => s.notificationsLoading);
+  const didFetch = useAppStore(s => s.notificationsDidFetch);
+  const fetchNotifications = useAppStore(s => s.fetchNotifications);
   const markRead = useAppStore(s => s.markNotificationRead);
   const markAllRead = useAppStore(s => s.markAllNotificationsRead);
   const expandHccUpload = useAppStore(s => s.expandHccUpload);
@@ -27,6 +54,15 @@ export function NotificationsPopover({ onClose, anchorRef }) {
   const openTaskFromNotification = useAppStore(s => s.openTaskFromNotification);
   const openAppointmentFromNotification = useAppStore(s => s.openAppointmentFromNotification);
   const setPendingChatUserEmail = useAppStore(s => s.setPendingChatUserEmail);
+
+  // Refetch on open. The realtime subscription is the fast path, not the
+  // source of truth: a binding created before the table was published — or
+  // one that died while the tab stayed visible and online — delivers silence
+  // forever, and none of the other resync triggers (visibilitychange, online,
+  // re-subscribe) fire in that state. Reading once at the moment the user
+  // actually looks makes the panel correct regardless of socket health, and
+  // also reconciles rows deleted elsewhere, which INSERT events never cover.
+  useEffect(() => { fetchNotifications?.(); }, [fetchNotifications]);
 
   useEffect(() => {
     const onDocClick = (e) => {
@@ -74,7 +110,12 @@ export function NotificationsPopover({ onClose, anchorRef }) {
         )}
       </div>
 
-      {notifications.length === 0 ? (
+      {/* Cold load only — `didFetch` keeps the skeleton from flashing on
+          background resyncs (tab refocus, realtime reconnect), which would
+          otherwise blank a list the user is actively reading. */}
+      {loading && !didFetch && notifications.length === 0 ? (
+        <NotificationSkeleton />
+      ) : notifications.length === 0 ? (
         <div className={styles.empty}>
           <Icon name="solar:bell-off-linear" size={24} color="var(--neutral-200)" />
           <span>You're all caught up</span>
@@ -97,7 +138,11 @@ export function NotificationsPopover({ onClose, anchorRef }) {
               </span>
               <span className={styles.entryBody}>
                 <span className={styles.entryTitle}>{n.title}</span>
-                {n.body && <span className={styles.entrySub}>{n.body}</span>}
+                {n.body && (
+                  <span className={styles.entrySub}>
+                    {n.actorName ? `${n.actorName} · ${n.body}` : n.body}
+                  </span>
+                )}
                 <span className={styles.entryTime}>{relativeTime(n.ts)}</span>
               </span>
               {!n.read && <span className={styles.entryDot} aria-hidden />}

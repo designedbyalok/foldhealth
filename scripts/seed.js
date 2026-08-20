@@ -1157,6 +1157,52 @@ async function main() {
     }
   }
 
+  // ── Notifications (bell feed) ──
+  // Normally these are written by the `tasks_emit_notifications` trigger, not
+  // by hand — assigning a task or @mentioning someone produces them. This
+  // block only backfills a couple of rows for the demo account so the bell
+  // has something in it on a fresh database, before anyone has touched a task.
+  {
+    const { data: probe, error: probeErr } = await supabase
+      .from('notifications')
+      .select('id')
+      .limit(1);
+    if (probeErr) {
+      console.log(`  ✗ notifications: ${probeErr.message} — run supabase/notifications_migration.sql first`);
+    } else if (probe?.length) {
+      console.log('  ✓ notifications (already present)');
+    } else {
+      // Recipient is the dev/demo identity the app signs in as; actor is any
+      // other profile so the row doesn't read as self-inflicted.
+      const { data: demo } = await supabase
+        .from('profiles').select('id, full_name').eq('email', 'demo@fold.health').maybeSingle();
+      const { data: actor } = await supabase
+        .from('profiles').select('id, full_name').eq('email', 'alokk@fold.health').maybeSingle();
+      const { data: someTasks } = await supabase
+        .from('tasks').select('id, name').order('id', { ascending: true }).limit(2);
+
+      if (!demo?.id || !someTasks?.length) {
+        console.log('  ⤵ notifications skipped (needs the demo profile + at least one task)');
+      } else {
+        const rows = someTasks.map((t, i) => ({
+          recipient_id: demo.id,
+          actor_id: actor?.id || null,
+          actor_name: actor?.full_name || 'Alok Kumar',
+          type: i === 0 ? 'task.assigned' : 'task.mentioned',
+          title: i === 0 ? 'You were assigned a task' : 'You were mentioned in a task',
+          body: t.name,
+          action: 'openTask',
+          task_id: t.id,
+          read: false,
+        }));
+        const { error: insErr } = await supabase.from('notifications').insert(rows);
+        console.log(insErr
+          ? `  ✗ notifications: ${insErr.message}`
+          : `  ✓ notifications (${rows.length} seeded for demo@fold.health)`);
+      }
+    }
+  }
+
   console.log('\n✅  Seed complete. Run `bun run dev` to verify.\n');
 }
 
