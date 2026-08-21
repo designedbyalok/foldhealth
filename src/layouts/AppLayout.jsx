@@ -254,8 +254,17 @@ export function AppLayout() {
   // First login inserts with safe defaults; later logins only refresh identity
   // fields so admin-set role/status aren't clobbered.
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data }) => {
-      const user = data?.user;
+    // getSession(), not getUser(): getUser() is a network round trip that
+    // re-validates the token against the auth server, and this effect used to
+    // block on it before it could do anything — the profile read behind it did
+    // not start until ~4 s into a cold load. getSession() reads the locally
+    // persisted session (including user_metadata) with no request at all.
+    // Skipping server validation is safe here because everything below is
+    // keyed to the session's own user id and gated by RLS: a tampered local
+    // session cannot write another user's row. Same reasoning as
+    // `_resolveWorklistUser` in the store.
+    supabase.auth.getSession().then(async ({ data }) => {
+      const user = data?.session?.user;
       if (!user) return;
       const meta = user.user_metadata || {};
       const fullName = meta.full_name
@@ -283,15 +292,25 @@ export function AppLayout() {
         updated_at: new Date().toISOString(),
       };
 
-      const { data: existing } = await supabase
+      // Write first, ask questions only if it missed. This was a
+      // `select id` → then `update` or `insert`, i.e. two serialized round
+      // trips on every single page load to do what is almost always one
+      // UPDATE — the row already exists, because handle_new_user() inserts it
+      // from an auth.users trigger at signup. `.select('id')` on the update
+      // reports what it actually touched, so the INSERT fallback still covers
+      // rows that predate that trigger. Common path: one request. Same
+      // affected-rows pattern useUsersTab uses for its own writes.
+      //
+      // A single upsert would be shorter and wrong: INSERT has to supply
+      // `status: 'Active'` and UPDATE must not, or every login would reset a
+      // status an admin had set.
+      const { data: updated } = await supabase
         .from('profiles')
-        .select('id')
+        .update(identity)
         .eq('id', user.id)
-        .maybeSingle();
+        .select('id');
 
-      if (existing) {
-        await supabase.from('profiles').update(identity).eq('id', user.id);
-      } else {
+      if (!updated || updated.length === 0) {
         // Identity fields only. `role` / `admin_role` / `clinical_roles` are
         // authorization fields and must be owned by the database (the
         // handle_new_user() trigger and column defaults), never chosen by the

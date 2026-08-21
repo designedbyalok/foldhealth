@@ -311,7 +311,11 @@ export function TopBar() {
   /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data?.user || null));
+    // getSession() rather than getUser(): this `user` only feeds the avatar
+    // initials and the assigned-roles lookup, and getSession() reads the
+    // persisted session locally instead of spending a round trip re-validating
+    // the token against the auth server. AppLayout made the same swap.
+    supabase.auth.getSession().then(({ data }) => setUser(data?.session?.user || null));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
       setUser(session?.user || null);
     });
@@ -345,14 +349,30 @@ export function TopBar() {
 
   // Search must cover every patient the app knows about, not just the TOC
   // slice — the worklist slices are prefetched by SubNav on Population, but
-  // the TopBar also renders on pages without a SubNav, so kick the two
-  // fetches it depends on here. fetchPatients is store-guarded (single-fire);
-  // fetchAllPatients is guarded by the length check.
-  useEffect(() => {
+  // the TopBar also renders on pages without a SubNav, so it owns the two
+  // fetches its index depends on.
+  //
+  // These are deliberately NOT kicked at mount, and not on a timer either.
+  // `patients` (51 KB) and `all_patients` (100 KB) are the two heaviest
+  // queries in the app, and firing them during first paint put them in
+  // contention with whatever the current page was loading: on
+  // Settings → Users the page's own `profiles` query measured ~300 ms alone
+  // and ~3.2 s behind these two.
+  //
+  // requestIdleCallback was tried and does NOT solve this — idle arrives
+  // while the route's lazy chunk is still downloading, so the prefetch fired
+  // at ~1.0 s and the page's own query at ~1.3 s, i.e. still ahead of it.
+  // Any delay long enough to clear an arbitrary page's fetches would be a
+  // guess.
+  //
+  // So: warm on intent instead. Pointer-enter on the search box starts the
+  // fetch while the user is still moving toward it, and focus covers keyboard
+  // users. A page load where nobody searches costs nothing. Both fetches are
+  // store-guarded single-fire, so calling this repeatedly is free.
+  const warmSearchIndex = useCallback(() => {
     fetchPatients();
-    if (allPatients.length === 0) fetchAllPatients();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    fetchAllPatients();
+  }, [fetchPatients, fetchAllPatients]);
 
   // Unified search index. Priority order matters twice over: profile-backed
   // slices come first so their rows win the dedupe (their ids resolve in
@@ -499,7 +519,7 @@ export function TopBar() {
       </div>
 
       <div className={styles.center}>
-        <div className={styles.searchWrap} ref={searchRef}>
+        <div className={styles.searchWrap} ref={searchRef} onPointerEnter={warmSearchIndex}>
           <div className={styles.searchBox}>
             <Icon name="solar:magnifer-linear" size={18} color="var(--neutral-200)" />
             <input aria-label="Search members"
@@ -507,7 +527,7 @@ export function TopBar() {
               placeholder="Search Members"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              onFocus={() => setSearchFocused(true)}
+              onFocus={() => { setSearchFocused(true); warmSearchIndex(); }}
             />
             {searchQuery && (
               <button className={styles.searchClear} onClick={() => setSearchQuery('')} aria-label="Clear search">

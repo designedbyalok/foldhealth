@@ -37,6 +37,33 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **Settings → Users load: 14 API calls down to 5** — the page felt slow, but
+  its own query was never the problem. A cold load fired 14 logical Supabase
+  calls in one burst at ~870 ms, only two of which the table needs, and
+  `profiles?select=*` measured 273–909 ms alone versus 3198 ms inside that
+  burst — it was queued behind ~151 KB of patient data the page does not
+  render. Removed outright: the Users tab's admin check (a second query for
+  `role`/`clinical_roles`/`admin_role` on the signed-in user, whose row is
+  already in the list response — now derived from it), two `getUser()` round
+  trips that only needed the locally persisted session (`getSession()`), and
+  AppLayout's `select id` probe before its identity write (now
+  `update().select('id')` with the INSERT as a zero-rows fallback, since
+  `handle_new_user()` already created the row). Deferred to the moment a user
+  reaches for them: TopBar's `patients` + `all_patients` search index (warms on
+  pointer-enter/focus of the search box), and the changelog plus the Featurebase
+  SSO JWT (warm on Help hover — `changelogUnread` is only ever read *inside*
+  HelpPopover, which does not exist until it opens). `fetchAllPatients` also
+  gained the single-fire guard `fetchPatients` already had; two components
+  mounting in the same tick both read `allPatients.length === 0` and both
+  fetched, pulling 100 KB twice. `requestIdleCallback` was tried for the
+  prefetch and rejected — idle arrives while the route's lazy chunk is still
+  downloading, so it fired at 1025 ms, still ahead of the page's own query at
+  1324 ms. Net: 31 requests to 10, and the users query now completes in
+  ~210–520 ms, i.e. at its uncontended speed. `select=*` was deliberately left
+  alone: the `_raw` pass-through means the two user drawers read 34 of the
+  table's 35 columns, so narrowing saves only `updated_at` (6.1%) in exchange
+  for a column list that has to stay in sync with both drawers.
+
 - **Real-time task notifications (assignment + @mention)** — the bell never
   worked, for three independent reasons. The two producers lived in
   `updateTask`/`createTask` and read `currentUserProfile` — the *actor* — then

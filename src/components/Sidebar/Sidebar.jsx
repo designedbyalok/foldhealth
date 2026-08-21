@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Icon } from '../Icon/Icon';
 import { HelpPopover } from '../HelpPopover/HelpPopover';
 import { WhatsNewDrawer } from '../WhatsNewDrawer/WhatsNewDrawer';
@@ -46,11 +46,31 @@ export function Sidebar() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [whatsNewOpen, setWhatsNewOpen] = useState(false);
 
-  // In-house changelog (Supabase-backed) — prefetch so the Help popover's
-  // unread badge is accurate before the drawer is ever opened.
+  // In-house changelog (Supabase-backed). Fetched when the user reaches for
+  // Help rather than on mount: `changelogUnread` is only ever read inside
+  // HelpPopover, which does not exist until `helpOpen`, so a mount-time fetch
+  // bought nothing but another query competing with the current page's own
+  // (it was one of ~9 firing simultaneously on Settings → Users). Warming on
+  // pointer-enter means the badge is already correct by the time the popover
+  // paints. `fetchChangelog` is guarded by `_changelogFetched`, so the extra
+  // call from onClick is a no-op.
   const fetchChangelog = useAppStore(s => s.fetchChangelog);
-  useEffect(() => { fetchChangelog(); }, [fetchChangelog]);
   const changelogEntries = useAppStore(s => s.changelogEntries);
+
+  // Everything the Help menu needs, warmed the moment the user reaches for it.
+  // The Featurebase JWT rides along for the same reason as the changelog:
+  // "Give Feedback" reads it synchronously (window.open cannot survive an
+  // await without tripping popup blockers), so it has to already be in the
+  // store by the time that item is clicked — but minting it at login cost an
+  // Edge Function call on every page load. Hovering Help, then reading the
+  // popover, then clicking is comfortably longer than the ~0.5 s mint. If a
+  // user does beat it, openFeedbackPortal falls back to the anonymous portal,
+  // which is its existing behaviour for dev-bypass sessions.
+  const ensureFeaturebaseJwt = useAppStore(s => s.ensureFeaturebaseJwt);
+  const warmHelpMenu = useCallback(() => {
+    fetchChangelog();
+    ensureFeaturebaseJwt();
+  }, [fetchChangelog, ensureFeaturebaseJwt]);
   const changelogSeenAt = useAppStore(s => s.changelogSeenAt);
   const changelogUnread = changelogEntries.filter(
     e => new Date(e.created_at) > new Date(changelogSeenAt || 0),
@@ -219,8 +239,10 @@ export function Sidebar() {
               key={item.label}
               className={[styles.item, isActive ? styles.active : ''].filter(Boolean).join(' ')}
               title={item.label}
+              onPointerEnter={isHelp ? warmHelpMenu : undefined}
+              onFocus={isHelp ? warmHelpMenu : undefined}
               onClick={() => {
-                if (isHelp) setHelpOpen(v => !v);
+                if (isHelp) { warmHelpMenu(); setHelpOpen(v => !v); }
               }}
             >
               <div className={styles.itemInner}>

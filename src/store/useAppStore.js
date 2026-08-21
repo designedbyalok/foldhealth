@@ -1044,11 +1044,36 @@ export const useAppStore = create((set, get) => ({
   },
 
   // ─── Featurebase (Help → Give Feedback) ─────────────────────────────
-  // Identity-verification JWT minted by the featurebase-jwt Edge Function
-  // after login (see App.jsx). Used to build the portal SSO link so users
-  // land on feedback.foldhealth signed in. Null for dev-bypass sessions.
+  // Identity-verification JWT minted by the featurebase-jwt Edge Function.
+  // Used to build the portal SSO link so users land on feedback.foldhealth
+  // signed in. Null for dev-bypass sessions.
+  //
+  // Minted when the user reaches for Help, NOT at login. It used to be an
+  // Edge Function invocation on every page load in the app — 0.5–4.1 s in
+  // measurement — for a link most sessions never click.
   featurebaseJwt: null,
+  _featurebaseJwtPending: false,
   setFeaturebaseJwt: (jwt) => set({ featurebaseJwt: jwt }),
+  // Dropped on every auth change (App.jsx) so a JWT can never outlive the
+  // session that minted it, or follow a user switch. Clearing `pending` too
+  // means a mint still in flight across the change cannot land on the new
+  // session — its `set` is the last thing it does, and the next reach for
+  // Help re-mints from scratch.
+  resetFeaturebaseJwt: () => set({ featurebaseJwt: null, _featurebaseJwtPending: false }),
+  ensureFeaturebaseJwt: async () => {
+    if (get().featurebaseJwt || get()._featurebaseJwtPending) return;
+    // getSession() is local — no round trip just to find out we are in a
+    // dev-bypass session and should stay anonymous.
+    const { data } = await supabase.auth.getSession();
+    if (!data?.session?.user) return;
+    set({ _featurebaseJwtPending: true });
+    const { data: minted, error } = await supabase.functions.invoke('featurebase-jwt');
+    if (error) console.warn('[featurebase] jwt mint failed:', error.message);
+    // On failure this leaves the JWT null with `pending` released, so the next
+    // time the user opens Help it tries again — the old login-time mint had
+    // exactly one attempt per session.
+    set({ featurebaseJwt: minted?.jwt || null, _featurebaseJwtPending: false });
+  },
 
   // ─── Changelog (Help → What's New) ──────────────────────────────────
   // Rows are inserted by .github/workflows/changelog.yml on each push to
@@ -6831,15 +6856,24 @@ export const useAppStore = create((set, get) => ({
   // ─── All Patients (unified TOC + HCC view, Supabase-backed) ───
   allPatients: [],
   allPatientsLoading: false,
+  // Single-fire guard — same pattern and same reason as `patientsDidFetch`.
+  // Every caller guarded with `allPatients.length === 0` instead, which reads
+  // the length *before* the first fetch resolves: two components mounting in
+  // the same tick both see 0 and both fire, pulling this table's ~100 KB
+  // twice. TopBar + any page that wants patients is exactly that case.
+  allPatientsDidFetch: false,
   fetchAllPatients: async () => {
-    set({ allPatientsLoading: true });
+    if (useAppStore.getState().allPatientsDidFetch) return;
+    set({ allPatientsDidFetch: true, allPatientsLoading: true });
     const { data, error } = await supabase
       .from('all_patients')
       .select('*')
       .order('name', { ascending: true });
     if (error) {
       console.warn('fetchAllPatients error (falling back to combined TOC+HCC):', error.message);
-      set({ allPatients: [], allPatientsLoading: false });
+      // Release the guard so a retry (or the next mount) can try again —
+      // otherwise one transient failure means an empty table for the session.
+      set({ allPatients: [], allPatientsLoading: false, allPatientsDidFetch: false });
       return;
     }
     const rows = (data || []).map(r => ({

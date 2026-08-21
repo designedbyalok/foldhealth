@@ -16,28 +16,42 @@ export function useUsersTab() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [userFilters, setUserFilters] = useState({ status: [], roles: [], location: [] });
   const currentUserIdRef = useRef(null);
-  const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
+  // Signed-in user's id, and the dev-bypass flag for "no session at all".
+  // Only `getSession()` runs here — it reads the locally persisted session and
+  // costs no round trip, unlike `getUser()`.
+  const [meId, setMeId] = useState(null);
+  const [noSession, setNoSession] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setIsCurrentUserAdmin(true);
-        return;
-      }
+    supabase.auth.getSession().then(({ data }) => {
+      const session = data?.session;
+      if (!session) { setNoSession(true); return; }
       currentUserIdRef.current = session.user.id;
-      const { data } = await supabase
-        .from('profiles')
-        .select('role, clinical_roles, admin_role')
-        .eq('id', session.user.id)
-        .maybeSingle();
-      if (!data) { setIsCurrentUserAdmin(false); return; }
-      const isClinAdmin = data.role === 'Admin/Practice Manager'
-        || data.clinical_roles?.includes('Admin/Practice Manager');
-      const isSystemAdmin = data.admin_role === 'Business/Practice Owner';
-      setIsCurrentUserAdmin(isClinAdmin || isSystemAdmin);
-    })();
+      setMeId(session.user.id);
+    });
   }, []);
+
+  // Derived, not fetched. This used to be its own
+  // `profiles?select=role,clinical_roles,admin_role&id=eq.<me>` round trip,
+  // which is redundant: `fetchUsers` below already pulls every profile row
+  // including the signed-in user's, with these three columns in it. Verified
+  // against the live table — the current user is present in that response.
+  //
+  // One deliberate behaviour change: if the list query fails and `users` falls
+  // back to FALLBACK_USERS (no `_raw`), this is now false rather than
+  // separately resolved. That fails closed on a permission check, and in
+  // practice the standalone query hit the same table under the same RLS, so it
+  // would have failed too.
+  const isCurrentUserAdmin = useMemo(() => {
+    if (noSession) return true;   // dev bypass — unchanged
+    if (!meId) return false;
+    const raw = users.find(u => u.id === meId)?._raw;
+    if (!raw) return false;
+    const isClinAdmin = raw.role === 'Admin/Practice Manager'
+      || raw.clinical_roles?.includes('Admin/Practice Manager');
+    const isSystemAdmin = raw.admin_role === 'Business/Practice Owner';
+    return isClinAdmin || isSystemAdmin;
+  }, [users, meId, noSession]);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);

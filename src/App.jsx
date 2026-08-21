@@ -38,15 +38,15 @@ function App() {
   // client). The Help popover's "Give Feedback" builds the portal SSO link
   // from it so users land on the feedback portal already signed in.
   // Dev-bypass sessions stay anonymous (plain portal link).
+  //
+  // This effect only *invalidates*. The mint moved to `ensureFeaturebaseJwt`,
+  // called when the user reaches for Help (Sidebar), because minting it here
+  // meant one Edge Function invocation on every page load — 0.5–4.1 s
+  // measured — to prepare a link most sessions never click. Any session
+  // change (logout, token refresh, switching user) drops the old JWT so it
+  // can never be sent for the wrong identity; the next Help open re-mints.
   useEffect(() => {
-    const setFeaturebaseJwt = useAppStore.getState().setFeaturebaseJwt;
-    if (!session?.user) { setFeaturebaseJwt(null); return; }
-    let cancelled = false;
-    supabase.functions.invoke('featurebase-jwt').then(({ data, error }) => {
-      if (error) console.warn('[featurebase] jwt mint failed:', error.message);
-      if (!cancelled && data?.jwt) setFeaturebaseJwt(data.jwt);
-    });
-    return () => { cancelled = true; };
+    useAppStore.getState().resetFeaturebaseJwt();
   }, [session]);
 
   // Track the hash so the public-form route reacts to navigation.
