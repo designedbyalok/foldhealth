@@ -5,6 +5,7 @@ import { useTableSort } from '../../components/HeaderCell/useTableSort';
 import { useWorklistColumns } from '../../components/WorklistColumns/useWorklistColumns';
 import { HCC_COLUMNS } from './columns';
 import { memberMatchesFilters, countActiveFilters } from './filters';
+import { getChartDocs } from './data/chartDocs';
 import { slaDueCategory } from './sla';
 import { GAP_ONLY_FILTER_KEYS } from './HccWorklistTableParts.constants';
 
@@ -33,6 +34,15 @@ export function useHccWorklistTable() {
   const fetchHccAddedCharts = useAppStore(s => s.fetchHccAddedCharts);
   const fetchHccChartStatus = useAppStore(s => s.fetchHccChartStatus);
   const fetchHccRemovedCharts = useAppStore(s => s.fetchHccRemovedCharts);
+  // Chart slices — source of truth for a record's LIVE document count (seeded
+  // defaults + uploads/added, minus removed). The static `m.ch` seed doesn't
+  // track later attachments, so the enriched memo below computes the real
+  // count from these and exposes it as `docCount` for the doc-count filter.
+  // Grouped with the other store selectors (not read mid-hook) to keep hook
+  // order stable.
+  const hccAddedCharts = useAppStore(s => s.hccAddedCharts);
+  const hccChartStatus = useAppStore(s => s.hccChartStatus);
+  const hccRemovedCharts = useAppStore(s => s.hccRemovedCharts);
   const selectedHccIds = useAppStore(s => s.selectedHccIds);
   const selectAllHcc = useAppStore(s => s.selectAllHcc);
   const clearHccSelected = useAppStore(s => s.clearHccSelected);
@@ -181,14 +191,25 @@ export function useHccWorklistTable() {
       resolved?.kind === 'unassigned' ? `~Awaiting ${resolved.role}` :  // ~ pushes to end of A-Z sort
       resolved?.kind === 'billing'    ? '~Billing Ready'             :
       '';
+    // Live document count — matches exactly what the Documents column renders
+    // (getChartDocs), so the doc-count filter agrees with what the user sees.
+    // Passes the original `m` (not a mutated ch) so getChartDocs' own
+    // `ch == null` seed-suppression sentinel keeps working.
+    const docCount = getChartDocs(
+      m,
+      hccAddedCharts[m.id] || [],
+      hccChartStatus[m.id] || {},
+      hccRemovedCharts[m.id] || [],
+    ).length;
     return {
       ...m,
       name_first: parts[0] || '',
       name_last: parts[parts.length - 1] || '',
       dob: ageNum, // proxy: older age = earlier DOB; matches prototype sort semantics
       assigneeName,
+      docCount,
     };
-  }), [dedupedMembers, hccDosAssignments]);
+  }), [dedupedMembers, hccDosAssignments, hccAddedCharts, hccChartStatus, hccRemovedCharts]);
 
   const filtered = useMemo(() => {
     let rows = enriched;

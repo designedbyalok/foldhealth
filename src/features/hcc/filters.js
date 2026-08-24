@@ -313,9 +313,15 @@ function matchOne(m, k, vals) {
       });
     }
     case 'chart': {
-      // Match if the record's document count falls into any of the selected
-      // buckets. Reads the same `ch` field the worklist Documents column uses.
-      const cnt = m.ch || 0;
+      // Match on the ACTUAL current document count, not the static seeded
+      // `ch`. `m.ch` is the original chart_count from hcc_members and does
+      // NOT reflect documents attached later via upload / added-charts — so a
+      // record the user has uploaded a doc to (visible in the Documents
+      // column, which renders from getChartDocs) still read ch=null and got
+      // wrongly excluded from doc-count filters (e.g. the Support default's
+      // ">= 1 document" rule). The worklist enriches each row with `docCount`
+      // = getChartDocs(...).length; fall back to `ch` for callers that don't.
+      const cnt = m.docCount ?? (m.ch || 0);
       return vals.some(v => {
         if (v === 'No Documents') return cnt === 0;
         if (v === '1 - 5') return cnt >= 1 && cnt <= 5;
