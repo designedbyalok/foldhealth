@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import styles from './ChartDetailDrawer.module.css';
-import { buildReviewStages, computeReviewProgress } from './DiagPanel/ReviewProgressPopover.utils';
+import { buildReviewStages, computeReviewProgress, stageStateForStatus } from './DiagPanel/ReviewProgressPopover.utils';
 import { dosKey } from './assignment/dosState';
 import { DOC_TYPES, makeUploadedChartDoc } from './data/chartDocs';
 import { staffForRole } from './assignment/astranaStaff';
@@ -407,8 +407,10 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
   const dosStateForBadge = (member?.id && dosDate)
     ? hccDosAssignmentsMap[dosKey(member.id, dosDate, dosRp, dosPos)]
     : null;
-  const teamReviewStages = buildReviewStages(member, dosStateForBadge);
-  const teamReviewProgress = computeReviewProgress(teamReviewStages);
+  // Base pipeline from the persisted engine/member status. The Support stage
+  // is overridden below with the drawer's LIVE status so passing a doc updates
+  // the Review Progress popover in realtime (see teamReviewStages).
+  const baseReviewStages = buildReviewStages(member, dosStateForBadge);
   // Once Support has handed off (marked Completed) and a Coder is on the DOS,
   // the Support assignee is no longer editable from this drawer — reassigning
   // would break the linear Support → Coder pipeline the engine enforces.
@@ -558,6 +560,25 @@ export function useChartDetailDrawer({ charts, initialId, member, onClose }) {
         ? { key: 'returned', label: 'Rebuttal' }
         : { key: 'action-needed', label: 'Action Needed' });
   const currentBadge = STATUS_BADGE[effectiveStatus] || STATUS_BADGE['action-needed'];
+
+  // Review Progress popover — the Support stage mirrors the drawer's LIVE
+  // status (effectiveStatus), so passing a doc flips it to Completed (etc.)
+  // in realtime instead of lingering on "Action Needed" until the drawer
+  // closes. effectiveStatus already reconciles engine precedence + the
+  // doc-derived value, so this keeps the popover, the header pill, and — once
+  // the on-close sync persists it — the DiagPanel all showing the same thing.
+  const UI_TO_ENGINE_STATUS = {
+    completed: 'Completed', 'in-progress': 'In Progress', insufficient: 'Insufficient',
+    rejected: 'Reject', returned: 'Returned', 'action-needed': 'Awaiting',
+  };
+  const liveSupportEngineStatus = UI_TO_ENGINE_STATUS[effectiveStatus] || null;
+  const teamReviewStages = liveSupportEngineStatus
+    ? baseReviewStages.map(st => (st.role === 'support'
+        ? { ...st, status: liveSupportEngineStatus, state: stageStateForStatus(liveSupportEngineStatus) }
+        : st))
+    : baseReviewStages;
+  const teamReviewProgress = computeReviewProgress(teamReviewStages);
+
   const openAction = () => {
     if (actionPos) { setActionPos(null); return; }
     const r = actionRef.current?.getBoundingClientRect();
