@@ -252,9 +252,7 @@
 .consentSectionHead { display: flex; flex-direction: column; gap: var(--space-1); }
 .consentSectionTitle { font-size: var(--font-base); font-weight: 600; color: var(--neutral-400); }
 .consentSectionHead .propHint { margin: 0; line-height: 1.45; }
-/* Category = section title, "Required" = column header, so each row carries a
-   single checkbox per column instead of a checkbox nested under a checkbox. */
-.consentGroup { --consent-req-col: 3.5rem; display: flex; flex-direction: column; }
+.consentGroup { display: flex; flex-direction: column; }
 .consentGroupHead {
   display: flex; align-items: center; gap: var(--space-1);
   padding: 0 var(--space-2) var(--space-1); margin-top: var(--space-1);
@@ -264,15 +262,14 @@
   text-transform: uppercase; color: var(--neutral-300);
 }
 .consentGroupCount { flex: 1 1 0; font-size: var(--font-sm); color: var(--neutral-200); }
-.consentGroupCol {
-  width: var(--consent-req-col); flex-shrink: 0; text-align: center;
-  font-size: var(--font-sm); color: var(--neutral-200);
-}
+/* One consent item — the summary line plus the collapsible description editor.
+   The whole block is the sortable unit, so hover lives here, not on the row. */
+.consentItemBlock { border-radius: 6px; }
+.consentItemBlock:hover { background: var(--neutral-50); }
 .consentRow {
   display: flex; align-items: center; gap: var(--space-2); min-width: 0;
-  min-height: 2.125rem; padding: 0 var(--space-2) 0 var(--space-1); border-radius: 6px;
+  min-height: 2.125rem; padding: 0 var(--space-2) 0 var(--space-1);
 }
-.consentRow:hover { background: var(--neutral-50); }
 .consentRowDrag {
   flex-shrink: 0; display: flex; padding: 0; border: none; background: none;
   cursor: grab; opacity: .5; touch-action: none;
@@ -283,16 +280,7 @@
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .consentRowOff .consentRowName { color: var(--neutral-200); }
-.consentRowReq {
-  width: var(--consent-req-col); flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-}
-.consentAddForm {
-  display: flex; flex-direction: column; gap: var(--space-3);
-  padding: var(--space-3); border: 0.5px solid var(--neutral-150); border-radius: 8px;
-  background: var(--neutral-50);
-}
-.consentAddActions { display: flex; align-items: center; gap: var(--space-2); }
+.consentAgreement { padding: var(--space-1) var(--space-2) var(--space-2) calc(var(--space-1) + 1.375rem); }
 
 /* ── Field inputs (shared canvas/preview) ───────────────────────────────── */
 /* Shared primitives (Input/Textarea/Select) fill their field column. */

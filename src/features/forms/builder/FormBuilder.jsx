@@ -22,17 +22,13 @@ import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Input } from '../../../components/Input/Input';
 import { Textarea } from '../../../components/Textarea/Textarea';
 import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
-import { Switch } from '../../../components/Switch/Switch';
 import { Toggle } from '../../../components/Toggle/Toggle';
 import { CloseButton } from '../../../components/CloseButton/CloseButton';
-import { Select } from '../../../components/Select/Select';
 import { useAppStore } from '../../../store/useAppStore';
 import { PALETTE_TABS, paletteFor } from './componentCatalog';
 import { instantiateInstrument } from './validatedInstruments';
 import {
   CONSENT_CATEGORY_OPTIONS,
-  createCustomConsentItem,
-  insertConsentItem,
   reorderConsentItems,
   syncConsentQuestions,
 } from './memberConsent';
@@ -298,6 +294,7 @@ function ConsentRow({ item, fieldLinkId, onToggleIncluded, onPatchItem, onRemove
     id: `consent:${item.id}`,
     data: { consentFieldId: fieldLinkId, category: item.category },
   });
+  const [editing, setEditing] = useState(false);
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -307,49 +304,59 @@ function ConsentRow({ item, fieldLinkId, onToggleIncluded, onPatchItem, onRemove
     <div
       ref={setNodeRef}
       style={style}
-      className={`${styles.consentRow} ${item.included ? '' : styles.consentRowOff}`}
+      className={`${styles.consentItemBlock} ${item.included ? '' : styles.consentRowOff}`}
     >
-      <button
-        className={styles.consentRowDrag}
-        {...listeners}
-        {...attributes}
-        aria-label={`Reorder ${item.name}`}
-      >
-        <DotsGrid />
-      </button>
-      <Checkbox
-        checked={!!item.included}
-        onCheckedChange={(checked) => onToggleIncluded(item, !!checked)}
-        aria-label={`Show ${item.name} on this form`}
-      />
-      <span className={styles.consentRowName} title={item.name}>{item.name}</span>
-      {item.custom && (
+      <div className={styles.consentRow}>
+        <button
+          className={styles.consentRowDrag}
+          {...listeners}
+          {...attributes}
+          aria-label={`Reorder ${item.name}`}
+        >
+          <DotsGrid />
+        </button>
+        <Checkbox
+          checked={!!item.included}
+          onCheckedChange={(checked) => onToggleIncluded(item, !!checked)}
+          aria-label={`Show ${item.name} on this form`}
+        />
+        <span className={styles.consentRowName} title={item.name}>{item.name}</span>
+        {item.custom && (
+          <ActionButton
+            icon="solar:trash-bin-trash-linear"
+            size="S"
+            tooltip="Remove"
+            tooltipLeft
+            onClick={() => onRemove(item)}
+          />
+        )}
         <ActionButton
-          icon="solar:trash-bin-trash-linear"
+          icon="solar:pen-linear"
           size="S"
-          tooltip="Remove"
+          tooltip={editing ? 'Hide description' : 'Edit description'}
           tooltipLeft
-          onClick={() => onRemove(item)}
+          active={editing}
+          onClick={() => setEditing((v) => !v)}
         />
+      </div>
+      {editing && (
+        <div className={styles.consentAgreement}>
+          <Textarea
+            className={styles.ctl}
+            rows={4}
+            placeholder="Describe what the member is consenting to"
+            value={item.agreement || ''}
+            aria-label={`${item.name} consent description`}
+            onChange={(e) => onPatchItem(item.id, { agreement: e.target.value })}
+          />
+        </div>
       )}
-      <span className={styles.consentRowReq}>
-        <Switch
-          checked={!!item.mandatory}
-          disabled={!item.included}
-          ariaLabel={`${item.name} response is required`}
-          onChange={(mandatory) => onPatchItem(item.id, { mandatory })}
-        />
-      </span>
     </div>
   );
 }
 
 function ConsentProperties({ field, onPatch }) {
   const uid = useId();
-  const [adding, setAdding] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [newCategory, setNewCategory] = useState('program');
-  const [nameError, setNameError] = useState('');
   const consentItems = field.consentItems || [];
 
   const commitItems = (nextItems) => {
@@ -366,23 +373,7 @@ function ConsentProperties({ field, onPatch }) {
   };
 
   const toggleIncluded = (item, included) => {
-    patchItem(item.id, {
-      included,
-      ...(!included ? { mandatory: false } : {}),
-    });
-  };
-
-  const addItem = () => {
-    const name = newName.trim();
-    if (!name) {
-      setNameError('Enter a consent type name.');
-      return;
-    }
-    commitItems(insertConsentItem(consentItems, createCustomConsentItem(name, newCategory)));
-    setNewName('');
-    setNewCategory('program');
-    setNameError('');
-    setAdding(false);
+    patchItem(item.id, { included });
   };
 
   return (
@@ -427,7 +418,8 @@ function ConsentProperties({ field, onPatch }) {
         <div className={styles.consentSectionHead}>
           <span className={styles.consentSectionTitle}>Consent items on this form</span>
           <span className={styles.propHint}>
-            Pick the items to show, then mark which ones the member must answer.
+            Pick the items to show, then edit each description to match what the
+            member is agreeing to.
           </span>
         </div>
 
@@ -440,7 +432,6 @@ function ConsentProperties({ field, onPatch }) {
               <div className={styles.consentGroupHead}>
                 <span className={styles.consentGroupTitle}>{label}</span>
                 <span className={styles.consentGroupCount}>{shown}/{rows.length}</span>
-                <span className={styles.consentGroupCol}>Required</span>
               </div>
               <SortableContext
                 items={rows.map((item) => `consent:${item.id}`)}
@@ -460,59 +451,6 @@ function ConsentProperties({ field, onPatch }) {
             </div>
           );
         })}
-
-        {adding ? (
-          <div className={styles.consentAddForm}>
-            <Input
-              label="Consent type name"
-              value={newName}
-              placeholder="e.g. Palliative Care"
-              errorText={nameError}
-              validateOn="none"
-              onChange={(e) => {
-                setNewName(e.target.value);
-                if (nameError) setNameError('');
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addItem();
-                }
-              }}
-            />
-            <Select
-              label="Category"
-              value={newCategory}
-              options={CONSENT_CATEGORY_OPTIONS}
-              onChange={setNewCategory}
-              portal
-            />
-            <div className={styles.consentAddActions}>
-              <Button variant="primary" size="L" onClick={addItem}>Add item</Button>
-              <Button
-                variant="ghost"
-                size="L"
-                onClick={() => {
-                  setAdding(false);
-                  setNewName('');
-                  setNameError('');
-                }}
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <Button
-            variant="secondary"
-            size="L"
-            fullWidth
-            leadingIcon="solar:add-circle-linear"
-            onClick={() => setAdding(true)}
-          >
-            Add consent type
-          </Button>
-        )}
       </div>
     </aside>
   );
