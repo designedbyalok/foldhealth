@@ -113,7 +113,7 @@ export function makeMemberConsent() {
   return {
     type: 'group',
     text: 'Member Consent',
-    description: 'Review each selected program or service and record the member’s decision.',
+    description: 'Check only the services you would like to receive when available and deemed medically necessary.',
     healthKey: 'memberConsent',
     required: true,
     reusable: false,
