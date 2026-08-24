@@ -67,12 +67,12 @@ describe('member consent health component', () => {
     const questions = syncConsentQuestions(field.items.map(assignIds), items, assignIds);
 
     expect(items.map((i) => i.id)).toEqual([
-      'ccm', 'apcm', 'bhi', 'primary-care', 'custom-1',
-      'podiatry', 'mental-health', 'wound-care', 'palliative-care', 'telehealth',
+      'ccm', 'apcm', 'bhi', 'custom-1',
+      'primary-care', 'podiatry', 'mental-health', 'wound-care', 'palliative-care', 'telehealth',
     ]);
     expect(questions.map((q) => q.consentKey)).toEqual([
-      'ccm', 'apcm', 'bhi', 'primary-care', 'custom-1',
-      'podiatry', 'mental-health', 'wound-care', 'palliative-care', 'telehealth',
+      'ccm', 'apcm', 'bhi', 'custom-1',
+      'primary-care', 'podiatry', 'mental-health', 'wound-care', 'palliative-care', 'telehealth',
     ]);
   });
 

@@ -31,7 +31,7 @@ const DEFAULT_ITEMS = [
   {
     id: 'primary-care',
     name: 'Primary Care',
-    category: 'program',
+    category: 'service',
     included: true,
     mandatory: false,
     agreement: 'Primary Care provides ongoing, whole-person medical care — routine checkups, preventive screenings, and coordination of the member’s overall treatment.',
