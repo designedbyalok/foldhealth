@@ -1529,7 +1529,11 @@ export const useAppStore = create((set, get) => ({
       };
     });
     // Persist so the Pass/Fail mark AND (when Failed) the reason list + comment
-    // survive reload. Non-failed statuses clear the two fail columns.
+    // survive reload. Non-failed statuses clear the two fail columns. Failures
+    // route through reportPersistFailure (not a silent console.warn) so an RLS
+    // block or unreachable backend surfaces a user-visible toast — a silent
+    // failure here is exactly what made doc reviews "vanish" on refresh with
+    // no signal. `.select('id')` lets us catch an UPDATE that matched 0 rows.
     supabase
       .from('hcc_chart_status')
       .upsert({
@@ -1541,8 +1545,10 @@ export const useAppStore = create((set, get) => ({
         fail_note: isFailed && failNote ? failNote : null,
         updated_at: new Date().toISOString(),
       })
-      .then(({ error }) => {
-        if (error) console.warn(`setChartDocStatus persist(${memberId}|${docId}) failed:`, error.message);
+      .select('id')
+      .then(({ data, error }) => {
+        if (error) return reportPersistFailure(`setChartDocStatus(${memberId}|${docId})`, error);
+        if (!data || data.length === 0) reportPersistFailure(`setChartDocStatus(${memberId}|${docId})`, { message: 'affected 0 rows' });
       });
     // Callers reviewing docs inside the ChartDetailDrawer pass deferSync so
     // the record's supS doesn't flip mid-review — flipping it there would
@@ -5122,17 +5128,23 @@ export const useAppStore = create((set, get) => ({
       .select('*')
       // SLA default: oldest Created Date first (closest to breaching the window).
       .order('create_date', { ascending: true });
+    // fetchHccMembers is called unguarded from several surfaces (worklist,
+    // TopBar, home card, patient detail). If a LATER call transiently errors
+    // or returns empty, we must NOT overwrite already-loaded real rows with
+    // the seed mock — that is exactly what made persisted statuses/assignees
+    // "reset" mid-session. Only fall back to the mock on a genuine cold start
+    // (nothing loaded yet); otherwise keep what we have.
+    const haveRealRows = (get().hccMembers || []).length > 0;
     if (error) {
-      // Phase 2f — Supabase error: fall back to the full local mock so the
-      // worklist still has rows. Logs the error so we don't silently swap
-      // backends without noticing.
-      console.warn('fetchHccMembers error — falling back to local mock:', error.message);
+      console.warn('fetchHccMembers error:', error.message);
+      if (haveRealRows) { set({ hccMembersLoading: false }); return; }
       const { HCC_MEMBERS } = await import('../features/hcc/data/mock');
       set({ hccMembers: await finalize(HCC_MEMBERS), hccMembersLoading: false });
       return;
     }
-    // Empty result set: same fallback.
+    // Empty result set: same guard — keep loaded rows, else seed from mock.
     if (!data || data.length === 0) {
+      if (haveRealRows) { set({ hccMembersLoading: false }); return; }
       const { HCC_MEMBERS } = await import('../features/hcc/data/mock');
       set({ hccMembers: await finalize(HCC_MEMBERS), hccMembersLoading: false });
       return;

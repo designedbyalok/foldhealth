@@ -89,19 +89,25 @@ export function getChartDocs(member, added = [], statusOverrides = {}, removedId
     const removed = new Set(removedIds);
     all = all.filter(d => !removed.has(d.id));
   }
-  // Per-doc overrides only apply when Support has an assignee — nobody can
-  // have "passed" the record if no one has been assigned to review it. This
-  // hides stale Passed/Failed marks left over from a prior session and keeps
-  // the worklist Evidence cell, the Chart Review drawer, and the DiagPanel
-  // Support pill in sync: all three read Pending when Support is unassigned.
+  // An explicit persisted override (from hcc_chart_status — a real Pass/Fail
+  // a user recorded in the drawer) is authoritative and ALWAYS wins. It must
+  // never be discarded, even when Support currently shows no assignee: the
+  // doc-status write and the support-assignee write are separate, non-atomic
+  // persists, so a member can legitimately have a persisted Passed doc while
+  // its support assignment is (transiently) missing. Forcing such docs back
+  // to Pending here silently reverted the user's saved review on refresh.
+  //
+  // The "force Pending when Support is unassigned" rule only exists to hide
+  // STALE SEED DEFAULTS (generateDefaultCharts / member.docStatus) — docs
+  // that were never actually reviewed. So it applies only to docs WITHOUT an
+  // explicit override.
+  const overrides = (statusOverrides && Object.keys(statusOverrides).length) ? statusOverrides : null;
   const hasSupportAssignee = !!(member?.sup && String(member.sup).trim());
-  if (!hasSupportAssignee) {
-    return all.map(d => ({ ...d, status: 'Pending' }));
-  }
-  if (statusOverrides && Object.keys(statusOverrides).length) {
-    return all.map(d => (statusOverrides[d.id] ? { ...d, status: statusOverrides[d.id] } : d));
-  }
-  return all;
+  return all.map(d => {
+    if (overrides && overrides[d.id]) return { ...d, status: overrides[d.id] };
+    if (!hasSupportAssignee) return { ...d, status: 'Pending' };
+    return d;
+  });
 }
 
 // Document types offered when uploading a new chart (shared by the upload
