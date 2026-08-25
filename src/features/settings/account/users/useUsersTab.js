@@ -174,7 +174,8 @@ export function useUsersTab() {
       return !error && data && data.length > 0;
     }));
     const okCount = results.filter(Boolean).length;
-    setUsers(prev => prev.filter(u => !ids.includes(u.id)));
+    const idSet = new Set(ids);
+    setUsers(prev => prev.filter(u => !idSet.has(u.id)));
     fetchUsers();
     if (okCount) showToast(`${okCount} user${okCount === 1 ? '' : 's'} deleted`);
     if (okCount < ids.length) showToast(`${ids.length - okCount} could not be deleted (check permissions)`);

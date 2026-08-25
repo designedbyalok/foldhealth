@@ -398,8 +398,12 @@ export function AgentsTable() {
     const ids = bulk.selectedIdList;
     if (!ids.length) { setBulkDeleteOpen(false); return; }
     setBulkDeleting(true);
-    const { error } = await supabase.from('agents').delete().in('id', ids);
-    setBulkDeleting(false);
+    let error;
+    try {
+      ({ error } = await supabase.from('agents').delete().in('id', ids));
+    } finally {
+      setBulkDeleting(false);
+    }
     if (error) { showToast?.('Could not delete agents — check permissions'); return; }
     setBulkDeleteOpen(false);
     bulk.exitBulk();

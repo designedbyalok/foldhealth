@@ -142,11 +142,15 @@ export function LocationsTab({ tabsForBar, activeTab, setActiveTab }) {
     // Soft-delete, matching the single-row path. Optimistically drop each from
     // the store, then persist in one statement.
     ids.forEach((id) => removeLocationStore(id));
-    const { error } = await supabase
-      .from('practice_locations')
-      .update({ deleted_at: new Date().toISOString() })
-      .in('id', ids);
-    setBulkDeleting(false);
+    let error;
+    try {
+      ({ error } = await supabase
+        .from('practice_locations')
+        .update({ deleted_at: new Date().toISOString() })
+        .in('id', ids));
+    } finally {
+      setBulkDeleting(false);
+    }
     setBulkDeleteOpen(false);
     if (error) {
       showToast?.(`Delete failed: ${error.message}`);

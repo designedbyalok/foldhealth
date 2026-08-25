@@ -44,8 +44,11 @@ export function UsersTab({ tabsForBar, activeTab, setActiveTab }) {
     const ids = bulk.selectedIdList;
     if (!ids.length) { setBulkDeleteOpen(false); return; }
     setBulkDeleting(true);
-    await tab.deleteUsersBulk(ids);
-    setBulkDeleting(false);
+    try {
+      await tab.deleteUsersBulk(ids);
+    } finally {
+      setBulkDeleting(false);
+    }
     setBulkDeleteOpen(false);
     bulk.exitBulk();
   };

@@ -60,10 +60,12 @@ export function useBulkSelect(resetKey) {
   const enterBulk = useCallback(() => setBulkMode(true), []);
   const exitBulk = useCallback(() => { setBulkMode(false); setSelectedIds(new Set()); }, []);
   const toggleBulk = useCallback(() => {
-    setBulkMode((on) => {
-      if (on) setSelectedIds(new Set());
-      return !on;
-    });
+    // Two separate, pure state updates. Clearing unconditionally is fine:
+    // turning bulk mode ON, the selection is already empty; turning it OFF, we
+    // want it cleared. (Calling setSelectedIds inside the setBulkMode updater
+    // would be an impure updater.)
+    setBulkMode((on) => !on);
+    setSelectedIds(new Set());
   }, []);
 
   return {
