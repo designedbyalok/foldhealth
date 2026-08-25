@@ -1126,12 +1126,21 @@
 
 
 /* Override the shared BulkBar's viewport-centered positioning when it's
-   rendered inside the DiagPanel drawer. The drawer is 700px wide with an
-   8px right inset (see Drawer.module.css), so its horizontal centre sits
-   at 100vw − (700/2 + 8) = 100vw − 358px. The transform shifts the bar
-   left by half its own width to place its centre at the drawer's centre. */
+   rendered inside the DiagPanel drawer.
+   The shared bar is `position: fixed`, but the drawer's `.panel` carries a
+   `transform` (its slide animation, always present as translateX(0)), which
+   makes the panel the containing block for any fixed descendant. So the bar's
+   coordinates resolve against the PANEL, not the viewport — the old
+   `left: calc(100vw − 358px)` hard-coded a 700px drawer and pushed the bar off
+   the panel's right edge (misaligned, and fully off-screen at other widths /
+   when the panel is resized or a left sub-panel is open — the "sometimes
+   doesn't show up" report).
+   Fixing it as `absolute` + `left: 50%` centres the bar within the panel of
+   whatever width, tracking resize and the left sub-panel automatically. It
+   resolves against the same panel, so nothing else about the layout changes. */
 .bulkBarInDrawer {
-  left: calc(100vw - 358px) !important;
+  position: absolute !important;
+  left: 50% !important;
   right: auto !important;
   bottom: 32px !important;
   transform: translateX(-50%) !important;
