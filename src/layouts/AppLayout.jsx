@@ -23,6 +23,7 @@ import { PopulationGroupsView } from '../features/population-groups/PopulationGr
 import { PgProcessingHost } from '../features/population-groups/PgProcessingHost';
 import { Icon } from '../components/Icon/Icon';
 import { useAppStore } from '../store/useAppStore';
+import { parseHash } from '../lib/router';
 import { useNotificationsFeed } from '../components/NotificationsPopover/useNotificationsFeed';
 import { splitFullName } from '../lib/nameValidation';
 import { Toaster } from '../components/Toast/Toast';
@@ -402,7 +403,12 @@ export function AppLayout() {
         if (mode && mode !== 'edit') useAppStore.getState().setFormBuilderMode(mode);
         if (mode === 'analytics' && subTab) useAppStore.getState().setFormAnalyticsTab(subTab);
       } else {
+        // Form is gone (deleted, or a stale/typo'd id). Reset builder state AND
+        // leave the form-edit URL — otherwise onFormBuilderRoute stays true and
+        // the takeover would show the loading fallback indefinitely.
+        useAppStore.getState().showToast?.('Form not found');
         useAppStore.setState({ editingFormId: null, formBuilderForm: null });
+        if (typeof window !== 'undefined') window.location.hash = '#/settings/content/forms';
       }
       useAppStore.setState({ _pendingFormEditId: null, _pendingFormMode: null, _pendingFormAnalyticsTab: null });
     })();
@@ -431,7 +437,21 @@ export function AppLayout() {
   const editingCampaignId = useAppStore(s => s.editingCampaignId);
   const campaignBuilderId = useAppStore(s => s.campaignBuilderId);
   const editingFormId = useAppStore(s => s.editingFormId);
+  const formBuilderForm = useAppStore(s => s.formBuilderForm);
   const formViewId = useAppStore(s => s.formViewId);
+
+  // Reload-safe form-builder detection. On a refresh of
+  // #/settings/content/forms/{id}/{mode}, `editingFormId` is null until the
+  // hydration effect below has fetched the form and called openFormBuilder —
+  // an async gap during which the content list would otherwise render, so the
+  // editor "flashed back to the list and returned". Reading the URL
+  // synchronously here lets the builder takeover win on the very first paint.
+  // App re-renders AppLayout on every hashchange, so this stays in sync with
+  // client navigation too.
+  const formRoute = parseHash();
+  const onFormBuilderRoute =
+    formRoute.page === 'settings' && formRoute.section === 'content'
+    && formRoute.tab === 'forms' && !!formRoute.id;
 
   // Email Builder is a full-screen takeover when editing a campaign. Wins over
   // the CampaignBuilder so "Edit Template" from inside the campaign builder
@@ -477,11 +497,16 @@ export function AppLayout() {
 
   // Form Builder is a focused full-screen takeover (no app sidebar — it has its
   // own header + close action that returns to #/settings/content/forms).
-  if (editingFormId) {
+  // Rendered whenever the URL is a form-edit route, not only once the store's
+  // editingFormId is set, so a reload never flashes the content list first.
+  // While the form is still loading (reload, before fetchFormById resolves)
+  // show the neutral fallback rather than an empty "Untitled Form" — the
+  // not-found path redirects to the list, so this can't spin forever.
+  if (editingFormId || onFormBuilderRoute) {
     return (
       <div className={styles.app}>
         <Suspense fallback={<LazyFallback />}>
-          <FormBuilder />
+          {formBuilderForm ? <FormBuilder /> : <LazyFallback />}
         </Suspense>
         <Toaster />
       </div>
