@@ -1,5 +1,6 @@
 import { Badge } from '../../../../components/Badge/Badge';
 import { Avatar } from '../../../../components/Avatar/Avatar';
+import { Checkbox } from '../../../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { ROLE_COLORS } from '../AccountPanel.constants';
 import { statusBadge, formatDate, formatRelative } from './UsersTab.utils';
 import { UserActions } from './UserActions';
@@ -14,14 +15,29 @@ export function UsersTabRow({
   onResetPassword,
   onToggleStatus,
   onDelete,
+  bulkMode = false,
+  selected = false,
+  onToggleSelect,
 }) {
   const sb = statusBadge(user.status);
   const rel = formatRelative(user.lastActiveAt);
 
   return (
-    <tr key={user.id} className={styles.row}>
-      <td className={`${styles.membersTd} ${styles.stickyLeft}`} style={{ left: 0 }}>
-        <button type="button" className={styles.userCell} onClick={() => onView(user)}>
+    <tr
+      key={user.id}
+      className={`${styles.row} ${bulkMode && selected ? styles.rowSelected : ''}`}
+    >
+      {bulkMode && (
+        <td className={`${styles.checkTd} ${styles.stickyLeft}`} style={{ left: 0 }}>
+          <Checkbox checked={selected} onCheckedChange={() => onToggleSelect?.(user.id)} aria-label={`Select ${user.name}`} />
+        </td>
+      )}
+      <td className={`${styles.membersTd} ${styles.stickyLeft}`} style={{ left: bulkMode ? 36 : 0 }}>
+        <button
+          type="button"
+          className={styles.userCell}
+          onClick={() => (bulkMode ? onToggleSelect?.(user.id) : onView(user))}
+        >
           <Avatar variant="staff" size="M" initials={user.initials} />
           <div className={styles.userInfo}>
             <span className={styles.userName}>{user.name}</span>

@@ -7,6 +7,9 @@ import { ActionButton } from '../../../../components/ActionButton/ActionButton';
 import { SectionTitleBar } from '../../../../components/SectionTitleBar/SectionTitleBar';
 import { WorklistShell } from '../../../../components/WorklistShell/WorklistShell';
 import { ConfirmDialog } from '../../../../components/ConfirmDialog/ConfirmDialog';
+import { Checkbox } from '../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { BulkSelectToggle } from '../../../../components/BulkSelect/BulkSelectToggle';
+import { useBulkSelect } from '../../../../components/BulkSelect/useBulkSelect';
 import { useTableSort } from '../../../../components/HeaderCell/useTableSort';
 import { EditLocationDrawer } from './EditLocationDrawer';
 import panelStyles from '../AccountPanel.module.css';
@@ -49,6 +52,11 @@ export function LocationsTab({ tabsForBar, activeTab, setActiveTab }) {
   const [editing, setEditing] = useState(null);   // location object being edited
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState(null); // location object flagged for delete
+
+  // Bulk-select. Reset when the account subtab changes.
+  const bulk = useBulkSelect(activeTab);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   // The store's fetched flag makes this a once-per-session query; the
   // upsert/remove mutations keep the local copy in sync afterwards.
@@ -127,9 +135,50 @@ export function LocationsTab({ tabsForBar, activeTab, setActiveTab }) {
     }
   };
 
+  const handleBulkDelete = async () => {
+    const ids = bulk.selectedIdList;
+    if (!ids.length) { setBulkDeleteOpen(false); return; }
+    setBulkDeleting(true);
+    // Soft-delete, matching the single-row path. Optimistically drop each from
+    // the store, then persist in one statement.
+    ids.forEach((id) => removeLocationStore(id));
+    const { error } = await supabase
+      .from('practice_locations')
+      .update({ deleted_at: new Date().toISOString() })
+      .in('id', ids);
+    setBulkDeleting(false);
+    setBulkDeleteOpen(false);
+    if (error) {
+      showToast?.(`Delete failed: ${error.message}`);
+      fetchLocations();
+      return;
+    }
+    bulk.exitBulk();
+    showToast?.(`${ids.length} location${ids.length === 1 ? '' : 's'} deleted`);
+  };
+
+  // Sticky select column prepended in bulk mode; Name shifts right by 36.
+  const columns = useMemo(() => (
+    bulk.bulkMode
+      ? [
+          { key: 'select', showCheckbox: true, sticky: 'left', left: 0, width: 36 },
+          ...LOCATION_COLUMNS.map(c => (c.key === 'name' ? { ...c, left: 36 } : c)),
+        ]
+      : LOCATION_COLUMNS
+  ), [bulk.bulkMode]);
+
   const renderRow = (loc) => (
-    <tr key={loc.id} className={styles.row} onClick={() => setEditing(loc)}>
-      <td className={`${styles.membersTd} ${styles.stickyLeft}`} style={{ left: 0 }}>
+    <tr
+      key={loc.id}
+      className={`${styles.row} ${bulk.bulkMode && bulk.isSelected(loc.id) ? styles.rowSelected : ''}`}
+      onClick={() => (bulk.bulkMode ? bulk.toggleId(loc.id) : setEditing(loc))}
+    >
+      {bulk.bulkMode && (
+        <td className={`${styles.checkTd} ${styles.stickyLeft}`} style={{ left: 0 }} onClick={e => e.stopPropagation()}>
+          <Checkbox checked={bulk.isSelected(loc.id)} onCheckedChange={() => bulk.toggleId(loc.id)} aria-label={`Select ${loc.name}`} />
+        </td>
+      )}
+      <td className={`${styles.membersTd} ${styles.stickyLeft}`} style={{ left: bulk.bulkMode ? 36 : 0 }}>
         <span className={styles.nameCell}>{loc.name}</span>
       </td>
       <td className={styles.td}>
@@ -164,6 +213,7 @@ export function LocationsTab({ tabsForBar, activeTab, setActiveTab }) {
       onSearchChange={setSearchVal}
       primaryActionLabel="New Location"
       onPrimaryAction={() => setCreating(true)}
+      rightExtras={<BulkSelectToggle active={bulk.bulkMode} onToggle={bulk.toggleBulk} />}
     />
   );
 
@@ -171,12 +221,21 @@ export function LocationsTab({ tabsForBar, activeTab, setActiveTab }) {
     <>
       <WorklistShell
         header={header}
-        columns={LOCATION_COLUMNS}
+        columns={columns}
         sortKey={sortKey}
         sortDir={sortDir}
         onSort={requestSort}
         rows={paginated}
         renderRow={renderRow}
+        selectedIds={bulk.selectedIdList}
+        onSelectAll={(checked) => bulk.setMany(paginated.map(l => l.id), checked)}
+        onClearSelection={bulk.clearSelection}
+        bulkActions={[{
+          label: 'Delete',
+          icon: 'solar:trash-bin-trash-linear',
+          variant: 'secondary',
+          onClick: () => setBulkDeleteOpen(true),
+        }]}
         loading={loading && !fetched}
         emptyState={
           <div className={panelStyles.emptyState}>
@@ -213,6 +272,19 @@ export function LocationsTab({ tabsForBar, activeTab, setActiveTab }) {
           confirmLabel="Delete Location"
           onCancel={() => setDeleting(null)}
           onConfirm={handleConfirmDelete}
+        />
+      )}
+
+      {bulkDeleteOpen && (
+        <ConfirmDialog
+          variant="destructive"
+          icon="solar:trash-bin-2-linear"
+          title={`Delete ${bulk.count} location${bulk.count === 1 ? '' : 's'}?`}
+          description="Please confirm if you want to permanently delete the selected locations from the system."
+          confirmLabel="Delete Locations"
+          loading={bulkDeleting}
+          onCancel={() => setBulkDeleteOpen(false)}
+          onConfirm={handleBulkDelete}
         />
       )}
     </>

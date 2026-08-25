@@ -158,6 +158,29 @@ export function useUsersTab() {
     }
   };
 
+  // Bulk delete — same edge-function-then-profiles-fallback path as
+  // deleteUser, run per id in parallel. The bulk confirm dialog replaces the
+  // per-row confirm(). Returns true if at least one deletion succeeded.
+  const deleteUsersBulk = async (ids) => {
+    if (!isCurrentUserAdmin) {
+      showToast('Only Admin/Practice Manager can delete users');
+      return false;
+    }
+    if (!ids?.length) return false;
+    const results = await Promise.all(ids.map(async (id) => {
+      const { error: fnError } = await supabase.functions.invoke('delete-user', { body: { userId: id } });
+      if (!fnError) return true;
+      const { data, error } = await supabase.from('profiles').delete().eq('id', id).select();
+      return !error && data && data.length > 0;
+    }));
+    const okCount = results.filter(Boolean).length;
+    setUsers(prev => prev.filter(u => !ids.includes(u.id)));
+    fetchUsers();
+    if (okCount) showToast(`${okCount} user${okCount === 1 ? '' : 's'} deleted`);
+    if (okCount < ids.length) showToast(`${ids.length - okCount} could not be deleted (check permissions)`);
+    return okCount > 0;
+  };
+
   const resetPassword = async (user) => {
     if (!isCurrentUserAdmin) {
       showToast('Only Admin/Practice Manager can reset passwords');
@@ -264,6 +287,7 @@ export function useUsersTab() {
     fetchUsers,
     toggleUserStatus,
     deleteUser,
+    deleteUsersBulk,
     resetPassword,
     saveUserProfile,
     filteredUsers,

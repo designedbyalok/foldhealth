@@ -7,6 +7,8 @@
 .stickyRight  { composes: stickyRight  from '../../../../components/WorklistShell/WorklistRow.module.css'; }
 .td           { composes: td           from '../../../../components/WorklistShell/WorklistRow.module.css'; }
 .membersTd    { composes: membersTd    from '../../../../components/WorklistShell/WorklistRow.module.css'; }
+.checkTd      { composes: checkTd      from '../../../../components/WorklistShell/WorklistRow.module.css'; }
+.rowSelected  { composes: rowSelected  from '../../../../components/WorklistShell/WorklistRow.module.css'; }
 
 .nameCell {
   font-size: var(--font-base);

@@ -3,6 +3,9 @@ import { Icon } from '../../../../components/Icon/Icon';
 import { SectionTitleBar } from '../../../../components/SectionTitleBar/SectionTitleBar';
 import { FilterBar } from '../../../../components/FilterBar/FilterBar';
 import { WorklistShell } from '../../../../components/WorklistShell/WorklistShell';
+import { ConfirmDialog } from '../../../../components/ConfirmDialog/ConfirmDialog';
+import { BulkSelectToggle } from '../../../../components/BulkSelect/BulkSelectToggle';
+import { useBulkSelect } from '../../../../components/BulkSelect/useBulkSelect';
 import { useTableSort } from '../../../../components/HeaderCell/useTableSort';
 import { ViewUserDrawer, EditUserDrawer } from '../AccountPanel';
 import { InviteUserDrawer } from '../InviteUserDrawer';
@@ -17,12 +20,35 @@ export function UsersTab({ tabsForBar, activeTab, setActiveTab }) {
   const [userPage, setUserPage] = useState(1);
   const [userPerPage, setUserPerPage] = useState(10);
 
+  const bulk = useBulkSelect(activeTab);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
   useEffect(() => { setUserPage(1); }, [tab.searchVal, tab.userFilters, sortKey, sortDir]);
 
   const paginatedUsers = useMemo(
     () => sortedUsers.slice((userPage - 1) * userPerPage, userPage * userPerPage),
     [sortedUsers, userPage, userPerPage],
   );
+
+  const columns = useMemo(() => (
+    bulk.bulkMode
+      ? [
+          { key: 'select', showCheckbox: true, sticky: 'left', left: 0, width: 36 },
+          ...USERS_COLUMNS.map(c => (c.key === 'name' ? { ...c, left: 36 } : c)),
+        ]
+      : USERS_COLUMNS
+  ), [bulk.bulkMode]);
+
+  const handleBulkDelete = async () => {
+    const ids = bulk.selectedIdList;
+    if (!ids.length) { setBulkDeleteOpen(false); return; }
+    setBulkDeleting(true);
+    await tab.deleteUsersBulk(ids);
+    setBulkDeleting(false);
+    setBulkDeleteOpen(false);
+    bulk.exitBulk();
+  };
 
   const renderRow = useCallback((user) => (
     <UsersTabRow
@@ -34,8 +60,11 @@ export function UsersTab({ tabsForBar, activeTab, setActiveTab }) {
       onResetPassword={tab.resetPassword}
       onToggleStatus={tab.toggleUserStatus}
       onDelete={tab.deleteUser}
+      bulkMode={bulk.bulkMode}
+      selected={bulk.isSelected(user.id)}
+      onToggleSelect={bulk.toggleId}
     />
-  ), [tab]);
+  ), [tab, bulk]);
 
   const header = (
     <SectionTitleBar
@@ -51,6 +80,7 @@ export function UsersTab({ tabsForBar, activeTab, setActiveTab }) {
       onFilter={() => tab.setFilterOpen(v => !v)}
       primaryActionLabel="Invite User"
       onPrimaryAction={() => tab.setShowInvite(true)}
+      rightExtras={<BulkSelectToggle active={bulk.bulkMode} onToggle={bulk.toggleBulk} />}
     />
   );
 
@@ -74,12 +104,21 @@ export function UsersTab({ tabsForBar, activeTab, setActiveTab }) {
         header={header}
         showFilters={tab.filterOpen}
         filters={filterNode}
-        columns={USERS_COLUMNS}
+        columns={columns}
         sortKey={sortKey}
         sortDir={sortDir}
         onSort={requestSort}
         rows={paginatedUsers}
         renderRow={renderRow}
+        selectedIds={bulk.selectedIdList}
+        onSelectAll={(checked) => bulk.setMany(paginatedUsers.map(u => u.id), checked)}
+        onClearSelection={bulk.clearSelection}
+        bulkActions={[{
+          label: 'Delete',
+          icon: 'solar:trash-bin-trash-linear',
+          variant: 'secondary',
+          onClick: () => setBulkDeleteOpen(true),
+        }]}
         loading={tab.loading && paginatedUsers.length === 0}
         emptyState={
           <div className={panelStyles.emptyState}>
@@ -113,6 +152,21 @@ export function UsersTab({ tabsForBar, activeTab, setActiveTab }) {
         <InviteUserDrawer
           onClose={() => tab.setShowInvite(false)}
           onInvited={() => { tab.setShowInvite(false); tab.fetchUsers(); }}
+        />
+      )}
+
+      {bulkDeleteOpen && (
+        <ConfirmDialog
+          icon="solar:danger-triangle-linear"
+          iconColor="var(--status-error)"
+          title={`Delete ${bulk.count} user${bulk.count === 1 ? '' : 's'}`}
+          description="Are you sure you want to delete the selected users? This permanently removes them from the platform and cannot be undone."
+          confirmLabel="Delete Users"
+          cancelLabel="Cancel"
+          variant="error"
+          loading={bulkDeleting}
+          onCancel={() => setBulkDeleteOpen(false)}
+          onConfirm={handleBulkDelete}
         />
       )}
     </>

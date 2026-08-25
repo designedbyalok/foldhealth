@@ -11,6 +11,9 @@ import { WorklistShell } from '../../../components/WorklistShell/WorklistShell';
 import { FilterBar } from '../../../components/FilterBar/FilterBar';
 import { Switch } from '../../../components/Switch/Switch';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
+import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { BulkSelectToggle } from '../../../components/BulkSelect/BulkSelectToggle';
+import { useBulkSelect } from '../../../components/BulkSelect/useBulkSelect';
 import { supabase } from '../../../lib/supabase';
 import { PracticeConfigPanel } from './PracticeConfigPanel';
 import { FeatureTogglesPanel } from './FeatureTogglesPanel';
@@ -157,7 +160,7 @@ function useCurrentUserName() {
   return name;
 }
 
-function AgentRow({ agent, isFirst }) {
+function AgentRow({ agent, isFirst, bulkMode = false, selected = false, onToggleSelect }) {
   const updateAgent = useAppStore(s => s.updateAgent);
   const openBuilder = useAppStore(s => s.openBuilder);
   const fetchAgents = useAppStore(s => s.fetchAgents);
@@ -204,8 +207,16 @@ function AgentRow({ agent, isFirst }) {
   const model = agent.model || 'ChatGPT 4.5 Mini';
 
   return (
-    <tr className={rowStyles.row} onClick={() => openBuilder({ id: agent.id, name: agent.name })}>
-      <td className={`${rowStyles.membersTd} ${rowStyles.stickyLeft}`} style={{ left: 0 }}>
+    <tr
+      className={`${rowStyles.row} ${bulkMode && selected ? rowStyles.rowSelected : ''}`}
+      onClick={() => (bulkMode ? onToggleSelect?.(agent.id) : openBuilder({ id: agent.id, name: agent.name }))}
+    >
+      {bulkMode && (
+        <td className={`${rowStyles.checkTd} ${rowStyles.stickyLeft}`} style={{ left: 0 }} onClick={(e) => e.stopPropagation()}>
+          <Checkbox checked={selected} onCheckedChange={() => onToggleSelect?.(agent.id)} aria-label={`Select ${agent.name}`} />
+        </td>
+      )}
+      <td className={`${rowStyles.membersTd} ${rowStyles.stickyLeft}`} style={{ left: bulkMode ? 36 : 0 }}>
         {agent.use_case}
       </td>
       <td className={rowStyles.td}>
@@ -217,7 +228,8 @@ function AgentRow({ agent, isFirst }) {
               className={rowStyles.nameLink}
               onClick={(e) => {
                 e.stopPropagation();
-                openBuilder({ id: agent.id, name: agent.name });
+                if (bulkMode) onToggleSelect?.(agent.id);
+                else openBuilder({ id: agent.id, name: agent.name });
               }}
               {...(isFirst ? { 'data-tour': 'agent-name-link' } : {})}
             >
@@ -347,6 +359,7 @@ export function AgentsTable() {
   const agents = useAppStore(s => s.agents);
   const agentsLoading = useAppStore(s => s.agentsLoading);
   const fetchAgents = useAppStore(s => s.fetchAgents);
+  const showToast = useAppStore(s => s.showToast);
   const settingsTab = useAppStore(s => s.settingsTab);
   const setSettingsTab = useAppStore(s => s.setSettingsTab);
   const setShowCreateAgent = useAppStore(s => s.setShowCreateAgent);
@@ -364,6 +377,35 @@ export function AgentsTable() {
   const [agentFilters, setAgentFilters] = useState({ status: [], model: [], use_case: [] });
   const agentFiltersActive =
     agentFilters.status.length + agentFilters.model.length + agentFilters.use_case.length;
+
+  // Bulk-select (Agents tab only). Resets when the settings subtab changes.
+  const bulk = useBulkSelect(settingsTab);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  // Prepend the sticky select column when bulk mode is on; the Use Case column
+  // shifts right by the checkbox width so nothing overlaps.
+  const agentColumns = useMemo(() => (
+    bulk.bulkMode
+      ? [
+          { key: 'select', showCheckbox: true, sticky: 'left', left: 0, width: 36 },
+          ...AGENT_COLUMNS.map(c => (c.key === 'useCase' ? { ...c, left: 36 } : c)),
+        ]
+      : AGENT_COLUMNS
+  ), [bulk.bulkMode]);
+
+  const handleBulkDelete = async () => {
+    const ids = bulk.selectedIdList;
+    if (!ids.length) { setBulkDeleteOpen(false); return; }
+    setBulkDeleting(true);
+    const { error } = await supabase.from('agents').delete().in('id', ids);
+    setBulkDeleting(false);
+    if (error) { showToast?.('Could not delete agents — check permissions'); return; }
+    setBulkDeleteOpen(false);
+    bulk.exitBulk();
+    await fetchAgents();
+    showToast?.(`${ids.length} agent${ids.length === 1 ? '' : 's'} deleted`);
+  };
 
   const tabKey = settingsTab === 'agents' ? 'agents' : settingsTab;
   const tabsForBar = TABS.map(label => ({ key: label.toLowerCase(), label }));
@@ -465,6 +507,9 @@ export function AgentsTable() {
         }}
         primaryActionLabel={primaryActionLabel}
         onPrimaryAction={handlePrimaryAction}
+        rightExtras={settingsTab === 'agents' && (
+          <BulkSelectToggle active={bulk.bulkMode} onToggle={bulk.toggleBulk} />
+        )}
       />
 
       {/* Goals filter bar */}
@@ -529,12 +574,30 @@ export function AgentsTable() {
               showSaveFilter={false}
             />
           }
-          columns={AGENT_COLUMNS}
+          columns={agentColumns}
           sortKey={sortKey}
           sortDir={sortDir}
           onSort={requestSort}
           rows={paginatedAgents}
-          renderRow={(agent, idx) => <AgentRow key={agent.id} agent={agent} isFirst={idx === 0} />}
+          selectedIds={bulk.selectedIdList}
+          onSelectAll={(checked) => bulk.setMany(paginatedAgents.map(a => a.id), checked)}
+          onClearSelection={bulk.clearSelection}
+          bulkActions={[{
+            label: 'Delete',
+            icon: 'solar:trash-bin-trash-linear',
+            variant: 'secondary',
+            onClick: () => setBulkDeleteOpen(true),
+          }]}
+          renderRow={(agent, idx) => (
+            <AgentRow
+              key={agent.id}
+              agent={agent}
+              isFirst={idx === 0}
+              bulkMode={bulk.bulkMode}
+              selected={bulk.isSelected(agent.id)}
+              onToggleSelect={bulk.toggleId}
+            />
+          )}
           loading={agentsLoading}
           emptyState={
             <div className={styles.emptySearch}>
@@ -559,6 +622,22 @@ export function AgentsTable() {
           onPageChange={(p) => useAppStore.setState({ currentPage: p })}
           onPageSizeChange={(pp) => useAppStore.setState({ perPage: pp, currentPage: 1 })}
           minTableWidth={1400}
+        />
+      )}
+
+      {/* Bulk delete confirmation */}
+      {bulkDeleteOpen && (
+        <ConfirmDialog
+          icon="solar:danger-triangle-linear"
+          iconColor="var(--status-error)"
+          title={`Delete ${bulk.count} agent${bulk.count === 1 ? '' : 's'}`}
+          description="Are you sure you want to delete the selected agents? This action cannot be undone."
+          confirmLabel="Delete Agents"
+          cancelLabel="Cancel"
+          variant="error"
+          loading={bulkDeleting}
+          onCancel={() => setBulkDeleteOpen(false)}
+          onConfirm={handleBulkDelete}
         />
       )}
 

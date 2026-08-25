@@ -21,6 +21,10 @@ import { AddIconMinimalist } from '../../../components/Icon/AddIconMinimalist';
 import { CreateInsurancePlanDrawer } from './CreateInsurancePlanDrawer';
 import { InsurancePlanViewDrawer } from './InsurancePlanViewDrawer';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
+import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { BulkBar } from '../../../components/BulkBar/BulkBar';
+import { BulkSelectToggle } from '../../../components/BulkSelect/BulkSelectToggle';
+import { useBulkSelect } from '../../../components/BulkSelect/useBulkSelect';
 import { OrgPanel } from './OrgPanel';
 import { UsersTab } from './users/UsersTab';
 import { LocationsTab } from './locations/LocationsTab';
@@ -49,6 +53,12 @@ export function AccountPanel() {
   const [viewingPlan, setViewingPlan] = useState(null);
   const [editingPlan, setEditingPlan] = useState(null);
   const [deletingPlanId, setDeletingPlanId] = useState(null);
+
+  // Bulk-select for the Insurance Plans table. Resets when the account tab
+  // changes. Plans are local state, so bulk delete filters that state — same
+  // as the single-row delete below.
+  const planBulk = useBulkSelect(activeTab);
+  const [bulkDeletePlansOpen, setBulkDeletePlansOpen] = useState(false);
   const [planSearchVal, setPlanSearchVal] = useState('');
 
   const handleSavePlan = (planData) => {
@@ -79,6 +89,7 @@ export function AccountPanel() {
           onSearchChange={setPlanSearchVal}
           primaryActionLabel="New Insurance Plan"
           onPrimaryAction={() => setShowCreateInsurance(true)}
+          rightExtras={<BulkSelectToggle active={planBulk.bulkMode} onToggle={planBulk.toggleBulk} />}
         />
       ) : !isUsers && !isLocations ? (
         <SectionTitleBar
@@ -108,6 +119,10 @@ export function AccountPanel() {
               onEdit={(plan) => setEditingPlan(plan)}
               onDeleteRequest={(id) => setDeletingPlanId(id)}
               searchVal={planSearchVal}
+              bulkMode={planBulk.bulkMode}
+              isSelected={planBulk.isSelected}
+              onToggleSelect={planBulk.toggleId}
+              onToggleAll={(rows) => planBulk.toggleAll(rows)}
             />
           ) : (
             <div className={styles.emptyState}>
@@ -148,6 +163,37 @@ export function AccountPanel() {
           onConfirm={() => {
             setPlans(prev => prev.filter(p => p.id !== deletingPlanId));
             setDeletingPlanId(null);
+          }}
+        />
+      )}
+
+      {/* Floating bulk bar for Insurance Plans */}
+      {isInsurancePlans && planBulk.bulkMode && planBulk.count > 0 && (
+        <BulkBar
+          selectedIds={planBulk.selectedIdList}
+          onClear={planBulk.clearSelection}
+          actions={[{
+            label: 'Delete',
+            icon: 'solar:trash-bin-trash-linear',
+            variant: 'secondary',
+            onClick: () => setBulkDeletePlansOpen(true),
+          }]}
+        />
+      )}
+
+      {bulkDeletePlansOpen && (
+        <ConfirmDialog
+          variant="destructive"
+          icon="solar:trash-bin-2-linear"
+          title={`Delete ${planBulk.count} insurance plan${planBulk.count === 1 ? '' : 's'}?`}
+          description="Please confirm if you want to permanently delete the selected insurance plans from the system."
+          confirmLabel="Delete Plans"
+          onCancel={() => setBulkDeletePlansOpen(false)}
+          onConfirm={() => {
+            const ids = new Set(planBulk.selectedIdList);
+            setPlans(prev => prev.filter(p => !ids.has(p.id)));
+            setBulkDeletePlansOpen(false);
+            planBulk.exitBulk();
           }}
         />
       )}
@@ -358,7 +404,10 @@ export function ViewUserDrawer({ user, onClose, onEdit }) {
 
 /* ── Insurance Plans Tab ── */
 
-function InsurancePlansTab({ plans = [], onCreateNew, onView, onEdit, onDeleteRequest, searchVal = '' }) {
+function InsurancePlansTab({
+  plans = [], onCreateNew, onView, onEdit, onDeleteRequest, searchVal = '',
+  bulkMode = false, isSelected = () => false, onToggleSelect, onToggleAll,
+}) {
   const filtered = searchVal
     ? plans.filter(p =>
         (p.planName || '').toLowerCase().includes(searchVal.toLowerCase()) ||
@@ -366,6 +415,7 @@ function InsurancePlansTab({ plans = [], onCreateNew, onView, onEdit, onDeleteRe
         (p.groupNumber || '').toLowerCase().includes(searchVal.toLowerCase())
       )
     : plans;
+  const allSelected = filtered.length > 0 && filtered.every(p => isSelected(p.id));
 
   if (plans.length === 0) {
     return (
@@ -390,6 +440,11 @@ function InsurancePlansTab({ plans = [], onCreateNew, onView, onEdit, onDeleteRe
       <table className={styles.insuranceTable}>
         <thead>
           <tr className={styles.insuranceTableHeader}>
+            {bulkMode && (
+              <th className={styles.insuranceTh} style={{ width: 44 }}>
+                <Checkbox checked={allSelected} onCheckedChange={() => onToggleAll?.(filtered)} aria-label="Select all plans" />
+              </th>
+            )}
             <th className={styles.insuranceTh} style={{ width: 180 }}>Plan Logo</th>
             <th className={styles.insuranceTh}>Plan Name</th>
             <th className={styles.insuranceTh} style={{ width: 160 }}>Plan Type</th>
@@ -400,7 +455,17 @@ function InsurancePlansTab({ plans = [], onCreateNew, onView, onEdit, onDeleteRe
         </thead>
         <tbody>
           {filtered.map(plan => (
-            <tr key={plan.id} className={styles.insuranceTableRow}>
+            <tr
+              key={plan.id}
+              className={styles.insuranceTableRow}
+              onClick={bulkMode ? () => onToggleSelect?.(plan.id) : undefined}
+              style={bulkMode ? { cursor: 'pointer' } : undefined}
+            >
+              {bulkMode && (
+                <td className={styles.insuranceTd} onClick={e => e.stopPropagation()}>
+                  <Checkbox checked={isSelected(plan.id)} onCheckedChange={() => onToggleSelect?.(plan.id)} aria-label={`Select ${plan.planName}`} />
+                </td>
+              )}
               <td className={styles.insuranceTd}>
                 {(plan.logoPreviewUrl || plan.planLogoUrl) ? (
                   <img
