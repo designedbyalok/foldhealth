@@ -1,6 +1,6 @@
 import { Badge } from '../../../../components/Badge/Badge';
 import { Avatar } from '../../../../components/Avatar/Avatar';
-import { Checkbox } from '../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { BulkCheckboxCell } from '../../../../components/BulkSelect/BulkCheckboxCell';
 import { ROLE_COLORS } from '../AccountPanel.constants';
 import { statusBadge, formatDate, formatRelative } from './UsersTab.utils';
 import { UserActions } from './UserActions';
@@ -28,9 +28,7 @@ export function UsersTabRow({
       className={`${styles.row} ${bulkMode && selected ? styles.rowSelected : ''}`}
     >
       {bulkMode && (
-        <td className={`${styles.checkTd} ${styles.stickyLeft}`} style={{ left: 0 }}>
-          <Checkbox checked={selected} onCheckedChange={() => onToggleSelect?.(user.id)} aria-label={`Select ${user.name}`} />
-        </td>
+        <BulkCheckboxCell selected={selected} onToggle={() => onToggleSelect?.(user.id)} label={`Select ${user.name}`} />
       )}
       <td className={`${styles.membersTd} ${styles.stickyLeft}`} style={{ left: bulkMode ? 36 : 0 }}>
         <button

@@ -9,6 +9,9 @@ import { BulkBar } from '../BulkBar/BulkBar';
 import { TableSkeleton } from '../TableSkeleton/TableSkeleton';
 import { ColumnsHeaderButton } from '../WorklistColumns/ColumnsHeaderButton';
 import { useWorklistColumns } from '../WorklistColumns/useWorklistColumns';
+import { ConfirmDialog } from '../ConfirmDialog/ConfirmDialog';
+import { BulkSelectToggle } from '../BulkSelect/BulkSelectToggle';
+import { useBulkSelect } from '../BulkSelect/useBulkSelect';
 import styles from './WorklistShell.module.css';
 
 const EMPTY_SELECTED_IDS = [];
@@ -73,11 +76,15 @@ export function WorklistShell({
   // built-in header props (title, onHistory, onExport, search*) are then
   // ignored — the caller owns those handlers on its own header. Filter
   // chip row + table + bulk bar + pagination stay unchanged.
-  header,
+  // A node, OR — when using the built-in `bulkSelect` below — a render function
+  // `(bulk) => node` that receives `{ bulkToggle, bulkActive, toggleBulk }` so
+  // the caller can drop `bulk.bulkToggle` into its SectionTitleBar's
+  // rightExtras. Passing a node keeps every existing caller working unchanged.
+  header: headerProp,
   showFilters,
   onToggleFilters,
   filters,
-  columns = EMPTY_COLUMNS,
+  columns: columnsProp = EMPTY_COLUMNS,
   sortKey,
   sortDir,
   onSort,
@@ -85,10 +92,27 @@ export function WorklistShell({
   renderRow,
   loading,
   emptyState,
-  selectedIds = EMPTY_SELECTED_IDS,
-  onSelectAll,
-  onClearSelection,
-  bulkActions,
+  selectedIds: selectedIdsProp = EMPTY_SELECTED_IDS,
+  onSelectAll: onSelectAllProp,
+  onClearSelection: onClearSelectionProp,
+  bulkActions: bulkActionsProp,
+  // Opt-in, self-contained bulk-select + bulk-delete. When provided, the shell
+  // OWNS the whole interaction: a toggle button (exposed to `header` as
+  // `bulk.bulkToggle`), the sticky select column (auto-injected — the caller's
+  // `columns` stay bulk-agnostic), the per-row checkbox context (`ctx.bulk`
+  // passed to renderRow), the floating BulkBar, and a Delete confirm dialog.
+  // Shape:
+  //   {
+  //     onDelete: (ids) => Promise|void,   // required
+  //     getRowId?: (row) => id,            // default row => row.id
+  //     entityLabel?: 'agent',             // confirm-dialog copy
+  //     entityLabelPlural?: 'agents',
+  //     resetKey?: any,                    // reset mode+selection when it changes
+  //     extraActions?: [...BulkBar actions] // besides Delete
+  //   }
+  // Callers that manage their own selection (QueueTable, HCC, …) simply omit
+  // `bulkSelect` and keep using selectedIds / onSelectAll / bulkActions.
+  bulkSelect,
   page,
   perPage,
   totalItems,
@@ -112,6 +136,75 @@ export function WorklistShell({
   worklistKey,
 }) {
   const [searchOpen, setSearchOpen] = useState(false);
+
+  // ── Built-in bulk-select (opt-in via the `bulkSelect` prop) ──────────────
+  // The hook is always called (rules of hooks); it stays inert unless a caller
+  // opts in. A caller whose toggle lives OUTSIDE the shell's header (e.g. a
+  // SectionTitleBar shared across sibling tabs) can pass its own
+  // `bulkSelect.controller` from useBulkSelect and render the toggle itself;
+  // the shell then drives its column/bar/dialog off that shared controller.
+  // Otherwise the shell owns the controller and exposes a ready toggle to a
+  // render-prop `header`. `bulkActive` gates every bulk branch below.
+  const internalBulk = useBulkSelect(bulkSelect?.resetKey);
+  const bulk = bulkSelect?.controller || internalBulk;
+  const bulkActive = !!bulkSelect && bulk.bulkMode;
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const getRowId = useMemo(() => bulkSelect?.getRowId || ((r) => r.id), [bulkSelect]);
+
+  // Effective values — the built-in bulk state takes over the selection props
+  // when `bulkSelect` is set, otherwise the caller's props pass through.
+  const columns = useMemo(() => {
+    if (!bulkActive) return columnsProp;
+    // Inject the sticky select column and shift the caller's sticky-left
+    // columns right by its width so nothing overlaps.
+    return [
+      { key: '__bulkSelect', showCheckbox: true, sticky: 'left', left: 0, width: 36 },
+      ...columnsProp.map((c) => (c.sticky === 'left' ? { ...c, left: (c.left || 0) + 36 } : c)),
+    ];
+  }, [bulkActive, columnsProp]);
+
+  const pageIds = useMemo(() => rows.map(getRowId), [rows, getRowId]);
+  const selectedIds = bulkSelect ? bulk.selectedIdList : selectedIdsProp;
+  const onSelectAll = bulkSelect
+    ? (checked) => bulk.setMany(pageIds, checked)
+    : onSelectAllProp;
+  const onClearSelection = bulkSelect ? bulk.clearSelection : onClearSelectionProp;
+  const bulkActions = bulkSelect
+    ? [
+        { label: 'Delete', icon: 'solar:trash-bin-trash-linear', variant: 'secondary', onClick: () => setBulkDeleteOpen(true) },
+        ...(bulkSelect.extraActions || []),
+      ]
+    : bulkActionsProp;
+
+  // The context each row reads in renderRow to draw its own checkbox cell.
+  const bulkRowCtx = bulkSelect
+    ? { active: bulkActive, isSelected: (id) => bulk.isSelected(id), toggle: (id) => bulk.toggleId(id), getRowId }
+    : null;
+
+  // `header` may be a render function when bulkSelect is used, so it can place
+  // the toggle in its own SectionTitleBar.
+  const bulkToggle = bulkSelect ? <BulkSelectToggle active={bulk.bulkMode} onToggle={bulk.toggleBulk} /> : null;
+  const header = typeof headerProp === 'function'
+    ? headerProp({ bulkToggle, bulkActive: bulk.bulkMode, toggleBulk: bulk.toggleBulk })
+    : headerProp;
+
+  const handleBulkDelete = async () => {
+    const ids = bulk.selectedIdList;
+    if (!ids.length) { setBulkDeleteOpen(false); return; }
+    setBulkDeleting(true);
+    try {
+      await bulkSelect.onDelete?.(ids);
+    } finally {
+      setBulkDeleting(false);
+    }
+    setBulkDeleteOpen(false);
+    bulk.exitBulk();
+  };
+
+  const entity = bulkSelect?.entityLabel || 'item';
+  const entityPlural = bulkSelect?.entityLabelPlural || `${entity}s`;
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
   // Only non-sticky columns are user-customisable. The sticky columns keep
   // their fixed position around the customisable band.
@@ -159,7 +252,7 @@ export function WorklistShell({
   const actionsColKey = worklistKey
     ? [...columns].reverse().find(c => c.sticky === 'right')?.key
     : null;
-  const rowCtx = { visibleColumns: activeCustomisable, hiddenSet, orderedColumns: orderedColumnsForRow };
+  const rowCtx = { visibleColumns: activeCustomisable, hiddenSet, orderedColumns: orderedColumnsForRow, bulk: bulkRowCtx };
 
   return (
     <div className={embedded ? `${styles.shell} ${styles.shellEmbedded}` : styles.shell}>
@@ -336,6 +429,24 @@ export function WorklistShell({
           perPage={perPage}
           onPageChange={onPageChange}
           onPerPageChange={onPageSizeChange}
+        />
+      )}
+
+      {bulkSelect && bulkDeleteOpen && (
+        <ConfirmDialog
+          icon="solar:danger-triangle-linear"
+          iconColor="var(--status-error)"
+          title={bulkSelect.confirmTitle
+            ? bulkSelect.confirmTitle(bulk.count)
+            : `Delete ${bulk.count} ${bulk.count === 1 ? entity : entityPlural}`}
+          description={bulkSelect.confirmDescription
+            || `Are you sure you want to delete the selected ${entityPlural}? This action cannot be undone.`}
+          confirmLabel={`Delete ${cap(bulk.count === 1 ? entity : entityPlural)}`}
+          cancelLabel="Cancel"
+          variant="error"
+          loading={bulkDeleting}
+          onCancel={() => setBulkDeleteOpen(false)}
+          onConfirm={handleBulkDelete}
         />
       )}
     </div>

@@ -11,8 +11,8 @@ import { WorklistShell } from '../../../components/WorklistShell/WorklistShell';
 import { FilterBar } from '../../../components/FilterBar/FilterBar';
 import { Switch } from '../../../components/Switch/Switch';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { BulkSelectToggle } from '../../../components/BulkSelect/BulkSelectToggle';
+import { BulkCheckboxCell } from '../../../components/BulkSelect/BulkCheckboxCell';
 import { useBulkSelect } from '../../../components/BulkSelect/useBulkSelect';
 import { supabase } from '../../../lib/supabase';
 import { PracticeConfigPanel } from './PracticeConfigPanel';
@@ -212,9 +212,7 @@ function AgentRow({ agent, isFirst, bulkMode = false, selected = false, onToggle
       onClick={() => (bulkMode ? onToggleSelect?.(agent.id) : openBuilder({ id: agent.id, name: agent.name }))}
     >
       {bulkMode && (
-        <td className={`${rowStyles.checkTd} ${rowStyles.stickyLeft}`} style={{ left: 0 }} onClick={(e) => e.stopPropagation()}>
-          <Checkbox checked={selected} onCheckedChange={() => onToggleSelect?.(agent.id)} aria-label={`Select ${agent.name}`} />
-        </td>
+        <BulkCheckboxCell selected={selected} onToggle={() => onToggleSelect?.(agent.id)} label={`Select ${agent.name}`} />
       )}
       <td className={`${rowStyles.membersTd} ${rowStyles.stickyLeft}`} style={{ left: bulkMode ? 36 : 0 }}>
         {agent.use_case}
@@ -378,35 +376,15 @@ export function AgentsTable() {
   const agentFiltersActive =
     agentFilters.status.length + agentFilters.model.length + agentFilters.use_case.length;
 
-  // Bulk-select (Agents tab only). Resets when the settings subtab changes.
+  // Bulk-select (Agents tab only). AgentsTable owns the controller because the
+  // toggle lives in the shared SectionTitleBar above — a sibling of the shell,
+  // not the shell's header. The shell still owns the select column, floating
+  // bar, and confirm dialog via `bulkSelect.controller` below.
   const bulk = useBulkSelect(settingsTab);
-  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
-  const [bulkDeleting, setBulkDeleting] = useState(false);
 
-  // Prepend the sticky select column when bulk mode is on; the Use Case column
-  // shifts right by the checkbox width so nothing overlaps.
-  const agentColumns = useMemo(() => (
-    bulk.bulkMode
-      ? [
-          { key: 'select', showCheckbox: true, sticky: 'left', left: 0, width: 36 },
-          ...AGENT_COLUMNS.map(c => (c.key === 'useCase' ? { ...c, left: 36 } : c)),
-        ]
-      : AGENT_COLUMNS
-  ), [bulk.bulkMode]);
-
-  const handleBulkDelete = async () => {
-    const ids = bulk.selectedIdList;
-    if (!ids.length) { setBulkDeleteOpen(false); return; }
-    setBulkDeleting(true);
-    let error;
-    try {
-      ({ error } = await supabase.from('agents').delete().in('id', ids));
-    } finally {
-      setBulkDeleting(false);
-    }
+  const bulkDeleteAgents = async (ids) => {
+    const { error } = await supabase.from('agents').delete().in('id', ids);
     if (error) { showToast?.('Could not delete agents — check permissions'); return; }
-    setBulkDeleteOpen(false);
-    bulk.exitBulk();
     await fetchAgents();
     showToast?.(`${ids.length} agent${ids.length === 1 ? '' : 's'} deleted`);
   };
@@ -578,28 +556,26 @@ export function AgentsTable() {
               showSaveFilter={false}
             />
           }
-          columns={agentColumns}
+          columns={AGENT_COLUMNS}
           sortKey={sortKey}
           sortDir={sortDir}
           onSort={requestSort}
           rows={paginatedAgents}
-          selectedIds={bulk.selectedIdList}
-          onSelectAll={(checked) => bulk.setMany(paginatedAgents.map(a => a.id), checked)}
-          onClearSelection={bulk.clearSelection}
-          bulkActions={[{
-            label: 'Delete',
-            icon: 'solar:trash-bin-trash-linear',
-            variant: 'secondary',
-            onClick: () => setBulkDeleteOpen(true),
-          }]}
-          renderRow={(agent, idx) => (
+          bulkSelect={{
+            controller: bulk,
+            resetKey: settingsTab,
+            entityLabel: 'agent',
+            entityLabelPlural: 'agents',
+            onDelete: bulkDeleteAgents,
+          }}
+          renderRow={(agent, idx, ctx) => (
             <AgentRow
               key={agent.id}
               agent={agent}
               isFirst={idx === 0}
-              bulkMode={bulk.bulkMode}
-              selected={bulk.isSelected(agent.id)}
-              onToggleSelect={bulk.toggleId}
+              bulkMode={ctx.bulk?.active}
+              selected={ctx.bulk?.isSelected(agent.id)}
+              onToggleSelect={ctx.bulk?.toggle}
             />
           )}
           loading={agentsLoading}
@@ -626,22 +602,6 @@ export function AgentsTable() {
           onPageChange={(p) => useAppStore.setState({ currentPage: p })}
           onPageSizeChange={(pp) => useAppStore.setState({ perPage: pp, currentPage: 1 })}
           minTableWidth={1400}
-        />
-      )}
-
-      {/* Bulk delete confirmation */}
-      {bulkDeleteOpen && (
-        <ConfirmDialog
-          icon="solar:danger-triangle-linear"
-          iconColor="var(--status-error)"
-          title={`Delete ${bulk.count} agent${bulk.count === 1 ? '' : 's'}`}
-          description="Are you sure you want to delete the selected agents? This action cannot be undone."
-          confirmLabel="Delete Agents"
-          cancelLabel="Cancel"
-          variant="error"
-          loading={bulkDeleting}
-          onCancel={() => setBulkDeleteOpen(false)}
-          onConfirm={handleBulkDelete}
         />
       )}
 

@@ -1,0 +1,4 @@
+/* Composes the shared worklist-row checkbox + sticky classes so the cell reads
+   identically to every other WorklistShell select column. */
+.checkTd     { composes: checkTd     from '../WorklistShell/WorklistRow.module.css'; }
+.stickyLeft  { composes: stickyLeft  from '../WorklistShell/WorklistRow.module.css'; }
