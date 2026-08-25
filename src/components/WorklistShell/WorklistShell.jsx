@@ -63,6 +63,9 @@ const EMPTY_SELECTED_IDS = [];
 const EMPTY_COLUMNS = [];
 const EMPTY_ROWS = [];
 
+// Capitalise the first letter — used for the bulk-delete confirm button label.
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
 export function WorklistShell({
   title,
   onHistory,
@@ -204,7 +207,6 @@ export function WorklistShell({
 
   const entity = bulkSelect?.entityLabel || 'item';
   const entityPlural = bulkSelect?.entityLabelPlural || `${entity}s`;
-  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
   // Only non-sticky columns are user-customisable. The sticky columns keep
   // their fixed position around the customisable band.
