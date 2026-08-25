@@ -29,6 +29,33 @@ describe('member consent health component', () => {
     });
   });
 
+  it('defaults showDecline off and ships single-option questions', () => {
+    const field = makeMemberConsent();
+    expect(field.showDecline).toBe(false);
+    expect(field.items.every((q) => q.options.length === 1)).toBe(true);
+  });
+
+  it('adds the decline option to every question when showDecline is on', () => {
+    const field = makeMemberConsent();
+    const questions = syncConsentQuestions(
+      field.items.map(assignIds), field.consentItems, assignIds, true,
+    );
+    expect(questions.every((q) => q.options.length === 2)).toBe(true);
+    expect(questions.find((q) => q.consentKey === 'ccm').options).toEqual([
+      { value: 'consented', label: 'I give my consent for CCM' },
+      { value: 'declined', label: 'I decline to give my consent for CCM' },
+    ]);
+    // Question ids stay stable across the toggle.
+    expect(questions.find((q) => q.consentKey === 'ccm').linkId).toBe('id-ccm');
+  });
+
+  it('drops the decline option again when showDecline goes back off', () => {
+    const field = makeMemberConsent();
+    const withDecline = syncConsentQuestions(field.items.map(assignIds), field.consentItems, assignIds, true);
+    const backOff = syncConsentQuestions(withDecline, field.consentItems, assignIds, false);
+    expect(backOff.every((q) => q.options.length === 1)).toBe(true);
+  });
+
   it('removes excluded items and keeps existing question ids stable', () => {
     const field = makeMemberConsent();
     const existing = field.items.map(assignIds);

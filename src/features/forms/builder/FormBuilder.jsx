@@ -21,6 +21,7 @@ import { Button } from '../../../components/Button/Button';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Input } from '../../../components/Input/Input';
 import { Textarea } from '../../../components/Textarea/Textarea';
+import { Switch } from '../../../components/Switch/Switch';
 import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { Toggle } from '../../../components/Toggle/Toggle';
 import { CloseButton } from '../../../components/CloseButton/CloseButton';
@@ -358,11 +359,12 @@ function ConsentRow({ item, fieldLinkId, onToggleIncluded, onPatchItem, onRemove
 function ConsentProperties({ field, onPatch }) {
   const uid = useId();
   const consentItems = field.consentItems || [];
+  const showDecline = !!field.showDecline;
 
   const commitItems = (nextItems) => {
     onPatch({
       consentItems: nextItems,
-      items: syncConsentQuestions(field.items, nextItems, assignIds),
+      items: syncConsentQuestions(field.items, nextItems, assignIds, showDecline),
     });
   };
 
@@ -374,6 +376,15 @@ function ConsentProperties({ field, onPatch }) {
 
   const toggleIncluded = (item, included) => {
     patchItem(item.id, { included });
+  };
+
+  // Global toggle: regenerate every question with/without its "I decline"
+  // option in one write. Off by default; the author opts in.
+  const setShowDecline = (next) => {
+    onPatch({
+      showDecline: next,
+      items: syncConsentQuestions(field.items, consentItems, assignIds, next),
+    });
   };
 
   return (
@@ -413,6 +424,15 @@ function ConsentProperties({ field, onPatch }) {
           value={field.description || ''}
           onChange={(e) => onPatch({ description: e.target.value })}
         />
+
+        <div className={styles.consentToggleRow}>
+          <span className={styles.consentToggleLabel}>Show decline option</span>
+          <Switch
+            checked={showDecline}
+            ariaLabel="Show a decline option on every consent item"
+            onChange={setShowDecline}
+          />
+        </div>
 
         <div className={styles.consentDivider} />
         <div className={styles.consentSectionHead}>
@@ -709,7 +729,7 @@ export function FormBuilder() {
         if (nextItems === items) return prev;
         return updateField(prev, consentFieldId, {
           consentItems: nextItems,
-          items: syncConsentQuestions(target.items, nextItems, assignIds),
+          items: syncConsentQuestions(target.items, nextItems, assignIds, !!target.showDecline),
         });
       });
       return;

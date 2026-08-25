@@ -84,7 +84,17 @@ export const CONSENT_CATEGORY_OPTIONS = [
   { value: 'others', label: 'Others' },
 ];
 
-export function consentQuestion(item) {
+// `showDecline` is a component-level switch (field.showDecline). Off by
+// default, each item is a single "I give my consent" checkbox — an unchecked
+// box already records the absence of consent. When the author turns it on, a
+// matching "I decline" option is added to every item at once.
+export function consentQuestion(item, showDecline = false) {
+  const options = [
+    { value: 'consented', label: `I give my consent for ${item.name}` },
+  ];
+  if (showDecline) {
+    options.push({ value: 'declined', label: `I decline to give my consent for ${item.name}` });
+  }
   return {
     type: 'choice',
     control: 'consent',
@@ -93,22 +103,18 @@ export function consentQuestion(item) {
     required: !!item.mandatory,
     consentKey: item.id,
     consentCategory: item.category,
-    // A single "I give my consent" checkbox. The matching decline option was
-    // removed — an unchecked box already records the absence of consent, so a
-    // second box only invited contradictory answers (both ticked).
-    options: [
-      { value: 'consented', label: `I give my consent for ${item.name}` },
-    ],
+    options,
   };
 }
 
 export function makeMemberConsent() {
+  const showDecline = false;
   const consentItems = [];
   const items = [];
   for (const defaultItem of DEFAULT_ITEMS) {
     const item = { ...defaultItem };
     consentItems.push(item);
-    if (item.included) items.push(consentQuestion(item));
+    if (item.included) items.push(consentQuestion(item, showDecline));
   }
   return {
     type: 'group',
@@ -118,12 +124,13 @@ export function makeMemberConsent() {
     required: true,
     reusable: false,
     shareWithPatient: true,
+    showDecline,
     consentItems,
     items,
   };
 }
 
-export function syncConsentQuestions(existingQuestions, consentItems, assignIds) {
+export function syncConsentQuestions(existingQuestions, consentItems, assignIds, showDecline = false) {
   const existing = new Map(
     (existingQuestions || []).map((question) => [question.consentKey, question]),
   );
@@ -132,7 +139,7 @@ export function syncConsentQuestions(existingQuestions, consentItems, assignIds)
   for (const item of consentItems || []) {
     if (!item.included) continue;
     const current = existing.get(item.id);
-    const next = { ...consentQuestion(item), linkId: current?.linkId };
+    const next = { ...consentQuestion(item, showDecline), linkId: current?.linkId };
     questions.push(next.linkId ? next : assignIds(next));
   }
   return questions;
