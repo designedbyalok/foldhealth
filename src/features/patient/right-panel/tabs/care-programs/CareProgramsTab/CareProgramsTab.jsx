@@ -5,6 +5,8 @@ import { CARE_PROGRAM_CATALOG } from '../../../../data/careProgramCatalog';
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { ProgramDetailView } from '../program-detail/ProgramDetailView/ProgramDetailView.jsx';
 import { ProgramDetailSkeleton } from '../program-detail/ProgramDetailSkeleton/ProgramDetailSkeleton.jsx';
+import { CarePlanSummaryView } from '../summary/CarePlanSummaryView/CarePlanSummaryView.jsx';
+import { stepsFor, flatSteps } from '../program-detail/ProgramDetailView/ProgramDetailView.utils';
 import { CareProgramsTabTable } from './CareProgramsTabTable';
 import { CareProgramsTabToolbar, CareProgramsTabMenus } from './CareProgramsTabToolbar';
 import {
@@ -33,6 +35,7 @@ export function CareProgramsTab() {
   const [npOpen, setNpOpen] = useState(false);
   const [statusMenu, setStatusMenu] = useState(null);
   const [rowMenu, setRowMenu] = useState(null);
+  const [showSummary, setShowSummary] = useState(false);
   const npBtnRef = useRef(null);
 
   const patientId = useAppStore(s => s.selectedPatientId);
@@ -46,6 +49,7 @@ export function CareProgramsTab() {
   const selectedCareProgramKey = useAppStore(s => s.selectedCareProgramKey);
   const openCareProgram = useAppStore(s => s.openCareProgram);
   const closeCareProgram = useAppStore(s => s.closeCareProgram);
+  const setCareProgramStep = useAppStore(s => s.setCareProgramStep);
 
   useEffect(() => {
     if (patientId) fetchCareProgramsForPatient(patientId);
@@ -119,6 +123,15 @@ export function CareProgramsTab() {
 
   const openProgram = (program) => setPendingProgram({ program, firstStep: false });
 
+  // From the comprehensive view, hand off to the owning program's Care Plan
+  // step. openCareProgram resets the step to null, so set it right after.
+  const openProgramAtCarePlan = (program) => {
+    const carePlanStep = flatSteps(stepsFor(program.code)).find(s => s.name === 'Care Plan');
+    setShowSummary(false);
+    openCareProgram(programUrlKey(program));
+    if (carePlanStep) setCareProgramStep(carePlanStep.id);
+  };
+
   const changeStatus = (program, status) => {
     const patch = { status, statusColor: statusColorFor(status) };
     if (status === 'Enrolled' && (!program.startDate || program.startDate === '—')) {
@@ -176,6 +189,17 @@ export function CareProgramsTab() {
 
   if (pendingProgram) return <ProgramDetailSkeleton />;
 
+  if (showSummary && !selectedProgram) {
+    return (
+      <CarePlanSummaryView
+        patientId={patientId}
+        programs={programs}
+        onClose={() => setShowSummary(false)}
+        onOpenProgramStep={openProgramAtCarePlan}
+      />
+    );
+  }
+
   if (selectedProgram) {
     return (
       <ProgramDetailView
@@ -198,6 +222,7 @@ export function CareProgramsTab() {
         setFilter={setFilter} clearFilters={clearFilters}
         npOpen={npOpen} setNpOpen={setNpOpen} npBtnRef={npBtnRef}
         programOptions={programOptions} handleAddProgram={handleAddProgram}
+        onOpenSummary={() => setShowSummary(true)}
       />
 
       {visible.length === 0 ? (

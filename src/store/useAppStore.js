@@ -2369,6 +2369,10 @@ export const useAppStore = create((set, get) => ({
   patientCarePlans: {},        // { [key]: { plan, goals, interventions } }
   patientCarePlanLoading: {},  // { [key]: bool }
   patientCarePlanLoadedFor: {},// { [key]: bool }
+  // The comprehensive (all-programs) view loads every plan for a patient in one
+  // pass and warms the per-program cache above, keyed by patient id.
+  patientCarePlanAllLoading: {},   // { [patientId]: bool }
+  patientCarePlanAllLoadedFor: {},  // { [patientId]: bool }
 
   fetchPatientCarePlan: async (patientId, programId) => {
     if (!patientId || !programId) return;
@@ -2506,6 +2510,51 @@ export const useAppStore = create((set, get) => ({
   // Save the patient's live plan back into the shared library as a reusable
   // template (roadmap #4). Reuses the library's saveCarePlanTemplate — the
   // template's goals/interventions are free-text line items, so we flatten.
+  // Load every care plan for a patient across all their programs, in one pass,
+  // for the comprehensive read-only view (roadmap E2). Warms the per-program
+  // cache so opening a program afterwards is instant.
+  fetchAllPatientCarePlans: async (patientId) => {
+    if (!patientId) return;
+    if (get().patientCarePlanAllLoadedFor[patientId]) return;
+    set(s => ({ patientCarePlanAllLoading: { ...s.patientCarePlanAllLoading, [patientId]: true } }));
+
+    const { data: planRows, error } = await supabase
+      .from('patient_care_plans').select('*').eq('patient_id', patientId);
+    if (error) console.warn('fetchAllPatientCarePlans:', error.message);
+
+    const rows = planRows || [];
+    let goalsByPlan = {}, intvByPlan = {};
+    if (rows.length) {
+      const planIds = rows.map(r => r.id);
+      const [g, i] = await Promise.all([
+        supabase.from('patient_care_plan_goals').select('*').in('plan_id', planIds)
+          .order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
+        supabase.from('patient_care_plan_interventions').select('*').in('plan_id', planIds)
+          .order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
+      ]);
+      for (const row of (g.data || [])) (goalsByPlan[row.plan_id] ||= []).push(mapPatientCarePlanGoalRow(row));
+      for (const row of (i.data || [])) (intvByPlan[row.plan_id] ||= []).push(mapPatientCarePlanInterventionRow(row));
+    }
+
+    set(s => {
+      const next = { ...s.patientCarePlans };
+      const loaded = { ...s.patientCarePlanLoadedFor };
+      for (const r of rows) {
+        const plan = mapPatientCarePlanRow(r);
+        next[carePlanKey(patientId, r.program_id)] = {
+          plan, goals: goalsByPlan[r.id] || [], interventions: intvByPlan[r.id] || [],
+        };
+        loaded[carePlanKey(patientId, r.program_id)] = true;
+      }
+      return {
+        patientCarePlans: next,
+        patientCarePlanLoadedFor: loaded,
+        patientCarePlanAllLoading: { ...s.patientCarePlanAllLoading, [patientId]: false },
+        patientCarePlanAllLoadedFor: { ...s.patientCarePlanAllLoadedFor, [patientId]: true },
+      };
+    });
+  },
+
   savePatientCarePlanAsTemplate: async (patientId, program, name) => {
     const key = carePlanKey(patientId, program.id);
     const cur = get().patientCarePlans[key];
