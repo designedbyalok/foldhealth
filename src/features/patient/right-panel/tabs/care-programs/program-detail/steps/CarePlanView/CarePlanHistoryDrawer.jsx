@@ -6,15 +6,17 @@ import { useAppStore } from '../../../../../../../../store/useAppStore';
 const TYPE_LABEL = { goal: 'Goal', intervention: 'Intervention', share: 'Share', plan: 'Plan' };
 const ACTION_LABEL = {
   created: 'Created', updated: 'Edited', status_changed: 'Status changed',
-  deleted: 'Removed', shared: 'Shared',
+  deleted: 'Removed', shared: 'Shared', signed: 'Signed', note: 'Note', restored: 'Restored',
 };
-// Timeline styles created/updated/deleted natively; status_changed and shared
-// get per-entry icon overrides.
+// Timeline styles created/updated/deleted natively; the rest get per-entry
+// icon overrides.
 const ICON_OVERRIDE = {
   status_changed: { icon: 'solar:refresh-linear', iconBg: 'var(--primary-100)', iconColor: 'var(--primary-300)' },
   shared: { icon: 'solar:share-linear', iconBg: 'var(--status-info-light)', iconColor: 'var(--status-info)' },
+  signed: { icon: 'solar:pen-2-linear', iconBg: 'var(--status-success-light)', iconColor: 'var(--status-success)' },
+  restored: { icon: 'custom:history', iconBg: 'var(--primary-100)', iconColor: 'var(--primary-300)' },
 };
-const TIMELINE_ACTION = { created: 'created', updated: 'updated', deleted: 'deleted', status_changed: 'updated', shared: 'note' };
+const TIMELINE_ACTION = { created: 'created', updated: 'updated', deleted: 'deleted', status_changed: 'updated', shared: 'note', signed: 'created', note: 'note', restored: 'updated' };
 
 // Read-only history of everything that happened to this program's care plan —
 // edits, status changes, removals and shares (roadmap #9).

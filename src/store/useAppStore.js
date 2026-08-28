@@ -252,6 +252,8 @@ function mapPatientCarePlanRow(row) {
     conditions: (row.conditions || []).map(label => ({ label })),
     conditionTotal: row.condition_total ?? (row.conditions || []).length,
     createdDate: row.created_at,
+    signedBy: row.signed_by || null,
+    signedAt: row.signed_at || null,
   };
 }
 
@@ -2689,6 +2691,109 @@ export const useAppStore = create((set, get) => ({
       patientCarePlanAudit: { ...s.patientCarePlanAudit, [key]: (data || []).map(mapCarePlanAuditRow) },
       patientCarePlanAuditLoading: { ...s.patientCarePlanAuditLoading, [key]: false },
     }));
+  },
+
+  // ── Care Plan versioning & sign-off (roadmap #25, #36) ──
+  patientCarePlanVersions: {},         // { [key]: versions[] }
+  patientCarePlanVersionsLoading: {},  // { [key]: bool }
+
+  fetchCarePlanVersions: async (patientId, programId) => {
+    if (!patientId || !programId) return;
+    const key = carePlanKey(patientId, programId);
+    set(s => ({ patientCarePlanVersionsLoading: { ...s.patientCarePlanVersionsLoading, [key]: true } }));
+    const { data, error } = await supabase
+      .from('patient_care_plan_versions').select('*')
+      .eq('patient_id', patientId).eq('program_id', programId)
+      .order('version_number', { ascending: false });
+    if (error) console.warn('fetchCarePlanVersions:', error.message);
+    set(s => ({
+      patientCarePlanVersions: {
+        ...s.patientCarePlanVersions,
+        [key]: (data || []).map(r => ({
+          id: r.id, versionNumber: r.version_number, snapshot: r.snapshot || {},
+          reason: r.reason, note: r.note || '', createdBy: r.created_by || '', createdAt: r.created_at,
+        })),
+      },
+      patientCarePlanVersionsLoading: { ...s.patientCarePlanVersionsLoading, [key]: false },
+    }));
+  },
+
+  // Snapshot the current plan into an immutable version. Returns the version
+  // number, or null on failure.
+  snapshotCarePlanVersion: async (patientId, program, { reason = 'manual', note = '' } = {}) => {
+    const key = carePlanKey(patientId, program.id);
+    const cur = get().patientCarePlans[key];
+    const planId = cur?.plan?.id || await get().ensurePatientCarePlan(patientId, program);
+    if (!planId) return null;
+    // Next version number = current max + 1.
+    const { data: last } = await supabase
+      .from('patient_care_plan_versions').select('version_number')
+      .eq('plan_id', planId).order('version_number', { ascending: false }).limit(1).maybeSingle();
+    const versionNumber = (last?.version_number || 0) + 1;
+    const snapshot = {
+      conditions: (cur?.plan?.conditions || []).map(c => c.label),
+      goals: cur?.goals || [],
+      interventions: cur?.interventions || [],
+    };
+    const { data, error } = await supabase.from('patient_care_plan_versions').insert({
+      plan_id: planId, patient_id: patientId, program_id: program.id,
+      version_number: versionNumber, snapshot, reason, note,
+      created_by: get().currentUserProfile?.name || null,
+    }).select().single();
+    if (error) { console.warn('snapshotCarePlanVersion:', error.message); get().showToast('Could not save version'); return null; }
+    // Invalidate cached versions so the drawer refetches.
+    set(s => ({ patientCarePlanVersions: { ...s.patientCarePlanVersions, [key]: undefined } }));
+    return data.version_number;
+  },
+
+  // Sign the plan: snapshot a version, stamp signed_by/at, and audit it.
+  signCarePlan: async (patientId, program, note = '') => {
+    const key = carePlanKey(patientId, program.id);
+    const cur = get().patientCarePlans[key];
+    const planId = cur?.plan?.id;
+    if (!planId) { get().showToast('Add a goal before signing.'); return null; }
+    const versionNumber = await get().snapshotCarePlanVersion(patientId, program, { reason: 'signed', note });
+    const name = get().currentUserProfile?.name || null;
+    const signedAt = new Date().toISOString();
+    const { error } = await supabase.from('patient_care_plans')
+      .update({ signed_by: name, signed_at: signedAt }).eq('id', planId);
+    if (error) { console.warn('signCarePlan:', error.message); get().showToast('Could not sign care plan'); return null; }
+    set(s => {
+      const c = s.patientCarePlans[key];
+      return c ? { patientCarePlans: { ...s.patientCarePlans, [key]: { ...c, plan: { ...c.plan, signedBy: name, signedAt } } } } : {};
+    });
+    get().logCarePlanAudit(patientId, program, {
+      entityType: 'plan', action: 'signed',
+      summary: `Signed${versionNumber ? ` (v${versionNumber})` : ''}`, detail: note,
+    });
+    return versionNumber;
+  },
+
+  // Post-sign maintenance note — recorded without editing the plan (roadmap #36).
+  addCarePlanNote: async (patientId, program, note) => {
+    if (!note?.trim()) return;
+    get().logCarePlanAudit(patientId, program, { entityType: 'plan', action: 'note', summary: 'Note added', detail: note.trim() });
+    get().showToast('Note added');
+  },
+
+  // Replace the live plan with a version's snapshot (roadmap #25 restore).
+  restoreCarePlanVersion: async (patientId, program, version) => {
+    const key = carePlanKey(patientId, program.id);
+    const planId = get().patientCarePlans[key]?.plan?.id;
+    if (!planId) return;
+    const snap = version.snapshot || {};
+    // Replace children: delete current, insert from the snapshot (new ids).
+    await supabase.from('patient_care_plan_goals').delete().eq('plan_id', planId);
+    await supabase.from('patient_care_plan_interventions').delete().eq('plan_id', planId);
+    const goalRows = (snap.goals || []).map((g, i) => ({ ...patientCarePlanGoalToRow(g, planId), sort_order: i }));
+    const intvRows = (snap.interventions || []).map((x, i) => ({ ...patientCarePlanInterventionToRow(x, planId), sort_order: i }));
+    if (goalRows.length) await supabase.from('patient_care_plan_goals').insert(goalRows);
+    if (intvRows.length) await supabase.from('patient_care_plan_interventions').insert(intvRows);
+    // Reload the plan from the DB and audit the restore.
+    set(s => ({ patientCarePlanLoadedFor: { ...s.patientCarePlanLoadedFor, [key]: false } }));
+    await get().fetchPatientCarePlan(patientId, program.id);
+    get().logCarePlanAudit(patientId, program, { entityType: 'plan', action: 'restored', summary: `Restored v${version.versionNumber}` });
+    get().showToast(`Restored version ${version.versionNumber}`);
   },
 
   // ── Care Plan Library (Settings → Care Plan Library) ──

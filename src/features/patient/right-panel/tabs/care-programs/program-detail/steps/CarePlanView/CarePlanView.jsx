@@ -5,6 +5,7 @@ import { ActionButton } from '../../../../../../../../components/ActionButton/Ac
 import { Avatar } from '../../../../../../../../components/Avatar/Avatar';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { Input } from '../../../../../../../../components/Input/Input';
+import { Textarea } from '../../../../../../../../components/Textarea/Textarea';
 import { Drawer } from '../../../../../../../../components/Drawer/Drawer';
 import { MenuPopover } from '../../../../../../../../components/MenuPopover/MenuPopover';
 import { PriorityIcon } from '../../../../../../../../components/PriorityIcon/PriorityIcon';
@@ -15,6 +16,7 @@ import { CARE_PLAN_MOCK } from '../../../../../../data/carePlanMock';
 import { AddInterventionDrawer } from './AddInterventionDrawer';
 import { CarePlanShareDrawer } from './CarePlanShareDrawer';
 import { CarePlanHistoryDrawer } from './CarePlanHistoryDrawer';
+import { CarePlanVersionsDrawer } from './CarePlanVersionsDrawer';
 import styles from './CarePlanView.module.css';
 
 // The statuses a goal or intervention can move through. Kept flat and shared so
@@ -96,6 +98,8 @@ export function CarePlanView({ patientId, program }) {
   const savePatientCarePlanIntervention = useAppStore(s => s.savePatientCarePlanIntervention);
   const deletePatientCarePlanIntervention = useAppStore(s => s.deletePatientCarePlanIntervention);
   const savePatientCarePlanAsTemplate = useAppStore(s => s.savePatientCarePlanAsTemplate);
+  const signCarePlan = useAppStore(s => s.signCarePlan);
+  const addCarePlanNote = useAppStore(s => s.addCarePlanNote);
   const showToast = useAppStore(s => s.showToast);
   const patientName = useAppStore(s => s.patients.find(p => p.id === patientId)?.name);
   const carePlanShareRequest = useAppStore(s => s.carePlanShareRequest);
@@ -131,8 +135,27 @@ export function CarePlanView({ patientId, program }) {
   const [templateName, setTemplateName] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null); // { kind, id, name }
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [versionsOpen, setVersionsOpen] = useState(false);
+  const [signOpen, setSignOpen] = useState(false);
+  const [signNote, setSignNote] = useState('');
+  const [noteOpen, setNoteOpen] = useState(false);
+  const [noteText, setNoteText] = useState('');
 
   const canEdit = !usingMock;
+  const signedBy = live?.plan?.signedBy;
+  const signedAt = live?.plan?.signedAt;
+
+  const doSign = async () => {
+    setSignOpen(false);
+    const v = await signCarePlan(patientId, program, signNote.trim());
+    setSignNote('');
+    if (v) showToast('Care plan signed');
+  };
+  const doAddNote = async () => {
+    setNoteOpen(false);
+    await addCarePlanNote(patientId, program, noteText);
+    setNoteText('');
+  };
   // The drawer is driven entirely by the store flag — the toolbar button and
   // the step header (a separate component) both set it, and closing clears it.
   // A mock plan can still be previewed/downloaded; only Share (which persists
@@ -223,6 +246,23 @@ export function CarePlanView({ patientId, program }) {
           <Button
             variant="secondary"
             size="M"
+            leadingIcon="solar:layers-minimalistic-linear"
+            onClick={() => setVersionsOpen(true)}
+          >
+            Versions
+          </Button>
+          {!usingMock && (signedBy ? (
+            <Button variant="secondary" size="M" leadingIcon="solar:notes-linear" onClick={() => { setNoteText(''); setNoteOpen(true); }}>
+              Add Note
+            </Button>
+          ) : (
+            <Button variant="secondary" size="M" leadingIcon="solar:pen-2-linear" onClick={() => { setSignNote(''); setSignOpen(true); }}>
+              Sign
+            </Button>
+          ))}
+          <Button
+            variant="secondary"
+            size="M"
             leadingIconElement={<Icon name="custom:history" size={16} color="var(--neutral-400)" />}
             onClick={() => setHistoryOpen(true)}
           >
@@ -247,6 +287,13 @@ export function CarePlanView({ patientId, program }) {
           </Button>
         </div>
       </div>
+
+      {signedBy && (
+        <div className={styles.signedBanner}>
+          <Icon name="solar:check-circle-bold" size={16} color="var(--status-success)" />
+          Signed by {signedBy}{signedAt ? ` on ${new Date(signedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}
+        </div>
+      )}
 
       {/* Goals */}
       <div className={styles.section}>
@@ -402,6 +449,44 @@ export function CarePlanView({ patientId, program }) {
 
       {historyOpen && (
         <CarePlanHistoryDrawer patientId={patientId} program={program} onClose={() => setHistoryOpen(false)} />
+      )}
+
+      {versionsOpen && (
+        <CarePlanVersionsDrawer patientId={patientId} program={program} onClose={() => setVersionsOpen(false)} />
+      )}
+
+      {signOpen && (
+        <Drawer
+          title="Sign Care Plan"
+          onClose={() => setSignOpen(false)}
+          secondaryAction={<Button variant="secondary" size="L" onClick={() => setSignOpen(false)}>Cancel</Button>}
+          primaryAction={<Button variant="primary" size="L" onClick={doSign}>Sign</Button>}
+        >
+          <div className={styles.drawerBody}>
+            <p className={styles.drawerHint}>Signing saves a version snapshot of the plan and records who signed it. You can still add notes and change statuses afterwards.</p>
+            <div className={styles.drawerField}>
+              <span className={styles.drawerLabel}>Note <span className={styles.optional}>(optional)</span></span>
+              <Textarea value={signNote} onChange={e => setSignNote(e.target.value)} placeholder="Add a sign-off note" rows={3} />
+            </div>
+          </div>
+        </Drawer>
+      )}
+
+      {noteOpen && (
+        <Drawer
+          title="Add Note"
+          onClose={() => setNoteOpen(false)}
+          secondaryAction={<Button variant="secondary" size="L" onClick={() => setNoteOpen(false)}>Cancel</Button>}
+          primaryAction={<Button variant="primary" size="L" onClick={doAddNote} disabled={!noteText.trim()}>Add Note</Button>}
+        >
+          <div className={styles.drawerBody}>
+            <p className={styles.drawerHint}>Records a maintenance note on the signed plan without editing it — it appears in the plan's History.</p>
+            <div className={styles.drawerField}>
+              <span className={styles.drawerLabel}>Note <span className={styles.required}>*</span></span>
+              <Textarea autoFocus value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="e.g. Reviewed with patient; no changes needed." rows={3} />
+            </div>
+          </div>
+        </Drawer>
       )}
 
       {templateOpen && (

@@ -232,7 +232,21 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  flex-wrap: wrap;
 }
+
+.signedBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--space-2);
+  background: var(--status-success-light);
+  color: var(--status-success);
+  font-size: var(--font-base);
+  font-weight: 500;
+}
+.optional { color: var(--neutral-300); font-weight: 400; }
 
 .emptyRow {
   padding: var(--space-4) var(--space-1);
