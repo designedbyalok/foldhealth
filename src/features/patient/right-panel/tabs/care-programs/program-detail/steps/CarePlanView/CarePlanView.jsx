@@ -13,6 +13,7 @@ import { useAppStore } from '../../../../../../../../store/useAppStore';
 import { CreateGoalDrawer } from '../../../../../../../settings/care-plan-library/CreateGoalDrawer';
 import { CARE_PLAN_MOCK } from '../../../../../../data/carePlanMock';
 import { AddInterventionDrawer } from './AddInterventionDrawer';
+import { CarePlanShareDrawer } from './CarePlanShareDrawer';
 import styles from './CarePlanView.module.css';
 
 // The statuses a goal or intervention can move through. Kept flat and shared so
@@ -95,6 +96,10 @@ export function CarePlanView({ patientId, program }) {
   const deletePatientCarePlanIntervention = useAppStore(s => s.deletePatientCarePlanIntervention);
   const savePatientCarePlanAsTemplate = useAppStore(s => s.savePatientCarePlanAsTemplate);
   const showToast = useAppStore(s => s.showToast);
+  const patientName = useAppStore(s => s.patients.find(p => p.id === patientId)?.name);
+  const carePlanShareRequest = useAppStore(s => s.carePlanShareRequest);
+  const requestCarePlanShare = useAppStore(s => s.requestCarePlanShare);
+  const clearCarePlanShareRequest = useAppStore(s => s.clearCarePlanShareRequest);
 
   const key = patientId && program ? `${patientId}::${program.id}` : null;
   const live = useAppStore(s => (key ? s.patientCarePlans[key] : null));
@@ -102,6 +107,10 @@ export function CarePlanView({ patientId, program }) {
   useEffect(() => {
     if (patientId && program?.id) fetchPatientCarePlan(patientId, program.id);
   }, [patientId, program?.id, fetchPatientCarePlan]);
+
+  // A share request that was never opened/closed (e.g. the program was closed
+  // with the flag still set) must not linger and auto-open the drawer next time.
+  useEffect(() => () => clearCarePlanShareRequest(), [clearCarePlanShareRequest]);
 
   // A saved plan is data-backed and editable; with none we show the mock as a
   // read-only preview. The first Add creates the real plan and edits take over.
@@ -122,6 +131,11 @@ export function CarePlanView({ patientId, program }) {
   const [deleteTarget, setDeleteTarget] = useState(null); // { kind, id, name }
 
   const canEdit = !usingMock;
+  // The drawer is driven entirely by the store flag — the toolbar button and
+  // the step header (a separate component) both set it, and closing clears it.
+  // A mock plan can still be previewed/downloaded; only Share (which persists
+  // real ids) is gated to a saved plan.
+  const shareOpen = !!carePlanShareRequest;
 
   const changeStatus = (status) => {
     const { kind, item } = statusMenu;
@@ -203,15 +217,25 @@ export function CarePlanView({ patientId, program }) {
           <Icon name="solar:magic-stick-3-linear" size={16} color="var(--primary-300)" />
           New Problems identified in HRA
         </button>
-        <Button
-          variant="secondary"
-          size="M"
-          leadingIcon="solar:bookmark-linear"
-          disabled={usingMock}
-          onClick={() => { setTemplateName(''); setTemplateOpen(true); }}
-        >
-          Save as Template
-        </Button>
+        <div className={styles.toolbarActions}>
+          <Button
+            variant="secondary"
+            size="M"
+            leadingIcon="solar:eye-linear"
+            onClick={() => requestCarePlanShare('preview')}
+          >
+            Preview &amp; Share
+          </Button>
+          <Button
+            variant="secondary"
+            size="M"
+            leadingIcon="solar:bookmark-linear"
+            disabled={usingMock}
+            onClick={() => { setTemplateName(''); setTemplateOpen(true); }}
+          >
+            Save as Template
+          </Button>
+        </div>
       </div>
 
       {/* Goals */}
@@ -352,6 +376,17 @@ export function CarePlanView({ patientId, program }) {
           intervention={intvDrawer.intervention}
           onClose={() => setIntvDrawer(false)}
           onSave={handleAddIntervention}
+        />
+      )}
+
+      {shareOpen && (
+        <CarePlanShareDrawer
+          patientId={patientId}
+          program={program}
+          data={data}
+          patientName={patientName}
+          canShare={canEdit}
+          onClose={clearCarePlanShareRequest}
         />
       )}
 

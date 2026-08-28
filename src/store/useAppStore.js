@@ -2579,6 +2579,36 @@ export const useAppStore = create((set, get) => ({
     return get().saveCarePlanTemplate({ name: name.trim(), conditions, goals, interventions });
   },
 
+  // Preview & share (E4). The header's Download / Sign & Share buttons live in
+  // a different component from the plan data, so they set this request flag and
+  // CarePlanView (which owns the data) opens the drawer in response.
+  carePlanShareRequest: null,  // null | 'preview' | 'share'
+  requestCarePlanShare: (mode) => set({ carePlanShareRequest: mode }),
+  clearCarePlanShareRequest: () => set({ carePlanShareRequest: null }),
+
+  // Record one share of a plan (or a selection of it) to an external party.
+  // Returns the saved record, or null on failure.
+  sharePatientCarePlan: async (patientId, program, { target, format = 'standard', note = '', goalIds = [], interventionIds = [] }) => {
+    const row = {
+      patient_id: patientId,
+      program_id: program.id,
+      program_code: program.code || null,
+      target,
+      format,
+      note,
+      goal_ids: goalIds,
+      intervention_ids: interventionIds,
+      shared_by: get().currentUserProfile?.name || null,
+    };
+    const { data, error } = await supabase.from('care_plan_shares').insert(row).select().single();
+    if (error) {
+      console.warn('sharePatientCarePlan:', error.message);
+      get().showToast('Could not share care plan');
+      return null;
+    }
+    return data;
+  },
+
   // ── Care Plan Library (Settings → Care Plan Library) ──
   // Three sibling lists plus each goal's interventions, all persisted in
   // `care_plan_*` (supabase/care_plan_library_migration.sql). Unlike the

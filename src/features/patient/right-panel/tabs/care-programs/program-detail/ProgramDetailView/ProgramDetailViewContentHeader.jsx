@@ -52,6 +52,7 @@ export function ProgramDetailViewContentHeader({
   const currentUserProfile = useAppStore(s => s.currentUserProfile);
   const createTask = useAppStore(s => s.createTask);
   const showToast = useAppStore(s => s.showToast);
+  const requestCarePlanShare = useAppStore(s => s.requestCarePlanShare);
 
   // "Send for Sign Off" → pick an assignee, then file a task against them.
   const createSignOffTask = async (user) => {
@@ -161,9 +162,9 @@ export function ProgramDetailViewContentHeader({
           {isCarePlanStep ? (
             <>
               <ActionButton icon="solar:magnifer-linear" size="S" tooltip="Search" />
-              <ActionButton icon="solar:download-minimalistic-linear" size="S" tooltip="Download" />
+              <ActionButton icon="solar:download-minimalistic-linear" size="S" tooltip="Download" onClick={() => requestCarePlanShare('preview')} />
               <Button variant="secondary" size="L" leadingIconElement={<AddIconMinimalist size={16} />}>Add Care Plan</Button>
-              <Button variant="alt" size="L" leadingIcon="solar:pen-2-linear">Sign &amp; Share</Button>
+              <Button variant="alt" size="L" leadingIcon="solar:pen-2-linear" onClick={() => requestCarePlanShare('share')}>Sign &amp; Share</Button>
               <ActionButton icon="solar:menu-dots-linear" size="S" tooltip="More" />
             </>
           ) : isMedReconStep ? (
