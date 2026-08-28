@@ -260,6 +260,33 @@ function carePlanKey(patientId, programId) {
   return `${patientId}::${programId}`;
 }
 
+// Derive an audit entry from a goal/intervention save by diffing against its
+// previous state — a create, a status change, a rename, or a generic edit.
+function auditForSave(entityType, next, prev) {
+  if (!prev) return { entityType, entityId: next.id, action: 'created', summary: next.title };
+  if (prev.status !== next.status) {
+    return { entityType, entityId: next.id, action: 'status_changed', summary: next.title, detail: `${prev.status} → ${next.status}` };
+  }
+  if (prev.title !== next.title) {
+    return { entityType, entityId: next.id, action: 'updated', summary: next.title, detail: `Renamed from "${prev.title}"` };
+  }
+  return { entityType, entityId: next.id, action: 'updated', summary: next.title };
+}
+
+function mapCarePlanAuditRow(row) {
+  return {
+    id: row.id,
+    entityType: row.entity_type,
+    entityId: row.entity_id,
+    action: row.action,
+    summary: row.summary || '',
+    detail: row.detail || '',
+    actor: row.actor || '',
+    programCode: row.program_code || '',
+    createdAt: row.created_at,
+  };
+}
+
 function mapInterventionRow(row) {
   return {
     id: row.id,
@@ -2449,6 +2476,7 @@ export const useAppStore = create((set, get) => ({
 
   savePatientCarePlanGoal: async (patientId, program, values, id = null) => {
     const key = carePlanKey(patientId, program.id);
+    const prevGoal = id ? (get().patientCarePlans[key]?.goals || []).find(g => g.id === id) : null;
     const planId = await get().ensurePatientCarePlan(patientId, program);
     if (!planId) return null;
     const row = patientCarePlanGoalToRow(values, planId);
@@ -2458,6 +2486,7 @@ export const useAppStore = create((set, get) => ({
     const { data, error } = await q.select().single();
     if (error) { console.warn('savePatientCarePlanGoal:', error.message); get().showToast('Could not save goal'); return null; }
     const goal = mapPatientCarePlanGoalRow(data);
+    get().logCarePlanAudit(patientId, program, auditForSave('goal', goal, prevGoal));
     set(s => {
       const cur = s.patientCarePlans[key] || { goals: [], interventions: [] };
       return {
@@ -2476,17 +2505,20 @@ export const useAppStore = create((set, get) => ({
   deletePatientCarePlanGoal: async (patientId, programId, id) => {
     const key = carePlanKey(patientId, programId);
     const prev = get().patientCarePlans[key];
+    const removed = (prev?.goals || []).find(g => g.id === id);
     set(s => ({
       patientCarePlans: { ...s.patientCarePlans, [key]: { ...prev, goals: prev.goals.filter(g => g.id !== id) } },
     }));
     const { error } = await supabase.from('patient_care_plan_goals').delete().eq('id', id);
-    if (error) { console.warn('deletePatientCarePlanGoal:', error.message); set(s => ({ patientCarePlans: { ...s.patientCarePlans, [key]: prev } })); get().showToast('Could not delete goal'); }
+    if (error) { console.warn('deletePatientCarePlanGoal:', error.message); set(s => ({ patientCarePlans: { ...s.patientCarePlans, [key]: prev } })); get().showToast('Could not delete goal'); return; }
+    if (removed) get().logCarePlanAudit(patientId, { id: programId, code: prev?.plan?.programCode }, { entityType: 'goal', entityId: id, action: 'deleted', summary: removed.title });
   },
 
   savePatientCarePlanIntervention: async (patientId, program, values, id = null) => {
     const key = carePlanKey(patientId, program.id);
     const planId = await get().ensurePatientCarePlan(patientId, program);
     if (!planId) return null;
+    const prevIntv = id ? (get().patientCarePlans[key]?.interventions || []).find(x => x.id === id) : null;
     const row = patientCarePlanInterventionToRow(values, planId);
     const q = id
       ? supabase.from('patient_care_plan_interventions').update({ ...row, updated_at: new Date().toISOString() }).eq('id', id)
@@ -2494,6 +2526,7 @@ export const useAppStore = create((set, get) => ({
     const { data, error } = await q.select().single();
     if (error) { console.warn('savePatientCarePlanIntervention:', error.message); get().showToast('Could not save intervention'); return null; }
     const intervention = mapPatientCarePlanInterventionRow(data);
+    get().logCarePlanAudit(patientId, program, auditForSave('intervention', intervention, prevIntv));
     set(s => {
       const cur = s.patientCarePlans[key] || { goals: [], interventions: [] };
       return {
@@ -2514,11 +2547,13 @@ export const useAppStore = create((set, get) => ({
   deletePatientCarePlanIntervention: async (patientId, programId, id) => {
     const key = carePlanKey(patientId, programId);
     const prev = get().patientCarePlans[key];
+    const removed = (prev?.interventions || []).find(x => x.id === id);
     set(s => ({
       patientCarePlans: { ...s.patientCarePlans, [key]: { ...prev, interventions: prev.interventions.filter(x => x.id !== id) } },
     }));
     const { error } = await supabase.from('patient_care_plan_interventions').delete().eq('id', id);
-    if (error) { console.warn('deletePatientCarePlanIntervention:', error.message); set(s => ({ patientCarePlans: { ...s.patientCarePlans, [key]: prev } })); get().showToast('Could not delete intervention'); }
+    if (error) { console.warn('deletePatientCarePlanIntervention:', error.message); set(s => ({ patientCarePlans: { ...s.patientCarePlans, [key]: prev } })); get().showToast('Could not delete intervention'); return; }
+    if (removed) get().logCarePlanAudit(patientId, { id: programId, code: prev?.plan?.programCode }, { entityType: 'intervention', entityId: id, action: 'deleted', summary: removed.title });
   },
 
   // Save the patient's live plan back into the shared library as a reusable
@@ -2606,7 +2641,54 @@ export const useAppStore = create((set, get) => ({
       get().showToast('Could not share care plan');
       return null;
     }
+    const label = { ehr: 'EHR', patient: 'Patient', poa: 'POA' }[target] || target;
+    get().logCarePlanAudit(patientId, program, {
+      entityType: 'share', entityId: data.id, action: 'shared',
+      summary: `Shared to ${label}`,
+      detail: `${goalIds.length} goal(s), ${interventionIds.length} intervention(s)`,
+    });
     return data;
+  },
+
+  // ── Care Plan audit (History) ──
+  // Append-only trail in care_plan_audit (roadmap #9). Writes are
+  // fire-and-forget — an audit failure must never block the user's action.
+  patientCarePlanAudit: {},        // { [key]: entries[] }
+  patientCarePlanAuditLoading: {}, // { [key]: bool }
+
+  logCarePlanAudit: (patientId, program, entry) => {
+    if (!patientId || !program?.id) return;
+    supabase.from('care_plan_audit').insert({
+      patient_id: patientId,
+      program_id: program.id,
+      program_code: program.code || null,
+      entity_type: entry.entityType,
+      entity_id: entry.entityId != null ? String(entry.entityId) : null,
+      action: entry.action,
+      summary: entry.summary || '',
+      detail: entry.detail || '',
+      actor: get().currentUserProfile?.name || null,
+    }).then(({ error }) => {
+      if (error) { console.warn('logCarePlanAudit:', error.message); return; }
+      // Invalidate the cached history for this program so the drawer refetches.
+      const key = carePlanKey(patientId, program.id);
+      set(s => ({ patientCarePlanAudit: { ...s.patientCarePlanAudit, [key]: undefined } }));
+    });
+  },
+
+  fetchCarePlanAudit: async (patientId, programId) => {
+    if (!patientId || !programId) return;
+    const key = carePlanKey(patientId, programId);
+    set(s => ({ patientCarePlanAuditLoading: { ...s.patientCarePlanAuditLoading, [key]: true } }));
+    const { data, error } = await supabase
+      .from('care_plan_audit').select('*')
+      .eq('patient_id', patientId).eq('program_id', programId)
+      .order('created_at', { ascending: false });
+    if (error) console.warn('fetchCarePlanAudit:', error.message);
+    set(s => ({
+      patientCarePlanAudit: { ...s.patientCarePlanAudit, [key]: (data || []).map(mapCarePlanAuditRow) },
+      patientCarePlanAuditLoading: { ...s.patientCarePlanAuditLoading, [key]: false },
+    }));
   },
 
   // ── Care Plan Library (Settings → Care Plan Library) ──

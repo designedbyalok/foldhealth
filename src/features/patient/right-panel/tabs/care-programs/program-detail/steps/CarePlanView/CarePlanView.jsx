@@ -14,6 +14,7 @@ import { CreateGoalDrawer } from '../../../../../../../settings/care-plan-librar
 import { CARE_PLAN_MOCK } from '../../../../../../data/carePlanMock';
 import { AddInterventionDrawer } from './AddInterventionDrawer';
 import { CarePlanShareDrawer } from './CarePlanShareDrawer';
+import { CarePlanHistoryDrawer } from './CarePlanHistoryDrawer';
 import styles from './CarePlanView.module.css';
 
 // The statuses a goal or intervention can move through. Kept flat and shared so
@@ -129,6 +130,7 @@ export function CarePlanView({ patientId, program }) {
   const [templateOpen, setTemplateOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null); // { kind, id, name }
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const canEdit = !usingMock;
   // The drawer is driven entirely by the store flag — the toolbar button and
@@ -218,6 +220,14 @@ export function CarePlanView({ patientId, program }) {
           New Problems identified in HRA
         </button>
         <div className={styles.toolbarActions}>
+          <Button
+            variant="secondary"
+            size="M"
+            leadingIconElement={<Icon name="custom:history" size={16} color="var(--neutral-400)" />}
+            onClick={() => setHistoryOpen(true)}
+          >
+            History
+          </Button>
           <Button
             variant="secondary"
             size="M"
@@ -388,6 +398,10 @@ export function CarePlanView({ patientId, program }) {
           canShare={canEdit}
           onClose={clearCarePlanShareRequest}
         />
+      )}
+
+      {historyOpen && (
+        <CarePlanHistoryDrawer patientId={patientId} program={program} onClose={() => setHistoryOpen(false)} />
       )}
 
       {templateOpen && (
