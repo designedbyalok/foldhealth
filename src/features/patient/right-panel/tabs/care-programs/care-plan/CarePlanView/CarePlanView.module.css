@@ -235,6 +235,24 @@
   flex-wrap: wrap;
 }
 
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.clearAll {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--primary-300);
+}
+
 .signedBanner {
   display: flex;
   align-items: center;

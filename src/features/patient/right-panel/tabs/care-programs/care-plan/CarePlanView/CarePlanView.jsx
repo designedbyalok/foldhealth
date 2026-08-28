@@ -12,6 +12,7 @@ import { MenuPopover } from '../../../../../../../components/MenuPopover/MenuPop
 import { PriorityIcon } from '../../../../../../../components/PriorityIcon/PriorityIcon';
 import { ConfirmDialog } from '../../../../../../../components/ConfirmDialog/ConfirmDialog';
 import { Select } from '../../../../../../../components/Select/Select';
+import { FilterChip } from '../../../../../../../components/FilterChip/FilterChip';
 import { useAppStore } from '../../../../../../../store/useAppStore';
 import { CreateGoalDrawer } from '../../../../../../settings/care-plan-library/goals/CreateGoalDrawer/CreateGoalDrawer';
 import { CARE_PLAN_MOCK } from '../../../../../data/carePlanMock';
@@ -25,6 +26,8 @@ import styles from './CarePlanView.module.css';
 // the pill menu and the intervention drawer offer the same vocabulary.
 const GBI_STATUSES = ['Not Started', 'In Progress', 'On Hold', 'Met', 'Not Met'];
 const PRIORITIES = ['high', 'medium', 'low'];
+// Capitalized labels for the priority filter chip (values compare case-insensitively).
+const PRIORITY_LABELS = ['High', 'Medium', 'Low'];
 
 function LinkChip({ count }) {
   return (
@@ -152,8 +155,30 @@ export function CarePlanView({ patientId, program }) {
   const [signNote, setSignNote] = useState('');
   const [noteOpen, setNoteOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
+  // Role/status/priority filter (#39). Goals & barriers have no assignee, so the
+  // assignee filter narrows only interventions; status/priority apply to all.
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filters, setFilters] = useState({ status: [], priority: [], assignee: [] });
 
   const canEdit = !usingMock;
+
+  const setFilter = (key, vals) => setFilters(f => ({ ...f, [key]: vals }));
+  const clearFilters = () => setFilters({ status: [], priority: [], assignee: [] });
+  const filtersActive = filters.status.length || filters.priority.length || filters.assignee.length;
+
+  const assigneeOptions = useMemo(
+    () => [...new Set((data.interventions || []).map(i => i.assignee?.name).filter(Boolean))],
+    [data.interventions],
+  );
+  const matchesSP = (item) =>
+    (!filters.status.length || filters.status.includes(item.status)) &&
+    (!filters.priority.length || filters.priority.map(p => p.toLowerCase()).includes((item.priority || '').toLowerCase()));
+  const filteredGoals = useMemo(() => data.goals.filter(matchesSP), [data.goals, filters]); // eslint-disable-line react-hooks/exhaustive-deps
+  const filteredBarriers = useMemo(() => (data.barriers || []).filter(matchesSP), [data.barriers, filters]); // eslint-disable-line react-hooks/exhaustive-deps
+  const filteredInterventions = useMemo(
+    () => data.interventions.filter(i => matchesSP(i) && (!filters.assignee.length || filters.assignee.includes(i.assignee?.name))),
+    [data.interventions, filters], // eslint-disable-line react-hooks/exhaustive-deps
+  );
   const signedBy = live?.plan?.signedBy;
   const signedAt = live?.plan?.signedAt;
 
@@ -302,6 +327,14 @@ export function CarePlanView({ patientId, program }) {
           New Problems identified in HRA
         </button>
         <div className={styles.toolbarActions}>
+          <ActionButton
+            icon="solar:filter-linear"
+            size="S"
+            tooltip="Filter"
+            active={filtersOpen || !!filtersActive}
+            iconColor={filtersActive ? 'var(--primary-300)' : undefined}
+            onClick={() => setFiltersOpen(o => !o)}
+          />
           <Button
             variant="secondary"
             size="M"
@@ -354,6 +387,20 @@ export function CarePlanView({ patientId, program }) {
         </div>
       )}
 
+      {filtersOpen && (
+        <div className={styles.filterBar}>
+          <FilterChip label="Status" options={GBI_STATUSES} selected={filters.status} onChange={v => setFilter('status', v)} />
+          <FilterChip label="Priority" options={PRIORITY_LABELS} selected={filters.priority} onChange={v => setFilter('priority', v)} />
+          <FilterChip label="Assignee" searchable options={assigneeOptions} selected={filters.assignee} onChange={v => setFilter('assignee', v)} />
+          {filtersActive ? (
+            <button type="button" className={styles.clearAll} onClick={clearFilters}>
+              <Icon name="solar:backspace-linear" size={16} color="var(--primary-300)" />
+              Clear All
+            </button>
+          ) : null}
+        </div>
+      )}
+
       {/* Goals */}
       <div className={styles.section}>
         <div className={styles.sectionHead}>
@@ -376,8 +423,8 @@ export function CarePlanView({ patientId, program }) {
             <span className={styles.statusCell}>Status</span>
             <span className={styles.rowMenuCell} />
           </div>
-          {data.goals.length === 0 && <div className={styles.emptyRow}>No goals yet. Add one to get started.</div>}
-          {data.goals.map(g => (
+          {filteredGoals.length === 0 && <div className={styles.emptyRow}>{data.goals.length ? 'No goals match the filters.' : 'No goals yet. Add one to get started.'}</div>}
+          {filteredGoals.map(g => (
             <div key={g.id} className={styles.goalRow}>
               <span className={styles.pCell}>
                 <button type="button" className={styles.priorityBtn} onClick={(e) => canEdit && setPriorityMenu({ kind: 'goal', item: g, rect: e.currentTarget.getBoundingClientRect() })} disabled={!canEdit} aria-label="Change priority">
@@ -421,8 +468,8 @@ export function CarePlanView({ patientId, program }) {
             <span className={styles.statusCell}>Status</span>
             <span className={styles.rowMenuCell} />
           </div>
-          {data.interventions.length === 0 && <div className={styles.emptyRow}>No interventions yet.</div>}
-          {data.interventions.map(i => (
+          {filteredInterventions.length === 0 && <div className={styles.emptyRow}>{data.interventions.length ? 'No interventions match the filters.' : 'No interventions yet.'}</div>}
+          {filteredInterventions.map(i => (
             <div key={i.id} className={styles.intvRow}>
               <span className={styles.pCell}>
                 <button type="button" className={styles.priorityBtn} onClick={(e) => canEdit && setPriorityMenu({ kind: 'intv', item: i, rect: e.currentTarget.getBoundingClientRect() })} disabled={!canEdit} aria-label="Change priority">
@@ -484,8 +531,8 @@ export function CarePlanView({ patientId, program }) {
             <span className={styles.statusCell}>Status</span>
             <span className={styles.rowMenuCell} />
           </div>
-          {(data.barriers || []).length === 0 && <div className={styles.emptyRow}>No barriers yet. Add one to capture what blocks this patient.</div>}
-          {(data.barriers || []).map(b => (
+          {filteredBarriers.length === 0 && <div className={styles.emptyRow}>{(data.barriers || []).length ? 'No barriers match the filters.' : 'No barriers yet. Add one to capture what blocks this patient.'}</div>}
+          {filteredBarriers.map(b => (
             <div key={b.id} className={styles.goalRow}>
               <span className={styles.pCell}>
                 <button type="button" className={styles.priorityBtn} onClick={(e) => canEdit && setPriorityMenu({ kind: 'barrier', item: b, rect: e.currentTarget.getBoundingClientRect() })} disabled={!canEdit} aria-label="Change priority">
