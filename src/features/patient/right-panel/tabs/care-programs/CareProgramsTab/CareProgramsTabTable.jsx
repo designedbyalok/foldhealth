@@ -81,7 +81,7 @@ export function CareProgramsTabTable({
               <td className={styles.assigneeCell} data-assign-row={p.id} onClick={e => e.stopPropagation()}>
                 <AssigneeChange
                   avatarOnly
-                  size="S"
+                  size="M"
                   name={p.assignee && p.assignee !== 'Unassigned' ? p.assignee : undefined}
                   initials={p.assignee && p.assignee !== 'Unassigned' ? initialsOf(p.assignee) : ''}
                   unassigned={!p.assignee || p.assignee === 'Unassigned'}

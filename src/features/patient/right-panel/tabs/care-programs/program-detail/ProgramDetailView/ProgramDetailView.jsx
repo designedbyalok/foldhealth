@@ -41,7 +41,7 @@ export function ProgramDetailView({ program, onClose, startAtFirstStep = false, 
   const assigneePicker = (
     <AssigneeChange
       avatarOnly
-      size="S"
+      size="M"
       name={v.isUnassigned ? undefined : v.assignee}
       initials={v.isUnassigned ? '' : v.initialsOf(v.assignee)}
       unassigned={v.isUnassigned}
