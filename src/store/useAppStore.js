@@ -132,6 +132,20 @@ function mapCarePlanTemplateRow(row) {
   };
 }
 
+// Standalone (goal-independent) reusable intervention — the Interventions
+// Library tab. Distinct from the goal-linked care_plan_interventions rows.
+function mapCarePlanInterventionTemplateRow(row) {
+  return {
+    id: row.id,
+    kind: row.kind || 'internal-task',
+    title: row.title,
+    description: row.description || '',
+    config: row.config || {},
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 /* ── Patient Care Plan row ⇄ object mapping ──
    The per-patient, per-program plan behind the Care Plan step. Goals mirror
    the library goal shape (so a template instantiates cleanly) plus the fields
@@ -2573,6 +2587,7 @@ export const useAppStore = create((set, get) => ({
   carePlanTemplates: [],
   carePlanGoals: [],
   carePlanBarriers: [],
+  carePlanInterventionTemplates: [],
   carePlanLibraryLoading: false,
   carePlanLibraryDidFetch: false,
   // Per-user starred templates (roadmap #3), persisted in
@@ -2616,12 +2631,16 @@ export const useAppStore = create((set, get) => ({
 
   fetchCarePlanLibrary: async () => {
     set({ carePlanLibraryLoading: true });
-    const [templates, goals, barriers, interventions] = await Promise.all([
+    const [templates, goals, barriers, interventions, intvTemplates] = await Promise.all([
       supabase.from('care_plan_templates').select('*').order('created_at', { ascending: true }),
       supabase.from('care_plan_goals').select('*').order('created_at', { ascending: true }),
       supabase.from('care_plan_barriers').select('*').order('created_at', { ascending: true }),
       supabase.from('care_plan_interventions').select('*').order('created_at', { ascending: true }),
+      supabase.from('care_plan_intervention_templates').select('*').order('created_at', { ascending: true }),
     ]);
+    // intvTemplates is intentionally excluded from the gate: its table may not
+    // exist in an environment where that migration hasn't run, and its absence
+    // shouldn't blank the other three tabs.
     const firstError = templates.error || goals.error || barriers.error || interventions.error;
     if (firstError) {
       // Table missing (migration not run yet) or blocked — keep the tabs as
@@ -2630,6 +2649,7 @@ export const useAppStore = create((set, get) => ({
       set({ carePlanLibraryLoading: false, carePlanLibraryDidFetch: true });
       return;
     }
+    if (intvTemplates.error) console.warn('intervention templates fetch failed (run migration?):', intvTemplates.error.message);
     const byGoal = new Map();
     (interventions.data || []).forEach((row) => {
       const list = byGoal.get(row.goal_id) || [];
@@ -2640,9 +2660,46 @@ export const useAppStore = create((set, get) => ({
       carePlanTemplates: (templates.data || []).map(mapCarePlanTemplateRow),
       carePlanGoals: (goals.data || []).map(row => mapCarePlanGoalRow(row, byGoal.get(row.id) || [])),
       carePlanBarriers: (barriers.data || []).map(mapCarePlanBarrierRow),
+      carePlanInterventionTemplates: (intvTemplates.data || []).map(mapCarePlanInterventionTemplateRow),
       carePlanLibraryLoading: false,
       carePlanLibraryDidFetch: true,
     });
+  },
+
+  saveCarePlanInterventionTemplate: async (values, id = null) => {
+    const row = {
+      kind: values.kind || 'internal-task',
+      title: (values.title || '').trim(),
+      description: values.description || '',
+      config: values.config || {},
+    };
+    const q = id
+      ? supabase.from('care_plan_intervention_templates').update({ ...row, updated_at: new Date().toISOString() }).eq('id', id)
+      : supabase.from('care_plan_intervention_templates').insert(row);
+    const { data, error } = await q.select().single();
+    if (error) {
+      console.warn('save intervention template failed:', error.message);
+      get().showToast('Could not save intervention');
+      return null;
+    }
+    const tpl = mapCarePlanInterventionTemplateRow(data);
+    set(s => ({
+      carePlanInterventionTemplates: id
+        ? s.carePlanInterventionTemplates.map(t => (t.id === tpl.id ? tpl : t))
+        : [...s.carePlanInterventionTemplates, tpl],
+    }));
+    return tpl;
+  },
+
+  deleteCarePlanInterventionTemplate: async (id) => {
+    const prev = get().carePlanInterventionTemplates;
+    set({ carePlanInterventionTemplates: prev.filter(t => t.id !== id) });
+    const { error } = await supabase.from('care_plan_intervention_templates').delete().eq('id', id);
+    if (error) {
+      console.warn('delete intervention template failed:', error.message);
+      set({ carePlanInterventionTemplates: prev });
+      get().showToast('Could not delete intervention');
+    }
   },
 
   /**

@@ -5,6 +5,7 @@ import { Badge } from '../../../components/Badge/Badge';
 import { Button } from '../../../components/Button/Button';
 import { Input } from '../../../components/Input/Input';
 import { Textarea } from '../../../components/Textarea/Textarea';
+import { Select } from '../../../components/Select/Select';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { SectionTitleBar } from '../../../components/SectionTitleBar/SectionTitleBar';
@@ -22,14 +23,27 @@ import styles from './CarePlanLibraryPanel.module.css';
 const CARE_PLAN_TABS = [
   { key: 'template', label: 'Plan Template' },
   { key: 'goals', label: 'Goals Library' },
+  { key: 'interventions', label: 'Interventions Library' },
   { key: 'barriers', label: 'Barriers Library' },
 ];
 
 const TAB_META = {
   template: { entityLabel: 'Template', emptyIcon: 'solar:clipboard-list-linear' },
   goals: { entityLabel: 'Goal', emptyIcon: 'solar:flag-linear' },
+  interventions: { entityLabel: 'Intervention', emptyIcon: 'solar:clipboard-check-linear' },
   barriers: { entityLabel: 'Barrier', emptyIcon: 'solar:shield-warning-linear' },
 };
+
+// The intervention kinds a template can carry — same vocabulary as the goal
+// drawer's Add-Intervention menu (Figma 14109:303516).
+const INTERVENTION_KINDS = [
+  { value: 'send-form', label: 'Send Form' },
+  { value: 'patient-education', label: 'Patient Education' },
+  { value: 'patient-task', label: 'Patient Task' },
+  { value: 'measure-vital', label: 'Measure Vital' },
+  { value: 'internal-task', label: 'Internal Task' },
+];
+const kindLabel = (k) => INTERVENTION_KINDS.find(o => o.value === k)?.label || k;
 
 function filterByTitleAndDescription(list, query) {
   const q = query.trim().toLowerCase();
@@ -91,6 +105,15 @@ const SIMPLE_COLUMNS = [
   { key: 'title', label: 'Title', sticky: 'left', left: 0, width: 260 },
   { key: 'description', label: 'Description', width: 360 },
   { key: 'linked', label: 'Linked Items', width: 140 },
+  { key: 'createdOn', label: 'Created On', width: 220 },
+  { key: 'updated', label: 'Last Updated', width: 130 },
+  { key: 'actions', label: 'Actions', sticky: 'right', width: 100 },
+];
+
+const INTERVENTION_COLUMNS = [
+  { key: 'title', label: 'Intervention Title', sticky: 'left', left: 0, width: 280 },
+  { key: 'type', label: 'Type', width: 160 },
+  { key: 'description', label: 'Description', width: 340 },
   { key: 'createdOn', label: 'Created On', width: 220 },
   { key: 'updated', label: 'Last Updated', width: 130 },
   { key: 'actions', label: 'Actions', sticky: 'right', width: 100 },
@@ -178,6 +201,9 @@ export function CarePlanLibraryPanel() {
   const deleteCarePlanBarrier = useAppStore(s => s.deleteCarePlanBarrier);
   const saveCarePlanTemplate = useAppStore(s => s.saveCarePlanTemplate);
   const deleteCarePlanTemplate = useAppStore(s => s.deleteCarePlanTemplate);
+  const interventionTemplates = useAppStore(s => s.carePlanInterventionTemplates);
+  const saveCarePlanInterventionTemplate = useAppStore(s => s.saveCarePlanInterventionTemplate);
+  const deleteCarePlanInterventionTemplate = useAppStore(s => s.deleteCarePlanInterventionTemplate);
   const favorites = useAppStore(s => s.carePlanFavorites);
   const fetchCarePlanFavorites = useAppStore(s => s.fetchCarePlanFavorites);
   const toggleCarePlanFavorite = useAppStore(s => s.toggleCarePlanFavorite);
@@ -251,18 +277,28 @@ export function CarePlanLibraryPanel() {
     prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
   ));
   const filteredBarriers = useMemo(() => filterByTitleAndDescription(barriers, searchValue), [barriers, searchValue]);
+  const filteredInterventions = useMemo(
+    () => filterByTitleAndDescription(interventionTemplates, searchValue),
+    [interventionTemplates, searchValue],
+  );
 
   const closeDrawer = () => setDraft(null);
 
   const openCreate = () => {
-    // Templates get the full-pane New Care Plan view; goals/barriers keep the
-    // lightweight drawer.
+    // Templates get the full-pane New Care Plan view; goals/barriers/
+    // interventions keep the lightweight drawer.
     if (activeTab === 'template') { setCarePlanCreateOpen(true); return; }
-    setDraft(blankSimpleDraft(activeTab === 'goals' ? 'goal' : 'barrier'));
+    if (activeTab === 'goals') { setDraft(blankSimpleDraft('goal')); return; }
+    if (activeTab === 'interventions') { setDraft({ kind: 'intervention', id: null, title: '', description: '', interventionKind: 'internal-task' }); return; }
+    setDraft(blankSimpleDraft('barrier'));
   };
 
   const openEditTemplate = (t) => setDraft(templateDraftFrom(t));
   const openEditSimple = (kind, item) => setDraft(simpleDraftFrom(kind, item));
+  const openEditIntervention = (item) => setDraft({
+    kind: 'intervention', id: item.id, title: item.title,
+    description: item.description, interventionKind: item.kind,
+  });
 
   const canSave = draft && (draft.kind === 'template'
     ? draft.name.trim().length > 0
@@ -278,6 +314,13 @@ export function CarePlanLibraryPanel() {
       );
       if (!saved) return;
       showToast(`"${draft.name.trim()}" ${draft.id ? 'updated' : 'created'}`);
+    } else if (draft.kind === 'intervention') {
+      const saved = await saveCarePlanInterventionTemplate(
+        { title: draft.title.trim(), description: draft.description.trim(), kind: draft.interventionKind },
+        draft.id,
+      );
+      if (!saved) return;
+      showToast(`"${draft.title.trim()}" ${draft.id ? 'updated' : 'created'}`);
     } else {
       const saved = await saveCarePlanBarrier(
         { title: draft.title.trim(), description: draft.description.trim() },
@@ -293,6 +336,7 @@ export function CarePlanLibraryPanel() {
     const { kind, id, name } = deleteTarget;
     if (kind === 'template') deleteCarePlanTemplate(id);
     else if (kind === 'goal') deleteCarePlanGoal(id);
+    else if (kind === 'intervention') deleteCarePlanInterventionTemplate(id);
     else deleteCarePlanBarrier(id);
     showToast(`"${name}" deleted`);
     setDeleteTarget(null);
@@ -421,6 +465,27 @@ export function CarePlanLibraryPanel() {
     </tr>
   );
 
+  const renderInterventionRow = (item) => (
+    <tr key={item.id} className={styles.row}>
+      <td className={styles.tdName}>
+        <button type="button" className={styles.nameLink} onClick={() => openEditIntervention(item)}>{item.title}</button>
+      </td>
+      <td className={styles.tdType}>
+        <Badge tone="grey" size="S" label={kindLabel(item.kind)} />
+      </td>
+      <td className={styles.tdDescription}>{item.description || '—'}</td>
+      <td className={styles.tdMuted}>{formatDateTime(item.createdAt)}</td>
+      <td className={styles.tdUpdated}>{formatRelative(item.updatedAt)}</td>
+      <td className={styles.tdActions} onClick={e => e.stopPropagation()}>
+        <div className={styles.actionCell}>
+          <ActionButton icon="solar:pen-linear" size="S" tooltip="Edit" onClick={() => openEditIntervention(item)} />
+          <div className={styles.vDivider} />
+          <ActionButton icon="solar:trash-bin-trash-linear" size="S" tooltip="Delete" onClick={() => setDeleteTarget({ kind: 'intervention', id: item.id, name: item.title })} />
+        </div>
+      </td>
+    </tr>
+  );
+
   // An empty library renders the ring state alone — no header row, no table —
   // mirroring the Insurance Plans tab. A search that matches nothing keeps the
   // table, since the columns are still meaningful there.
@@ -500,6 +565,23 @@ export function CarePlanLibraryPanel() {
               </div>
             }
             minTableWidth={1530}
+          />
+          )
+        )}
+        {!(libraryLoading && !libraryDidFetch) && activeTab === 'interventions' && (
+          interventionTemplates.length === 0 ? emptyPane('No Interventions Added') : (
+          <WorklistShell
+            header={null}
+            columns={INTERVENTION_COLUMNS}
+            rows={filteredInterventions}
+            renderRow={renderInterventionRow}
+            emptyState={
+              <div className={styles.emptyState}>
+                <Icon name={meta.emptyIcon} size={32} color="var(--neutral-150)" />
+                <p>No interventions match "<strong>{searchValue.trim()}</strong>".</p>
+              </div>
+            }
+            minTableWidth={1130}
           />
           )
         )}
@@ -631,6 +713,40 @@ export function CarePlanLibraryPanel() {
               value={draft.title}
               onChange={e => setDraft(d => ({ ...d, title: e.target.value }))}
               placeholder={draft.kind === 'goal' ? 'e.g. A1C below 7%' : 'e.g. Transportation'}
+            />
+          </div>
+          <div className={styles.formField}>
+            <span className={styles.formLabel}>Description</span>
+            <Textarea
+              value={draft.description}
+              onChange={e => setDraft(d => ({ ...d, description: e.target.value }))}
+              placeholder="Short description"
+            />
+          </div>
+        </Drawer>
+      )}
+
+      {draft && draft.kind === 'intervention' && (
+        <Drawer
+          title={draft.id ? 'Edit Intervention' : 'New Intervention'}
+          onClose={closeDrawer}
+          secondaryAction={<Button variant="secondary" size="L" onClick={closeDrawer}>Cancel</Button>}
+          primaryAction={<Button variant="primary" size="L" onClick={saveDraft} disabled={!canSave}>Save</Button>}
+        >
+          <div className={styles.formField}>
+            <span className={styles.formLabel}>Type</span>
+            <Select
+              options={INTERVENTION_KINDS}
+              value={draft.interventionKind}
+              onChange={(v) => setDraft(d => ({ ...d, interventionKind: v }))}
+            />
+          </div>
+          <div className={styles.formField}>
+            <span className={styles.formLabel}>Title <span className={styles.required}>•</span></span>
+            <Input
+              value={draft.title}
+              onChange={e => setDraft(d => ({ ...d, title: e.target.value }))}
+              placeholder="e.g. Measure blood pressure daily"
             />
           </div>
           <div className={styles.formField}>
