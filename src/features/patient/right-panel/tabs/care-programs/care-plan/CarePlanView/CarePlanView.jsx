@@ -21,6 +21,7 @@ import { AddInterventionDrawer } from '../drawers/AddInterventionDrawer/AddInter
 import { CarePlanShareDrawer } from '../drawers/CarePlanShareDrawer/CarePlanShareDrawer';
 import { CarePlanHistoryDrawer } from '../drawers/CarePlanHistoryDrawer/CarePlanHistoryDrawer';
 import { CarePlanVersionsDrawer } from '../drawers/CarePlanVersionsDrawer/CarePlanVersionsDrawer';
+import { CarePlanLinkDrawer } from '../drawers/CarePlanLinkDrawer/CarePlanLinkDrawer';
 import styles from './CarePlanView.module.css';
 
 // The statuses a goal or intervention can move through. Kept flat and shared so
@@ -121,9 +122,14 @@ export function CarePlanView({ patientId, program }) {
   const key = patientId && program ? `${patientId}::${program.id}` : null;
   const live = useAppStore(s => (key ? s.patientCarePlans[key] : null));
 
+  const fetchCarePlanLinks = useAppStore(s => s.fetchCarePlanLinks);
+  const carePlanLinks = useAppStore(s => (key ? s.patientCarePlanLinks[key] : null)) || [];
+  const [linkOwner, setLinkOwner] = useState(null); // null | { kind, item }
+  const linkCount = (id) => carePlanLinks.filter(l => l.ownerId === String(id)).length;
+
   useEffect(() => {
-    if (patientId && program?.id) fetchPatientCarePlan(patientId, program.id);
-  }, [patientId, program?.id, fetchPatientCarePlan]);
+    if (patientId && program?.id) { fetchPatientCarePlan(patientId, program.id); fetchCarePlanLinks(patientId, program.id); }
+  }, [patientId, program?.id, fetchPatientCarePlan, fetchCarePlanLinks]);
 
   // A share request that was never opened/closed (e.g. the program was closed
   // with the flag still set) must not linger and auto-open the drawer next time.
@@ -309,7 +315,6 @@ export function CarePlanView({ patientId, program }) {
   const handleViewAllConditions = () => setConditionsViewOpen(true);
   const handleNewProblems = () => showToast('New Problems — coming soon');
   const handleTrends = () => showToast('Trends — coming soon');
-  const handleLinkChip = (count, title) => showToast(count ? `"${title}" has ${count} links — manage in detail view` : 'No links yet');
   const handleAssigneeChange = (intervention, user) => {
     if (!canEdit) return;
     savePatientCarePlanIntervention(patientId, program, { ...intervention, assignee: { name: user.name, initials: user.initials } }, intervention.id);
@@ -481,7 +486,7 @@ export function CarePlanView({ patientId, program }) {
               <span className={styles.titleCell}>
                 <span className={styles.rowIcon}><Icon name={g.icon} size={16} color="var(--neutral-400)" /></span>
                 <EditableTitle title={g.title} subtitle={g.subtitle} editable={canEdit} onCommit={t => renameGoal(g, t)} />
-                <span onClick={() => handleLinkChip(g.links, g.title)} style={{ cursor: 'pointer' }}><LinkChip count={g.links} /></span>
+                <span onClick={() => canEdit && setLinkOwner({ kind: 'goal', item: g })} style={{ cursor: canEdit ? 'pointer' : 'default' }}><LinkChip count={linkCount(g.id)} /></span>
               </span>
               <span className={`${styles.valueCell} ${g.currentValue === 'No Data' ? styles.muted : ''}`}>{g.currentValue || ''}</span>
               <span className={styles.trendCell}>{g.trend}</span>
@@ -535,7 +540,7 @@ export function CarePlanView({ patientId, program }) {
                     <Icon name="solar:refresh-linear" size={12} color="var(--neutral-300)" />
                   </span>
                 )}
-                <span onClick={() => handleLinkChip(i.links, i.title)} style={{ cursor: 'pointer' }}><LinkChip count={i.links} /></span>
+                <span onClick={() => canEdit && setLinkOwner({ kind: 'intervention', item: i })} style={{ cursor: canEdit ? 'pointer' : 'default' }}><LinkChip count={linkCount(i.id)} /></span>
               </span>
               <span className={styles.assigneeCell} onClick={e => e.stopPropagation()}>
                 <AssigneeChange
@@ -593,7 +598,7 @@ export function CarePlanView({ patientId, program }) {
               <span className={styles.titleCell}>
                 <span className={styles.rowIcon}><Icon name="solar:shield-warning-linear" size={16} color="var(--neutral-400)" /></span>
                 <EditableTitle title={b.title} editable={canEdit} onCommit={t => renameBarrier(b, t)} />
-                <span onClick={() => handleLinkChip(0, b.title)} style={{ cursor: 'pointer' }}><LinkChip count={0} /></span>
+                <span onClick={() => canEdit && setLinkOwner({ kind: 'barrier', item: b })} style={{ cursor: canEdit ? 'pointer' : 'default' }}><LinkChip count={linkCount(b.id)} /></span>
               </span>
               <span className={styles.valueCell} style={{ color: 'var(--neutral-500)' }}>{b.description || <span className={styles.muted}>—</span>}</span>
               <span className={styles.statusCell}>
@@ -630,6 +635,16 @@ export function CarePlanView({ patientId, program }) {
           items={GBI_STATUSES.map(s => ({ key: s, label: s }))}
           onSelect={bulkSetStatus}
           onClose={() => setBulkMenu(null)}
+        />
+      )}
+
+      {linkOwner && (
+        <CarePlanLinkDrawer
+          patientId={patientId}
+          program={program}
+          patientName={patientName}
+          owner={linkOwner}
+          onClose={() => setLinkOwner(null)}
         />
       )}
 

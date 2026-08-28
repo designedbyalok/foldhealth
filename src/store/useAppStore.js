@@ -2881,6 +2881,57 @@ export const useAppStore = create((set, get) => ({
     get().showToast(`Restored version ${version.versionNumber}`);
   },
 
+  // ── Care Plan links (roadmap #11) ──
+  // Links from a goal/intervention/barrier to existing tasks & appointments,
+  // persisted in care_plan_links. Keyed by `<patientId>::<programId>`.
+  patientCarePlanLinks: {},         // { [key]: links[] }
+  patientCarePlanLinksLoadedFor: {},// { [key]: bool }
+
+  fetchCarePlanLinks: async (patientId, programId) => {
+    if (!patientId || !programId) return;
+    const key = carePlanKey(patientId, programId);
+    const { data, error } = await supabase
+      .from('care_plan_links').select('*')
+      .eq('patient_id', patientId).eq('program_id', programId)
+      .order('created_at', { ascending: true });
+    if (error) console.warn('fetchCarePlanLinks:', error.message);
+    set(s => ({
+      patientCarePlanLinks: {
+        ...s.patientCarePlanLinks,
+        [key]: (data || []).map(r => ({
+          id: r.id, ownerType: r.owner_type, ownerId: r.owner_id,
+          entityType: r.entity_type, entityId: r.entity_id, entityLabel: r.entity_label || '',
+          createdAt: r.created_at,
+        })),
+      },
+      patientCarePlanLinksLoadedFor: { ...s.patientCarePlanLinksLoadedFor, [key]: true },
+    }));
+  },
+
+  addCarePlanLink: async (patientId, program, { ownerType, ownerId, entityType, entityId, entityLabel }) => {
+    const key = carePlanKey(patientId, program.id);
+    const planId = await get().ensurePatientCarePlan(patientId, program);
+    if (!planId) return null;
+    const { data, error } = await supabase.from('care_plan_links').insert({
+      plan_id: planId, patient_id: patientId, program_id: program.id,
+      owner_type: ownerType, owner_id: String(ownerId),
+      entity_type: entityType, entity_id: String(entityId), entity_label: entityLabel || '',
+      created_by: get().currentUserProfile?.name || null,
+    }).select().single();
+    if (error) { console.warn('addCarePlanLink:', error.message); get().showToast('Could not link item'); return null; }
+    const link = { id: data.id, ownerType, ownerId: String(ownerId), entityType, entityId: String(entityId), entityLabel: entityLabel || '', createdAt: data.created_at };
+    set(s => ({ patientCarePlanLinks: { ...s.patientCarePlanLinks, [key]: [...(s.patientCarePlanLinks[key] || []), link] } }));
+    return link;
+  },
+
+  removeCarePlanLink: async (patientId, programId, id) => {
+    const key = carePlanKey(patientId, programId);
+    const prev = get().patientCarePlanLinks[key] || [];
+    set(s => ({ patientCarePlanLinks: { ...s.patientCarePlanLinks, [key]: prev.filter(l => l.id !== id) } }));
+    const { error } = await supabase.from('care_plan_links').delete().eq('id', id);
+    if (error) { console.warn('removeCarePlanLink:', error.message); set(s => ({ patientCarePlanLinks: { ...s.patientCarePlanLinks, [key]: prev } })); get().showToast('Could not remove link'); }
+  },
+
   // ── Care Plan Library (Settings → Care Plan Library) ──
   // Three sibling lists plus each goal's interventions, all persisted in
   // `care_plan_*` (supabase/care_plan_library_migration.sql). Unlike the

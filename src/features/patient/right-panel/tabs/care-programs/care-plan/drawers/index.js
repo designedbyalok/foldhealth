@@ -5,3 +5,4 @@ export { AddInterventionDrawer } from './AddInterventionDrawer/AddInterventionDr
 export { CarePlanShareDrawer } from './CarePlanShareDrawer/CarePlanShareDrawer.jsx';
 export { CarePlanHistoryDrawer } from './CarePlanHistoryDrawer/CarePlanHistoryDrawer.jsx';
 export { CarePlanVersionsDrawer } from './CarePlanVersionsDrawer/CarePlanVersionsDrawer.jsx';
+export { CarePlanLinkDrawer } from './CarePlanLinkDrawer/CarePlanLinkDrawer.jsx';
