@@ -149,7 +149,7 @@ export function CareProgramsTab() {
 
   const handleRowAction = (key, program) => {
     if (key === 'assign') {
-      setTimeout(() => document.querySelector(`[data-assign-row="${program.id}"]`)?.click(), 0);
+      setTimeout(() => document.querySelector(`[data-assign-row="${program.id}"] button`)?.click(), 0);
     } else if (key === 'print') {
       showToast?.(`Preparing ${program.name} summary…`);
     } else if (key === 'close') {

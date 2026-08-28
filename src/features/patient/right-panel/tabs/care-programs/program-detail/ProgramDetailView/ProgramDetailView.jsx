@@ -1,7 +1,7 @@
-import { Icon } from '../../../../../../../components/Icon/Icon';
-import { DownChevronIcon } from '../../../../../../../components/Icon/DownChevronIcon';
+import { useEffect } from 'react';
 import { MenuPopover } from '../../../../../../../components/MenuPopover/MenuPopover';
-import { RoleAssigneePicker } from '../../../../../../hcc/RoleAssigneePicker';
+import { AssigneeChange } from '../../../../../../../components/AssigneeChange/AssigneeChange';
+import { useAppStore } from '../../../../../../../store/useAppStore';
 import { OutreachTab } from '../../../../../left-panel/tabs/outreach/OutreachTab/OutreachTab.jsx';
 import { CcmBillingReview } from '../billing/CcmBillingReview/CcmBillingReview.jsx';
 import { SendLetterDrawer } from '../letters/SendLetterDrawer/SendLetterDrawer.jsx';
@@ -34,28 +34,21 @@ import styles from './ProgramDetailView.module.css';
 export function ProgramDetailView({ program, onClose, startAtFirstStep = false, onSwitchProgram }) {
   const v = useProgramDetailView({ program, onSwitchProgram });
   const { stepFlags } = v;
+  const platformUsers = useAppStore(s => s.platformUsers);
+  const fetchPlatformUsers = useAppStore(s => s.fetchPlatformUsers);
+  useEffect(() => { fetchPlatformUsers?.(); }, [fetchPlatformUsers]);
 
   const assigneePicker = (
-    <RoleAssigneePicker
-      role="care_program"
-      memberId={program.id}
-      dosDate="care-program"
-      titleLabel=""
-      currentName={v.isUnassigned ? null : v.assignee}
-      onAssign={user => v.updateCareProgram(v.patientId, program.id, { assignee: user.name })}
-      trigger={({ ref, onClick }) => (
-        v.isUnassigned ? (
-          <button ref={ref} type="button" className={styles.assigneeChipEmpty} onClick={onClick} title="Assign" aria-label="Assign">
-            <Icon name="solar:user-plus-linear" size={14} color="var(--neutral-300)" />
-            <DownChevronIcon size={11} color="var(--neutral-300)" />
-          </button>
-        ) : (
-          <button ref={ref} type="button" className={styles.assigneeChip} onClick={onClick} title={`Assigned to ${v.assignee}`} aria-label={v.assignee}>
-            <span className={styles.assigneeAvatar}>{v.initialsOf(v.assignee)}</span>
-            <DownChevronIcon size={11} color="var(--secondary-300)" />
-          </button>
-        )
-      )}
+    <AssigneeChange
+      avatarOnly
+      size="S"
+      name={v.isUnassigned ? undefined : v.assignee}
+      initials={v.isUnassigned ? '' : v.initialsOf(v.assignee)}
+      unassigned={v.isUnassigned}
+      showRole={false}
+      users={platformUsers}
+      pickerTitle="Assign"
+      onSelect={user => v.updateCareProgram(v.patientId, program.id, { assignee: user.name })}
     />
   );
 

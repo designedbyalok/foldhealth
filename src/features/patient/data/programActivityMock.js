@@ -262,7 +262,7 @@ export const PROGRAM_STEPS_MOCK = [
     ],
   },
   {
-    id: 'step-4', name: 'Model of Care', type: 'section', expanded: false,
+    id: 'step-4', name: 'Model of Care', type: 'section', expanded: true,
     children: [
       { id: 'step-4a', name: 'Care Plan', status: 'completed', mandatory: true },
     ],

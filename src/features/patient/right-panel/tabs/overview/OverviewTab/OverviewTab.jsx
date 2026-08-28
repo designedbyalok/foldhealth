@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Icon } from '../../../../../../components/Icon/Icon';
+import { useAppStore } from '../../../../../../store/useAppStore';
+import { programUrlKey } from '../../care-programs/CareProgramsTab/CareProgramsTab.utils';
 import { ActionButton } from '../../../../../../components/ActionButton/ActionButton';
 import { HealthMapWidget } from '../../../../shared/widgets/HealthMapWidget/HealthMapWidget.jsx';
 import { ProgressRing } from '../../../../../hcc/DiagPanel/ReviewProgressPopover';
 import { AppointmentsDrawer } from '../AppointmentsDrawer/AppointmentsDrawer.jsx';
-import { PATIENT_SYNOPSIS, RECENT_NOTES, ACTIVE_CARE_PROGRAMS, UPCOMING_APPOINTMENTS, CARE_PLAN_RECOMMENDATIONS } from '../../../../data/overviewMock';
+import { PATIENT_SYNOPSIS, RECENT_NOTES, UPCOMING_APPOINTMENTS, CARE_PLAN_RECOMMENDATIONS } from '../../../../data/overviewMock';
 import styles from './OverviewTab.module.css';
 
 function SectionHeader({ title, onAdd, viewAll, viewByDropdown, onViewAll }) {
@@ -114,9 +116,29 @@ function RecentNotesTable() {
 }
 
 function ActiveCareProgramsTable() {
+  const patientId = useAppStore(s => s.selectedPatientId);
+  const careProgramsByPatient = useAppStore(s => s.careProgramsByPatient);
+  const fetchCareProgramsForPatient = useAppStore(s => s.fetchCareProgramsForPatient);
+  const setPatientProfileTab = useAppStore(s => s.setPatientProfileTab);
+  const openCareProgram = useAppStore(s => s.openCareProgram);
+
+  useEffect(() => {
+    if (patientId) fetchCareProgramsForPatient(patientId);
+  }, [patientId, fetchCareProgramsForPatient]);
+
+  // Active = every enrollment that isn't closed. Show the first few here; the
+  // full list lives on the Care Programs tab.
+  const programs = (careProgramsByPatient[patientId] || []).filter(p => p.status !== 'Closed');
+
+  const goToCarePrograms = () => setPatientProfileTab('Care Programs');
+  const openProgram = (prog) => {
+    setPatientProfileTab('Care Programs');
+    openCareProgram(programUrlKey(prog));
+  };
+
   return (
     <div className={styles.card}>
-      <SectionHeader title="Active Care Programs" onAdd={() => {}} viewAll />
+      <SectionHeader title="Active Care Programs" onAdd={goToCarePrograms} viewAll onViewAll={goToCarePrograms} />
       <div className={styles.tableWrap}>
         <table className={styles.table}>
           <thead>
@@ -132,24 +154,18 @@ function ActiveCareProgramsTable() {
             </tr>
           </thead>
           <tbody>
-            {ACTIVE_CARE_PROGRAMS.slice(0, 3).map(prog => (
-              <tr key={prog.id}>
-                <td><input type="checkbox" className={styles.checkbox} aria-label={`Select ${prog.name}`} /></td>
+            {programs.length === 0 ? (
+              <tr><td colSpan={8} className={styles.emptyCell}>No active care programs.</td></tr>
+            ) : programs.slice(0, 3).map(prog => (
+              <tr key={prog.id} className={styles.clickableRow} onClick={() => openProgram(prog)}>
+                <td onClick={e => e.stopPropagation()}><input type="checkbox" className={styles.checkbox} aria-label={`Select ${prog.name}`} /></td>
                 <td>
                   <div className={styles.progressCell}>
-                    <ProgressRing progress={prog.progress} size={16} stroke={2} />
-                    <span>{prog.name}</span>
+                    <ProgressRing progress={prog.progress || 0} size={16} stroke={2} />
+                    <button type="button" className={styles.programLink} onClick={(e) => { e.stopPropagation(); openProgram(prog); }}>{prog.name}</button>
                   </div>
                 </td>
-                <td>
-                  {prog.statusLink ? (
-                    <span className={styles.statusLink}>{prog.status}</span>
-                  ) : prog.statusNew ? (
-                    <span className={styles.newBadge}>{prog.status}</span>
-                  ) : (
-                    <span style={{ color: 'var(--neutral-300)' }}>{prog.status}</span>
-                  )}
-                </td>
+                <td><span style={{ color: prog.statusColor || 'var(--neutral-300)' }}>{prog.status}</span></td>
                 <td>{prog.startDate}</td>
                 <td>{prog.endDate}</td>
                 <td>{prog.lastUpdated}</td>

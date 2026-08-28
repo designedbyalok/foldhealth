@@ -64,4 +64,17 @@
 
 /* Progress ring in table */
 .progressCell { display: flex; align-items: center; gap: 6px; }
+.clickableRow { cursor: pointer; }
+.clickableRow:hover { background: var(--neutral-50); }
+.programLink {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: var(--font-base);
+  color: var(--neutral-500);
+  text-align: left;
+}
+.clickableRow:hover .programLink { color: var(--primary-300); }
+.emptyCell { text-align: center; color: var(--neutral-300); font-size: var(--font-base); padding: var(--space-4); }
 .newBadge { font-size: var(--font-sm); font-weight: 500; color: var(--status-success); background: var(--status-success-light); padding: 2px 8px; border-radius: 4px; }

@@ -1,12 +1,15 @@
-import { Icon } from '../../../../../../components/Icon/Icon';
+import { useEffect } from 'react';
 import { DownChevronIcon } from '../../../../../../components/Icon/DownChevronIcon';
 import { ActionButton } from '../../../../../../components/ActionButton/ActionButton';
 import { Checkbox } from '../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { WorklistShell } from '../../../../../../components/WorklistShell/WorklistShell';
-import { RoleAssigneePicker } from '../../../../../hcc/RoleAssigneePicker';
+import { AssigneeChange } from '../../../../../../components/AssigneeChange/AssigneeChange';
+import { useAppStore } from '../../../../../../store/useAppStore';
 import { ProgramStatusRing } from '../program-detail/shared/ProgramStatusRing/ProgramStatusRing.jsx';
 import { stepProgress } from './CareProgramsTab.utils';
 import styles from './CareProgramsTab.module.css';
+
+const initialsOf = (name) => (name || '').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
 // Column widths carried over from the hand-rolled <table> this replaced.
 const PROGRAM_COLUMNS = [
@@ -32,6 +35,9 @@ export function CareProgramsTabTable({
   setRowMenu,
   rowMenuId,
 }) {
+  const platformUsers = useAppStore(s => s.platformUsers);
+  const fetchPlatformUsers = useAppStore(s => s.fetchPlatformUsers);
+  useEffect(() => { fetchPlatformUsers?.(); }, [fetchPlatformUsers]);
   return (
     <WorklistShell
       header={null}
@@ -72,26 +78,17 @@ export function CareProgramsTabTable({
               <td className={styles.dateCell}>{p.startDate}</td>
               <td className={styles.dateCell}>{p.endDate}</td>
               <td className={styles.dateCell}>{p.lastUpdated}</td>
-              <td className={styles.assigneeCell} onClick={e => e.stopPropagation()}>
-                <RoleAssigneePicker
-                  role="care_program"
-                  memberId={p.id}
-                  dosDate="care-program"
-                  titleLabel=""
-                  currentName={p.assignee && p.assignee !== 'Unassigned' ? p.assignee : null}
-                  onAssign={user => assignOwner(p, user)}
-                  trigger={({ ref, onClick }) => (
-                    p.assignee && p.assignee !== 'Unassigned' ? (
-                      <button ref={ref} type="button" data-assign-row={p.id} className={styles.assignName} onClick={onClick}>
-                        {p.assignee}
-                      </button>
-                    ) : (
-                      <button ref={ref} type="button" data-assign-row={p.id} className={styles.assignPill} onClick={onClick}>
-                        <Icon name="solar:user-plus-rounded-linear" size={14} color="var(--neutral-200)" />
-                        <span>Assign</span>
-                      </button>
-                    )
-                  )}
+              <td className={styles.assigneeCell} data-assign-row={p.id} onClick={e => e.stopPropagation()}>
+                <AssigneeChange
+                  avatarOnly
+                  size="S"
+                  name={p.assignee && p.assignee !== 'Unassigned' ? p.assignee : undefined}
+                  initials={p.assignee && p.assignee !== 'Unassigned' ? initialsOf(p.assignee) : ''}
+                  unassigned={!p.assignee || p.assignee === 'Unassigned'}
+                  showRole={false}
+                  users={platformUsers}
+                  pickerTitle="Assign"
+                  onSelect={user => assignOwner(p, user)}
                 />
               </td>
               <td className={styles.pcpCell}>{p.pcp}</td>
