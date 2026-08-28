@@ -13,6 +13,7 @@ import { PriorityIcon } from '../../../../../../../components/PriorityIcon/Prior
 import { ConfirmDialog } from '../../../../../../../components/ConfirmDialog/ConfirmDialog';
 import { Select } from '../../../../../../../components/Select/Select';
 import { FilterChip } from '../../../../../../../components/FilterChip/FilterChip';
+import { Checkbox } from '../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { useAppStore } from '../../../../../../../store/useAppStore';
 import { CreateGoalDrawer } from '../../../../../../settings/care-plan-library/goals/CreateGoalDrawer/CreateGoalDrawer';
 import { CARE_PLAN_MOCK } from '../../../../../data/carePlanMock';
@@ -181,6 +182,37 @@ export function CarePlanView({ patientId, program }) {
   );
   const signedBy = live?.plan?.signedBy;
   const signedAt = live?.plan?.signedAt;
+
+  // Bulk selection (#7). Selection is per section, over the visible (filtered)
+  // rows; a bulk status change loops the normal save path so each write audits.
+  const [selected, setSelected] = useState({ goal: new Set(), intv: new Set(), barrier: new Set() });
+  const [bulkMenu, setBulkMenu] = useState(null); // { rect }
+  const selectedCount = selected.goal.size + selected.intv.size + selected.barrier.size;
+  const toggleSelect = (kind, id) => setSelected(prev => {
+    const next = new Set(prev[kind]);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return { ...prev, [kind]: next };
+  });
+  const toggleSelectAll = (kind, rows) => setSelected(prev => {
+    const ids = rows.map(r => r.id);
+    const allOn = ids.length > 0 && ids.every(id => prev[kind].has(id));
+    return { ...prev, [kind]: allOn ? new Set() : new Set(ids) };
+  });
+  const allSelected = (kind, rows) => rows.length > 0 && rows.every(r => selected[kind].has(r.id));
+  const clearSelection = () => setSelected({ goal: new Set(), intv: new Set(), barrier: new Set() });
+
+  const bulkSetStatus = async (status) => {
+    setBulkMenu(null);
+    const g = filteredGoals.filter(x => selected.goal.has(x.id));
+    const iv = filteredInterventions.filter(x => selected.intv.has(x.id));
+    const br = filteredBarriers.filter(x => selected.barrier.has(x.id));
+    for (const x of g) await savePatientCarePlanGoal(patientId, program, { ...x, status }, x.id);
+    for (const x of iv) await savePatientCarePlanIntervention(patientId, program, { ...x, status }, x.id);
+    for (const x of br) await savePatientCarePlanBarrier(patientId, program, { ...x, status }, x.id);
+    const n = g.length + iv.length + br.length;
+    clearSelection();
+    if (n) showToast(`Updated ${n} item${n === 1 ? '' : 's'} to "${status}"`);
+  };
 
   const doSign = async () => {
     setSignOpen(false);
@@ -401,6 +433,19 @@ export function CarePlanView({ patientId, program }) {
         </div>
       )}
 
+      {selectedCount > 0 && (
+        <div className={styles.bulkBar}>
+          <span className={styles.bulkCount}>{selectedCount} selected</span>
+          <div className={styles.bulkActions}>
+            <Button variant="secondary" size="S" leadingIcon="solar:checklist-minimalistic-linear"
+              onClick={(e) => setBulkMenu({ rect: e.currentTarget.getBoundingClientRect() })}>
+              Set status
+            </Button>
+            <button type="button" className={styles.bulkClear} onClick={clearSelection}>Clear</button>
+          </div>
+        </div>
+      )}
+
       {/* Goals */}
       <div className={styles.section}>
         <div className={styles.sectionHead}>
@@ -415,6 +460,7 @@ export function CarePlanView({ patientId, program }) {
         </div>
         <div className={styles.table}>
           <div className={styles.goalHead}>
+            <span className={styles.selectCell}><Checkbox checked={allSelected('goal', filteredGoals)} onCheckedChange={() => toggleSelectAll('goal', filteredGoals)} aria-label="Select all goals" disabled={!canEdit} /></span>
             <span className={styles.pCell}>P</span>
             <span className={styles.titleCell}>Goal Title</span>
             <span className={styles.valueCell}>Current Value</span>
@@ -426,6 +472,7 @@ export function CarePlanView({ patientId, program }) {
           {filteredGoals.length === 0 && <div className={styles.emptyRow}>{data.goals.length ? 'No goals match the filters.' : 'No goals yet. Add one to get started.'}</div>}
           {filteredGoals.map(g => (
             <div key={g.id} className={styles.goalRow}>
+              <span className={styles.selectCell} onClick={e => e.stopPropagation()}><Checkbox checked={selected.goal.has(g.id)} onCheckedChange={() => toggleSelect('goal', g.id)} aria-label={`Select ${g.title}`} disabled={!canEdit} /></span>
               <span className={styles.pCell}>
                 <button type="button" className={styles.priorityBtn} onClick={(e) => canEdit && setPriorityMenu({ kind: 'goal', item: g, rect: e.currentTarget.getBoundingClientRect() })} disabled={!canEdit} aria-label="Change priority">
                   <PriorityIcon priority={g.priority} size={16} />
@@ -461,6 +508,7 @@ export function CarePlanView({ patientId, program }) {
         </div>
         <div className={styles.table}>
           <div className={styles.intvHead}>
+            <span className={styles.selectCell}><Checkbox checked={allSelected('intv', filteredInterventions)} onCheckedChange={() => toggleSelectAll('intv', filteredInterventions)} aria-label="Select all interventions" disabled={!canEdit} /></span>
             <span className={styles.pCell}>P</span>
             <span className={styles.titleCell}>Name</span>
             <span className={styles.assigneeCell}>Assigned To</span>
@@ -471,6 +519,7 @@ export function CarePlanView({ patientId, program }) {
           {filteredInterventions.length === 0 && <div className={styles.emptyRow}>{data.interventions.length ? 'No interventions match the filters.' : 'No interventions yet.'}</div>}
           {filteredInterventions.map(i => (
             <div key={i.id} className={styles.intvRow}>
+              <span className={styles.selectCell} onClick={e => e.stopPropagation()}><Checkbox checked={selected.intv.has(i.id)} onCheckedChange={() => toggleSelect('intv', i.id)} aria-label={`Select ${i.title}`} disabled={!canEdit} /></span>
               <span className={styles.pCell}>
                 <button type="button" className={styles.priorityBtn} onClick={(e) => canEdit && setPriorityMenu({ kind: 'intv', item: i, rect: e.currentTarget.getBoundingClientRect() })} disabled={!canEdit} aria-label="Change priority">
                   <PriorityIcon priority={i.priority} size={16} />
@@ -525,6 +574,7 @@ export function CarePlanView({ patientId, program }) {
         </div>
         <div className={styles.table}>
           <div className={styles.goalHead}>
+            <span className={styles.selectCell}><Checkbox checked={allSelected('barrier', filteredBarriers)} onCheckedChange={() => toggleSelectAll('barrier', filteredBarriers)} aria-label="Select all barriers" disabled={!canEdit} /></span>
             <span className={styles.pCell}>P</span>
             <span className={styles.titleCell}>Barrier Title</span>
             <span className={styles.valueCell}>Description</span>
@@ -534,6 +584,7 @@ export function CarePlanView({ patientId, program }) {
           {filteredBarriers.length === 0 && <div className={styles.emptyRow}>{(data.barriers || []).length ? 'No barriers match the filters.' : 'No barriers yet. Add one to capture what blocks this patient.'}</div>}
           {filteredBarriers.map(b => (
             <div key={b.id} className={styles.goalRow}>
+              <span className={styles.selectCell} onClick={e => e.stopPropagation()}><Checkbox checked={selected.barrier.has(b.id)} onCheckedChange={() => toggleSelect('barrier', b.id)} aria-label={`Select ${b.title}`} disabled={!canEdit} /></span>
               <span className={styles.pCell}>
                 <button type="button" className={styles.priorityBtn} onClick={(e) => canEdit && setPriorityMenu({ kind: 'barrier', item: b, rect: e.currentTarget.getBoundingClientRect() })} disabled={!canEdit} aria-label="Change priority">
                   <PriorityIcon priority={b.priority} size={16} />
@@ -567,6 +618,18 @@ export function CarePlanView({ patientId, program }) {
           items={GBI_STATUSES.map(s => ({ key: s, label: s }))}
           onSelect={changeStatus}
           onClose={() => setStatusMenu(null)}
+        />
+      )}
+
+      {bulkMenu && (
+        <MenuPopover
+          anchorRect={bulkMenu.rect}
+          align="left"
+          width={180}
+          ariaLabel="Set status for selected"
+          items={GBI_STATUSES.map(s => ({ key: s, label: s }))}
+          onSelect={bulkSetStatus}
+          onClose={() => setBulkMenu(null)}
         />
       )}
 

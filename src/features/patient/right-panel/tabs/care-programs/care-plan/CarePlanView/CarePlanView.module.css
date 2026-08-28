@@ -112,18 +112,44 @@
 .goalHead,
 .goalRow {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) 140px 80px 90px 150px 28px;
+  grid-template-columns: 24px 32px minmax(0, 1fr) 140px 80px 90px 150px 28px;
   align-items: center;
   column-gap: 8px;
 }
 .intvHead,
 .intvRow {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) 180px 110px 150px 28px;
+  grid-template-columns: 24px 32px minmax(0, 1fr) 180px 110px 150px 28px;
   align-items: center;
   column-gap: 8px;
 }
 .rowMenuCell { display: flex; align-items: center; justify-content: center; }
+.selectCell { display: flex; align-items: center; justify-content: center; }
+
+/* Bulk-action bar shown when rows are selected (#7). */
+.bulkBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--space-2);
+  background: var(--primary-100);
+  border: 0.5px solid var(--primary-200);
+}
+.bulkCount {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--primary-300);
+}
+.bulkActions { display: flex; align-items: center; gap: var(--space-2); margin-left: auto; }
+.bulkClear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
 .goalHead,
 .intvHead {
   padding: 8px 4px;
