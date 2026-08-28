@@ -2932,6 +2932,32 @@ export const useAppStore = create((set, get) => ({
     if (error) { console.warn('removeCarePlanLink:', error.message); set(s => ({ patientCarePlanLinks: { ...s.patientCarePlanLinks, [key]: prev } })); get().showToast('Could not remove link'); }
   },
 
+  // ── Care Plan report (roadmap #10) ──
+  // Patient-level share & audit metadata for the report. GBI totals come from
+  // the per-program plans loaded by fetchAllPatientCarePlans; this adds the
+  // cross-program share and activity aggregates. Keyed by patientId.
+  patientCarePlanReport: {},         // { [patientId]: { shares, audit } }
+  patientCarePlanReportLoading: {},  // { [patientId]: bool }
+
+  fetchCarePlanReport: async (patientId) => {
+    if (!patientId) return;
+    set(s => ({ patientCarePlanReportLoading: { ...s.patientCarePlanReportLoading, [patientId]: true } }));
+    await get().fetchAllPatientCarePlans(patientId);
+    const [shares, audit] = await Promise.all([
+      supabase.from('care_plan_shares').select('target, created_at').eq('patient_id', patientId),
+      supabase.from('care_plan_audit').select('action, created_at').eq('patient_id', patientId),
+    ]);
+    if (shares.error) console.warn('fetchCarePlanReport shares:', shares.error.message);
+    if (audit.error) console.warn('fetchCarePlanReport audit:', audit.error.message);
+    set(s => ({
+      patientCarePlanReport: {
+        ...s.patientCarePlanReport,
+        [patientId]: { shares: shares.data || [], audit: audit.data || [] },
+      },
+      patientCarePlanReportLoading: { ...s.patientCarePlanReportLoading, [patientId]: false },
+    }));
+  },
+
   // ── Care Plan Library (Settings → Care Plan Library) ──
   // Three sibling lists plus each goal's interventions, all persisted in
   // `care_plan_*` (supabase/care_plan_library_migration.sql). Unlike the

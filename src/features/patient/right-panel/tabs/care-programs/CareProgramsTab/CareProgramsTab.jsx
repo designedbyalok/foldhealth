@@ -6,6 +6,7 @@ import { useAppStore } from '../../../../../../store/useAppStore';
 import { ProgramDetailView } from '../program-detail/ProgramDetailView/ProgramDetailView.jsx';
 import { ProgramDetailSkeleton } from '../program-detail/shared/ProgramDetailSkeleton/ProgramDetailSkeleton.jsx';
 import { CarePlanSummaryView } from '../care-plan/summary/CarePlanSummaryView/CarePlanSummaryView.jsx';
+import { CarePlanReportView } from '../care-plan/report/CarePlanReportView/CarePlanReportView.jsx';
 import { stepsFor, flatSteps } from '../program-detail/ProgramDetailView/ProgramDetailView.utils';
 import { CareProgramsTabTable } from './CareProgramsTabTable';
 import { CareProgramsTabToolbar, CareProgramsTabMenus } from './CareProgramsTabToolbar';
@@ -37,6 +38,7 @@ export function CareProgramsTab() {
   const [rowMenu, setRowMenu] = useState(null);
   const carePlanSummaryOpen = useAppStore(s => s.carePlanSummaryOpen);
   const setCarePlanSummaryOpen = useAppStore(s => s.setCarePlanSummaryOpen);
+  const [reportOpen, setReportOpen] = useState(false);
   const npBtnRef = useRef(null);
 
   const patientId = useAppStore(s => s.selectedPatientId);
@@ -202,6 +204,16 @@ export function CareProgramsTab() {
     );
   }
 
+  if (reportOpen && !selectedProgram) {
+    return (
+      <CarePlanReportView
+        patientId={patientId}
+        programs={programs}
+        onClose={() => setReportOpen(false)}
+      />
+    );
+  }
+
   if (selectedProgram) {
     return (
       <ProgramDetailView
@@ -225,6 +237,7 @@ export function CareProgramsTab() {
         npOpen={npOpen} setNpOpen={setNpOpen} npBtnRef={npBtnRef}
         programOptions={programOptions} handleAddProgram={handleAddProgram}
         onOpenSummary={() => setCarePlanSummaryOpen(true)}
+        onOpenReport={() => setReportOpen(true)}
       />
 
       {visible.length === 0 ? (

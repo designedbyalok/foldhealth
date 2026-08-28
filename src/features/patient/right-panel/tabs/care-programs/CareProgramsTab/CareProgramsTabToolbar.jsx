@@ -17,12 +17,17 @@ export function CareProgramsTabToolbar({
   activeSubTab, setActiveSubTab, showFilters, setShowFilters,
   filters, filterOptionsFor, setFilter, clearFilters,
   npOpen, setNpOpen, npBtnRef, programOptions, handleAddProgram,
-  onOpenSummary,
+  onOpenSummary, onOpenReport,
 }) {
   const summaryControl = (
-    <Button variant="secondary" size="L" leadingIcon="solar:document-text-linear" onClick={onOpenSummary}>
-      Care Plan
-    </Button>
+    <>
+      <Button variant="secondary" size="L" leadingIcon="solar:document-text-linear" onClick={onOpenSummary}>
+        Care Plan
+      </Button>
+      <Button variant="secondary" size="L" leadingIcon="solar:chart-2-linear" onClick={onOpenReport}>
+        Report
+      </Button>
+    </>
   );
   const newProgramControl = (align = 'left') => (
     <div className={styles.npWrap}>
