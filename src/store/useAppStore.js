@@ -132,6 +132,120 @@ function mapCarePlanTemplateRow(row) {
   };
 }
 
+/* ── Patient Care Plan row ⇄ object mapping ──
+   The per-patient, per-program plan behind the Care Plan step. Goals mirror
+   the library goal shape (so a template instantiates cleanly) plus the fields
+   the patient view shows and edits: currentValue, trend, status. Kept beside
+   the library mappers so a shared column rename can't drift. */
+function mapPatientCarePlanGoalRow(row) {
+  return {
+    id: row.id,
+    title: row.title,
+    subtitle: row.subtitle || '',
+    icon: row.icon || 'solar:flag-linear',
+    priority: row.priority || 'medium',
+    category: row.category || '',
+    measure: row.measure || '',
+    conditions: row.conditions || [],
+    comparator: row.comparator || '=',
+    targetValue: row.target_value || '',
+    targetValue2: row.target_value_2 || '',
+    customUnit: row.custom_unit || '',
+    setTarget: row.set_target !== false,
+    duration: row.duration || '',
+    durationUnit: row.duration_unit || '',
+    frequency: row.frequency || '',
+    targetDate: row.target_date || '',
+    currentValue: row.current_value || '',
+    trend: row.trend || '-',
+    status: row.status || 'Not Started',
+    links: 0,
+    sortOrder: row.sort_order ?? 0,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function patientCarePlanGoalToRow(g, planId) {
+  return {
+    plan_id: planId,
+    title: (g.title || '').trim(),
+    subtitle: g.subtitle || '',
+    icon: g.icon || 'solar:flag-linear',
+    priority: g.priority || 'medium',
+    category: g.category || '',
+    measure: g.measure || '',
+    conditions: g.conditions || [],
+    comparator: g.comparator || '=',
+    target_value: g.targetValue || '',
+    target_value_2: g.targetValue2 || '',
+    custom_unit: g.customUnit || '',
+    set_target: g.setTarget !== false,
+    duration: g.duration || '',
+    duration_unit: g.durationUnit || '',
+    frequency: g.frequency || '',
+    target_date: g.targetDate || '',
+    current_value: g.currentValue || '',
+    trend: g.trend || '-',
+    status: g.status || 'Not Started',
+    sort_order: g.sortOrder ?? 0,
+  };
+}
+
+function mapPatientCarePlanInterventionRow(row) {
+  return {
+    id: row.id,
+    goalId: row.goal_id || null,
+    kind: row.kind || '',
+    title: row.title || '',
+    icon: row.icon || 'solar:clipboard-list-linear',
+    duration: row.duration || null,
+    config: row.config || {},
+    assignee: { name: row.assignee_name || 'Unassigned', initials: row.assignee_initials || '' },
+    status: row.status || 'Not Started',
+    adherence: row.adherence || '-',
+    links: 0,
+    sortOrder: row.sort_order ?? 0,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function patientCarePlanInterventionToRow(i, planId) {
+  return {
+    plan_id: planId,
+    goal_id: i.goalId || null,
+    kind: i.kind || '',
+    title: (i.title || '').trim(),
+    icon: i.icon || 'solar:clipboard-list-linear',
+    duration: i.duration || null,
+    config: i.config || {},
+    assignee_name: i.assignee?.name || 'Unassigned',
+    assignee_initials: i.assignee?.initials || '',
+    status: i.status || 'Not Started',
+    adherence: i.adherence || '-',
+    sort_order: i.sortOrder ?? 0,
+  };
+}
+
+function mapPatientCarePlanRow(row) {
+  return {
+    id: row.id,
+    patientId: row.patient_id,
+    programId: row.program_id,
+    programCode: row.program_code || '',
+    createdBy: row.created_by || '',
+    conditions: (row.conditions || []).map(label => ({ label })),
+    conditionTotal: row.condition_total ?? (row.conditions || []).length,
+    createdDate: row.created_at,
+  };
+}
+
+// State key for a patient's plan on one program.
+function carePlanKey(patientId, programId) {
+  return `${patientId}::${programId}`;
+}
+
 function mapInterventionRow(row) {
   return {
     id: row.id,
@@ -2246,6 +2360,161 @@ export const useAppStore = create((set, get) => ({
   // New Care Plan takes over the entire Settings area (the sub-nav is hidden,
   // only the app rail remains) — so the flag lives above CarePlanLibraryPanel.
   carePlanCreateOpen: false,
+
+  // ── Patient Care Plan (the Care Plan step in a program) ──
+  // Per (patient, program) plan, persisted in patient_care_plan_* (see
+  // supabase/patient_care_plan_migration.sql). Keyed by `<patientId>::<programId>`.
+  // Until the migration is run the fetch returns nothing and CarePlanView
+  // falls back to its local mock, so the demo keeps rendering either way.
+  patientCarePlans: {},        // { [key]: { plan, goals, interventions } }
+  patientCarePlanLoading: {},  // { [key]: bool }
+  patientCarePlanLoadedFor: {},// { [key]: bool }
+
+  fetchPatientCarePlan: async (patientId, programId) => {
+    if (!patientId || !programId) return;
+    const key = carePlanKey(patientId, programId);
+    if (get().patientCarePlanLoadedFor[key]) return;
+    set(s => ({ patientCarePlanLoading: { ...s.patientCarePlanLoading, [key]: true } }));
+
+    const { data: planRow, error: planErr } = await supabase
+      .from('patient_care_plans')
+      .select('*')
+      .eq('patient_id', patientId)
+      .eq('program_id', programId)
+      .maybeSingle();
+    if (planErr) console.warn('fetchPatientCarePlan:', planErr.message);
+
+    let plan = null, goals = [], interventions = [];
+    if (planRow) {
+      plan = mapPatientCarePlanRow(planRow);
+      const [g, i] = await Promise.all([
+        supabase.from('patient_care_plan_goals').select('*').eq('plan_id', planRow.id)
+          .order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
+        supabase.from('patient_care_plan_interventions').select('*').eq('plan_id', planRow.id)
+          .order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
+      ]);
+      goals = (g.data || []).map(mapPatientCarePlanGoalRow);
+      interventions = (i.data || []).map(mapPatientCarePlanInterventionRow);
+    }
+
+    set(s => ({
+      patientCarePlans: { ...s.patientCarePlans, [key]: plan ? { plan, goals, interventions } : null },
+      patientCarePlanLoading: { ...s.patientCarePlanLoading, [key]: false },
+      patientCarePlanLoadedFor: { ...s.patientCarePlanLoadedFor, [key]: true },
+    }));
+  },
+
+  // Lazily create the plan header row so the first goal/intervention has a
+  // plan_id to hang off. Returns the plan id, or null on failure.
+  ensurePatientCarePlan: async (patientId, program) => {
+    const key = carePlanKey(patientId, program.id);
+    const existing = get().patientCarePlans[key];
+    if (existing?.plan?.id) return existing.plan.id;
+    const { data, error } = await supabase
+      .from('patient_care_plans')
+      .upsert(
+        { patient_id: patientId, program_id: program.id, program_code: program.code || null },
+        { onConflict: 'patient_id,program_id' },
+      )
+      .select()
+      .single();
+    if (error) { console.warn('ensurePatientCarePlan:', error.message); get().showToast('Could not create care plan'); return null; }
+    const plan = mapPatientCarePlanRow(data);
+    set(s => ({
+      patientCarePlans: {
+        ...s.patientCarePlans,
+        [key]: { plan, goals: existing?.goals || [], interventions: existing?.interventions || [] },
+      },
+    }));
+    return plan.id;
+  },
+
+  savePatientCarePlanGoal: async (patientId, program, values, id = null) => {
+    const key = carePlanKey(patientId, program.id);
+    const planId = await get().ensurePatientCarePlan(patientId, program);
+    if (!planId) return null;
+    const row = patientCarePlanGoalToRow(values, planId);
+    const q = id
+      ? supabase.from('patient_care_plan_goals').update({ ...row, updated_at: new Date().toISOString() }).eq('id', id)
+      : supabase.from('patient_care_plan_goals').insert(row);
+    const { data, error } = await q.select().single();
+    if (error) { console.warn('savePatientCarePlanGoal:', error.message); get().showToast('Could not save goal'); return null; }
+    const goal = mapPatientCarePlanGoalRow(data);
+    set(s => {
+      const cur = s.patientCarePlans[key] || { goals: [], interventions: [] };
+      return {
+        patientCarePlans: {
+          ...s.patientCarePlans,
+          [key]: {
+            ...cur,
+            goals: id ? cur.goals.map(g => (g.id === goal.id ? goal : g)) : [...cur.goals, goal],
+          },
+        },
+      };
+    });
+    return goal;
+  },
+
+  deletePatientCarePlanGoal: async (patientId, programId, id) => {
+    const key = carePlanKey(patientId, programId);
+    const prev = get().patientCarePlans[key];
+    set(s => ({
+      patientCarePlans: { ...s.patientCarePlans, [key]: { ...prev, goals: prev.goals.filter(g => g.id !== id) } },
+    }));
+    const { error } = await supabase.from('patient_care_plan_goals').delete().eq('id', id);
+    if (error) { console.warn('deletePatientCarePlanGoal:', error.message); set(s => ({ patientCarePlans: { ...s.patientCarePlans, [key]: prev } })); get().showToast('Could not delete goal'); }
+  },
+
+  savePatientCarePlanIntervention: async (patientId, program, values, id = null) => {
+    const key = carePlanKey(patientId, program.id);
+    const planId = await get().ensurePatientCarePlan(patientId, program);
+    if (!planId) return null;
+    const row = patientCarePlanInterventionToRow(values, planId);
+    const q = id
+      ? supabase.from('patient_care_plan_interventions').update({ ...row, updated_at: new Date().toISOString() }).eq('id', id)
+      : supabase.from('patient_care_plan_interventions').insert(row);
+    const { data, error } = await q.select().single();
+    if (error) { console.warn('savePatientCarePlanIntervention:', error.message); get().showToast('Could not save intervention'); return null; }
+    const intervention = mapPatientCarePlanInterventionRow(data);
+    set(s => {
+      const cur = s.patientCarePlans[key] || { goals: [], interventions: [] };
+      return {
+        patientCarePlans: {
+          ...s.patientCarePlans,
+          [key]: {
+            ...cur,
+            interventions: id
+              ? cur.interventions.map(x => (x.id === intervention.id ? intervention : x))
+              : [...cur.interventions, intervention],
+          },
+        },
+      };
+    });
+    return intervention;
+  },
+
+  deletePatientCarePlanIntervention: async (patientId, programId, id) => {
+    const key = carePlanKey(patientId, programId);
+    const prev = get().patientCarePlans[key];
+    set(s => ({
+      patientCarePlans: { ...s.patientCarePlans, [key]: { ...prev, interventions: prev.interventions.filter(x => x.id !== id) } },
+    }));
+    const { error } = await supabase.from('patient_care_plan_interventions').delete().eq('id', id);
+    if (error) { console.warn('deletePatientCarePlanIntervention:', error.message); set(s => ({ patientCarePlans: { ...s.patientCarePlans, [key]: prev } })); get().showToast('Could not delete intervention'); }
+  },
+
+  // Save the patient's live plan back into the shared library as a reusable
+  // template (roadmap #4). Reuses the library's saveCarePlanTemplate — the
+  // template's goals/interventions are free-text line items, so we flatten.
+  savePatientCarePlanAsTemplate: async (patientId, program, name) => {
+    const key = carePlanKey(patientId, program.id);
+    const cur = get().patientCarePlans[key];
+    if (!cur) return null;
+    const conditions = (cur.plan?.conditions || []).map(c => c.label);
+    const goals = (cur.goals || []).map(g => ({ id: `g-${g.id}`, title: g.title, subtitle: g.subtitle || '' }));
+    const interventions = (cur.interventions || []).map(i => ({ id: `i-${i.id}`, title: i.title, duration: i.duration || '' }));
+    return get().saveCarePlanTemplate({ name: name.trim(), conditions, goals, interventions });
+  },
 
   // ── Care Plan Library (Settings → Care Plan Library) ──
   // Three sibling lists plus each goal's interventions, all persisted in

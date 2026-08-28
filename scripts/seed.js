@@ -20,6 +20,7 @@ import { ICDS, NOT_LINKED, getIcdsForMember, getNotLinkedForMember } from '../sr
 import { HCC_MEMBER_BY_NAME } from '../src/features/hcc/data/mock.js';
 import { POP_GROUPS } from '../src/features/population-groups/PopulationGroupsView.utils.js';
 import { CCM_BILLING_PERIODS, CCM_BILLABLE_ACTIVITIES, CCM_BILLING_REPORTS } from '../src/features/patient/data/ccmBillingMock.js';
+import { CARE_PLAN_MOCK } from '../src/features/patient/data/carePlanMock.js';
 import { CCM_WORKLIST_MEMBERS } from '../src/features/ccm-worklist/data/mock.js';
 import { SNP_WORKLIST_MEMBERS } from '../src/features/snp-worklist/data/mock.js';
 import { CAREGAP_ACTIVITY_MOCK } from '../src/features/hedis-worklist/data/caregapActivityMock.js';
@@ -1199,6 +1200,67 @@ async function main() {
         console.log(insErr
           ? `  ✗ notifications: ${insErr.message}`
           : `  ✓ notifications (${rows.length} seeded for demo@fold.health)`);
+      }
+    }
+  }
+
+  // ── Patient Care Plan (demo) ──
+  // The Care Plan step is Supabase-backed (patient_care_plan_* tables). There is
+  // no seeded patient/program to attach to at build time, so we instantiate one
+  // live plan against the first real patient — enough to prove the pipeline. All
+  // other programs fall back to CARE_PLAN_MOCK in the UI until a user edits them.
+  console.log('\nSeeding patient care plan (demo)...');
+  {
+    const { data: firstPatient, error: fpErr } = await supabase
+      .from('patients').select('id, name').order('id', { ascending: true }).limit(1).maybeSingle();
+    if (fpErr || !firstPatient) {
+      console.log(`  ✗ patient_care_plan: ${fpErr?.message || 'no patients found — seed patients first'}`);
+    } else {
+      const patientId = firstPatient.id;
+      const programId = `pcp-${patientId}-CCM`;
+      // Make sure the program exists so the plan is reachable in the UI.
+      const { error: progErr } = await supabase.from('patient_care_programs').upsert({
+        id: programId, patient_id: patientId, code: 'CCM',
+        name: 'Chronic Care Management (CCM)', status: 'Enrolled',
+        status_color: 'var(--status-success)', progress: 0,
+      }, { onConflict: 'id' });
+      if (progErr) console.log(`  ✗ demo program: ${progErr.message}`);
+
+      const { data: planRow, error: planErr } = await supabase.from('patient_care_plans').upsert({
+        patient_id: patientId, program_id: programId, program_code: 'CCM',
+        created_by: CARE_PLAN_MOCK.createdBy,
+        conditions: CARE_PLAN_MOCK.conditions.map(c => c.label),
+        condition_total: CARE_PLAN_MOCK.conditionTotal,
+      }, { onConflict: 'patient_id,program_id' }).select().single();
+
+      if (planErr) {
+        console.log(`  ✗ patient_care_plans: ${planErr.message} — run supabase/patient_care_plan_migration.sql first`);
+      } else {
+        // Delete-then-insert children keeps re-runs idempotent without needing
+        // deterministic child ids (same pattern as HCC gaps above).
+        await supabase.from('patient_care_plan_goals').delete().eq('plan_id', planRow.id);
+        await supabase.from('patient_care_plan_interventions').delete().eq('plan_id', planRow.id);
+
+        const goalRows = CARE_PLAN_MOCK.goals.map((g, idx) => ({
+          plan_id: planRow.id, title: g.title, subtitle: g.subtitle || '',
+          icon: g.icon, priority: g.priority || 'medium',
+          current_value: g.currentValue || '', trend: g.trend || '-',
+          status: g.status || 'Not Started', sort_order: idx,
+        }));
+        const { error: gErr } = await supabase.from('patient_care_plan_goals').insert(goalRows);
+
+        const intvRows = CARE_PLAN_MOCK.interventions.map((i, idx) => ({
+          plan_id: planRow.id, kind: 'internal-task', title: i.title,
+          icon: i.icon, duration: i.duration || null,
+          assignee_name: i.assignee?.name || 'Unassigned',
+          assignee_initials: i.assignee?.initials || '',
+          status: i.status || 'Not Started', adherence: i.adherence || '-', sort_order: idx,
+        }));
+        const { error: iErr } = await supabase.from('patient_care_plan_interventions').insert(intvRows);
+
+        console.log((gErr || iErr)
+          ? `  ✗ care plan children: ${(gErr || iErr).message}`
+          : `  ✓ patient care plan for "${firstPatient.name}" (${goalRows.length} goals, ${intvRows.length} interventions)`);
       }
     }
   }

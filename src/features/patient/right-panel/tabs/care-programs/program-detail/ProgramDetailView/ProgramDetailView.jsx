@@ -69,7 +69,7 @@ export function ProgramDetailView({ program, onClose, startAtFirstStep = false, 
       );
     }
     if (stepFlags.isPreVisitStep) return <PreVisitStep programCode={program.code} />;
-    if (stepFlags.isCarePlanStep) return <CarePlanView />;
+    if (stepFlags.isCarePlanStep) return <CarePlanView patientId={v.patientId} program={program} />;
     if (stepFlags.isAppointmentStep) return <AppointmentStep patientId={v.currentPatient?.id} programCode={program.code} />;
     if (stepFlags.isOpenCareGapsStep) return <OpenCareGaps />;
     if (stepFlags.isMedReconStep) return <MedicationReconciliation />;

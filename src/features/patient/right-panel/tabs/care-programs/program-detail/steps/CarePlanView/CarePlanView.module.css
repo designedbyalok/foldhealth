@@ -112,17 +112,18 @@
 .goalHead,
 .goalRow {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) 140px 80px 90px 150px;
+  grid-template-columns: 32px minmax(0, 1fr) 140px 80px 90px 150px 28px;
   align-items: center;
   column-gap: 8px;
 }
 .intvHead,
 .intvRow {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) 180px 110px 150px;
+  grid-template-columns: 32px minmax(0, 1fr) 180px 110px 150px 28px;
   align-items: center;
   column-gap: 8px;
 }
+.rowMenuCell { display: flex; align-items: center; justify-content: center; }
 .goalHead,
 .intvHead {
   padding: 8px 4px;
@@ -140,7 +141,21 @@
 .titleCell { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .rowIcon { display: flex; flex-shrink: 0; }
 .titleText { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.title { font-size: var(--font-base); color: var(--neutral-500); }
+.title {
+  font-size: var(--font-base);
+  color: var(--neutral-500);
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: default;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.titleEditable { cursor: text; }
+.titleEditable:hover { color: var(--primary-300); }
+.titleEditInput { max-width: 260px; }
 .subtitle { font-size: var(--font-md); color: var(--neutral-300); }
 
 .linkChip {
@@ -204,3 +219,41 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ── Toolbar (New Problems + Save as Template) ── */
+.toolbarRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.emptyRow {
+  padding: var(--space-4) var(--space-1);
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+
+/* ── Drawer form fields (Add Intervention / Save as Template) ── */
+.drawerBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.drawerField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.drawerLabel {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+.drawerHint {
+  font-size: var(--font-md);
+  color: var(--neutral-300);
+  margin: 0;
+}
+.required { color: var(--status-error); }
