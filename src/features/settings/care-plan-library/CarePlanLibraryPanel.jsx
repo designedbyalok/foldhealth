@@ -65,7 +65,7 @@ const TEMPLATE_COLUMNS = [
   { key: 'conditions', label: 'Chronic Conditions', sortKey: 'conditions', sortType: 'alpha', width: 280 },
   { key: 'createdOn', label: 'Created On', sortKey: 'createdAt', sortType: 'date', width: 200 },
   { key: 'updated', label: 'Last Update', sortKey: 'updatedAt', sortType: 'date', width: 200 },
-  { key: 'actions', label: 'Actions', sticky: 'right', width: 156 },
+  { key: 'actions', label: 'Actions', sticky: 'right', width: 196 },
 ];
 
 // Figma 14181:316571 — checkbox, Goals Title, Type, Linked Items, Target
@@ -178,10 +178,15 @@ export function CarePlanLibraryPanel() {
   const deleteCarePlanBarrier = useAppStore(s => s.deleteCarePlanBarrier);
   const saveCarePlanTemplate = useAppStore(s => s.saveCarePlanTemplate);
   const deleteCarePlanTemplate = useAppStore(s => s.deleteCarePlanTemplate);
+  const favorites = useAppStore(s => s.carePlanFavorites);
+  const fetchCarePlanFavorites = useAppStore(s => s.fetchCarePlanFavorites);
+  const toggleCarePlanFavorite = useAppStore(s => s.toggleCarePlanFavorite);
+  const isFavorite = (id) => favorites.includes(id);
 
   useEffect(() => {
     if (!libraryDidFetch) fetchCarePlanLibrary();
-  }, [libraryDidFetch, fetchCarePlanLibrary]);
+    fetchCarePlanFavorites();
+  }, [libraryDidFetch, fetchCarePlanLibrary, fetchCarePlanFavorites]);
 
   // A single draft/delete-target slot, discriminated by `kind` — only one
   // drawer or confirm dialog is ever open at a time regardless of tab.
@@ -198,7 +203,6 @@ export function CarePlanLibraryPanel() {
     const base = !q ? templates : templates.filter(t =>
       t.name.toLowerCase().includes(q) || t.conditions.some(c => c.toLowerCase().includes(q))
     );
-    if (!templateSort.key) return base;
     const dir = templateSort.dir === 'asc' ? 1 : -1;
     const valueOf = (t) => (
       templateSort.key === 'conditions' ? (t.conditions[0] || '') :
@@ -206,8 +210,15 @@ export function CarePlanLibraryPanel() {
       templateSort.key === 'updatedAt' ? t.updatedAt :
       t.name
     );
-    return base.toSorted((a, b) => valueOf(a).localeCompare(valueOf(b)) * dir);
-  }, [templates, searchValue, templateSort]);
+    // Favorites always float to the top; the chosen column sorts within each
+    // group so a starred template never sinks below an unstarred one.
+    return base.toSorted((a, b) => {
+      const favDiff = Number(favorites.includes(b.id)) - Number(favorites.includes(a.id));
+      if (favDiff) return favDiff;
+      if (!templateSort.key) return 0;
+      return valueOf(a).localeCompare(valueOf(b)) * dir;
+    });
+  }, [templates, searchValue, templateSort, favorites]);
 
   const [goalSort, setGoalSort] = useState({ key: 'title', dir: 'asc' });
   const [selectedGoalIds, setSelectedGoalIds] = useState([]);
@@ -327,6 +338,18 @@ export function CarePlanLibraryPanel() {
       <td className={styles.tdUpdated}>{formatDateTime(t.updatedAt)}</td>
       <td className={styles.tdActions} onClick={e => e.stopPropagation()}>
         <div className={styles.actionCell}>
+          <ActionButton
+            size="S"
+            tooltip={isFavorite(t.id) ? 'Remove favorite' : 'Add favorite'}
+            onClick={() => toggleCarePlanFavorite(t.id)}
+          >
+            <Icon
+              name={isFavorite(t.id) ? 'solar:star-bold' : 'solar:star-linear'}
+              size={16}
+              color={isFavorite(t.id) ? 'var(--status-warning)' : 'var(--neutral-300)'}
+            />
+          </ActionButton>
+          <div className={styles.vDivider} />
           <ActionButton icon="solar:pen-linear" size="S" tooltip="Edit" onClick={() => openEditTemplate(t)} />
           <div className={styles.vDivider} />
           <ActionButton icon="solar:copy-linear" size="S" tooltip="Duplicate" onClick={() => duplicateTemplate(t)} />

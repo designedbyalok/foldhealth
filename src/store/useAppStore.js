@@ -2575,6 +2575,44 @@ export const useAppStore = create((set, get) => ({
   carePlanBarriers: [],
   carePlanLibraryLoading: false,
   carePlanLibraryDidFetch: false,
+  // Per-user starred templates (roadmap #3), persisted in
+  // care_plan_template_favorites. Held as an array of template ids for the
+  // signed-in user; favorites sort to the top of the library.
+  carePlanFavorites: [],
+  carePlanFavoritesLoaded: false,
+
+  fetchCarePlanFavorites: async () => {
+    if (get().carePlanFavoritesLoaded) return;
+    const userId = await get()._resolveWorklistUser();
+    const { data, error } = await supabase
+      .from('care_plan_template_favorites').select('template_id').eq('user_id', userId);
+    if (error) console.warn('fetchCarePlanFavorites:', error.message);
+    set({ carePlanFavorites: (data || []).map(r => r.template_id), carePlanFavoritesLoaded: true });
+  },
+
+  toggleCarePlanFavorite: async (templateId) => {
+    const userId = await get()._resolveWorklistUser();
+    const wasFav = get().carePlanFavorites.includes(templateId);
+    // Optimistic — the star flips immediately; revert on failure.
+    set(s => ({
+      carePlanFavorites: wasFav
+        ? s.carePlanFavorites.filter(id => id !== templateId)
+        : [...s.carePlanFavorites, templateId],
+    }));
+    const { error } = wasFav
+      ? await supabase.from('care_plan_template_favorites').delete().eq('user_id', userId).eq('template_id', templateId)
+      : await supabase.from('care_plan_template_favorites').upsert(
+          { user_id: userId, template_id: templateId }, { onConflict: 'user_id,template_id' });
+    if (error) {
+      console.warn('toggleCarePlanFavorite:', error.message);
+      set(s => ({
+        carePlanFavorites: wasFav
+          ? [...s.carePlanFavorites, templateId]
+          : s.carePlanFavorites.filter(id => id !== templateId),
+      }));
+      get().showToast('Could not update favorite');
+    }
+  },
 
   fetchCarePlanLibrary: async () => {
     set({ carePlanLibraryLoading: true });
