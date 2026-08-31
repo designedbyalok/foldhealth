@@ -101,14 +101,30 @@ export const PRIORITY_COLORS = {
   none: '#6F7A90',
 };
 
+// Tasks are stored as MM-DD-YYYY, but some legacy/automation rows landed as
+// ISO YYYY-MM-DD. Parse both (plus MM/DD/YYYY) so overdue, sorting, and the
+// calendar all stay correct regardless of the stored shape.
 export function parseTaskDate(str) {
   if (!str || typeof str !== 'string') return null;
-  const parts = str.split('-').map(Number);
-  if (parts.length !== 3 || parts.some(n => Number.isNaN(n))) return null;
-  const [m, d, y] = parts;
+  let y, m, d;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    [y, m, d] = str.split('-').map(Number);
+  } else if (/^\d{2}[-/]\d{2}[-/]\d{4}$/.test(str)) {
+    [m, d, y] = str.split(/[-/]/).map(Number);
+  } else {
+    return null;
+  }
+  if ([y, m, d].some(n => Number.isNaN(n))) return null;
   const date = new Date(y, m - 1, d);
   date.setHours(0, 0, 0, 0);
   return date;
+}
+
+// Canonical display shape for every task date: MM/DD/YYYY.
+export function formatTaskDate(str) {
+  const d = parseTaskDate(str);
+  if (!d) return str || '';
+  return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
 }
 
 export function todayStart() {
@@ -138,7 +154,7 @@ export function formatDateFriendly(str) {
   if (diff === 0) return 'Today';
   if (diff === 1) return 'Tomorrow';
   if (diff === -1) return 'Yesterday';
-  return str;
+  return formatTaskDate(str);
 }
 
 export const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];

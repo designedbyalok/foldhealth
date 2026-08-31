@@ -45,7 +45,7 @@ export function KanbanCardContent({ task, onToggle }) {
           <div className={styles.cardTopLeft}>
             <PriorityIcon priority={task.priority} size={16} />
             <span className={`${styles.cardDue} ${isOverdue(task) ? styles.cardDueMissed : ''}`}>
-              Due : {formatDateFriendly(task.due_date) === 'Today' || formatDateFriendly(task.due_date) === 'Tomorrow' || formatDateFriendly(task.due_date) === 'Yesterday' ? formatDateFriendly(task.due_date) : task.due_date}
+              Due : {formatDateFriendly(task.due_date)}
             </span>
           </div>
           <button

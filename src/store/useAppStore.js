@@ -920,11 +920,19 @@ async function persistProgramDocument(doc, file) {
   }
 }
 
+// Accept both the canonical MM-DD-YYYY and legacy ISO YYYY-MM-DD (and
+// MM/DD/YYYY) so isPastDate flags overdue rows regardless of stored shape.
 function parseTaskDateStr(str) {
   if (!str || typeof str !== 'string') return null;
-  const parts = str.split('-').map(Number);
-  if (parts.length !== 3 || parts.some(n => Number.isNaN(n))) return null;
-  const [m, d, y] = parts;
+  let y, m, d;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    [y, m, d] = str.split('-').map(Number);
+  } else if (/^\d{2}[-/]\d{2}[-/]\d{4}$/.test(str)) {
+    [m, d, y] = str.split(/[-/]/).map(Number);
+  } else {
+    return null;
+  }
+  if ([y, m, d].some(n => Number.isNaN(n))) return null;
   const date = new Date(y, m - 1, d);
   date.setHours(0, 0, 0, 0);
   return date;
@@ -5994,7 +6002,7 @@ export const useAppStore = create((set, get) => ({
       assigned_to_id: reviewerId || null,
       pool: 'HEDIS Sign-Off',
       labels: [...gapCodes],
-      due_date: dueDate.toISOString().slice(0, 10),
+      due_date: `${String(dueDate.getMonth() + 1).padStart(2, '0')}-${String(dueDate.getDate()).padStart(2, '0')}-${dueDate.getFullYear()}`,
       meta: `HEDIS Sign-Off · ${state || member.state || 'Unknown state'}`,
       hedisMemberId,
       hedisGapCodes: [...gapCodes],

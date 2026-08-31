@@ -4,18 +4,15 @@ import { Icon } from '../../components/Icon/Icon';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { CheckboxTick } from '../../components/CheckboxTick/CheckboxTick';
 import { useAppStore } from '../../store/useAppStore';
-import { MONTH_NAMES, formatDateFriendly } from './TasksView.utils';
+import { MONTH_NAMES, formatDateFriendly, parseTaskDate } from './TasksView.utils';
 import { usePopoverPosition } from './usePopoverPosition';
 import styles from './TasksView.module.css';
 
 export function TaskDatePicker({ value, onSelect, overdue }) {
   const [open, setOpen] = useState(false);
   const [viewDate, setViewDate] = useState(() => {
-    if (value) {
-      const parts = value.split('-');
-      if (parts.length === 3) return new Date(+parts[2], +parts[0] - 1, 1);
-    }
-    return new Date();
+    const parsed = parseTaskDate(value);
+    return parsed ? new Date(parsed.getFullYear(), parsed.getMonth(), 1) : new Date();
   });
   const btnRef = useRef(null);
   const pos = usePopoverPosition(btnRef, open);
@@ -25,10 +22,10 @@ export function TaskDatePicker({ value, onSelect, overdue }) {
   const todayMonth = today.getMonth();
   const todayYear = today.getFullYear();
 
-  const selectedParts = value ? value.split('-') : null;
-  const selectedDay = selectedParts ? +selectedParts[1] : null;
-  const selectedMonth = selectedParts ? +selectedParts[0] - 1 : null;
-  const selectedYear = selectedParts ? +selectedParts[2] : null;
+  const selected = parseTaskDate(value);
+  const selectedDay = selected ? selected.getDate() : null;
+  const selectedMonth = selected ? selected.getMonth() : null;
+  const selectedYear = selected ? selected.getFullYear() : null;
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
