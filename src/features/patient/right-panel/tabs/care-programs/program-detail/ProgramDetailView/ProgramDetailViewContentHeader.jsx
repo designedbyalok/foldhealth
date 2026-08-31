@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Icon } from '../../../../../../../components/Icon/Icon';
 import { AddIconMinimalist } from '../../../../../../../components/Icon/AddIconMinimalist';
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
+import { BulkSelectToggle } from '../../../../../../../components/BulkSelect/BulkSelectToggle';
 import { Button } from '../../../../../../../components/Button/Button';
 import { Link } from '../../../../../../../components/Link/Link';
 import { SelectAssigneeModal } from '../../../../../../../components/SelectAssigneeModal/SelectAssigneeModal';
@@ -70,6 +71,8 @@ export function ProgramDetailViewContentHeader({
   const showToast = useAppStore(s => s.showToast);
   const requestCarePlanShare = useAppStore(s => s.requestCarePlanShare);
   const requestCarePlanPanel = useAppStore(s => s.requestCarePlanPanel);
+  const carePlanBulkMode = useAppStore(s => s.carePlanBulkMode);
+  const toggleCarePlanBulkMode = useAppStore(s => s.toggleCarePlanBulkMode);
   const selectedPatientId = useAppStore(s => s.selectedPatientId);
   const carePlanKey = selectedPatientId && program?.id ? `${selectedPatientId}::${program.id}` : null;
   const liveCarePlan = useAppStore(s => (carePlanKey ? s.patientCarePlans[carePlanKey] : null));
@@ -240,6 +243,8 @@ export function ProgramDetailViewContentHeader({
               />
               <CarePlanActionDivider />
               <ActionButton icon="solar:copy-linear" size="S" tooltip="Copy" onClick={() => showToast?.('Copy — coming soon')} />
+              <CarePlanActionDivider />
+              <BulkSelectToggle size="S" active={carePlanBulkMode} onToggle={toggleCarePlanBulkMode} />
               <CarePlanActionDivider />
               <Button variant="secondary" size="L" leadingIcon="solar:eye-linear" onClick={() => requestCarePlanShare('preview')}>
                 Preview

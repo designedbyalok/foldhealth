@@ -1,6 +1,7 @@
 import { Icon } from '../../../../../../../components/Icon/Icon';
 import { Input } from '../../../../../../../components/Input/Input';
 import { Badge } from '../../../../../../../components/Badge/Badge';
+import { Checkbox } from '../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { CarePlanProgressRing } from '../../../../../../../components/CarePlanProgressRing/CarePlanProgressRing';
 import { useState } from 'react';
 import styles from './carePlanTables.module.css';
@@ -54,8 +55,15 @@ export const GBI_STATUS_TONE = {
 
 const BORDER_LEFT = { borderLeft: '0.5px solid var(--neutral-150)' };
 
+// The bulk-select checkbox column. Prepended to a table's columns only while
+// bulk mode is on (see withSelectColumn) so the three GBI tables share one
+// checkbox placement and, when off, all start at the centered priority cell.
+export const SELECT_COLUMN = { key: 'select', label: '', showCheckbox: true, width: 28 };
+
+export const withSelectColumn = (columns, bulkMode) =>
+  (bulkMode ? [SELECT_COLUMN, ...columns] : columns);
+
 export const GOAL_COLUMNS = [
-  { key: 'select', label: '', showCheckbox: true, width: 28 },
   { key: 'priority', label: 'P', width: 32, thStyle: { borderRight: '0.5px solid var(--neutral-150)' } },
   { key: 'title', label: 'Goal Title' },
   { key: 'value', label: 'Current Value', width: 120, thStyle: BORDER_LEFT },
@@ -75,13 +83,22 @@ export const INTERVENTION_COLUMNS = [
 ];
 
 export const BARRIER_COLUMNS = [
-  { key: 'select', label: '', showCheckbox: true, width: 28 },
   { key: 'priority', label: 'P', width: 32, thStyle: { borderRight: '0.5px solid var(--neutral-150)' } },
   { key: 'title', label: 'Barrier Title' },
   { key: 'description', label: 'Description', width: 200, thStyle: BORDER_LEFT },
   { key: 'status', label: 'Status', width: 140, thStyle: BORDER_LEFT },
   { key: 'actions', label: '', width: 40, sticky: 'right', thStyle: BORDER_LEFT },
 ];
+
+// The per-row bulk checkbox cell shared by all three GBI tables — stops click
+// propagation so ticking never fires the row action.
+export function GbiCheckboxCell({ checked, onToggle, label, disabled }) {
+  return (
+    <td className={styles.checkTd} onClick={e => e.stopPropagation()}>
+      <Checkbox checked={checked} onCheckedChange={onToggle} aria-label={label} disabled={disabled} />
+    </td>
+  );
+}
 
 export function LinkChip({ count }) {
   return (

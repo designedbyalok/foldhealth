@@ -27,6 +27,7 @@ import { CarePlanBarriersTable } from '../tables/CarePlanBarriersTable';
 import { RingEmptyState } from '../../../../../../../components/RingEmptyState/RingEmptyState';
 import { SimpleTableSkeleton } from '../../../../../../../components/SimpleTableSkeleton/SimpleTableSkeleton';
 import { DownChevronIcon } from '../../../../../../../components/Icon/DownChevronIcon';
+import { BulkBar } from '../../../../../../../components/BulkBar/BulkBar';
 import styles from './CarePlanView.module.css';
 
 // The statuses a goal or intervention can move through. Kept flat and shared so
@@ -87,6 +88,9 @@ export function CarePlanView({ patientId, program }) {
   useEffect(() => { fetchPlatformUsers?.(); }, [fetchPlatformUsers]);
   const carePlanShareRequest = useAppStore(s => s.carePlanShareRequest);
   const clearCarePlanShareRequest = useAppStore(s => s.clearCarePlanShareRequest);
+  // Bulk-select mode is toggled from the program-detail content header.
+  const bulkMode = useAppStore(s => s.carePlanBulkMode);
+  const setCarePlanBulkMode = useAppStore(s => s.setCarePlanBulkMode);
   const carePlanPanelRequest = useAppStore(s => s.carePlanPanelRequest);
   const clearCarePlanPanelRequest = useAppStore(s => s.clearCarePlanPanelRequest);
   const carePlanTemplates = useAppStore(s => s.carePlanTemplates);
@@ -226,6 +230,11 @@ export function CarePlanView({ patientId, program }) {
     return { ...prev, [kind]: next };
   });
   const clearSelection = () => setSelected({ goal: new Set(), intv: new Set(), barrier: new Set() });
+
+  // Leaving bulk mode drops any pending selection; unmounting resets the shared
+  // flag so bulk mode never persists across care plans.
+  useEffect(() => { if (!bulkMode) setSelected({ goal: new Set(), intv: new Set(), barrier: new Set() }); }, [bulkMode]);
+  useEffect(() => () => setCarePlanBulkMode(false), [setCarePlanBulkMode]);
 
   const bulkSetStatus = async (status) => {
     setBulkMenu(null);
@@ -435,16 +444,22 @@ export function CarePlanView({ patientId, program }) {
       )}
 
       {selectedCount > 0 && (
-        <div className={styles.bulkBar}>
-          <span className={styles.bulkCount}>{selectedCount} selected</span>
-          <div className={styles.bulkActions}>
-            <Button variant="secondary" size="S" leadingIcon="solar:checklist-minimalistic-linear"
-              onClick={(e) => setBulkMenu({ rect: e.currentTarget.getBoundingClientRect() })}>
-              Set status
-            </Button>
-            <button type="button" className={styles.bulkClear} onClick={clearSelection}>Clear</button>
-          </div>
-        </div>
+        <BulkBar
+          className="js-careplan-bulkbar"
+          selectedIds={[...selected.goal, ...selected.intv, ...selected.barrier]}
+          onClear={clearSelection}
+          actions={[{
+            label: 'Set status',
+            icon: 'solar:checklist-minimalistic-linear',
+            // BulkBar action callbacks don't carry the event, so anchor the
+            // status menu to the floating bar itself (MenuPopover opens upward
+            // near the viewport bottom).
+            onClick: () => {
+              const el = document.querySelector('.js-careplan-bulkbar');
+              setBulkMenu({ rect: el ? el.getBoundingClientRect() : null });
+            },
+          }]}
+        />
       )}
 
       {/* Goals */}
@@ -471,6 +486,7 @@ export function CarePlanView({ patientId, program }) {
           <CarePlanGoalsTable
             rows={filteredGoals}
             canEdit={canEdit}
+            bulkMode={bulkMode}
             selectedIds={[...selected.goal]}
             onSelectAll={(checked) => selectAllKind('goal', filteredGoals, checked)}
             onToggleSelect={(id) => toggleSelect('goal', id)}
@@ -505,6 +521,7 @@ export function CarePlanView({ patientId, program }) {
           <CarePlanInterventionsTable
             rows={filteredInterventions}
             canEdit={canEdit}
+            bulkMode={bulkMode}
             selectedIds={[...selected.intv]}
             onSelectAll={(checked) => selectAllKind('intv', filteredInterventions, checked)}
             onToggleSelect={(id) => toggleSelect('intv', id)}
@@ -541,6 +558,7 @@ export function CarePlanView({ patientId, program }) {
           <CarePlanBarriersTable
             rows={filteredBarriers}
             canEdit={canEdit}
+            bulkMode={bulkMode}
             selectedIds={[...selected.barrier]}
             onSelectAll={(checked) => selectAllKind('barrier', filteredBarriers, checked)}
             onToggleSelect={(id) => toggleSelect('barrier', id)}

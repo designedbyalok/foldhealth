@@ -3,11 +3,12 @@ import { Icon } from '../../../../../../../components/Icon/Icon';
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
 import { AssigneeChange } from '../../../../../../../components/AssigneeChange/AssigneeChange';
 import { Badge } from '../../../../../../../components/Badge/Badge';
-import { Checkbox } from '../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { WorklistShell } from '../../../../../../../components/WorklistShell/WorklistShell';
 import { PriorityIcon } from '../../../../../../../components/PriorityIcon/PriorityIcon';
 import {
   INTERVENTION_COLUMNS,
+  withSelectColumn,
+  GbiCheckboxCell,
   LinkChip,
   GoalProgressCell,
   GbiStatusButton,
@@ -17,6 +18,7 @@ import styles from './carePlanTables.module.css';
 export function CarePlanInterventionsTable({
   rows,
   canEdit,
+  bulkMode,
   selectedIds,
   onSelectAll,
   onToggleSelect,
@@ -30,28 +32,12 @@ export function CarePlanInterventionsTable({
   platformUsers,
   emptyState,
 }) {
+  // Bulk mode injects the shared checkbox column (with WorklistShell's built-in
+  // select-all header checkbox). The actions header keeps its table-settings
+  // affordance.
   const columns = useMemo(() => {
-    const allSelected = rows.length > 0 && selectedIds.length === rows.length;
-    const someSelected = selectedIds.length > 0 && !allSelected;
-    return INTERVENTION_COLUMNS.map((col) => {
-      if (col.key === 'title') {
-        return {
-          ...col,
-          thLabel: (
-            <span className={styles.intvNameHeader}>
-              <Checkbox
-                checked={someSelected ? 'indeterminate' : allSelected}
-                onCheckedChange={(v) => onSelectAll?.(!!v)}
-                aria-label="Select all rows"
-                disabled={!canEdit || rows.length === 0}
-              />
-              <span>Name</span>
-            </span>
-          ),
-        };
-      }
-      if (col.key === 'actions') {
-        return {
+    const base = INTERVENTION_COLUMNS.map((col) => (col.key === 'actions'
+      ? {
           ...col,
           thLabel: (
             <ActionButton
@@ -62,11 +48,10 @@ export function CarePlanInterventionsTable({
               aria-label="Table settings"
             />
           ),
-        };
-      }
-      return col;
-    });
-  }, [rows.length, selectedIds.length, onSelectAll, canEdit]);
+        }
+      : col));
+    return withSelectColumn(base, bulkMode);
+  }, [bulkMode]);
 
   return (
     <div className={styles.tableWrap}>
@@ -89,6 +74,14 @@ export function CarePlanInterventionsTable({
               className={`${styles.row} ${styles.rowClickable} ${styles.intvRow}`}
               onClick={() => onOpenIntervention(i)}
             >
+              {bulkMode && (
+                <GbiCheckboxCell
+                  checked={selectedIds.includes(i.id)}
+                  onToggle={() => onToggleSelect(i.id)}
+                  label={`Select ${i.title}`}
+                  disabled={!canEdit}
+                />
+              )}
               <td className={styles.priorityTd} onClick={e => e.stopPropagation()}>
                 <button
                   type="button"
@@ -102,14 +95,6 @@ export function CarePlanInterventionsTable({
               </td>
               <td className={styles.titleTd}>
                 <div className={styles.intvNameCell}>
-                  <span className={styles.intvRowCheck} onClick={e => e.stopPropagation()}>
-                    <Checkbox
-                      checked={selectedIds.includes(i.id)}
-                      onCheckedChange={() => onToggleSelect(i.id)}
-                      aria-label={`Select ${i.title}`}
-                      disabled={!canEdit}
-                    />
-                  </span>
                   <span className={styles.rowIcon}>
                     <Icon name={i.icon} size={16} color="var(--neutral-400)" />
                   </span>

@@ -1,10 +1,11 @@
 import { Icon } from '../../../../../../../components/Icon/Icon';
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
-import { Checkbox } from '../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { WorklistShell } from '../../../../../../../components/WorklistShell/WorklistShell';
 import { PriorityIcon } from '../../../../../../../components/PriorityIcon/PriorityIcon';
 import {
   BARRIER_COLUMNS,
+  withSelectColumn,
+  GbiCheckboxCell,
   LinkChip,
   GbiStatusButton,
   EditableInlineTitle,
@@ -14,6 +15,7 @@ import styles from './carePlanTables.module.css';
 export function CarePlanBarriersTable({
   rows,
   canEdit,
+  bulkMode,
   selectedIds,
   onSelectAll,
   onToggleSelect,
@@ -31,7 +33,7 @@ export function CarePlanBarriersTable({
         embedded
         header={null}
         hideBulkBar
-        columns={BARRIER_COLUMNS}
+        columns={withSelectColumn(BARRIER_COLUMNS, bulkMode)}
         rows={rows}
         selectedIds={selectedIds}
         onSelectAll={onSelectAll}
@@ -39,14 +41,14 @@ export function CarePlanBarriersTable({
         emptyState={emptyState}
         renderRow={(b) => (
           <tr key={b.id} className={styles.row}>
-            <td className={styles.checkTd} onClick={e => e.stopPropagation()}>
-              <Checkbox
+            {bulkMode && (
+              <GbiCheckboxCell
                 checked={selectedIds.includes(b.id)}
-                onCheckedChange={() => onToggleSelect(b.id)}
-                aria-label={`Select ${b.title}`}
+                onToggle={() => onToggleSelect(b.id)}
+                label={`Select ${b.title}`}
                 disabled={!canEdit}
               />
-            </td>
+            )}
             <td className={styles.priorityTd}>
               <button
                 type="button"

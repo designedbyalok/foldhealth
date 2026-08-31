@@ -2911,6 +2911,13 @@ export const useAppStore = create((set, get) => ({
   requestCarePlanPanel: (panel) => set({ carePlanPanelRequest: panel }),
   clearCarePlanPanelRequest: () => set({ carePlanPanelRequest: null }),
 
+  // Bulk-select mode for the care plan GBI tables. The toggle lives in the
+  // program-detail content header; CarePlanView reads this to show the row
+  // checkboxes and the shared BulkBar.
+  carePlanBulkMode: false,
+  toggleCarePlanBulkMode: () => set(s => ({ carePlanBulkMode: !s.carePlanBulkMode })),
+  setCarePlanBulkMode: (on) => set({ carePlanBulkMode: on }),
+
   // Record one share of a plan (or a selection of it) to an external party.
   // Returns the saved record, or null on failure.
   sharePatientCarePlan: async (patientId, program, { target, format = 'standard', note = '', goalIds = [], interventionIds = [] }) => {

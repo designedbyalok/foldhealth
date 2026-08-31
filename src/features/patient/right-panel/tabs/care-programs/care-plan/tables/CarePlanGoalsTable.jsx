@@ -1,10 +1,11 @@
 import { Icon } from '../../../../../../../components/Icon/Icon';
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
-import { Checkbox } from '../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { WorklistShell } from '../../../../../../../components/WorklistShell/WorklistShell';
 import { PriorityIcon } from '../../../../../../../components/PriorityIcon/PriorityIcon';
 import {
   GOAL_COLUMNS,
+  withSelectColumn,
+  GbiCheckboxCell,
   LinkChip,
   GoalProgressCell,
   TrendCell,
@@ -24,6 +25,7 @@ function GoalTitle({ title, subtitle }) {
 export function CarePlanGoalsTable({
   rows,
   canEdit,
+  bulkMode,
   selectedIds,
   onSelectAll,
   onToggleSelect,
@@ -41,7 +43,7 @@ export function CarePlanGoalsTable({
         embedded
         header={null}
         hideBulkBar
-        columns={GOAL_COLUMNS}
+        columns={withSelectColumn(GOAL_COLUMNS, bulkMode)}
         rows={rows}
         selectedIds={selectedIds}
         onSelectAll={onSelectAll}
@@ -53,14 +55,14 @@ export function CarePlanGoalsTable({
             className={`${styles.row} ${styles.rowClickable}`}
             onClick={() => onOpenGoal(g)}
           >
-            <td className={styles.checkTd} onClick={e => e.stopPropagation()}>
-              <Checkbox
+            {bulkMode && (
+              <GbiCheckboxCell
                 checked={selectedIds.includes(g.id)}
-                onCheckedChange={() => onToggleSelect(g.id)}
-                aria-label={`Select ${g.title}`}
+                onToggle={() => onToggleSelect(g.id)}
+                label={`Select ${g.title}`}
                 disabled={!canEdit}
               />
-            </td>
+            )}
             <td className={styles.priorityTd} onClick={e => e.stopPropagation()}>
               <button
                 type="button"
