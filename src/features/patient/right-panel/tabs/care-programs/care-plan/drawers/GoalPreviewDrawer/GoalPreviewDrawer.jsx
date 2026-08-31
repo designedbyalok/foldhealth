@@ -15,6 +15,8 @@ import { MenuPopover } from '../../../../../../../../components/MenuPopover/Menu
 import { ConfirmDialog } from '../../../../../../../../components/ConfirmDialog/ConfirmDialog';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import { AddInterventionDrawer } from '../AddInterventionDrawer/AddInterventionDrawer';
+import { CreateGoalDrawer } from '../../../../../../../settings/care-plan-library/goals/CreateGoalDrawer/CreateGoalDrawer';
+import { formatGoalTarget, formatGoalDuration } from '../../../../../../../settings/care-plan-library/lib';
 import styles from './GoalPreviewDrawer.module.css';
 
 const GBI_STATUSES = ['Not Started', 'In Progress', 'On Hold', 'Met', 'Not Met'];
@@ -85,6 +87,16 @@ function fmtStamp(iso) {
 }
 
 const initialsOf = (name) => (name || '').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+
+// Rebuild the goal's descriptive subtitle from its structured values so the
+// hero line ("Blood pressure < 140/90 mmHg • 3 Months") reflects edits made in
+// the Edit Goal drawer. Returns '' when there's nothing structured to show.
+function buildGoalSubtitle(g) {
+  const target = formatGoalTarget(g);
+  const dur = formatGoalDuration(g);
+  const left = [g.measure, target].filter(Boolean).join(' ').trim();
+  return [left, dur].filter(Boolean).join(' • ');
+}
 
 function splitArrow(detail) {
   if (!detail || !detail.includes('→')) return [null, null];
@@ -190,6 +202,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose }) {
   const savePatientCarePlanIntervention = useAppStore(s => s.savePatientCarePlanIntervention);
   const savePatientCarePlanBarrier = useAppStore(s => s.savePatientCarePlanBarrier);
   const addCarePlanNote = useAppStore(s => s.addCarePlanNote);
+  const showToast = useAppStore(s => s.showToast);
   const updateCarePlanNote = useAppStore(s => s.updateCarePlanNote);
   const deleteCarePlanNote = useAppStore(s => s.deleteCarePlanNote);
   const fetchCarePlanAudit = useAppStore(s => s.fetchCarePlanAudit);
@@ -221,6 +234,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose }) {
   const [moreMenu, setMoreMenu] = useState(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
+  const [editGoalOpen, setEditGoalOpen] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState(null);
   const [noteDraft, setNoteDraft] = useState('');
   const [confirm, setConfirm] = useState(null);
@@ -275,6 +289,22 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose }) {
     savePatientCarePlanGoal(patientId, program, { ...live, title: next }, live.id);
   };
 
+  // Full-detail edit via the shared Goals Library drawer. Its onSave returns the
+  // whole goal shape (title/priority/target/duration/…); merge onto the live
+  // goal so unrelated fields (subtitle, icon, status, progress) are preserved.
+  // `interventions` from the drawer is ignored — care-plan interventions are
+  // managed separately and the goal row mapper drops the field.
+  const handleSaveGoalEdit = async (values) => {
+    setEditGoalOpen(false);
+    const merged = { ...live, ...values };
+    // Regenerate the subtitle from the edited structured values (keep the old
+    // one only if the edit leaves nothing structured to render).
+    const subtitle = buildGoalSubtitle(merged);
+    if (subtitle) merged.subtitle = subtitle;
+    const saved = await savePatientCarePlanGoal(patientId, program, merged, live.id);
+    if (saved) showToast?.('Goal updated');
+  };
+
   const submitReading = async () => {
     if (!readingValue.trim()) return;
     await saveGoalMeasurement(patientId, program.id, live.id, { value: readingValue.trim(), unit, favorable: readingFavorable });
@@ -312,6 +342,19 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose }) {
     live.updatedAt ? `Last Updated : ${fmtDate(live.updatedAt)}${youSuffix(live.updatedBy)}` : null,
   ].filter(Boolean);
 
+  // Edit mode replaces this drawer's surface with the shared Goals Library
+  // drawer (rather than stacking a second drawer on top). Cancel/Save both
+  // return to Goal Details.
+  if (editGoalOpen) {
+    return (
+      <CreateGoalDrawer
+        goal={live}
+        onClose={() => setEditGoalOpen(false)}
+        onSave={handleSaveGoalEdit}
+      />
+    );
+  }
+
   return (
     <Drawer title="Goal Details" onClose={onClose} bodyClassName={styles.drawerPad}>
       <div className={styles.body}>
@@ -331,7 +374,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose }) {
               size="L"
               tooltip="Edit Goal"
               disabled={!canEdit}
-              onClick={() => { setTitleDraft(live.title); setEditingTitle(true); }}
+              onClick={() => setEditGoalOpen(true)}
             />
             <span className={styles.headerDivider} />
             <ActionButton
