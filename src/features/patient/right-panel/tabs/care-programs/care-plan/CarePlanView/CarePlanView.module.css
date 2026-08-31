@@ -198,7 +198,7 @@
   border: none;
   padding: 0;
   text-align: left;
-  cursor: default;
+  cursor: inherit;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

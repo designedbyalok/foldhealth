@@ -105,15 +105,21 @@ function EditableTitle({ title, subtitle, editable, onCommit }) {
 
   return (
     <span className={styles.titleText}>
-      <button
-        type="button"
-        className={`${styles.title} ${editable ? styles.titleEditable : ''}`}
-        onClick={editable ? () => { setValue(title); setEditing(true); } : undefined}
-        disabled={!editable}
-        title={editable ? 'Click to rename' : undefined}
-      >
-        {title}
-      </button>
+      {editable ? (
+        <button
+          type="button"
+          className={`${styles.title} ${styles.titleEditable}`}
+          onClick={() => { setValue(title); setEditing(true); }}
+          title="Click to rename"
+        >
+          {title}
+        </button>
+      ) : (
+        // Non-editable titles (goals) sit inside a clickable row — render a
+        // plain span so the click bubbles up and opens the preview drawer.
+        // A disabled <button> would swallow the event instead.
+        <span className={styles.title}>{title}</span>
+      )}
       {subtitle && <span className={styles.subtitle}>{subtitle}</span>}
     </span>
   );
@@ -780,7 +786,8 @@ export function CarePlanView({ patientId, program }) {
       {previewGoal && (
         <GoalPreviewDrawer
           goal={previewGoal}
-          interventions={data.interventions}
+          patientId={patientId}
+          program={program}
           onClose={() => setPreviewGoal(null)}
         />
       )}

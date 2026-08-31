@@ -173,6 +173,8 @@ function mapPatientCarePlanGoalRow(row) {
     currentValue: row.current_value || '',
     trend: row.trend || '-',
     status: row.status || 'Not Started',
+    progress: row.progress ?? 0,
+    updatedBy: row.updated_by || '',
     links: 0,
     sortOrder: row.sort_order ?? 0,
     createdAt: row.created_at,
@@ -202,7 +204,32 @@ function patientCarePlanGoalToRow(g, planId) {
     current_value: g.currentValue || '',
     trend: g.trend || '-',
     status: g.status || 'Not Started',
+    progress: Number.isFinite(g.progress) ? g.progress : 0,
+    updated_by: g.updatedBy || null,
     sort_order: g.sortOrder ?? 0,
+  };
+}
+
+function mapGoalMeasurementRow(row) {
+  return {
+    id: row.id,
+    goalId: row.goal_id,
+    value: row.value || '',
+    unit: row.unit || '',
+    favorable: row.favorable !== false,
+    takenAt: row.taken_at,
+    sortOrder: row.sort_order ?? 0,
+  };
+}
+
+function mapCarePlanAutomationRow(row) {
+  return {
+    id: row.id,
+    goalId: row.goal_id || null,
+    title: row.title || '',
+    icon: row.icon || 'solar:bolt-linear',
+    enabled: row.enabled !== false,
+    sortOrder: row.sort_order ?? 0,
   };
 }
 
@@ -2473,26 +2500,40 @@ export const useAppStore = create((set, get) => ({
       .maybeSingle();
     if (planErr) console.warn('fetchPatientCarePlan:', planErr.message);
 
-    let plan = null, goals = [], interventions = [], barriers = [];
+    let plan = null, goals = [], interventions = [], barriers = [], measurements = [], automations = [];
     if (planRow) {
       plan = mapPatientCarePlanRow(planRow);
-      const [g, i, b] = await Promise.all([
+      const [g, i, b, a] = await Promise.all([
         supabase.from('patient_care_plan_goals').select('*').eq('plan_id', planRow.id)
           .order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
         supabase.from('patient_care_plan_interventions').select('*').eq('plan_id', planRow.id)
           .order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
         supabase.from('patient_care_plan_barriers').select('*').eq('plan_id', planRow.id)
           .order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
+        supabase.from('patient_care_plan_automations').select('*').eq('plan_id', planRow.id)
+          .order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
       ]);
       goals = (g.data || []).map(mapPatientCarePlanGoalRow);
       interventions = (i.data || []).map(mapPatientCarePlanInterventionRow);
       barriers = (b.data || []).map(mapPatientCarePlanBarrierRow);
+      automations = (a.data || []).map(mapCarePlanAutomationRow);
       // If barriers table hasn't been migrated yet, supabase returns error; treat as empty.
       if (b.error && (b.error.code === '42P01' || b.error.code === 'PGRST205')) barriers = [];
+      if (a.error && (a.error.code === '42P01' || a.error.code === 'PGRST205')) automations = [];
+      // Measurements hang off goal ids — fetch them once the goals are known.
+      const goalIds = goals.map(x => x.id);
+      if (goalIds.length) {
+        const mm = await supabase.from('patient_care_plan_goal_measurements').select('*')
+          .in('goal_id', goalIds)
+          .order('taken_at', { ascending: true });
+        if (!(mm.error && (mm.error.code === '42P01' || mm.error.code === 'PGRST205'))) {
+          measurements = (mm.data || []).map(mapGoalMeasurementRow);
+        }
+      }
     }
 
     set(s => ({
-      patientCarePlans: { ...s.patientCarePlans, [key]: plan ? { plan, goals, interventions, barriers } : null },
+      patientCarePlans: { ...s.patientCarePlans, [key]: plan ? { plan, goals, interventions, barriers, measurements, automations } : null },
       patientCarePlanLoading: { ...s.patientCarePlanLoading, [key]: false },
       patientCarePlanLoadedFor: { ...s.patientCarePlanLoadedFor, [key]: true },
     }));
@@ -2517,7 +2558,7 @@ export const useAppStore = create((set, get) => ({
     set(s => ({
       patientCarePlans: {
         ...s.patientCarePlans,
-        [key]: { plan, goals: existing?.goals || [], interventions: existing?.interventions || [], barriers: existing?.barriers || [] },
+        [key]: { plan, goals: existing?.goals || [], interventions: existing?.interventions || [], barriers: existing?.barriers || [], measurements: existing?.measurements || [], automations: existing?.automations || [] },
       },
     }));
     return plan.id;
@@ -2569,6 +2610,9 @@ export const useAppStore = create((set, get) => ({
     const planId = await get().ensurePatientCarePlan(patientId, program);
     if (!planId) return null;
     const row = patientCarePlanGoalToRow(values, planId);
+    // Stamp the last editor so the Goal Details "Last Update … by <name>" line
+    // has an actor.
+    row.updated_by = get().currentUserProfile?.name || row.updated_by || null;
     const q = id
       ? supabase.from('patient_care_plan_goals').update({ ...row, updated_at: new Date().toISOString() }).eq('id', id)
       : supabase.from('patient_care_plan_goals').insert(row);
@@ -2601,6 +2645,73 @@ export const useAppStore = create((set, get) => ({
     const { error } = await supabase.from('patient_care_plan_goals').delete().eq('id', id);
     if (error) { console.warn('deletePatientCarePlanGoal:', error.message); set(s => ({ patientCarePlans: { ...s.patientCarePlans, [key]: prev } })); get().showToast('Could not delete goal'); return; }
     if (removed) get().logCarePlanAudit(patientId, { id: programId, code: prev?.plan?.programCode }, { entityType: 'goal', entityId: id, action: 'deleted', summary: removed.title });
+  },
+
+  // ── Goal Details: measurements (manual "Last N Values") ──────────────────
+  saveGoalMeasurement: async (patientId, programId, goalId, values) => {
+    const key = carePlanKey(patientId, programId);
+    const cur = get().patientCarePlans[key];
+    const sortOrder = (cur?.measurements || []).filter(m => m.goalId === goalId).length;
+    const row = {
+      goal_id: goalId,
+      value: (values.value || '').trim(),
+      unit: values.unit || '',
+      favorable: values.favorable !== false,
+      taken_at: values.takenAt || new Date().toISOString(),
+      sort_order: sortOrder,
+    };
+    const { data, error } = await supabase.from('patient_care_plan_goal_measurements').insert(row).select().single();
+    if (error) { console.warn('saveGoalMeasurement:', error.message); get().showToast('Could not save measurement'); return null; }
+    const measurement = mapGoalMeasurementRow(data);
+    set(s => {
+      const c = s.patientCarePlans[key] || { measurements: [] };
+      return { patientCarePlans: { ...s.patientCarePlans, [key]: { ...c, measurements: [...(c.measurements || []), measurement] } } };
+    });
+    return measurement;
+  },
+
+  deleteGoalMeasurement: async (patientId, programId, id) => {
+    const key = carePlanKey(patientId, programId);
+    const prev = get().patientCarePlans[key];
+    set(s => ({ patientCarePlans: { ...s.patientCarePlans, [key]: { ...prev, measurements: (prev.measurements || []).filter(m => m.id !== id) } } }));
+    const { error } = await supabase.from('patient_care_plan_goal_measurements').delete().eq('id', id);
+    if (error) { console.warn('deleteGoalMeasurement:', error.message); set(s => ({ patientCarePlans: { ...s.patientCarePlans, [key]: prev } })); get().showToast('Could not delete measurement'); }
+  },
+
+  // ── Goal Details: automations ────────────────────────────────────────────
+  saveCarePlanAutomation: async (patientId, program, goalId, values, id = null) => {
+    const key = carePlanKey(patientId, program.id);
+    const planId = await get().ensurePatientCarePlan(patientId, program);
+    if (!planId) return null;
+    const cur = get().patientCarePlans[key];
+    const row = {
+      plan_id: planId,
+      goal_id: goalId || null,
+      title: (values.title || '').trim(),
+      icon: values.icon || 'solar:bolt-linear',
+      enabled: values.enabled !== false,
+      sort_order: values.sortOrder ?? (cur?.automations || []).length,
+    };
+    const q = id
+      ? supabase.from('patient_care_plan_automations').update({ ...row, updated_at: new Date().toISOString() }).eq('id', id)
+      : supabase.from('patient_care_plan_automations').insert(row);
+    const { data, error } = await q.select().single();
+    if (error) { console.warn('saveCarePlanAutomation:', error.message); get().showToast('Could not save automation'); return null; }
+    const automation = mapCarePlanAutomationRow(data);
+    set(s => {
+      const c = s.patientCarePlans[key] || { automations: [] };
+      const list = c.automations || [];
+      return { patientCarePlans: { ...s.patientCarePlans, [key]: { ...c, automations: id ? list.map(a => (a.id === automation.id ? automation : a)) : [...list, automation] } } };
+    });
+    return automation;
+  },
+
+  deleteCarePlanAutomation: async (patientId, programId, id) => {
+    const key = carePlanKey(patientId, programId);
+    const prev = get().patientCarePlans[key];
+    set(s => ({ patientCarePlans: { ...s.patientCarePlans, [key]: { ...prev, automations: (prev.automations || []).filter(a => a.id !== id) } } }));
+    const { error } = await supabase.from('patient_care_plan_automations').delete().eq('id', id);
+    if (error) { console.warn('deleteCarePlanAutomation:', error.message); set(s => ({ patientCarePlans: { ...s.patientCarePlans, [key]: prev } })); get().showToast('Could not delete automation'); }
   },
 
   savePatientCarePlanIntervention: async (patientId, program, values, id = null) => {
@@ -2863,9 +2974,15 @@ export const useAppStore = create((set, get) => ({
   },
 
   // Post-sign maintenance note — recorded without editing the plan (roadmap #36).
-  addCarePlanNote: async (patientId, program, note) => {
+  addCarePlanNote: async (patientId, program, note, meta = {}) => {
     if (!note?.trim()) return;
-    get().logCarePlanAudit(patientId, program, { entityType: 'plan', action: 'note', summary: 'Note added', detail: note.trim() });
+    get().logCarePlanAudit(patientId, program, {
+      entityType: meta.entityType || 'plan',
+      entityId: meta.entityId,
+      action: 'note',
+      summary: meta.summary || 'Note added',
+      detail: note.trim(),
+    });
     get().showToast('Note added');
   },
 

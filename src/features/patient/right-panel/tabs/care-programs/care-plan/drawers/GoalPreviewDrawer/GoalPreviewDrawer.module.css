@@ -1,26 +1,26 @@
+/* The shared Drawer already pads its content area (16px) — no padding here,
+   so the sections run the full width of that padded body. */
 .body {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
-  padding: var(--space-4);
 }
 
-.hero {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-}
-.heroIcon {
+/* ── Status bar ── */
+.statusBar {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
   border-radius: var(--space-2);
   background: var(--neutral-50);
-  flex-shrink: 0;
 }
-.heroText {
+.statusSelect { min-width: 160px; }
+.statusActions { display: flex; align-items: center; gap: var(--space-1); }
+
+/* ── Hero ── */
+.hero {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
@@ -40,43 +40,153 @@
   font-size: var(--font-base);
   color: var(--neutral-300);
 }
-
-.metaGrid {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  border-radius: var(--space-2);
-  border: 0.5px solid var(--neutral-150);
-  background: var(--neutral-0);
-}
-.metaRow {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-.metaLabel {
-  font-size: var(--font-base);
+.meta {
+  font-size: var(--font-md);
   color: var(--neutral-300);
-  flex-shrink: 0;
 }
-.metaValue {
-  font-size: var(--font-base);
-  color: var(--neutral-500);
-  text-align: right;
+.badges {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-1);
 }
 
+/* ── Section shell ── */
 .section {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+}
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 .sectionTitle {
   font-size: var(--font-base);
   font-weight: 500;
   color: var(--neutral-500);
 }
+
+/* ── Progress ── */
+.progressWrap {
+  position: relative;
+  padding-top: var(--space-6);
+}
+.progressBubble {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-150);
+  box-shadow: var(--shadow-popover);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--neutral-500);
+  white-space: nowrap;
+}
+
+/* ── Add-row (shared: reading / automation) ── */
+.addRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.addInput {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  padding: 0 var(--space-3);
+  border-radius: var(--space-2);
+  border: 0.5px solid var(--neutral-150);
+  background: var(--neutral-0);
+  font-size: var(--font-base);
+  color: var(--neutral-500);
+}
+.addInput:focus { outline: none; border-color: var(--primary-200); }
+.favorableToggle {
+  height: 32px;
+  padding: 0 var(--space-3);
+  border-radius: var(--space-2);
+  border: 0.5px solid var(--neutral-150);
+  background: var(--neutral-0);
+  cursor: pointer;
+  font-size: var(--font-md);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.favorableOn { color: var(--status-success); border-color: var(--status-success); }
+.favorableOff { color: var(--status-error); border-color: var(--status-error); }
+
+/* ── Last Trends card ── */
+.trendsCard {
+  display: flex;
+  flex-direction: column;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  overflow: hidden;
+}
+.trendsHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  background: var(--neutral-50);
+  border-bottom: 0.5px solid var(--neutral-150);
+  font-size: var(--font-md);
+  color: var(--neutral-300);
+}
+.trendsHeadRight { min-width: 72px; text-align: center; }
+.trendsBody {
+  display: flex;
+  align-items: stretch;
+}
+.trendsValues {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+}
+.valueCol {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  min-width: 84px;
+}
+.valueCol:hover .valueRemove { opacity: 1; }
+.value { font-size: var(--font-base); font-weight: 500; }
+.valueGood { color: var(--status-success); }
+.valueBad { color: var(--status-error); }
+.valueAge { font-size: var(--font-sm); color: var(--neutral-300); }
+.valueRemove {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.trendsSpark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: var(--space-2);
+  border-left: 0.5px solid var(--neutral-150);
+}
+.spark { display: block; }
+.sparkEmpty { font-size: var(--font-base); color: var(--neutral-200); }
+
+/* ── Linked lists (interventions / barriers / automations) ── */
 .linkedList {
   display: flex;
   flex-direction: column;
@@ -99,11 +209,56 @@
   min-width: 0;
   flex: 1;
 }
-.linkedTitle {
+.linkedTitle { font-size: var(--font-base); color: var(--neutral-500); }
+.linkedMeta { font-size: var(--font-md); color: var(--neutral-300); }
+
+.emptyCard {
+  padding: var(--space-4) var(--space-3);
+  border: 0.5px dashed var(--neutral-200);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+  text-align: center;
+}
+
+/* ── Add Note ── */
+.noteInput {
+  width: 100%;
+  padding: var(--space-3);
+  border-radius: var(--space-2);
+  border: 0.5px solid var(--neutral-150);
+  background: var(--neutral-0);
   font-size: var(--font-base);
   color: var(--neutral-500);
+  resize: vertical;
 }
-.linkedMeta {
+.noteInput:focus { outline: none; border-color: var(--primary-200); }
+.noteActions { display: flex; justify-content: flex-end; }
+
+/* ── Activity ── */
+.activityList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.activityRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.activityText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.activityLine { font-size: var(--font-base); color: var(--neutral-500); }
+.activityDetail {
   font-size: var(--font-md);
-  color: var(--neutral-300);
+  color: var(--neutral-400);
+  padding: var(--space-2);
+  border-radius: var(--space-2);
+  background: var(--neutral-50);
 }
+.activityTime { font-size: var(--font-sm); color: var(--neutral-300); }
