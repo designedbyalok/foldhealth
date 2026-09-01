@@ -22,6 +22,9 @@ import { POP_GROUPS } from '../src/features/population-groups/PopulationGroupsVi
 import { CCM_BILLING_PERIODS, CCM_BILLABLE_ACTIVITIES, CCM_BILLING_REPORTS } from '../src/features/patient/data/ccmBillingMock.js';
 import { CARE_PLAN_MOCK } from '../src/features/patient/data/carePlanMock.js';
 import { CARE_PLAN_BARRIER_LIBRARY, carePlanBarrierLibraryToRow } from '../src/features/settings/care-plan-library/data/barrierLibrarySeed.js';
+import { CARE_PLAN_GOAL_LIBRARY, carePlanGoalLibraryToRow, carePlanGoalLibraryLinkRows } from '../src/features/settings/care-plan-library/data/carePlanGoalLibrarySeed.js';
+import { CARE_PLAN_INTERVENTION_LIBRARY } from '../src/features/settings/care-plan-library/data/carePlanInterventionLibrarySeed.js';
+import { CARE_PLAN_BARRIER_STRUCTURED_LIBRARY } from '../src/features/settings/care-plan-library/data/carePlanBarrierStructuredSeed.js';
 import { CCM_WORKLIST_MEMBERS } from '../src/features/ccm-worklist/data/mock.js';
 import { SNP_WORKLIST_MEMBERS } from '../src/features/snp-worklist/data/mock.js';
 import { CAREGAP_ACTIVITY_MOCK } from '../src/features/hedis-worklist/data/caregapActivityMock.js';
@@ -741,6 +744,40 @@ async function main() {
   } else {
     console.log(`  ✓ ${barrierLibraryRows.length} library barriers`);
   }
+
+  // Structured GIB library (seeded from structured_care_plan_goals_library.md).
+  console.log('Seeding care_plan_barriers (structured library)...');
+  const { error: cpbsErr } = await supabase
+    .from('care_plan_barriers')
+    .upsert(CARE_PLAN_BARRIER_STRUCTURED_LIBRARY, { onConflict: 'id' });
+  if (cpbsErr) console.error('  ✗', cpbsErr.message);
+  else console.log(`  ✓ ${CARE_PLAN_BARRIER_STRUCTURED_LIBRARY.length} structured barriers`);
+
+  console.log('Seeding care_plan_intervention_templates (library)...');
+  const { error: cpitErr } = await supabase
+    .from('care_plan_intervention_templates')
+    .upsert(CARE_PLAN_INTERVENTION_LIBRARY, { onConflict: 'id' });
+  if (cpitErr) {
+    if (cpitErr.code === '42P01' || cpitErr.code === 'PGRST205') {
+      console.log('  ⚠ care_plan_intervention_templates missing — run supabase/care_plan_intervention_templates_migration.sql');
+    } else console.error('  ✗', cpitErr.message);
+  } else console.log(`  ✓ ${CARE_PLAN_INTERVENTION_LIBRARY.length} intervention templates`);
+
+  console.log('Seeding care_plan_goals (library)...');
+  const goalLibraryRows = CARE_PLAN_GOAL_LIBRARY.map(carePlanGoalLibraryToRow);
+  const { error: cpgErr } = await supabase
+    .from('care_plan_goals')
+    .upsert(goalLibraryRows, { onConflict: 'id' });
+  if (cpgErr) console.error('  ✗', cpgErr.message);
+  else console.log(`  ✓ ${goalLibraryRows.length} library goals`);
+
+  console.log('Seeding care_plan_interventions (goal GIB links)...');
+  const goalLinkRows = CARE_PLAN_GOAL_LIBRARY.flatMap(carePlanGoalLibraryLinkRows);
+  const { error: cpglErr } = await supabase
+    .from('care_plan_interventions')
+    .upsert(goalLinkRows, { onConflict: 'id' });
+  if (cpglErr) console.error('  ✗', cpglErr.message);
+  else console.log(`  ✓ ${goalLinkRows.length} goal-linked interventions/barriers`);
 
   console.log('Seeding practice_locations...');
   const locationRows = PRACTICE_LOCATIONS.map(practiceLocationToRow);
