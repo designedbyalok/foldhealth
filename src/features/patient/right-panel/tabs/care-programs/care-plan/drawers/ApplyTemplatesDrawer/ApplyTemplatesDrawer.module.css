@@ -18,6 +18,17 @@
   gap: var(--space-2);
 }
 
+.sectionLabel {
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--neutral-300);
+  padding: var(--space-2) var(--space-2) var(--space-1);
+}
+.sectionLabel:not(:first-child) {
+  margin-top: var(--space-2);
+  border-top: 0.5px solid var(--neutral-150);
+}
+
 .rowWrap {
   display: flex;
   flex-direction: column;
