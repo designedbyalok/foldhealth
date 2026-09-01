@@ -282,6 +282,7 @@ export function CarePlanView({ patientId, program }) {
   // rows; a bulk status change loops the normal save path so each write audits.
   const [selected, setSelected] = useState({ goal: new Set(), intv: new Set(), barrier: new Set() });
   const [bulkMenu, setBulkMenu] = useState(null); // { rect }
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const selectedCount = selected.goal.size + selected.intv.size + selected.barrier.size;
   const toggleSelect = (kind, id) => setSelected(prev => {
     const next = new Set(prev[kind]);
@@ -306,6 +307,19 @@ export function CarePlanView({ patientId, program }) {
     const n = g.length + iv.length + br.length;
     clearSelection();
     if (n) showToast(`Updated ${n} item${n === 1 ? '' : 's'} to "${status}"`);
+  };
+
+  const bulkDelete = async () => {
+    setBulkDeleteOpen(false);
+    const g = filteredGoals.filter(x => selected.goal.has(x.id));
+    const iv = filteredInterventions.filter(x => selected.intv.has(x.id));
+    const br = filteredBarriers.filter(x => selected.barrier.has(x.id));
+    for (const x of g) await deletePatientCarePlanGoal(patientId, program.id, x.id);
+    for (const x of iv) await deletePatientCarePlanIntervention(patientId, program.id, x.id);
+    for (const x of br) await deletePatientCarePlanBarrier(patientId, program.id, x.id);
+    const n = g.length + iv.length + br.length;
+    clearSelection();
+    if (n) { showToast(`Removed ${n} item${n === 1 ? '' : 's'}`); refreshCarePlanDuplicates(patientId, program); }
   };
 
   const doSign = async () => {
@@ -643,6 +657,11 @@ export function CarePlanView({ patientId, program }) {
               const el = document.querySelector('.js-careplan-bulkbar');
               setBulkMenu({ rect: el ? el.getBoundingClientRect() : null });
             },
+          }, {
+            label: 'Delete',
+            icon: 'solar:trash-bin-trash-linear',
+            variant: 'danger',
+            onClick: () => setBulkDeleteOpen(true),
           }]}
         />
       )}
@@ -1075,6 +1094,19 @@ export function CarePlanView({ patientId, program }) {
           variant="error"
           onCancel={() => setDeleteTarget(null)}
           onConfirm={confirmDelete}
+        />
+      )}
+
+      {bulkDeleteOpen && (
+        <ConfirmDialog
+          icon="solar:danger-triangle-linear"
+          iconColor="var(--status-error)"
+          title={`Remove ${selectedCount} item${selectedCount === 1 ? '' : 's'}?`}
+          description="This removes the selected goals, interventions, and barriers from the patient's care plan. This action cannot be undone."
+          confirmLabel="Remove"
+          variant="error"
+          onCancel={() => setBulkDeleteOpen(false)}
+          onConfirm={bulkDelete}
         />
       )}
     </div>
