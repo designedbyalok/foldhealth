@@ -36,11 +36,13 @@ export function CarePlanShareDrawer({ patientId, program, data, patientName, can
 
   const allGoalIds = data.goals.map(g => g.id);
   const allIntvIds = data.interventions.map(i => i.id);
+  const allBarrierIds = (data.barriers || []).map(b => b.id);
   // Track what's been *deselected* rather than selected, so the default is
   // "everything included" no matter what the plan currently holds — new rows
   // are included by default and a stale set can't leave real rows unchecked.
   const [goalOff, setGoalOff] = useState(() => new Set());
   const [intvOff, setIntvOff] = useState(() => new Set());
+  const [barrierOff, setBarrierOff] = useState(() => new Set());
   const [target, setTarget] = useState('EHR');
   const [note, setNote] = useState('');
   const [sharing, setSharing] = useState(false);
@@ -58,9 +60,12 @@ export function CarePlanShareDrawer({ patientId, program, data, patientName, can
     conditions: data.conditions.map(c => c.label),
     goals: data.goals.filter(g => !goalOff.has(g.id)),
     interventions: data.interventions.filter(i => !intvOff.has(i.id)),
-  }), [data, goalOff, intvOff]);
+    barriers: (data.barriers || []).filter(b => !barrierOff.has(b.id)),
+  }), [data, goalOff, intvOff, barrierOff]);
 
-  const nothingSelected = selection.goals.length === 0 && selection.interventions.length === 0;
+  const nothingSelected = selection.goals.length === 0
+    && selection.interventions.length === 0
+    && selection.barriers.length === 0;
 
   const buildDoc = () => buildCarePlanHtml(
     {
@@ -157,6 +162,23 @@ export function CarePlanShareDrawer({ patientId, program, data, patientName, can
           </div>
         </div>
 
+        {allBarrierIds.length > 0 && (
+          <div className={styles.field}>
+            <SectionSelectAll label="Barriers" ids={allBarrierIds} off={barrierOff} setOff={setBarrierOff} />
+            <div className={styles.list}>
+              {(data.barriers || []).map(b => (
+                <label key={b.id} className={styles.row}>
+                  <Checkbox checked={!barrierOff.has(b.id)} onCheckedChange={() => setBarrierOff(s => toggleOff(s, b.id))} aria-label={`Include ${b.title}`} />
+                  <span className={styles.rowText}>
+                    <span className={styles.rowTitle}>{b.title}</span>
+                  </span>
+                  <span className={styles.rowStatus}>{b.status}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className={styles.field}>
           <span className={styles.label}>Note <span className={styles.optional}>(optional)</span></span>
           <Textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Add a note for the recipient" rows={2} />
@@ -165,7 +187,7 @@ export function CarePlanShareDrawer({ patientId, program, data, patientName, can
         {nothingSelected && (
           <div className={styles.warn}>
             <Icon name="solar:info-circle-linear" size={14} color="var(--status-warning)" />
-            Select at least one goal or intervention to download or share.
+            Select at least one goal, intervention, or barrier to download or share.
           </div>
         )}
         {!canShare && (

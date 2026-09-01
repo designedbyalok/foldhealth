@@ -242,13 +242,13 @@ export function ProgramDetailViewContentHeader({
         <div className={`${styles.contentActions} ${isCarePlanStep ? styles.carePlanActionBar : ''}`}>
           {isCarePlanStep ? (
             <>
-              <ActionButton icon="solar:magnifer-linear" size="S" tooltip="Search" onClick={() => requestCarePlanPanel('filter')} />
+              <ActionButton icon="solar:magnifer-linear" size="L" tooltip="Search" onClick={() => requestCarePlanPanel('filter')} />
               <CarePlanActionDivider />
-              <ActionButton icon="solar:download-minimalistic-linear" size="S" tooltip="Download" onClick={() => requestCarePlanShare('preview')} />
+              <ActionButton icon="solar:download-minimalistic-linear" size="L" tooltip="Download" onClick={() => requestCarePlanShare('preview')} />
               <CarePlanActionDivider />
               <ActionButton
                 icon="solar:history-linear"
-                size="S"
+                size="L"
                 tooltip="History"
                 onClick={() => requestCarePlanPanel('history')}
               />
@@ -276,7 +276,7 @@ export function ProgramDetailViewContentHeader({
               <CarePlanActionDivider />
               <ActionButton
                 icon="solar:menu-dots-linear"
-                size="S"
+                size="L"
                 tooltip="More"
                 onClick={(e) => setCarePlanMoreMenu({ rect: e.currentTarget.getBoundingClientRect() })}
               />

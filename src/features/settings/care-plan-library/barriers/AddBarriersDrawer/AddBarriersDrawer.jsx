@@ -3,6 +3,7 @@ import { Drawer } from '../../../../../components/Drawer/Drawer';
 import { Button } from '../../../../../components/Button/Button';
 import { Input } from '../../../../../components/Input/Input';
 import { Badge } from '../../../../../components/Badge/Badge';
+import { Icon } from '../../../../../components/Icon/Icon';
 import { Checkbox } from '../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { useAppStore } from '../../../../../store/useAppStore';
 import styles from './AddBarriersDrawer.module.css';
@@ -48,12 +49,30 @@ export function AddBarriersDrawer({ onClose, onAdd, existingBarriers = [] }) {
   const addedRows = useMemo(() => rows.filter(b => b.added), [rows]);
   const availableRows = useMemo(() => rows.filter(b => !b.added), [rows]);
 
+  // "Search or Enter Barrier": when the typed text matches no library or
+  // already-added barrier, offer to create it as a custom (free-text) barrier.
+  const trimmed = query.trim();
+  const knownTitles = useMemo(
+    () => new Set([...libraryBarriers.map(b => normTitle(b.title)), ...addedTitles]),
+    [libraryBarriers, addedTitles],
+  );
+  const canCreate = !!trimmed && !knownTitles.has(normTitle(trimmed));
+
   const toggle = (id) => setSelected(prev => {
     const next = new Set(prev);
     if (next.has(id)) next.delete(id);
     else next.add(id);
     return next;
   });
+
+  // Add any checked library barriers plus the typed custom one. The parent
+  // saver keys off title/description, so a custom object with no library id
+  // persists exactly like a picked one.
+  const handleCreate = () => {
+    if (!canCreate) return;
+    const picks = libraryBarriers.filter(b => selected.has(b.id));
+    onAdd?.([...picks, { id: `custom-${normTitle(trimmed).replace(/\s+/g, '-')}`, title: trimmed, description: '' }]);
+  };
 
   const headerRight = (
     <>
@@ -94,15 +113,24 @@ export function AddBarriersDrawer({ onClose, onAdd, existingBarriers = [] }) {
           leadingIcon="solar:magnifer-linear"
           value={query}
           onChange={e => setQuery(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && canCreate) { e.preventDefault(); handleCreate(); } }}
         />
 
         <div className={styles.list}>
+          {canCreate && (
+            <button type="button" className={styles.createRow} onClick={handleCreate}>
+              <Icon name="solar:add-circle-linear" size={18} color="var(--primary-300)" />
+              <span className={styles.createText}>Create “{trimmed}”</span>
+            </button>
+          )}
           {rows.length === 0 ? (
-            <p className={styles.empty}>
-              {libraryBarriers.length === 0
-                ? 'No barriers in the library yet.'
-                : `No barriers match “${query.trim()}”.`}
-            </p>
+            canCreate ? null : (
+              <p className={styles.empty}>
+                {libraryBarriers.length === 0
+                  ? 'No barriers in the library yet.'
+                  : `No barriers match “${query.trim()}”.`}
+              </p>
+            )
           ) : (
             <>
               {addedRows.length > 0 && (

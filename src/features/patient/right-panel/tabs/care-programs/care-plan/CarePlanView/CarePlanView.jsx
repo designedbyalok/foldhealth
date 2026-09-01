@@ -485,8 +485,13 @@ export function CarePlanView({ patientId, program }) {
                   onClick={() => setTemplatesDrawerOpen(true)}
                   aria-label={`${t.name}, ${templateGoalCount(t)} goals`}
                 >
-                  <Badge tone="grey" size="S" icon="solar:bookmark-linear" label={t.name} />
-                  <span className={styles.appliedTemplateCount}>{templateGoalCount(t)}</span>
+                  <Badge
+                    tone="grey"
+                    size="S"
+                    icon="solar:bookmark-linear"
+                    label={t.name}
+                    trailingIconElement={<span className={styles.appliedTemplateCount}>{templateGoalCount(t)}</span>}
+                  />
                 </button>
               ))}
               {visibleConditions.map(c => {

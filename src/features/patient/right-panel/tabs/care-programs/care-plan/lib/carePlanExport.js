@@ -28,10 +28,19 @@ function interventionRows(interventions) {
     </tr>`).join('');
 }
 
+function barrierRows(barriers) {
+  if (!barriers.length) return '<tr><td colspan="2" class="empty">No barriers included.</td></tr>';
+  return barriers.map(b => `
+    <tr>
+      <td>${esc(b.title)}${b.description ? `<div class="sub">${esc(b.description)}</div>` : ''}</td>
+      <td>${esc(b.status || '—')}</td>
+    </tr>`).join('');
+}
+
 /**
  * Build the export document HTML from the selected elements.
  * @param {{patientName?:string, programName?:string, sharedBy?:string, date?:string}} meta
- * @param {{conditions:string[], goals:Array, interventions:Array}} selection
+ * @param {{conditions:string[], goals:Array, interventions:Array, barriers?:Array}} selection
  */
 export function buildCarePlanHtml(meta, selection) {
   const { patientName = 'Patient', programName = '', sharedBy = '', date = '' } = meta;
@@ -73,6 +82,10 @@ export function buildCarePlanHtml(meta, selection) {
   <h2>Interventions</h2>
   <table><thead><tr><th>Intervention</th><th>Assigned To</th><th>Status</th></tr></thead>
   <tbody>${interventionRows(selection.interventions)}</tbody></table>
+
+  <h2>Barriers</h2>
+  <table><thead><tr><th>Barrier</th><th>Status</th></tr></thead>
+  <tbody>${barrierRows(selection.barriers || [])}</tbody></table>
 
   <footer>Generated from Fold Health. This document reflects the selected elements of the care plan at export time.</footer>
 </div></body></html>`;

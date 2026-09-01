@@ -57,6 +57,31 @@
   white-space: nowrap;
 }
 
+.createRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 32px;
+  padding: 0 var(--space-2);
+  border: none;
+  border-radius: var(--space-1);
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+.createRow:hover {
+  background: var(--neutral-50);
+}
+.createText {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-base);
+  color: var(--primary-300);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .groupDivider {
   height: 0.5px;
   background: var(--neutral-150);
