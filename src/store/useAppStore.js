@@ -2543,6 +2543,11 @@ export const useAppStore = create((set, get) => ({
   patientCarePlans: {},        // { [key]: { plan, goals, interventions, barriers } }
   patientCarePlanLoading: {},  // { [key]: bool }
   patientCarePlanLoadedFor: {},// { [key]: bool }
+  // Possible-duplicate flags raised when a goal/intervention/barrier is added
+  // that matches one already on this patient's plans (this program or another).
+  // Keyed by `<patientId>::<programId>`; each entry drives one "Possible
+  // Duplicate" banner in the Care Plan (Figma SNP-Story 8464:289403).
+  carePlanDuplicateFlags: {},  // { [key]: Flag[] }
   // The comprehensive (all-programs) view loads every plan for a patient in one
   // pass and warms the per-program cache above, keyed by patient id.
   patientCarePlanAllLoading: {},   // { [patientId]: bool }
@@ -2685,6 +2690,62 @@ export const useAppStore = create((set, get) => ({
       };
     });
   },
+
+  // ── Possible-duplicate detection (Figma SNP-Story 8464:289403) ──
+  // Look across ALL of a patient's care plans (every program) for a G/B/I of
+  // the same kind and title as the one just added. Returns the existing match
+  // with its plan/program context, or null.
+  findCarePlanDuplicate: async (patientId, currentProgramId, kind, title, excludeId) => {
+    const norm = (title || '').trim();
+    if (!norm) return null;
+    const { data: plans, error: pErr } = await supabase
+      .from('patient_care_plans')
+      .select('id, program_id, program_code, created_by, created_at')
+      .eq('patient_id', patientId);
+    if (pErr || !plans?.length) return null;
+    const planById = Object.fromEntries(plans.map(p => [p.id, p]));
+    const table = kind === 'goal' ? 'patient_care_plan_goals'
+      : kind === 'intervention' ? 'patient_care_plan_interventions'
+      : 'patient_care_plan_barriers';
+    const map = kind === 'goal' ? mapPatientCarePlanGoalRow
+      : kind === 'intervention' ? mapPatientCarePlanInterventionRow
+      : mapPatientCarePlanBarrierRow;
+    // ilike with no wildcards = case-insensitive exact match on the title.
+    const { data: rows, error: rErr } = await supabase
+      .from(table).select('*').in('plan_id', plans.map(p => p.id)).ilike('title', norm);
+    if (rErr) return null;
+    const match = (rows || []).find(r => r.id !== excludeId);
+    if (!match) return null;
+    const plan = planById[match.plan_id];
+    return {
+      item: map(match),
+      programId: plan.program_id,
+      programCode: plan.program_code || '',
+      sameplan: plan.program_id === currentProgramId,
+      createdBy: plan.created_by || '',
+      startDate: plan.created_at,
+    };
+  },
+
+  // Run detection for a freshly-added item and, on a hit, raise a banner flag.
+  checkCarePlanDuplicate: async (patientId, program, kind, newItem) => {
+    if (!newItem?.id) return;
+    const found = await get().findCarePlanDuplicate(patientId, program.id, kind, newItem.title, newItem.id);
+    if (!found) return;
+    const key = carePlanKey(patientId, program.id);
+    const flagId = `${kind}-${newItem.id}`;
+    set(s => {
+      const list = (s.carePlanDuplicateFlags[key] || []).filter(f => f.flagId !== flagId);
+      return { carePlanDuplicateFlags: { ...s.carePlanDuplicateFlags, [key]: [...list, { flagId, kind, newItem, existing: found }] } };
+    });
+  },
+
+  dismissCarePlanDuplicate: (key, flagId) => set(s => ({
+    carePlanDuplicateFlags: {
+      ...s.carePlanDuplicateFlags,
+      [key]: (s.carePlanDuplicateFlags[key] || []).filter(f => f.flagId !== flagId),
+    },
+  })),
 
   savePatientCarePlanGoal: async (patientId, program, values, id = null) => {
     const key = carePlanKey(patientId, program.id);

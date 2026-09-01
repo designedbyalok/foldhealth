@@ -42,8 +42,11 @@ import { DownChevronIcon } from '../../../../../../../components/Icon/DownChevro
 import { BulkBar } from '../../../../../../../components/BulkBar/BulkBar';
 import { Badge } from '../../../../../../../components/Badge/Badge';
 import { ApplyTemplatesDrawer } from '../drawers/ApplyTemplatesDrawer/ApplyTemplatesDrawer';
+import { CarePlanDuplicateFlag } from '../DuplicateFlag/CarePlanDuplicateFlag';
 import { templateGoalCount } from '../lib/carePlanTemplateApply';
 import styles from './CarePlanView.module.css';
+
+const EMPTY_ARR = [];
 
 // The statuses a goal or intervention can move through. Kept flat and shared so
 // the pill menu and the intervention drawer offer the same vocabulary.
@@ -109,12 +112,15 @@ export function CarePlanView({ patientId, program }) {
   const deletePatientCarePlanIntervention = useAppStore(s => s.deletePatientCarePlanIntervention);
   const savePatientCarePlanBarrier = useAppStore(s => s.savePatientCarePlanBarrier);
   const deletePatientCarePlanBarrier = useAppStore(s => s.deletePatientCarePlanBarrier);
+  const checkCarePlanDuplicate = useAppStore(s => s.checkCarePlanDuplicate);
+  const dismissCarePlanDuplicate = useAppStore(s => s.dismissCarePlanDuplicate);
   const savePatientCarePlanAsTemplate = useAppStore(s => s.savePatientCarePlanAsTemplate);
   const signCarePlan = useAppStore(s => s.signCarePlan);
   const touchCarePlanModified = useAppStore(s => s.touchCarePlanModified);
   const addCarePlanNote = useAppStore(s => s.addCarePlanNote);
   const showToast = useAppStore(s => s.showToast);
   const patientName = useAppStore(s => s.patients.find(p => p.id === patientId)?.name);
+  const currentUserName = useAppStore(s => s.currentUserProfile?.name || '');
   const platformUsers = useAppStore(s => s.platformUsers);
   const fetchPlatformUsers = useAppStore(s => s.fetchPlatformUsers);
   useEffect(() => { fetchPlatformUsers?.(); }, [fetchPlatformUsers]);
@@ -131,6 +137,7 @@ export function CarePlanView({ patientId, program }) {
 
   const key = patientId && program ? `${patientId}::${program.id}` : null;
   const live = useAppStore(s => (key ? s.patientCarePlans[key] : null));
+  const duplicateFlags = useAppStore(s => (key ? s.carePlanDuplicateFlags[key] : null)) || EMPTY_ARR;
   // First-load skeleton: true while the initial fetch is in flight (before the
   // plan resolves), false once loaded.
   const carePlanLoading = useAppStore(s => (key ? !!s.patientCarePlanLoading[key] : false));
@@ -350,6 +357,7 @@ export function CarePlanView({ patientId, program }) {
       if (goal) {
         added += 1;
         existingTitles.add(titleKey);
+        checkCarePlanDuplicate(patientId, program, 'goal', { ...goal, createdBy: currentUserName });
       }
     }
     if (added) showToast(`Added ${added} goal${added === 1 ? '' : 's'}`);
@@ -360,7 +368,10 @@ export function CarePlanView({ patientId, program }) {
     const editingId = intvDrawer?.intervention?.id || null;
     setIntvDrawer(false);
     const saved = await savePatientCarePlanIntervention(patientId, program, values, editingId);
-    if (saved) showToast(`"${saved.title}" ${editingId ? 'updated' : 'added'}`);
+    if (saved) {
+      showToast(`"${saved.title}" ${editingId ? 'updated' : 'added'}`);
+      if (!editingId) checkCarePlanDuplicate(patientId, program, 'intervention', { ...saved, createdBy: currentUserName });
+    }
   };
 
   const openInterventionTypeMenu = () => {
@@ -379,7 +390,10 @@ export function CarePlanView({ patientId, program }) {
       status: 'Not Started',
       assignee: { name: 'Unassigned', initials: '' },
     }, editingId);
-    if (saved) showToast(`"${saved.title}" ${editingId ? 'updated' : 'added'}`);
+    if (saved) {
+      showToast(`"${saved.title}" ${editingId ? 'updated' : 'added'}`);
+      if (!editingId) checkCarePlanDuplicate(patientId, program, 'intervention', { ...saved, createdBy: currentUserName });
+    }
     return saved;
   };
 
@@ -406,6 +420,7 @@ export function CarePlanView({ patientId, program }) {
       if (saved) {
         added += 1;
         existingTitles.add(titleKey);
+        checkCarePlanDuplicate(patientId, program, 'barrier', { ...saved, createdBy: currentUserName });
       }
     }
     if (added) showToast(`Added ${added} barrier${added === 1 ? '' : 's'}`);
@@ -416,7 +431,10 @@ export function CarePlanView({ patientId, program }) {
     const editingId = barrierDrawer?.barrier?.id || null;
     setBarrierDrawer(null);
     const saved = await savePatientCarePlanBarrier(patientId, program, values, editingId);
-    if (saved) showToast(`"${saved.title}" ${editingId ? 'updated' : 'added'}`);
+    if (saved) {
+      showToast(`"${saved.title}" ${editingId ? 'updated' : 'added'}`);
+      if (!editingId) checkCarePlanDuplicate(patientId, program, 'barrier', { ...saved, createdBy: currentUserName });
+    }
   };
 
   const confirmDelete = () => {
@@ -427,6 +445,45 @@ export function CarePlanView({ patientId, program }) {
     setDeleteTarget(null);
     showToast(`"${name}" removed`);
   };
+
+  // ── Possible-duplicate resolution (Figma SNP-Story 8464:289403) ──
+  // Every action only mutates THIS plan's item (never another program's plan).
+  const deleteGbiById = (kind, id) => {
+    if (kind === 'goal') deletePatientCarePlanGoal(patientId, program.id, id);
+    else if (kind === 'barrier') deletePatientCarePlanBarrier(patientId, program.id, id);
+    else deletePatientCarePlanIntervention(patientId, program.id, id);
+  };
+  const openGbiEditor = (kind, item) => {
+    if (kind === 'goal') setPreviewGoal(item);
+    else if (kind === 'barrier') setBarrierDrawer({ barrier: item });
+    else setIntvDrawer({ intervention: item });
+  };
+  const handleDuplicateIgnore = (flag) => dismissCarePlanDuplicate(key, flag.flagId);
+  const handleDuplicateAcceptExisting = (flag) => {
+    deleteGbiById(flag.kind, flag.newItem.id);
+    dismissCarePlanDuplicate(key, flag.flagId);
+  };
+  const handleDuplicateAcceptNew = (flag) => {
+    if (flag.existing.sameplan) deleteGbiById(flag.kind, flag.existing.item.id);
+    dismissCarePlanDuplicate(key, flag.flagId);
+  };
+  const handleDuplicateEditExisting = (flag) => {
+    deleteGbiById(flag.kind, flag.newItem.id);
+    openGbiEditor(flag.kind, flag.existing.item);
+    dismissCarePlanDuplicate(key, flag.flagId);
+  };
+  const renderDuplicateFlags = (kind) => duplicateFlags
+    .filter(f => f.kind === kind)
+    .map(flag => (
+      <CarePlanDuplicateFlag
+        key={flag.flagId}
+        flag={flag}
+        onIgnore={() => handleDuplicateIgnore(flag)}
+        onAcceptExisting={() => handleDuplicateAcceptExisting(flag)}
+        onAcceptNew={() => handleDuplicateAcceptNew(flag)}
+        onEditExisting={() => handleDuplicateEditExisting(flag)}
+      />
+    ));
 
   // Condition chip interactions — View All, remove, New Problems. All persist via
   // the plan header row (conditions array) so they survive reload.
@@ -599,6 +656,7 @@ export function CarePlanView({ patientId, program }) {
             </ActionButton>
           )}
         />
+        {renderDuplicateFlags('goal')}
         {openSections.goals && (carePlanLoading ? (
           <SimpleTableSkeleton rows={3} cols={7} />
         ) : filteredGoals.length === 0 && data.goals.length === 0 ? (
@@ -657,6 +715,7 @@ export function CarePlanView({ patientId, program }) {
             onClose={() => setIntvTypeMenuOpen(false)}
           />
         )}
+        {renderDuplicateFlags('intervention')}
         {openSections.interventions && (carePlanLoading ? (
           <SimpleTableSkeleton rows={3} cols={6} />
         ) : filteredInterventions.length === 0 && data.interventions.length === 0 ? (
@@ -698,6 +757,7 @@ export function CarePlanView({ patientId, program }) {
             </ActionButton>
           )}
         />
+        {renderDuplicateFlags('barrier')}
         {openSections.barriers && (carePlanLoading ? (
           <SimpleTableSkeleton rows={3} cols={3} />
         ) : filteredBarriers.length === 0 && (data.barriers || []).length === 0 ? (
