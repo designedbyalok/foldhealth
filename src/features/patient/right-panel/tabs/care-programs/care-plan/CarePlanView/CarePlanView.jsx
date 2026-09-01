@@ -112,7 +112,7 @@ export function CarePlanView({ patientId, program }) {
   const deletePatientCarePlanIntervention = useAppStore(s => s.deletePatientCarePlanIntervention);
   const savePatientCarePlanBarrier = useAppStore(s => s.savePatientCarePlanBarrier);
   const deletePatientCarePlanBarrier = useAppStore(s => s.deletePatientCarePlanBarrier);
-  const checkCarePlanDuplicate = useAppStore(s => s.checkCarePlanDuplicate);
+  const refreshCarePlanDuplicates = useAppStore(s => s.refreshCarePlanDuplicates);
   const dismissCarePlanDuplicate = useAppStore(s => s.dismissCarePlanDuplicate);
   const savePatientCarePlanAsTemplate = useAppStore(s => s.savePatientCarePlanAsTemplate);
   const signCarePlan = useAppStore(s => s.signCarePlan);
@@ -120,7 +120,6 @@ export function CarePlanView({ patientId, program }) {
   const addCarePlanNote = useAppStore(s => s.addCarePlanNote);
   const showToast = useAppStore(s => s.showToast);
   const patientName = useAppStore(s => s.patients.find(p => p.id === patientId)?.name);
-  const currentUserName = useAppStore(s => s.currentUserProfile?.name || '');
   const platformUsers = useAppStore(s => s.platformUsers);
   const fetchPlatformUsers = useAppStore(s => s.fetchPlatformUsers);
   useEffect(() => { fetchPlatformUsers?.(); }, [fetchPlatformUsers]);
@@ -148,8 +147,13 @@ export function CarePlanView({ patientId, program }) {
   const linkCount = (id) => carePlanLinks.filter(l => l.ownerId === String(id)).length;
 
   useEffect(() => {
-    if (patientId && program?.id) { fetchPatientCarePlan(patientId, program.id); fetchCarePlanLinks(patientId, program.id); }
-  }, [patientId, program?.id, fetchPatientCarePlan, fetchCarePlanLinks]);
+    if (patientId && program?.id) {
+      fetchPatientCarePlan(patientId, program.id);
+      fetchCarePlanLinks(patientId, program.id);
+      // Surface duplicates already sitting on this (and other) plans on load.
+      refreshCarePlanDuplicates(patientId, program);
+    }
+  }, [patientId, program?.id, fetchPatientCarePlan, fetchCarePlanLinks, refreshCarePlanDuplicates]); // eslint-disable-line react-hooks/exhaustive-deps -- program object is stable by id
 
   useEffect(() => { fetchCarePlanLibrary?.(); }, [fetchCarePlanLibrary]);
 
@@ -161,8 +165,9 @@ export function CarePlanView({ patientId, program }) {
     else if (carePlanPanelRequest === 'filter') setFiltersOpen(true);
     else if (carePlanPanelRequest === 'note') { setNoteText(''); setNoteOpen(true); }
     else if (carePlanPanelRequest === 'sign') { setSignNote(''); setSignOpen(true); }
+    else if (carePlanPanelRequest === 'scan-duplicates') { scanForDuplicates(); }
     clearCarePlanPanelRequest();
-  }, [carePlanPanelRequest, clearCarePlanPanelRequest]);
+  }, [carePlanPanelRequest, clearCarePlanPanelRequest]); // eslint-disable-line react-hooks/exhaustive-deps -- request handlers are stable
 
   // A share request that was never opened/closed (e.g. the program was closed
   // with the flag still set) must not linger and auto-open the drawer next time.
@@ -357,10 +362,9 @@ export function CarePlanView({ patientId, program }) {
       if (goal) {
         added += 1;
         existingTitles.add(titleKey);
-        checkCarePlanDuplicate(patientId, program, 'goal', { ...goal, createdBy: currentUserName });
       }
     }
-    if (added) showToast(`Added ${added} goal${added === 1 ? '' : 's'}`);
+    if (added) { showToast(`Added ${added} goal${added === 1 ? '' : 's'}`); refreshCarePlanDuplicates(patientId, program); }
     else showToast('Selected goals are already on this plan');
   };
 
@@ -370,7 +374,7 @@ export function CarePlanView({ patientId, program }) {
     const saved = await savePatientCarePlanIntervention(patientId, program, values, editingId);
     if (saved) {
       showToast(`"${saved.title}" ${editingId ? 'updated' : 'added'}`);
-      if (!editingId) checkCarePlanDuplicate(patientId, program, 'intervention', { ...saved, createdBy: currentUserName });
+      if (!editingId) refreshCarePlanDuplicates(patientId, program);
     }
   };
 
@@ -392,7 +396,7 @@ export function CarePlanView({ patientId, program }) {
     }, editingId);
     if (saved) {
       showToast(`"${saved.title}" ${editingId ? 'updated' : 'added'}`);
-      if (!editingId) checkCarePlanDuplicate(patientId, program, 'intervention', { ...saved, createdBy: currentUserName });
+      if (!editingId) refreshCarePlanDuplicates(patientId, program);
     }
     return saved;
   };
@@ -420,10 +424,9 @@ export function CarePlanView({ patientId, program }) {
       if (saved) {
         added += 1;
         existingTitles.add(titleKey);
-        checkCarePlanDuplicate(patientId, program, 'barrier', { ...saved, createdBy: currentUserName });
       }
     }
-    if (added) showToast(`Added ${added} barrier${added === 1 ? '' : 's'}`);
+    if (added) { showToast(`Added ${added} barrier${added === 1 ? '' : 's'}`); refreshCarePlanDuplicates(patientId, program); }
     else showToast('Selected barriers are already on this plan');
   };
 
@@ -433,7 +436,7 @@ export function CarePlanView({ patientId, program }) {
     const saved = await savePatientCarePlanBarrier(patientId, program, values, editingId);
     if (saved) {
       showToast(`"${saved.title}" ${editingId ? 'updated' : 'added'}`);
-      if (!editingId) checkCarePlanDuplicate(patientId, program, 'barrier', { ...saved, createdBy: currentUserName });
+      if (!editingId) refreshCarePlanDuplicates(patientId, program);
     }
   };
 
@@ -457,6 +460,12 @@ export function CarePlanView({ patientId, program }) {
     if (kind === 'goal') setPreviewGoal(item);
     else if (kind === 'barrier') setBarrierDrawer({ barrier: item });
     else setIntvDrawer({ intervention: item });
+  };
+  // Manual "Scan for Duplicates" (care plan ⋯ menu). Resets prior Ignore/resolve
+  // choices so every current duplicate is re-surfaced, and reports the count.
+  const scanForDuplicates = async () => {
+    const n = await refreshCarePlanDuplicates(patientId, program, { reset: true });
+    showToast(n > 0 ? `Found ${n} possible duplicate${n === 1 ? '' : 's'}` : 'No possible duplicates found');
   };
   const handleDuplicateIgnore = (flag) => dismissCarePlanDuplicate(key, flag.flagId);
   const handleDuplicateAcceptExisting = (flag) => {

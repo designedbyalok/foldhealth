@@ -8,15 +8,14 @@
   background: var(--neutral-0);
 }
 
-/* Inverted (dark-in-light) chrome bar so the warning reads as a distinct alert
-   and stays legible in both themes. */
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
   padding: var(--space-1) var(--space-3);
-  background: var(--neutral-500);
+  background: var(--neutral-50);
+  border-bottom: 0.5px solid var(--neutral-150);
 }
 
 .headerTitle {
@@ -34,10 +33,10 @@
   padding: 0;
   cursor: pointer;
   font-size: var(--font-sm);
-  color: color-mix(in srgb, var(--neutral-0) 65%, transparent);
+  color: var(--neutral-300);
 }
 .ignore:hover {
-  color: var(--neutral-0);
+  color: var(--neutral-400);
 }
 
 .body {

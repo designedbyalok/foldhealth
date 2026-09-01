@@ -107,6 +107,7 @@ export function ProgramDetailViewContentHeader({
       { key: 'versions', icon: 'solar:layers-minimalistic-linear', label: 'Versions' },
       { key: 'history', iconElement: <Icon name="custom:history" size={16} color="var(--neutral-400)" />, label: 'History' },
       { key: 'preview', icon: 'solar:eye-linear', label: 'Preview' },
+      { key: 'scan-duplicates', icon: 'solar:copy-linear', label: 'Scan for Duplicates' },
     ];
     if (!carePlanMeta.usingMock) {
       items.push({ key: 'template', icon: 'solar:bookmark-linear', label: 'Save as Template' });
