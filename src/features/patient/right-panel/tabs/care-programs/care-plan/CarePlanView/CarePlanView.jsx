@@ -7,6 +7,7 @@ import { Input } from '../../../../../../../components/Input/Input';
 import { Textarea } from '../../../../../../../components/Textarea/Textarea';
 import { Drawer } from '../../../../../../../components/Drawer/Drawer';
 import { MenuPopover } from '../../../../../../../components/MenuPopover/MenuPopover';
+import { SelectAssigneeModal } from '../../../../../../../components/SelectAssigneeModal/SelectAssigneeModal';
 import { PriorityIcon } from '../../../../../../../components/PriorityIcon/PriorityIcon';
 import { ConfirmDialog } from '../../../../../../../components/ConfirmDialog/ConfirmDialog';
 import { Select } from '../../../../../../../components/Select/Select';
@@ -322,8 +323,9 @@ export function CarePlanView({ patientId, program }) {
   // Bulk selection (#7). Selection is per section, over the visible (filtered)
   // rows; a bulk status change loops the normal save path so each write audits.
   const [selected, setSelected] = useState({ goal: new Set(), intv: new Set(), barrier: new Set() });
-  const [bulkMenu, setBulkMenu] = useState(null); // { rect }
+  const [bulkMenu, setBulkMenu] = useState(null); // { rect, type }
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
   const selectedCount = selected.goal.size + selected.intv.size + selected.barrier.size;
   const toggleSelect = (kind, id) => setSelected(prev => {
     const next = new Set(prev[kind]);
@@ -361,6 +363,16 @@ export function CarePlanView({ patientId, program }) {
     const n = g.length + iv.length + br.length;
     clearSelection();
     if (n) showToast(`Set ${n} item${n === 1 ? '' : 's'} to ${priority.charAt(0).toUpperCase() + priority.slice(1)} priority`);
+  };
+
+  // Bulk assign applies to selected interventions only (goals/barriers have no assignee).
+  const bulkAssign = async (user) => {
+    setBulkAssignOpen(false);
+    const iv = filteredInterventions.filter(x => selected.intv.has(x.id));
+    if (!iv.length) { showToast('Select one or more interventions to assign'); return; }
+    for (const x of iv) await savePatientCarePlanIntervention(patientId, program, { ...x, assignee: { name: user.name, initials: user.initials } }, x.id);
+    clearSelection();
+    showToast(`Assigned ${iv.length} intervention${iv.length === 1 ? '' : 's'} to ${user.name}`);
   };
 
   // Re-insert a removed goal/intervention/barrier (undo). Drops the old id so it
@@ -768,6 +780,10 @@ export function CarePlanView({ patientId, program }) {
               const el = document.querySelector('.js-careplan-bulkbar');
               setBulkMenu({ rect: el ? el.getBoundingClientRect() : null, type: 'priority' });
             },
+          }, {
+            label: 'Assign',
+            icon: 'solar:user-plus-linear',
+            onClick: () => setBulkAssignOpen(true),
           }, {
             label: 'Delete',
             icon: 'solar:trash-bin-trash-linear',
@@ -1244,6 +1260,14 @@ export function CarePlanView({ patientId, program }) {
           onConfirm={confirmDelete}
         />
       )}
+
+      <SelectAssigneeModal
+        open={bulkAssignOpen}
+        onClose={() => setBulkAssignOpen(false)}
+        onConfirm={bulkAssign}
+        title="Assign interventions"
+        confirmLabel="Assign"
+      />
 
       {bulkDeleteOpen && (
         <ConfirmDialog
