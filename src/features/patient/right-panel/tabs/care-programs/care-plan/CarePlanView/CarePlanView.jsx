@@ -29,6 +29,7 @@ import { CarePlanShareDrawer } from '../drawers/CarePlanShareDrawer/CarePlanShar
 import { CarePlanHistoryDrawer } from '../drawers/CarePlanHistoryDrawer/CarePlanHistoryDrawer';
 import { CarePlanVersionsDrawer } from '../drawers/CarePlanVersionsDrawer/CarePlanVersionsDrawer';
 import { CarePlanLinkDrawer } from '../drawers/CarePlanLinkDrawer/CarePlanLinkDrawer';
+import { CarePlanTrendsDrawer } from '../drawers/CarePlanTrendsDrawer/CarePlanTrendsDrawer';
 import { GoalPreviewDrawer } from '../drawers/GoalPreviewDrawer/GoalPreviewDrawer';
 import { InterventionPreviewDrawer } from '../drawers/InterventionPreviewDrawer/InterventionPreviewDrawer';
 import { deriveGoalTableFields } from '../lib/goalMetrics';
@@ -196,6 +197,7 @@ export function CarePlanView({ patientId, program }) {
   const [conditionsViewOpen, setConditionsViewOpen] = useState(false);
   const [problemOpen, setProblemOpen] = useState(false);
   const [problemText, setProblemText] = useState('');
+  const [trendsOpen, setTrendsOpen] = useState(false);
   const MAX_VISIBLE_CONDITIONS = 4;
   // Collapsible GBI sections (chevron in each section header).
   const [openSections, setOpenSections] = useState({ goals: true, interventions: true, barriers: true });
@@ -564,7 +566,7 @@ export function CarePlanView({ patientId, program }) {
     if (!canEdit) return;
     await applyPatientCarePlanTemplates(patientId, program, ids);
   };
-  const handleTrends = () => showToast('Trends — coming soon');
+  const handleTrends = () => setTrendsOpen(true);
   const handleAssigneeChange = (intervention, user) => {
     if (!canEdit) return;
     savePatientCarePlanIntervention(patientId, program, { ...intervention, assignee: { name: user.name, initials: user.initials } }, intervention.id);
@@ -1142,6 +1144,14 @@ export function CarePlanView({ patientId, program }) {
             </div>
           </div>
         </Drawer>
+      )}
+
+      {trendsOpen && (
+        <CarePlanTrendsDrawer
+          goals={data.goals}
+          measurements={measurements}
+          onClose={() => setTrendsOpen(false)}
+        />
       )}
 
       {templatesDrawerOpen && (
