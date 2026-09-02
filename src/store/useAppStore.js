@@ -2695,6 +2695,38 @@ export const useAppStore = create((set, get) => ({
     });
   },
 
+  // Replace the plan's problem/condition list (dedup, trimmed) and mirror it
+  // into the cache so add/remove reflect immediately. Returns true on success.
+  savePatientCarePlanConditions: async (patientId, program, labels) => {
+    const key = carePlanKey(patientId, program.id);
+    const planId = get().patientCarePlans[key]?.plan?.id;
+    if (!planId) return false;
+    const seen = new Set();
+    const uniq = [];
+    for (const raw of labels) {
+      const label = (raw || '').trim();
+      const k = label.toLowerCase();
+      if (!label || seen.has(k)) continue;
+      seen.add(k);
+      uniq.push(label);
+    }
+    const { error } = await supabase.from('patient_care_plans')
+      .update({ conditions: uniq, condition_total: uniq.length, updated_at: new Date().toISOString() })
+      .eq('id', planId);
+    if (error) { console.warn('savePatientCarePlanConditions:', error.message); get().showToast('Could not update problems'); return false; }
+    set(s => {
+      const cur = s.patientCarePlans[key];
+      if (!cur?.plan) return {};
+      return {
+        patientCarePlans: {
+          ...s.patientCarePlans,
+          [key]: { ...cur, plan: { ...cur.plan, conditions: uniq.map(label => ({ label })), conditionTotal: uniq.length } },
+        },
+      };
+    });
+    return true;
+  },
+
   // ── Possible-duplicate detection (Figma SNP-Story 8464:289403) ──
   // Recompute every possible-duplicate banner for the current plan by scanning
   // ALL of a patient's care plans (every program). A G/B/I on this plan is

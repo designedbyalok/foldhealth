@@ -117,7 +117,6 @@ export function CarePlanView({ patientId, program }) {
   const dismissCarePlanDuplicate = useAppStore(s => s.dismissCarePlanDuplicate);
   const savePatientCarePlanAsTemplate = useAppStore(s => s.savePatientCarePlanAsTemplate);
   const signCarePlan = useAppStore(s => s.signCarePlan);
-  const touchCarePlanModified = useAppStore(s => s.touchCarePlanModified);
   const addCarePlanNote = useAppStore(s => s.addCarePlanNote);
   const showToast = useAppStore(s => s.showToast);
   const patientName = useAppStore(s => s.patients.find(p => p.id === patientId)?.name);
@@ -134,6 +133,7 @@ export function CarePlanView({ patientId, program }) {
   const carePlanTemplates = useAppStore(s => s.carePlanTemplates);
   const fetchCarePlanLibrary = useAppStore(s => s.fetchCarePlanLibrary);
   const applyPatientCarePlanTemplates = useAppStore(s => s.applyPatientCarePlanTemplates);
+  const savePatientCarePlanConditions = useAppStore(s => s.savePatientCarePlanConditions);
 
   const key = patientId && program ? `${patientId}::${program.id}` : null;
   const live = useAppStore(s => (key ? s.patientCarePlans[key] : null));
@@ -179,7 +179,8 @@ export function CarePlanView({ patientId, program }) {
   const usingMock = !live;
   const measurements = live?.measurements || [];
   const data = useMemo(() => (live ? {
-    conditions: live.plan.conditions,
+    // Plan-level problems are user-managed, so every chip gets a remove control.
+    conditions: (live.plan.conditions || []).map(c => ({ ...c, removable: true })),
     conditionTotal: live.plan.conditionTotal,
     goals: live.goals.map(g => ({ ...g, ...deriveGoalTableFields(g, measurements) })),
     interventions: live.interventions,
@@ -193,6 +194,8 @@ export function CarePlanView({ patientId, program }) {
   }), [live, measurements]);
 
   const [conditionsViewOpen, setConditionsViewOpen] = useState(false);
+  const [problemOpen, setProblemOpen] = useState(false);
+  const [problemText, setProblemText] = useState('');
   const MAX_VISIBLE_CONDITIONS = 4;
   // Collapsible GBI sections (chevron in each section header).
   const [openSections, setOpenSections] = useState({ goals: true, interventions: true, barriers: true });
@@ -534,22 +537,27 @@ export function CarePlanView({ patientId, program }) {
       />
     ));
 
-  // Condition chip interactions — View All, remove, New Problems. All persist via
-  // the plan header row (conditions array) so they survive reload.
+  // Condition/problem chip interactions — View All, remove, add. All persist to
+  // the plan header row (conditions array) and update the cache immediately.
   const handleRemoveCondition = async (label) => {
     if (!canEdit || !live?.plan) return;
-    const next = (live.plan.conditions || []).filter(c => c.label !== label);
-    const { error } = await import('../../../../../../../lib/supabase').then(m => m.supabase.from('patient_care_plans').update({ conditions: next.map(c => c.label), condition_total: live.plan.conditionTotal, updated_at: new Date().toISOString() }).eq('id', live.plan.id).select().single());
-    if (!error) {
-      await touchCarePlanModified(patientId, program.id);
-      showToast(`Removed "${label}"`);
-    } else {
-      showToast('Could not remove condition');
-    }
+    const next = (live.plan.conditions || []).map(c => c.label).filter(l => l !== label);
+    const ok = await savePatientCarePlanConditions(patientId, program, next);
+    if (ok) showToast(`Removed "${label}"`);
+  };
+
+  const doAddProblem = async () => {
+    const label = problemText.trim();
+    if (!label || !live?.plan) return;
+    const next = [...(live.plan.conditions || []).map(c => c.label), label];
+    const ok = await savePatientCarePlanConditions(patientId, program, next);
+    setProblemOpen(false);
+    setProblemText('');
+    if (ok) showToast(`Added "${label}"`);
   };
 
   const handleViewAllConditions = () => setConditionsViewOpen(true);
-  const handleNewProblems = () => showToast('New Problems — coming soon');
+  const handleNewProblems = () => { setProblemText(''); setProblemOpen(true); };
   const handleTemplates = () => setTemplatesDrawerOpen(true);
   const handleApplyTemplates = async (ids) => {
     setTemplatesDrawerOpen(false);
@@ -1107,6 +1115,30 @@ export function CarePlanView({ patientId, program }) {
             <div className={styles.drawerField}>
               <span className={styles.drawerLabel}>Note <span className={styles.required}>*</span></span>
               <Textarea autoFocus value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="e.g. Reviewed with patient; no changes needed." rows={3} />
+            </div>
+          </div>
+        </Drawer>
+      )}
+
+      {problemOpen && (
+        <Drawer
+          title="Add Problem"
+          onClose={() => setProblemOpen(false)}
+          secondaryAction={<Button variant="secondary" size="L" onClick={() => setProblemOpen(false)}>Cancel</Button>}
+          primaryAction={<Button variant="primary" size="L" onClick={doAddProblem} disabled={!problemText.trim()}>Add</Button>}
+        >
+          <div className={styles.drawerBody}>
+            <p className={styles.drawerHint}>Adds a problem/condition to this care plan. It shows in the problems bar and groups the goals, interventions, and barriers that address it.</p>
+            <div className={styles.drawerField}>
+              <span className={styles.drawerLabel}>Problem <span className={styles.required}>*</span></span>
+              <Input
+                autoFocus
+                value={problemText}
+                onChange={e => setProblemText(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && problemText.trim()) { e.preventDefault(); doAddProblem(); } }}
+                placeholder="e.g. Chronic Kidney Disease"
+                aria-label="Problem"
+              />
             </div>
           </div>
         </Drawer>
