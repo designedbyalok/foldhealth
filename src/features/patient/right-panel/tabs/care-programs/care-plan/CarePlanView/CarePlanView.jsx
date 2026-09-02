@@ -340,6 +340,19 @@ export function CarePlanView({ patientId, program }) {
     if (n) showToast(`Updated ${n} item${n === 1 ? '' : 's'} to "${status}"`);
   };
 
+  const bulkSetPriority = async (priority) => {
+    setBulkMenu(null);
+    const g = filteredGoals.filter(x => selected.goal.has(x.id));
+    const iv = filteredInterventions.filter(x => selected.intv.has(x.id));
+    const br = filteredBarriers.filter(x => selected.barrier.has(x.id));
+    for (const x of g) await savePatientCarePlanGoal(patientId, program, { ...x, priority }, x.id);
+    for (const x of iv) await savePatientCarePlanIntervention(patientId, program, { ...x, priority }, x.id);
+    for (const x of br) await savePatientCarePlanBarrier(patientId, program, { ...x, priority }, x.id);
+    const n = g.length + iv.length + br.length;
+    clearSelection();
+    if (n) showToast(`Set ${n} item${n === 1 ? '' : 's'} to ${priority.charAt(0).toUpperCase() + priority.slice(1)} priority`);
+  };
+
   // Re-insert a removed goal/intervention/barrier (undo). Drops the old id so it
   // saves as a fresh row; derived fields are ignored by the row mappers.
   const restoreGbi = ({ kind, item }) => {
@@ -735,11 +748,18 @@ export function CarePlanView({ patientId, program }) {
             label: 'Set status',
             icon: 'solar:checklist-minimalistic-linear',
             // BulkBar action callbacks don't carry the event, so anchor the
-            // status menu to the floating bar itself (MenuPopover opens upward
-            // near the viewport bottom).
+            // menu to the floating bar itself (MenuPopover opens upward near
+            // the viewport bottom).
             onClick: () => {
               const el = document.querySelector('.js-careplan-bulkbar');
-              setBulkMenu({ rect: el ? el.getBoundingClientRect() : null });
+              setBulkMenu({ rect: el ? el.getBoundingClientRect() : null, type: 'status' });
+            },
+          }, {
+            label: 'Set priority',
+            icon: 'solar:flag-linear',
+            onClick: () => {
+              const el = document.querySelector('.js-careplan-bulkbar');
+              setBulkMenu({ rect: el ? el.getBoundingClientRect() : null, type: 'priority' });
             },
           }, {
             label: 'Delete',
@@ -917,9 +937,11 @@ export function CarePlanView({ patientId, program }) {
           anchorRect={bulkMenu.rect}
           align="left"
           width={180}
-          ariaLabel="Set status for selected"
-          items={GBI_STATUSES.map(s => ({ key: s, label: s }))}
-          onSelect={bulkSetStatus}
+          ariaLabel={bulkMenu.type === 'priority' ? 'Set priority for selected' : 'Set status for selected'}
+          items={bulkMenu.type === 'priority'
+            ? PRIORITIES.map(p => ({ key: p, label: p.charAt(0).toUpperCase() + p.slice(1), iconElement: <PriorityIcon priority={p} size={16} /> }))
+            : GBI_STATUSES.map(s => ({ key: s, label: s }))}
+          onSelect={bulkMenu.type === 'priority' ? bulkSetPriority : bulkSetStatus}
           onClose={() => setBulkMenu(null)}
         />
       )}
