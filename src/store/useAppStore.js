@@ -11481,8 +11481,8 @@ export const useAppStore = create((set, get) => ({
     }
   },
 
-  showToast: (msg) => {
-    toast(msg);
+  showToast: (msg, opts) => {
+    toast(msg, opts);
   },
 
   openDetail: (patientId, callRow = null) => {

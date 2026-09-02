@@ -340,6 +340,22 @@ export function CarePlanView({ patientId, program }) {
     if (n) showToast(`Updated ${n} item${n === 1 ? '' : 's'} to "${status}"`);
   };
 
+  // Re-insert a removed goal/intervention/barrier (undo). Drops the old id so it
+  // saves as a fresh row; derived fields are ignored by the row mappers.
+  const restoreGbi = ({ kind, item }) => {
+    const { id, ...values } = item; // eslint-disable-line no-unused-vars
+    if (kind === 'goal') return savePatientCarePlanGoal(patientId, program, values);
+    if (kind === 'barrier') return savePatientCarePlanBarrier(patientId, program, values);
+    return savePatientCarePlanIntervention(patientId, program, values);
+  };
+  const undoAction = (removed) => ({
+    label: 'Undo',
+    onClick: async () => {
+      for (const r of removed) await restoreGbi(r);
+      refreshCarePlanDuplicates(patientId, program);
+    },
+  });
+
   const bulkDelete = async () => {
     setBulkDeleteOpen(false);
     const g = filteredGoals.filter(x => selected.goal.has(x.id));
@@ -350,7 +366,15 @@ export function CarePlanView({ patientId, program }) {
     for (const x of br) await deletePatientCarePlanBarrier(patientId, program.id, x.id);
     const n = g.length + iv.length + br.length;
     clearSelection();
-    if (n) { showToast(`Removed ${n} item${n === 1 ? '' : 's'}`); refreshCarePlanDuplicates(patientId, program); }
+    if (n) {
+      const removed = [
+        ...g.map(item => ({ kind: 'goal', item })),
+        ...iv.map(item => ({ kind: 'intervention', item })),
+        ...br.map(item => ({ kind: 'barrier', item })),
+      ];
+      showToast(`Removed ${n} item${n === 1 ? '' : 's'}`, { action: undoAction(removed), duration: 6000 });
+      refreshCarePlanDuplicates(patientId, program);
+    }
   };
 
   const doSign = async () => {
@@ -486,12 +510,12 @@ export function CarePlanView({ patientId, program }) {
   };
 
   const confirmDelete = () => {
-    const { kind, id, name } = deleteTarget;
+    const { kind, id, name, item } = deleteTarget;
     if (kind === 'goal') deletePatientCarePlanGoal(patientId, program.id, id);
     else if (kind === 'barrier') deletePatientCarePlanBarrier(patientId, program.id, id);
     else deletePatientCarePlanIntervention(patientId, program.id, id);
     setDeleteTarget(null);
-    showToast(`"${name}" removed`);
+    showToast(`"${name}" removed`, item ? { action: undoAction([{ kind: kind === 'intv' ? 'intervention' : kind, item }]), duration: 6000 } : undefined);
   };
 
   // ── Possible-duplicate resolution (Figma SNP-Story 8464:289403) ──
@@ -923,7 +947,7 @@ export function CarePlanView({ patientId, program }) {
             const isBarrier = kind === 'barrier-menu';
             const item = statusMenu.item;
             setStatusMenu(null);
-            if (k === 'delete') setDeleteTarget({ kind: isGoal ? 'goal' : isBarrier ? 'barrier' : 'intv', id: item.id, name: item.title });
+            if (k === 'delete') setDeleteTarget({ kind: isGoal ? 'goal' : isBarrier ? 'barrier' : 'intv', id: item.id, name: item.title, item });
             else if (k === 'rename' && isBarrier) setBarrierDrawer({ barrier: item });
             else if (k === 'rename' && !isGoal) setPreviewIntervention(item);
             // Goal rename happens inline via EditableTitle; nudge the user there.
