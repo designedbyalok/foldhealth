@@ -4632,11 +4632,64 @@ export function goalLibraryCategory(g) {
   return 'Other';
 }
 
+// The seed left every goal's `measure` empty and many targets as free text, so
+// the goals couldn't auto-track patient data. Bind the trackable goals (Vital /
+// Lab result / Activity / Assessment, plus medication/appointment goals) to the
+// right measure with a structured target the drawer's MEASURE_CONFIG can render
+// and the platform can track. Non-trackable process goals (housing, mood,
+// caregiver, etc.) keep their qualitative targets and no measure.
+export const GOAL_MEASURE_OVERRIDES = {
+  // ── Vital ──
+  'Maintain blood pressure within target': { measure: 'Blood Pressure', comparator: '<=', target_value: '130', target_value_2: '80', custom_unit: '' },
+  'Improve blood pressure control': { measure: 'Blood Pressure', comparator: '<=', target_value: '130', target_value_2: '80', custom_unit: '' },
+  'Monitor blood pressure consistently': { measure: 'Blood Pressure', comparator: '<=', target_value: '130', target_value_2: '80', custom_unit: '' },
+  'Maintain controlled heart rate': { measure: 'Pulse Rate', comparator: 'between', target_value: '60', target_value_2: '100', custom_unit: '' },
+  'Monitor daily weight for heart failure': { measure: 'Weight', comparator: '<=', target_value: '3', target_value_2: '', custom_unit: '' },
+  'Maintain glucose within target range': { measure: 'Blood Glucose', comparator: 'between', target_value: '80', target_value_2: '180', custom_unit: '' },
+  'Monitor blood glucose consistently': { measure: 'Blood Glucose', comparator: 'between', target_value: '80', target_value_2: '180', custom_unit: '' },
+  // ── Activity ──
+  'Reduce cardiovascular risk through activity': { measure: 'Duration', comparator: '>=', target_value: '150', target_value_2: '', custom_unit: '' },
+  'Increase physical activity for metabolic health': { measure: 'Steps', comparator: '>=', target_value: '7000', target_value_2: '', custom_unit: '' },
+  'Improve mobility': { measure: 'Steps', comparator: '>=', target_value: '5000', target_value_2: '', custom_unit: '' },
+  'Improve balance': { measure: 'Aerobics', comparator: '>=', target_value: '20', target_value_2: '', custom_unit: '' },
+  // ── Lab result ──
+  'Improve lipid management': { measure: 'LDL Cholesterol', comparator: '<', target_value: '100', target_value_2: '', custom_unit: '' },
+  'Improve A1C control': { measure: 'Hemoglobin A1c', comparator: '<', target_value: '7', target_value_2: '', custom_unit: '' },
+  'Improve renal risk monitoring': { measure: 'eGFR', comparator: '>=', target_value: '60', target_value_2: '', custom_unit: '' },
+  'Maintain kidney function monitoring': { measure: 'eGFR', comparator: '>=', target_value: '60', target_value_2: '', custom_unit: '' },
+  'Maintain individualized renal-protection plan': { measure: 'eGFR', comparator: '>=', target_value: '60', target_value_2: '', custom_unit: '' },
+  // ── Assessment (completion tracked against the named instrument) ──
+  'Complete annual wellness visit': { measure: 'Annual Wellness Visit', comparator: '=', target_value: 'Completed', target_value_2: '', custom_unit: '' },
+  'Complete preventive screening plan': { measure: 'Preventive Screening', comparator: '=', target_value: 'Completed', target_value_2: '', custom_unit: '' },
+  'Complete immunization review': { measure: 'Immunization Review', comparator: '=', target_value: 'Completed', target_value_2: '', custom_unit: '' },
+  'Complete fall-risk assessment': { measure: 'Fall Risk Assessment', comparator: '=', target_value: 'Completed', target_value_2: '', custom_unit: '' },
+  'Complete advance care planning review': { measure: 'Advance Care Planning', comparator: '=', target_value: 'Completed', target_value_2: '', custom_unit: '' },
+  'Improve completion of recommended preventive services': { measure: 'Preventive Screening', comparator: '>=', target_value: '90', target_value_2: '', custom_unit: '%' },
+  // ── Other: medication adherence ──
+  'Improve medication adherence for hypertension': { measure: '', comparator: '>=', target_value: '90', target_value_2: '', custom_unit: '%' },
+  'Improve diabetes medication adherence': { measure: '', comparator: '>=', target_value: '90', target_value_2: '', custom_unit: '%' },
+  'Improve overall medication adherence': { measure: '', comparator: '>=', target_value: '90', target_value_2: '', custom_unit: '%' },
+  'Improve inhaler adherence': { measure: '', comparator: '>=', target_value: '90', target_value_2: '', custom_unit: '%' },
+  'Maintain oxygen therapy adherence': { measure: '', comparator: '>=', target_value: '90', target_value_2: '', custom_unit: '%' },
+  'Improve refill continuity': { measure: '', comparator: '>=', target_value: '90', target_value_2: '', custom_unit: '%' },
+  'Follow post-discharge medication plan': { measure: '', comparator: '>=', target_value: '90', target_value_2: '', custom_unit: '%' },
+  // ── Other: appointment attendance ──
+  'Reduce missed appointments': { measure: '', comparator: '>=', target_value: '90', target_value_2: '', custom_unit: '%' },
+  'Complete specialty follow-up': { measure: '', comparator: '>=', target_value: '90', target_value_2: '', custom_unit: '%' },
+  'Complete post-discharge follow-up': { measure: '', comparator: '>=', target_value: '90', target_value_2: '', custom_unit: '%' },
+  'Improve response to care-team outreach': { measure: '', comparator: '>=', target_value: '90', target_value_2: '', custom_unit: '%' },
+};
+
 // care_plan_goals row (drops the embedded links; derives the category; stamps
-// the library author so the goals list can show who created each goal).
+// the library author; binds trackable goals to a structured measure + target).
 export function carePlanGoalLibraryToRow(g) {
   const { links, ...row } = g;
-  return { ...row, category: goalLibraryCategory(g), created_by: g.created_by || 'Fold Health' };
+  return {
+    ...row,
+    category: goalLibraryCategory(g),
+    created_by: g.created_by || 'Fold Health',
+    ...(GOAL_MEASURE_OVERRIDES[g.title] || {}),
+  };
 }
 
 // Per-goal care_plan_interventions rows (a goal's linked interventions +

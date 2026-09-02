@@ -3,8 +3,8 @@ export const MEASURE_CONFIG = {
   'Blood Pressure': { dual: true, units: ['mmHg', 'mmHg'], placeholders: ['Systolic BP', 'Diastolic BP'], separator: '/' },
   Height: { dual: true, units: ['Ft', 'in'], placeholders: ['Enter Value', 'Enter Value'], separator: '/' },
   Weight: { unit: 'lbs' },
-  BMI: {},
-  'Blood Glucose': {},
+  BMI: { unit: 'kg/m²' },
+  'Blood Glucose': { unit: 'mg/dL' },
   'Pain Scale': { kind: 'select', options: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'] },
   'Waist Circumference': { unit: 'cm' },
   'Head Circumference': { unit: 'cm' },
@@ -24,6 +24,17 @@ export const MEASURE_CONFIG = {
   Basketball: { unit: 'minutes' },
   Biking: { unit: 'minutes' },
   Spinning: { unit: 'minutes' },
+
+  // Lab results — units so a saved lab target renders as "< 7 %".
+  'Hemoglobin A1c': { unit: '%' },
+  'Estim. Avg Glu (eAG)': { unit: 'mg/dL' },
+  'Glucose, Fasting': { unit: 'mg/dL' },
+  eGFR: { unit: 'mL/min' },
+  Creatinine: { unit: 'mg/dL' },
+  'LDL Cholesterol': { unit: 'mg/dL' },
+  'HDL Cholesterol': { unit: 'mg/dL' },
+  'Total Cholesterol': { unit: 'mg/dL' },
+  Triglycerides: { unit: 'mg/dL' },
 };
 
 /**

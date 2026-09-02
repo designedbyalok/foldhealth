@@ -47,6 +47,7 @@ const MEASURES = {
   'Lab result': {
     label: 'Select Lab result',
     options: [
+      'LDL Cholesterol', 'HDL Cholesterol', 'Total Cholesterol', 'Triglycerides',
       'Immunoglobulin A, Quant, CSF', 'Immunoglobulin M, Quant, CSF', 'aPTT 1:1 Mix Saline',
       'LD, Body Fluid', 'IgM P23 Ab.', 'Creatine Kinase (CK), MB', 'Creatinine',
       'Hemoglobin A1c', 'Estim. Avg Glu (eAG)', 'Cortisol - AM', 'Cortisol - PM',
@@ -58,6 +59,8 @@ const MEASURES = {
   Assessment: {
     label: 'Select Assessment',
     options: [
+      'Annual Wellness Visit', 'Preventive Screening', 'Fall Risk Assessment',
+      'Immunization Review', 'Advance Care Planning',
       'CCM Initial Assessment', 'SNP - Health Risk Assessment', 'COPD Initial Assessment',
       'Patient Assessment', 'BRSCI - Benjamin Rose Institute Caregiver Strain Instrument',
       'Patient Assessment (ECM)', 'Health Risk Assessment Questionnaire',
@@ -234,7 +237,14 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
     ? cfg.placeholders
     : isRange ? ['From', 'To'] : ['Enter Value', 'Enter Value'];
   const separator = cfg.dual ? (cfg.separator || '/') : 'and';
-  const canSave = title.trim().length > 0;
+  // A goal is valid when it names WHAT it tracks (a measure for the structured
+  // types; "Other" tracks via a typed unit) and, when a target is set, the
+  // value(s) that target needs — so saved goals are structured, not blank.
+  const hasMeasure = isOther || measure.trim().length > 0;
+  const hasTargetValue = !setTarget || (
+    targetValue.trim().length > 0 && (!twoValues || targetValue2.trim().length > 0)
+  );
+  const canSave = title.trim().length > 0 && hasMeasure && hasTargetValue;
 
   const updateIntervention = (index, patch) => {
     setInterventions(prev => prev.map((it, i) => (i === index ? { ...it, ...patch } : it)));
