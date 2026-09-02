@@ -58,7 +58,7 @@
 .tdName { left: 0; }
 /* Tables that lead with a checkbox column (44px) push the name column past it. */
 .tdNameOffset { left: 44px; }
-.tdActions { right: 0; }
+.tdActions { right: 0; padding-right: var(--space-2); }
 .nameLink {
   background: none;
   border: none;
@@ -68,9 +68,18 @@
   font-weight: 500;
   color: var(--neutral-400);
   text-align: left;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 /* Goals Title cell stacks the title over its target value (frees the separate
-   Target Value column so the title gets more room). */
+   Target Value column so the title gets more room). Flexes between a min and
+   max so the row of columns fits the default view without scrolling. */
+.tdName {
+  min-width: 220px;
+  max-width: 360px;
+}
 .nameCell {
   display: flex;
   flex-direction: column;
@@ -238,9 +247,10 @@
   flex-direction: column;
   gap: var(--space-1);
 }
-.createdBy {
+.createdAt {
   color: var(--neutral-400);
 }
-.createdAt {
+.createdBy {
+  font-size: var(--font-sm);
   color: var(--neutral-300);
 }

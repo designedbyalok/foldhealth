@@ -4632,10 +4632,11 @@ export function goalLibraryCategory(g) {
   return 'Other';
 }
 
-// care_plan_goals row (drops the embedded links; derives the category).
+// care_plan_goals row (drops the embedded links; derives the category; stamps
+// the library author so the goals list can show who created each goal).
 export function carePlanGoalLibraryToRow(g) {
   const { links, ...row } = g;
-  return { ...row, category: goalLibraryCategory(g) };
+  return { ...row, category: goalLibraryCategory(g), created_by: g.created_by || 'Fold Health' };
 }
 
 // Per-goal care_plan_interventions rows (a goal's linked interventions +

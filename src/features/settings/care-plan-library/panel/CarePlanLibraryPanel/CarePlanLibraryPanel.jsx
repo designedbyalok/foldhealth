@@ -69,8 +69,8 @@ function formatRelative(iso) {
 function StampCell({ name, children }) {
   return (
     <div className={styles.createdCell}>
-      {name && <span className={styles.createdBy}>{name}</span>}
       <span className={styles.createdAt}>{children}</span>
+      {name && <span className={styles.createdBy}>{name}</span>}
     </div>
   );
 }
@@ -83,7 +83,7 @@ function formatDateTime(iso) {
   const d = new Date(iso);
   const date = d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
   const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  return `${date} | ${time}`;
+  return `${date}, ${time}`;
 }
 
 // Figma 14106:280383 — checkbox, Template Name, Chronic Conditions,
@@ -103,13 +103,12 @@ const TEMPLATE_COLUMNS = [
 // design's min/max column bounds.
 const GOAL_COLUMNS = [
   { key: 'select', label: '', showCheckbox: true, width: 44, sticky: 'left', left: 0 },
-  { key: 'title', label: 'Goals Title', sortKey: 'title', sortType: 'alpha', sticky: 'left', left: 44, width: 360 },
-  { key: 'type', label: 'Type', sortKey: 'type', sortType: 'alpha', width: 120 },
-  { key: 'linked', label: 'Linked Items', width: 140 },
-  { key: 'duration', label: 'Duration', width: 120 },
-  { key: 'conditions', label: 'Chronic Conditions', sortKey: 'conditions', sortType: 'alpha', width: 250 },
-  { key: 'createdOn', label: 'Created On', sortKey: 'createdAt', sortType: 'date', width: 220 },
-  { key: 'actions', label: 'Actions', sticky: 'right', width: 156 },
+  { key: 'title', label: 'Goals Title', sortKey: 'title', sortType: 'alpha', sticky: 'left', left: 44, width: 300 },
+  { key: 'type', label: 'Type', sortKey: 'type', sortType: 'alpha', width: 104 },
+  { key: 'duration', label: 'Duration', width: 100 },
+  { key: 'conditions', label: 'Chronic Conditions', sortKey: 'conditions', sortType: 'alpha', width: 190 },
+  { key: 'createdOn', label: 'Created On', sortKey: 'createdAt', sortType: 'date', width: 150 },
+  { key: 'actions', label: 'Actions', sticky: 'right', width: 132 },
 ];
 
 // Linked Items is a single total — the per-kind breakdown isn't surfaced here.
@@ -444,9 +443,6 @@ export function CarePlanLibraryPanel() {
       <td className={styles.tdType}>
         {g.type ? <Badge tone="grey" size="S" label={g.type} /> : '—'}
       </td>
-      <td className={styles.tdLinked}>
-        <Badge tone="grey" size="S" label={String(linkedCount(g))} />
-      </td>
       <td className={styles.tdMuted}>{formatGoalDuration(g) || '—'}</td>
       <td className={styles.tdConditions}>
         {(g.conditions || []).length
@@ -586,7 +582,7 @@ export function CarePlanLibraryPanel() {
                 <p>No goals match "<strong>{searchValue.trim()}</strong>".</p>
               </div>
             }
-            minTableWidth={1530}
+            minTableWidth={1032}
           />
           )
         )}
