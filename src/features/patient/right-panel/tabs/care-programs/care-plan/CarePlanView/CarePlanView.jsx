@@ -200,7 +200,17 @@ export function CarePlanView({ patientId, program }) {
   const [trendsOpen, setTrendsOpen] = useState(false);
   const MAX_VISIBLE_CONDITIONS = 4;
   // Collapsible GBI sections (chevron in each section header).
-  const [openSections, setOpenSections] = useState({ goals: true, interventions: true, barriers: true });
+  // Remember which GBI sections are collapsed across visits (per-device UI pref).
+  const [openSections, setOpenSections] = useState(() => {
+    const fallback = { goals: true, interventions: true, barriers: true };
+    try {
+      const saved = JSON.parse(localStorage.getItem('carePlanOpenSections') || 'null');
+      return saved && typeof saved === 'object' ? { ...fallback, ...saved } : fallback;
+    } catch { return fallback; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem('carePlanOpenSections', JSON.stringify(openSections)); } catch { /* storage unavailable */ }
+  }, [openSections]);
   const toggleSection = (name) => setOpenSections(s => ({ ...s, [name]: !s[name] }));
   const [statusMenu, setStatusMenu] = useState(null); // { kind, item, rect }
   const [priorityMenu, setPriorityMenu] = useState(null); // { kind, item, rect }
