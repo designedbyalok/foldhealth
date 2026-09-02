@@ -442,10 +442,8 @@
 .intvAdherence {
   display: flex;
   align-items: center;
-  justify-content: center;
   flex-shrink: 0;
-  min-width: 60px;
-  max-width: 90px;
+  width: 100px;
   padding: var(--space-2);
 }
 .intvAdherenceDash {

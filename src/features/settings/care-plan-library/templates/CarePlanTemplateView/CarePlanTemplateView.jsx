@@ -144,11 +144,11 @@ export function CarePlanTemplateView({ template, mode = 'view', onClose, onSave 
 
         <div className={styles.planBody}>
           {section('Goals', goalRows.length,
-            <CarePlanGoalsTable rows={goalRows} canEdit={false} linkCount={() => 0} />)}
+            <CarePlanGoalsTable rows={goalRows} canEdit={false} linked={() => null} />)}
           {section('Interventions', interventionRows.length,
-            <CarePlanInterventionsTable rows={interventionRows} canEdit={false} linkCount={() => 0} />)}
+            <CarePlanInterventionsTable rows={interventionRows} canEdit={false} linked={() => null} />)}
           {section('Barriers', barrierRows.length,
-            <CarePlanBarriersTable rows={barrierRows} canEdit={false} linkCount={() => 0} />)}
+            <CarePlanBarriersTable rows={barrierRows} canEdit={false} linked={() => null} />)}
         </div>
       </div>
     </div>

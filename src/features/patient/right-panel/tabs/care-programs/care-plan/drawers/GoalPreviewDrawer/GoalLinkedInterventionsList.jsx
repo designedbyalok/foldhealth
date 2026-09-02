@@ -93,7 +93,7 @@ export function GoalLinkedInterventionsList({
 
             <div className={styles.intvAdherence} onClick={(e) => e.stopPropagation()}>
               {showAdherence
-                ? <GbiProgressCell progress={adherence} variant="ring" />
+                ? <GbiProgressCell progress={adherence} />
                 : <span className={styles.intvAdherenceDash}>—</span>}
             </div>
 
