@@ -43,7 +43,7 @@ import { DownChevronIcon } from '../../../../../../../components/Icon/DownChevro
 import { BulkBar } from '../../../../../../../components/BulkBar/BulkBar';
 import { Badge } from '../../../../../../../components/Badge/Badge';
 import { ApplyTemplatesDrawer } from '../drawers/ApplyTemplatesDrawer/ApplyTemplatesDrawer';
-import { CarePlanDuplicateFlag } from '../DuplicateFlag/CarePlanDuplicateFlag';
+import { CarePlanDuplicateGroup } from '../DuplicateFlag/CarePlanDuplicateGroup';
 import { templateGoalCount } from '../lib/carePlanTemplateApply';
 import styles from './CarePlanView.module.css';
 
@@ -573,18 +573,15 @@ export function CarePlanView({ patientId, program }) {
     openGbiEditor(flag.kind, flag.existing.item);
     dismissCarePlanDuplicate(key, flag.flagId);
   };
-  const renderDuplicateFlags = (kind) => duplicateFlags
-    .filter(f => f.kind === kind)
-    .map(flag => (
-      <CarePlanDuplicateFlag
-        key={flag.flagId}
-        flag={flag}
-        onIgnore={() => handleDuplicateIgnore(flag)}
-        onAcceptExisting={() => handleDuplicateAcceptExisting(flag)}
-        onAcceptNew={() => handleDuplicateAcceptNew(flag)}
-        onEditExisting={() => handleDuplicateEditExisting(flag)}
-      />
-    ));
+  const renderDuplicateFlags = (kind) => (
+    <CarePlanDuplicateGroup
+      flags={duplicateFlags.filter(f => f.kind === kind)}
+      onIgnore={handleDuplicateIgnore}
+      onAcceptExisting={handleDuplicateAcceptExisting}
+      onAcceptNew={handleDuplicateAcceptNew}
+      onEditExisting={handleDuplicateEditExisting}
+    />
+  );
 
   // Condition/problem chip interactions — View All, remove, add. All persist to
   // the plan header row (conditions array) and update the cache immediately.
