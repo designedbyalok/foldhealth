@@ -23,7 +23,7 @@ function BarrierRow({
   onLinkOwner,
   onStatusMenu,
   onRowMenu,
-  linkCount,
+  linked,
 }) {
   return (
     <tr key={b.id} className={`${styles.row} ${styles.gbiRow}`}>
@@ -41,7 +41,7 @@ function BarrierRow({
           icon="custom:barrier"
           title={b.title}
           meta={b.description || null}
-          linkCount={linkCount(b.id)}
+          linked={linked(b)}
           canEdit={canEdit}
           onLinkClick={() => onLinkOwner({ kind: 'barrier', item: b })}
         />
@@ -78,7 +78,7 @@ export function CarePlanBarriersTable({
   onLinkOwner,
   onStatusMenu,
   onRowMenu,
-  linkCount,
+  linked,
   emptyState,
 }) {
   const [closedOpen, setClosedOpen] = useState(false);
@@ -120,7 +120,7 @@ export function CarePlanBarriersTable({
             onLinkOwner={onLinkOwner}
             onStatusMenu={onStatusMenu}
             onRowMenu={onRowMenu}
-            linkCount={linkCount}
+            linked={linked}
           />
         )}
       />
@@ -159,7 +159,7 @@ export function CarePlanBarriersTable({
                     onLinkOwner={onLinkOwner}
                     onStatusMenu={onStatusMenu}
                     onRowMenu={onRowMenu}
-                    linkCount={linkCount}
+                    linked={linked}
                   />
                 ))}
               </tbody>

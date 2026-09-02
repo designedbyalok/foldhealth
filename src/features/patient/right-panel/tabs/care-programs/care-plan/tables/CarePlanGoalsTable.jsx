@@ -26,7 +26,7 @@ export function CarePlanGoalsTable({
   onLinkOwner,
   onStatusMenu,
   onRowMenu,
-  linkCount,
+  linked,
   emptyState,
 }) {
   const sortableRows = useMemo(() => enrichGoalRows(rows), [rows]);
@@ -79,7 +79,7 @@ export function CarePlanGoalsTable({
                 title={g.title}
                 meta={g.subtitle || null}
                 layout="stacked"
-                linkCount={linkCount(g.id)}
+                linked={linked(g)}
                 canEdit={canEdit}
                 onLinkClick={() => onLinkOwner({ kind: 'goal', item: g })}
               />

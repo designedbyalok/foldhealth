@@ -4,6 +4,7 @@ import { Badge } from '../../../../../../../components/Badge/Badge';
 import { Checkbox } from '../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { CarePlanProgressRing } from '../../../../../../../components/CarePlanProgressRing/CarePlanProgressRing';
 import { useState } from 'react';
+import { GbiLinkButton } from './CarePlanLinkedPreview';
 import styles from './carePlanTables.module.css';
 
 export function EditableInlineTitle({ title, editable, onCommit }) {
@@ -129,7 +130,7 @@ export function GbiNameCell({
   title,
   meta,
   layout = 'inline',
-  linkCount = 0,
+  linked = null,
   canEdit,
   onLinkClick,
 }) {
@@ -152,15 +153,7 @@ export function GbiNameCell({
         ) : null}
         {meta && stacked ? <span className={styles.nameSecondary}>{meta}</span> : null}
       </span>
-      <span
-        className={`${styles.linkChipWrap} ${canEdit ? styles.linkChipClickable : ''}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          if (canEdit) onLinkClick?.(e);
-        }}
-      >
-        <LinkChip count={linkCount} />
-      </span>
+      <GbiLinkButton data={linked} canEdit={canEdit} onClick={onLinkClick} />
     </div>
   );
 }

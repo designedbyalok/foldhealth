@@ -144,9 +144,20 @@ export function CarePlanView({ patientId, program }) {
   const carePlanLoading = useAppStore(s => (key ? !!s.patientCarePlanLoading[key] : false));
 
   const fetchCarePlanLinks = useAppStore(s => s.fetchCarePlanLinks);
-  const carePlanLinks = useAppStore(s => (key ? s.patientCarePlanLinks[key] : null)) || [];
   const [linkOwner, setLinkOwner] = useState(null); // null | { kind, item }
-  const linkCount = (id) => carePlanLinks.filter(l => l.ownerId === String(id)).length;
+  // Linked-items preview data (Figma SNP-Story 2632:112808). A goal links its
+  // interventions/barriers/automations (by goalId); a child row links its goal.
+  const programBadge = program?.name ? [program.name] : (program?.code ? [program.code] : []);
+  const linkedForGoal = (g) => ({
+    programs: programBadge,
+    interventions: (live?.interventions || []).filter(i => i.goalId === g.id).map(i => ({ id: i.id, icon: i.icon, title: i.title })),
+    barriers: (live?.barriers || []).filter(b => b.goalId === g.id).map(b => ({ id: b.id, title: b.title })),
+    automations: (live?.automations || []).filter(a => a.goalId === g.id).map(a => ({ id: a.id, title: a.title })),
+  });
+  const linkedForChild = (item) => ({
+    programs: programBadge,
+    goals: (live?.goals || []).filter(g => g.id === item.goalId).map(g => ({ id: g.id, title: g.title })),
+  });
 
   useEffect(() => {
     if (patientId && program?.id) {
@@ -825,7 +836,7 @@ export function CarePlanView({ patientId, program }) {
             onLinkOwner={setLinkOwner}
             onStatusMenu={setStatusMenu}
             onRowMenu={setStatusMenu}
-            linkCount={linkCount}
+            linked={linkedForGoal}
             emptyState={filteredGoals.length === 0 ? <div className={styles.emptyRow}>No goals match the filters.</div> : null}
           />
         ))}
@@ -886,7 +897,7 @@ export function CarePlanView({ patientId, program }) {
             onStatusMenu={setStatusMenu}
             onRowMenu={setStatusMenu}
             onAssigneeChange={handleAssigneeChange}
-            linkCount={linkCount}
+            linked={linkedForChild}
             platformUsers={platformUsers}
             emptyState={filteredInterventions.length === 0 ? <div className={styles.emptyRow}>No interventions match the filters.</div> : null}
           />
@@ -926,7 +937,7 @@ export function CarePlanView({ patientId, program }) {
             onLinkOwner={setLinkOwner}
             onStatusMenu={setStatusMenu}
             onRowMenu={setStatusMenu}
-            linkCount={linkCount}
+            linked={linkedForChild}
             emptyState={filteredBarriers.length === 0 ? <div className={styles.emptyRow}>No barriers match the filters.</div> : null}
           />
         ))}

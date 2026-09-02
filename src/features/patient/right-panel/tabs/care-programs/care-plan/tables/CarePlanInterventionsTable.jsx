@@ -28,7 +28,7 @@ export function CarePlanInterventionsTable({
   onRowMenu,
   onOpenIntervention,
   onAssigneeChange,
-  linkCount,
+  linked,
   platformUsers,
   emptyState,
 }) {
@@ -101,7 +101,7 @@ export function CarePlanInterventionsTable({
                   icon={i.icon}
                   title={i.title}
                   meta={i.duration || null}
-                  linkCount={linkCount(i.id)}
+                  linked={linked(i)}
                   canEdit={canEdit}
                   onLinkClick={() => onLinkOwner({ kind: 'intervention', item: i })}
                 />
