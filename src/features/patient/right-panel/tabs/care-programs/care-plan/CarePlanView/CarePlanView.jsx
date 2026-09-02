@@ -274,6 +274,12 @@ export function CarePlanView({ patientId, program }) {
     [appliedTemplateIds, carePlanTemplates],
   );
   const appliedTemplateCount = appliedTemplates.length;
+  // Cap the applied-template chips so a heavily-templated plan doesn't bury the
+  // GBI tables under rows of badges; the rest collapse into a "+N" that opens
+  // the templates drawer.
+  const MAX_VISIBLE_TEMPLATES = 4;
+  const visibleTemplates = appliedTemplates.slice(0, MAX_VISIBLE_TEMPLATES);
+  const hiddenTemplateCount = appliedTemplateCount - visibleTemplates.length;
   const signedBy = live?.plan?.signedBy;
   const signedAt = live?.plan?.signedAt;
   const showSignedBanner = isCarePlanSigned(live?.plan);
@@ -557,7 +563,7 @@ export function CarePlanView({ patientId, program }) {
         <div className={styles.problemsBar}>
           <div className={styles.conditionRow}>
             <div className={styles.chips}>
-              {appliedTemplates.map(t => (
+              {visibleTemplates.map(t => (
                 <button
                   key={t.id}
                   type="button"
@@ -574,6 +580,16 @@ export function CarePlanView({ patientId, program }) {
                   />
                 </button>
               ))}
+              {hiddenTemplateCount > 0 ? (
+                <button
+                  type="button"
+                  className={styles.appliedTemplateBadge}
+                  onClick={() => setTemplatesDrawerOpen(true)}
+                  aria-label={`Show ${hiddenTemplateCount} more applied templates`}
+                >
+                  <Badge tone="grey" size="S" label={`+${hiddenTemplateCount}`} />
+                </button>
+              ) : null}
               {visibleConditions.map(c => {
                 const count = conditionCounts.get(c.label) ?? 0;
                 const isAlert = !!(c.primary || c.alert);
