@@ -30,9 +30,16 @@ export function CarePlanInterventionsTable({
   onAssigneeChange,
   linked,
   platformUsers,
+  template = false,
   emptyState,
 }) {
   const columns = useMemo(() => {
+    if (template) {
+      return withSelectColumn(
+        INTERVENTION_COLUMNS.filter(c => c.key === 'priority' || c.key === 'title'),
+        bulkMode,
+      );
+    }
     const base = INTERVENTION_COLUMNS.map((col) => (col.key === 'actions'
       ? {
           ...col,
@@ -50,7 +57,7 @@ export function CarePlanInterventionsTable({
         }
       : col));
     return withSelectColumn(base, bulkMode);
-  }, [bulkMode]);
+  }, [bulkMode, template]);
 
   const sortableRows = useMemo(() => enrichInterventionRows(rows), [rows]);
   const { sorted, sortKey, sortDir, requestSort } = useTableSort(sortableRows, 'title', 'asc');
@@ -106,43 +113,47 @@ export function CarePlanInterventionsTable({
                   onLinkClick={() => onLinkOwner({ kind: 'intervention', item: i })}
                 />
               </td>
-              <td className={styles.assigneeTd} onClick={e => e.stopPropagation()}>
-                <AssigneeChange
-                  size="S"
-                  fillContainer
-                  nameMuted
-                  name={i.assignee.name}
-                  initials={i.assignee.initials}
-                  showRole={false}
-                  unassigned={i.assignee.name === 'Unassigned'}
-                  unassignedLabel="Unassigned"
-                  users={platformUsers}
-                  pickerTitle="Change assignee"
-                  onSelect={(u) => onAssigneeChange(i, u)}
-                  disabled={!canEdit}
-                />
-              </td>
-              <td className={styles.adherenceTd} onClick={e => e.stopPropagation()}>
-                <GbiProgressCell progress={i.adherence} />
-              </td>
-              <td className={styles.statusTd} onClick={e => e.stopPropagation()}>
-                <GbiStatusButton
-                  value={i.status}
-                  disabled={!canEdit}
-                  onOpen={rect => onStatusMenu({ kind: 'intv', item: i, rect })}
-                />
-              </td>
-              <td className={styles.actionsTd} onClick={e => e.stopPropagation()}>
-                <ActionButton
-                  icon="solar:menu-dots-linear"
-                  size="S"
-                  tooltip="More"
-                  tooltipBelow
-                  tooltipLeft
-                  disabled={!canEdit}
-                  onClick={(e) => onRowMenu({ kind: 'intv-menu', item: i, rect: e.currentTarget.getBoundingClientRect() })}
-                />
-              </td>
+              {!template && (
+                <>
+                  <td className={styles.assigneeTd} onClick={e => e.stopPropagation()}>
+                    <AssigneeChange
+                      size="S"
+                      fillContainer
+                      nameMuted
+                      name={i.assignee.name}
+                      initials={i.assignee.initials}
+                      showRole={false}
+                      unassigned={i.assignee.name === 'Unassigned'}
+                      unassignedLabel="Unassigned"
+                      users={platformUsers}
+                      pickerTitle="Change assignee"
+                      onSelect={(u) => onAssigneeChange(i, u)}
+                      disabled={!canEdit}
+                    />
+                  </td>
+                  <td className={styles.adherenceTd} onClick={e => e.stopPropagation()}>
+                    <GbiProgressCell progress={i.adherence} />
+                  </td>
+                  <td className={styles.statusTd} onClick={e => e.stopPropagation()}>
+                    <GbiStatusButton
+                      value={i.status}
+                      disabled={!canEdit}
+                      onOpen={rect => onStatusMenu({ kind: 'intv', item: i, rect })}
+                    />
+                  </td>
+                  <td className={styles.actionsTd} onClick={e => e.stopPropagation()}>
+                    <ActionButton
+                      icon="solar:menu-dots-linear"
+                      size="S"
+                      tooltip="More"
+                      tooltipBelow
+                      tooltipLeft
+                      disabled={!canEdit}
+                      onClick={(e) => onRowMenu({ kind: 'intv-menu', item: i, rect: e.currentTarget.getBoundingClientRect() })}
+                    />
+                  </td>
+                </>
+              )}
             </tr>
         )}
       />

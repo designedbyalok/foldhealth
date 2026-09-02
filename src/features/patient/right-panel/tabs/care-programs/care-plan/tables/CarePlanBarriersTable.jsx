@@ -24,6 +24,7 @@ function BarrierRow({
   onStatusMenu,
   onRowMenu,
   linked,
+  template,
 }) {
   return (
     <tr key={b.id} className={`${styles.row} ${styles.gbiRow}`}>
@@ -46,24 +47,28 @@ function BarrierRow({
           onLinkClick={() => onLinkOwner({ kind: 'barrier', item: b })}
         />
       </td>
-      <td className={styles.barrierStatusTd} onClick={e => e.stopPropagation()}>
-        <GbiStatusButton
-          value={b.status}
-          disabled={!canEdit}
-          onOpen={rect => onStatusMenu({ kind: 'barrier', item: b, rect })}
-        />
-      </td>
-      <td className={styles.actionsTd} onClick={e => e.stopPropagation()}>
-        <ActionButton
-          icon="solar:menu-dots-linear"
-          size="S"
-          tooltip="More"
-          tooltipBelow
-          tooltipLeft
-          disabled={!canEdit}
-          onClick={(e) => onRowMenu({ kind: 'barrier-menu', item: b, rect: e.currentTarget.getBoundingClientRect() })}
-        />
-      </td>
+      {!template && (
+        <>
+          <td className={styles.barrierStatusTd} onClick={e => e.stopPropagation()}>
+            <GbiStatusButton
+              value={b.status}
+              disabled={!canEdit}
+              onOpen={rect => onStatusMenu({ kind: 'barrier', item: b, rect })}
+            />
+          </td>
+          <td className={styles.actionsTd} onClick={e => e.stopPropagation()}>
+            <ActionButton
+              icon="solar:menu-dots-linear"
+              size="S"
+              tooltip="More"
+              tooltipBelow
+              tooltipLeft
+              disabled={!canEdit}
+              onClick={(e) => onRowMenu({ kind: 'barrier-menu', item: b, rect: e.currentTarget.getBoundingClientRect() })}
+            />
+          </td>
+        </>
+      )}
     </tr>
   );
 }
@@ -79,10 +84,14 @@ export function CarePlanBarriersTable({
   onStatusMenu,
   onRowMenu,
   linked,
+  template = false,
   emptyState,
 }) {
   const [closedOpen, setClosedOpen] = useState(false);
   const { sorted, sortKey, sortDir, requestSort } = useTableSort(rows, 'title', 'asc');
+  const columns = template
+    ? BARRIER_COLUMNS.filter(c => c.key === 'priority' || c.key === 'title')
+    : BARRIER_COLUMNS;
 
   const { openRows, closedRows } = useMemo(() => {
     const open = [];
@@ -101,7 +110,7 @@ export function CarePlanBarriersTable({
         embeddedNoScroll
         header={null}
         hideBulkBar
-        columns={withSelectColumn(BARRIER_COLUMNS, bulkMode)}
+        columns={withSelectColumn(columns, bulkMode)}
         rows={openRows}
         sortKey={sortKey}
         sortDir={sortDir}
@@ -121,6 +130,7 @@ export function CarePlanBarriersTable({
             onStatusMenu={onStatusMenu}
             onRowMenu={onRowMenu}
             linked={linked}
+            template={template}
           />
         )}
       />
@@ -144,8 +154,8 @@ export function CarePlanBarriersTable({
               <colgroup>
                 <col style={{ width: GBI_COL_WIDTH.priority }} />
                 <col />
-                <col style={{ width: GBI_COL_WIDTH.status }} />
-                <col style={{ width: GBI_COL_WIDTH.actions }} />
+                {!template && <col style={{ width: GBI_COL_WIDTH.status }} />}
+                {!template && <col style={{ width: GBI_COL_WIDTH.actions }} />}
               </colgroup>
               <tbody>
                 {closedRows.map(b => (
@@ -160,6 +170,7 @@ export function CarePlanBarriersTable({
                     onStatusMenu={onStatusMenu}
                     onRowMenu={onRowMenu}
                     linked={linked}
+                    template={template}
                   />
                 ))}
               </tbody>

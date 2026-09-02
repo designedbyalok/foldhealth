@@ -27,10 +27,14 @@ export function CarePlanGoalsTable({
   onStatusMenu,
   onRowMenu,
   linked,
+  template = false,
   emptyState,
 }) {
   const sortableRows = useMemo(() => enrichGoalRows(rows), [rows]);
   const { sorted, sortKey, sortDir, requestSort } = useTableSort(sortableRows, 'title', 'asc');
+  const columns = template
+    ? GOAL_COLUMNS.filter(c => c.key === 'priority' || c.key === 'title')
+    : GOAL_COLUMNS;
 
   return (
     <div className={styles.tableWrap}>
@@ -39,7 +43,7 @@ export function CarePlanGoalsTable({
         embeddedNoScroll
         header={null}
         hideBulkBar
-        columns={withSelectColumn(GOAL_COLUMNS, bulkMode)}
+        columns={withSelectColumn(columns, bulkMode)}
         rows={sorted}
         sortKey={sortKey}
         sortDir={sortDir}
@@ -84,32 +88,36 @@ export function CarePlanGoalsTable({
                 onLinkClick={() => onLinkOwner({ kind: 'goal', item: g })}
               />
             </td>
-            <td className={styles.valueTd} onClick={e => e.stopPropagation()}>
-              <span className={`${styles.valueText} ${g.currentValue === 'No Data' ? styles.muted : ''}`}>
-                {g.currentValue}
-              </span>
-            </td>
-            <td className={styles.progressTd} onClick={e => e.stopPropagation()}>
-              <GbiProgressCell progress={g.progress} />
-            </td>
-            <td className={styles.statusTd} onClick={e => e.stopPropagation()}>
-              <GbiStatusButton
-                value={g.status}
-                disabled={!canEdit}
-                onOpen={rect => onStatusMenu({ kind: 'goal', item: g, rect })}
-              />
-            </td>
-            <td className={styles.actionsTd} onClick={e => e.stopPropagation()}>
-              <ActionButton
-                icon="solar:menu-dots-linear"
-                size="S"
-                tooltip="More"
-                tooltipBelow
-                tooltipLeft
-                disabled={!canEdit}
-                onClick={(e) => onRowMenu({ kind: 'goal-menu', item: g, rect: e.currentTarget.getBoundingClientRect() })}
-              />
-            </td>
+            {!template && (
+              <>
+                <td className={styles.valueTd} onClick={e => e.stopPropagation()}>
+                  <span className={`${styles.valueText} ${g.currentValue === 'No Data' ? styles.muted : ''}`}>
+                    {g.currentValue}
+                  </span>
+                </td>
+                <td className={styles.progressTd} onClick={e => e.stopPropagation()}>
+                  <GbiProgressCell progress={g.progress} />
+                </td>
+                <td className={styles.statusTd} onClick={e => e.stopPropagation()}>
+                  <GbiStatusButton
+                    value={g.status}
+                    disabled={!canEdit}
+                    onOpen={rect => onStatusMenu({ kind: 'goal', item: g, rect })}
+                  />
+                </td>
+                <td className={styles.actionsTd} onClick={e => e.stopPropagation()}>
+                  <ActionButton
+                    icon="solar:menu-dots-linear"
+                    size="S"
+                    tooltip="More"
+                    tooltipBelow
+                    tooltipLeft
+                    disabled={!canEdit}
+                    onClick={(e) => onRowMenu({ kind: 'goal-menu', item: g, rect: e.currentTarget.getBoundingClientRect() })}
+                  />
+                </td>
+              </>
+            )}
           </tr>
         )}
       />
