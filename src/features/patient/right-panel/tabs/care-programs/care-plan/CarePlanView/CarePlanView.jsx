@@ -62,17 +62,17 @@ const INTERVENTION_EDITORS = {
 };
 
 /** Collapsible GBI section header: title · divider · add action · [optional trailing end]. */
-function GbiSectionHead({ title, open, onToggle, addButton, trailingEnd }) {
+function GbiSectionHead({ title, count, open, onToggle, addButton, trailingEnd }) {
   return (
     <div className={`${styles.sectionHead} ${styles.gbiSectionHead}`}>
-      <SectionTitle label={title} open={open} onToggle={onToggle} />
+      <SectionTitle label={title} count={count} open={open} onToggle={onToggle} />
       <span className={styles.sectionActionDivider} aria-hidden="true" />
       {addButton}
       {trailingEnd ? <div className={styles.gbiSectionHeadEnd}>{trailingEnd}</div> : null}
     </div>
   );
 }
-function SectionTitle({ label, open, onToggle }) {
+function SectionTitle({ label, count, open, onToggle }) {
   return (
     <button type="button" className={styles.sectionToggle} onClick={onToggle} aria-expanded={open}>
       <DownChevronIcon
@@ -81,6 +81,7 @@ function SectionTitle({ label, open, onToggle }) {
         className={`${styles.sectionChevron} ${open ? '' : styles.sectionChevronClosed}`}
       />
       <span className={styles.sectionTitle}>{label}</span>
+      {count > 0 ? <span className={styles.sectionCount}>{count}</span> : null}
     </button>
   );
 }
@@ -263,6 +264,25 @@ export function CarePlanView({ patientId, program }) {
     }
     return counts;
   }, [data.goals, data.interventions, data.barriers, data.conditions]);
+
+  // Plan-level rollup for the summary strip: counts, status mix, avg goal progress.
+  const planStats = useMemo(() => {
+    const goals = data.goals, iv = data.interventions, br = data.barriers || [];
+    const all = [...goals, ...iv, ...br];
+    const avgProgress = goals.length
+      ? Math.round(goals.reduce((sum, g) => sum + (Number(g.progress) || 0), 0) / goals.length)
+      : 0;
+    return {
+      goals: goals.length,
+      iv: iv.length,
+      br: br.length,
+      total: all.length,
+      met: all.filter(x => x.status === 'Met').length,
+      inProgress: all.filter(x => x.status === 'In Progress').length,
+      overdue: all.filter(x => x.status === 'Overdue').length,
+      avgProgress,
+    };
+  }, [data]);
 
   const visibleConditions = data.conditions.slice(0, MAX_VISIBLE_CONDITIONS);
   const hiddenConditionCount = Math.max(0, data.conditionTotal - visibleConditions.length);
@@ -644,6 +664,20 @@ export function CarePlanView({ patientId, program }) {
       </div>
 
       <div className={styles.contentBody}>
+      {!carePlanLoading && planStats.total > 0 && (
+        <div className={styles.summaryStrip}>
+          <span className={styles.summaryMetric}><strong>{planStats.goals}</strong> Goals</span>
+          <span className={styles.summaryMetric}><strong>{planStats.iv}</strong> Interventions</span>
+          <span className={styles.summaryMetric}><strong>{planStats.br}</strong> Barriers</span>
+          <span className={styles.summaryDivider} aria-hidden="true" />
+          <span className={styles.summaryMetric}><strong>{planStats.avgProgress}%</strong> avg goal progress</span>
+          <span className={styles.summaryStatuses}>
+            {planStats.met > 0 && <Badge tone="success" size="S" label={`${planStats.met} Met`} />}
+            {planStats.inProgress > 0 && <Badge tone="warning" size="S" label={`${planStats.inProgress} In Progress`} />}
+            {planStats.overdue > 0 && <Badge tone="error" size="S" label={`${planStats.overdue} Overdue`} />}
+          </span>
+        </div>
+      )}
       {filtersOpen && (
         <div className={styles.filterBar}>
           <FilterChip label="Status" options={GBI_STATUSES} selected={filters.status} onChange={v => setFilter('status', v)} />
@@ -686,6 +720,7 @@ export function CarePlanView({ patientId, program }) {
       <div className={styles.section}>
         <GbiSectionHead
           title="Goals"
+          count={data.goals.length}
           open={openSections.goals}
           onToggle={() => toggleSection('goals')}
           trailingEnd={(
@@ -732,6 +767,7 @@ export function CarePlanView({ patientId, program }) {
       <div className={styles.section}>
         <GbiSectionHead
           title="Interventions"
+          count={data.interventions.length}
           open={openSections.interventions}
           onToggle={() => toggleSection('interventions')}
           addButton={(
@@ -793,6 +829,7 @@ export function CarePlanView({ patientId, program }) {
       <div className={styles.section}>
         <GbiSectionHead
           title="Open Barriers"
+          count={(data.barriers || []).length}
           open={openSections.barriers}
           onToggle={() => toggleSection('barriers')}
           addButton={(

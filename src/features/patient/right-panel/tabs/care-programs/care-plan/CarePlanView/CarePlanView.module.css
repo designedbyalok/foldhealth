@@ -29,6 +29,38 @@
   min-width: 0;
 }
 
+.summaryStrip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-50);
+}
+.summaryMetric {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  white-space: nowrap;
+}
+.summaryMetric strong {
+  font-weight: 600;
+  color: var(--neutral-500);
+}
+.summaryDivider {
+  width: 0.5px;
+  height: var(--space-4);
+  background: var(--neutral-150);
+  flex-shrink: 0;
+}
+.summaryStatuses {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: auto;
+}
+
 /* ── Condition chips (Paper BPH-0) ── */
 .conditionRow {
   display: flex;
@@ -201,6 +233,20 @@
   font-size: var(--font-base);
   font-weight: 500;
   color: var(--neutral-500);
+}
+.sectionCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--space-4);
+  height: var(--space-4);
+  padding: 0 var(--space-1);
+  border-radius: var(--space-1);
+  background: var(--neutral-75);
+  font-size: var(--font-xs);
+  font-weight: 500;
+  color: var(--neutral-300);
+  line-height: 1;
 }
 .sectionToggle {
   display: inline-flex;
