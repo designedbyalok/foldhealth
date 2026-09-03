@@ -7,6 +7,9 @@
   gap: var(--space-4);
   padding: var(--space-4);
 }
+/* Embedded in the Care Management pane: the pane already provides the outer
+   padding, so drop the container's own to keep content aligned across tabs. */
+.embedded { padding: 0; }
 
 /* ── Header ── */
 .header {

@@ -1,13 +1,17 @@
 .container { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
 
-/* Comprehensive / Activity panes: match the Care Programs view padding so the
-   shared toolbar aligns across every sub-tab. */
+/* Each sub-tab's pane stays mounted; only the active one is shown. */
+.paneSlot { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.paneSlot[hidden] { display: none; }
+
+/* Comprehensive / Activity panes: match the Care Programs view padding exactly
+   (12px on all sides) so the toolbar and content align across every sub-tab. */
 .pane {
   display: flex;
   flex-direction: column;
   flex: 1;
   overflow: hidden;
-  padding: var(--space-3) var(--space-3) 0 var(--space-2);
+  padding: var(--space-3);
   row-gap: var(--space-3);
 }
 .paneBody { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; }

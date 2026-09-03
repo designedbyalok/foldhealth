@@ -97,6 +97,8 @@ export function CareProgramsTabTable({
                   icon="solar:menu-dots-linear"
                   size="S"
                   tooltip="More actions"
+                  tooltipBelow
+                  tooltipLeft
                   className={`${styles.rowMenuBtn} ${rowMenuId === p.id ? styles.rowMenuBtnOpen : ''}`}
                   onClick={e => setRowMenu({ id: p.id, rect: e.currentTarget.getBoundingClientRect() })}
                 />

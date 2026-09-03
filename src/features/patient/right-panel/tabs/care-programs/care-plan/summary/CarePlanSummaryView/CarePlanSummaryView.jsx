@@ -7,9 +7,8 @@ import { PriorityIcon } from '../../../../../../../../components/PriorityIcon/Pr
 import { RingEmptyState } from '../../../../../../../../components/RingEmptyState/RingEmptyState';
 import { TableSkeleton } from '../../../../../../../../components/TableSkeleton/TableSkeleton';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
+import { buildCarePlanSnapshot, filterCarePlanSnapshot } from '../carePlanSnapshot';
 import styles from './CarePlanSummaryView.module.css';
-
-const norm = (s) => (s || '').trim().toLowerCase();
 
 // One row's worth of goal, annotated with the program it came from and whether
 // the same goal title shows up on more than one program (a duplicate GBI).
@@ -71,50 +70,24 @@ export function CarePlanSummaryView({ patientId, programs, onClose, onOpenProgra
     if (patientId) fetchAllPatientCarePlans(patientId);
   }, [patientId, fetchAllPatientCarePlans]);
 
-  // Flatten every program's plan into two lists tagged with their program, and
-  // union the conditions. Duplicate detection is by normalized title across
-  // programs — the same goal on two programs is surfaced, not hidden.
-  const { conditions, goals, interventions } = useMemo(() => {
-    const conditionSet = new Map();
-    const goalRows = [];
-    const intvRows = [];
-    const goalTitleCounts = new Map();
-
-    for (const program of programs) {
-      const plan = patientCarePlans[`${patientId}::${program.id}`];
-      if (!plan) continue;
-      for (const c of (plan.plan?.conditions || [])) if (!conditionSet.has(norm(c.label))) conditionSet.set(norm(c.label), c.label);
-      for (const g of plan.goals) {
-        goalTitleCounts.set(norm(g.title), (goalTitleCounts.get(norm(g.title)) || 0) + 1);
-        goalRows.push({ ...g, program, programCode: program.code });
-      }
-      for (const i of plan.interventions) intvRows.push({ ...i, program, programCode: program.code });
-    }
-    for (const g of goalRows) g.duplicate = goalTitleCounts.get(norm(g.title)) > 1;
-
-    return {
-      conditions: [...conditionSet.values()],
-      goals: goalRows,
-      interventions: intvRows,
-    };
-  }, [programs, patientCarePlans, patientId]);
+  // Flatten every program's plan into goals + interventions tagged with their
+  // program (shared with the Download export).
+  const { conditions, goals, interventions } = useMemo(
+    () => buildCarePlanSnapshot(programs, patientCarePlans, patientId),
+    [programs, patientCarePlans, patientId],
+  );
 
   // Apply the toolbar's search + program filter to the flattened snapshot.
-  const q = searchText.trim().toLowerCase();
   const progKey = programFilter.join('|');
-  const filteredGoals = useMemo(() => {
-    const set = programFilter.length ? new Set(programFilter) : null;
-    return goals.filter(g => (!q || g.title.toLowerCase().includes(q)) && (!set || set.has(g.programCode)));
-  }, [goals, q, progKey]); // eslint-disable-line react-hooks/exhaustive-deps
-  const filteredInterventions = useMemo(() => {
-    const set = programFilter.length ? new Set(programFilter) : null;
-    return interventions.filter(i => (!q || i.title.toLowerCase().includes(q)) && (!set || set.has(i.programCode)));
-  }, [interventions, q, progKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { goals: filteredGoals, interventions: filteredInterventions } = useMemo(
+    () => filterCarePlanSnapshot({ conditions, goals, interventions }, { searchText, programFilter }),
+    [conditions, goals, interventions, searchText, progKey], // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   const isEmpty = loadedFor && goals.length === 0 && interventions.length === 0;
 
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} ${embedded ? styles.embedded : ''}`}>
       {!embedded && (
         <div className={styles.header}>
           <div className={styles.headerText}>

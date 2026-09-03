@@ -7,6 +7,7 @@ import { SubTabs } from '../../../../../../components/SubTabs/SubTabs';
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { CareProgramsTab } from '../../care-programs/CareProgramsTab/CareProgramsTab';
 import { CarePlanSummaryView } from '../../care-programs/care-plan/summary/CarePlanSummaryView/CarePlanSummaryView.jsx';
+import { buildCarePlanSnapshot, filterCarePlanSnapshot, downloadCarePlanCsv } from '../../care-programs/care-plan/summary/carePlanSnapshot';
 import { programUrlKey } from '../../care-programs/CareProgramsTab/CareProgramsTab.utils';
 import { stepsFor, flatSteps } from '../../care-programs/program-detail/ProgramDetailView/ProgramDetailView.utils';
 import { CareManagementToolbar } from '../CareManagementToolbar/CareManagementToolbar';
@@ -20,11 +21,25 @@ const CM_TABS = ['Care Programs', 'Comprehensive Care Plan', 'Program Activity L
  *  search + (program) filter and a Download CTA. */
 function ComprehensiveCarePlanPane({ header, patientId, programs, onClose, onOpenProgramStep }) {
   const showToast = useAppStore(s => s.showToast);
+  const patientCarePlans = useAppStore(s => s.patientCarePlans);
   const [searchMode, setSearchMode] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [programFilter, setProgramFilter] = useState([]);
   const programCodes = useMemo(() => [...new Set(programs.map(p => p.code))], [programs]);
+
+  const handleDownload = () => {
+    const snapshot = filterCarePlanSnapshot(
+      buildCarePlanSnapshot(programs, patientCarePlans, patientId),
+      { searchText, programFilter },
+    );
+    if (snapshot.goals.length === 0 && snapshot.interventions.length === 0) {
+      showToast?.('No care plan data to download');
+      return;
+    }
+    downloadCarePlanCsv(snapshot, `care-plan-${patientId || 'patient'}`);
+    showToast?.('Care plan downloaded');
+  };
 
   return (
     <div className={styles.pane}>
@@ -39,7 +54,7 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose, onOpe
             variant="tertiary"
             size="L"
             leadingIcon="solar:download-minimalistic-linear"
-            onClick={() => showToast?.('Preparing care plan download…')}
+            onClick={handleDownload}
           >
             Download
           </Button>
@@ -167,10 +182,15 @@ export function CareManagementView() {
   // so it renders inline in that pane's shared toolbar row.
   const subTabBar = <SubTabs tabs={CM_TABS} activeKey={subTab} onChange={setSubTab} />;
 
+  // Keep all three panes mounted and toggle visibility, so switching only
+  // shows/hides a pane instead of unmounting + remounting it — no re-fetch,
+  // no re-animation, no reflow. The result is a flicker-free switch.
   return (
     <div className={styles.container}>
-      {subTab === 'Care Programs' && <CareProgramsTab header={subTabBar} />}
-      {subTab === 'Comprehensive Care Plan' && (
+      <div className={styles.paneSlot} hidden={subTab !== 'Care Programs'}>
+        <CareProgramsTab header={subTabBar} />
+      </div>
+      <div className={styles.paneSlot} hidden={subTab !== 'Comprehensive Care Plan'}>
         <ComprehensiveCarePlanPane
           header={subTabBar}
           patientId={patientId}
@@ -178,8 +198,10 @@ export function CareManagementView() {
           onClose={() => setSubTab('Care Programs')}
           onOpenProgramStep={openProgramAtCarePlan}
         />
-      )}
-      {subTab === 'Program Activity Log' && <ProgramActivityLog header={subTabBar} />}
+      </div>
+      <div className={styles.paneSlot} hidden={subTab !== 'Program Activity Log'}>
+        <ProgramActivityLog header={subTabBar} />
+      </div>
     </div>
   );
 }
