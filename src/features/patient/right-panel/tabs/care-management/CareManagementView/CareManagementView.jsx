@@ -152,7 +152,9 @@ function ProgramActivityLog({ header }) {
  * only the CTA changes per tab. Each pane reuses its existing, data-backed view.
  */
 export function CareManagementView() {
-  const [subTab, setSubTab] = useState('Care Programs');
+  // Sub-tab lives in the store so it rides the URL and survives a refresh.
+  const subTab = useAppStore(s => s.careManagementTab);
+  const setSubTab = useAppStore(s => s.setCareManagementTab);
   const patientId = useAppStore(s => s.selectedPatientId);
   const careProgramsByPatient = useAppStore(s => s.careProgramsByPatient);
   const fetchCareProgramsForPatient = useAppStore(s => s.fetchCareProgramsForPatient);

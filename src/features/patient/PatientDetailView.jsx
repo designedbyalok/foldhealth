@@ -5,7 +5,6 @@ import { PatientP360Banner } from './shell/PatientP360Banner/PatientP360Banner';
 import { PatientProfileTabs } from './left-panel/PatientProfileTabs/PatientProfileTabs';
 import { ProfileTabBar } from './shell/ProfileTabBar/ProfileTabBar';
 import { CareManagementView } from './right-panel/tabs/care-management/CareManagementView/CareManagementView';
-import { CareProgramsTab } from './right-panel/tabs/care-programs/CareProgramsTab/CareProgramsTab';
 import { OverviewTab } from './right-panel/tabs/overview/OverviewTab/OverviewTab';
 import { PatientNotesTab } from './right-panel/tabs/notes/PatientNotesTab';
 import { ClinicalNotePreviewDrawer } from '../tasks/ClinicalNotePreviewDrawer';
@@ -210,8 +209,6 @@ export function PatientDetailView() {
               <PatientNotesTab patient={patient} />
             ) : activeTab === 'Care Management' ? (
               <CareManagementView />
-            ) : activeTab === 'Care Programs' ? (
-              <CareProgramsTab />
             ) : activeTab === 'Profile' ? (
               <ProfileTab patient={patient} />
             ) : activeTab === 'Tasks' ? (

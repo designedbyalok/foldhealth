@@ -82,7 +82,7 @@ export const PROGRAM_ACTIVITY_BY_MONTH = [
 // left panel dropped both to avoid duplicate nav on the P360 screen.
 export const PROFILE_TABS = [
   'Overview', 'Timeline', 'Notes', 'Assessments', 'Care Management',
-  'Care Programs', 'Tasks', 'Documents', 'Orders & Referrals', 'Profile',
+  'Tasks', 'Documents', 'Orders & Referrals', 'Profile',
 ];
 
 export const CARE_PROGRAMS_MOCK = [

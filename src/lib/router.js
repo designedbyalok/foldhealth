@@ -18,9 +18,10 @@ export function parseHash() {
     id: segments[3] || null,
     sub: segments[4] || null,
     extra: segments[5] || null,
-    // Deepest patient URLs need a 7th segment:
-    // #/population/<list>/patient/<memberId>/care-programs/<program>/<step>
+    // Deepest patient URLs need a 7th/8th segment:
+    // #/population/<list>/patient/<memberId>/care-management/care-programs/<program>/<step>
     extra2: segments[6] || null,
+    extra3: segments[7] || null,
   };
 }
 
@@ -42,42 +43,60 @@ const PATIENT_SLICES = ['patients', 'hccMembers', 'awvMembers', 'jsaMembers', 'c
 const tabSlug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const SLUG_TO_PROFILE_TAB = Object.fromEntries(PROFILE_TABS.map(t => [tabSlug(t), t]));
 
-// Applies the tab/program/step segments of a patient URL onto a `hashToState`
-// updates object. Unknown tab slugs fall back to Overview; program/step ride
-// along only under the Care Programs tab. 'summary' is a virtual program
-// key for the cross-program Care Plan summary view.
-function applyPatientSubRoute(updates, tabSeg, programSeg, stepSeg) {
-  const tab = (tabSeg && SLUG_TO_PROFILE_TAB[tabSeg]) || 'Overview';
-  updates.patientProfileTab = tab;
-  const inPrograms = tab === 'Care Programs';
-  if (!inPrograms) {
-    updates.selectedCareProgramKey = null;
-    updates.careProgramStep = null;
-    updates.carePlanSummaryOpen = false;
-    return;
-  }
+// Care Programs is now a sub-tab of Care Management (alongside the
+// comprehensive plan and the activity log).
+const CM_SUBTABS = ['Care Programs', 'Comprehensive Care Plan', 'Program Activity Log'];
+const SLUG_TO_CM_SUBTAB = Object.fromEntries(CM_SUBTABS.map(t => [tabSlug(t), t]));
+
+// The open program / step ride under the Care Programs sub-tab. 'summary' is
+// the legacy cross-program view — now the Comprehensive Care Plan sub-tab.
+function applyCareProgramsProgram(updates, programSeg, stepSeg) {
   if (programSeg === 'summary') {
-    updates.carePlanSummaryOpen = true;
+    updates.careManagementTab = 'Comprehensive Care Plan';
     updates.selectedCareProgramKey = null;
     updates.careProgramStep = null;
     return;
   }
-  updates.carePlanSummaryOpen = false;
   updates.selectedCareProgramKey = programSeg || null;
   updates.careProgramStep = stepSeg || null;
 }
 
-// The tab/program/step tail of a patient URL, from store state.
+// Applies the tab / (Care Management sub-tab) / program / step segments of a
+// patient URL onto a `hashToState` updates object. Unknown tab slugs fall back
+// to Overview.
+function applyPatientSubRoute(updates, tabSeg, seg1, seg2, seg3) {
+  updates.selectedCareProgramKey = null;
+  updates.careProgramStep = null;
+  updates.carePlanSummaryOpen = false;
+
+  // Backward-compat: the old top-level `care-programs` tab (…/care-programs/
+  // <program>/<step>) is now Care Management → Care Programs.
+  if (tabSeg === 'care-programs') {
+    updates.patientProfileTab = 'Care Management';
+    updates.careManagementTab = 'Care Programs';
+    applyCareProgramsProgram(updates, seg1, seg2);
+    return;
+  }
+
+  const tab = (tabSeg && SLUG_TO_PROFILE_TAB[tabSeg]) || 'Overview';
+  updates.patientProfileTab = tab;
+  if (tab !== 'Care Management') return;
+
+  // …/care-management/<sub-tab>[/<program>[/<step>]]
+  const sub = (seg1 && SLUG_TO_CM_SUBTAB[seg1]) || 'Care Programs';
+  updates.careManagementTab = sub;
+  if (sub === 'Care Programs') applyCareProgramsProgram(updates, seg2, seg3);
+}
+
+// The tab / sub-tab / program / step tail of a patient URL, from store state.
 function patientSubSegments(state) {
   const tab = state.patientProfileTab || 'Overview';
   if (tab === 'Overview') return [];
   const segs = [tabSlug(tab)];
-  if (tab === 'Care Programs') {
-    if (state.carePlanSummaryOpen) {
-      segs.push('summary');
-      return segs;
-    }
-    if (state.selectedCareProgramKey) {
+  if (tab === 'Care Management') {
+    const sub = state.careManagementTab || 'Care Programs';
+    segs.push(tabSlug(sub));
+    if (sub === 'Care Programs' && state.selectedCareProgramKey) {
       segs.push(state.selectedCareProgramKey);
       if (state.careProgramStep) segs.push(state.careProgramStep);
     }
@@ -345,7 +364,7 @@ export function hashToState(route, state = null) {
     // #/hedis/patient/<memberId>[/<tab>[/<program>[/<step>]]]
     if (route.section === 'patient' && route.tab) {
       updates.selectedPatientId = findPatientIdByMemberId(state, route.tab) || route.tab;
-      applyPatientSubRoute(updates, route.id, route.sub, route.extra);
+      applyPatientSubRoute(updates, route.id, route.sub, route.extra, route.extra2);
     }
     return updates;
   }
@@ -516,7 +535,7 @@ export function hashToState(route, state = null) {
   // Legacy patient URL: #/population/patient/<id>[/<tab>[/<program>[/<step>]]]
   if (route.section === 'patient' && route.tab) {
     updates.selectedPatientId = findPatientIdByMemberId(state, route.tab) || route.tab;
-    applyPatientSubRoute(updates, route.id, route.sub, route.extra);
+    applyPatientSubRoute(updates, route.id, route.sub, route.extra, route.extra2);
     return updates;
   }
   // Dynamic group detail deep link: #/population/<pgSlug>/rule/<groupId>.
@@ -537,7 +556,7 @@ export function hashToState(route, state = null) {
     updates.activeTab = tabForListSlug(route.section, URL_TO_LIST[route.section]);
     updates._subnavNavigated = true;
     updates.selectedPatientId = findPatientIdByMemberId(state, route.id) || route.id;
-    applyPatientSubRoute(updates, route.sub, route.extra, route.extra2);
+    applyPatientSubRoute(updates, route.sub, route.extra, route.extra2, route.extra3);
     return updates;
   }
   updates.selectedPatientId = null;

@@ -1788,6 +1788,10 @@ export const useAppStore = create((set, get) => ({
   // Patient detail view
   selectedPatientId: null,
   patientProfileTab: 'Overview',
+  // Care Programs is now a sub-tab of Care Management. This holds the active
+  // Care Management sub-tab ('Care Programs' | 'Comprehensive Care Plan' |
+  // 'Program Activity Log') and rides the URL so a refresh restores it.
+  careManagementTab: 'Care Programs',
   // Care program open in the Care Programs tab, as its URL key — a slug of
   // the program code plus the trigger ordinal past 1 ('awv', 'snp-2'). Kept
   // as the key (not the program object or row id) so the hash router can
@@ -1807,8 +1811,21 @@ export const useAppStore = create((set, get) => ({
     const from = get().activePage;
     track('nav.patient_opened', { patientId, from });
     const updates = { selectedPatientId: patientId, selectedCareProgramKey: null, careProgramStep: null, carePlanSummaryOpen: false };
-    if (opts.profileTab) updates.patientProfileTab = opts.profileTab;
-    if (opts.programCode) updates.pendingCareProgramCode = opts.programCode;
+    if (opts.profileTab) {
+      // 'Care Programs' is now the Care Programs sub-tab of Care Management.
+      if (opts.profileTab === 'Care Programs') {
+        updates.patientProfileTab = 'Care Management';
+        updates.careManagementTab = 'Care Programs';
+      } else {
+        updates.patientProfileTab = opts.profileTab;
+      }
+    }
+    if (opts.programCode) {
+      // Opening a specific program always lands on Care Management → Care Programs.
+      updates.patientProfileTab = 'Care Management';
+      updates.careManagementTab = 'Care Programs';
+      updates.pendingCareProgramCode = opts.programCode;
+    }
     set(updates);
     const state = get();
     if (state.activePage !== 'population') set({ activePage: 'population' });
@@ -1823,9 +1840,20 @@ export const useAppStore = create((set, get) => ({
   setPatientProfileTab: (tab) => {
     const from = get().patientProfileTab;
     track('nav.patient_tab_changed', { patientId: get().selectedPatientId, from, to: tab });
+    // 'Care Programs' now lives as a sub-tab under Care Management.
+    const isPrograms = tab === 'Care Programs';
+    const nextTab = isPrograms ? 'Care Management' : tab;
     // Leaving the tab closes any open program detail (matches the previous
     // component-local behavior, where unmounting dropped the selection).
-    set({ patientProfileTab: tab, selectedCareProgramKey: null, careProgramStep: null, carePlanSummaryOpen: false });
+    set({
+      patientProfileTab: nextTab,
+      ...(isPrograms ? { careManagementTab: 'Care Programs' } : {}),
+      selectedCareProgramKey: null, careProgramStep: null, carePlanSummaryOpen: false,
+    });
+    updateHash?.(get());
+  },
+  setCareManagementTab: (tab) => {
+    set({ careManagementTab: tab });
     updateHash?.(get());
   },
   openCareProgram: (programKey) => {
