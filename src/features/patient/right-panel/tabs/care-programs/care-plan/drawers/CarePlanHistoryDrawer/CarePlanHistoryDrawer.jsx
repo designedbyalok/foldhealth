@@ -45,13 +45,11 @@ export function CarePlanHistoryDrawer({ patientId, program, onClose }) {
 
   return (
     <Drawer title="Care Plan History" onClose={onClose}>
-      <div style={{ padding: 16 }}>
-        <Timeline
-          entries={timelineEntries}
-          currentUserName={currentUserName}
-          emptyLabel={loading ? 'Loading history…' : 'No care plan activity yet.'}
-        />
-      </div>
+      <Timeline
+        entries={timelineEntries}
+        currentUserName={currentUserName}
+        emptyLabel={loading ? 'Loading history…' : 'No care plan activity yet.'}
+      />
     </Drawer>
   );
 }
