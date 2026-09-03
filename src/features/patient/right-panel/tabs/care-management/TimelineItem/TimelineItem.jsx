@@ -5,9 +5,10 @@ import styles from './TimelineItem.module.css';
 
 /**
  * One activity row inside the Program Activity Log — grey icon avatar on the
- * spine, meta line (time • actor), title • status, program badge on the right.
+ * spine (peek/spine modes), meta line (time • actor), title • status, program
+ * badge on the right.
  */
-export function TimelineItem({ item, programCode, showDate = false, spine = false, peek = false, isFirst = true, isLast = false }) {
+export function TimelineItem({ item, programCode, showDate = false, spine = false, peek = false, isLast = false }) {
   const { icon } = activityIcon(item.activityKind);
   const code = programCode || item.programCode;
 
@@ -56,7 +57,7 @@ export function TimelineItem({ item, programCode, showDate = false, spine = fals
         <div className={styles.peekSpineCol}>
           <span className={styles.spineLine} />
           {spineAvatar}
-          <span className={isLast ? styles.spineLineEnd : styles.spineLineGrow} />
+          <span className={styles.spineLineGrow} />
         </div>
         <div className={styles.content}>
           {body}
@@ -70,7 +71,7 @@ export function TimelineItem({ item, programCode, showDate = false, spine = fals
     return (
       <div className={styles.spineRow}>
         <div className={styles.spineCol}>
-          {isFirst ? <span className={styles.spineLine} /> : null}
+          <span className={styles.spineLine} />
           {spineAvatar}
           <span className={isLast ? styles.spineLineEnd : styles.spineLineGrow} />
         </div>
@@ -84,7 +85,6 @@ export function TimelineItem({ item, programCode, showDate = false, spine = fals
 
   return (
     <div className={styles.row}>
-      {spineAvatar}
       <div className={styles.content}>
         {body}
         {badge}

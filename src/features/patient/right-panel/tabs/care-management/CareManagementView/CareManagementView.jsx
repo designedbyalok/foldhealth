@@ -17,6 +17,7 @@ import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkel
 import { RingEmptyState } from '../../../../../../components/RingEmptyState/RingEmptyState';
 import { DownChevronIcon } from '../../../../../../components/Icon/DownChevronIcon';
 import { CM_FILTERS } from '../../../../data/programActivityMock';
+import { resolvePatientStoreId } from '../../../../../../lib/resolvePatientStoreId';
 import styles from './CareManagementView.module.css';
 
 const CM_TABS = ['Care Programs', 'Comprehensive Care Plan', 'Program Activity Log'];
@@ -94,7 +95,7 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose, onOpe
  *  filter and an Add Care Note CTA. */
 function ProgramActivityLog({ header }) {
   const showToast = useAppStore(s => s.showToast);
-  const patientId = useAppStore(s => s.selectedPatientId);
+  const patientId = useAppStore(s => resolvePatientStoreId(s, s.selectedPatientId));
   const fetchPatientProgramActivity = useAppStore(s => s.fetchPatientProgramActivity);
   const activityByPatient = useAppStore(s => s.patientProgramActivity);
   const loadingMap = useAppStore(s => s.patientProgramActivityLoading);

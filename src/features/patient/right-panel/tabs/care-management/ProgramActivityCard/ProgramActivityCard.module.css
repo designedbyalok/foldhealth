@@ -31,11 +31,12 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  padding-bottom: var(--space-2);
 }
 
 .entry {
   display: flex;
-  gap: var(--space-1);
+  gap: var(--space-2);
   align-items: stretch;
   width: 100%;
   padding-left: var(--space-3);
@@ -47,15 +48,16 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  padding-bottom: var(--space-2);
 }
 
-/* Shared spine track — lines run continuously through each avatar. */
 .spineCol {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: var(--space-5);
   flex-shrink: 0;
+  padding-top: var(--space-3);
   align-self: stretch;
 }
 
@@ -72,10 +74,15 @@
   margin-bottom: calc(var(--space-1) / -4);
 }
 
-.spineLineGrow,
+.spineLineGrow {
+  flex: 1;
+  min-height: var(--space-3);
+  margin-top: calc(var(--space-1) / -4);
+}
+
 .spineLineEnd {
   flex: 1;
-  min-height: 0;
+  min-height: var(--space-3);
   margin-top: calc(var(--space-1) / -4);
 }
 
@@ -83,26 +90,15 @@
   flex-shrink: 0;
 }
 
-.stackButton {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-1);
-  width: 100%;
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  cursor: pointer;
-  text-align: left;
-}
-
 .stack {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   width: 100%;
   isolation: isolate;
+  /* How far each peeked card edge shows below the summary. */
+  --peek-reveal: calc(var(--space-3) / 2);
 }
 
 .summaryCard {
@@ -116,8 +112,6 @@
   border-radius: var(--space-2);
   box-shadow: var(--shadow-card);
   padding: var(--space-3);
-  padding-right: var(--space-5);
-  margin-bottom: calc((var(--space-12) + var(--space-3) / 2) * -1);
 }
 
 .summaryText {
@@ -142,30 +136,22 @@
   line-height: 1.2;
 }
 
-.peekLayer {
-  position: relative;
-  width: 100%;
-  padding-left: var(--peek-inset, var(--space-2));
-  padding-right: var(--peek-inset, var(--space-2));
-  margin-bottom: calc((var(--space-12) + var(--space-3) / 2) * -1);
-}
-
-.peekLayer:last-of-type {
-  margin-bottom: 0;
-}
-
-.peekCard {
+/* Thin card edges fanned behind the summary, hinting at more activities. */
+.peekEdge {
+  height: var(--space-4);
+  margin-top: calc(var(--peek-reveal) - var(--space-4));
+  margin-inline: calc(var(--space-3) * var(--peek-i));
   background: var(--neutral-0);
   border: 0.5px solid var(--neutral-100);
   border-radius: var(--space-2);
   box-shadow: var(--shadow-card);
-  overflow: hidden;
 }
 
 .expandedList {
   display: flex;
   flex-direction: column;
   gap: 0;
+  margin-top: var(--space-2);
   background: var(--neutral-0);
   border: 0.5px solid var(--neutral-100);
   border-radius: var(--space-2);
@@ -185,15 +171,11 @@
   line-height: 1.2;
 }
 
-.stackButton:hover .seeAll {
-  text-decoration: underline;
-}
-
 button.seeAllButton {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0;
+  margin-top: var(--space-1);
 }
 
 button.seeAllButton:hover {

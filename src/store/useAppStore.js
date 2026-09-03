@@ -32,6 +32,7 @@ import { makeActivityRow as buildHccActivityRow } from '../features/hcc/activity
 import { hccRoleDefaultFilters } from '../features/hcc/filters';
 import { deriveGoalTableFields } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/goalMetrics';
 import { goalPayloadFromTemplateEntry, interventionPayloadFromTemplateEntry } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanTemplateApply';
+import { resolvePatientStoreId } from '../lib/resolvePatientStoreId';
 
 // Central failure reporter for every persistHccXxx helper. Historically
 // each of these was fire-and-forget with only console.warn on error — so
@@ -2446,12 +2447,13 @@ export const useAppStore = create((set, get) => ({
 
   fetchPatientProgramActivity: async (patientId) => {
     if (!patientId) return;
-    if (get().patientProgramActivityLoadedFor[patientId]) return;
-    set(s => ({ patientProgramActivityLoading: { ...s.patientProgramActivityLoading, [patientId]: true } }));
+    const resolvedId = resolvePatientStoreId(get(), patientId);
+    if (get().patientProgramActivityLoadedFor[resolvedId]) return;
+    set(s => ({ patientProgramActivityLoading: { ...s.patientProgramActivityLoading, [resolvedId]: true } }));
     const { data, error } = await supabase
       .from('patient_program_activity')
       .select('*')
-      .eq('patient_id', patientId)
+      .eq('patient_id', resolvedId)
       .order('occurred_at', { ascending: false });
     if (error) console.warn('fetchPatientProgramActivity:', error.message);
     const rows = (data || []).map(r => ({
@@ -2467,9 +2469,9 @@ export const useAppStore = create((set, get) => ({
       activityKind:  r.activity_kind || 'document',
     }));
     set(s => ({
-      patientProgramActivity: { ...s.patientProgramActivity, [patientId]: rows },
-      patientProgramActivityLoading: { ...s.patientProgramActivityLoading, [patientId]: false },
-      patientProgramActivityLoadedFor: { ...s.patientProgramActivityLoadedFor, [patientId]: true },
+      patientProgramActivity: { ...s.patientProgramActivity, [resolvedId]: rows },
+      patientProgramActivityLoading: { ...s.patientProgramActivityLoading, [resolvedId]: false },
+      patientProgramActivityLoadedFor: { ...s.patientProgramActivityLoadedFor, [resolvedId]: true },
     }));
   },
   fetchCareProgramsForPatient: async (patientId) => {

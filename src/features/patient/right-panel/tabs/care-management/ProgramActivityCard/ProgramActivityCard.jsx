@@ -3,104 +3,84 @@ import { Icon } from '../../../../../../components/Icon/Icon';
 import { Badge } from '../../../../../../components/Badge/Badge';
 import { Avatar } from '../../../../../../components/Avatar/Avatar';
 import { TimelineItem } from '../TimelineItem/TimelineItem.jsx';
+import { activityIcon } from '../programActivity';
 import styles from './ProgramActivityCard.module.css';
 
 /** Count badge on the timeline spine for a multi-activity program group. */
-function SpineCount({ count, isLast, isFirst }) {
+function SpineCount({ count, isLast }) {
   return (
     <div className={styles.spineCol}>
-      {isFirst ? <span className={styles.spineLine} /> : null}
+      <span className={styles.spineLine} />
       <Avatar variant="others" initials={String(count)} size="XS" className={styles.spineAvatar} />
       <span className={isLast ? styles.spineLineEnd : styles.spineLineGrow} />
     </div>
   );
 }
 
-/** Collapsed stacked cards — summary on top, two activity peeks beneath. */
-function ActivityStack({ entry, isLast, isFirst }) {
+/** A program's activities on a day: a summary card that fans peek edges when
+ *  collapsed and expands the full list in place (Figma 108:127731). */
+function ActivityStack({ entry, isLast }) {
   const [expanded, setExpanded] = useState(false);
-  const peekItems = entry.items.slice(0, 2);
-
-  if (expanded) {
-    return (
-      <div className={styles.entry}>
-        <SpineCount count={entry.count} isLast={isLast} isFirst={isFirst} />
-        <div className={styles.entryBody}>
-          <div className={styles.expandedList}>
-            {entry.items.map((item, idx) => (
-              <TimelineItem
-                key={item.id}
-                item={item}
-                programCode={entry.programCode}
-                spine
-                isFirst={idx === 0}
-                isLast={idx === entry.items.length - 1}
-              />
-            ))}
-          </div>
-          <button type="button" className={`${styles.seeAll} ${styles.seeAllButton}`} onClick={() => setExpanded(false)} aria-expanded>
-            <Icon name="solar:alt-arrow-down-linear" size={14} color="var(--primary-300)" />
-            Hide activities
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const peekCount = Math.min(2, entry.count - 1);
 
   return (
     <div className={styles.entry}>
-      <SpineCount count={entry.count} isLast={isLast} isFirst={isFirst} />
+      <SpineCount count={entry.count} isLast={isLast} />
       <div className={styles.entryBody}>
-        <button type="button" className={styles.stackButton} onClick={() => setExpanded(true)} aria-expanded={false}>
-          <div className={styles.stack}>
-            <div className={styles.summaryCard}>
-              <div className={styles.summaryText}>
-                <span className={styles.programTitle}>{entry.programName}</span>
-                <span className={styles.summaryMeta}>
-                  {entry.count} {entry.count === 1 ? 'Activity' : 'Activities'} • {entry.userCount} {entry.userCount === 1 ? 'User' : 'Users'}
-                </span>
-              </div>
-              <Badge tone="primary" size="XS" label={entry.programCode} />
+        <div className={styles.stack}>
+          <div className={styles.summaryCard}>
+            <div className={styles.summaryText}>
+              <span className={styles.programTitle}>{entry.programName}</span>
+              <span className={styles.summaryMeta}>
+                {entry.count} {entry.count === 1 ? 'Activity' : 'Activities'} • {entry.userCount} {entry.userCount === 1 ? 'User' : 'Users'}
+              </span>
             </div>
-            {peekItems.map((item, i) => (
-              <div
-                key={item.id}
-                className={styles.peekLayer}
-                style={{ zIndex: 2 - i, '--peek-inset': `${(i + 1) * 8}px` }}
-              >
-                <div className={styles.peekCard}>
-                  <TimelineItem
-                    item={item}
-                    programCode={entry.programCode}
-                    showDate
-                    peek
-                    isLast={i === peekItems.length - 1}
-                  />
-                </div>
-              </div>
-            ))}
+            <Badge tone="primary" size="XS" label={entry.programCode} />
           </div>
-          <span className={styles.seeAll}>
-            <Icon name="solar:alt-arrow-right-linear" size={14} color="var(--primary-300)" />
-            See all activities
-          </span>
+
+          {!expanded && Array.from({ length: peekCount }).map((_, i) => (
+            <span key={i} className={styles.peekEdge} style={{ zIndex: 2 - i, '--peek-i': i + 1 }} />
+          ))}
+
+          {expanded && (
+            <div className={styles.expandedList}>
+              {entry.items.map((item, idx) => (
+                <TimelineItem
+                  key={item.id}
+                  item={item}
+                  programCode={entry.programCode}
+                  spine
+                  isLast={idx === entry.items.length - 1}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <button type="button" className={`${styles.seeAll} ${styles.seeAllButton}`} onClick={() => setExpanded(v => !v)} aria-expanded={expanded}>
+          <Icon name={expanded ? 'solar:alt-arrow-up-linear' : 'solar:alt-arrow-right-linear'} size={14} color="var(--primary-300)" />
+          {expanded ? 'Collapse' : 'See all activities'}
         </button>
       </div>
     </div>
   );
 }
 
-/** Single activity on a day — full row with icon spine (no stack). */
-function ActivitySingle({ entry, isLast, isFirst }) {
+/** Single activity on a day — spine column + content (no stack). */
+function ActivitySingle({ entry, isLast }) {
+  const item = entry.items[0];
+  const { icon } = activityIcon(item.activityKind);
+
   return (
     <div className={styles.entry}>
-      <TimelineItem
-        item={entry.items[0]}
-        programCode={entry.programCode}
-        spine
-        isFirst={isFirst}
-        isLast={isLast}
-      />
+      <div className={styles.spineCol}>
+        <span className={styles.spineLine} />
+        <Avatar type="icon" variant="others" iconName={icon} size="XS" className={styles.spineAvatar} />
+        <span className={isLast ? styles.spineLineEnd : styles.spineLineGrow} />
+      </div>
+      <div className={styles.entryBody}>
+        <TimelineItem item={item} programCode={entry.programCode} />
+      </div>
     </div>
   );
 }
@@ -119,11 +99,10 @@ export function ProgramActivityDay({ day }) {
       <div className={styles.dayEntries}>
         {day.entries.map((entry, i) => {
           const isLast = i === day.entries.length - 1;
-          const isFirst = i === 0;
           if (entry.type === 'group') {
-            return <ActivityStack key={entry.key} entry={entry} isLast={isLast} isFirst={isFirst} />;
+            return <ActivityStack key={entry.key} entry={entry} isLast={isLast} />;
           }
-          return <ActivitySingle key={entry.key} entry={entry} isLast={isLast} isFirst={isFirst} />;
+          return <ActivitySingle key={entry.key} entry={entry} isLast={isLast} />;
         })}
       </div>
     </div>
