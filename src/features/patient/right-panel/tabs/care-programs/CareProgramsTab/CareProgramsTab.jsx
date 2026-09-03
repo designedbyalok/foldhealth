@@ -9,24 +9,51 @@ import { CarePlanSummaryView } from '../care-plan/summary/CarePlanSummaryView/Ca
 import { CarePlanReportView } from '../care-plan/report/CarePlanReportView/CarePlanReportView.jsx';
 import { stepsFor, flatSteps } from '../program-detail/ProgramDetailView/ProgramDetailView.utils';
 import { CareProgramsTabTable } from './CareProgramsTabTable';
-import { CareProgramsTabToolbar, CareProgramsTabMenus } from './CareProgramsTabToolbar';
+import { CareProgramsTabMenus } from './CareProgramsTabToolbar';
+import { CareManagementToolbar } from '../../care-management/CareManagementToolbar/CareManagementToolbar';
 import {
-  matchesTab,
   programUrlKey,
   EMPTY_FILTERS,
   SUB_STATUS_OPTIONS,
   DATE_RANGE_OPTIONS,
   todayStr,
 } from './CareProgramsTab.utils';
+import { Icon } from '../../../../../../components/Icon/Icon';
+import { Button } from '../../../../../../components/Button/Button';
+import { FilterChip } from '../../../../../../components/FilterChip/FilterChip';
+import { AddIconMinimalist } from '../../../../../../components/Icon/AddIconMinimalist';
+import { SearchListPopover } from '../../../../../../components/SearchListPopover/SearchListPopover';
+import { DownChevronIcon } from '../../../../../../components/Icon/DownChevronIcon';
+import { CP_FILTERS } from '../../../../data/programActivityMock';
 import styles from './CareProgramsTab.module.css';
+
+// Programs move to the "Past" section once completed or closed.
+const PAST_STATUSES = new Set(['Completed', 'Closed']);
+
+/** Collapsible "Active" / "Past" grouping header for the programs list. */
+function ProgramSection({ title, open, onToggle, children }) {
+  return (
+    <div className={styles.programSection}>
+      <button type="button" className={styles.programSectionHeader} onClick={onToggle} aria-expanded={open}>
+        <span className={styles.programSectionTitle}>{title}</span>
+        <DownChevronIcon
+          size={14}
+          className={`${styles.programSectionChevron} ${open ? '' : styles.programSectionChevronClosed}`}
+        />
+      </button>
+      {open && children}
+    </div>
+  );
+}
 
 function EmptyState() {
   return <RingEmptyState icon="solar:hand-heart-linear" label="No Active Programs" />;
 }
 
-export function CareProgramsTab() {
-  const [activeSubTab, setActiveSubTab] = useState('All');
+export function CareProgramsTab({ header }) {
   const [searchMode, setSearchMode] = useState(false);
+  const [activeOpen, setActiveOpen] = useState(true);
+  const [pastOpen, setPastOpen] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [startAtFirstStep, setStartAtFirstStep] = useState(false);
@@ -170,7 +197,6 @@ export function CareProgramsTab() {
 
   const visible = useMemo(() => {
     let list = programs;
-    if (activeSubTab !== 'All') list = list.filter(p => matchesTab(p, activeSubTab));
     const assigneeSet = filters.assignee.length ? new Set(filters.assignee) : null;
     const programSet = filters.program.length ? new Set(filters.program) : null;
     const statusSet = filters.status.length ? new Set(filters.status) : null;
@@ -180,7 +206,11 @@ export function CareProgramsTab() {
     const q = searchText.trim().toLowerCase();
     if (q) list = list.filter(p => p.name.toLowerCase().includes(q));
     return list;
-  }, [programs, activeSubTab, filters, searchText]);
+  }, [programs, filters, searchText]);
+
+  // A program is "Past" once it's completed or closed; everything else is Active.
+  const activePrograms = useMemo(() => visible.filter(p => !PAST_STATUSES.has(p.status)), [visible]);
+  const pastPrograms = useMemo(() => visible.filter(p => PAST_STATUSES.has(p.status)), [visible]);
 
   const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const visibleIds = visible.map(p => p.id);
@@ -233,33 +263,97 @@ export function CareProgramsTab() {
 
   return (
     <div className={styles.view}>
-      <CareProgramsTabToolbar
+      <CareManagementToolbar
+        header={header}
         searchMode={searchMode} setSearchMode={setSearchMode}
         searchText={searchText} setSearchText={setSearchText}
-        activeSubTab={activeSubTab} setActiveSubTab={setActiveSubTab}
+        searchPlaceholder="Search programs"
         showFilters={showFilters} setShowFilters={setShowFilters}
-        filters={filters} filterOptionsFor={filterOptionsFor}
-        setFilter={setFilter} clearFilters={clearFilters}
-        npOpen={npOpen} setNpOpen={setNpOpen} npBtnRef={npBtnRef}
-        programOptions={programOptions} handleAddProgram={handleAddProgram}
-        onOpenSummary={() => setCarePlanSummaryOpen(true)}
-        onOpenReport={() => setReportOpen(true)}
+        cta={(
+          <div className={styles.npWrap}>
+            <Button
+              ref={npBtnRef}
+              variant="tertiary"
+              size="L"
+              leadingIconElement={<AddIconMinimalist size={16} />}
+              trailingIconElement={<DownChevronIcon size={16} />}
+              onClick={() => setNpOpen(o => !o)}
+            >
+              New Program
+            </Button>
+            {npOpen && (
+              <SearchListPopover
+                anchorRect={npBtnRef.current?.getBoundingClientRect()}
+                align="right"
+                options={programOptions}
+                onSelect={handleAddProgram}
+                onClose={() => setNpOpen(false)}
+                searchPlaceholder="Search programs"
+                emptyText="No programs found"
+              />
+            )}
+          </div>
+        )}
+        filterBar={(
+          <div className={styles.filterBar}>
+            {CP_FILTERS.map(f => (
+              <FilterChip key={f.key} label={f.label} options={filterOptionsFor(f.key)}
+                selected={filters[f.key]} onChange={vals => setFilter(f.key, vals)} />
+            ))}
+            <button className={styles.clearAll} onClick={clearFilters}>
+              <Icon name="solar:backspace-linear" size={16} color="var(--primary-300)" />
+              Clear All
+            </button>
+          </div>
+        )}
       />
 
       {visible.length === 0 ? (
         <EmptyState />
       ) : (
-        <CareProgramsTabTable
-          visible={visible}
-          selectedIdSet={selectedIdSet}
-          toggleAll={toggleAll}
-          toggleOne={toggleOne}
-          openProgram={openProgram}
-          setStatusMenu={setStatusMenu}
-          assignOwner={assignOwner}
-          setRowMenu={setRowMenu}
-          rowMenuId={rowMenu?.id}
-        />
+        <div className={styles.programSections}>
+          <ProgramSection
+            title="Active Care Programs"
+            open={activeOpen}
+            onToggle={() => setActiveOpen(v => !v)}
+          >
+            {activePrograms.length === 0 ? (
+              <div className={styles.programSectionEmpty}>No active care programs.</div>
+            ) : (
+              <CareProgramsTabTable
+                visible={activePrograms}
+                selectedIdSet={selectedIdSet}
+                toggleAll={toggleAll}
+                toggleOne={toggleOne}
+                openProgram={openProgram}
+                setStatusMenu={setStatusMenu}
+                assignOwner={assignOwner}
+                setRowMenu={setRowMenu}
+                rowMenuId={rowMenu?.id}
+              />
+            )}
+          </ProgramSection>
+
+          {pastPrograms.length > 0 && (
+            <ProgramSection
+              title="Past Care Programs"
+              open={pastOpen}
+              onToggle={() => setPastOpen(v => !v)}
+            >
+              <CareProgramsTabTable
+                visible={pastPrograms}
+                selectedIdSet={selectedIdSet}
+                toggleAll={toggleAll}
+                toggleOne={toggleOne}
+                openProgram={openProgram}
+                setStatusMenu={setStatusMenu}
+                assignOwner={assignOwner}
+                setRowMenu={setRowMenu}
+                rowMenuId={rowMenu?.id}
+              />
+            </ProgramSection>
+          )}
+        </div>
       )}
 
       <CareProgramsTabMenus

@@ -1,25 +1,120 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Icon } from '../../../../../../components/Icon/Icon';
+import { Button } from '../../../../../../components/Button/Button';
+import { FilterChip } from '../../../../../../components/FilterChip/FilterChip';
+import { AddIconMinimalist } from '../../../../../../components/Icon/AddIconMinimalist';
+import { SubTabs } from '../../../../../../components/SubTabs/SubTabs';
+import { useAppStore } from '../../../../../../store/useAppStore';
+import { CareProgramsTab } from '../../care-programs/CareProgramsTab/CareProgramsTab';
+import { CarePlanSummaryView } from '../../care-programs/care-plan/summary/CarePlanSummaryView/CarePlanSummaryView.jsx';
+import { programUrlKey } from '../../care-programs/CareProgramsTab/CareProgramsTab.utils';
+import { stepsFor, flatSteps } from '../../care-programs/program-detail/ProgramDetailView/ProgramDetailView.utils';
+import { CareManagementToolbar } from '../CareManagementToolbar/CareManagementToolbar';
 import { ProgramActivityCard } from '../ProgramActivityCard/ProgramActivityCard.jsx';
 import { PROGRAM_ACTIVITY_BY_MONTH, CM_FILTERS } from '../../../../data/programActivityMock';
 import styles from './CareManagementView.module.css';
 
-export function CareManagementView() {
-  return (
-    <div className={styles.view}>
-      {/* Filters */}
-      <div className={styles.filters}>
-        {CM_FILTERS.map(f => (
-          <button key={f.label} className={`${styles.filterBtn} ${f.active ? styles.filterActive : ''}`}>
-            {f.label}
-            {f.value && <span className={styles.filterValue}>{f.value}</span>}
-            <Icon name="solar:alt-arrow-down-linear" size={10} color={f.active ? 'var(--primary-300)' : 'var(--neutral-200)'} />
-          </button>
-        ))}
-      </div>
+const CM_TABS = ['Care Programs', 'Comprehensive Care Plan', 'Program Activity Log'];
 
-      {/* Monthly sections */}
+/** Comprehensive Care Plan pane — read-only cross-program snapshot with its own
+ *  search + (program) filter and a Download CTA. */
+function ComprehensiveCarePlanPane({ header, patientId, programs, onClose, onOpenProgramStep }) {
+  const showToast = useAppStore(s => s.showToast);
+  const [searchMode, setSearchMode] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [programFilter, setProgramFilter] = useState([]);
+  const programCodes = useMemo(() => [...new Set(programs.map(p => p.code))], [programs]);
+
+  return (
+    <div className={styles.pane}>
+      <CareManagementToolbar
+        header={header}
+        searchMode={searchMode} setSearchMode={setSearchMode}
+        searchText={searchText} setSearchText={setSearchText}
+        searchPlaceholder="Search goals & interventions"
+        showFilters={showFilters} setShowFilters={setShowFilters}
+        cta={(
+          <Button
+            variant="tertiary"
+            size="L"
+            leadingIcon="solar:download-minimalistic-linear"
+            onClick={() => showToast?.('Preparing care plan download…')}
+          >
+            Download
+          </Button>
+        )}
+        filterBar={(
+          <div className={styles.filterBar}>
+            <FilterChip label="Program" options={programCodes} selected={programFilter} onChange={setProgramFilter} />
+            {programFilter.length > 0 && (
+              <button type="button" className={styles.clearAll} onClick={() => setProgramFilter([])}>
+                <Icon name="solar:backspace-linear" size={16} color="var(--primary-300)" />
+                Clear All
+              </button>
+            )}
+          </div>
+        )}
+      />
+      <div className={styles.paneBody}>
+        <CarePlanSummaryView
+          embedded
+          patientId={patientId}
+          programs={programs}
+          searchText={searchText}
+          programFilter={programFilter}
+          onClose={onClose}
+          onOpenProgramStep={onOpenProgramStep}
+        />
+      </div>
+    </div>
+  );
+}
+
+/** Program Activity Log — the monthly activity timeline with its own search +
+ *  filter and an Add Care Note CTA. */
+function ProgramActivityLog({ header }) {
+  const showToast = useAppStore(s => s.showToast);
+  const [searchMode, setSearchMode] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+
+  const months = useMemo(() => {
+    const q = searchText.trim().toLowerCase();
+    if (!q) return PROGRAM_ACTIVITY_BY_MONTH;
+    return PROGRAM_ACTIVITY_BY_MONTH
+      .map(m => ({ ...m, cards: m.cards.filter(c => (c.program || '').toLowerCase().includes(q)) }))
+      .filter(m => m.cards.length > 0);
+  }, [searchText]);
+
+  return (
+    <div className={styles.pane}>
+      <CareManagementToolbar
+        header={header}
+        searchMode={searchMode} setSearchMode={setSearchMode}
+        searchText={searchText} setSearchText={setSearchText}
+        searchPlaceholder="Search activity"
+        showFilters={showFilters} setShowFilters={setShowFilters}
+        cta={(
+          <Button
+            variant="tertiary"
+            size="L"
+            leadingIconElement={<AddIconMinimalist size={16} />}
+            onClick={() => showToast?.('Add a care note')}
+          >
+            Add Care Note
+          </Button>
+        )}
+        filterBar={(
+          <div className={styles.filterBar}>
+            {CM_FILTERS.map(f => (
+              <FilterChip key={f.label} label={f.label} options={[]} selected={[]} onChange={() => {}} />
+            ))}
+          </div>
+        )}
+      />
       <div className={styles.timeline}>
-        {PROGRAM_ACTIVITY_BY_MONTH.map(month => (
+        {months.map(month => (
           <div key={month.month} className={styles.monthSection}>
             <div className={styles.monthHeader}>
               <span className={styles.monthLine} />
@@ -32,6 +127,59 @@ export function CareManagementView() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Care Management — a secondary switch (SubTabs) over the three program views.
+ * Every tab shares the same toolbar layout (search · sub-tabs · CTA · filter);
+ * only the CTA changes per tab. Each pane reuses its existing, data-backed view.
+ */
+export function CareManagementView() {
+  const [subTab, setSubTab] = useState('Care Programs');
+  const patientId = useAppStore(s => s.selectedPatientId);
+  const careProgramsByPatient = useAppStore(s => s.careProgramsByPatient);
+  const fetchCareProgramsForPatient = useAppStore(s => s.fetchCareProgramsForPatient);
+  const openCareProgram = useAppStore(s => s.openCareProgram);
+  const setCareProgramStep = useAppStore(s => s.setCareProgramStep);
+
+  useEffect(() => {
+    if (patientId) fetchCareProgramsForPatient(patientId);
+  }, [patientId, fetchCareProgramsForPatient]);
+
+  const programs = useMemo(
+    () => careProgramsByPatient[patientId] || [],
+    [careProgramsByPatient, patientId],
+  );
+
+  // From the comprehensive view, hand off to the owning program's Care Plan
+  // step: open the program (store) and switch to the Care Programs sub-tab so
+  // CareProgramsTab renders it.
+  const openProgramAtCarePlan = (program) => {
+    const carePlanStep = flatSteps(stepsFor(program.code)).find(s => s.name.toLowerCase().includes('care plan'));
+    openCareProgram(programUrlKey(program));
+    if (carePlanStep) setCareProgramStep(carePlanStep.id);
+    setSubTab('Care Programs');
+  };
+
+  // The sub-tab switch is a controlled element owned here, handed to each pane
+  // so it renders inline in that pane's shared toolbar row.
+  const subTabBar = <SubTabs tabs={CM_TABS} activeKey={subTab} onChange={setSubTab} />;
+
+  return (
+    <div className={styles.container}>
+      {subTab === 'Care Programs' && <CareProgramsTab header={subTabBar} />}
+      {subTab === 'Comprehensive Care Plan' && (
+        <ComprehensiveCarePlanPane
+          header={subTabBar}
+          patientId={patientId}
+          programs={programs}
+          onClose={() => setSubTab('Care Programs')}
+          onOpenProgramStep={openProgramAtCarePlan}
+        />
+      )}
+      {subTab === 'Program Activity Log' && <ProgramActivityLog header={subTabBar} />}
     </div>
   );
 }

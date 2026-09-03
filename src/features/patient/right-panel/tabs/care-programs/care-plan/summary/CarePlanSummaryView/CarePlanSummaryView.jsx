@@ -61,7 +61,7 @@ function InterventionRow({ row, onOpen }) {
 // Read-only, patient-level snapshot of every care plan across all of a
 // patient's programs (roadmap #1 / E2). Clicking a row hands off to the owning
 // program's Care Plan step for edits.
-export function CarePlanSummaryView({ patientId, programs, onClose, onOpenProgramStep }) {
+export function CarePlanSummaryView({ patientId, programs, onClose, onOpenProgramStep, searchText = '', programFilter = [], embedded = false }) {
   const fetchAllPatientCarePlans = useAppStore(s => s.fetchAllPatientCarePlans);
   const loading = useAppStore(s => s.patientCarePlanAllLoading[patientId]);
   const loadedFor = useAppStore(s => s.patientCarePlanAllLoadedFor[patientId]);
@@ -99,22 +99,36 @@ export function CarePlanSummaryView({ patientId, programs, onClose, onOpenProgra
     };
   }, [programs, patientCarePlans, patientId]);
 
+  // Apply the toolbar's search + program filter to the flattened snapshot.
+  const q = searchText.trim().toLowerCase();
+  const progKey = programFilter.join('|');
+  const filteredGoals = useMemo(() => {
+    const set = programFilter.length ? new Set(programFilter) : null;
+    return goals.filter(g => (!q || g.title.toLowerCase().includes(q)) && (!set || set.has(g.programCode)));
+  }, [goals, q, progKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const filteredInterventions = useMemo(() => {
+    const set = programFilter.length ? new Set(programFilter) : null;
+    return interventions.filter(i => (!q || i.title.toLowerCase().includes(q)) && (!set || set.has(i.programCode)));
+  }, [interventions, q, progKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const isEmpty = loadedFor && goals.length === 0 && interventions.length === 0;
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <div className={styles.headerText}>
-          <span className={styles.headerTitle}>Care Plan</span>
-          <span className={styles.headerMeta}>All programs · read-only snapshot</span>
+      {!embedded && (
+        <div className={styles.header}>
+          <div className={styles.headerText}>
+            <span className={styles.headerTitle}>Care Plan</span>
+            <span className={styles.headerMeta}>All programs · read-only snapshot</span>
+          </div>
+          <span className={styles.readOnlyBadge}>
+            <Icon name="solar:lock-keyhole-minimalistic-linear" size={14} color="var(--neutral-300)" />
+            Read only
+          </span>
+          <span className={styles.headerDivider} />
+          <CloseButton onClick={onClose} />
         </div>
-        <span className={styles.readOnlyBadge}>
-          <Icon name="solar:lock-keyhole-minimalistic-linear" size={14} color="var(--neutral-300)" />
-          Read only
-        </span>
-        <span className={styles.headerDivider} />
-        <CloseButton onClick={onClose} />
-      </div>
+      )}
 
       {loading && !loadedFor ? (
         <TableSkeleton rows={6} />
@@ -129,7 +143,7 @@ export function CarePlanSummaryView({ patientId, programs, onClose, onOpenProgra
           )}
 
           <div className={styles.section}>
-            <span className={styles.sectionTitle}>Goals <span className={styles.count}>{goals.length}</span></span>
+            <span className={styles.sectionTitle}>Goals <span className={styles.count}>{filteredGoals.length}</span></span>
             <div className={styles.table}>
               <div className={styles.goalHead}>
                 <span className={styles.pCell}>P</span>
@@ -138,14 +152,14 @@ export function CarePlanSummaryView({ patientId, programs, onClose, onOpenProgra
                 <span className={styles.statusCell}>Status</span>
                 <span className={styles.chevronCell} />
               </div>
-              {goals.length === 0
-                ? <div className={styles.emptyRow}>No goals across programs.</div>
-                : goals.map(g => <GoalRow key={`${g.programCode}-${g.id}`} row={g} onOpen={() => onOpenProgramStep(g.program)} />)}
+              {filteredGoals.length === 0
+                ? <div className={styles.emptyRow}>No goals match.</div>
+                : filteredGoals.map(g => <GoalRow key={`${g.programCode}-${g.id}`} row={g} onOpen={() => onOpenProgramStep(g.program)} />)}
             </div>
           </div>
 
           <div className={styles.section}>
-            <span className={styles.sectionTitle}>Interventions <span className={styles.count}>{interventions.length}</span></span>
+            <span className={styles.sectionTitle}>Interventions <span className={styles.count}>{filteredInterventions.length}</span></span>
             <div className={styles.table}>
               <div className={styles.intvHead}>
                 <span className={styles.pCell}>P</span>
@@ -155,9 +169,9 @@ export function CarePlanSummaryView({ patientId, programs, onClose, onOpenProgra
                 <span className={styles.statusCell}>Status</span>
                 <span className={styles.chevronCell} />
               </div>
-              {interventions.length === 0
-                ? <div className={styles.emptyRow}>No interventions across programs.</div>
-                : interventions.map(i => <InterventionRow key={`${i.programCode}-${i.id}`} row={i} onOpen={() => onOpenProgramStep(i.program)} />)}
+              {filteredInterventions.length === 0
+                ? <div className={styles.emptyRow}>No interventions match.</div>
+                : filteredInterventions.map(i => <InterventionRow key={`${i.programCode}-${i.id}`} row={i} onOpen={() => onOpenProgramStep(i.program)} />)}
             </div>
           </div>
         </div>

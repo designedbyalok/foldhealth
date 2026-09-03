@@ -1,0 +1,30 @@
+.topArea {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.subTabBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.subTabs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0;
+}
+.searchWrap {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+.searchBox350 { width: 350px !important; }
+.vDivider {
+  width: 0.5px;
+  height: 16px;
+  background: var(--neutral-150);
+  flex-shrink: 0;
+}
