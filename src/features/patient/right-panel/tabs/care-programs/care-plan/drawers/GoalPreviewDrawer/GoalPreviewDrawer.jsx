@@ -158,7 +158,7 @@ function Sparkline({ values }) {
   );
 }
 
-function AccordionHead({ title, open, onToggle, onAdd, addTooltip, canEdit, muted }) {
+const AccordionHead = function AccordionHead({ title, open, onToggle, onAdd, addTooltip, canEdit, muted, addRef, addAriaHasPopup, addAriaExpanded }) {
   return (
     <div className={styles.accHead}>
       <button type="button" className={styles.accToggle} onClick={onToggle} aria-expanded={open}>
@@ -175,11 +175,34 @@ function AccordionHead({ title, open, onToggle, onAdd, addTooltip, canEdit, mute
         )}
       </button>
       {canEdit && (
-        <ActionButton icon="solar:add-linear" size="S" tooltip={addTooltip} onClick={onAdd} />
+        <ActionButton
+          ref={addRef}
+          icon="solar:add-linear"
+          size="S"
+          tooltip={addTooltip}
+          onClick={onAdd}
+          aria-haspopup={addAriaHasPopup}
+          aria-expanded={addAriaExpanded}
+        />
       )}
     </div>
   );
-}
+};
+
+// Same intervention kinds the settings-side CreateGoalDrawer offers so
+// the popover looks and behaves identically here (Send Form / Patient
+// Education / Patient Task / Measure Vital / Internal Task).
+const INTERVENTION_KIND_ITEMS = [
+  { key: 'send-form', label: 'Send Form', icon: 'solar:document-add-linear' },
+  { key: 'patient-education', label: 'Patient Education', icon: 'solar:book-2-linear' },
+  { key: 'patient-task', label: 'Patient Task', icon: 'solar:checklist-minimalistic-linear' },
+  { key: 'measure-vital', label: 'Measure Vital', icon: 'solar:heart-pulse-linear' },
+  { divider: true },
+  { key: 'internal-task', label: 'Internal Task', icon: 'solar:clipboard-check-linear' },
+];
+const INTERVENTION_KIND_LABELS = Object.fromEntries(
+  INTERVENTION_KIND_ITEMS.filter(i => i.key).map(i => [i.key, i.label]),
+);
 
 /**
  * Goal Details — Figma SNP-Story 2632:81504.
@@ -243,6 +266,13 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
   const [addingBarrier, setAddingBarrier] = useState(false);
   const [barrierTitle, setBarrierTitle] = useState('');
   const [intvOpen, setIntvOpen] = useState(false);
+  // Kind-picker popover state. `intvMenuOpen` toggles the MenuPopover
+  // anchored to the Interventions "+" button; `intvSelectedKind` is the
+  // item the user picked, seeded onto the AddInterventionDrawer that
+  // then opens.
+  const [intvMenuOpen, setIntvMenuOpen] = useState(false);
+  const [intvSelectedKind, setIntvSelectedKind] = useState(null);
+  const intvAddRef = useRef(null);
   const [note, setNote] = useState('');
   const [notePlain, setNotePlain] = useState('');
   const [activityTab, setActivityTab] = useState('all');
@@ -553,8 +583,26 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
             onToggle={() => toggle('interventions')}
             canEdit={canEdit}
             addTooltip="Add Intervention"
-            onAdd={() => expandAnd('interventions', () => setIntvOpen(true))}
+            addRef={intvAddRef}
+            addAriaHasPopup="menu"
+            addAriaExpanded={intvMenuOpen}
+            onAdd={() => expandAnd('interventions', () => setIntvMenuOpen(v => !v))}
           />
+          {intvMenuOpen && (
+            <MenuPopover
+              anchorRef={intvAddRef}
+              align="right"
+              width={200}
+              ariaLabel="Add intervention"
+              items={INTERVENTION_KIND_ITEMS}
+              onSelect={(kind) => {
+                setIntvMenuOpen(false);
+                setIntvSelectedKind(kind);
+                setIntvOpen(true);
+              }}
+              onClose={() => setIntvMenuOpen(false)}
+            />
+          )}
           {open.interventions && (
             interventions.length === 0 ? (
               <div className={styles.emptyCard}>No interventions linked yet.</div>
@@ -796,10 +844,18 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
 
       {intvOpen && (
         <AddInterventionDrawer
-          onClose={() => setIntvOpen(false)}
+          intervention={intvSelectedKind
+            ? { kind: intvSelectedKind, title: '', kindLabel: INTERVENTION_KIND_LABELS[intvSelectedKind] }
+            : undefined}
+          onClose={() => { setIntvOpen(false); setIntvSelectedKind(null); }}
           onSave={async (values) => {
-            await savePatientCarePlanIntervention(patientId, program, { ...values, goalId: live.id });
+            await savePatientCarePlanIntervention(patientId, program, {
+              ...values,
+              kind: intvSelectedKind || values.kind || null,
+              goalId: live.id,
+            });
             setIntvOpen(false);
+            setIntvSelectedKind(null);
           }}
         />
       )}

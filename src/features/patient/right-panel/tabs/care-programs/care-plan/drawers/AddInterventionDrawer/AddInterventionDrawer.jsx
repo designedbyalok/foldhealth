@@ -38,9 +38,18 @@ export function AddInterventionDrawer({ intervention, onClose, onSave }) {
     </>
   );
 
+  // When the caller opens this drawer from the goal preview's kind
+  // picker, `intervention.kindLabel` names the flavour chosen (Send
+  // Form / Patient Task / …). The drawer's title switches to that
+  // label so the user sees which intervention type they're authoring.
+  const kindLabel = intervention?.kindLabel;
+  const drawerTitle = kindLabel
+    ? `Add ${kindLabel}`
+    : (intervention ? 'Edit Intervention' : 'Add Intervention');
+
   return (
     <Drawer
-      title={intervention ? 'Edit Intervention' : 'Add Intervention'}
+      title={drawerTitle}
       onClose={onClose}
       headerRight={headerRight}
       noCloseDivider

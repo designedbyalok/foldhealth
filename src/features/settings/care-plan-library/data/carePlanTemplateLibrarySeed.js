@@ -100,24 +100,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "cfb72508-376c-4d77-8ed0-798df226173b",
+        "id": "eb7bcfb2-d6e4-47d8-8c81-13dae47e8641",
         "title": "Assistive-device difficulty",
-        "description": "Patient has difficulty using the prescribed device safely."
+        "description": ""
       },
       {
-        "id": "af53bb62-8706-40d2-86a9-677a61b16cec",
-        "title": "Caregiver burden",
-        "description": "Caregiving responsibilities are difficult to sustain."
+        "id": "3c12a425-3def-4a3b-847a-b567e74e073a",
+        "title": "Equipment access issue",
+        "description": ""
       },
       {
-        "id": "9c7a03f0-d2d3-4026-842d-dbca2e20cdd4",
+        "id": "db4bc44c-b7c8-4f2b-8f90-ab052340d5d0",
         "title": "Caregiver capacity limitation",
-        "description": "Available caregiver support is insufficient for identified needs."
+        "description": ""
       },
       {
-        "id": "03d93ee1-7b53-4044-87e9-cb0ccf35c345",
-        "title": "Contact-information gap",
-        "description": "Emergency or caregiver contact information is missing or outdated."
+        "id": "8c58c376-6233-4a84-8699-32df778adb63",
+        "title": "Caregiver burden",
+        "description": ""
+      },
+      {
+        "id": "b0c42d48-0418-498e-8c46-c47b2fdbc3d6",
+        "title": "Limited physical activity",
+        "description": ""
+      },
+      {
+        "id": "e76ec93b-faf8-4508-8e53-ab535407ea29",
+        "title": "Functional limitation",
+        "description": ""
       }
     ]
   },
@@ -179,19 +189,24 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "7900ec08-eec7-4a04-89ce-60f6d722e06f",
+        "id": "26ab02a0-fc22-4725-8a4a-e41b64e05d19",
         "title": "Chronic pain burden",
-        "description": "Pain interferes with function or self-management."
+        "description": ""
       },
       {
-        "id": "e506b042-73d9-4afd-8809-f65b2604a83b",
+        "id": "744988e5-c812-48f1-868d-a02628220f4b",
         "title": "Limited response to current pain plan",
-        "description": "Current strategies have not sufficiently improved pain or function."
+        "description": ""
       },
       {
-        "id": "1810f386-e9cb-434f-8f54-2b0bdba777b4",
-        "title": "Mobility limitation",
-        "description": "Pain, weakness, balance, or other limitations restrict mobility."
+        "id": "32950d82-e64d-4b1d-838b-6094470f88b3",
+        "title": "Functional limitation",
+        "description": ""
+      },
+      {
+        "id": "8721d169-59e2-4e66-8d5e-b944abafa990",
+        "title": "Frequent rescue use",
+        "description": ""
       }
     ]
   },
@@ -289,19 +304,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "fb8d8185-4408-4de9-8c6d-a58854447678",
-        "title": "Difficulty following safety plan",
-        "description": "Patient has difficulty consistently applying fall-prevention strategies."
-      },
-      {
-        "id": "3eddfac7-d60e-4970-88f3-8f53271f2c02",
+        "id": "46c8140a-08e0-48e4-801b-80ee0055b367",
         "title": "Fall-risk environment",
-        "description": "Home or environmental factors increase fall risk."
+        "description": ""
       },
       {
-        "id": "0b5d2d5d-1e8e-4c66-8432-4f031d90712a",
+        "id": "dfc070dc-2bf0-47d5-8421-a416a3e11ba4",
         "title": "Incomplete fall assessment",
-        "description": "Fall-risk factors have not yet been fully evaluated."
+        "description": ""
+      },
+      {
+        "id": "b83319ab-abf5-4479-8f55-c331346082ad",
+        "title": "Emergency-plan gap",
+        "description": ""
+      },
+      {
+        "id": "ccc31edd-b941-4a3e-8b46-44fbdd166f3b",
+        "title": "Contact-information gap",
+        "description": ""
+      },
+      {
+        "id": "498b7eac-b1cc-410f-8f32-8b4664237945",
+        "title": "Mobility limitation",
+        "description": ""
+      },
+      {
+        "id": "861c2721-d5e8-447b-8022-3bd54fef4a79",
+        "title": "Difficulty following safety plan",
+        "description": ""
       }
     ]
   },
@@ -358,19 +388,24 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "f77cccf0-ca68-44ba-881f-c19854da12b9",
-        "title": "Food insecurity",
-        "description": "Reliable access to adequate food is limited."
-      },
-      {
-        "id": "4515a98e-e822-49cb-8880-6bbca94f3cff",
-        "title": "Housing instability",
-        "description": "Housing circumstances interfere with health and care-plan goals."
-      },
-      {
-        "id": "e1e67006-609b-4a47-8171-ed859f20e0b2",
+        "id": "6f2e7667-a806-4680-86b1-8c22bd292926",
         "title": "Resource-navigation difficulty",
-        "description": "Patient needs assistance identifying or accessing community resources."
+        "description": ""
+      },
+      {
+        "id": "c52a201a-4967-46c5-8d14-18b182fa2d19",
+        "title": "Food insecurity",
+        "description": ""
+      },
+      {
+        "id": "6bb1c348-6692-45c2-8117-94e43d387f70",
+        "title": "Housing instability",
+        "description": ""
+      },
+      {
+        "id": "925ec7ea-9eea-4bfd-8b45-035d8e58b742",
+        "title": "Social needs remain unresolved",
+        "description": ""
       }
     ]
   },
@@ -468,24 +503,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "c7f6ee09-6621-40ca-8c21-64d4564c7473",
-        "title": "Asthma trigger burden",
-        "description": "Relevant triggers remain difficult to avoid."
+        "id": "6515f77f-ea00-4738-84c7-15b2aed52eef",
+        "title": "Medication adherence difficulty",
+        "description": ""
       },
       {
-        "id": "33b0dd06-21e3-4291-87f8-21712b926fda",
-        "title": "Difficulty following action plan",
-        "description": "Patient is unsure how to respond to changing respiratory symptoms."
-      },
-      {
-        "id": "f5e908d0-7189-4a24-843f-add133395d71",
-        "title": "Incorrect inhaler technique",
-        "description": "Patient does not consistently use the device correctly."
-      },
-      {
-        "id": "0d1ebf27-3502-4118-8592-d8ce8fb4a9c8",
+        "id": "9c424ff2-bf18-47c4-872d-43171bed3c66",
         "title": "Inhaler adherence difficulty",
-        "description": "Controller or rescue medication use is inconsistent."
+        "description": ""
+      },
+      {
+        "id": "1518924d-3a32-47ac-81ab-2406b1af54b6",
+        "title": "Incorrect inhaler technique",
+        "description": ""
+      },
+      {
+        "id": "d2bfe721-e6fa-4133-857e-c3e047677d5d",
+        "title": "Difficulty learning equipment technique",
+        "description": ""
+      },
+      {
+        "id": "d3fc2b67-e85b-4b91-863c-aa4bb2c50c3d",
+        "title": "Respiratory symptom burden",
+        "description": ""
+      },
+      {
+        "id": "7b3cdb6e-ca8b-4d86-873f-b5d7395df1a4",
+        "title": "Respiratory trigger exposure",
+        "description": ""
       }
     ]
   },
@@ -500,6 +545,13 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "id": "5dbfcf2a-dbb5-43cb-8bb6-451af62e7000",
         "title": "Reduce cardiovascular risk through activity",
         "subtitle": "Increase regular physical activity according to the patient's care plan.",
+        "category": "Other",
+        "priority": "medium"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13471",
+        "title": "Adopt low-impact aerobic routine",
+        "subtitle": "Complete daily low-impact aerobic activity (cycling / swimming / walking) tuned to member ability.",
         "category": "Other",
         "priority": "medium"
       },
@@ -530,13 +582,6 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "subtitle": "Improve consistency and adequacy of nutritional intake.",
         "category": "Other",
         "priority": "medium"
-      },
-      {
-        "id": "2778ff3e-c5f9-4f21-82c6-94e8a7c54785",
-        "title": "Increase physical activity for metabolic health",
-        "subtitle": "Increase safe physical activity.",
-        "category": "Other",
-        "priority": "medium"
       }
     ],
     "interventions": [
@@ -549,6 +594,21 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "id": "646e2c9b-2ccc-4a84-848d-3fd512d6d5e6",
         "kind": "patient-education",
         "title": "Activity coaching"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13472",
+        "kind": "patient-education",
+        "title": "Choosing low-impact activities"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13473",
+        "kind": "patient-task",
+        "title": "Log daily activity minutes"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13474",
+        "kind": "internal-task",
+        "title": "Follow-up on activity plan"
       },
       {
         "id": "cd51d936-5ff4-46ee-866b-6009aedf893d",
@@ -564,43 +624,38 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "id": "57197f1b-2927-4f5d-8166-155e892f3886",
         "kind": "internal-task",
         "title": "Lipid-management follow-up"
-      },
-      {
-        "id": "458cf63c-9170-47d1-8f05-9623272be903",
-        "kind": "patient-education",
-        "title": "Diabetes nutrition coaching"
-      },
-      {
-        "id": "a12c7081-a7aa-414e-8073-feb0b303becb",
-        "kind": "patient-education",
-        "title": "Nutrition coaching"
-      },
-      {
-        "id": "a298cd17-fb1e-45b9-810f-79d32b494730",
-        "kind": "internal-task",
-        "title": "Nutrition support"
       }
     ],
     "barriers": [
       {
-        "id": "0026a45c-f85e-4198-83ec-a19cdc0e10f3",
-        "title": "Food access limitation",
-        "description": "Available food options make nutrition goals difficult."
-      },
-      {
-        "id": "7348bf6c-a962-41a3-8b9a-d3dd7694549c",
-        "title": "Limited nutrition knowledge",
-        "description": "Patient needs additional nutrition education."
-      },
-      {
-        "id": "8d212959-08cb-49f4-87c2-83197fe8e3e4",
+        "id": "ffaae93f-6c8a-4be4-8d36-911bdf0fac88",
         "title": "Limited physical activity",
-        "description": "Patient is less active than the care plan recommends."
+        "description": ""
       },
       {
-        "id": "7732d9c1-77aa-4b36-8d94-16ded3d62649",
-        "title": "Limited understanding of lipid management",
-        "description": "Patient needs additional education about the treatment plan."
+        "id": "412c4c98-f6a7-4b2a-8968-188a419108bf",
+        "title": "Nutrition challenges",
+        "description": ""
+      },
+      {
+        "id": "ccd46c73-2449-4fb6-82cf-81fdee24b8e2",
+        "title": "Physical limitations",
+        "description": ""
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13475",
+        "title": "Weather limits outdoor activity",
+        "description": ""
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13476",
+        "title": "Fatigue reduces activity tolerance",
+        "description": ""
+      },
+      {
+        "id": "68329229-a9c0-4493-8afd-ba5ea74b2f09",
+        "title": "Medication adherence difficulty",
+        "description": ""
       }
     ]
   },
@@ -698,24 +753,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "8c295415-1fd8-4a5f-89fa-948f66fc91b7",
-        "title": "Difficulty responding to low glucose",
-        "description": "Patient needs additional education or support around hypoglycemia response."
-      },
-      {
-        "id": "882d4c55-2ded-4ae3-87a5-b9fb658b3e6d",
-        "title": "Hypoglycemia risk",
-        "description": "Low glucose episodes interfere with the treatment plan."
-      },
-      {
-        "id": "e5014adb-1299-4645-868c-499854fe1f64",
-        "title": "Diabetes self-management complexity",
-        "description": "Multiple diabetes-management tasks are difficult to coordinate."
-      },
-      {
-        "id": "a1137627-49ad-4e9b-8d29-5dd61f708c4e",
+        "id": "d50a2ca4-8962-4b24-8e86-f71b6331519d",
         "title": "Glucose variability",
-        "description": "Glucose readings vary substantially from the desired range."
+        "description": ""
+      },
+      {
+        "id": "ad3a8a0b-c1d9-49b3-8754-4b564aee4c48",
+        "title": "Hypoglycemia risk",
+        "description": ""
+      },
+      {
+        "id": "80a8b9c6-cda0-420b-830a-0559f9a32d98",
+        "title": "Difficulty responding to low glucose",
+        "description": ""
+      },
+      {
+        "id": "38f6921b-e929-45cb-8eb6-e8c6148e9614",
+        "title": "Glucose-monitoring difficulty",
+        "description": ""
+      },
+      {
+        "id": "e6b8cc96-22d6-4671-8f58-3e28f07fb2e1",
+        "title": "Limited progress toward A1C target",
+        "description": ""
+      },
+      {
+        "id": "77a95d8e-4f15-4de8-8b51-6287296efe10",
+        "title": "Inconsistent diabetes routine",
+        "description": ""
       }
     ]
   },
@@ -813,24 +878,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "8c295415-1fd8-4a5f-89fa-948f66fc91b7",
-        "title": "Difficulty responding to low glucose",
-        "description": "Patient needs additional education or support around hypoglycemia response."
+        "id": "fcb1ae4c-be40-437e-8945-c770fcb56256",
+        "title": "Appointment access issue",
+        "description": ""
       },
       {
-        "id": "0026a45c-f85e-4198-83ec-a19cdc0e10f3",
-        "title": "Food access limitation",
-        "description": "Available food options make nutrition goals difficult."
+        "id": "d71ad103-0e19-468d-8856-d21ffddc7e10",
+        "title": "Lab access issue",
+        "description": ""
       },
       {
-        "id": "a1137627-49ad-4e9b-8d29-5dd61f708c4e",
-        "title": "Glucose variability",
-        "description": "Glucose readings vary substantially from the desired range."
+        "id": "0d1e63ef-6f2c-494c-8282-99a24c5f124e",
+        "title": "Referral completion barrier",
+        "description": ""
       },
       {
-        "id": "3051127d-3b6a-4bd1-8db2-1c2833fe9da9",
+        "id": "38f6921b-e929-45cb-8eb6-e8c6148e9614",
         "title": "Glucose-monitoring difficulty",
-        "description": "Patient has difficulty completing or recording glucose checks."
+        "description": ""
+      },
+      {
+        "id": "e6b8cc96-22d6-4671-8f58-3e28f07fb2e1",
+        "title": "Limited progress toward A1C target",
+        "description": ""
+      },
+      {
+        "id": "77a95d8e-4f15-4de8-8b51-6287296efe10",
+        "title": "Inconsistent diabetes routine",
+        "description": ""
       }
     ]
   },
@@ -928,14 +1003,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "1810f386-e9cb-434f-8f54-2b0bdba777b4",
-        "title": "Mobility limitation",
-        "description": "Pain, weakness, balance, or other limitations restrict mobility."
+        "id": "9214ffdd-346c-49d0-88a5-95c0663c45b2",
+        "title": "Follow-up access issue",
+        "description": ""
       },
       {
-        "id": "c3e4fb06-204b-4efb-8f5b-a55edb162a51",
-        "title": "Pressure-injury risk",
-        "description": "Immobility or other factors increase skin-breakdown risk."
+        "id": "4b118246-96da-4aab-869b-d9fe4f532d2f",
+        "title": "Referral completion barrier",
+        "description": ""
+      },
+      {
+        "id": "9d32b242-64b4-4907-8c9e-d5f427d04116",
+        "title": "Scheduling barrier",
+        "description": ""
+      },
+      {
+        "id": "6d7efe02-e06a-4100-8d85-5d067d36d67d",
+        "title": "Fall-risk environment",
+        "description": ""
+      },
+      {
+        "id": "498b7eac-b1cc-410f-8f32-8b4664237945",
+        "title": "Mobility limitation",
+        "description": ""
+      },
+      {
+        "id": "b0d6fd8d-d2eb-4c0f-8caf-2b6d404a04be",
+        "title": "Difficulty controlling condition",
+        "description": ""
       }
     ]
   },
@@ -1033,24 +1128,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "120ca3e3-929f-4674-82c4-a50855cc1472",
-        "title": "Appointment access issue",
-        "description": "Patient has difficulty obtaining or attending required appointments."
+        "id": "8eb09e06-0f9f-4af9-8f75-4e2874bbda09",
+        "title": "Resource-navigation difficulty",
+        "description": ""
       },
       {
-        "id": "ec2ae2dd-9cbc-412b-8fd5-bbb0fbffecf5",
-        "title": "Behavioral-health stigma or concern",
-        "description": "Personal concerns make engagement with services difficult."
+        "id": "925ec7ea-9eea-4bfd-8b45-035d8e58b742",
+        "title": "Social needs remain unresolved",
+        "description": ""
       },
       {
-        "id": "6af2e3d2-c3a0-4d3f-814b-a00dd1745544",
+        "id": "76d3ea90-fd2f-41f9-8d97-fbe5c290c711",
+        "title": "Cognitive impairment",
+        "description": ""
+      },
+      {
+        "id": "ce414361-dc76-49c1-8141-cf5b4006c735",
+        "title": "Organizational difficulty",
+        "description": ""
+      },
+      {
+        "id": "2b49b9c4-a43b-4b5d-874d-d51431a254f0",
         "title": "Care-management engagement barrier",
-        "description": "Patient is difficult to reach or has difficulty maintaining program engagement."
+        "description": ""
       },
       {
-        "id": "6ce0dc4d-57c3-4310-889f-5b3c747ab0d8",
-        "title": "Limited community engagement",
-        "description": "Patient has difficulty accessing or participating in social activities."
+        "id": "a6dd135a-efc1-4f8a-8fbd-7c6ce7a17606",
+        "title": "Competing priorities",
+        "description": ""
       }
     ]
   },
@@ -1148,24 +1253,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "cfb72508-376c-4d77-8ed0-798df226173b",
+        "id": "168f44f6-7116-4d13-84cd-adc6a92de8f5",
+        "title": "Functional limitation",
+        "description": ""
+      },
+      {
+        "id": "bdd392f2-c87f-4d8f-863b-ca6186a9a18c",
+        "title": "Need for caregiver assistance",
+        "description": ""
+      },
+      {
+        "id": "eb7bcfb2-d6e4-47d8-8c81-13dae47e8641",
         "title": "Assistive-device difficulty",
-        "description": "Patient has difficulty using the prescribed device safely."
+        "description": ""
       },
       {
-        "id": "af53bb62-8706-40d2-86a9-677a61b16cec",
-        "title": "Caregiver burden",
-        "description": "Caregiving responsibilities are difficult to sustain."
+        "id": "3c12a425-3def-4a3b-847a-b567e74e073a",
+        "title": "Equipment access issue",
+        "description": ""
       },
       {
-        "id": "9c7a03f0-d2d3-4026-842d-dbca2e20cdd4",
+        "id": "db4bc44c-b7c8-4f2b-8f90-ab052340d5d0",
         "title": "Caregiver capacity limitation",
-        "description": "Available caregiver support is insufficient for identified needs."
+        "description": ""
       },
       {
-        "id": "03d93ee1-7b53-4044-87e9-cb0ccf35c345",
-        "title": "Contact-information gap",
-        "description": "Emergency or caregiver contact information is missing or outdated."
+        "id": "8c58c376-6233-4a84-8699-32df778adb63",
+        "title": "Caregiver burden",
+        "description": ""
       }
     ]
   },
@@ -1180,6 +1295,20 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "id": "503c3af5-c10e-404b-893d-d4a2412d9e81",
         "title": "Maintain controlled heart rate",
         "subtitle": "Maintain resting heart rate within the individualized target range.",
+        "category": "Other",
+        "priority": "medium"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13471",
+        "title": "Adopt low-impact aerobic routine",
+        "subtitle": "Complete daily low-impact aerobic activity (cycling / swimming / walking) tuned to member ability.",
+        "category": "Other",
+        "priority": "medium"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13491",
+        "title": "Follow Mediterranean eating pattern",
+        "subtitle": "Adhere to Mediterranean eating pattern to reduce cardiometabolic risk.",
         "category": "Other",
         "priority": "medium"
       },
@@ -1203,20 +1332,6 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "subtitle": "Maintain blood pressure at or below the individualized target.",
         "category": "Other",
         "priority": "medium"
-      },
-      {
-        "id": "101fae43-be58-4f12-8cf7-e58f87c87b21",
-        "title": "Monitor blood pressure consistently",
-        "subtitle": "Record home blood pressure readings consistently.",
-        "category": "Other",
-        "priority": "medium"
-      },
-      {
-        "id": "5dbfcf2a-dbb5-43cb-8bb6-451af62e7000",
-        "title": "Reduce cardiovascular risk through activity",
-        "subtitle": "Increase regular physical activity according to the patient's care plan.",
-        "category": "Other",
-        "priority": "medium"
       }
     ],
     "interventions": [
@@ -1231,56 +1346,66 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "title": "Cardiac symptom education"
       },
       {
-        "id": "52403562-10f8-4a7b-8c2a-9952fbd1eb83",
-        "kind": "measure-vital",
-        "title": "Blood pressure monitoring"
-      },
-      {
-        "id": "da25836b-f1ae-40bb-8220-0cb5d427f437",
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13472",
         "kind": "patient-education",
-        "title": "BP technique education"
+        "title": "Choosing low-impact activities"
       },
       {
-        "id": "bc045527-78b2-4193-824e-8163e242eee9",
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13473",
+        "kind": "patient-task",
+        "title": "Log daily activity minutes"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13474",
         "kind": "internal-task",
-        "title": "BP trend follow-up"
+        "title": "Follow-up on activity plan"
       },
       {
-        "id": "cd51d936-5ff4-46ee-866b-6009aedf893d",
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13492",
         "kind": "patient-education",
-        "title": "Nutrition risk counseling"
+        "title": "Mediterranean eating plan"
       },
       {
-        "id": "a0d9423c-ee7b-479d-8c7c-62b3f5e6ed4f",
-        "kind": "patient-education",
-        "title": "Medication adherence education"
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13493",
+        "kind": "patient-task",
+        "title": "Log Mediterranean adherence weekly"
       },
       {
-        "id": "57197f1b-2927-4f5d-8166-155e892f3886",
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13494",
         "kind": "internal-task",
-        "title": "Lipid-management follow-up"
+        "title": "Nutrition follow-up"
       }
     ],
     "barriers": [
       {
-        "id": "7732d9c1-77aa-4b36-8d94-16ded3d62649",
-        "title": "Limited understanding of lipid management",
-        "description": "Patient needs additional education about the treatment plan."
-      },
-      {
-        "id": "3b16697b-b821-4c05-89fa-8918e77f98ad",
-        "title": "Tobacco cessation difficulty",
-        "description": "Patient reports difficulty reducing or stopping tobacco use."
-      },
-      {
-        "id": "620161f7-c056-443c-8636-13f6be35c08e",
-        "title": "Tobacco exposure",
-        "description": "Ongoing tobacco use or environmental exposure affects the goal."
-      },
-      {
-        "id": "f1ec1ed5-5ade-4ef2-8305-a7e07a5f871c",
+        "id": "e29f09b0-ab07-4186-8b01-cd8b96253707",
         "title": "Variable heart rate",
-        "description": "Heart rate varies outside the individualized target."
+        "description": ""
+      },
+      {
+        "id": "e60a115e-d4ca-4561-815b-12ffe97b1630",
+        "title": "Difficulty recognizing cardiac symptoms",
+        "description": ""
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13475",
+        "title": "Weather limits outdoor activity",
+        "description": ""
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13476",
+        "title": "Fatigue reduces activity tolerance",
+        "description": ""
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13495",
+        "title": "Limited cooking skills",
+        "description": ""
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13496",
+        "title": "Cost of key ingredients",
+        "description": ""
       }
     ]
   },
@@ -1378,14 +1503,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "5ba01e98-5c1d-4ce8-842b-6ed3a0908998",
-        "title": "Medication adherence difficulty",
-        "description": "Patient has difficulty taking medications consistently."
+        "id": "326c8b38-daf7-4cea-8a76-0abe208c3a63",
+        "title": "Inconsistent self-monitoring",
+        "description": ""
       },
       {
-        "id": "bd0809a0-c962-44c2-81ab-ffc1def16dfb",
-        "title": "Weight-monitoring inconsistency",
-        "description": "Daily weights are not consistently completed."
+        "id": "31a8acd4-db09-4d18-823a-39d2cea5a259",
+        "title": "Difficulty using monitoring equipment",
+        "description": ""
+      },
+      {
+        "id": "4f340ede-14a6-4d04-8e33-3f95d041d3a7",
+        "title": "Scale or equipment access",
+        "description": ""
+      },
+      {
+        "id": "07b79155-98fd-48aa-8c84-be68681070fc",
+        "title": "Medication adherence difficulty",
+        "description": ""
+      },
+      {
+        "id": "6d1ed546-4d23-42ed-8545-f2038bbffdc0",
+        "title": "Complex medication schedule",
+        "description": ""
+      },
+      {
+        "id": "e1a53048-2e0e-443a-8991-28c0bc5cc0b6",
+        "title": "Forgetfulness",
+        "description": ""
       }
     ]
   },
@@ -1396,6 +1541,13 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
       "Arthritis"
     ],
     "goals": [
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13471",
+        "title": "Adopt low-impact aerobic routine",
+        "subtitle": "Complete daily low-impact aerobic activity (cycling / swimming / walking) tuned to member ability.",
+        "category": "Other",
+        "priority": "medium"
+      },
       {
         "id": "ca6c08f8-6792-4bff-8f8f-128c95e16186",
         "title": "Improve balance",
@@ -1430,16 +1582,24 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "subtitle": "Increase safe physical activity.",
         "category": "Other",
         "priority": "medium"
-      },
-      {
-        "id": "3419b5a3-c77c-44e6-83a5-d7d9c24fcaa9",
-        "title": "Maintain appropriate assistive-device use",
-        "subtitle": "Use the prescribed assistive device safely and consistently.",
-        "category": "Other",
-        "priority": "medium"
       }
     ],
     "interventions": [
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13472",
+        "kind": "patient-education",
+        "title": "Choosing low-impact activities"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13473",
+        "kind": "patient-task",
+        "title": "Log daily activity minutes"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13474",
+        "kind": "internal-task",
+        "title": "Follow-up on activity plan"
+      },
       {
         "id": "568b9a05-329d-4900-89f2-fd4167b1801e",
         "kind": "patient-education",
@@ -1464,43 +1624,38 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "id": "39850447-c78e-453f-8e68-6eded8f8d3a4",
         "kind": "internal-task",
         "title": "Pain-care coordination"
-      },
-      {
-        "id": "3713892e-1adf-498a-8cb3-4474d07c0858",
-        "kind": "internal-task",
-        "title": "Activity plan"
-      },
-      {
-        "id": "27591e3a-cd9d-4122-8661-fbaff0a06023",
-        "kind": "measure-vital",
-        "title": "Functional assessment"
-      },
-      {
-        "id": "36bc58b7-f93d-406d-8a29-666a1cd2d996",
-        "kind": "patient-education",
-        "title": "Activity coaching"
       }
     ],
     "barriers": [
       {
-        "id": "1810f386-e9cb-434f-8f54-2b0bdba777b4",
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13475",
+        "title": "Weather limits outdoor activity",
+        "description": ""
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13476",
+        "title": "Fatigue reduces activity tolerance",
+        "description": ""
+      },
+      {
+        "id": "6d7efe02-e06a-4100-8d85-5d067d36d67d",
+        "title": "Fall-risk environment",
+        "description": ""
+      },
+      {
+        "id": "498b7eac-b1cc-410f-8f32-8b4664237945",
         "title": "Mobility limitation",
-        "description": "Pain, weakness, balance, or other limitations restrict mobility."
+        "description": ""
       },
       {
-        "id": "7900ec08-eec7-4a04-89ce-60f6d722e06f",
+        "id": "26ab02a0-fc22-4725-8a4a-e41b64e05d19",
         "title": "Chronic pain burden",
-        "description": "Pain interferes with function or self-management."
+        "description": ""
       },
       {
-        "id": "8d212959-08cb-49f4-87c2-83197fe8e3e4",
-        "title": "Limited physical activity",
-        "description": "Patient is less active than the care plan recommends."
-      },
-      {
-        "id": "e506b042-73d9-4afd-8809-f65b2604a83b",
+        "id": "744988e5-c812-48f1-868d-a02628220f4b",
         "title": "Limited response to current pain plan",
-        "description": "Current strategies have not sufficiently improved pain or function."
+        "description": ""
       }
     ]
   },
@@ -1511,6 +1666,13 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
       "Hypertension"
     ],
     "goals": [
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13471",
+        "title": "Adopt low-impact aerobic routine",
+        "subtitle": "Complete daily low-impact aerobic activity (cycling / swimming / walking) tuned to member ability.",
+        "category": "Other",
+        "priority": "medium"
+      },
       {
         "id": "5681f593-37ed-4f9e-8e47-f1d95dab03b1",
         "title": "Improve blood pressure control",
@@ -1545,16 +1707,24 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "subtitle": "Follow the agreed nutrition plan.",
         "category": "Other",
         "priority": "medium"
-      },
-      {
-        "id": "b5709052-110e-4ce8-8570-6518908f1c37",
-        "title": "Improve nutritional intake",
-        "subtitle": "Improve consistency and adequacy of nutritional intake.",
-        "category": "Other",
-        "priority": "medium"
       }
     ],
     "interventions": [
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13472",
+        "kind": "patient-education",
+        "title": "Choosing low-impact activities"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13473",
+        "kind": "patient-task",
+        "title": "Log daily activity minutes"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13474",
+        "kind": "internal-task",
+        "title": "Follow-up on activity plan"
+      },
       {
         "id": "52403562-10f8-4a7b-8c2a-9952fbd1eb83",
         "kind": "measure-vital",
@@ -1579,43 +1749,38 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "id": "13d32003-6ed8-43cd-8942-a7d2d729c9d2",
         "kind": "internal-task",
         "title": "Refill support"
-      },
-      {
-        "id": "9346036c-2112-42a6-8771-cfc9d5045fa7",
-        "kind": "internal-task",
-        "title": "Medication reminders"
-      },
-      {
-        "id": "458cf63c-9170-47d1-8f05-9623272be903",
-        "kind": "patient-education",
-        "title": "Diabetes nutrition coaching"
-      },
-      {
-        "id": "a12c7081-a7aa-414e-8073-feb0b303becb",
-        "kind": "patient-education",
-        "title": "Nutrition coaching"
       }
     ],
     "barriers": [
       {
-        "id": "0026a45c-f85e-4198-83ec-a19cdc0e10f3",
-        "title": "Food access limitation",
-        "description": "Available food options make nutrition goals difficult."
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13475",
+        "title": "Weather limits outdoor activity",
+        "description": ""
       },
       {
-        "id": "7348bf6c-a962-41a3-8b9a-d3dd7694549c",
-        "title": "Limited nutrition knowledge",
-        "description": "Patient needs additional nutrition education."
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13476",
+        "title": "Fatigue reduces activity tolerance",
+        "description": ""
       },
       {
-        "id": "8d212959-08cb-49f4-87c2-83197fe8e3e4",
-        "title": "Limited physical activity",
-        "description": "Patient is less active than the care plan recommends."
+        "id": "b0d6fd8d-d2eb-4c0f-8caf-2b6d404a04be",
+        "title": "Difficulty controlling condition",
+        "description": ""
       },
       {
-        "id": "5ba01e98-5c1d-4ce8-842b-6ed3a0908998",
+        "id": "e0d1f364-c879-405b-8134-488b544ab563",
         "title": "Medication adherence difficulty",
-        "description": "Patient has difficulty taking medications consistently."
+        "description": ""
+      },
+      {
+        "id": "1c5f319d-e97e-487b-8b8e-5fb8b158db13",
+        "title": "Persistent abnormal readings",
+        "description": ""
+      },
+      {
+        "id": "6d1ed546-4d23-42ed-8545-f2038bbffdc0",
+        "title": "Complex medication schedule",
+        "description": ""
       }
     ]
   },
@@ -1713,14 +1878,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "775eca4d-2192-412c-89bb-fb950aad2526",
-        "title": "Inconsistent self-monitoring",
-        "description": "Patient does not consistently record required measurements or symptoms."
+        "id": "b0d6fd8d-d2eb-4c0f-8caf-2b6d404a04be",
+        "title": "Difficulty controlling condition",
+        "description": ""
       },
       {
-        "id": "5ba01e98-5c1d-4ce8-842b-6ed3a0908998",
+        "id": "e0d1f364-c879-405b-8134-488b544ab563",
         "title": "Medication adherence difficulty",
-        "description": "Patient has difficulty taking medications consistently."
+        "description": ""
+      },
+      {
+        "id": "1c5f319d-e97e-487b-8b8e-5fb8b158db13",
+        "title": "Persistent abnormal readings",
+        "description": ""
+      },
+      {
+        "id": "6d1ed546-4d23-42ed-8545-f2038bbffdc0",
+        "title": "Complex medication schedule",
+        "description": ""
+      },
+      {
+        "id": "e1a53048-2e0e-443a-8991-28c0bc5cc0b6",
+        "title": "Forgetfulness",
+        "description": ""
+      },
+      {
+        "id": "8983a61c-d9de-43c8-8533-b4292df1223b",
+        "title": "Limited health literacy",
+        "description": ""
       }
     ]
   },
@@ -1818,24 +2003,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "8fb532c0-b217-4496-8749-ce9228a1bfa7",
-        "title": "Medication side effects",
-        "description": "Adverse effects interfere with adherence or quality of life."
+        "id": "d489e19a-69ad-4d5e-8672-3309e35e2b68",
+        "title": "Medication list discrepancy",
+        "description": ""
       },
       {
-        "id": "5d7dd139-759e-4c21-898b-c411275de96f",
+        "id": "07931b12-22d3-4eca-83e2-ef1361150a0c",
+        "title": "Incomplete care-team communication",
+        "description": ""
+      },
+      {
+        "id": "182f70a0-a501-40b4-8290-2a29bac6b7af",
+        "title": "Multiple prescribers",
+        "description": ""
+      },
+      {
+        "id": "3aa23632-0920-4c3a-87aa-737ea7f17b9d",
         "title": "Refill gap risk",
-        "description": "Medication may run out before the next refill is available."
+        "description": ""
       },
       {
-        "id": "229aa12c-db3f-4674-8764-71cb84a9803f",
-        "title": "Complex medication schedule",
-        "description": "Number or timing of medications makes adherence difficult."
+        "id": "7684a8a9-60f9-4e75-8e1c-4dc442a8392c",
+        "title": "Pharmacy access issue",
+        "description": ""
       },
       {
-        "id": "622beea5-efbd-434a-8c1f-3c0aa38eb814",
-        "title": "Difficulty reporting side effects",
-        "description": "Patient is uncertain when or how to report medication concerns."
+        "id": "6fa3d039-02cb-41f0-8268-15140866fef7",
+        "title": "Medication side effects",
+        "description": ""
       }
     ]
   },
@@ -1933,24 +2128,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "f77cccf0-ca68-44ba-881f-c19854da12b9",
-        "title": "Food insecurity",
-        "description": "Reliable access to adequate food is limited."
-      },
-      {
-        "id": "4515a98e-e822-49cb-8880-6bbca94f3cff",
-        "title": "Housing instability",
-        "description": "Housing circumstances interfere with health and care-plan goals."
-      },
-      {
-        "id": "e1e67006-609b-4a47-8171-ed859f20e0b2",
+        "id": "6f2e7667-a806-4680-86b1-8c22bd292926",
         "title": "Resource-navigation difficulty",
-        "description": "Patient needs assistance identifying or accessing community resources."
+        "description": ""
       },
       {
-        "id": "a6f20a90-1b20-40f5-8cb0-78620cb7adcc",
-        "title": "Social isolation",
-        "description": "Patient has limited meaningful social interaction."
+        "id": "c52a201a-4967-46c5-8d14-18b182fa2d19",
+        "title": "Food insecurity",
+        "description": ""
+      },
+      {
+        "id": "6bb1c348-6692-45c2-8117-94e43d387f70",
+        "title": "Housing instability",
+        "description": ""
+      },
+      {
+        "id": "925ec7ea-9eea-4bfd-8b45-035d8e58b742",
+        "title": "Social needs remain unresolved",
+        "description": ""
+      },
+      {
+        "id": "4bb5c8a0-0b9e-4efe-8fbe-692d3c3ad380",
+        "title": "Transportation barrier",
+        "description": ""
+      },
+      {
+        "id": "6643fa3e-89e4-4df4-8305-1893d2eda3c8",
+        "title": "Distance to care",
+        "description": ""
       }
     ]
   },
@@ -2048,19 +2253,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "153af8c7-7906-4cb7-82c0-9b433dce643a",
-        "title": "Unresolved post-discharge needs",
-        "description": "Important needs remain after a transition or discharge."
+        "id": "10846474-1fbf-48ce-860d-b0fe3df5316c",
+        "title": "Appointment access issue",
+        "description": ""
       },
       {
-        "id": "29c6c540-a310-458c-8ac2-b2ede830d131",
+        "id": "8e0a5ed7-08a2-493a-85fb-af3b53bb31d0",
         "title": "Follow-up access issue",
-        "description": "Patient has difficulty obtaining timely follow-up."
+        "description": ""
       },
       {
-        "id": "017324d6-81c4-4e25-8799-22345f0ad90e",
-        "title": "High readmission risk",
-        "description": "Multiple unresolved clinical or social factors increase risk."
+        "id": "d71ad103-0e19-468d-8856-d21ffddc7e10",
+        "title": "Lab access issue",
+        "description": ""
+      },
+      {
+        "id": "0d1e63ef-6f2c-494c-8282-99a24c5f124e",
+        "title": "Referral completion barrier",
+        "description": ""
+      },
+      {
+        "id": "11e53182-a614-4ebf-8d23-023583b83be8",
+        "title": "Incomplete care-team communication",
+        "description": ""
+      },
+      {
+        "id": "ec92801a-b6a4-4cfc-8272-698514add4fe",
+        "title": "Care-team coordination gap",
+        "description": ""
       }
     ]
   },
@@ -2139,14 +2359,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "e1e67006-609b-4a47-8171-ed859f20e0b2",
+        "id": "8eb09e06-0f9f-4af9-8f75-4e2874bbda09",
         "title": "Resource-navigation difficulty",
-        "description": "Patient needs assistance identifying or accessing community resources."
+        "description": ""
       },
       {
-        "id": "9fd854e8-d4e3-4d18-88b7-9927aaeb6dab",
+        "id": "925ec7ea-9eea-4bfd-8b45-035d8e58b742",
+        "title": "Social needs remain unresolved",
+        "description": ""
+      },
+      {
+        "id": "e6ab8bfa-f788-454c-87ec-118ce09aeacd",
+        "title": "Follow-up access issue",
+        "description": ""
+      },
+      {
+        "id": "1e7b3773-69d7-41fd-86ad-35308b091090",
+        "title": "Scheduling barrier",
+        "description": ""
+      },
+      {
+        "id": "4bb5c8a0-0b9e-4efe-8fbe-692d3c3ad380",
         "title": "Transportation barrier",
-        "description": "Lack of reliable transportation affects healthcare access."
+        "description": ""
+      },
+      {
+        "id": "6643fa3e-89e4-4df4-8305-1893d2eda3c8",
+        "title": "Distance to care",
+        "description": ""
       }
     ]
   },
@@ -2244,24 +2484,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "ec2ae2dd-9cbc-412b-8fd5-bbb0fbffecf5",
-        "title": "Behavioral-health stigma or concern",
-        "description": "Personal concerns make engagement with services difficult."
-      },
-      {
-        "id": "6af2e3d2-c3a0-4d3f-814b-a00dd1745544",
+        "id": "2b49b9c4-a43b-4b5d-874d-d51431a254f0",
         "title": "Care-management engagement barrier",
-        "description": "Patient is difficult to reach or has difficulty maintaining program engagement."
+        "description": ""
       },
       {
-        "id": "6ce0dc4d-57c3-4310-889f-5b3c747ab0d8",
-        "title": "Limited community engagement",
-        "description": "Patient has difficulty accessing or participating in social activities."
+        "id": "a6dd135a-efc1-4f8a-8fbd-7c6ce7a17606",
+        "title": "Competing priorities",
+        "description": ""
       },
       {
-        "id": "2b2af735-316f-4448-82b8-a0dcbb873e93",
-        "title": "Mood symptoms",
-        "description": "Mood symptoms interfere with engagement or daily activities."
+        "id": "eed1f185-cdba-4d22-8750-07f5aef23278",
+        "title": "Organizational difficulty",
+        "description": ""
+      },
+      {
+        "id": "8097b27d-ea9b-4352-867c-c2f52a10d2a5",
+        "title": "Limited social network",
+        "description": ""
+      },
+      {
+        "id": "88351a3a-928f-455f-8160-2bcf8e572694",
+        "title": "Social isolation",
+        "description": ""
+      },
+      {
+        "id": "e6544a8d-bd15-4d18-88f0-e7bcb3994b45",
+        "title": "Follow-up access issue",
+        "description": ""
       }
     ]
   },
@@ -2340,19 +2590,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "2f804821-e6de-4e8d-8da2-97e671dde2fc",
+        "id": "c7f0b01b-6d50-4942-8bb0-5295a32842da",
+        "title": "Functional limitation",
+        "description": ""
+      },
+      {
+        "id": "2b7cc268-8d37-482f-8c8f-d0e6d4061f34",
+        "title": "Need for caregiver assistance",
+        "description": ""
+      },
+      {
+        "id": "53ae1771-ef31-42a8-8eae-8b291f39fccb",
         "title": "Reduced self-care independence",
-        "description": "Patient needs additional support with self-care activities."
+        "description": ""
       },
       {
-        "id": "1810f386-e9cb-434f-8f54-2b0bdba777b4",
+        "id": "b0c42d48-0418-498e-8c46-c47b2fdbc3d6",
+        "title": "Limited physical activity",
+        "description": ""
+      },
+      {
+        "id": "2437799a-fa28-4613-8ea6-6e09fd10f816",
         "title": "Mobility limitation",
-        "description": "Pain, weakness, balance, or other limitations restrict mobility."
+        "description": ""
       },
       {
-        "id": "c3e4fb06-204b-4efb-8f5b-a55edb162a51",
-        "title": "Pressure-injury risk",
-        "description": "Immobility or other factors increase skin-breakdown risk."
+        "id": "eb7bcfb2-d6e4-47d8-8c81-13dae47e8641",
+        "title": "Assistive-device difficulty",
+        "description": ""
       }
     ]
   },
@@ -2417,7 +2682,38 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "title": "Shared goal setting"
       }
     ],
-    "barriers": []
+    "barriers": [
+      {
+        "id": "5358eb3f-839d-49ab-869a-031d910be6c5",
+        "title": "Advance-care-planning uncertainty",
+        "description": ""
+      },
+      {
+        "id": "ec68b8ff-b2b2-4b36-89aa-b4286db353c8",
+        "title": "Documentation gap",
+        "description": ""
+      },
+      {
+        "id": "b83319ab-abf5-4479-8f55-c331346082ad",
+        "title": "Emergency-plan gap",
+        "description": ""
+      },
+      {
+        "id": "ccc31edd-b941-4a3e-8b46-44fbdd166f3b",
+        "title": "Contact-information gap",
+        "description": ""
+      },
+      {
+        "id": "72e54455-8b79-460a-8fa2-15662338e5d3",
+        "title": "Low confidence with self-management",
+        "description": ""
+      },
+      {
+        "id": "cfe90906-f87f-4c79-867f-b7276455d30c",
+        "title": "Preference mismatch",
+        "description": ""
+      }
+    ]
   },
   {
     "id": "4fab010e-fb9d-5b88-a239-97daec269dd3",
@@ -2460,6 +2756,13 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "subtitle": "Keep emergency and caregiver contact information current.",
         "category": "Other",
         "priority": "medium"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13521",
+        "title": "Meet daily water intake target",
+        "subtitle": "Meet daily hydration target to support renal, cardiovascular, and cognitive health.",
+        "category": "Other",
+        "priority": "low"
       }
     ],
     "interventions": [
@@ -2506,24 +2809,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "af53bb62-8706-40d2-86a9-677a61b16cec",
-        "title": "Caregiver burden",
-        "description": "Caregiving responsibilities are difficult to sustain."
-      },
-      {
-        "id": "9c7a03f0-d2d3-4026-842d-dbca2e20cdd4",
-        "title": "Caregiver capacity limitation",
-        "description": "Available caregiver support is insufficient for identified needs."
-      },
-      {
-        "id": "ef186f62-53a7-4d0b-865a-43b97eb82cdd",
+        "id": "76d3ea90-fd2f-41f9-8d97-fbe5c290c711",
         "title": "Cognitive impairment",
-        "description": "Memory or cognitive changes interfere with self-management."
+        "description": ""
       },
       {
-        "id": "03d93ee1-7b53-4044-87e9-cb0ccf35c345",
-        "title": "Contact-information gap",
-        "description": "Emergency or caregiver contact information is missing or outdated."
+        "id": "ce414361-dc76-49c1-8141-cf5b4006c735",
+        "title": "Organizational difficulty",
+        "description": ""
+      },
+      {
+        "id": "db4bc44c-b7c8-4f2b-8f90-ab052340d5d0",
+        "title": "Caregiver capacity limitation",
+        "description": ""
+      },
+      {
+        "id": "8c58c376-6233-4a84-8699-32df778adb63",
+        "title": "Caregiver burden",
+        "description": ""
+      },
+      {
+        "id": "3c87d43c-cff4-4fbb-8d01-29c2580a50c8",
+        "title": "Safety-awareness limitation",
+        "description": ""
+      },
+      {
+        "id": "9f1050a2-f1a3-4f01-8782-d4d3a4526f52",
+        "title": "Fall-risk environment",
+        "description": ""
       }
     ]
   },
@@ -2616,24 +2929,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "6bcefbd1-16db-4527-8eb6-38d91c8d79c3",
-        "title": "Advance-care-planning uncertainty",
-        "description": "Patient or family needs additional discussion before preferences are documented."
+        "id": "72e54455-8b79-460a-8fa2-15662338e5d3",
+        "title": "Low confidence with self-management",
+        "description": ""
       },
       {
-        "id": "ec2ae2dd-9cbc-412b-8fd5-bbb0fbffecf5",
-        "title": "Behavioral-health stigma or concern",
-        "description": "Personal concerns make engagement with services difficult."
+        "id": "cfe90906-f87f-4c79-867f-b7276455d30c",
+        "title": "Preference mismatch",
+        "description": ""
       },
       {
-        "id": "6af2e3d2-c3a0-4d3f-814b-a00dd1745544",
+        "id": "e6544a8d-bd15-4d18-88f0-e7bcb3994b45",
+        "title": "Follow-up access issue",
+        "description": ""
+      },
+      {
+        "id": "5bdc7745-ea62-49a3-87f3-d3106a9059bf",
         "title": "Care-management engagement barrier",
-        "description": "Patient is difficult to reach or has difficulty maintaining program engagement."
+        "description": ""
       },
       {
-        "id": "c15589c0-f7e4-4a7d-8b7f-4805760940ad",
+        "id": "56b4bbe1-a4b3-457a-8977-017da39c2ce2",
         "title": "Competing priorities",
-        "description": "Other life circumstances interfere with care-plan tasks."
+        "description": ""
+      },
+      {
+        "id": "4ac7e221-9a66-4c08-8b83-234845285296",
+        "title": "Multiple active goals",
+        "description": ""
       }
     ]
   },
@@ -2717,24 +3040,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "cfb72508-376c-4d77-8ed0-798df226173b",
+        "id": "eb7bcfb2-d6e4-47d8-8c81-13dae47e8641",
         "title": "Assistive-device difficulty",
-        "description": "Patient has difficulty using the prescribed device safely."
+        "description": ""
       },
       {
-        "id": "9e5c69d6-7d99-45fc-8ef3-d1edb7018915",
+        "id": "3c12a425-3def-4a3b-847a-b567e74e073a",
         "title": "Equipment access issue",
-        "description": "Required assistive equipment is unavailable or difficult to obtain."
+        "description": ""
       },
       {
-        "id": "1810f386-e9cb-434f-8f54-2b0bdba777b4",
+        "id": "b0c42d48-0418-498e-8c46-c47b2fdbc3d6",
+        "title": "Limited physical activity",
+        "description": ""
+      },
+      {
+        "id": "e76ec93b-faf8-4508-8e53-ab535407ea29",
+        "title": "Functional limitation",
+        "description": ""
+      },
+      {
+        "id": "2437799a-fa28-4613-8ea6-6e09fd10f816",
         "title": "Mobility limitation",
-        "description": "Pain, weakness, balance, or other limitations restrict mobility."
+        "description": ""
       },
       {
-        "id": "c3e4fb06-204b-4efb-8f5b-a55edb162a51",
-        "title": "Pressure-injury risk",
-        "description": "Immobility or other factors increase skin-breakdown risk."
+        "id": "bdd392f2-c87f-4d8f-863b-ca6186a9a18c",
+        "title": "Need for caregiver assistance",
+        "description": ""
       }
     ]
   },
@@ -2832,14 +3165,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "017324d6-81c4-4e25-8799-22345f0ad90e",
-        "title": "High readmission risk",
-        "description": "Multiple unresolved clinical or social factors increase risk."
+        "id": "10846474-1fbf-48ce-860d-b0fe3df5316c",
+        "title": "Appointment access issue",
+        "description": ""
       },
       {
-        "id": "153af8c7-7906-4cb7-82c0-9b433dce643a",
-        "title": "Unresolved post-discharge needs",
-        "description": "Important needs remain after a transition or discharge."
+        "id": "8e0a5ed7-08a2-493a-85fb-af3b53bb31d0",
+        "title": "Follow-up access issue",
+        "description": ""
+      },
+      {
+        "id": "d71ad103-0e19-468d-8856-d21ffddc7e10",
+        "title": "Lab access issue",
+        "description": ""
+      },
+      {
+        "id": "0d1e63ef-6f2c-494c-8282-99a24c5f124e",
+        "title": "Referral completion barrier",
+        "description": ""
+      },
+      {
+        "id": "11e53182-a614-4ebf-8d23-023583b83be8",
+        "title": "Incomplete care-team communication",
+        "description": ""
+      },
+      {
+        "id": "ec92801a-b6a4-4cfc-8272-698514add4fe",
+        "title": "Care-team coordination gap",
+        "description": ""
       }
     ]
   },
@@ -2937,24 +3290,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "1810f386-e9cb-434f-8f54-2b0bdba777b4",
-        "title": "Mobility limitation",
-        "description": "Pain, weakness, balance, or other limitations restrict mobility."
-      },
-      {
-        "id": "fb8d8185-4408-4de9-8c6d-a58854447678",
-        "title": "Difficulty following safety plan",
-        "description": "Patient has difficulty consistently applying fall-prevention strategies."
-      },
-      {
-        "id": "3eddfac7-d60e-4970-88f3-8f53271f2c02",
+        "id": "6d7efe02-e06a-4100-8d85-5d067d36d67d",
         "title": "Fall-risk environment",
-        "description": "Home or environmental factors increase fall risk."
+        "description": ""
       },
       {
-        "id": "0b5d2d5d-1e8e-4c66-8432-4f031d90712a",
+        "id": "498b7eac-b1cc-410f-8f32-8b4664237945",
+        "title": "Mobility limitation",
+        "description": ""
+      },
+      {
+        "id": "dfc070dc-2bf0-47d5-8421-a416a3e11ba4",
         "title": "Incomplete fall assessment",
-        "description": "Fall-risk factors have not yet been fully evaluated."
+        "description": ""
+      },
+      {
+        "id": "861c2721-d5e8-447b-8022-3bd54fef4a79",
+        "title": "Difficulty following safety plan",
+        "description": ""
+      },
+      {
+        "id": "b0c42d48-0418-498e-8c46-c47b2fdbc3d6",
+        "title": "Limited physical activity",
+        "description": ""
+      },
+      {
+        "id": "e76ec93b-faf8-4508-8e53-ab535407ea29",
+        "title": "Functional limitation",
+        "description": ""
       }
     ]
   },
@@ -2992,6 +3355,20 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "subtitle": "Address all recommended preventive services that are due.",
         "category": "Other",
         "priority": "medium"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13401",
+        "title": "Maintain healthy body height record",
+        "subtitle": "Record annual measured height for longitudinal growth tracking and BMI calculation.",
+        "category": "Other",
+        "priority": "low"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13531",
+        "title": "Meet daily fruit and vegetable target",
+        "subtitle": "Consume the recommended servings of fruits and vegetables daily.",
+        "category": "Other",
+        "priority": "low"
       }
     ],
     "interventions": [
@@ -3024,13 +3401,48 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "id": "c3575745-e0eb-4a67-8d59-5414866d1a54",
         "kind": "measure-vital",
         "title": "Preventive screening tracking"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13402",
+        "kind": "measure-vital",
+        "title": "Measure standing height"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13403",
+        "kind": "patient-education",
+        "title": "Why height matters for BMI"
       }
     ],
     "barriers": [
       {
-        "id": "73f483c8-e066-4b0f-826b-fc881641ffed",
+        "id": "09db0e37-73c9-4afd-80ec-000ff4f65f32",
+        "title": "Appointment access issue",
+        "description": ""
+      },
+      {
+        "id": "e986bcb9-1c69-418d-849b-ae76adf5b4d0",
+        "title": "Follow-up access issue",
+        "description": ""
+      },
+      {
+        "id": "27228f03-3e28-4fd2-8f6b-4b721a4d3624",
         "title": "Immunization access barrier",
-        "description": "Patient has difficulty obtaining recommended vaccines."
+        "description": ""
+      },
+      {
+        "id": "74058092-60c4-4bee-8952-110a96dc990c",
+        "title": "Vaccine hesitancy or uncertainty",
+        "description": ""
+      },
+      {
+        "id": "b3bf3314-f0ef-492d-8978-4e72b5fd2b0e",
+        "title": "Lab access issue",
+        "description": ""
+      },
+      {
+        "id": "9dc2308b-fdfc-4779-8987-51a68218f5ad",
+        "title": "Referral completion barrier",
+        "description": ""
       }
     ]
   },
@@ -3068,6 +3480,13 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "subtitle": "Use prescribed oxygen therapy according to the care plan.",
         "category": "Other",
         "priority": "medium"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13421",
+        "title": "Monitor oxygen saturation for COPD",
+        "subtitle": "Track daily home SpO2 for members with moderate-to-severe COPD to trigger early follow-up.",
+        "category": "Other",
+        "priority": "high"
       },
       {
         "id": "1d9df1a1-37f5-4e47-82ec-6ca7716f1000",
@@ -3114,31 +3533,41 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "title": "Oxygen-use support"
       },
       {
-        "id": "dfd8cc4c-be1e-4117-8959-f80d6964a0f6",
-        "kind": "internal-task",
-        "title": "Exacerbation prevention"
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13422",
+        "kind": "measure-vital",
+        "title": "Daily SpO2 log"
       }
     ],
     "barriers": [
       {
-        "id": "33b0dd06-21e3-4291-87f8-21712b926fda",
-        "title": "Difficulty following action plan",
-        "description": "Patient is unsure how to respond to changing respiratory symptoms."
+        "id": "369990a9-fba6-43ab-89a0-7a7f73e633a1",
+        "title": "Tobacco exposure",
+        "description": ""
       },
       {
-        "id": "f5e908d0-7189-4a24-843f-add133395d71",
-        "title": "Incorrect inhaler technique",
-        "description": "Patient does not consistently use the device correctly."
+        "id": "56e8e09a-bcd2-4320-817b-1e701f6686f2",
+        "title": "Respiratory symptom burden",
+        "description": ""
       },
       {
-        "id": "0d1ebf27-3502-4118-8592-d8ce8fb4a9c8",
+        "id": "a20dcca7-7c54-4146-81fa-71e35c167134",
+        "title": "Respiratory trigger exposure",
+        "description": ""
+      },
+      {
+        "id": "6515f77f-ea00-4738-84c7-15b2aed52eef",
+        "title": "Medication adherence difficulty",
+        "description": ""
+      },
+      {
+        "id": "9c424ff2-bf18-47c4-872d-43171bed3c66",
         "title": "Inhaler adherence difficulty",
-        "description": "Controller or rescue medication use is inconsistent."
+        "description": ""
       },
       {
-        "id": "7c642373-9eb2-4ec8-89cc-8b2665333ae7",
-        "title": "Oxygen equipment issue",
-        "description": "Equipment access, maintenance, or usability affects adherence."
+        "id": "1518924d-3a32-47ac-81ab-2406b1af54b6",
+        "title": "Incorrect inhaler technique",
+        "description": ""
       }
     ]
   },
@@ -3164,6 +3593,13 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "priority": "medium"
       },
       {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13521",
+        "title": "Meet daily water intake target",
+        "subtitle": "Meet daily hydration target to support renal, cardiovascular, and cognitive health.",
+        "category": "Other",
+        "priority": "low"
+      },
+      {
         "id": "632a2797-cf1c-4572-8eb6-91e996052687",
         "title": "Complete recommended post-discharge services",
         "subtitle": "Complete referrals, labs, therapy, or other services listed in the discharge plan.",
@@ -3181,13 +3617,6 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "id": "0ebef36f-8fb6-4ee7-87b0-a514d63a09d4",
         "title": "Improve completion of recommended labs",
         "subtitle": "Complete recommended laboratory monitoring on schedule.",
-        "category": "Other",
-        "priority": "medium"
-      },
-      {
-        "id": "d58c571b-0f77-405b-8dd5-32f047e61575",
-        "title": "Maintain blood pressure within target",
-        "subtitle": "Maintain blood pressure at or below the individualized target.",
         "category": "Other",
         "priority": "medium"
       }
@@ -3219,26 +3648,51 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "title": "Renal risk-factor support"
       },
       {
-        "id": "bd8d6f4a-d200-47f9-8d31-4a0c88139500",
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13522",
+        "kind": "patient-education",
+        "title": "Hydration best practices"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13523",
+        "kind": "patient-task",
+        "title": "Log daily water intake"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13524",
         "kind": "internal-task",
-        "title": "Referral coordination"
-      },
-      {
-        "id": "79c0e677-c94d-46b3-8feb-f27630742f9a",
-        "kind": "measure-vital",
-        "title": "Appointment tracking"
-      },
-      {
-        "id": "52403562-10f8-4a7b-8c2a-9952fbd1eb83",
-        "kind": "measure-vital",
-        "title": "Blood pressure monitoring"
+        "title": "Hydration coaching call"
       }
     ],
     "barriers": [
       {
-        "id": "268e0cb3-e90e-4b1b-8182-fe3a6e627978",
+        "id": "c8898687-acd4-4e1b-890e-75467ba3bac8",
+        "title": "Appointment access issue",
+        "description": ""
+      },
+      {
+        "id": "32563b0b-63b9-4e00-8d86-e7aaabab5a79",
+        "title": "Lab access issue",
+        "description": ""
+      },
+      {
+        "id": "4b6f9db7-5c51-428f-8d40-40d5ee57e759",
         "title": "Kidney-monitoring complexity",
-        "description": "Multiple renal monitoring requirements are difficult to coordinate."
+        "description": ""
+      },
+      {
+        "id": "22e0eb92-4f2e-463a-87ea-7d799441b0de",
+        "title": "Medication adherence difficulty",
+        "description": ""
+      },
+      {
+        "id": "90ef2ee5-7579-4372-8886-c064414950b0",
+        "title": "Nutrition challenges",
+        "description": ""
+      },
+      {
+        "id": "ea1424c8-bb70-4736-8f23-b205e7f017c3",
+        "title": "Food access limitation",
+        "description": ""
       }
     ]
   },
@@ -3336,24 +3790,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "b0ba2c69-3cf2-4d67-8c50-3a4c7ca6c9fb",
-        "title": "Delayed wound healing",
-        "description": "Wound progress is slower than expected."
+        "id": "ffa0e269-6e32-453e-8598-72ab223ed975",
+        "title": "Complex medication schedule",
+        "description": ""
       },
       {
-        "id": "0026a45c-f85e-4198-83ec-a19cdc0e10f3",
-        "title": "Food access limitation",
-        "description": "Available food options make nutrition goals difficult."
+        "id": "8a40c7b2-1c69-4283-8c0c-99b0d97da88e",
+        "title": "Wound-care complexity",
+        "description": ""
       },
       {
-        "id": "7348bf6c-a962-41a3-8b9a-d3dd7694549c",
-        "title": "Limited nutrition knowledge",
-        "description": "Patient needs additional nutrition education."
+        "id": "f73ddf42-7136-4bfa-852b-776810a32fac",
+        "title": "Wound-care adherence difficulty",
+        "description": ""
       },
       {
-        "id": "2bdb76d1-a752-4834-8e25-c569e44d99ca",
+        "id": "9d7d636d-95ad-4662-84ee-720aad16e58c",
         "title": "Nutrition challenges",
-        "description": "Difficulty following recommended nutrition behaviors."
+        "description": ""
+      },
+      {
+        "id": "75e2d12d-7950-48aa-8394-9d67e337ddda",
+        "title": "Food access limitation",
+        "description": ""
+      },
+      {
+        "id": "abccb2d3-f29f-43db-8452-fbf062e6e26c",
+        "title": "Difficulty maintaining meal plan",
+        "description": ""
       }
     ]
   },
@@ -3451,24 +3915,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "deb5762f-70fa-4feb-85a8-3a740c74ed14",
-        "title": "Fluid-plan complexity",
-        "description": "The patient's clinical plan makes hydration targets difficult to follow."
+        "id": "ac572fa4-2cfd-4c9b-8797-c826108686ba",
+        "title": "Poor appetite",
+        "description": ""
       },
       {
-        "id": "0026a45c-f85e-4198-83ec-a19cdc0e10f3",
-        "title": "Food access limitation",
-        "description": "Available food options make nutrition goals difficult."
+        "id": "9c6175b2-86fb-4794-8123-73af17b76c02",
+        "title": "Unintended weight loss",
+        "description": ""
       },
       {
-        "id": "f77cccf0-ca68-44ba-881f-c19854da12b9",
+        "id": "71902ba9-ed05-417f-8cbe-9be8a79a0a35",
+        "title": "Nutrition-related functional limitation",
+        "description": ""
+      },
+      {
+        "id": "6f2e7667-a806-4680-86b1-8c22bd292926",
+        "title": "Resource-navigation difficulty",
+        "description": ""
+      },
+      {
+        "id": "c52a201a-4967-46c5-8d14-18b182fa2d19",
         "title": "Food insecurity",
-        "description": "Reliable access to adequate food is limited."
+        "description": ""
       },
       {
-        "id": "e31f5ac6-68a3-4471-81e4-d4b4de4b9a25",
-        "title": "Hydration challenge",
-        "description": "Patient has difficulty meeting the individualized hydration plan."
+        "id": "9d7d636d-95ad-4662-84ee-720aad16e58c",
+        "title": "Nutrition challenges",
+        "description": ""
       }
     ]
   },
@@ -3483,6 +3957,13 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "id": "3c90c65b-6209-41df-82a5-c462a1eb2250",
         "title": "Prevent unintended weight loss",
         "subtitle": "Maintain weight within the individualized acceptable range.",
+        "category": "Other",
+        "priority": "medium"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13471",
+        "title": "Adopt low-impact aerobic routine",
+        "subtitle": "Complete daily low-impact aerobic activity (cycling / swimming / walking) tuned to member ability.",
         "category": "Other",
         "priority": "medium"
       },
@@ -3513,13 +3994,6 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "subtitle": "Achieve gradual, sustainable weight reduction when clinically appropriate.",
         "category": "Other",
         "priority": "medium"
-      },
-      {
-        "id": "2778ff3e-c5f9-4f21-82c6-94e8a7c54785",
-        "title": "Increase physical activity for metabolic health",
-        "subtitle": "Increase safe physical activity.",
-        "category": "Other",
-        "priority": "medium"
       }
     ],
     "interventions": [
@@ -3539,6 +4013,21 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "title": "Weight monitoring"
       },
       {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13472",
+        "kind": "patient-education",
+        "title": "Choosing low-impact activities"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13473",
+        "kind": "patient-task",
+        "title": "Log daily activity minutes"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13474",
+        "kind": "internal-task",
+        "title": "Follow-up on activity plan"
+      },
+      {
         "id": "458cf63c-9170-47d1-8f05-9623272be903",
         "kind": "patient-education",
         "title": "Diabetes nutrition coaching"
@@ -3547,43 +4036,38 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "id": "a12c7081-a7aa-414e-8073-feb0b303becb",
         "kind": "patient-education",
         "title": "Nutrition coaching"
-      },
-      {
-        "id": "dac69210-833a-40b3-8ce9-1484a1eb5e0f",
-        "kind": "internal-task",
-        "title": "Activity plan"
-      },
-      {
-        "id": "d0696ba1-fe6f-4720-8809-849963ff071f",
-        "kind": "patient-education",
-        "title": "Weight-management coaching"
-      },
-      {
-        "id": "36bc58b7-f93d-406d-8a29-666a1cd2d996",
-        "kind": "patient-education",
-        "title": "Activity coaching"
       }
     ],
     "barriers": [
       {
-        "id": "0026a45c-f85e-4198-83ec-a19cdc0e10f3",
-        "title": "Food access limitation",
-        "description": "Available food options make nutrition goals difficult."
+        "id": "ac572fa4-2cfd-4c9b-8797-c826108686ba",
+        "title": "Poor appetite",
+        "description": ""
       },
       {
-        "id": "7348bf6c-a962-41a3-8b9a-d3dd7694549c",
-        "title": "Limited nutrition knowledge",
-        "description": "Patient needs additional nutrition education."
+        "id": "9c6175b2-86fb-4794-8123-73af17b76c02",
+        "title": "Unintended weight loss",
+        "description": ""
       },
       {
-        "id": "8d212959-08cb-49f4-87c2-83197fe8e3e4",
-        "title": "Limited physical activity",
-        "description": "Patient is less active than the care plan recommends."
+        "id": "71902ba9-ed05-417f-8cbe-9be8a79a0a35",
+        "title": "Nutrition-related functional limitation",
+        "description": ""
       },
       {
-        "id": "2bdb76d1-a752-4834-8e25-c569e44d99ca",
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13475",
+        "title": "Weather limits outdoor activity",
+        "description": ""
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13476",
+        "title": "Fatigue reduces activity tolerance",
+        "description": ""
+      },
+      {
+        "id": "9d7d636d-95ad-4662-84ee-720aad16e58c",
         "title": "Nutrition challenges",
-        "description": "Difficulty following recommended nutrition behaviors."
+        "description": ""
       }
     ]
   },
@@ -3605,6 +4089,13 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "id": "6b829781-05cc-46bc-8f2a-ec5adcd2176c",
         "title": "Maintain oxygen therapy adherence",
         "subtitle": "Use prescribed oxygen therapy according to the care plan.",
+        "category": "Other",
+        "priority": "medium"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13431",
+        "title": "Maintain resting respiratory rate",
+        "subtitle": "Keep resting respiratory rate within the normal range for the member's age and comorbidities.",
         "category": "Other",
         "priority": "medium"
       },
@@ -3657,41 +4148,51 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "title": "Medication adherence education"
       },
       {
-        "id": "e7c0636b-f1e4-4683-8adb-b30c4fdea920",
-        "kind": "internal-task",
-        "title": "Activity plan"
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13432",
+        "kind": "measure-vital",
+        "title": "Weekly respiratory-rate check"
       },
       {
-        "id": "646e2c9b-2ccc-4a84-848d-3fd512d6d5e6",
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13433",
         "kind": "patient-education",
-        "title": "Activity coaching"
+        "title": "Breathing-technique guidance"
       },
       {
-        "id": "dfd8cc4c-be1e-4117-8959-f80d6964a0f6",
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13434",
         "kind": "internal-task",
-        "title": "Exacerbation prevention"
+        "title": "Trend review for respiratory rate"
       }
     ],
     "barriers": [
       {
-        "id": "33b0dd06-21e3-4291-87f8-21712b926fda",
-        "title": "Difficulty following action plan",
-        "description": "Patient is unsure how to respond to changing respiratory symptoms."
+        "id": "369990a9-fba6-43ab-89a0-7a7f73e633a1",
+        "title": "Tobacco exposure",
+        "description": ""
       },
       {
-        "id": "a51bc6b3-ae7a-439b-891f-efbc782540f2",
+        "id": "56e8e09a-bcd2-4320-817b-1e701f6686f2",
         "title": "Respiratory symptom burden",
-        "description": "Symptoms interfere with daily activities or treatment goals."
+        "description": ""
       },
       {
-        "id": "072a14aa-e2d8-4bdd-8d1a-2152e343759c",
+        "id": "a20dcca7-7c54-4146-81fa-71e35c167134",
         "title": "Respiratory trigger exposure",
-        "description": "Environmental or behavioral triggers worsen symptoms."
+        "description": ""
       },
       {
-        "id": "3b16697b-b821-4c05-89fa-8918e77f98ad",
-        "title": "Tobacco cessation difficulty",
-        "description": "Patient reports difficulty reducing or stopping tobacco use."
+        "id": "9c7ecb94-afc8-41a7-87f8-a57a4c8ca1d3",
+        "title": "Oxygen equipment issue",
+        "description": ""
+      },
+      {
+        "id": "e9067de7-2f98-45f5-8385-504bda63187d",
+        "title": "Oxygen-use burden",
+        "description": ""
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13435",
+        "title": "Difficulty controlling condition",
+        "description": ""
       }
     ]
   },
@@ -3770,24 +4271,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "5abbadbb-cf6a-4786-8c5e-df67e7adbe31",
-        "title": "Behavioral-health access",
-        "description": "Difficulty obtaining behavioral-health services affects the plan."
+        "id": "73447b4d-76ea-44c3-84ab-3de8c24ac093",
+        "title": "Treatment engagement difficulty",
+        "description": ""
       },
       {
-        "id": "ec2ae2dd-9cbc-412b-8fd5-bbb0fbffecf5",
+        "id": "a044b42c-7fdb-4291-807f-eb9db9266950",
         "title": "Behavioral-health stigma or concern",
-        "description": "Personal concerns make engagement with services difficult."
+        "description": ""
       },
       {
-        "id": "99d7813e-6eb2-4646-85bc-f3f91a39518b",
-        "title": "Irregular sleep schedule",
-        "description": "Inconsistent sleep/wake patterns interfere with the goal."
-      },
-      {
-        "id": "2b2af735-316f-4448-82b8-a0dcbb873e93",
+        "id": "945b5867-c7f1-4633-87b1-ab10cf0b471a",
         "title": "Mood symptoms",
-        "description": "Mood symptoms interfere with engagement or daily activities."
+        "description": ""
+      },
+      {
+        "id": "21b9492b-d218-4333-8a2e-7d7a994de08d",
+        "title": "Behavioral-health access",
+        "description": ""
+      },
+      {
+        "id": "6abf9f20-e025-48d4-8ac9-76d033c7180b",
+        "title": "Irregular sleep schedule",
+        "description": ""
+      },
+      {
+        "id": "133bc0c9-5edc-4f40-8ef8-3d4a3988c75f",
+        "title": "Sleep environment barrier",
+        "description": ""
       }
     ]
   },
@@ -3878,24 +4389,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "af53bb62-8706-40d2-86a9-677a61b16cec",
-        "title": "Caregiver burden",
-        "description": "Caregiving responsibilities are difficult to sustain."
+        "id": "8097b27d-ea9b-4352-867c-c2f52a10d2a5",
+        "title": "Limited social network",
+        "description": ""
       },
       {
-        "id": "9c7a03f0-d2d3-4026-842d-dbca2e20cdd4",
+        "id": "88351a3a-928f-455f-8160-2bcf8e572694",
+        "title": "Social isolation",
+        "description": ""
+      },
+      {
+        "id": "8eb09e06-0f9f-4af9-8f75-4e2874bbda09",
+        "title": "Resource-navigation difficulty",
+        "description": ""
+      },
+      {
+        "id": "925ec7ea-9eea-4bfd-8b45-035d8e58b742",
+        "title": "Social needs remain unresolved",
+        "description": ""
+      },
+      {
+        "id": "db4bc44c-b7c8-4f2b-8f90-ab052340d5d0",
         "title": "Caregiver capacity limitation",
-        "description": "Available caregiver support is insufficient for identified needs."
+        "description": ""
       },
       {
-        "id": "03d93ee1-7b53-4044-87e9-cb0ccf35c345",
-        "title": "Contact-information gap",
-        "description": "Emergency or caregiver contact information is missing or outdated."
-      },
-      {
-        "id": "61104e73-604a-4543-88d5-f865a0d92b46",
-        "title": "Need for caregiver assistance",
-        "description": "Patient needs support to complete daily activities."
+        "id": "8c58c376-6233-4a84-8699-32df778adb63",
+        "title": "Caregiver burden",
+        "description": ""
       }
     ]
   },
@@ -3906,6 +4427,13 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
       "Sleep difficulty"
     ],
     "goals": [
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13471",
+        "title": "Adopt low-impact aerobic routine",
+        "subtitle": "Complete daily low-impact aerobic activity (cycling / swimming / walking) tuned to member ability.",
+        "category": "Other",
+        "priority": "medium"
+      },
       {
         "id": "847ed5b1-5d44-4143-8f7a-456588303538",
         "title": "Improve daytime energy",
@@ -3937,6 +4465,21 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "interventions": [
       {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13472",
+        "kind": "patient-education",
+        "title": "Choosing low-impact activities"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13473",
+        "kind": "patient-task",
+        "title": "Log daily activity minutes"
+      },
+      {
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13474",
+        "kind": "internal-task",
+        "title": "Follow-up on activity plan"
+      },
+      {
         "id": "0386948c-626e-4ebd-88a7-32ad9fd24cac",
         "kind": "internal-task",
         "title": "Activity plan"
@@ -3964,24 +4507,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "d2ae4e73-4208-4aa1-8006-febe96cea60e",
-        "title": "Fatigue",
-        "description": "Low energy limits participation in planned activities."
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13475",
+        "title": "Weather limits outdoor activity",
+        "description": ""
       },
       {
-        "id": "99d7813e-6eb2-4646-85bc-f3f91a39518b",
-        "title": "Irregular sleep schedule",
-        "description": "Inconsistent sleep/wake patterns interfere with the goal."
+        "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13476",
+        "title": "Fatigue reduces activity tolerance",
+        "description": ""
       },
       {
-        "id": "8d212959-08cb-49f4-87c2-83197fe8e3e4",
+        "id": "b1b85288-a6d9-4510-824c-e7189cb1d3f5",
         "title": "Limited physical activity",
-        "description": "Patient is less active than the care plan recommends."
+        "description": ""
       },
       {
-        "id": "f092510a-c2ef-42ca-82b0-bf5f9f0a9f11",
-        "title": "Physical limitations",
-        "description": "Functional limitations restrict activity."
+        "id": "d63e57b8-b3c5-4328-820b-d6337cafbcf5",
+        "title": "Fatigue",
+        "description": ""
+      },
+      {
+        "id": "6abf9f20-e025-48d4-8ac9-76d033c7180b",
+        "title": "Irregular sleep schedule",
+        "description": ""
+      },
+      {
+        "id": "133bc0c9-5edc-4f40-8ef8-3d4a3988c75f",
+        "title": "Sleep environment barrier",
+        "description": ""
       }
     ]
   },
@@ -4074,19 +4627,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "5ba01e98-5c1d-4ce8-842b-6ed3a0908998",
-        "title": "Medication adherence difficulty",
-        "description": "Patient has difficulty taking medications consistently."
+        "id": "76d3ea90-fd2f-41f9-8d97-fbe5c290c711",
+        "title": "Cognitive impairment",
+        "description": ""
       },
       {
-        "id": "bc728d9c-e357-4004-8bb7-5856b9a64998",
+        "id": "ce414361-dc76-49c1-8141-cf5b4006c735",
         "title": "Organizational difficulty",
-        "description": "Patient has difficulty managing appointments, tasks, or reminders."
+        "description": ""
       },
       {
-        "id": "5d7dd139-759e-4c21-898b-c411275de96f",
+        "id": "07b79155-98fd-48aa-8c84-be68681070fc",
+        "title": "Medication adherence difficulty",
+        "description": ""
+      },
+      {
+        "id": "6d1ed546-4d23-42ed-8545-f2038bbffdc0",
+        "title": "Complex medication schedule",
+        "description": ""
+      },
+      {
+        "id": "e1a53048-2e0e-443a-8991-28c0bc5cc0b6",
+        "title": "Forgetfulness",
+        "description": ""
+      },
+      {
+        "id": "3aa23632-0920-4c3a-87aa-737ea7f17b9d",
         "title": "Refill gap risk",
-        "description": "Medication may run out before the next refill is available."
+        "description": ""
       }
     ]
   },
@@ -4179,14 +4747,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "5ba01e98-5c1d-4ce8-842b-6ed3a0908998",
-        "title": "Medication adherence difficulty",
-        "description": "Patient has difficulty taking medications consistently."
+        "id": "d489e19a-69ad-4d5e-8672-3309e35e2b68",
+        "title": "Medication list discrepancy",
+        "description": ""
       },
       {
-        "id": "8fb532c0-b217-4496-8749-ce9228a1bfa7",
-        "title": "Medication side effects",
-        "description": "Adverse effects interfere with adherence or quality of life."
+        "id": "07931b12-22d3-4eca-83e2-ef1361150a0c",
+        "title": "Incomplete care-team communication",
+        "description": ""
+      },
+      {
+        "id": "182f70a0-a501-40b4-8290-2a29bac6b7af",
+        "title": "Multiple prescribers",
+        "description": ""
+      },
+      {
+        "id": "07b79155-98fd-48aa-8c84-be68681070fc",
+        "title": "Medication adherence difficulty",
+        "description": ""
+      },
+      {
+        "id": "6d1ed546-4d23-42ed-8545-f2038bbffdc0",
+        "title": "Complex medication schedule",
+        "description": ""
+      },
+      {
+        "id": "e1a53048-2e0e-443a-8991-28c0bc5cc0b6",
+        "title": "Forgetfulness",
+        "description": ""
       }
     ]
   },
@@ -4284,9 +4872,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "73f483c8-e066-4b0f-826b-fc881641ffed",
+        "id": "09db0e37-73c9-4afd-80ec-000ff4f65f32",
+        "title": "Appointment access issue",
+        "description": ""
+      },
+      {
+        "id": "e986bcb9-1c69-418d-849b-ae76adf5b4d0",
+        "title": "Follow-up access issue",
+        "description": ""
+      },
+      {
+        "id": "27228f03-3e28-4fd2-8f6b-4b721a4d3624",
         "title": "Immunization access barrier",
-        "description": "Patient has difficulty obtaining recommended vaccines."
+        "description": ""
+      },
+      {
+        "id": "74058092-60c4-4bee-8952-110a96dc990c",
+        "title": "Vaccine hesitancy or uncertainty",
+        "description": ""
+      },
+      {
+        "id": "b3bf3314-f0ef-492d-8978-4e72b5fd2b0e",
+        "title": "Lab access issue",
+        "description": ""
+      },
+      {
+        "id": "9dc2308b-fdfc-4779-8987-51a68218f5ad",
+        "title": "Referral completion barrier",
+        "description": ""
       }
     ]
   },
@@ -4363,7 +4976,33 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
         "title": "Immunization review"
       }
     ],
-    "barriers": []
+    "barriers": [
+      {
+        "id": "ba05fd97-db66-48db-8203-fc7434b031e5",
+        "title": "Appointment access issue",
+        "description": ""
+      },
+      {
+        "id": "b3bf3314-f0ef-492d-8978-4e72b5fd2b0e",
+        "title": "Lab access issue",
+        "description": ""
+      },
+      {
+        "id": "9dc2308b-fdfc-4779-8987-51a68218f5ad",
+        "title": "Referral completion barrier",
+        "description": ""
+      },
+      {
+        "id": "fc669fee-da97-466b-8f39-de619b6aedf1",
+        "title": "Scheduling barrier",
+        "description": ""
+      },
+      {
+        "id": "c7bc6732-7f56-441e-84bf-bc21b7abf3cf",
+        "title": "Immunization access barrier",
+        "description": ""
+      }
+    ]
   },
   {
     "id": "a2f88024-8b14-5302-9daa-620ac7578621",
@@ -4452,24 +5091,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "af53bb62-8706-40d2-86a9-677a61b16cec",
-        "title": "Caregiver burden",
-        "description": "Caregiving responsibilities are difficult to sustain."
+        "id": "8eb09e06-0f9f-4af9-8f75-4e2874bbda09",
+        "title": "Resource-navigation difficulty",
+        "description": ""
       },
       {
-        "id": "9c7a03f0-d2d3-4026-842d-dbca2e20cdd4",
+        "id": "925ec7ea-9eea-4bfd-8b45-035d8e58b742",
+        "title": "Social needs remain unresolved",
+        "description": ""
+      },
+      {
+        "id": "db4bc44c-b7c8-4f2b-8f90-ab052340d5d0",
         "title": "Caregiver capacity limitation",
-        "description": "Available caregiver support is insufficient for identified needs."
+        "description": ""
       },
       {
-        "id": "03d93ee1-7b53-4044-87e9-cb0ccf35c345",
-        "title": "Contact-information gap",
-        "description": "Emergency or caregiver contact information is missing or outdated."
+        "id": "8c58c376-6233-4a84-8699-32df778adb63",
+        "title": "Caregiver burden",
+        "description": ""
       },
       {
-        "id": "61104e73-604a-4543-88d5-f865a0d92b46",
-        "title": "Need for caregiver assistance",
-        "description": "Patient needs support to complete daily activities."
+        "id": "8097b27d-ea9b-4352-867c-c2f52a10d2a5",
+        "title": "Limited social network",
+        "description": ""
+      },
+      {
+        "id": "88351a3a-928f-455f-8160-2bcf8e572694",
+        "title": "Social isolation",
+        "description": ""
       }
     ]
   },
@@ -4567,14 +5216,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "153af8c7-7906-4cb7-82c0-9b433dce643a",
-        "title": "Unresolved post-discharge needs",
-        "description": "Important needs remain after a transition or discharge."
+        "id": "10846474-1fbf-48ce-860d-b0fe3df5316c",
+        "title": "Appointment access issue",
+        "description": ""
       },
       {
-        "id": "29c6c540-a310-458c-8ac2-b2ede830d131",
+        "id": "8e0a5ed7-08a2-493a-85fb-af3b53bb31d0",
         "title": "Follow-up access issue",
-        "description": "Patient has difficulty obtaining timely follow-up."
+        "description": ""
+      },
+      {
+        "id": "11e53182-a614-4ebf-8d23-023583b83be8",
+        "title": "Incomplete care-team communication",
+        "description": ""
+      },
+      {
+        "id": "ec92801a-b6a4-4cfc-8272-698514add4fe",
+        "title": "Care-team coordination gap",
+        "description": ""
+      },
+      {
+        "id": "d71ad103-0e19-468d-8856-d21ffddc7e10",
+        "title": "Lab access issue",
+        "description": ""
+      },
+      {
+        "id": "0d1e63ef-6f2c-494c-8282-99a24c5f124e",
+        "title": "Referral completion barrier",
+        "description": ""
       }
     ]
   },
@@ -4672,14 +5341,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "017324d6-81c4-4e25-8799-22345f0ad90e",
-        "title": "High readmission risk",
-        "description": "Multiple unresolved clinical or social factors increase risk."
+        "id": "f9f4d93c-f4ea-4041-841c-63a9285b2e6d",
+        "title": "Medication list discrepancy",
+        "description": ""
       },
       {
-        "id": "153af8c7-7906-4cb7-82c0-9b433dce643a",
-        "title": "Unresolved post-discharge needs",
-        "description": "Important needs remain after a transition or discharge."
+        "id": "369f0c2e-56c8-4ca1-88ba-c884ecded3e0",
+        "title": "Refill gap risk",
+        "description": ""
+      },
+      {
+        "id": "fadd4a59-7ea3-4c8e-8ab0-959ceecbd875",
+        "title": "Limited health literacy",
+        "description": ""
+      },
+      {
+        "id": "10846474-1fbf-48ce-860d-b0fe3df5316c",
+        "title": "Appointment access issue",
+        "description": ""
+      },
+      {
+        "id": "8e0a5ed7-08a2-493a-85fb-af3b53bb31d0",
+        "title": "Follow-up access issue",
+        "description": ""
+      },
+      {
+        "id": "d71ad103-0e19-468d-8856-d21ffddc7e10",
+        "title": "Lab access issue",
+        "description": ""
       }
     ]
   },
@@ -4753,24 +5442,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "120ca3e3-929f-4674-82c4-a50855cc1472",
-        "title": "Appointment access issue",
-        "description": "Patient has difficulty obtaining or attending required appointments."
+        "id": "05e4a823-a788-4c3d-8eb9-c97d29dd3065",
+        "title": "Referral completion barrier",
+        "description": ""
       },
       {
-        "id": "019a32bb-901d-45d5-872d-0c62e3d82c6f",
-        "title": "Missed appointment pattern",
-        "description": "Previous missed visits make continuity difficult."
+        "id": "e0790f93-febb-40fd-8e35-b5cdc2236a49",
+        "title": "Care-team coordination gap",
+        "description": ""
       },
       {
-        "id": "bc728d9c-e357-4004-8bb7-5856b9a64998",
-        "title": "Organizational difficulty",
-        "description": "Patient has difficulty managing appointments, tasks, or reminders."
-      },
-      {
-        "id": "d84190c2-e76b-4a82-8e22-ddfb5ad45759",
+        "id": "3993c9c4-932b-40d9-8ffe-7bbf826bf323",
         "title": "Scheduling barrier",
-        "description": "Appointment availability or scheduling complexity delays care."
+        "description": ""
+      },
+      {
+        "id": "9214ffdd-346c-49d0-88a5-95c0663c45b2",
+        "title": "Follow-up access issue",
+        "description": ""
+      },
+      {
+        "id": "76d3ea90-fd2f-41f9-8d97-fbe5c290c711",
+        "title": "Cognitive impairment",
+        "description": ""
+      },
+      {
+        "id": "ce414361-dc76-49c1-8141-cf5b4006c735",
+        "title": "Organizational difficulty",
+        "description": ""
       }
     ]
   },
@@ -4868,24 +5567,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "019a32bb-901d-45d5-872d-0c62e3d82c6f",
-        "title": "Missed appointment pattern",
-        "description": "Previous missed visits make continuity difficult."
+        "id": "e6ab8bfa-f788-454c-87ec-118ce09aeacd",
+        "title": "Follow-up access issue",
+        "description": ""
       },
       {
-        "id": "120ca3e3-929f-4674-82c4-a50855cc1472",
-        "title": "Appointment access issue",
-        "description": "Patient has difficulty obtaining or attending required appointments."
+        "id": "1e7b3773-69d7-41fd-86ad-35308b091090",
+        "title": "Scheduling barrier",
+        "description": ""
       },
       {
-        "id": "bc728d9c-e357-4004-8bb7-5856b9a64998",
+        "id": "4bb5c8a0-0b9e-4efe-8fbe-692d3c3ad380",
+        "title": "Transportation barrier",
+        "description": ""
+      },
+      {
+        "id": "6643fa3e-89e4-4df4-8305-1893d2eda3c8",
+        "title": "Distance to care",
+        "description": ""
+      },
+      {
+        "id": "76d3ea90-fd2f-41f9-8d97-fbe5c290c711",
+        "title": "Cognitive impairment",
+        "description": ""
+      },
+      {
+        "id": "ce414361-dc76-49c1-8141-cf5b4006c735",
         "title": "Organizational difficulty",
-        "description": "Patient has difficulty managing appointments, tasks, or reminders."
-      },
-      {
-        "id": "23308a4c-1bef-4b5c-8ef8-4075815a0cf3",
-        "title": "Provider/facility transition",
-        "description": "Change in provider or setting creates continuity challenges."
+        "description": ""
       }
     ]
   },
@@ -4971,9 +5680,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "775eca4d-2192-412c-89bb-fb950aad2526",
+        "id": "8983a61c-d9de-43c8-8533-b4292df1223b",
+        "title": "Limited health literacy",
+        "description": ""
+      },
+      {
+        "id": "59c1441c-cd56-4215-8128-1aba0d3973ec",
+        "title": "Cognitive impairment",
+        "description": ""
+      },
+      {
+        "id": "2cadd7a0-846f-469f-8149-61f75f43816d",
         "title": "Inconsistent self-monitoring",
-        "description": "Patient does not consistently record required measurements or symptoms."
+        "description": ""
+      },
+      {
+        "id": "b4f3febc-bc78-4d7a-8ed1-b156967878b9",
+        "title": "Difficulty using monitoring equipment",
+        "description": ""
+      },
+      {
+        "id": "8934d1d8-cc30-4888-8a84-0014b1529d81",
+        "title": "Difficulty learning equipment technique",
+        "description": ""
+      },
+      {
+        "id": "e38f17a3-c949-4eca-8a93-af7f7bea3049",
+        "title": "Need for repeated education",
+        "description": ""
       }
     ]
   },
@@ -5064,24 +5798,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "120ca3e3-929f-4674-82c4-a50855cc1472",
-        "title": "Appointment access issue",
-        "description": "Patient has difficulty obtaining or attending required appointments."
+        "id": "87378341-b25d-4866-8582-a6801a6703be",
+        "title": "Follow-up access issue",
+        "description": ""
       },
       {
-        "id": "019a32bb-901d-45d5-872d-0c62e3d82c6f",
+        "id": "bfb47014-a29c-499e-8410-2c2bc9d42b36",
+        "title": "Transportation barrier",
+        "description": ""
+      },
+      {
+        "id": "9fb2ad7b-2c5c-4032-898a-8f0cb129bc67",
         "title": "Missed appointment pattern",
-        "description": "Previous missed visits make continuity difficult."
+        "description": ""
       },
       {
-        "id": "bc728d9c-e357-4004-8bb7-5856b9a64998",
+        "id": "6643fa3e-89e4-4df4-8305-1893d2eda3c8",
+        "title": "Distance to care",
+        "description": ""
+      },
+      {
+        "id": "76d3ea90-fd2f-41f9-8d97-fbe5c290c711",
+        "title": "Cognitive impairment",
+        "description": ""
+      },
+      {
+        "id": "ce414361-dc76-49c1-8141-cf5b4006c735",
         "title": "Organizational difficulty",
-        "description": "Patient has difficulty managing appointments, tasks, or reminders."
-      },
-      {
-        "id": "d84190c2-e76b-4a82-8e22-ddfb5ad45759",
-        "title": "Scheduling barrier",
-        "description": "Appointment availability or scheduling complexity delays care."
+        "description": ""
       }
     ]
   },
@@ -5179,24 +5923,34 @@ export const CARE_PLAN_TEMPLATE_LIBRARY = [
     ],
     "barriers": [
       {
-        "id": "6bcefbd1-16db-4527-8eb6-38d91c8d79c3",
-        "title": "Advance-care-planning uncertainty",
-        "description": "Patient or family needs additional discussion before preferences are documented."
+        "id": "848c2913-2f8e-4e07-8683-70c936498518",
+        "title": "Changing clinical needs",
+        "description": ""
       },
       {
-        "id": "e879201c-285f-42be-8c9f-955c398e413b",
-        "title": "Care-team coordination gap",
-        "description": "Different care settings or providers are not fully aligned."
+        "id": "eee431a3-2095-4976-8044-d801a6325e25",
+        "title": "Multiple active goals",
+        "description": ""
       },
       {
-        "id": "c15589c0-f7e4-4a7d-8b7f-4805760940ad",
+        "id": "f00cc865-efc5-4bd1-881e-20b9f9ec0fae",
+        "title": "Frequent acute needs",
+        "description": ""
+      },
+      {
+        "id": "70fd7669-8ff1-4510-8ef5-ce61cad276e5",
+        "title": "Low confidence with self-management",
+        "description": ""
+      },
+      {
+        "id": "56b4bbe1-a4b3-457a-8977-017da39c2ce2",
         "title": "Competing priorities",
-        "description": "Other life circumstances interfere with care-plan tasks."
+        "description": ""
       },
       {
-        "id": "4515a98e-e822-49cb-8880-6bbca94f3cff",
-        "title": "Housing instability",
-        "description": "Housing circumstances interfere with health and care-plan goals."
+        "id": "e6544a8d-bd15-4d18-88f0-e7bcb3994b45",
+        "title": "Follow-up access issue",
+        "description": ""
       }
     ]
   }

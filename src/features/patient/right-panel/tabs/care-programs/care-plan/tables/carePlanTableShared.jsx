@@ -131,8 +131,6 @@ export function GbiNameCell({
   meta,
   layout = 'inline',
   linked = null,
-  canEdit,
-  onLinkClick,
 }) {
   const stacked = layout === 'stacked';
 
@@ -153,7 +151,7 @@ export function GbiNameCell({
         ) : null}
         {meta && stacked ? <span className={styles.nameSecondary}>{meta}</span> : null}
       </span>
-      <GbiLinkButton data={linked} canEdit={canEdit} onClick={onLinkClick} />
+      <GbiLinkButton data={linked} />
     </div>
   );
 }

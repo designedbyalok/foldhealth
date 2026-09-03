@@ -10,10 +10,7 @@ import { Input } from '../../../../../components/Input/Input';
 import { DatePicker } from '../../../../../components/DatePicker/DatePicker';
 import { MenuPopover } from '../../../../../components/MenuPopover/MenuPopover';
 import { Tooltip } from '../../../../../components/Tooltip/Tooltip';
-import { AddTaskDrawer } from '../../../../tasks/AddTaskDrawer';
-import { SendFormDrawer } from '../../interventions/SendFormDrawer/SendFormDrawer';
-import { SendContentDrawer } from '../../interventions/SendContentDrawer/SendContentDrawer';
-import { MeasureVitalDrawer } from '../../interventions/MeasureVitalDrawer/MeasureVitalDrawer';
+import { INTERVENTION_EDITORS } from '../../interventions';
 import { Link } from '../../../../../components/Link/Link';
 import { ActionButton } from '../../../../../components/ActionButton/ActionButton';
 import { AddIconMinimalist } from '../../../../../components/Icon/AddIconMinimalist';
@@ -22,25 +19,8 @@ import { PriorityIcon } from '../../../../../components/PriorityIcon/PriorityIco
 import { VITAL_OPTIONS } from '../../lib/vitalOptions';
 import { ChronicConditionSelect } from '../../shared';
 import { MEASURE_CONFIG } from '../../lib/goalFormat';
+import { GOAL_CATEGORIES, normalizeCategory } from '../../lib/goalCategories';
 import styles from './CreateGoalDrawer.module.css';
-
-// Categories per the goal-creation screens. Order matches the picker's
-// natural read order: physical measurements first, lifestyle, then a
-// catch-all bucket.
-const GOAL_CATEGORIES = ['Vitals', 'Labs', 'Diet', 'Exercise', 'Others'];
-
-// Older seeded rows carry the previous labels ('Vital' / 'Activity' /
-// 'Lab result' / 'Assessment' / 'Other'). Map them to the new enum on
-// read so the drawer's category Toggle lands on the correct tab even
-// before `bun run seed` re-runs.
-const LEGACY_CATEGORY_MAP = {
-  Vital: 'Vitals',
-  Activity: 'Exercise',
-  'Lab result': 'Labs',
-  Assessment: 'Others',
-  Other: 'Others',
-};
-const normalizeCategory = (c) => LEGACY_CATEGORY_MAP[c] || c || GOAL_CATEGORIES[0];
 
 // Per-measure target-value shape:
 //   unit        single trailing unit segment
@@ -74,15 +54,28 @@ const MEASURES = {
   Diet: {
     label: 'Select Diet Measure',
     options: [
-      'Calorie Intake', 'Sodium Intake', 'Carbohydrate Intake', 'Protein Intake',
-      'Fiber Intake', 'Water Intake', 'Fruit & Vegetable Servings', 'Sugar Intake',
-      'Saturated Fat Intake', 'DASH Adherence', 'Mediterranean Adherence',
+      // Nutrient targets — simple, action-oriented labels so goals read
+      // as "Consume calories …", "Maintain sodium …" instead of the
+      // clinical "Calorie Intake" phrasing.
+      'Calories', 'Sodium', 'Carbohydrates', 'Protein', 'Fiber', 'Water',
+      'Fruits & Vegetables', 'Sugar', 'Saturated Fat',
+      // Body-composition outcomes commonly tracked as diet goals.
+      'BMI', 'Weight',
+      // Adherence-pattern goals.
+      'DASH Adherence', 'Mediterranean Adherence',
     ],
   },
-  Others: {
-    label: 'Select Measure',
-    options: ['Medication Adherence', 'Appointment Attendance', 'Care Coordination'],
+  Assessment: {
+    label: 'Select Assessment',
+    options: [
+      'Annual Wellness Visit', 'Preventive Screening', 'Fall Risk Assessment',
+      'Immunization Review', 'Advance Care Planning',
+    ],
   },
+  // No Others entry — the measure row is hidden for Others so a free-
+  // form target is authored instead. `measureCfg` falls back to
+  // GOAL_CATEGORIES[0] (`Vitals`) if the map is ever consulted, but
+  // isOther gates every consumer of that config.
 };
 
 // Chronic conditions come from the NLM Clinical Table Search Service — a
@@ -91,8 +84,8 @@ const MEASURES = {
 // Select takes { value, label } pairs — plain strings render blank rows.
 const asOptions = (list) => (list || []).map(v => ({ value: v, label: v }));
 
-/* Lab names run long — they need a wider field. */
-const WIDE_MEASURE_CATEGORIES = ['Labs'];
+/* Lab and assessment names run long — they need a wider field. */
+const WIDE_MEASURE_CATEGORIES = ['Labs', 'Assessment'];
 
 const COMPARATORS = ['=', '<', '<=', '>', '>=', 'between'];
 const DURATION_UNITS = ['Day', 'Week', 'Month', 'Year'];
@@ -126,14 +119,6 @@ function dueBadgeLabel(config) {
   if (!config?.dueOffset) return '';
   return `${config.dueOffset}${(config.dueUnit || 'day')[0]}`;
 }
-
-// Which drawer edits which intervention kind. Patient/Internal tasks go
-// through the shared Add Task drawer instead.
-const INTERVENTION_EDITORS = {
-  'send-form': SendFormDrawer,
-  'patient-education': SendContentDrawer,
-  'measure-vital': MeasureVitalDrawer,
-};
 
 // Titles across the library share one ceiling.
 const TITLE_MAX = 150;
@@ -201,7 +186,6 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
   const [priorityMenuFor, setPriorityMenuFor] = useState(null);
   const [interventionEditing, setInterventionEditing] = useState(null);
   const [interventionDraft, setInterventionDraft] = useState('');
-  const [taskDrawerOpen, setTaskDrawerOpen] = useState(null);
   // { kind, index } — index null while adding, a row index while editing.
   const [interventionDrawer, setInterventionDrawer] = useState(null);
   const durationUnitRef = useRef(null);
@@ -209,7 +193,15 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
   const interventionAddRef = useRef(null);
 
   const measureCfg = MEASURES[category] || MEASURES[GOAL_CATEGORIES[0]];
-  const isOther = category === 'Other';
+  // Others (formerly 'Other') is the catch-all bucket — it hides the
+  // measure picker and the measure-driven target-value fields, letting
+  // the goal author enter a free-form target instead.
+  const isOther = category === 'Others' || category === 'Other';
+  // Assessment goals complete-or-not against a named instrument, so the
+  // only structured thing to author is the Target Date the completion
+  // is expected by. Everything else (Set Target, Current Value, Target
+  // Value, Duration, Frequency) is hidden.
+  const isAssessment = category === 'Assessment';
   const cfg = MEASURE_CONFIG[measure] || {};
   // "between" also needs a second field, labelled as a range rather than as
   // the measure's own second part (e.g. Height's Ft / in).
@@ -224,7 +216,10 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
   // types; "Other" tracks via a typed unit) and, when a target is set, the
   // value(s) that target needs — so saved goals are structured, not blank.
   const hasMeasure = isOther || measure.trim().length > 0;
-  const hasTargetValue = !setTarget || (
+  // Others and Assessment carry no target value, so the gate collapses
+  // to "always valid" for those buckets. Every other category still
+  // enforces a filled target when the Set Target switch is on.
+  const hasTargetValue = isOther || isAssessment || !setTarget || (
     targetValue.trim().length > 0 && (!twoValues || targetValue2.trim().length > 0)
   );
   const canSave = title.trim().length > 0 && hasMeasure && hasTargetValue;
@@ -364,15 +359,23 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
           )}
         </div>
 
-        <Switch checked={setTarget} onChange={setSetTarget} label="Set Target" />
+        {/* Others is a free-form catch-all — no measure, no target value,
+            so the Set Target toggle and the target block are hidden. Only
+            Duration + Frequency stay so the goal still has a timebox.
+            Assessment goes further — it hides Set Target, Current Value,
+            Target Value, Duration and Frequency. Only the Target Date the
+            instrument should be completed by is authored. */}
+        {!isOther && !isAssessment && (
+          <Switch checked={setTarget} onChange={setSetTarget} label="Set Target" />
+        )}
 
-        {!isOther && (
+        {!isOther && !isAssessment && (
         <div className={styles.field}>
           <Input label="Current Value" value="" disabled placeholder="No initial value found" />
         </div>
         )}
 
-        {setTarget && (
+        {!isOther && !isAssessment && setTarget && (
         <div className={styles.field}>
           <span className={styles.fieldLabel}>
             Target Value<span className={styles.mandatoryDot} aria-hidden="true" />
@@ -431,7 +434,10 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
         </div>
         )}
 
-        {setTarget && (
+        {/* Duration + Frequency stays visible for Others too — those are
+            the only structured fields that category exposes. Assessment
+            hides them entirely (only Target Date is authored). */}
+        {(isOther || setTarget) && !isAssessment && (
         <div className={styles.twoUp}>
           <div className={styles.field}>
             {/* One field — the unit is the trailing segment, same treatment as
@@ -484,7 +490,9 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
         </div>
         )}
 
-        {!isOther && setTarget && (
+        {/* Target Date shows for every structured category except Others,
+            and is the ONLY authored field for Assessment. */}
+        {((!isOther && setTarget) || isAssessment) && (
         <div className={styles.field}>
           <div className={styles.targetDate}>
             <DatePicker label="Target Date" value={targetDate} onSelect={setTargetDate} />
@@ -533,8 +541,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
                       items={INTERVENTION_ITEMS}
                       onSelect={(key) => {
                         setInterventionMenuOpen(false);
-                        if (key === 'patient-task' || key === 'internal-task') setTaskDrawerOpen(key);
-                        else setInterventionDrawer({ kind: key, index: null });
+                        setInterventionDrawer({ kind: key, index: null });
                       }}
                       onClose={() => setInterventionMenuOpen(false)}
                     />
@@ -712,6 +719,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
         const editing = interventionDrawer.index !== null;
         return (
           <Editor
+            kind={interventionDrawer.kind}
             intervention={editing ? interventions[interventionDrawer.index]?.config : undefined}
             onClose={() => setInterventionDrawer(null)}
             onSave={(config) => {
@@ -725,12 +733,6 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
           />
         );
       })()}
-      {taskDrawerOpen && (
-        <AddTaskDrawer
-          onClose={() => setTaskDrawerOpen(false)}
-          onTaskCreated={(t) => { addIntervention(taskDrawerOpen, t?.name || '', { taskId: t?.id }); setTaskDrawerOpen(false); }}
-        />
-      )}
     </Drawer>
   );
 }

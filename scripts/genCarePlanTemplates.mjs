@@ -104,8 +104,27 @@ const rows = TEMPLATES.map(([name, conditions, keywords]) => {
     }
     if (interventions.length >= 8) break;
   }
-  const barriers = pick(BARRIERS, keywords, 4)
-    .map(b => ({ id: b.id, title: b.title, description: b.description || '' }));
+  // Barriers come from the same goals' links, so a template's barriers are the
+  // ones its goals actually name — that also lets a barrier row report which
+  // goals point at it. Keyword matching is only the fallback.
+  const barrierSeen = new Set();
+  const barriers = [];
+  for (const g of goals) {
+    for (const link of g.links || []) {
+      if (link.kind !== 'barrier') continue;
+      const key = link.title.toLowerCase();
+      if (barrierSeen.has(link.id) || barrierSeen.has(key)) continue;
+      barrierSeen.add(link.id);
+      barrierSeen.add(key);
+      barriers.push({ id: link.id, title: link.title, description: '' });
+      if (barriers.length >= 6) break;
+    }
+    if (barriers.length >= 6) break;
+  }
+  if (!barriers.length) {
+    barriers.push(...pick(BARRIERS, keywords, 4)
+      .map(b => ({ id: b.id, title: b.title, description: b.description || '' })));
+  }
   return {
     id: uuid(name),
     name,

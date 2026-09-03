@@ -4864,8 +4864,8 @@ export const CARE_PLAN_GOAL_LIBRARY = [
   },
   {
     "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13501",
-    "title": "Reduce daily sodium intake",
-    "description": "Reduce daily sodium intake to lower blood pressure.",
+    "title": "Maintain sodium consumption",
+    "description": "Keep daily sodium intake at or below the recommended limit to support blood-pressure control.",
     "category": "Other",
     "measure": "",
     "conditions": ["Hypertension", "Heart failure"],
@@ -5061,6 +5061,106 @@ export const CARE_PLAN_GOAL_LIBRARY = [
       { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13575", "kind": "barrier", "title": "Reliance on convenience foods" },
       { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13576", "kind": "barrier", "title": "Family food preferences" }
     ]
+  },
+  {
+    "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13581",
+    "title": "Consume calories",
+    "description": "Meet the individualized daily calorie target to support recovery and energy needs.",
+    "category": "Other",
+    "measure": "",
+    "conditions": ["Malnutrition risk"],
+    "comparator": ">=",
+    "target_value": "500",
+    "target_value_2": "",
+    "custom_unit": "cals",
+    "set_target": true,
+    "duration": "2",
+    "duration_unit": "Month",
+    "frequency": "Daily",
+    "target_date": "",
+    "priority": "medium",
+    "links": [
+      { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13582", "kind": "patient-education", "title": "Meeting calorie needs" },
+      { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13583", "kind": "patient-task", "title": "Log daily calories" },
+      { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13584", "kind": "internal-task", "title": "Nutrition coach check-in" },
+      { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13585", "kind": "barrier", "title": "Poor appetite" },
+      { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13586", "kind": "barrier", "title": "Food insecurity" }
+    ]
+  },
+  {
+    "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13591",
+    "title": "Target to maintain normal BMI",
+    "description": "Keep BMI within the healthy range through consistent eating and activity patterns.",
+    "category": "Other",
+    "measure": "",
+    "conditions": ["Obesity", "Preventive care"],
+    "comparator": "<",
+    "target_value": "25",
+    "target_value_2": "",
+    "custom_unit": "",
+    "set_target": true,
+    "duration": "3",
+    "duration_unit": "Month",
+    "frequency": "Monthly",
+    "target_date": "",
+    "priority": "medium",
+    "links": [
+      { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13592", "kind": "patient-education", "title": "BMI and health guide" },
+      { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13593", "kind": "patient-task", "title": "Log monthly weight" },
+      { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13594", "kind": "internal-task", "title": "Coach follow-up on BMI trend" },
+      { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13595", "kind": "barrier", "title": "Sedentary lifestyle" },
+      { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13596", "kind": "barrier", "title": "Household food environment" }
+    ]
+  },
+  {
+    "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13601",
+    "title": "Target to achieve a healthy weight",
+    "description": "Reach the individualized target weight through combined diet and activity changes.",
+    "category": "Other",
+    "measure": "",
+    "conditions": ["Obesity"],
+    "comparator": "<",
+    "target_value": "160",
+    "target_value_2": "",
+    "custom_unit": "lbs",
+    "set_target": true,
+    "duration": "2",
+    "duration_unit": "Month",
+    "frequency": "Weekly",
+    "target_date": "",
+    "priority": "medium",
+    "links": [
+      { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13602", "kind": "patient-education", "title": "Healthy weight strategies" },
+      { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13603", "kind": "patient-task", "title": "Log weekly weight" },
+      { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13604", "kind": "internal-task", "title": "Weight-loss coaching call" },
+      { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13605", "kind": "barrier", "title": "Emotional eating" },
+      { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13606", "kind": "barrier", "title": "Limited access to nutritious food" }
+    ]
+  },
+  {
+    "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13611",
+    "title": "Eat a healthier diet for hypertensive patients",
+    "description": "Follow a heart-healthy eating pattern (DASH or Mediterranean) tuned to blood-pressure control.",
+    "category": "Other",
+    "measure": "",
+    "conditions": ["Hypertension"],
+    "comparator": "=",
+    "target_value": "Adherent",
+    "target_value_2": "",
+    "custom_unit": "",
+    "set_target": true,
+    "duration": "3",
+    "duration_unit": "Month",
+    "frequency": "Daily",
+    "target_date": "",
+    "priority": "medium",
+    "links": [
+      { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13612", "kind": "patient-education", "title": "Heart-healthy eating basics" },
+      { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13613", "kind": "patient-task", "title": "Weekly heart-healthy diet self-check" },
+      { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13614", "kind": "internal-task", "title": "Dietitian follow-up" },
+      { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13615", "kind": "barrier", "title": "Household food environment" },
+      { "id": "5c1d3f2a-8a1b-4e7e-9f01-1f21a1b13616", "kind": "barrier", "title": "Cost of fresh produce" }
+    ]
   }
 ];
 
@@ -5073,8 +5173,15 @@ export const CARE_PLAN_GOAL_LIBRARY = [
 const GOAL_CATEGORY_RULES = [
   ['Labs', /\b(a1c|hba1c|ldl|hdl|cholesterol|lipid|triglyceride|kidney|renal|egfr|creatinine|urine|microalbumin|labs?|panel|ferritin|tsh|thyroid|vitamin d|inr)\b/i],
   ['Vitals', /\b(blood pressure|heart[ -]?rate|resting heart|pulse|spo2|oxygen satur|daily weight|weight monitoring|weight for|body weight|height|glucose|glycemic|hypoglycem|hyperglycem|temperature|respiratory rate|respiration|vital sign)\b/i],
-  ['Diet', /\b(diet|nutrition|sodium|calorie|carb(?:ohydrate)?|fiber|fluid intake|water intake|fruits?|vegetables?|dash|mediterranean|hydration|meal plan)\b/i],
+  // Diet also captures body-composition outcomes that clinicians manage
+  // through diet (BMI, healthy weight, healthy eating patterns) — the
+  // reference library groups these on the Diet tab.
+  ['Diet', /\b(diet|nutrition|sodium|calories?|carb(?:ohydrate)?s?|fiber|fluid intake|water intake|fruits?|vegetables?|dash|mediterranean|hydration|meal plan|bmi|healthy weight|healthier diet|healthy diet|added sugar|sugar intake|saturated fat|protein intake|adequate protein)\b/i],
   ['Exercise', /\b(activity|exercise|walk|physical activit|steps|strength training|aerobic|cardio|mobility|balance|yoga|cycling|swim)\b/i],
+  // Assessment covers instrument-driven goals (annual wellness visit,
+  // preventive screening, HRA, etc.) — completion tracked against the
+  // named instrument.
+  ['Assessment', /\b(assessment|screening|screen for|wellness visit|preventive|immuniz|vaccin|advance care planning|action plan|risk assessment|caregiver strain|phq|gad|depression screen)\b/i],
 ];
 
 export function goalLibraryCategory(g) {
@@ -5115,14 +5222,27 @@ export const GOAL_MEASURE_OVERRIDES = {
   // ── Diet ──
   'Follow DASH eating pattern': { measure: 'DASH Adherence', comparator: '>=', target_value: '80', target_value_2: '', custom_unit: '%' },
   'Follow Mediterranean eating pattern': { measure: 'Mediterranean Adherence', comparator: '>=', target_value: '80', target_value_2: '', custom_unit: '%' },
-  'Reduce daily sodium intake': { measure: 'Sodium Intake', comparator: '<=', target_value: '2300', target_value_2: '', custom_unit: 'mg/day' },
-  'Increase daily fiber intake': { measure: 'Fiber Intake', comparator: '>=', target_value: '25', target_value_2: '', custom_unit: 'g/day' },
-  'Meet daily water intake target': { measure: 'Water Intake', comparator: '>=', target_value: '64', target_value_2: '', custom_unit: 'oz/day' },
-  'Meet daily fruit and vegetable target': { measure: 'Fruit & Vegetable Servings', comparator: '>=', target_value: '5', target_value_2: '', custom_unit: 'servings/day' },
-  'Reduce added sugar intake': { measure: 'Sugar Intake', comparator: '<=', target_value: '25', target_value_2: '', custom_unit: 'g/day' },
-  'Manage carbohydrate intake for diabetes': { measure: 'Carbohydrate Intake', comparator: '<=', target_value: '180', target_value_2: '', custom_unit: 'g/day' },
-  'Maintain adequate protein intake': { measure: 'Protein Intake', comparator: '>=', target_value: '60', target_value_2: '', custom_unit: 'g/day' },
-  'Reduce saturated fat intake': { measure: 'Saturated Fat Intake', comparator: '<=', target_value: '20', target_value_2: '', custom_unit: 'g/day' },
+  'Maintain sodium consumption': { measure: 'Sodium', comparator: '<=', target_value: '2000', target_value_2: '', custom_unit: 'mg/day' },
+  'Increase daily fiber intake': { measure: 'Fiber', comparator: '>=', target_value: '25', target_value_2: '', custom_unit: 'g/day' },
+  'Meet daily water intake target': { measure: 'Water', comparator: '>=', target_value: '64', target_value_2: '', custom_unit: 'oz/day' },
+  'Meet daily fruit and vegetable target': { measure: 'Fruits & Vegetables', comparator: '>=', target_value: '5', target_value_2: '', custom_unit: 'servings/day' },
+  'Reduce added sugar intake': { measure: 'Sugar', comparator: '<=', target_value: '25', target_value_2: '', custom_unit: 'g/day' },
+  'Manage carbohydrate intake for diabetes': { measure: 'Carbohydrates', comparator: '<=', target_value: '180', target_value_2: '', custom_unit: 'g/day' },
+  'Maintain adequate protein intake': { measure: 'Protein', comparator: '>=', target_value: '60', target_value_2: '', custom_unit: 'g/day' },
+  'Reduce saturated fat intake': { measure: 'Saturated Fat', comparator: '<=', target_value: '20', target_value_2: '', custom_unit: 'g/day' },
+  // Reference-image style Diet goals — outcome-oriented targets tied to
+  // Diet even when the metric is a body-composition or free-form goal.
+  'Consume calories': { measure: 'Calories', comparator: '>=', target_value: '500', target_value_2: '', custom_unit: 'cals' },
+  'Target to maintain normal BMI': { measure: 'BMI', comparator: '<', target_value: '25', target_value_2: '', custom_unit: '' },
+  'Target to achieve a healthy weight': { measure: 'Weight', comparator: '<', target_value: '160', target_value_2: '', custom_unit: 'lbs' },
+  'Eat a healthier diet for hypertensive patients': { measure: '', comparator: '=', target_value: 'Adherent', target_value_2: '', custom_unit: '' },
+  // ── Assessment (completion tracked against the named instrument) ──
+  'Complete annual wellness visit': { measure: 'Annual Wellness Visit', comparator: '=', target_value: 'Completed', target_value_2: '', custom_unit: '' },
+  'Complete preventive screening plan': { measure: 'Preventive Screening', comparator: '=', target_value: 'Completed', target_value_2: '', custom_unit: '' },
+  'Complete immunization review': { measure: 'Immunization Review', comparator: '=', target_value: 'Completed', target_value_2: '', custom_unit: '' },
+  'Complete fall-risk assessment': { measure: 'Fall Risk Assessment', comparator: '=', target_value: 'Completed', target_value_2: '', custom_unit: '' },
+  'Complete advance care planning review': { measure: 'Advance Care Planning', comparator: '=', target_value: 'Completed', target_value_2: '', custom_unit: '' },
+  'Improve completion of recommended preventive services': { measure: 'Preventive Screening', comparator: '>=', target_value: '90', target_value_2: '', custom_unit: '%' },
   // ── Labs ──
   'Improve lipid management': { measure: 'LDL Cholesterol', comparator: '<', target_value: '100', target_value_2: '', custom_unit: '' },
   'Improve A1C control': { measure: 'Hemoglobin A1c', comparator: '<', target_value: '7', target_value_2: '', custom_unit: '' },

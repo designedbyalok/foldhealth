@@ -42,7 +42,27 @@
 .filterActive { color: var(--primary-300); border-color: var(--primary-200); background: var(--primary-50); }
 .filterValue { font-weight: 500; }
 .timeline { flex: 1; overflow-y: auto; padding-bottom: var(--space-6); }
-.monthSection { margin-top: 16px; }
-.monthHeader { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
-.monthLine { flex: 1; height: 0.5px; background: var(--neutral-100); }
-.monthTitle { font-size: var(--font-sm); font-weight: 500; color: var(--neutral-200); white-space: nowrap; }
+.monthSection { margin-top: var(--space-2); }
+.monthToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: none;
+  border: none;
+  padding: calc(var(--space-1) / 2) calc(var(--space-1) / 4);
+  cursor: pointer;
+  margin-bottom: var(--space-2);
+}
+.monthTitle {
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--neutral-500);
+  line-height: 1.2;
+}
+.monthChevron {
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+.monthChevronClosed {
+  transform: rotate(-90deg);
+}

@@ -23,7 +23,6 @@ export function CarePlanGoalsTable({
   onToggleSelect,
   onOpenGoal,
   onPriorityMenu,
-  onLinkOwner,
   onStatusMenu,
   onRowMenu,
   linked,
@@ -88,7 +87,6 @@ export function CarePlanGoalsTable({
                 layout="stacked"
                 linked={linked(g)}
                 canEdit={canEdit}
-                onLinkClick={() => onLinkOwner({ kind: 'goal', item: g })}
               />
             </td>
             {!template && (

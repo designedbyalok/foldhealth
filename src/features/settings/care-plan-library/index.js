@@ -9,6 +9,4 @@ export { CarePlanLibraryPanel } from './panel/CarePlanLibraryPanel/CarePlanLibra
 export { CarePlanCreateView } from './create/CarePlanCreateView/CarePlanCreateView.jsx';
 export { CreateGoalDrawer } from './goals/CreateGoalDrawer/CreateGoalDrawer.jsx';
 export { AddGoalsDrawer } from './goals/AddGoalsDrawer/AddGoalsDrawer.jsx';
-export { MeasureVitalDrawer } from './interventions/MeasureVitalDrawer/MeasureVitalDrawer.jsx';
-export { SendFormDrawer } from './interventions/SendFormDrawer/SendFormDrawer.jsx';
-export { SendContentDrawer } from './interventions/SendContentDrawer/SendContentDrawer.jsx';
+export { InterventionDrawer, INTERVENTION_EDITORS } from './interventions/index.js';

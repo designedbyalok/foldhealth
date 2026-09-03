@@ -16,6 +16,7 @@ import { Drawer } from '../../../../../components/Drawer/Drawer';
 import { ConfirmDialog } from '../../../../../components/ConfirmDialog/ConfirmDialog';
 import { RingEmptyState } from '../../../../../components/RingEmptyState/RingEmptyState';
 import { TableSkeleton } from '../../../../../components/TableSkeleton/TableSkeleton';
+import { INTERVENTION_EDITORS } from '../../interventions';
 import { toast } from '../../../../../components/Toast/sonnerToast';
 import { useAppStore } from '../../../../../store/useAppStore';
 import { AddIconMinimalist } from '../../../../../components/Icon/AddIconMinimalist';
@@ -123,11 +124,9 @@ const GOAL_COLUMNS = [
 /* Bulk mode puts the checkbox column in front and pushes the sticky name
    column clear of it. */
 const withSelect = (columns, bulkMode) => [
-  {
-    ...SELECT_COLUMN,
-    width: bulkMode ? 44 : 0,
-    thStyle: bulkMode ? SELECT_COLUMN_TH : SELECT_COLUMN_COLLAPSED_TH,
-  },
+  (bulkMode
+    ? { ...SELECT_COLUMN, thStyle: SELECT_COLUMN_TH }
+    : { key: SELECT_COLUMN.key, label: '', width: 0, sticky: 'left', left: 0, thStyle: SELECT_COLUMN_COLLAPSED_TH }),
   ...columns.map(c => (c.sticky === 'left' && c.left === 0
     ? { ...c, left: bulkMode ? 44 : 0 }
     : c)),
@@ -346,9 +345,7 @@ export function CarePlanLibraryPanel() {
     setDraft(blankSimpleDraft('barrier'));
   };
 
-  // Both open the full-pane template screen — the name read-only, the pencil
-  // in edit mode.
-  const openViewTemplate = (t) => setCarePlanTemplateScreen({ mode: 'view', template: t });
+  // A template has no read-only state — name and pencil both open the editor.
   const openEditTemplate = (t) => setCarePlanTemplateScreen({ mode: 'edit', template: t });
   const openEditSimple = (kind, item) => setDraft(simpleDraftFrom(kind, item));
   const openEditIntervention = (item) => setDraft({
@@ -432,7 +429,7 @@ export function CarePlanLibraryPanel() {
         />
       </td>
       <td className={`${styles.tdName} ${bulkMode ? styles.tdNameOffset : ''}`}>
-        <button type="button" className={styles.nameLink} onClick={() => openViewTemplate(t)}>{t.name}</button>
+        <button type="button" className={styles.nameLink} onClick={() => openEditTemplate(t)}>{t.name}</button>
       </td>
       <td className={styles.tdConditions}>
         <div className={styles.chipRow}>
@@ -724,41 +721,32 @@ export function CarePlanLibraryPanel() {
         </Drawer>
       )}
 
-      {draft && draft.kind === 'intervention' && (
-        <Drawer
-          title={draft.id ? 'Edit Intervention' : 'New Intervention'}
-          onClose={closeDrawer}
-          secondaryAction={<Button variant="secondary" size="L" onClick={closeDrawer}>Cancel</Button>}
-          primaryAction={<Button variant="primary" size="L" onClick={saveDraft} disabled={!canSave}>Save</Button>}
-        >
-          <div className={styles.formField}>
-            <span className={styles.formLabel}>Type</span>
-            <Select
-              options={INTERVENTION_KINDS}
-              value={draft.interventionKind}
-              onChange={(v) => setDraft(d => ({ ...d, interventionKind: v }))}
-            />
-          </div>
-          <div className={styles.formField}>
-            <span className={styles.formLabel}>Title <span className={styles.required}>•</span></span>
-            <Input
-              value={draft.title}
-              onChange={e => setDraft(d => ({ ...d, title: e.target.value }))}
-              placeholder="e.g. Measure blood pressure daily"
-              maxLength={TITLE_MAX}
-              characterLimit={TITLE_MAX}
-            />
-          </div>
-          <div className={styles.formField}>
-            <span className={styles.formLabel}>Description</span>
-            <Textarea
-              value={draft.description}
-              onChange={e => setDraft(d => ({ ...d, description: e.target.value }))}
-              placeholder="Short description"
-            />
-          </div>
-        </Drawer>
-      )}
+      {draft && draft.kind === 'intervention' && (() => {
+        const Editor = INTERVENTION_EDITORS[draft.interventionKind];
+        if (!Editor) return null;
+        return (
+          <Editor
+            kind={draft.interventionKind}
+            title={draft.id ? 'Edit Intervention' : 'Add Intervention'}
+            intervention={draft.id ? draft : undefined}
+            // Only a new intervention can switch type — an existing one's kind
+            // decides which fields it has.
+            onKindChange={draft.id
+              ? undefined
+              : (k) => setDraft(d => ({ ...d, interventionKind: k }))}
+            onClose={closeDrawer}
+            onSave={async (values) => {
+              const saved = await saveCarePlanInterventionTemplate(
+                { kind: draft.interventionKind, title: values.title, description: values.description || '' },
+                draft.id,
+              );
+              if (!saved) return;
+              showToast(`"${values.title}" ${draft.id ? 'updated' : 'created'}`);
+              closeDrawer();
+            }}
+          />
+        );
+      })()}
 
       {deleteTarget && (
         <ConfirmDialog

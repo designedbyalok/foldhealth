@@ -27,8 +27,7 @@
 }
 .headText {
   font-size: var(--font-base);
-  font-weight: 500;
-  color: var(--neutral-400);
+  color: var(--neutral-300);
 }
 
 .section {

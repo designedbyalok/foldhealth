@@ -9,10 +9,10 @@ import { AIIcon } from '../../../../../components/Icon/AIIcon';
 import { AddIconMinimalist } from '../../../../../components/Icon/AddIconMinimalist';
 import { AddGoalsDrawer } from '../../goals/AddGoalsDrawer/AddGoalsDrawer';
 import { CarePlanSections, ChronicConditionSelect } from '../../shared';
+import { CARE_PLAN_NAME_MAX } from '../../lib/carePlanLimits';
 import { goalPayloadFromTemplateEntry } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/carePlanTemplateApply';
 import styles from './CarePlanCreateView.module.css';
 
-const NAME_MAX = 25;
 
 const TEMPLATE_TYPES = [
   { value: 'general', label: 'General' },
@@ -104,9 +104,9 @@ export function CarePlanCreateView({ onClose, onSave }) {
             </div>
             <Input
               value={name}
-              onChange={e => setName(e.target.value.slice(0, NAME_MAX))}
+              onChange={e => setName(e.target.value.slice(0, CARE_PLAN_NAME_MAX))}
               placeholder="Enter Care Plan Name"
-              characterLimit={NAME_MAX}
+              characterLimit={CARE_PLAN_NAME_MAX}
               aria-label="Care Plan Name"
             />
           </div>

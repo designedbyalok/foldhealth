@@ -23,7 +23,6 @@ export function CarePlanInterventionsTable({
   onSelectAll,
   onToggleSelect,
   onPriorityMenu,
-  onLinkOwner,
   onStatusMenu,
   onRowMenu,
   onOpenIntervention,
@@ -113,8 +112,7 @@ export function CarePlanInterventionsTable({
                   meta={i.duration || null}
                   linked={linked(i)}
                   canEdit={canEdit}
-                  onLinkClick={() => onLinkOwner({ kind: 'intervention', item: i })}
-                />
+                  />
               </td>
               {!template && (
                 <>

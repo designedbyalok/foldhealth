@@ -32,6 +32,7 @@ import { makeActivityRow as buildHccActivityRow } from '../features/hcc/activity
 import { hccRoleDefaultFilters } from '../features/hcc/filters';
 import { deriveGoalTableFields } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/goalMetrics';
 import { goalPayloadFromTemplateEntry, interventionPayloadFromTemplateEntry } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanTemplateApply';
+import { resolvePatientStoreId } from '../lib/resolvePatientStoreId';
 
 // Central failure reporter for every persistHccXxx helper. Historically
 // each of these was fire-and-forget with only console.warn on error — so
@@ -2268,6 +2269,10 @@ export const useAppStore = create((set, get) => ({
   // programsForPatient() when the row set is empty.
   careProgramsByPatient: {},
   careProgramsLoadedFor: {},
+  // Program Activity Log entries, keyed by patientId.
+  patientProgramActivity: {},
+  patientProgramActivityLoading: {},
+  patientProgramActivityLoadedFor: {},
 
   // Patient medications — backs the Medication Reconciliation step.
   // Keyed by patientId; the loaded-for map guards the fetch per-patient
@@ -2446,6 +2451,35 @@ export const useAppStore = create((set, get) => ({
     return true;
   },
 
+  fetchPatientProgramActivity: async (patientId) => {
+    if (!patientId) return;
+    const resolvedId = resolvePatientStoreId(get(), patientId);
+    if (get().patientProgramActivityLoadedFor[resolvedId]) return;
+    set(s => ({ patientProgramActivityLoading: { ...s.patientProgramActivityLoading, [resolvedId]: true } }));
+    const { data, error } = await supabase
+      .from('patient_program_activity')
+      .select('*')
+      .eq('patient_id', resolvedId)
+      .order('occurred_at', { ascending: false });
+    if (error) console.warn('fetchPatientProgramActivity:', error.message);
+    const rows = (data || []).map(r => ({
+      id:            r.id,
+      programCode:   r.program_code,
+      programName:   r.program_name,
+      occurredAt:    r.occurred_at,
+      actorName:     r.actor_name || '',
+      actorInitials: r.actor_initials || '',
+      title:         r.title,
+      statusLabel:   r.status_label || '',
+      statusType:    r.status_type || 'neutral',
+      activityKind:  r.activity_kind || 'document',
+    }));
+    set(s => ({
+      patientProgramActivity: { ...s.patientProgramActivity, [resolvedId]: rows },
+      patientProgramActivityLoading: { ...s.patientProgramActivityLoading, [resolvedId]: false },
+      patientProgramActivityLoadedFor: { ...s.patientProgramActivityLoadedFor, [resolvedId]: true },
+    }));
+  },
   fetchCareProgramsForPatient: async (patientId) => {
     if (!patientId) return;
     if (get().careProgramsLoadedFor[patientId]) return;

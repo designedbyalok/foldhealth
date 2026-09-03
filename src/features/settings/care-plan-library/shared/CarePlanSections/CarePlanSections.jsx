@@ -9,7 +9,11 @@ import styles from './CarePlanSections.module.css';
  * plan's own GBI tables. Shared by the template screen and New Care Plan so a
  * plan reads identically wherever it is being built or reviewed.
  */
-export function CarePlanSections({ goalRows, interventionRows, barrierRows, footer }) {
+export function CarePlanSections({
+  goalRows, interventionRows, barrierRows, footer,
+  onOpenGoal, onOpenIntervention,
+  linkedForGoal, linkedForChild,
+}) {
   const section = (label, count, table) => (
     <div className={styles.section}>
       <div className={styles.sectionHead}>
@@ -23,11 +27,28 @@ export function CarePlanSections({ goalRows, interventionRows, barrierRows, foot
   return (
     <div className={styles.sections}>
       {section('Goals', goalRows.length,
-        <CarePlanGoalsTable rows={goalRows} canEdit={false} linked={() => null} template />)}
+        <CarePlanGoalsTable
+          rows={goalRows}
+          canEdit={false}
+          linked={linkedForGoal || (() => null)}
+          template
+          onOpenGoal={onOpenGoal || (() => {})}
+        />)}
       {section('Interventions', interventionRows.length,
-        <CarePlanInterventionsTable rows={interventionRows} canEdit={false} linked={() => null} template />)}
+        <CarePlanInterventionsTable
+          rows={interventionRows}
+          canEdit={false}
+          linked={linkedForChild || (() => null)}
+          template
+          onOpenIntervention={onOpenIntervention || (() => {})}
+        />)}
       {section('Barriers', barrierRows.length,
-        <CarePlanBarriersTable rows={barrierRows} canEdit={false} linked={() => null} template />)}
+        <CarePlanBarriersTable
+          rows={barrierRows}
+          canEdit={false}
+          linked={linkedForChild || (() => null)}
+          template
+        />)}
       {footer}
     </div>
   );

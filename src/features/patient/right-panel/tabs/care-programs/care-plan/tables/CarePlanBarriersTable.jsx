@@ -20,14 +20,18 @@ function BarrierRow({
   selectedIds,
   canEdit,
   onToggleSelect,
-  onLinkOwner,
   onStatusMenu,
   onRowMenu,
+  onOpenBarrier,
   linked,
   template,
 }) {
   return (
-    <tr key={b.id} className={`${styles.row} ${styles.gbiRow}`}>
+    <tr
+      key={b.id}
+      className={`${styles.row} ${styles.gbiRow} ${onOpenBarrier ? styles.rowClickable : ''}`}
+      onClick={() => onOpenBarrier?.(b)}
+    >
       {bulkMode && (
         <GbiCheckboxCell
           checked={selectedIds.includes(b.id)}
@@ -44,7 +48,6 @@ function BarrierRow({
           meta={b.description || null}
           linked={linked(b)}
           canEdit={canEdit}
-          onLinkClick={() => onLinkOwner({ kind: 'barrier', item: b })}
         />
       </td>
       {!template && (
@@ -80,9 +83,9 @@ export function CarePlanBarriersTable({
   selectedIds,
   onSelectAll,
   onToggleSelect,
-  onLinkOwner,
   onStatusMenu,
   onRowMenu,
+  onOpenBarrier,
   linked,
   template = false,
   emptyState,
@@ -126,9 +129,9 @@ export function CarePlanBarriersTable({
             selectedIds={selectedIds}
             canEdit={canEdit}
             onToggleSelect={onToggleSelect}
-            onLinkOwner={onLinkOwner}
             onStatusMenu={onStatusMenu}
             onRowMenu={onRowMenu}
+            onOpenBarrier={onOpenBarrier}
             linked={linked}
             template={template}
           />
@@ -166,9 +169,9 @@ export function CarePlanBarriersTable({
                     selectedIds={selectedIds}
                     canEdit={canEdit}
                     onToggleSelect={onToggleSelect}
-                    onLinkOwner={onLinkOwner}
-                    onStatusMenu={onStatusMenu}
+                            onStatusMenu={onStatusMenu}
                     onRowMenu={onRowMenu}
+                    onOpenBarrier={onOpenBarrier}
                     linked={linked}
                     template={template}
                   />

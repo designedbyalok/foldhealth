@@ -1,11 +1,102 @@
-.row { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; position: relative; }
-.row::before { content: ''; position: absolute; left: 14px; top: 32px; bottom: -8px; width: 1px; background: var(--neutral-100); }
-.row:last-child::before { display: none; }
-.iconWrap { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.header { display: flex; align-items: center; gap: 6px; }
-.time { font-size: var(--font-xs); color: var(--neutral-200); }
-.coordinator { font-size: var(--font-xs); color: var(--neutral-200); }
-.titleRow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.title { font-size: var(--font-md); font-weight: 500; color: var(--neutral-400); }
-.status { font-size: var(--font-sm); }
+.spineRow,
+.peekRow,
+.row {
+  display: flex;
+  gap: var(--space-1);
+  align-items: stretch;
+  width: 100%;
+  min-height: 0;
+}
+
+.spineCol,
+.peekSpineCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: var(--space-5);
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+.spineLine,
+.spineLineGrow,
+.spineLineEnd {
+  width: 1px;
+  background: var(--neutral-150);
+  flex-shrink: 0;
+}
+
+.spineLine {
+  height: var(--space-5);
+  margin-bottom: calc(var(--space-1) / -4);
+}
+
+.spineLineGrow,
+.spineLineEnd {
+  flex: 1;
+  min-height: 0;
+  margin-top: calc(var(--space-1) / -4);
+}
+
+.spineAvatar {
+  flex-shrink: 0;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  /* Right pad matches the stack summary card so every program badge lines up. */
+  padding: calc(var(--space-3) / 2) var(--space-3) calc(var(--space-3) / 2) var(--space-2);
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  font-size: var(--font-xs);
+  font-weight: 500;
+  color: var(--neutral-300);
+  line-height: 1.2;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  line-height: 1.2;
+}
+
+.title {
+  font-size: var(--font-md);
+  font-weight: 400;
+  color: var(--neutral-500);
+}
+
+.status {
+  font-size: var(--font-md);
+  font-weight: 400;
+}
+
+.dot {
+  color: var(--neutral-300);
+  font-weight: 500;
+  font-size: var(--font-xs);
+}
+
+.programBadge {
+  flex-shrink: 0;
+  align-self: center;
+}

@@ -25,15 +25,20 @@ function Row({ icon, iconColor = 'var(--neutral-400)', label }) {
 function LinkedItemsPopover({ anchorRect, data }) {
   const total = linkedTotal(data);
   const width = 320;
-  // Anchor below the trigger, right-aligned, clamped to the viewport.
-  const top = Math.min(anchorRect.bottom + 6, window.innerHeight - 12);
+  // Right-aligned to the trigger and clamped to the viewport. A trigger in the
+  // lower half of the screen flips the card above it, so a long list isn't
+  // pushed off the bottom.
+  const above = anchorRect.bottom > window.innerHeight / 2;
+  const vertical = above
+    ? { bottom: Math.min(window.innerHeight - anchorRect.top + 6, window.innerHeight - 12) }
+    : { top: Math.min(anchorRect.bottom + 6, window.innerHeight - 12) };
   const left = Math.max(12, Math.min(anchorRect.right - width, window.innerWidth - width - 12));
   const programs = data.programs || [];
   return createPortal(
-    <div className={styles.card} style={{ top, left, width }} role="tooltip">
+    <div className={styles.card} style={{ ...vertical, left, width }} role="tooltip">
       <div className={styles.head}>
-        <Icon name="custom:link" size={16} color="var(--neutral-400)" />
-        <span className={styles.headText}>{total} Linked Item{total === 1 ? '' : 's'}</span>
+        <Badge tone="grey" size="S" label={String(total)} />
+        <span className={styles.headText}>Linked Items</span>
       </div>
       {programs.length > 0 && (
         <div className={styles.section}>
@@ -47,7 +52,7 @@ function LinkedItemsPopover({ anchorRect, data }) {
         <div className={styles.section}>
           <span className={styles.sectionLabel}>{data.goals.length === 1 ? 'Goal' : 'Goals'}</span>
           {data.goals.map(g => (
-            <Row key={g.id} icon="solar:flag-linear" label={g.title} />
+            <Row key={g.id} icon={g.icon || 'solar:flag-linear'} label={g.title} />
           ))}
         </div>
       )}
@@ -63,7 +68,7 @@ function LinkedItemsPopover({ anchorRect, data }) {
         <div className={styles.section}>
           <span className={styles.sectionLabel}>Barriers</span>
           {data.barriers.map(b => (
-            <Row key={b.id} icon="solar:danger-triangle-linear" iconColor="var(--neutral-300)" label={b.title} />
+            <Row key={b.id} icon="custom:barrier" label={b.title} />
           ))}
         </div>
       )}
@@ -82,10 +87,10 @@ function LinkedItemsPopover({ anchorRect, data }) {
 
 /**
  * Link affordance for a GBI row: an ActionButton badged with the number of
- * linked interventions/barriers/automations. Hovering previews them; clicking
- * opens the link manager (when editable).
+ * linked interventions/barriers/automations. Hovering previews them — the
+ * preview is the whole affordance, so the button doesn't open anything.
  */
-export function GbiLinkButton({ data, canEdit, onClick, size = 'S' }) {
+export function GbiLinkButton({ data, size = 'S' }) {
   const total = linkedTotal(data);
   const [rect, setRect] = useState(null);
   const wrapRef = useRef(null);
@@ -108,7 +113,7 @@ export function GbiLinkButton({ data, canEdit, onClick, size = 'S' }) {
       className={styles.wrap}
       onMouseEnter={open}
       onMouseLeave={close}
-      onClick={(e) => { e.stopPropagation(); if (canEdit) onClick?.(e); }}
+      onClick={e => e.stopPropagation()}
     >
       <ActionButton
         icon="custom:link"

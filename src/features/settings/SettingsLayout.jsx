@@ -43,15 +43,13 @@ export function SettingsLayout() {
   const setCarePlanTemplateScreen = useAppStore(s => s.setCarePlanTemplateScreen);
   const saveCarePlanTemplate = useAppStore(s => s.saveCarePlanTemplate);
 
-  // Viewing or editing a template owns the whole Settings area, same as New
-  // Care Plan.
+  // Editing a template owns the whole Settings area, same as New Care Plan.
   if (carePlanTemplateScreen) {
-    const { mode, template } = carePlanTemplateScreen;
+    const { template } = carePlanTemplateScreen;
     return (
       <div className={styles.layout}>
         <CarePlanTemplateView
           template={template}
-          mode={mode}
           onClose={() => setCarePlanTemplateScreen(null)}
           onSave={async (values) => {
             const saved = await saveCarePlanTemplate(values, template.id);

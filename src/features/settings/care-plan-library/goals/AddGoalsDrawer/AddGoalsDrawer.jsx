@@ -10,6 +10,7 @@ import { PriorityIcon } from '../../../../../components/PriorityIcon/PriorityIco
 import { AddIconMinimalist } from '../../../../../components/Icon/AddIconMinimalist';
 import { CreateGoalDrawer } from '../CreateGoalDrawer/CreateGoalDrawer';
 import { toast } from '../../../../../components/Toast/sonnerToast';
+import { GOAL_CATEGORIES, normalizeCategory } from '../../lib/goalCategories';
 import { useAppStore } from '../../../../../store/useAppStore';
 import { formatGoalTarget, formatGoalDuration } from '../../lib/goalFormat';
 import styles from './AddGoalsDrawer.module.css';
@@ -63,16 +64,14 @@ export function AddGoalsDrawer({ onClose, onAdd }) {
     }));
   }, [libraryGoals]);
 
-  // Tabs follow whatever categories the library actually holds.
-  const categories = useMemo(
-    () => ['All', ...[...new Set(goals.map(g => g.category).filter(Boolean))]],
-    [goals],
-  );
+  // Tabs are the canonical enum, not whatever labels the rows happen to
+  // carry — seeded goals still hold the pre-rename categories.
+  const categories = useMemo(() => ['All', ...GOAL_CATEGORIES], []);
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
     return goals.filter(g => {
-      if (category !== 'All' && g.category !== category) return false;
+      if (category !== 'All' && normalizeCategory(g.category) !== category) return false;
       if (!q) return true;
       return g.title.toLowerCase().includes(q) || (g.detail || '').toLowerCase().includes(q);
     });
@@ -140,7 +139,7 @@ export function AddGoalsDrawer({ onClose, onAdd }) {
                   {g.detail && <span className={styles.rowDetail}>{g.detail}</span>}
                 </span>
                 <span className={styles.rowMeta}>
-                  {g.category && <Badge tone="grey" size="S" label={g.category} />}
+                  {g.category && <Badge tone="grey" size="S" label={normalizeCategory(g.category)} />}
                   <PriorityIcon priority={g.priority} size={16} />
                 </span>
               </label>

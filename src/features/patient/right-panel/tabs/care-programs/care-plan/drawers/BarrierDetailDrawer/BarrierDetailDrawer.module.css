@@ -1,0 +1,159 @@
+/* Figma 2937:267306 — Barrier Details Drawer.
+   Spacing tokens: body px-24 py-12 with 12px gap; status bar p-8;
+   section head h-24 gap-8; link rows py-8 border-bottom neutral-100;
+   action cluster px-8 with a hairline 4px-padded divider between the
+   Open and Unlink glyphs. */
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: 0;
+}
+
+.headerDivider {
+  width: 1px;
+  height: 16px;
+  background: var(--neutral-150);
+  flex-shrink: 0;
+}
+
+/* Status bar — pill on the left, delete-barrier on the right. */
+.statusBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding: var(--space-2);
+  border-radius: var(--space-2);
+  background: var(--neutral-50);
+}
+.statusSelect {
+  flex: 0 0 auto;
+  width: fit-content;
+  max-width: 100%;
+}
+
+/* Editable barrier title block. */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.label {
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+.required {
+  color: var(--status-error);
+  margin-left: calc(var(--space-1) / 2);
+}
+
+.metaLine {
+  display: flex;
+  align-items: center;
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  margin-top: var(--space-1);
+}
+.metaDot {
+  color: var(--neutral-200);
+  margin: 0 var(--space-2);
+}
+
+/* Collapsible section. */
+.section {
+  display: flex;
+  flex-direction: column;
+}
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  height: var(--space-6);
+}
+.sectionToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--space-1) / 2);
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+.sectionTitle {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+.sectionChevron {
+  transform: rotate(-90deg);
+  transition: transform 120ms ease;
+}
+.sectionChevronOpen { transform: rotate(0deg); }
+
+.empty {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  padding: var(--space-2) 0;
+}
+
+/* Linked row — icon 16 + title/subtitle + open/unlink cluster. */
+.linkList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+.linkRow {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
+.linkIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+}
+.linkStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.linkTitle {
+  font-size: var(--font-base);
+  color: var(--neutral-500);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.linkSubtitle {
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+
+/* Row action cluster. Reference: two icon buttons split by a 16px
+   hairline that carries 4px padding on either side (so the visible
+   gap between icons is 8px + 8px + 1px hairline). */
+.linkActions {
+  display: inline-flex;
+  align-items: center;
+  padding-left: var(--space-2);
+}
+.linkActionsDivider {
+  display: inline-block;
+  width: 1px;
+  height: 16px;
+  margin: 0 var(--space-1);
+  background: var(--neutral-150);
+}

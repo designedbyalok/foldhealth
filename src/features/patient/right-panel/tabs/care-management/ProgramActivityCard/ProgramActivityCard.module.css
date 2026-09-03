@@ -1,16 +1,183 @@
-.card { display: flex; gap: 12px; padding: 12px 0; }
-.dateCol { display: flex; flex-direction: column; align-items: center; width: 40px; flex-shrink: 0; }
-.date { font-size: var(--font-md); font-weight: 500; color: var(--neutral-400); }
-.dayBadge { font-size: var(--font-2xs); color: var(--neutral-200); background: var(--neutral-50); padding: 1px 6px; border-radius: 4px; }
-.dotLine { flex: 1; display: flex; flex-direction: column; align-items: center; padding-top: 8px; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary-300); }
-.body { flex: 1; min-width: 0; border: 0.5px solid var(--neutral-100); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
-.header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
-.headerLeft { display: flex; align-items: center; gap: 8px; }
-.program { font-size: var(--font-base); font-weight: 500; color: var(--neutral-400); }
-.statusBadge { font-size: var(--font-xs); font-weight: 500; padding: 2px 8px; border-radius: 4px; border: 0.5px solid; }
-.avatarStack { display: flex; align-items: center; }
-.avatarWrap { position: relative; }
-.avatarCount { width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: var(--font-2xs); color: var(--neutral-300); border: 0.5px solid var(--neutral-150); background: var(--neutral-0); }
-.activities { font-size: var(--font-sm); color: var(--neutral-200); }
-.timeline { padding-top: 8px; border-top: 0.5px solid var(--neutral-100); margin-top: 4px; }
+.day {
+  display: flex;
+  gap: 0;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.dateCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--space-1) / 2);
+  width: 44px;
+  flex-shrink: 0;
+  padding: var(--space-3) calc(var(--space-1) / 2) var(--space-2);
+  position: sticky;
+  top: 0;
+}
+
+.date {
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--neutral-400);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.dayEntries {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-bottom: var(--space-2);
+}
+
+.entry {
+  display: flex;
+  gap: var(--space-2);
+  align-items: stretch;
+  width: 100%;
+  padding-left: var(--space-3);
+}
+
+.entryBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-bottom: var(--space-2);
+}
+
+.spineCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: var(--space-5);
+  flex-shrink: 0;
+  padding-top: var(--space-3);
+  align-self: stretch;
+}
+
+.spineLine,
+.spineLineGrow,
+.spineLineEnd {
+  width: 1px;
+  background: var(--neutral-150);
+  flex-shrink: 0;
+}
+
+.spineLine {
+  height: var(--space-5);
+  margin-bottom: calc(var(--space-1) / -4);
+}
+
+.spineLineGrow {
+  flex: 1;
+  min-height: var(--space-3);
+  margin-top: calc(var(--space-1) / -4);
+}
+
+.spineLineEnd {
+  flex: 1;
+  min-height: var(--space-3);
+  margin-top: calc(var(--space-1) / -4);
+}
+
+.spineAvatar {
+  flex-shrink: 0;
+}
+
+.stack {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  isolation: isolate;
+  /* How far each peeked card edge shows below the summary. */
+  --peek-reveal: calc(var(--space-3) / 2);
+}
+
+.summaryCard {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-100);
+  border-radius: var(--space-2);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-3);
+}
+
+.summaryText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+}
+
+.programTitle {
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--neutral-400);
+  line-height: 1.2;
+}
+
+.summaryMeta {
+  font-size: var(--font-md);
+  font-weight: 400;
+  color: var(--neutral-300);
+  line-height: 1.2;
+}
+
+/* Thin card edges fanned behind the summary, hinting at more activities. */
+.peekEdge {
+  height: var(--space-4);
+  margin-top: calc(var(--peek-reveal) - var(--space-4));
+  margin-inline: calc(var(--space-3) * var(--peek-i));
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-100);
+  border-radius: var(--space-2);
+  box-shadow: var(--shadow-card);
+}
+
+.expandedList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: var(--space-2);
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-100);
+  border-radius: var(--space-2);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.seeAll {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  align-self: flex-start;
+  padding: 0 var(--space-3);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--primary-300);
+  line-height: 1.2;
+}
+
+button.seeAllButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-top: var(--space-1);
+}
+
+button.seeAllButton:hover {
+  text-decoration: underline;
+}

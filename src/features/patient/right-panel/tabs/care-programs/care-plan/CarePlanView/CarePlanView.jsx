@@ -15,10 +15,9 @@ import { FilterChip } from '../../../../../../../components/FilterChip/FilterChi
 import { useAppStore } from '../../../../../../../store/useAppStore';
 import { AddGoalsDrawer } from '../../../../../../settings/care-plan-library/goals/AddGoalsDrawer/AddGoalsDrawer';
 import { AddBarriersDrawer } from '../../../../../../settings/care-plan-library/barriers/AddBarriersDrawer/AddBarriersDrawer';
+import { BarrierDetailDrawer } from '../drawers/BarrierDetailDrawer/BarrierDetailDrawer';
 import { AddInterventionDrawer } from '../drawers/AddInterventionDrawer/AddInterventionDrawer';
-import { SendFormDrawer } from '../../../../../../settings/care-plan-library/interventions/SendFormDrawer/SendFormDrawer';
-import { SendContentDrawer } from '../../../../../../settings/care-plan-library/interventions/SendContentDrawer/SendContentDrawer';
-import { MeasureVitalDrawer } from '../../../../../../settings/care-plan-library/interventions/MeasureVitalDrawer/MeasureVitalDrawer';
+import { INTERVENTION_EDITORS } from '../../../../../../settings/care-plan-library/interventions';
 import { AddTaskDrawer } from '../../../../../../tasks/AddTaskDrawer';
 import {
   CARE_PLAN_INTERVENTION_MENU,
@@ -55,12 +54,6 @@ const GBI_STATUSES = ['Not Started', 'In Progress', 'On Hold', 'Met', 'Not Met']
 const PRIORITIES = ['high', 'medium', 'low'];
 // Capitalized labels for the priority filter chip (values compare case-insensitively).
 const PRIORITY_LABELS = ['High', 'Medium', 'Low'];
-
-const INTERVENTION_EDITORS = {
-  'send-form': SendFormDrawer,
-  'patient-education': SendContentDrawer,
-  'measure-vital': MeasureVitalDrawer,
-};
 
 /** Collapsible GBI section header: title · divider · add action · [optional trailing end]. */
 function GbiSectionHead({ title, count, open, onToggle, addButton, trailingEnd }) {
@@ -157,7 +150,7 @@ export function CarePlanView({ patientId, program }) {
   });
   const linkedForChild = (item) => ({
     programs: programBadge,
-    goals: (live?.goals || []).filter(g => g.id === item.goalId).map(g => ({ id: g.id, title: g.title })),
+    goals: (live?.goals || []).filter(g => g.id === item.goalId).map(g => ({ id: g.id, title: g.title, icon: g.icon })),
   });
 
   useEffect(() => {
@@ -237,6 +230,9 @@ export function CarePlanView({ patientId, program }) {
   const [taskDrawerOpen, setTaskDrawerOpen] = useState(null); // null | 'patient-task' | 'internal-task'
   const intvAddRef = useRef(null);
   const [barrierDrawer, setBarrierDrawer] = useState(null); // null | { barrier }
+  // Barrier preview drawer: shows goals/template linked to this barrier
+  // in the current plan version, with delink + add-goal affordances.
+  const [previewBarrier, setPreviewBarrier] = useState(null);
   const [templatesDrawerOpen, setTemplatesDrawerOpen] = useState(false);
   // Applied-template filter: clicking a template badge in the sticky bar
   // scopes goals / interventions / barriers to items that came from that
@@ -953,7 +949,6 @@ export function CarePlanView({ patientId, program }) {
             onToggleSelect={(id) => toggleSelect('goal', id)}
             onOpenGoal={setPreviewGoal}
             onPriorityMenu={setPriorityMenu}
-            onLinkOwner={setLinkOwner}
             onStatusMenu={setStatusMenu}
             onRowMenu={setStatusMenu}
             linked={linkedForGoal}
@@ -1013,7 +1008,6 @@ export function CarePlanView({ patientId, program }) {
             onToggleSelect={(id) => toggleSelect('intv', id)}
             onOpenIntervention={setPreviewIntervention}
             onPriorityMenu={setPriorityMenu}
-            onLinkOwner={setLinkOwner}
             onStatusMenu={setStatusMenu}
             onRowMenu={setStatusMenu}
             onAssigneeChange={handleAssigneeChange}
@@ -1054,9 +1048,9 @@ export function CarePlanView({ patientId, program }) {
             selectedIds={[...selected.barrier]}
             onSelectAll={(checked) => selectAllKind('barrier', filteredBarriers, checked)}
             onToggleSelect={(id) => toggleSelect('barrier', id)}
-            onLinkOwner={setLinkOwner}
             onStatusMenu={setStatusMenu}
             onRowMenu={setStatusMenu}
+            onOpenBarrier={setPreviewBarrier}
             linked={linkedForChild}
             emptyState={filteredBarriers.length === 0 ? <div className={styles.emptyRow}>No barriers match the filters.</div> : null}
           />
@@ -1154,6 +1148,15 @@ export function CarePlanView({ patientId, program }) {
         />
       )}
 
+      {previewBarrier && (
+        <BarrierDetailDrawer
+          barrier={previewBarrier}
+          patientId={patientId}
+          program={program}
+          onClose={() => setPreviewBarrier(null)}
+        />
+      )}
+
       {previewIntervention && (
         <InterventionPreviewDrawer
           intervention={previewIntervention}
@@ -1176,6 +1179,7 @@ export function CarePlanView({ patientId, program }) {
         if (!Editor) return null;
         return (
           <Editor
+            kind={intvSpecialDrawer.kind}
             intervention={intvSpecialDrawer.intervention?.config}
             onClose={() => setIntvSpecialDrawer(null)}
             onSave={async (config) => {

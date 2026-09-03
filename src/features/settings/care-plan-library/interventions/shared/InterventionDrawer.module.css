@@ -37,7 +37,7 @@
   flex-shrink: 0;
 }
 .sectionTitle {
-  font-size: var(--font-lg);
+  font-size: var(--font-base);
   font-weight: 500;
   color: var(--neutral-400);
 }
@@ -141,4 +141,29 @@
 .titleInput {
   border: none;
   height: 100%;
+}
+
+/* The column body stretches its children — the kind toggle hugs instead. */
+.kindToggle {
+  align-self: flex-start;
+}
+
+/* Repeat schedule: [count] time after [value+unit] Ends in [value+unit]. */
+.repeatRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+.repeatCount {
+  flex: 0 0 40px;
+  width: 40px;
+}
+.repeatField {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.repeatRow .inlineText {
+  flex-shrink: 0;
 }
