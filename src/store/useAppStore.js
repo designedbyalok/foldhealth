@@ -2262,6 +2262,10 @@ export const useAppStore = create((set, get) => ({
   // programsForPatient() when the row set is empty.
   careProgramsByPatient: {},
   careProgramsLoadedFor: {},
+  // Program Activity Log entries, keyed by patientId.
+  patientProgramActivity: {},
+  patientProgramActivityLoading: {},
+  patientProgramActivityLoadedFor: {},
 
   // Patient medications — backs the Medication Reconciliation step.
   // Keyed by patientId; the loaded-for map guards the fetch per-patient
@@ -2440,6 +2444,34 @@ export const useAppStore = create((set, get) => ({
     return true;
   },
 
+  fetchPatientProgramActivity: async (patientId) => {
+    if (!patientId) return;
+    if (get().patientProgramActivityLoadedFor[patientId]) return;
+    set(s => ({ patientProgramActivityLoading: { ...s.patientProgramActivityLoading, [patientId]: true } }));
+    const { data, error } = await supabase
+      .from('patient_program_activity')
+      .select('*')
+      .eq('patient_id', patientId)
+      .order('occurred_at', { ascending: false });
+    if (error) console.warn('fetchPatientProgramActivity:', error.message);
+    const rows = (data || []).map(r => ({
+      id:            r.id,
+      programCode:   r.program_code,
+      programName:   r.program_name,
+      occurredAt:    r.occurred_at,
+      actorName:     r.actor_name || '',
+      actorInitials: r.actor_initials || '',
+      title:         r.title,
+      statusLabel:   r.status_label || '',
+      statusType:    r.status_type || 'neutral',
+      activityKind:  r.activity_kind || 'document',
+    }));
+    set(s => ({
+      patientProgramActivity: { ...s.patientProgramActivity, [patientId]: rows },
+      patientProgramActivityLoading: { ...s.patientProgramActivityLoading, [patientId]: false },
+      patientProgramActivityLoadedFor: { ...s.patientProgramActivityLoadedFor, [patientId]: true },
+    }));
+  },
   fetchCareProgramsForPatient: async (patientId) => {
     if (!patientId) return;
     if (get().careProgramsLoadedFor[patientId]) return;

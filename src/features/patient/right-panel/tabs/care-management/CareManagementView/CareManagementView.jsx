@@ -12,7 +12,10 @@ import { programUrlKey } from '../../care-programs/CareProgramsTab/CareProgramsT
 import { stepsFor, flatSteps } from '../../care-programs/program-detail/ProgramDetailView/ProgramDetailView.utils';
 import { CareManagementToolbar } from '../CareManagementToolbar/CareManagementToolbar';
 import { ProgramActivityCard } from '../ProgramActivityCard/ProgramActivityCard.jsx';
-import { PROGRAM_ACTIVITY_BY_MONTH, CM_FILTERS } from '../../../../data/programActivityMock';
+import { groupProgramActivity } from '../programActivity';
+import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
+import { RingEmptyState } from '../../../../../../components/RingEmptyState/RingEmptyState';
+import { CM_FILTERS } from '../../../../data/programActivityMock';
 import styles from './CareManagementView.module.css';
 
 const CM_TABS = ['Care Programs', 'Comprehensive Care Plan', 'Program Activity Log'];
@@ -90,17 +93,29 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose, onOpe
  *  filter and an Add Care Note CTA. */
 function ProgramActivityLog({ header }) {
   const showToast = useAppStore(s => s.showToast);
+  const patientId = useAppStore(s => s.selectedPatientId);
+  const fetchPatientProgramActivity = useAppStore(s => s.fetchPatientProgramActivity);
+  const activityByPatient = useAppStore(s => s.patientProgramActivity);
+  const loadingMap = useAppStore(s => s.patientProgramActivityLoading);
+  const loadedFor = useAppStore(s => s.patientProgramActivityLoadedFor);
   const [searchMode, setSearchMode] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
+  useEffect(() => {
+    if (patientId) fetchPatientProgramActivity(patientId);
+  }, [patientId, fetchPatientProgramActivity]);
+
+  const entries = activityByPatient[patientId] || [];
+  const loading = !!loadingMap[patientId] && !loadedFor[patientId];
+
   const months = useMemo(() => {
     const q = searchText.trim().toLowerCase();
-    if (!q) return PROGRAM_ACTIVITY_BY_MONTH;
-    return PROGRAM_ACTIVITY_BY_MONTH
-      .map(m => ({ ...m, cards: m.cards.filter(c => (c.program || '').toLowerCase().includes(q)) }))
-      .filter(m => m.cards.length > 0);
-  }, [searchText]);
+    const filtered = q
+      ? entries.filter(e => `${e.programName} ${e.programCode} ${e.title} ${e.actorName}`.toLowerCase().includes(q))
+      : entries;
+    return groupProgramActivity(filtered);
+  }, [entries, searchText]);
 
   return (
     <div className={styles.pane}>
@@ -129,18 +144,24 @@ function ProgramActivityLog({ header }) {
         )}
       />
       <div className={styles.timeline}>
-        {months.map(month => (
-          <div key={month.month} className={styles.monthSection}>
-            <div className={styles.monthHeader}>
-              <span className={styles.monthLine} />
-              <span className={styles.monthTitle}>{month.month}</span>
-              <span className={styles.monthLine} />
+        {loading ? (
+          <CardSkeleton count={4} />
+        ) : months.length === 0 ? (
+          <RingEmptyState icon="solar:clipboard-list-linear" label={searchText ? 'No matching activity' : 'No program activity yet'} />
+        ) : (
+          months.map(month => (
+            <div key={month.key} className={styles.monthSection}>
+              <div className={styles.monthHeader}>
+                <span className={styles.monthLine} />
+                <span className={styles.monthTitle}>{month.label}</span>
+                <span className={styles.monthLine} />
+              </div>
+              {month.cards.map(card => (
+                <ProgramActivityCard key={card.key} card={card} />
+              ))}
             </div>
-            {month.cards.map(card => (
-              <ProgramActivityCard key={card.id} card={card} />
-            ))}
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
