@@ -28,6 +28,7 @@ build-storybook.log
 # Environment
 .env
 .env.*
+!.env.example
 .claude/*
 # Share project skills with all contributors (keep local/session noise ignored).
 !.claude/skills/
