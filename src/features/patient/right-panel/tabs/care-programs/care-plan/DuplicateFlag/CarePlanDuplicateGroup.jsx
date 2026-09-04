@@ -8,9 +8,11 @@ import styles from './CarePlanDuplicateGroup.module.css';
  * Groups a section's possible-duplicate banners. A single duplicate shows its
  * comparison card directly; several collapse behind one "N possible duplicates"
  * summary (default collapsed) so a heavily-overlapping plan isn't buried under
- * stacked banners.
+ * stacked banners. Pass `hideSummary` when the caller already surfaces the
+ * count elsewhere (e.g. the section header's duplicates pill) and just wants
+ * the raw cards.
  */
-export function CarePlanDuplicateGroup({ flags, onIgnore, onAcceptExisting, onAcceptNew, onEditExisting }) {
+export function CarePlanDuplicateGroup({ flags, onIgnore, onAcceptExisting, onAcceptNew, onEditExisting, hideSummary = false }) {
   const [open, setOpen] = useState(false);
   if (!flags.length) return null;
 
@@ -24,6 +26,8 @@ export function CarePlanDuplicateGroup({ flags, onIgnore, onAcceptExisting, onAc
       onEditExisting={() => onEditExisting(flag)}
     />
   );
+
+  if (hideSummary) return <div className={styles.list}>{flags.map(card)}</div>;
 
   if (flags.length === 1) return card(flags[0]);
 

@@ -61,6 +61,18 @@
   margin: 0 var(--space-2);
 }
 
+/* Note editor — plain Textarea sits above a Discard / Save row. */
+.noteEditor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.noteActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
 /* Collapsible section. */
 .section {
   display: flex;

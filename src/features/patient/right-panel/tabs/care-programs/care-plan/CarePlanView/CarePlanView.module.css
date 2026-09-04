@@ -1,19 +1,30 @@
 .container {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
   container-type: inline-size;
+  overflow: hidden;
 }
 
-/* Sticky problems / templates bar */
+/* Templates + problems bar — sits above the scroll area so it stays
+   pinned without needing position: sticky and without stealing scroll
+   from the content column. */
 .stickyTop {
-  position: sticky;
-  top: 0;
-  z-index: 30;
   flex-shrink: 0;
   background: var(--neutral-0);
+  z-index: 30;
+}
+
+/* The actual scroll container. Everything below the templates bar
+   scrolls inside this element, so the browser scrollbar starts under
+   the pinned bar rather than running the full pane height. */
+.scrollArea {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 .problemsBar {
   flex-shrink: 0;
@@ -132,6 +143,108 @@
   align-items: center;
   gap: var(--space-1);
   margin-left: auto;
+}
+
+/* ── Care Note (Figma 2562:60104) — always shows the latest plan-level
+ *    note; the "+" opens the edit / add drawer, and every save is
+ *    appended to the audit log as a change entry. ── */
+.careNoteSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.careNoteHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-right: var(--space-1);
+}
+.careNoteToggle {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.careNoteHeadTitle {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+/* Card wrapper hosts the click target + the hover-only delete button. */
+.careNoteCardWrap {
+  position: relative;
+}
+.careNoteCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--primary-50);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font: inherit;
+}
+.careNoteCard:hover { background: var(--primary-100); }
+.careNoteCard:disabled { cursor: default; }
+.careNoteDelete {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.careNoteCardWrap:hover .careNoteDelete,
+.careNoteCardWrap:focus-within .careNoteDelete { opacity: 1; }
+.careNoteBody {
+  margin: 0;
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+  line-height: 1.2;
+  white-space: pre-wrap;
+}
+.careNoteMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+}
+.careNoteAuthor {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--space-1) / 2);
+  font-size: var(--font-sm);
+}
+.careNoteDot {
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+}
+.careNoteTimestamp {
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+}
+/* Change log inside the Add Note drawer — the shared ActivityLog
+   renders every past note (newest first) so users can trace edits. */
+.noteTimeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 0.5px solid var(--neutral-150);
+}
+.noteTimelineLabel {
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--neutral-300);
 }
 
 /* ── Condition chips ── */

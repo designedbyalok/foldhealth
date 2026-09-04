@@ -91,7 +91,33 @@ export function CarePlanBarriersTable({
   emptyState,
 }) {
   const [closedOpen, setClosedOpen] = useState(false);
-  const { sorted, sortKey, sortDir, requestSort } = useTableSort(rows, 'title', 'asc');
+  // Bridge for pre-migration data: consolidate title-clone barrier rows
+  // into a single logical row whose `goalIds` merges every clone's
+  // goal_id. Post-migration each barrier is already unique per title,
+  // so this pass is a no-op then.
+  const consolidatedRows = useMemo(() => {
+    const groups = new Map();
+    for (const row of (rows || [])) {
+      const key = (row.title || '').trim().toLowerCase();
+      const existing = groups.get(key);
+      const rowGoalIds = Array.isArray(row.goalIds) && row.goalIds.length > 0
+        ? row.goalIds
+        : (row.goalId ? [row.goalId] : []);
+      if (!existing) {
+        groups.set(key, { ...row, goalIds: [...new Set(rowGoalIds)] });
+      } else {
+        // Prefer the oldest row's id as the canonical id (matches the
+        // migration's keep-the-oldest strategy).
+        const keepOlder = new Date(existing.createdAt || 0) <= new Date(row.createdAt || 0);
+        groups.set(key, {
+          ...(keepOlder ? existing : row),
+          goalIds: [...new Set([...(existing.goalIds || []), ...rowGoalIds])],
+        });
+      }
+    }
+    return Array.from(groups.values());
+  }, [rows]);
+  const { sorted, sortKey, sortDir, requestSort } = useTableSort(consolidatedRows, 'title', 'asc');
   const columns = template
     ? BARRIER_COLUMNS.filter(c => c.key === 'priority' || c.key === 'title')
     : BARRIER_COLUMNS;

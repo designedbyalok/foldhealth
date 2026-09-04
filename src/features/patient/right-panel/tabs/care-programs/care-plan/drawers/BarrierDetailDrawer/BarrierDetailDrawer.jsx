@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Drawer } from '../../../../../../../../components/Drawer/Drawer';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
@@ -112,23 +112,32 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose }) {
   const goalsInPlan = slice?.goals || [];
   const barriersInPlan = slice?.barriers || [];
 
-  // Match every barrier row in the plan whose title is the same as
-  // this one (title-based M:N shim over the 1:1 goal_id column).
+  // Post-migration path: a barrier row carries its full goal set via
+  // `goalIds`. We also merge in every legacy title-clone's goal_id so
+  // pre-migration data reads as one logical barrier here too (matches
+  // the same consolidation the Barriers table does).
   const normalizedTitle = (barrier?.title || '').trim().toLowerCase();
-  const linkedBarrierRows = useMemo(
+  const legacyClones = useMemo(
     () => barriersInPlan.filter(b => (b.title || '').trim().toLowerCase() === normalizedTitle),
     [barriersInPlan, normalizedTitle],
   );
+  const linkedGoalIdSet = useMemo(() => {
+    const set = new Set();
+    if (Array.isArray(barrier?.goalIds)) barrier.goalIds.forEach(id => id && set.add(id));
+    for (const clone of legacyClones) {
+      if (Array.isArray(clone.goalIds)) clone.goalIds.forEach(id => id && set.add(id));
+      if (clone.goalId) set.add(clone.goalId);
+    }
+    return set;
+  }, [barrier?.goalIds, legacyClones]);
   const linkedGoals = useMemo(() => (
-    linkedBarrierRows
-      .map(b => ({ barrierRowId: b.id, goal: goalsInPlan.find(g => g.id === b.goalId) }))
+    Array.from(linkedGoalIdSet)
+      .map(gid => ({ goal: goalsInPlan.find(g => g.id === gid) }))
       .filter(x => !!x.goal)
-  ), [linkedBarrierRows, goalsInPlan]);
-
-  const linkedGoalIds = new Set(linkedGoals.map(x => x.goal.id));
+  ), [linkedGoalIdSet, goalsInPlan]);
   const availableGoals = useMemo(
-    () => goalsInPlan.filter(g => !linkedGoalIds.has(g.id)),
-    [goalsInPlan, linkedGoalIds],
+    () => goalsInPlan.filter(g => !linkedGoalIdSet.has(g.id)),
+    [goalsInPlan, linkedGoalIdSet],
   );
 
   // A barrier is transitively linked to every care-plan template
@@ -158,19 +167,40 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose }) {
   const [confirmDeleteBarrier, setConfirmDeleteBarrier] = useState(false);
   const [open, setOpen] = useState({ goals: true, templates: true });
   const toggle = (k) => setOpen(o => ({ ...o, [k]: !o[k] }));
-  const [note, setNote] = useState('');
-  const [notePlain, setNotePlain] = useState('');
+  // Barrier's audit rows (this and every clone) — the set is used by
+  // both the change-log derivation for the Add / Update Note editor
+  // and the Activity Log feed below.
+  const barrierIdSet = useMemo(
+    () => new Set(legacyClones.map(b => String(b.id))),
+    [legacyClones],
+  );
+  const latestBarrierNote = useMemo(() => {
+    const notes = auditAll
+      .filter(a => a.action === 'note'
+        && (a.entityType === 'barrier' || a.entityType === 'note')
+        && barrierIdSet.has(String(a.entityId)))
+      .sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt));
+    return notes[0] || null;
+  }, [auditAll, barrierIdSet]);
+  const [note, setNote] = useState(latestBarrierNote?.detail || '');
+  const [notePlain, setNotePlain] = useState(latestBarrierNote?.detail || '');
+  // Whenever a new note lands (either the drawer just opened on a
+  // different barrier or the user just submitted), re-seed the textarea
+  // to the current latest so the editor keeps reading "Update Note".
+  useEffect(() => {
+    const seed = latestBarrierNote?.detail || '';
+    setNote(seed);
+    setNotePlain(seed);
+  }, [latestBarrierNote?.id]);
   const submitNote = async () => {
-    const body = (notePlain || note).replace(/<[^>]+>/g, '').trim();
+    const body = note.trim();
     if (!body) return;
     await addCarePlanNote?.(patientId, program, body, {
       entityType: 'barrier',
       entityId: barrier.id,
       summary: `Note on ${barrier.title || 'barrier'}`,
     });
-    setNote('');
-    setNotePlain('');
-    showToast?.('Note added');
+    showToast?.(latestBarrierNote ? 'Note updated' : 'Note added');
   };
 
   // Activity for this barrier — every audit row whose entityType is
@@ -182,10 +212,6 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose }) {
     () => Object.fromEntries(goalsInPlan.map(g => [g.id, g.title])),
     [goalsInPlan],
   );
-  const barrierIdSet = useMemo(
-    () => new Set(linkedBarrierRows.map(b => String(b.id))),
-    [linkedBarrierRows],
-  );
   const activityEntries = useMemo(() => {
     const rows = auditAll
       .filter(a => (a.entityType === 'barrier' || a.entityType === 'note')
@@ -193,30 +219,42 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose }) {
       .map(a => {
         // Look up the goal each cloned row belongs to so linked/unlinked
         // reads as "linked to <goal>" instead of a bare "created".
-        const cloneRow = linkedBarrierRows.find(b => String(b.id) === String(a.entityId));
+        const cloneRow = legacyClones.find(b => String(b.id) === String(a.entityId));
         const linkedGoalTitle = cloneRow?.goalId ? goalIndex[cloneRow.goalId] : null;
         return mapBarrierAuditEntry({ ...a, linkedGoalTitle });
       })
       .sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt));
     return rows;
-  }, [auditAll, barrierIdSet, linkedBarrierRows, goalIndex]);
+  }, [auditAll, barrierIdSet, legacyClones, goalIndex]);
 
-  const dirty = title.trim() !== (barrier.title || '') || status !== (barrier.status || 'Not Started');
-
-  const handleUpdate = async () => {
-    if (!dirty) return;
-    // Persist across every clone that shares this barrier's title so
-    // the M:N view stays coherent (rename + re-status is applied to
-    // every linked-goal row).
-    for (const row of linkedBarrierRows) {
+  // Title + status auto-save. Title waits ~500ms after the last keystroke
+  // so quick edits don't spam Supabase, then persists onto every legacy
+  // clone that still exists (pre-migration data) plus the canonical row.
+  // Post-migration `legacyClones` collapses to `[barrier]` and this loop
+  // becomes a single write. First mount is skipped so simply opening the
+  // drawer doesn't fire a save.
+  const persistedTitle = (barrier.title || '').trim();
+  const persistedStatus = barrier.status || 'Not Started';
+  const persistBarrier = async (nextTitle, nextStatus, doneVerb) => {
+    const rows = legacyClones.length ? legacyClones : [barrier];
+    for (const row of rows) {
       await savePatientCarePlanBarrier(patientId, program, {
         ...row,
-        title: title.trim(),
-        status,
+        title: nextTitle,
+        status: nextStatus,
+        goalIds: Array.from(linkedGoalIdSet),
       }, row.id);
     }
-    showToast?.('Barrier updated');
+    if (doneVerb) showToast?.(doneVerb);
   };
+  const skipAutoSave = useMemo(() => ({ current: true }), []);
+  useEffect(() => {
+    if (skipAutoSave.current) { skipAutoSave.current = false; return; }
+    const t = title.trim();
+    if (t === persistedTitle && status === persistedStatus) return;
+    const id = setTimeout(() => { persistBarrier(t, status, 'Barrier updated'); }, t === persistedTitle ? 0 : 500);
+    return () => clearTimeout(id);
+  }, [title, status]); // eslint-disable-line react-hooks/exhaustive-deps -- persistBarrier stable via closure
 
   const handleAddGoalClick = () => {
     if (availableGoals.length === 0) {
@@ -227,15 +265,20 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose }) {
   };
   const handleLinkGoals = async (goalIds) => {
     if (!goalIds?.length) return;
-    for (const goalId of goalIds) {
-      await savePatientCarePlanBarrier(patientId, program, {
-        goalId,
-        title: title.trim() || barrier.title,
-        description: barrier.description,
-        status,
-        priority: barrier.priority || 'medium',
-      });
-    }
+    // Extend the canonical barrier's goal set; the join-table sync inside
+    // savePatientCarePlanBarrier writes the new links.
+    const nextGoalIds = Array.from(new Set([
+      ...linkedGoalIdSet,
+      ...goalIds.filter(Boolean),
+    ]));
+    await savePatientCarePlanBarrier(patientId, program, {
+      ...barrier,
+      title: title.trim() || barrier.title,
+      description: barrier.description,
+      status,
+      priority: barrier.priority || 'medium',
+      goalIds: nextGoalIds,
+    }, barrier.id);
     showToast?.(goalIds.length === 1
       ? `Linked to ${goalsInPlan.find(g => g.id === goalIds[0])?.title || 'goal'}`
       : `Linked to ${goalIds.length} goals`);
@@ -245,16 +288,34 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose }) {
     const target = unlinkConfirm;
     setUnlinkConfirm(null);
     if (!target) return;
-    await deletePatientCarePlanBarrier(patientId, program.id, target.barrierRowId);
+    const goalIdToRemove = target.goal?.id;
+    if (!goalIdToRemove) return;
+    // Drop the goal from every clone's `goalIds` and re-save so the join
+    // table converges. If a legacy clone existed solely to link this
+    // goal (pre-migration state), it gets fully removed.
+    const rows = legacyClones.length ? legacyClones : [barrier];
+    for (const row of rows) {
+      const rowGoalIds = Array.isArray(row.goalIds) && row.goalIds.length > 0
+        ? row.goalIds
+        : (row.goalId ? [row.goalId] : []);
+      const nextRowGoalIds = rowGoalIds.filter(gid => gid !== goalIdToRemove);
+      if (rowGoalIds.length > 0 && nextRowGoalIds.length === 0) {
+        // Row's only link was this goal — delete the row entirely.
+        await deletePatientCarePlanBarrier(patientId, program.id, row.id);
+      } else {
+        await savePatientCarePlanBarrier(patientId, program, {
+          ...row,
+          goalIds: nextRowGoalIds,
+        }, row.id);
+      }
+    }
     showToast?.(`Unlinked from ${target.goal.title}`);
-    // If the drawer's own row was just removed and we still have peer
-    // rows to show, keep the drawer open — otherwise close.
-    if (target.barrierRowId === barrier.id && linkedGoals.length <= 1) onClose?.();
+    if (linkedGoals.length <= 1) onClose?.();
   };
 
   const handleDeleteBarrier = async () => {
     setConfirmDeleteBarrier(false);
-    for (const row of linkedBarrierRows) {
+    for (const row of legacyClones) {
       await deletePatientCarePlanBarrier(patientId, program.id, row.id);
     }
     showToast?.('Barrier removed from plan');
@@ -272,19 +333,7 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose }) {
         onClose={onClose}
         width={640}
         noCloseDivider
-        headerRight={
-          <>
-            <Button
-              variant="primary"
-              size="M"
-              disabled={!dirty}
-              onClick={handleUpdate}
-            >
-              Update
-            </Button>
-            <span className={styles.headerDivider} aria-hidden />
-          </>
-        }
+        headerRight={null}
       >
         <div className={styles.body}>
           {/* Status bar — Select on the left, delete-barrier on the right.
@@ -355,12 +404,12 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose }) {
                 <div className={styles.empty}>Not linked to any goals in this plan version yet.</div>
               ) : (
                 <ul className={styles.linkList}>
-                  {linkedGoals.map(({ barrierRowId, goal }) => {
+                  {linkedGoals.map(({ goal }) => {
                     const target = formatGoalTarget(goal);
                     const duration = formatGoalDuration(goal);
                     const subtitle = [target, duration].filter(Boolean).join(' for ');
                     return (
-                      <li key={barrierRowId} className={styles.linkRow}>
+                      <li key={goal.id} className={styles.linkRow}>
                         <span className={styles.linkIcon}>
                           <Icon name={goalIconFor(goal)} size={16} color="var(--neutral-400)" />
                         </span>
@@ -380,7 +429,7 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose }) {
                             icon="solar:link-broken-minimalistic-linear"
                             size="S"
                             tooltip="Unlink"
-                            onClick={() => setUnlinkConfirm({ barrierRowId, goal })}
+                            onClick={() => setUnlinkConfirm({ goal })}
                           />
                         </div>
                       </li>
@@ -450,23 +499,45 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose }) {
 
           {/* Add Note — mirrors the GoalPreviewDrawer note surface so
               writes land in the same care-plan audit stream. */}
-          <Textarea
-            title="Add Note"
-            placeholder="Add a note"
-            value={note}
-            onChange={(html, extra) => {
-              setNote(typeof html === 'string' ? html : '');
-              setNotePlain(typeof extra === 'string' ? extra : (typeof html === 'string' ? html : ''));
-            }}
-            richText
-            attachment
-            rows={3}
-            bottomButton={{
-              label: 'Add Note',
-              onClick: submitNote,
-              disabled: !(notePlain || note).replace(/<[^>]+>/g, '').trim(),
-            }}
-          />
+          <div className={styles.noteEditor}>
+            <Textarea
+              title={latestBarrierNote ? 'Update Note' : 'Add Note'}
+              placeholder="Add a note"
+              value={note}
+              onChange={(value) => {
+                const v = typeof value === 'string' ? value : '';
+                setNote(v);
+                setNotePlain(v);
+              }}
+              rows={3}
+            />
+            {(() => {
+              const baseline = (latestBarrierNote?.detail || '').trim();
+              const current = note.trim();
+              const canSave = current.length > 0 && current !== baseline;
+              const canDiscard = current !== baseline;
+              return (
+                <div className={styles.noteActions}>
+                  <Button
+                    variant="secondary"
+                    size="M"
+                    disabled={!canDiscard}
+                    onClick={() => { setNote(baseline); setNotePlain(baseline); }}
+                  >
+                    Discard
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="M"
+                    disabled={!canSave}
+                    onClick={submitNote}
+                  >
+                    {latestBarrierNote ? 'Update Note' : 'Add Note'}
+                  </Button>
+                </div>
+              );
+            })()}
+          </div>
 
           {/* Activity Log for this barrier — status changes, edits, goal
               link / unlink, template link / unlink, and notes. Reuses the

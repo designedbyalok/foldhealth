@@ -283,10 +283,19 @@ function patientCarePlanInterventionToRow(i, planId) {
   };
 }
 
-function mapPatientCarePlanBarrierRow(row) {
+function mapPatientCarePlanBarrierRow(row, goalIdsFromJoin = null) {
+  // `goalIds` is the many-to-many set of goal ids linked to this barrier
+  // (Figma / spec: patient_care_plan_barrier_goals migration). We prefer
+  // the join-table set when provided; before the migration runs we fall
+  // back to the legacy 1:1 goal_id column so the UI never renders empty.
+  const legacyGoal = row.goal_id || null;
+  const goalIds = Array.isArray(goalIdsFromJoin) && goalIdsFromJoin.length > 0
+    ? [...new Set(goalIdsFromJoin.filter(Boolean))]
+    : (legacyGoal ? [legacyGoal] : []);
   return {
     id: row.id,
-    goalId: row.goal_id || null,
+    goalId: legacyGoal,
+    goalIds,
     title: row.title || '',
     description: row.description || '',
     status: row.status || 'Not Started',
@@ -2657,7 +2666,26 @@ export const useAppStore = create((set, get) => ({
       ]);
       goals = (g.data || []).map(mapPatientCarePlanGoalRow);
       interventions = (i.data || []).map(mapPatientCarePlanInterventionRow);
-      barriers = (b.data || []).map(mapPatientCarePlanBarrierRow);
+      // Hydrate `goalIds` from the barrier<->goal join table when it exists
+      // (care_plan_barrier_goals migration). Schema-tolerant: if the join
+      // table hasn't shipped yet the mapper falls back to the legacy
+      // goal_id column so the UI keeps working.
+      const barrierRows = b.data || [];
+      let barrierGoalMap = new Map();
+      if (barrierRows.length) {
+        const bg = await supabase
+          .from('patient_care_plan_barrier_goals')
+          .select('barrier_id, goal_id')
+          .in('barrier_id', barrierRows.map(r => r.id));
+        if (!bg.error) {
+          for (const link of (bg.data || [])) {
+            const arr = barrierGoalMap.get(link.barrier_id) || [];
+            arr.push(link.goal_id);
+            barrierGoalMap.set(link.barrier_id, arr);
+          }
+        }
+      }
+      barriers = barrierRows.map(r => mapPatientCarePlanBarrierRow(r, barrierGoalMap.get(r.id) || null));
       automations = (a.data || []).map(mapCarePlanAutomationRow);
       // If barriers table hasn't been migrated yet, supabase returns error; treat as empty.
       if (b.error && (b.error.code === '42P01' || b.error.code === 'PGRST205')) barriers = [];
@@ -2711,13 +2739,38 @@ export const useAppStore = create((set, get) => ({
     const prev = id ? (get().patientCarePlans[key]?.barriers || []).find(b => b.id === id) : null;
     const planId = await get().ensurePatientCarePlan(patientId, program);
     if (!planId) return null;
-    const row = patientCarePlanBarrierToRow(values, planId);
+    // If the caller passes `goalIds`, that's the full linked set for the
+    // barrier (many-to-many). Fall back to the legacy 1:1 `goalId` field
+    // so pre-migration callers keep working. `goal_id` is written for
+    // backwards compatibility until the join-table migration lands.
+    const nextGoalIds = Array.isArray(values.goalIds) && values.goalIds.length > 0
+      ? [...new Set(values.goalIds.filter(Boolean))]
+      : (values.goalId ? [values.goalId] : []);
+    const legacyGoalId = nextGoalIds[0] || null;
+    const row = patientCarePlanBarrierToRow({ ...values, goalId: legacyGoalId }, planId);
     const q = id
       ? supabase.from('patient_care_plan_barriers').update({ ...row, updated_at: new Date().toISOString() }).eq('id', id)
       : supabase.from('patient_care_plan_barriers').insert(row);
     const { data, error } = await q.select().single();
     if (error) { console.warn('savePatientCarePlanBarrier:', error.message); get().showToast('Could not save barrier'); return null; }
-    const barrier = mapPatientCarePlanBarrierRow(data);
+
+    // Sync the join table so the goal set reflects `nextGoalIds`. Wipe
+    // any prior links, then insert the new set. Silent no-op if the join
+    // table hasn't been migrated yet (schema-tolerant fallback).
+    const barrierId = data.id;
+    let joinGoalIds = nextGoalIds;
+    const del = await supabase.from('patient_care_plan_barrier_goals').delete().eq('barrier_id', barrierId);
+    const missingJoin = del.error && (del.error.code === '42P01' || del.error.code === 'PGRST205');
+    if (!missingJoin && nextGoalIds.length > 0) {
+      const ins = await supabase.from('patient_care_plan_barrier_goals')
+        .insert(nextGoalIds.map(gid => ({ barrier_id: barrierId, goal_id: gid })));
+      if (ins.error && (ins.error.code === '42P01' || ins.error.code === 'PGRST205')) {
+        // Join table absent — clients will read the legacy goal_id only.
+        joinGoalIds = legacyGoalId ? [legacyGoalId] : [];
+      }
+    }
+
+    const barrier = mapPatientCarePlanBarrierRow(data, joinGoalIds);
     get().logCarePlanAudit(patientId, program, auditForSave('barrier', barrier, prev));
     set(s => {
       const cur = s.patientCarePlans[key] || { goals: [], interventions: [], barriers: [] };
@@ -2829,10 +2882,14 @@ export const useAppStore = create((set, get) => ({
     if (!currentPlan) { setFlags([]); return 0; }
     const planIds = plans.map(p => p.id);
 
+    // Duplicate detection only runs for goals + interventions. Barriers
+    // are legitimately shared across patients/goals (many hit the same
+    // barrier text) and the M:N join table already collapses same-title
+    // rows into a single canonical barrier — so a "possible duplicate"
+    // banner on the Barriers section reads as noise, not signal.
     const KINDS = [
       { kind: 'goal', table: 'patient_care_plan_goals', map: mapPatientCarePlanGoalRow },
       { kind: 'intervention', table: 'patient_care_plan_interventions', map: mapPatientCarePlanInterventionRow },
-      { kind: 'barrier', table: 'patient_care_plan_barriers', map: mapPatientCarePlanBarrierRow },
     ];
     const meta = (planRow) => ({
       programId: planRow.program_id,
