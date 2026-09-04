@@ -39,23 +39,7 @@ export function CarePlanInterventionsTable({
         bulkMode,
       );
     }
-    const base = INTERVENTION_COLUMNS.map((col) => (col.key === 'actions'
-      ? {
-          ...col,
-          thLabel: (
-            <ActionButton
-              icon="custom:filter"
-              size="S"
-              tooltip="Table settings"
-              tooltipBelow
-              tooltipLeft
-              disabled
-              aria-label="Table settings"
-            />
-          ),
-        }
-      : col));
-    return withSelectColumn(base, bulkMode);
+    return withSelectColumn(INTERVENTION_COLUMNS, bulkMode);
   }, [bulkMode, template]);
 
   const sortableRows = useMemo(() => enrichInterventionRows(rows), [rows]);

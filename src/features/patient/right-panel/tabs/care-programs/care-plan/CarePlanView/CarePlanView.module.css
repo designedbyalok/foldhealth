@@ -59,6 +59,13 @@
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
 }
+/* Collapsed strip keeps chips on a single line — anything past the row
+   width clips out and stays hidden until the user hits "View All". */
+.priorityChipsCollapsed {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+.priorityChipsCollapsed > button { flex-shrink: 0; }
 .viewMoreLink {
   border: none;
   background: none;
@@ -72,12 +79,6 @@
   white-space: nowrap;
 }
 .viewMoreLink:hover { text-decoration: underline; }
-.templateFilterBar {
-  display: flex;
-  align-items: center;
-  padding: var(--space-1) var(--space-3);
-  border-bottom: 0.5px solid var(--neutral-150);
-}
 .appliedTemplateTrail {
   display: inline-flex;
   align-items: center;

@@ -68,32 +68,23 @@
   display: block;
 }
 
-/* Horizontal bar — default for GBI table Progress / Adherence columns. */
-.barShell {
-  display: flex;
+/* Pill — GBI table Progress column. Figma 4539:72258 / 72269 / 72273 /
+   72277: rounded-8 chip with a task-check icon and the percentage in
+   white, background tinted by threshold (neutral 0%, error 1-40, warning
+   41-75, success >75). */
+.pill {
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  width: 100%;
-  min-width: 0;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--space-2);
+  width: fit-content;
+  max-width: 100%;
 }
-.barTrack {
-  flex: 1;
-  height: 4px;
-  min-width: 28px;
-  border-radius: 2px;
-  background: var(--neutral-100);
-  overflow: hidden;
-}
-.barFill {
-  height: 100%;
-  border-radius: 2px;
-}
-.barLabel {
+.pillLabel {
   flex-shrink: 0;
-  min-width: 28px;
-  font-size: var(--font-2xs);
+  font-size: var(--font-sm);
   font-weight: 500;
-  line-height: 1;
-  color: var(--neutral-300);
-  text-align: right;
+  line-height: 1.2;
+  color: currentColor;
 }

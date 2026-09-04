@@ -52,34 +52,51 @@ function splitArrow(detail) {
 }
 
 // Map a `patient_care_plan_audit` row for this barrier into the
-// ActivityLog entry shape. Handles the actions the store currently
-// emits (created, status_changed, updated, deleted, note) plus the
-// derived link/unlink verbs the drawer needs.
+// ActivityLog entry shape (`t` picks the variant renderer; `date` /
+// `time` / `by` feed the meta line; `title` feeds the headline; the
+// status-change variant expects `from` / `to` for the transition pills).
 function mapBarrierAuditEntry(e) {
   const [from, to] = splitArrow(e.detail);
-  const base = { id: e.id, actor: e.actor || '', at: e.createdAt, createdAt: e.createdAt, action: e.action };
+  const created = e.createdAt ? new Date(e.createdAt) : null;
+  const date = created ? created.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
+  const time = created ? created.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : null;
+  const base = {
+    id: e.id,
+    date,
+    time,
+    by: e.actor || null,
+    createdAt: e.createdAt,
+    action: e.action,
+  };
   switch (e.action) {
     case 'note':
-      return { ...base, verb: 'added a', field: 'Note', comment: e.detail };
+      return { ...base, t: 'comment', title: 'Added a Note', commentBody: e.detail || '' };
     case 'status_changed':
-      return { ...base, verb: 'changed the', field: 'Status', from, to, fromTone: 'grey', toTone: 'grey' };
+      return { ...base, t: 'status_change', title: 'Status changed', from, to };
     case 'created':
-      // The barrier's very first row is a "created"; every subsequent
-      // clone under a different goal is a "linked to goal" event.
-      return { ...base, verb: e.linkedGoalTitle ? 'linked to' : 'added a', field: e.linkedGoalTitle || 'Barrier', comment: e.linkedGoalTitle ? undefined : undefined };
+      return {
+        ...base,
+        t: 'status_change',
+        title: e.linkedGoalTitle ? `Linked to ${e.linkedGoalTitle}` : 'Barrier added',
+      };
     case 'deleted':
-      return { ...base, verb: e.linkedGoalTitle ? 'unlinked from' : 'removed the', field: e.linkedGoalTitle || 'Barrier' };
+      return {
+        ...base,
+        t: 'status_change',
+        title: e.linkedGoalTitle ? `Unlinked from ${e.linkedGoalTitle}` : 'Barrier removed',
+      };
     case 'updated':
-      if (e.detail && e.detail.startsWith('Renamed')) {
-        return { ...base, verb: 'edited the', field: 'Barrier', comment: e.detail };
-      }
-      return { ...base, verb: 'edited the', field: 'Barrier' };
+      return {
+        ...base,
+        t: 'status_change',
+        title: e.detail && e.detail.startsWith('Renamed') ? e.detail : 'Barrier edited',
+      };
     case 'template_linked':
-      return { ...base, verb: 'linked template', field: e.summary || 'Template' };
+      return { ...base, t: 'status_change', title: `Linked template: ${e.summary || 'Template'}` };
     case 'template_unlinked':
-      return { ...base, verb: 'unlinked template', field: e.summary || 'Template' };
+      return { ...base, t: 'status_change', title: `Unlinked template: ${e.summary || 'Template'}` };
     default:
-      return { ...base, verb: 'updated', field: e.summary || 'Barrier' };
+      return { ...base, t: 'status_change', title: e.summary || 'Barrier updated' };
   }
 }
 

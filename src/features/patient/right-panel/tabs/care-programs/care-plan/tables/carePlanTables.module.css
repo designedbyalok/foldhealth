@@ -8,7 +8,7 @@
   background: var(--neutral-0);
   -webkit-overflow-scrolling: touch;
   --gbi-col-value: 120px;
-  --gbi-col-progress: 100px;
+  --gbi-col-progress: 90px;
 }
 .tableWrap table {
   table-layout: fixed;
@@ -45,7 +45,7 @@
 }
 .td {
   composes: td from '../../../../../../../components/WorklistShell/WorklistRow.module.css';
-  padding: var(--space-1) var(--space-2);
+  padding: calc(var(--space-1) + var(--space-1) / 2) var(--space-2);
   vertical-align: middle;
   border-left: none;
 }
@@ -62,7 +62,7 @@
 .priorityTd {
   composes: td from '../../../../../../../components/WorklistShell/WorklistRow.module.css';
   width: 28px;
-  padding: var(--space-1);
+  padding: calc(var(--space-1) + var(--space-1) / 2) var(--space-1);
   border-right: none;
   border-left: none;
   text-align: center;
@@ -72,7 +72,7 @@
   composes: membersTd from '../../../../../../../components/WorklistShell/WorklistRow.module.css';
   min-width: 0;
   width: auto;
-  padding: var(--space-1) var(--space-2);
+  padding: calc(var(--space-1) + var(--space-1) / 2) var(--space-2);
   vertical-align: middle;
 }
 .valueTd,
@@ -83,7 +83,7 @@
   composes: td from '../../../../../../../components/WorklistShell/WorklistRow.module.css';
   border-left: none;
   box-sizing: border-box;
-  padding: var(--space-1) var(--space-2);
+  padding: calc(var(--space-1) + var(--space-1) / 2) var(--space-2);
   vertical-align: middle;
 }
 .valueTd {
@@ -101,7 +101,7 @@
 }
 .progressTd > *,
 .adherenceTd > * {
-  width: 100%;
+  max-width: 100%;
 }
 .assigneeTd {
   width: var(--gbi-col-value);
@@ -122,7 +122,7 @@
   min-width: 36px;
   max-width: 36px;
   box-sizing: border-box;
-  padding: var(--space-1);
+  padding: calc(var(--space-1) + var(--space-1) / 2) var(--space-1);
   text-align: center;
   vertical-align: middle;
   border-left: none;
@@ -133,7 +133,7 @@
   composes: td from '../../../../../../../components/WorklistShell/WorklistRow.module.css';
   border-left: none;
   box-sizing: border-box;
-  padding: var(--space-1) var(--space-2);
+  padding: calc(var(--space-1) + var(--space-1) / 2) var(--space-2);
   vertical-align: middle;
 }
 .closedBarriers {

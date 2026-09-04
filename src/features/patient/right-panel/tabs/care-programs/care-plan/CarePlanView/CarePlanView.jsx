@@ -736,7 +736,7 @@ export function CarePlanView({ patientId, program }) {
                     <div className={styles.priorityRail} aria-label={`${p} priority`}>
                       <PriorityIcon priority={p} size={16} />
                     </div>
-                    <div className={styles.priorityChips}>
+                    <div className={`${styles.priorityChips} ${templateStripExpanded ? '' : styles.priorityChipsCollapsed}`}>
                       {list.map(t => {
                         const isActive = templateFilterId === t.id;
                         return (
@@ -786,18 +786,6 @@ export function CarePlanView({ patientId, program }) {
                   </div>
                 );
               })}
-              {templateFilterId && (
-                <div className={styles.templateFilterBar}>
-                  <button
-                    type="button"
-                    className={styles.appliedTemplateBadge}
-                    onClick={() => setTemplateFilterId(null)}
-                    aria-label="Clear template filter"
-                  >
-                    <Badge tone="grey" size="S" icon="solar:close-circle-linear" label="Clear filter" />
-                  </button>
-                </div>
-              )}
             </div>
           );
         })()}

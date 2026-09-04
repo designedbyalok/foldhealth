@@ -1,5 +1,29 @@
 import styles from './CarePlanProgressRing.module.css';
 
+/** Small in-pill radial: ring outlining a pie whose sweep matches the
+ *  percentage. Stroke / fill inherit the pill's `color`, so the pill can
+ *  swap tone by setting `color` on the wrapper. Figma 4539:72258 / 72269
+ *  / 72273 / 72277. */
+function PillProgressRing({ pct }) {
+  const c = 8;
+  const r = 7;
+  const theta = (pct / 100) * 2 * Math.PI;
+  const x = c + r * Math.sin(theta);
+  const y = c - r * Math.cos(theta);
+  const largeArc = theta > Math.PI ? 1 : 0;
+  const pie = pct >= 100
+    ? `M${c} ${c} L${c} ${c - r} A${r} ${r} 0 1 1 ${c - 0.001} ${c - r} Z`
+    : pct > 0
+      ? `M${c} ${c} L${c} ${c - r} A${r} ${r} 0 ${largeArc} 1 ${x} ${y} Z`
+      : '';
+  return (
+    <svg width={14} height={14} viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}>
+      <circle cx={c} cy={c} r={r} fill="none" stroke="currentColor" strokeWidth="1" />
+      {pie && <path d={pie} fill="currentColor" />}
+    </svg>
+  );
+}
+
 /** Paper ProgressRing (Fold Design System → Care Plan → 2X-0), 46×46. */
 const TRACK_SIZE = 37.41;
 const TRACK_PATH =
@@ -25,20 +49,30 @@ function progressTone(pct) {
   return 'var(--neutral-200)';
 }
 
+/** Threshold palette for the pill variant (Figma 4539:72258 / 72269 /
+ *  72273 / 72277): quiet neutral for the "not started" 0% state, then
+ *  the tinted red / warning / success surfaces for progress. */
+function progressPillTone(pct) {
+  if (pct === 0) return { bg: 'var(--neutral-50)', ink: 'var(--neutral-300)' };
+  if (pct <= 40) return { bg: 'var(--status-error)', ink: 'var(--neutral-0)' };
+  if (pct <= 75) return { bg: 'var(--status-warning)', ink: 'var(--neutral-0)' };
+  return { bg: 'var(--status-success)', ink: 'var(--neutral-0)' };
+}
+
 function ProgressBarCompact({ pct, label, className }) {
+  const tone = progressPillTone(pct);
   return (
     <div
-      className={[styles.barShell, className].filter(Boolean).join(' ')}
+      className={[styles.pill, className].filter(Boolean).join(' ')}
       role="progressbar"
       aria-valuenow={pct}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-label={label}
+      style={{ background: tone.bg, color: tone.ink }}
     >
-      <div className={styles.barTrack}>
-        <div className={styles.barFill} style={{ width: `${pct}%`, background: progressTone(pct) }} />
-      </div>
-      <span className={styles.barLabel}>{pct}%</span>
+      <PillProgressRing pct={pct} />
+      <span className={styles.pillLabel}>{pct}%</span>
     </div>
   );
 }

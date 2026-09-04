@@ -330,9 +330,9 @@
   row-gap: var(--space-3);
 }
 .contentHeaderRowCarePlan .assessmentHeader {
-  flex: 1 1 220px;
+  flex: 1 1 auto;
   max-width: 100%;
-  min-width: 0;
+  min-width: fit-content;
 }
 .contentHeaderRowCarePlan .carePlanTitleBtn {
   max-width: 100%;
@@ -431,6 +431,7 @@
   font-size: var(--font-sm);
   color: var(--neutral-300);
   line-height: 1.4;
+  white-space: nowrap;
 }
 .carePlanMetaDot {
   color: var(--neutral-200);
