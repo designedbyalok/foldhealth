@@ -132,6 +132,11 @@ export function DiagPanelView(props) {
       )}
       {recordsRequestPrompt && (
         <RecordsRequestDialog
+          lastAssignees={{
+            coder: member?.cdr || null,
+            support: member?.sup || null,
+            qa: member?.r1 || null,
+          }}
           onCancel={cancelRecordsRequest}
           onConfirm={confirmRecordsRequest}
         />

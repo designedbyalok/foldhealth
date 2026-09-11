@@ -36,7 +36,111 @@
   margin: 0;
 }
 
-/* Radio group — hairline between options, no outer border. */
+/* Inline radio row — Coder + Support Team side by side, no descriptions
+   or divider. Matches the Figma ICD-Import 6379-182566 layout. */
+.radioRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.radioOption {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) 0;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  text-align: left;
+}
+.radioOption:focus-visible {
+  outline: 2px solid var(--primary-200);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.radioLabel {
+  font-size: var(--font-base);
+  font-weight: 400;
+  color: var(--neutral-300);
+  line-height: var(--leading-tight);
+}
+.radioOptionActive .radioLabel {
+  color: var(--neutral-400);
+}
+
+/* Assigned to — uses the shared Select component. These classes only
+   dress the trigger's picked-value row and the dropdown option rows;
+   Select owns the border, chevron, and menu chrome. */
+.assigneeSelectWrapper {
+  /* Field label uses Select's built-in labelled-field spacing; nothing
+     extra here — the wrapper is a hook for future overrides. */
+}
+.assigneeSelect {
+  /* Reserved for trigger-height / typography overrides if the design
+     ever needs them; empty for now so Select's defaults apply. */
+}
+/* Picked-value pill inside Select's trigger — avatar + name + green
+   "(Available)" tag on one row. */
+.assigneeTriggerLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.assigneeName {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--neutral-500);
+}
+.assigneeAvailable {
+  color: var(--status-success);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.assigneeUnavailable {
+  color: var(--status-error);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+/* Dropdown row inside the Select menu — M-size avatar on the left,
+   two-line text (name + role) in the middle, Available/Unavailable
+   tag pinned to the right. No chevron. */
+.assigneeOption {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+}
+.assigneeOptionText {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.assigneeOptionName {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-500);
+  line-height: var(--leading-tight);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.assigneeOptionRole {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  line-height: var(--leading-normal);
+}
+
+/* Legacy stacked-radio styles kept for backward compat (unused by the
+   new inline layout above; safe to remove if no other caller pulls
+   these class names). */
 .radioGroup {
   display: flex;
   flex-direction: column;

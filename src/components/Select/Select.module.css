@@ -162,6 +162,12 @@
   left: auto;
   right: auto;
   z-index: 9800;
+  /* Radix modals (AlertDialog / Dialog) set `body { pointer-events: none }`
+     while open. A portaled menu is a body child, so it inherits that and
+     stops accepting clicks + wheel events. Explicitly re-enable them so
+     the menu is scrollable + clickable when opened from inside a modal. */
+  pointer-events: auto;
+  overscroll-behavior: contain;
 }
 
 /* Flip-up variant — used when the trigger is near the bottom of the

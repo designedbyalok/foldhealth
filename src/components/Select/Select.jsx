@@ -301,6 +301,17 @@ export function Select({
             !portal && menuAlign === 'right' ? styles.menuRight : '',
             !portal && menuPlacement === 'top' ? styles.menuTop : '',
           ].filter(Boolean).join(' ')}
+          // Radix Dialog / AlertDialog attach global wheel + touchmove
+          // listeners on document with `{ passive: false }` that call
+          // preventDefault() to block body scroll while a modal is open.
+          // A portaled Select menu is a body sibling of the modal, so
+          // those global listeners cancel its scroll wheel events too —
+          // even though the menu has `overflow-y: auto`. Stopping
+          // propagation at the menu's own wheel + touchmove handlers
+          // keeps Radix's document-level listeners from firing, so the
+          // menu scrolls normally when opened from inside a modal.
+          onWheel={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
           style={portal && anchorRect ? {
             width: anchorRect.width,
             left: menuAlign === 'right' ? undefined : anchorRect.left,
