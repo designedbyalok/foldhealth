@@ -16,7 +16,7 @@ import { ProgramRelatedTasks } from '../related/ProgramRelatedTasks/ProgramRelat
 import { AddTaskDrawer } from '../../../../../../tasks/TasksView';
 import { ProgramRelatedFiles } from '../related/ProgramRelatedFiles/ProgramRelatedFiles.jsx';
 import { ReferralReview } from '../steps/ReferralReview/ReferralReview.jsx';
-import { DiagnosisGapsTable } from '../../../../../left-panel/tabs/gaps/DiagnosisGapsTable/DiagnosisGapsTable.jsx';
+import { ProgramDiagnosisGapsTable } from '../DiagnosisGapsStep/ProgramDiagnosisGapsTable.jsx';
 import { AddLetterDrawer } from '../letters/AddLetterDrawer/AddLetterDrawer.jsx';
 import { LetterHistoryDrawer } from '../letters/LetterHistoryDrawer/LetterHistoryDrawer.jsx';
 import { LetterPreviewDrawer } from '../letters/LetterPreviewDrawer/LetterPreviewDrawer.jsx';
@@ -110,7 +110,7 @@ export function ProgramDetailView({ program, onClose, startAtFirstStep = false, 
         />
       );
     }
-    if (stepFlags.isDiagnosisGapsStep) return <DiagnosisGapsTable memberName={v.currentPatient?.name} />;
+    if (stepFlags.isDiagnosisGapsStep) return <ProgramDiagnosisGapsTable memberName={v.currentPatient?.name} search={v.diagGapsSearchText} />;
     return <StepPlaceholder name={v.stepName} />;
   };
 
@@ -174,6 +174,10 @@ export function ProgramDetailView({ program, onClose, startAtFirstStep = false, 
             setTaskSearchOpen={v.setTaskSearchOpen}
             taskSearchText={v.taskSearchText}
             setTaskSearchText={v.setTaskSearchText}
+            diagGapsSearchOpen={v.diagGapsSearchOpen}
+            setDiagGapsSearchOpen={v.setDiagGapsSearchOpen}
+            diagGapsSearchText={v.diagGapsSearchText}
+            setDiagGapsSearchText={v.setDiagGapsSearchText}
             setAddTaskOpen={v.setAddTaskOpen}
             taskFiltersOpen={v.taskFiltersOpen}
             setTaskFiltersOpen={v.setTaskFiltersOpen}

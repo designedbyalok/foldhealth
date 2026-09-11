@@ -237,6 +237,20 @@ function pickPool(seed, count) {
   return out;
 }
 
+// Stable "last documented" date derived from a hash: MM/DD/YYYY, anchored
+// so generated members read the same as the hand-curated ICDS map above
+// (mid-2025 through early-2026). Used by every generator so every ICD row
+// carries a real date the UI can render (no "-" placeholders).
+function genLastDocumented(seed) {
+  const monthIdx = seed % 12;        // 0-11
+  const day = 1 + (seed % 28);        // 1-28
+  const yearOff = (seed >> 5) % 2;    // 0 or 1
+  const year = 2025 + yearOff;
+  const mm = String(monthIdx + 1).padStart(2, '0');
+  const dd = String(day).padStart(2, '0');
+  return `${mm}/${dd}/${year}`;
+}
+
 function generateIcdsForMember(name) {
   const h = hashStr(name);
   const count = 3 + (h % 4); // 3–6 linked/suspect ICDs
@@ -248,6 +262,7 @@ function generateIcdsForMember(name) {
       status: isAI ? 'New' : GEN_STATUS[hh % GEN_STATUS.length],
       type: isAI ? (hh % 2 ? 'Suspect' : 'Recapture') : null,
       docs: 1 + (hh % 3), cmts: hh % 2, notes: (hh >> 3) % 2,
+      last: genLastDocumented(hh),
     };
   });
 }
@@ -261,6 +276,7 @@ function generateNotLinkedForMember(name) {
       code: base.code, desc: base.desc, hcc: base.hcc,
       status: 'New', type: hh % 2 ? 'Suspect' : 'Recapture',
       docs: 1, cmts: hh % 2,
+      last: genLastDocumented(hh),
     };
   });
 }

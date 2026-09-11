@@ -62,6 +62,10 @@ export function ProgramDetailViewContentHeader({
   setTaskSearchOpen,
   taskSearchText,
   setTaskSearchText,
+  diagGapsSearchOpen,
+  setDiagGapsSearchOpen,
+  diagGapsSearchText,
+  setDiagGapsSearchText,
   setAddTaskOpen,
   taskFiltersOpen,
   setTaskFiltersOpen,
@@ -240,13 +244,19 @@ export function ProgramDetailViewContentHeader({
     isBillingStep, isOutreachStep, isPreVisitStep, isCarePlanStep,
     isAppointmentStep, isOpenCareGapsStep, isMedReconStep,
     isProgramTasksStep, isProgramFilesStep, isReferralStep, isLettersStep,
+    isDiagnosisGapsStep,
   } = stepFlags;
 
   if (isBillingStep) return null;
 
+  // Simple steps render a single-line `.contentTitle` span with a compact
+  // action row on the right; keeping the row centered avoids the title
+  // top-anchoring against the taller action cluster.
+  const isCompactHeader = !assessmentCfg && !isMedReconStep && !isReferralStep && !isCarePlanStep;
+
   return (
-    <div className={`${styles.contentHeader} ${isCarePlanStep ? styles.contentHeaderCarePlan : ''}`}>
-      <div className={`${styles.contentHeaderRow} ${isCarePlanStep ? styles.contentHeaderRowCarePlan : ''}`}>
+    <div className={`${styles.contentHeader} ${isCarePlanStep ? styles.contentHeaderCarePlan : ''} ${isDiagnosisGapsStep ? styles.contentHeaderDiagGaps : ''}`}>
+      <div className={`${styles.contentHeaderRow} ${isCarePlanStep ? styles.contentHeaderRowCarePlan : ''} ${isCompactHeader ? styles.contentHeaderRowCompact : ''}`}>
         {assessmentCfg ? (
           <div className={styles.assessmentHeader}>
             <div className={styles.assessmentHeaderText}>
@@ -479,6 +489,27 @@ export function ProgramDetailViewContentHeader({
               {assigneePicker}
               {!isMandatoryStep && <Link variant="secondary">Skip</Link>}
               <Button variant="tertiary" size="L" onClick={goNextStep} disabled={!nextStep}>Next</Button>
+            </>
+          ) : isDiagnosisGapsStep ? (
+            <>
+              {diagGapsSearchOpen ? (
+                <SearchBar
+                  className={styles.diagGapsSearch}
+                  placeholder="Search"
+                  value={diagGapsSearchText}
+                  onChange={e => setDiagGapsSearchText(e.target.value)}
+                  onClose={() => { setDiagGapsSearchOpen(false); setDiagGapsSearchText(''); }}
+                />
+              ) : (
+                <ActionButton
+                  icon="solar:magnifer-linear"
+                  size="S"
+                  tooltip="Search"
+                  onClick={() => setDiagGapsSearchOpen(true)}
+                />
+              )}
+              <Button variant="tertiary" size="M" leadingIcon="solar:check-circle-linear">Reviewed</Button>
+              <ActionButton icon="solar:menu-dots-linear" size="S" tooltip="More" />
             </>
           ) : (
             <>

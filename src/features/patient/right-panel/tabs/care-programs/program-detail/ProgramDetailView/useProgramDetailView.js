@@ -49,6 +49,8 @@ export function useProgramDetailView({ program, onSwitchProgram }) {
   const [taskFiltersOpen, setTaskFiltersOpen] = useState(false);
   const [taskSearchOpen, setTaskSearchOpen] = useState(false);
   const [taskSearchText, setTaskSearchText] = useState('');
+  const [diagGapsSearchOpen, setDiagGapsSearchOpen] = useState(false);
+  const [diagGapsSearchText, setDiagGapsSearchText] = useState('');
   const [taskFilters, setTaskFilters] = useState(EMPTY_TASK_FILTERS);
   const [addLetterOpen, setAddLetterOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -76,10 +78,24 @@ export function useProgramDetailView({ program, onSwitchProgram }) {
   const addProgramTask = useAppStore(s => s.addProgramTask);
   const currentPatient = useAppStore(s => {
     const pid = s.selectedPatientId;
-    return s.patients.find(p => p.id === pid)
-      || (s.allPatients || []).find(p => p.id === pid)
-      || s.hccMembers.find(p => p.id === pid)
-      || null;
+    if (!pid) return null;
+    // Patients arrive across many worklist slices (AWV / SNP / CCM / HEDIS /
+    // JSA) and the selected id may be an internal `id` or a plan-facing
+    // `memberId` depending on which list navigated us here. Look through
+    // every slice and match on either key so the program view resolves the
+    // real patient (needed for the Diagnosis Gaps ICD lookup, which is
+    // keyed by patient name).
+    const buckets = [
+      s.patients, s.allPatients, s.hccMembers,
+      s.awvMembers, s.snpMembers, s.snpWorklistMembers,
+      s.ccmMembers, s.ccmWorklistMembers, s.hedisMembers, s.jsaMembers,
+    ];
+    const matches = m => m && (m.id === pid || String(m.memberId) === String(pid));
+    for (const list of buckets) {
+      const hit = list?.find(matches);
+      if (hit) return hit;
+    }
+    return null;
   });
   const patientId = useAppStore(s => s.selectedPatientId);
   const updateCareProgram = useAppStore(s => s.updateCareProgram);
@@ -188,7 +204,7 @@ export function useProgramDetailView({ program, onSwitchProgram }) {
     isProgramFilesStep: stepName === 'Program Related Files' || stepName === 'Program Documents' || stepName === 'Documents',
     isReferralStep: stepName === 'Referral Review',
     isLettersStep: stepName === 'Letters',
-    isDiagnosisGapsStep: stepName === 'Diagnosis Gaps',
+    isDiagnosisGapsStep: stepName === 'Open Diagnosis Gaps',
   };
 
   return {
@@ -201,6 +217,7 @@ export function useProgramDetailView({ program, onSwitchProgram }) {
     rowMenu, setRowMenu, previewTarget, setPreviewTarget,
     addTaskOpen, setAddTaskOpen, taskFiltersOpen, setTaskFiltersOpen,
     taskSearchOpen, setTaskSearchOpen, taskSearchText, setTaskSearchText,
+    diagGapsSearchOpen, setDiagGapsSearchOpen, diagGapsSearchText, setDiagGapsSearchText,
     taskFilters, setTaskFilter, taskFiltersActive, taskFilterMeta,
     addLetterOpen, setAddLetterOpen, historyOpen, setHistoryOpen,
     addedLetterIds, setAddedLetterIds, detailsExpanded, setDetailsExpanded,

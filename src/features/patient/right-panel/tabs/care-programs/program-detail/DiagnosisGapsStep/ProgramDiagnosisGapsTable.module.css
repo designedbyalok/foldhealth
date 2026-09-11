@@ -1,0 +1,128 @@
+.wrapper { display: flex; flex-direction: column; }
+
+/* Filter row sits below the step content header. 8px gap between chips
+   matches the shared FilterChipBar pattern used in the HCC worklist and
+   HEDIS gap drawers. */
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
+.card {
+  background: var(--neutral-0);
+  border-bottom: 0.5px solid var(--neutral-100);
+  overflow: hidden;
+}
+
+/* Row group wraps the HCC row + its expanded ICD list so a group can
+   carry the divider between HCCs even when the expanded list adds
+   its own internal rows. */
+.rowGroup {
+  border-bottom: 0.5px solid var(--neutral-100);
+}
+.rowGroup:last-child { border-bottom: none; }
+
+.row {
+  display: flex; align-items: center;
+  padding: 0 var(--space-3);
+  transition: background 0.1s;
+}
+.row:hover { background: var(--primary-25); }
+
+.content {
+  flex: 1; min-width: 0; display: flex; flex-direction: column;
+  gap: calc(var(--space-1) / 2); padding: var(--space-2) 0; justify-content: center;
+}
+.title {
+  font-size: var(--font-base);
+  color: var(--neutral-500);
+  line-height: 1.2;
+  display: inline-flex;
+  gap: 0;
+  align-items: baseline;
+}
+.hccCode { font-weight: 500; color: var(--neutral-500); }
+.hccSep { color: var(--neutral-300); margin: 0 var(--space-1); }
+.hccName { color: var(--neutral-500); }
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
+.metaText { font-size: var(--font-sm); color: var(--neutral-300); white-space: nowrap; }
+.metaSep { color: var(--neutral-200); font-size: var(--font-sm); }
+
+/* Inline "N ICDs" toggle: link-styled count with a trailing chevron
+   that rotates 180deg when the ICD list is expanded (matches the
+   Figma spec — chevron up when open, down when closed). */
+.icdLink {
+  background: none; border: none; padding: 0; cursor: pointer;
+  display: inline-flex; align-items: center; gap: calc(var(--space-1) / 2);
+  font-size: var(--font-sm); color: var(--primary-300); font-weight: 500;
+}
+.icdLink:hover { text-decoration: underline; }
+.icdChevron { transition: transform 0.12s ease; }
+.icdChevronOpen { transform: rotate(180deg); transition: transform 0.12s ease; }
+
+.moreBtn { display: flex; align-items: center; padding: var(--space-2); flex-shrink: 0; opacity: 0; transition: opacity 0.1s; }
+.row:hover .moreBtn { opacity: 1; }
+
+/* Expanded ICD list — a two-column table (ICD Code | Description) with
+   its own greyed header row. Sits inside the HCC's rowGroup so the
+   group divider still separates each HCC after the list ends. The
+   primary-300 left accent bar visually ties the list back to the HCC
+   row above it (per Figma spec). */
+.icdList {
+  display: flex;
+  flex-direction: column;
+  border-top: 0.5px solid var(--neutral-100);
+  border-left: 4px solid var(--primary-300);
+}
+.icdHeaderRow {
+  display: flex;
+  align-items: center;
+  background: var(--primary-25);
+  padding: var(--space-1) var(--space-3);
+  border-bottom: 0.5px solid var(--neutral-100);
+}
+.icdHeaderCell {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  font-weight: 400;
+}
+.icdHeaderCell:first-child {
+  flex-shrink: 0;
+  width: 120px;
+}
+.icdHeaderCell:last-child { flex: 1; min-width: 0; }
+
+.icdRow {
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  background: var(--primary-25);
+  border-bottom: 0.5px solid var(--neutral-100);
+}
+.icdRow:last-child { border-bottom: none; }
+.icdCode {
+  flex-shrink: 0;
+  width: 120px;
+  font-size: var(--font-base);
+  color: var(--primary-300);
+  font-variant-numeric: tabular-nums;
+}
+.icdDesc {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-base);
+  color: var(--neutral-500);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty {
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}

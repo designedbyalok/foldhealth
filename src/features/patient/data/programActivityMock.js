@@ -314,7 +314,7 @@ const AWV_STEPS = [
     ],
   },
   { id: 'awv-caregaps', name: 'Care Gaps' },
-  { id: 'awv-diaggaps', name: 'Diagnosis Gaps', mandatory: true },
+  { id: 'awv-diaggaps', name: 'Open Diagnosis Gaps', mandatory: true },
   { id: 'awv-appt', name: 'Appointment', mandatory: true },
   { id: 'awv-referral', name: 'Referral Review' },
   { id: 'awv-task', name: 'Program Related Task' },
@@ -436,6 +436,7 @@ const APE_STEPS = [
   { id: 'ape-letters', name: 'Letters' },
   { id: 'ape-appt', name: 'Appointment', mandatory: true },
   { id: 'ape-caregaps', name: 'Open Care Gaps' },
+  { id: 'ape-diaggaps', name: 'Open Diagnosis Gaps', mandatory: true },
   { id: 'ape-task', name: 'Program Related Task' },
 ];
 

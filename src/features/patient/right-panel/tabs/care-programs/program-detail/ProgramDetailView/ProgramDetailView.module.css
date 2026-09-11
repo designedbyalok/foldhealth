@@ -308,6 +308,11 @@
   border-bottom: 0.5px solid var(--neutral-150);
   flex-shrink: 0;
 }
+/* Diagnosis Gaps step: compact 44px total header (12px vertical padding
+   over the 32px Button M row, minus the bottom border). */
+.contentHeaderDiagGaps {
+  padding: calc(var(--space-1) + var(--space-1) / 2) var(--space-3);
+}
 .contentHeaderCarePlan {
   container-type: inline-size;
   padding: calc(var(--space-1) + var(--space-1) / 2) var(--space-3);
@@ -322,6 +327,11 @@
   justify-content: space-between;
   gap: var(--space-3);
   min-width: 0;
+}
+/* Simple single-line title + compact action cluster — vertically center
+   the two so the title doesn't top-anchor against the taller buttons. */
+.contentHeaderRowCompact {
+  align-items: center;
 }
 /* Care Plan header — title + action cluster stay on the SAME top row so
    the actions never wrap to a new line on small widths (they own their
@@ -420,6 +430,10 @@
 }
 /* Search icon → inline field transform in the Program Related Tasks header. */
 .taskSearch { width: 250px; }
+/* Compact search used on step toolbars (Diagnosis Gaps). Matches the
+   32px Button M height so the search bar sits in-line with sibling
+   buttons instead of towering over them. */
+.diagGapsSearch { width: 220px; height: 32px; }
 /* Filter chips row — lives inside the header bar (Program Related Tasks). */
 .headerFilterBar {
   display: flex;
