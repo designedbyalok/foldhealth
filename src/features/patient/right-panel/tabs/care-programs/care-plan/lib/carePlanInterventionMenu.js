@@ -33,7 +33,7 @@ function initialsOf(name) {
 // paths persist and hydrate the same way. `preLinkedGoalId` is used
 // by the goal drawer to seed the link when the drawer opens with no
 // user-picked goal yet.
-export function buildInterventionRecordFromConfig(kind, config, { preLinkedGoalId = null } = {}) {
+export function buildInterventionRecordFromConfig(kind, config, { preLinkedGoalId = null, editing = false } = {}) {
   const assigneeName = (typeof config?.assignedTo === 'string' && config.assignedTo.trim())
     || (typeof config?.member === 'string' && config.member.trim())
     || 'Unassigned';
@@ -49,7 +49,10 @@ export function buildInterventionRecordFromConfig(kind, config, { preLinkedGoalI
     duration: interventionDurationFromConfig(config),
     priority: interventionPriorityFromConfig(config),
     config,
-    status: 'Not Started',
+    // Only a new intervention starts at Not Started. Sending it on an edit
+    // reopens a completed one, and the store's merge can't rescue a key that
+    // is present and wrong.
+    ...(editing ? {} : { status: 'Not Started' }),
     assignee: {
       name: assigneeName,
       initials: assigneeName === 'Unassigned' ? '' : initialsOf(assigneeName),

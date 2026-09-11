@@ -713,7 +713,7 @@ export function CarePlanView({ patientId, program }) {
   };
 
   const saveInterventionFromConfig = async (kind, config, editingId = null) => {
-    const record = buildInterventionRecordFromConfig(kind, config);
+    const record = buildInterventionRecordFromConfig(kind, config, { editing: !!editingId });
     const saved = await savePatientCarePlanIntervention(patientId, program, record, editingId);
     if (saved) {
       showToast(`"${saved.title}" ${editingId ? 'updated' : 'added'}`);

@@ -3627,15 +3627,21 @@ export const useAppStore = create((set, get) => ({
     if (error) { console.warn('deleteCarePlanAutomation:', error.message); set(s => ({ patientCarePlans: { ...s.patientCarePlans, [key]: prev } })); get().showToast('Could not delete automation'); }
   },
 
-  savePatientCarePlanIntervention: async (patientId, program, values, id = null) => {
+  savePatientCarePlanIntervention: async (patientId, program, incoming, id = null) => {
     const key = carePlanKey(patientId, program.id);
     const planId = await get().ensurePatientCarePlan(patientId, program);
     if (!planId) return null;
     const prevIntv = id ? (get().patientCarePlans[key]?.interventions || []).find(x => x.id === id) : null;
+    // An update writes the whole row, so a caller that passes a partial object
+    // would blank every column it left out (the older intervention drawer sends
+    // no kind / priority / goalId / config). Merge over what is already stored
+    // so a save only changes what it actually carries.
+    const values = prevIntv ? { ...prevIntv, ...incoming } : incoming;
     // Interventions always carry a Due date — seed a default when the
     // caller has not supplied a manual override AND the duration-based
     // computation would produce nothing. Default = createdAt + 30 days
     // so the table cell never renders "-" for a persisted row.
+    if (prevIntv && incoming.config) values.config = { ...(prevIntv.config || {}), ...incoming.config };
     const cfg = values.config || {};
     const hasOverride = !!cfg.dueDateOverride;
     const hasDuration = (cfg.dueOffset != null && cfg.dueUnit) || !!values.duration;
