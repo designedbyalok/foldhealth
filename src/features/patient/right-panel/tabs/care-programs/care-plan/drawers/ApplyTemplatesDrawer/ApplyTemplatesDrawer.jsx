@@ -7,7 +7,9 @@ import { Link } from '../../../../../../../../components/Link/Link';
 import { FilterChip } from '../../../../../../../../components/FilterChip/FilterChip';
 import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { PriorityIcon } from '../../../../../../../../components/PriorityIcon/PriorityIcon';
+import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
+import { TemplatePreviewDrawer } from '../TemplatePreviewDrawer';
 import styles from './ApplyTemplatesDrawer.module.css';
 
 // Figma 2349:336796 — the picker lists PROBLEMS with the parent template as
@@ -65,6 +67,7 @@ export function ApplyTemplatesDrawer({
   const favorites = useAppStore(s => s.carePlanFavorites);
   const carePlanFavoritesLoaded = useAppStore(s => s.carePlanFavoritesLoaded);
   const fetchCarePlanFavorites = useAppStore(s => s.fetchCarePlanFavorites);
+  const toggleCarePlanFavorite = useAppStore(s => s.toggleCarePlanFavorite);
 
   useEffect(() => {
     if (!libraryDidFetch) fetchCarePlanLibrary();
@@ -84,9 +87,15 @@ export function ApplyTemplatesDrawer({
   });
   // Condition filter chip — an OR set of conditions to keep. Empty = all.
   const [conditionFilter, setConditionFilter] = useState([]);
+  // The filter row is revealed by the toolbar Filter button rather than always
+  // occupying space next to search. It opens automatically if a condition
+  // filter is already active (re-opening the drawer with a filter set).
+  const [filtersOpen, setFiltersOpen] = useState(conditionFilter.length > 0);
   // Condition sort direction. null = library order (the default), then the
   // header cycles asc → desc → null.
   const [sortDir, setSortDir] = useState(null);
+  // Template opened for read-only preview (its GBI stack), or null.
+  const [previewTemplate, setPreviewTemplate] = useState(null);
 
   // Grouping key — the templates already applied to the plan. Kept off the
   // live `selected` set so toggling a row in-session doesn't make it jump
@@ -127,8 +136,27 @@ export function ApplyTemplatesDrawer({
     return list;
   }, [templates, query, conditionFilter, sortDir]);
 
-  const addedRows = useMemo(() => rows.filter(t => appliedSet.has(t.id)), [rows, appliedSet]);
-  const availableRows = useMemo(() => rows.filter(t => !appliedSet.has(t.id)), [rows, appliedSet]);
+  // Star lookup for the current render. Kept live (not a frozen snapshot) so a
+  // row's star flips the instant it is toggled; rows re-bucket on the next open.
+  const favSet = useMemo(() => new Set(favorites), [favorites]);
+  const isFavorite = (id) => favSet.has(id);
+
+  // Three buckets, in display order: Favorites (starred) → Selected (already on
+  // the plan, not starred) → everything else. A starred template floats to the
+  // top even if it is also applied, so the user's explicit pin always wins.
+  // Order within each bucket is inherited from `rows` (search / sort applied).
+  const favRows = useMemo(() => rows.filter(t => favSet.has(t.id)), [rows, favSet]);
+  const addedRows = useMemo(
+    () => rows.filter(t => !favSet.has(t.id) && appliedSet.has(t.id)),
+    [rows, favSet, appliedSet],
+  );
+  const restRows = useMemo(
+    () => rows.filter(t => !favSet.has(t.id) && !appliedSet.has(t.id)),
+    [rows, favSet, appliedSet],
+  );
+  // When nothing is starred or applied there is only one flat list — drop the
+  // group labels entirely so the drawer reads as a simple table.
+  const flat = favRows.length === 0 && addedRows.length === 0;
 
   const toggle = (id) => {
     const nowSelected = !selected.has(id);
@@ -226,6 +254,26 @@ export function ApplyTemplatesDrawer({
             })}
           </div>
         )}
+        <span className={styles.rowActions}>
+          <ActionButton
+            size="S"
+            active={isFavorite(t.id)}
+            tooltip={isFavorite(t.id) ? 'Remove favorite' : 'Add favorite'}
+            onClick={() => toggleCarePlanFavorite(t.id)}
+          >
+            <Icon
+              name={isFavorite(t.id) ? 'solar:star-bold' : 'solar:star-linear'}
+              size={16}
+              color={isFavorite(t.id) ? 'var(--status-warning)' : 'var(--neutral-300)'}
+            />
+          </ActionButton>
+          <ActionButton
+            icon="solar:eye-linear"
+            size="S"
+            tooltip="Preview template"
+            onClick={() => setPreviewTemplate(t)}
+          />
+        </span>
       </div>
     );
   };
@@ -242,14 +290,27 @@ export function ApplyTemplatesDrawer({
             value={query}
             onChange={e => setQuery(e.target.value)}
           />
-          <FilterChip
-            label="Condition"
-            options={conditionOptions}
-            selected={conditionFilter}
-            onChange={setConditionFilter}
-            searchable
+          <ActionButton
+            icon="custom:filter"
+            size="L"
+            tooltip="Filter"
+            active={filtersOpen || conditionFilter.length > 0}
+            aria-expanded={filtersOpen}
+            onClick={() => setFiltersOpen(v => !v)}
           />
         </div>
+
+        {filtersOpen && (
+          <div className={styles.filterBar}>
+            <FilterChip
+              label="Condition"
+              options={conditionOptions}
+              selected={conditionFilter}
+              onChange={setConditionFilter}
+              searchable
+            />
+          </div>
+        )}
 
         <div className={styles.list}>
           <div className={styles.tableHead} role="row">
@@ -265,6 +326,7 @@ export function ApplyTemplatesDrawer({
               <SortGlyph dir={sortDir} />
             </button>
             {showPriority && <span className={styles.tableHeadPriority}>Priority</span>}
+            <span className={styles.tableHeadActions} aria-hidden />
           </div>
           {libraryLoading && templates.length === 0 ? (
             <p className={styles.empty}>Loading templates…</p>
@@ -274,22 +336,44 @@ export function ApplyTemplatesDrawer({
                 ? 'No templates in the library yet. Create one in Settings → Care Plan Library.'
                 : `No templates match your search.`}
             </p>
+          ) : flat ? (
+            restRows.map(renderRow)
           ) : (
             <>
+              {favRows.length > 0 && (
+                <>
+                  <span className={styles.groupLabel}>Favorites</span>
+                  {favRows.map(renderRow)}
+                </>
+              )}
+              {favRows.length > 0 && addedRows.length > 0 && (
+                <span className={styles.groupDivider} aria-hidden />
+              )}
               {addedRows.length > 0 && (
                 <>
                   <span className={styles.groupLabel}>Selected</span>
                   {addedRows.map(renderRow)}
                 </>
               )}
-              {addedRows.length > 0 && availableRows.length > 0 && (
+              {(favRows.length > 0 || addedRows.length > 0) && restRows.length > 0 && (
                 <span className={styles.groupDivider} aria-hidden />
               )}
-              {availableRows.map(renderRow)}
+              {restRows.length > 0 && (
+                <>
+                  <span className={styles.groupLabel}>All Templates</span>
+                  {restRows.map(renderRow)}
+                </>
+              )}
             </>
           )}
         </div>
       </div>
+      {previewTemplate && (
+        <TemplatePreviewDrawer
+          template={previewTemplate}
+          onClose={() => setPreviewTemplate(null)}
+        />
+      )}
     </Drawer>
   );
 }

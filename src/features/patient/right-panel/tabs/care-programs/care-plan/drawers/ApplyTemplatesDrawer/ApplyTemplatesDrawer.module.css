@@ -28,6 +28,13 @@
   min-width: 0;
 }
 
+/* Filter row — revealed below the search/filter toolbar by the Filter button. */
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .list {
   display: flex;
   flex-direction: column;
@@ -76,6 +83,12 @@
   width: 104px;
   flex-shrink: 0;
   padding-left: var(--space-3);
+}
+/* Trailing actions column (favorite star + preview) — kept as an empty header
+   spacer so the row action cluster aligns under a fixed column. */
+.tableHeadActions {
+  width: 60px;
+  flex-shrink: 0;
 }
 
 .sortGlyph {
@@ -152,6 +165,16 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* Per-row favorite star + preview, aligned under .tableHeadActions. */
+.rowActions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  width: 60px;
   flex-shrink: 0;
 }
 /* Priority button — Figma 2562:60655 / 60665 / 60675.
