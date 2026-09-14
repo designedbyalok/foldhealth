@@ -452,7 +452,7 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "set_target": true,
     "duration": "6",
     "duration_unit": "Month",
-    "frequency": "Per lab schedule",
+    "frequency": "Quarterly",
     "target_date": "",
     "priority": "medium",
     "links": [
@@ -504,7 +504,7 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "set_target": true,
     "duration": "3",
     "duration_unit": "Month",
-    "frequency": "Per glucose-monitoring plan",
+    "frequency": "Quarterly",
     "target_date": "",
     "priority": "medium",
     "links": [
@@ -556,7 +556,7 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "set_target": true,
     "duration": "6",
     "duration_unit": "Month",
-    "frequency": "Every 3 months",
+    "frequency": "Quarterly",
     "target_date": "",
     "priority": "medium",
     "links": [
@@ -905,7 +905,7 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "set_target": true,
     "duration": "6",
     "duration_unit": "Month",
-    "frequency": "Per care plan",
+    "frequency": "Quarterly",
     "target_date": "",
     "priority": "medium",
     "links": [
@@ -947,7 +947,7 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "set_target": true,
     "duration": "6",
     "duration_unit": "Month",
-    "frequency": "Per care plan",
+    "frequency": "Quarterly",
     "target_date": "",
     "priority": "medium",
     "links": [
@@ -1145,7 +1145,7 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "set_target": true,
     "duration": "30",
     "duration_unit": "Day",
-    "frequency": "At education review",
+    "frequency": "Monthly",
     "target_date": "",
     "priority": "medium",
     "links": [
@@ -1333,7 +1333,7 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "set_target": true,
     "duration": "7",
     "duration_unit": "Day",
-    "frequency": "After each transition",
+    "frequency": "Monthly",
     "target_date": "",
     "priority": "medium",
     "links": [
@@ -1380,7 +1380,7 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "set_target": true,
     "duration": "7",
     "duration_unit": "Day",
-    "frequency": "As identified",
+    "frequency": "Monthly",
     "target_date": "",
     "priority": "medium",
     "links": [
@@ -1548,7 +1548,7 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "set_target": true,
     "duration": "30",
     "duration_unit": "Day",
-    "frequency": "Per transition",
+    "frequency": "Monthly",
     "target_date": "",
     "priority": "medium",
     "links": [
@@ -1647,7 +1647,7 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "set_target": true,
     "duration": "7",
     "duration_unit": "Day",
-    "frequency": "Once after discharge",
+    "frequency": "Monthly",
     "target_date": "",
     "priority": "medium",
     "links": [
@@ -1788,7 +1788,7 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "set_target": true,
     "duration": "14",
     "duration_unit": "Day",
-    "frequency": "Per transition",
+    "frequency": "Monthly",
     "target_date": "",
     "priority": "medium",
     "links": [
@@ -2347,10 +2347,10 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "conditions": [
       "Hydration risk"
     ],
-    "comparator": "=",
-    "target_value": "Meet prescribed daily fluid goal",
+    "comparator": ">=",
+    "target_value": "8",
     "target_value_2": "",
-    "custom_unit": "",
+    "custom_unit": "cups/day",
     "set_target": true,
     "duration": "3",
     "duration_unit": "Month",
@@ -2883,7 +2883,7 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "set_target": true,
     "duration": "6",
     "duration_unit": "Month",
-    "frequency": "Per care plan",
+    "frequency": "Quarterly",
     "target_date": "",
     "priority": "medium",
     "links": [
@@ -3024,7 +3024,7 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "set_target": true,
     "duration": "8",
     "duration_unit": "Week",
-    "frequency": "Per wound-care schedule",
+    "frequency": "Weekly",
     "target_date": "",
     "priority": "medium",
     "links": [
@@ -3165,7 +3165,7 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "set_target": true,
     "duration": "3",
     "duration_unit": "Month",
-    "frequency": "Per care plan",
+    "frequency": "Monthly",
     "target_date": "",
     "priority": "medium",
     "links": [
@@ -3301,7 +3301,7 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "set_target": true,
     "duration": "6",
     "duration_unit": "Month",
-    "frequency": "Per care plan",
+    "frequency": "Monthly",
     "target_date": "",
     "priority": "medium",
     "links": [
@@ -3343,7 +3343,7 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "set_target": true,
     "duration": "3",
     "duration_unit": "Month",
-    "frequency": "As needed",
+    "frequency": "Monthly",
     "target_date": "",
     "priority": "medium",
     "links": [
@@ -3951,7 +3951,7 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "set_target": true,
     "duration": "3",
     "duration_unit": "Month",
-    "frequency": "As needed",
+    "frequency": "Monthly",
     "target_date": "",
     "priority": "medium",
     "links": [
@@ -4275,7 +4275,7 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "set_target": true,
     "duration": "3",
     "duration_unit": "Month",
-    "frequency": "As needed",
+    "frequency": "Weekly",
     "target_date": "",
     "priority": "medium",
     "links": [
@@ -4364,7 +4364,7 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "set_target": true,
     "duration": "30",
     "duration_unit": "Day",
-    "frequency": "Per transition",
+    "frequency": "Monthly",
     "target_date": "",
     "priority": "medium",
     "links": [
@@ -4468,7 +4468,7 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "set_target": true,
     "duration": "6",
     "duration_unit": "Month",
-    "frequency": "Per care plan",
+    "frequency": "Quarterly",
     "target_date": "",
     "priority": "medium",
     "links": [
@@ -4626,7 +4626,7 @@ export const CARE_PLAN_GOAL_LIBRARY = [
     "set_target": true,
     "duration": "12",
     "duration_unit": "Month",
-    "frequency": "Yearly",
+    "frequency": "Quarterly",
     "target_date": "",
     "priority": "low",
     "links": [

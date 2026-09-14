@@ -344,6 +344,23 @@ function buildProgramOverlap(rows) {
 }
 const overlapFor = (map, row) => (map?.get((row?.title || '').trim().toLowerCase()) || 1);
 
+// Collapse rows that share a normalized title down to one representative
+// so the Comprehensive Care Plan lists each goal / intervention / barrier
+// once, even when the same item lives on multiple programs. The
+// ProgramCell's "+N" badge (computed from the full set before dedup)
+// still tells the reader it spans programs.
+function dedupeByTitle(rows) {
+  const seen = new Set();
+  const out = [];
+  for (const r of rows || []) {
+    const key = (r?.title || '').trim().toLowerCase();
+    if (key && seen.has(key)) continue;
+    if (key) seen.add(key);
+    out.push(r);
+  }
+  return out;
+}
+
 // Match the per-plan CarePlanGoalsTable date fallback: legacy goals
 // without a targetDate project createdAt + 90 days so the Target
 // column always shows a real date rather than "—".
@@ -768,6 +785,12 @@ export function CarePlanSummaryView({
   const interventionProgramOverlap = useMemo(() => buildProgramOverlap(filteredInterventions), [filteredInterventions]);
   const barrierProgramOverlap      = useMemo(() => buildProgramOverlap(filteredBarriers),      [filteredBarriers]);
 
+  // Show each goal / intervention / barrier once. Overlap maps above are
+  // built from the full filtered set, so the "+N" program badge survives.
+  const uniqueGoals         = useMemo(() => dedupeByTitle(filteredGoals),         [filteredGoals]);
+  const uniqueInterventions = useMemo(() => dedupeByTitle(filteredInterventions), [filteredInterventions]);
+  const uniqueBarriers      = useMemo(() => dedupeByTitle(filteredBarriers),      [filteredBarriers]);
+
   const isEmpty = loadedFor && goals.length === 0 && interventions.length === 0 && barriers.length === 0;
 
   const [openSections, setOpenSections] = useState({ programs: true, goals: true, interventions: true, barriers: true });
@@ -1101,13 +1124,13 @@ export function CarePlanSummaryView({
           <div className={styles.section}>
             <SectionHead
               title="Goals"
-              count={filteredGoals.length}
+              count={uniqueGoals.length}
               open={openSections.goals}
               onToggle={() => toggleSection('goals')}
             />
             {openSections.goals && (
               <GoalsTable
-                rows={filteredGoals}
+                rows={uniqueGoals}
                 onOpen={openGoal}
                 onPriorityMenu={setPriorityMenu}
                 onStatusMenu={setStatusMenu}
@@ -1119,13 +1142,13 @@ export function CarePlanSummaryView({
           <div className={styles.section}>
             <SectionHead
               title="Interventions"
-              count={filteredInterventions.length}
+              count={uniqueInterventions.length}
               open={openSections.interventions}
               onToggle={() => toggleSection('interventions')}
             />
             {openSections.interventions && (
               <InterventionsTable
-                rows={filteredInterventions}
+                rows={uniqueInterventions}
                 onOpen={openIntervention}
                 onPriorityMenu={setPriorityMenu}
                 onStatusMenu={setStatusMenu}
@@ -1140,13 +1163,13 @@ export function CarePlanSummaryView({
           <div className={styles.section}>
             <SectionHead
               title="Barriers"
-              count={filteredBarriers.length}
+              count={uniqueBarriers.length}
               open={openSections.barriers}
               onToggle={() => toggleSection('barriers')}
             />
             {openSections.barriers && (
               <BarriersTable
-                rows={filteredBarriers}
+                rows={uniqueBarriers}
                 onOpen={openBarrier}
                 onStatusMenu={setStatusMenu}
                 programOverlap={barrierProgramOverlap}
