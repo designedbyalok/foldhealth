@@ -132,6 +132,50 @@ CREATE TABLE IF NOT EXISTS apcm_patients (
 ALTER TABLE apcm_patients DISABLE ROW LEVEL SECURITY;
 `;
 
+const PATIENT_PROBLEMS_DDL = `
+CREATE TABLE IF NOT EXISTS patient_problems (
+  id           text PRIMARY KEY,
+  patient_id   text NOT NULL,
+  title        text NOT NULL,
+  code         text,
+  problem_type text,
+  severity     text,
+  status       text NOT NULL DEFAULT 'Active',
+  onset_label  text,
+  sort_order   integer NOT NULL DEFAULT 0,
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  updated_at   timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS patient_problems_patient_id_idx ON patient_problems (patient_id);
+ALTER TABLE patient_problems ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all on patient_problems" ON patient_problems;
+CREATE POLICY "Allow all on patient_problems" ON patient_problems FOR ALL USING (true) WITH CHECK (true);
+`;
+
+// Annette Brave's (11089) problem list — mirrors her care-plan conditions.
+const PATIENT_PROBLEMS = [
+  { id: 'pp-11089-dm2',  patientId: '11089', title: 'Diabetes Mellitus Type 2', code: 'E11.9', type: 'Chronic', severity: 'Moderate', status: 'Active',   onsetLabel: '11/18/23 (1 Year)',   sortOrder: 1 },
+  { id: 'pp-11089-htn',  patientId: '11089', title: 'Essential Hypertension',   code: 'I10',   type: 'Chronic', severity: 'Moderate', status: 'Active',   onsetLabel: '11/18/23 (1 Year)',   sortOrder: 2 },
+  { id: 'pp-11089-copd', patientId: '11089', title: 'COPD',                     code: 'J44.9', type: 'Chronic', severity: 'Moderate', status: 'Active',   onsetLabel: '02/10/24 (7 Months)', sortOrder: 3 },
+  { id: 'pp-11089-hld',  patientId: '11089', title: 'Hyperlipidemia',           code: 'E78.5', type: 'Chronic', severity: 'Mild',     status: 'Active',   onsetLabel: '11/18/23 (1 Year)',   sortOrder: 4 },
+  { id: 'pp-11089-obes', patientId: '11089', title: 'Obesity',                  code: 'E66.9', type: 'Chronic', severity: 'Mild',     status: 'Active',   onsetLabel: '11/18/23 (1 Year)',   sortOrder: 5 },
+  { id: 'pp-11089-bron', patientId: '11089', title: 'Acute Bronchitis',         code: 'J20.9', type: 'Acute',   severity: 'Mild',     status: 'Resolved', onsetLabel: '01/05/24 (Resolved)', sortOrder: 6 },
+];
+
+function patientProblemToRow(p) {
+  return {
+    id: p.id,
+    patient_id: p.patientId,
+    title: p.title,
+    code: p.code || null,
+    problem_type: p.type || null,
+    severity: p.severity || null,
+    status: p.status || 'Active',
+    onset_label: p.onsetLabel || null,
+    sort_order: p.sortOrder ?? 0,
+  };
+}
+
 const ICD_DDL = `
 CREATE TABLE IF NOT EXISTS icd_codes (
   code        text PRIMARY KEY,
@@ -630,6 +674,8 @@ async function main() {
     console.log('  ✓ hedis_members — created / already exists');
     await db.query(APCM_DDL);
     console.log('  ✓ apcm_patients — created / already exists');
+    await db.query(PATIENT_PROBLEMS_DDL);
+    console.log('  ✓ patient_problems — created / already exists');
     await db.query(ICD_DDL);
     console.log('  ✓ icd_codes — created / already exists');
     await db.query(POS_DDL);
@@ -683,6 +729,13 @@ async function main() {
     .from('apcm_patients')
     .upsert(apcmRows, { onConflict: 'id' });
   if (ae) { console.error('  ✗', ae.message); } else { console.log(`  ✓ ${apcmRows.length} patients`); }
+
+  console.log('Seeding patient_problems...');
+  const problemRows = PATIENT_PROBLEMS.map(patientProblemToRow);
+  const { error: ppe } = await supabase
+    .from('patient_problems')
+    .upsert(problemRows, { onConflict: 'id' });
+  if (ppe) { console.error('  ✗', ppe.message); } else { console.log(`  ✓ ${problemRows.length} problems`); }
 
   console.log('Seeding icd_codes...');
   const icdRows = FALLBACK_ICDS.map(icdToRow);

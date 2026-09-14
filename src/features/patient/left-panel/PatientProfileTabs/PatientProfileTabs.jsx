@@ -266,7 +266,7 @@ export function PatientProfileTabs({
           </div>
         )}
 
-        {activeIdx === 1 && <PAMIHxTab />}
+        {activeIdx === 1 && <PAMIHxTab patientId={patientId} />}
 
         {activeIdx === 2 && <VitalsLabsTab />}
 

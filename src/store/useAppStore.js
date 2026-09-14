@@ -113,6 +113,20 @@ function mapCarePlanGoalRow(row, interventions = []) {
   };
 }
 
+// Patient problem-list row (PAMI/Hx "Problems") ⇄ object.
+function mapPatientProblemRow(row) {
+  return {
+    id: row.id,
+    title: row.title,
+    code: row.code || '',
+    type: row.problem_type || '',
+    severity: row.severity || '',
+    status: row.status || 'Active',
+    onsetLabel: row.onset_label || '',
+    sortOrder: row.sort_order ?? 0,
+  };
+}
+
 function carePlanGoalToRow(g) {
   return {
     title: (g.title || '').trim(),
@@ -1980,6 +1994,46 @@ export const useAppStore = create((set, get) => ({
     }
   },
 
+  // Patient problem list (PAMI/Hx "Problems"). Keyed by patientId; the PAMI tab
+  // falls back to a local mock for patients with no rows yet.
+  patientProblems: {},           // { [patientId]: Problem[] }
+  patientProblemsLoadedFor: {},  // { [patientId]: true } — gates the skeleton
+  fetchPatientProblems: async (patientId) => {
+    if (!patientId) return;
+    const { data, error } = await supabase.from('patient_problems')
+      .select('*').eq('patient_id', String(patientId)).order('sort_order', { ascending: true });
+    if (error) console.warn('fetchPatientProblems:', error.message);
+    set(s => ({
+      patientProblems: { ...s.patientProblems, [patientId]: (data || []).map(mapPatientProblemRow) },
+      patientProblemsLoadedFor: { ...s.patientProblemsLoadedFor, [patientId]: true },
+    }));
+  },
+  addPatientProblem: async (patientId, values) => {
+    if (!patientId || !values?.title?.trim()) return false;
+    const row = {
+      id: `pp-${patientId}-${Date.now()}`,
+      patient_id: String(patientId),
+      title: values.title.trim(),
+      code: values.code || null,
+      problem_type: values.type || 'Chronic',
+      severity: values.severity || 'Mild',
+      status: 'Active',
+      onset_label: values.onsetLabel || new Date().toLocaleDateString('en-US'),
+      sort_order: 999,
+    };
+    const { error } = await supabase.from('patient_problems').insert(row);
+    if (error) { console.warn('addPatientProblem:', error.message); get().showToast?.('Could not add problem'); return false; }
+    await get().fetchPatientProblems(patientId);
+    get().showToast?.(`Added "${row.title}"`);
+    return true;
+  },
+  removePatientProblem: async (patientId, id) => {
+    const { error } = await supabase.from('patient_problems').delete().eq('id', id);
+    if (error) { console.warn('removePatientProblem:', error.message); get().showToast?.('Could not remove problem'); return false; }
+    await get().fetchPatientProblems(patientId);
+    return true;
+  },
+
   // Quick Notes (global / home page)
   fetchQuickNotes: async () => {
     const { data } = await supabase.from('sticky_notes').select('*').eq('patient_id', 'global').order('created_at', { ascending: false });
@@ -3830,11 +3884,14 @@ export const useAppStore = create((set, get) => ({
     });
   },
 
-  savePatientCarePlanAsTemplate: async (patientId, program, name) => {
+  savePatientCarePlanAsTemplate: async (patientId, program, name, conditionsArg) => {
     const key = carePlanKey(patientId, program.id);
     const cur = get().patientCarePlans[key];
     if (!cur) return null;
-    const conditions = (cur.plan?.conditions || []).map(c => c.label);
+    // Caller-picked conditions win; otherwise fall back to the plan's own.
+    const conditions = Array.isArray(conditionsArg) && conditionsArg.length
+      ? conditionsArg
+      : (cur.plan?.conditions || []).map(c => c.label);
     const goals = (cur.goals || []).map(g => ({ id: `g-${g.id}`, title: g.title, subtitle: g.subtitle || '' }));
     const interventions = (cur.interventions || []).map(i => ({ id: `i-${i.id}`, title: i.title, duration: i.duration || '' }));
     return get().saveCarePlanTemplate({ name: name.trim(), conditions, goals, interventions });

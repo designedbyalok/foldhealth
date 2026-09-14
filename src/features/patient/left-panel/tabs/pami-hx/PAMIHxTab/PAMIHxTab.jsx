@@ -1,7 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ActionButton } from '../../../../../../components/ActionButton/ActionButton';
 import { Icon } from '../../../../../../components/Icon/Icon';
+import { Input } from '../../../../../../components/Input/Input';
+import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
+import { MenuPopover } from '../../../../../../components/MenuPopover/MenuPopover';
 import { DownChevronIcon } from '../../../../../../components/Icon/DownChevronIcon';
+import { useAppStore } from '../../../../../../store/useAppStore';
 import styles from './PAMIHxTab.module.css';
 
 const NOOP = () => {};
@@ -15,9 +19,10 @@ const CLINICAL_EVENTS = [
   { id: 'ce4', title: 'New Imaging Report', reportedOn: '09/11/2024', meta: null, action: 'View' },
 ];
 
-const PROBLEMS = [
-  { id: 'p1', title: 'Diabeties Mellitus Type 2 (E11.9)', date: '11/18/23 (1 Year)', type: 'Chronic', severity: 'Mild', status: 'Active' },
-  { id: 'p2', title: 'Asthama (J45)', date: '11/18/23 (1 Year)', type: 'Acute', severity: 'Mild', status: 'Active' },
+// Fallback shown only for patients with no problem rows in the DB yet.
+const PROBLEMS_MOCK = [
+  { id: 'p1', title: 'Diabetes Mellitus Type 2', code: 'E11.9', onsetLabel: '11/18/23 (1 Year)', type: 'Chronic', severity: 'Mild', status: 'Active' },
+  { id: 'p2', title: 'Asthma', code: 'J45', onsetLabel: '11/18/23 (1 Year)', type: 'Acute', severity: 'Mild', status: 'Active' },
 ];
 
 const ALLERGIES = [
@@ -155,23 +160,44 @@ function ClinicalEventRow({ event }) {
   );
 }
 
-function ProblemRow({ item }) {
+function ProblemRow({ item, onRemove }) {
+  const [menuRect, setMenuRect] = useState(null);
+  const onset = item.onsetLabel || item.date;
   return (
-    <DataRow key={item.id} showMore>
+    <div className={styles.row}>
       <div className={styles.nameCell}>
-        <span className={styles.name}>{item.title}</span>
+        <span className={styles.name}>{item.title}{item.code ? ` (${item.code})` : ''}</span>
         <div className={styles.metaRow}>
-          <span className={styles.meta}>{item.date}</span>
-          <span className={styles.metaDot}>•</span>
-          <span className={styles.meta}>{item.type}</span>
-          <span className={styles.metaDot}>•</span>
-          <Badge label={item.severity} />
+          {onset && <><span className={styles.meta}>{onset}</span><span className={styles.metaDot}>•</span></>}
+          {item.type && <><span className={styles.meta}>{item.type}</span><span className={styles.metaDot}>•</span></>}
+          {item.severity && <Badge label={item.severity} />}
         </div>
       </div>
       <div className={styles.statusCell}>
         <span className={styles.statusActive}>{item.status}</span>
       </div>
-    </DataRow>
+      {onRemove && (
+        <div className={styles.moreBtn}>
+          <ActionButton
+            icon="solar:menu-dots-linear"
+            size="S"
+            tooltip="More"
+            onClick={(e) => setMenuRect(e.currentTarget.getBoundingClientRect())}
+          />
+          {menuRect && (
+            <MenuPopover
+              anchorRect={menuRect}
+              align="right"
+              width={140}
+              ariaLabel="Problem actions"
+              items={[{ key: 'remove', label: 'Remove', icon: 'solar:trash-bin-trash-linear', danger: true }]}
+              onSelect={() => { setMenuRect(null); onRemove(item); }}
+              onClose={() => setMenuRect(null)}
+            />
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -321,16 +347,70 @@ function RecentClinicalEvents() {
   );
 }
 
-function ProblemsSection() {
+function ProblemsSection({ patientId }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState('');
+  const storeProblems = useAppStore(s => (patientId ? s.patientProblems[patientId] : null));
+  const loadedFor = useAppStore(s => (patientId ? s.patientProblemsLoadedFor[patientId] : false));
+  const fetchPatientProblems = useAppStore(s => s.fetchPatientProblems);
+  const addPatientProblem = useAppStore(s => s.addPatientProblem);
+  const removePatientProblem = useAppStore(s => s.removePatientProblem);
+
+  useEffect(() => { if (patientId) fetchPatientProblems(patientId); }, [patientId, fetchPatientProblems]);
+
+  // DB rows when the patient has any; otherwise fall back to the mock so the
+  // section is never blank. Only DB rows are removable.
+  const fromDb = !!(storeProblems && storeProblems.length);
+  const problems = fromDb ? storeProblems : PROBLEMS_MOCK;
+  const active = problems.filter(p => (p.status || 'Active') !== 'Resolved');
+  const resolvedCount = problems.filter(p => p.status === 'Resolved').length;
+  const loading = !!patientId && !loadedFor;
+
+  const commitAdd = async () => {
+    const title = draft.trim();
+    if (!title) { setAdding(false); return; }
+    await addPatientProblem(patientId, { title });
+    setDraft('');
+    setAdding(false);
+  };
+
   return (
     <div className={styles.section}>
-      <SectionHeader title="Problems" actions={<AddBtn />} collapsed={collapsed} onToggle={() => setCollapsed(v => !v)} />
+      <SectionHeader
+        title="Problems"
+        actions={<AddBtn onClick={() => { setDraft(''); setAdding(true); }} />}
+        collapsed={collapsed}
+        onToggle={() => setCollapsed(v => !v)}
+      />
       <CollapseWrapper collapsed={collapsed}>
         <div className={styles.card}>
           <ColHeader />
-          {PROBLEMS.map(item => <ProblemRow key={item.id} item={item} />)}
-          <FooterLink label="Resolved (1)" />
+          {adding && (
+            <div className={styles.row}>
+              <Input
+                autoFocus
+                value={draft}
+                onChange={e => setDraft(e.target.value)}
+                onBlur={commitAdd}
+                onKeyDown={e => { if (e.key === 'Enter') commitAdd(); if (e.key === 'Escape') { setDraft(''); setAdding(false); } }}
+                placeholder="Add a condition (e.g. Hypertension)"
+                aria-label="Add a problem"
+              />
+            </div>
+          )}
+          {loading ? (
+            <CardSkeleton rows={3} />
+          ) : (
+            active.map(item => (
+              <ProblemRow
+                key={item.id}
+                item={item}
+                onRemove={fromDb ? (p => removePatientProblem(patientId, p.id)) : undefined}
+              />
+            ))
+          )}
+          {resolvedCount > 0 && <FooterLink label={`Resolved (${resolvedCount})`} />}
         </div>
       </CollapseWrapper>
     </div>
@@ -486,11 +566,11 @@ function HistorySection() {
   );
 }
 
-export function PAMIHxTab() {
+export function PAMIHxTab({ patientId }) {
   return (
     <div className={styles.wrapper}>
       <RecentClinicalEvents />
-      <ProblemsSection />
+      <ProblemsSection patientId={patientId} />
       <AllergiesSection />
       <MedicationsSection />
       <ImmunizationsSection />

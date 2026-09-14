@@ -5,6 +5,7 @@ import { Button } from '../../../../../../../../components/Button/Button';
 import { Textarea } from '../../../../../../../../components/Textarea/Textarea';
 import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
+import { DownChevronIcon } from '../../../../../../../../components/Icon/DownChevronIcon';
 import { Badge } from '../../../../../../../../components/Badge/Badge';
 import { MenuPopover } from '../../../../../../../../components/MenuPopover/MenuPopover';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
@@ -16,13 +17,28 @@ import styles from './CarePlanShareDrawer.module.css';
 const TARGET_ID = { EHR: 'ehr', Patient: 'patient', POA: 'poa' };
 const GBI_STATUSES = ['Not Started', 'In Progress', 'On Hold', 'Met', 'Not Met'];
 
-function SectionSelectAll({ label, ids, off, setOff }) {
+function SectionSelectAll({ label, ids, off, setOff, collapsed, onToggle }) {
   const total = ids.length;
   const count = ids.filter(id => !off.has(id)).length;
   const allOn = count === total && total > 0;
   return (
     <div className={styles.sectionHead}>
-      <span className={styles.sectionTitle}>{label} <span className={styles.count}>{count}/{total}</span></span>
+      <span className={styles.sectionHeadLeft}>
+        <button
+          type="button"
+          className={styles.collapseToggle}
+          onClick={onToggle}
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? `Expand ${label}` : `Collapse ${label}`}
+        >
+          <DownChevronIcon
+            size={14}
+            color="var(--neutral-300)"
+            className={`${styles.collapseChevron} ${collapsed ? styles.collapseChevronCollapsed : ''}`}
+          />
+        </button>
+        <span className={styles.sectionTitle}>{label} <span className={styles.count}>{count}/{total}</span></span>
+      </span>
       <button type="button" className={styles.selectAll} onClick={() => setOff(allOn ? new Set(ids) : new Set())}>
         {allOn ? 'Clear all' : 'Select all'}
       </button>
@@ -56,6 +72,9 @@ export function CarePlanShareDrawer({ patientId, program, data, patientName, can
   const [statusMenu, setStatusMenu] = useState(null);
   const [note, setNote] = useState('');
   const [sharing, setSharing] = useState(false);
+  // Per-section collapse (Goals / Interventions / Barriers).
+  const [collapsed, setCollapsed] = useState({});
+  const toggleCollapsed = (key) => setCollapsed(c => ({ ...c, [key]: !c[key] }));
 
   const toggleOff = (set, id) => {
     const next = new Set(set);
@@ -174,7 +193,8 @@ export function CarePlanShareDrawer({ patientId, program, data, patientName, can
         )}
 
         <div className={styles.field}>
-          <SectionSelectAll label="Goals" ids={allGoalIds} off={goalOff} setOff={setGoalOff} />
+          <SectionSelectAll label="Goals" ids={allGoalIds} off={goalOff} setOff={setGoalOff} collapsed={collapsed.goals} onToggle={() => toggleCollapsed('goals')} />
+          {!collapsed.goals && (
           <div className={styles.list}>
             {data.goals.length === 0 && <div className={styles.empty}>No goals on this plan.</div>}
             {patchedGoals.map(g => (
@@ -193,10 +213,12 @@ export function CarePlanShareDrawer({ patientId, program, data, patientName, can
               </div>
             ))}
           </div>
+          )}
         </div>
 
         <div className={styles.field}>
-          <SectionSelectAll label="Interventions" ids={allIntvIds} off={intvOff} setOff={setIntvOff} />
+          <SectionSelectAll label="Interventions" ids={allIntvIds} off={intvOff} setOff={setIntvOff} collapsed={collapsed.interventions} onToggle={() => toggleCollapsed('interventions')} />
+          {!collapsed.interventions && (
           <div className={styles.list}>
             {data.interventions.length === 0 && <div className={styles.empty}>No interventions on this plan.</div>}
             {patchedInterventions.map(i => (
@@ -215,11 +237,13 @@ export function CarePlanShareDrawer({ patientId, program, data, patientName, can
               </div>
             ))}
           </div>
+          )}
         </div>
 
         {allBarrierIds.length > 0 && (
           <div className={styles.field}>
-            <SectionSelectAll label="Barriers" ids={allBarrierIds} off={barrierOff} setOff={setBarrierOff} />
+            <SectionSelectAll label="Barriers" ids={allBarrierIds} off={barrierOff} setOff={setBarrierOff} collapsed={collapsed.barriers} onToggle={() => toggleCollapsed('barriers')} />
+            {!collapsed.barriers && (
             <div className={styles.list}>
               {patchedBarriers.map(b => (
                 <div key={b.id} className={styles.row}>
@@ -236,6 +260,7 @@ export function CarePlanShareDrawer({ patientId, program, data, patientName, can
                 </div>
               ))}
             </div>
+            )}
           </div>
         )}
 

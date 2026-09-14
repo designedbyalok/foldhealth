@@ -16,6 +16,8 @@ import { RemoveGoalDialog } from '../drawers/RemoveGoalDialog';
 import { Select } from '../../../../../../../components/Select/Select';
 import { FilterChip } from '../../../../../../../components/FilterChip/FilterChip';
 import { useAppStore } from '../../../../../../../store/useAppStore';
+import { ChronicConditionSelect } from '../../../../../../settings/care-plan-library/shared';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../../../../../../components/ShadcnDialog/ShadcnDialog';
 import { AddGoalsDrawer } from '../../../../../../settings/care-plan-library/goals/AddGoalsDrawer/AddGoalsDrawer';
 import { AddBarriersDrawer } from '../../../../../../settings/care-plan-library/barriers/AddBarriersDrawer/AddBarriersDrawer';
 import { BarrierDrawer } from '../../../../../../settings/care-plan-library/barriers/BarrierDrawer/BarrierDrawer';
@@ -140,6 +142,12 @@ export function CarePlanView({ patientId, program }) {
   const platformUsers = useAppStore(s => s.platformUsers);
   const fetchPlatformUsers = useAppStore(s => s.fetchPlatformUsers);
   useEffect(() => { fetchPlatformUsers?.(); }, [fetchPlatformUsers]);
+
+  // Patient problem list drives the Add Goals drawer's condition-based
+  // recommendations (and its "Added goals" group reads the plan's own goals).
+  const patientProblems = useAppStore(s => s.patientProblems[patientId] || EMPTY_ARR);
+  const fetchPatientProblems = useAppStore(s => s.fetchPatientProblems);
+  useEffect(() => { if (patientId) fetchPatientProblems(patientId); }, [patientId, fetchPatientProblems]);
   const carePlanShareRequest = useAppStore(s => s.carePlanShareRequest);
   const clearCarePlanShareRequest = useAppStore(s => s.clearCarePlanShareRequest);
   // Bulk-select mode is toggled from the program-detail content header.
@@ -264,7 +272,7 @@ export function CarePlanView({ patientId, program }) {
   useEffect(() => {
     if (!carePlanPanelRequest) return;
     if (carePlanPanelRequest === 'versions') setVersionsOpen(true);
-    else if (carePlanPanelRequest === 'template') { setTemplateName(''); setTemplateOpen(true); }
+    else if (carePlanPanelRequest === 'template') { setTemplateName(''); setTemplateConditions((live?.plan?.conditions || []).map(c => c.label)); setTemplateOpen(true); }
     else if (carePlanPanelRequest === 'templates') setTemplatesDrawerOpen(true);
     else if (carePlanPanelRequest === 'history') setHistoryOpen(true);
     else if (carePlanPanelRequest === 'filter') setFiltersOpen(true);
@@ -336,6 +344,7 @@ export function CarePlanView({ patientId, program }) {
   const [templateFilterId, setTemplateFilterId] = useState(null);
   const [templateOpen, setTemplateOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
+  const [templateConditions, setTemplateConditions] = useState([]);
   const [deleteTarget, setDeleteTarget] = useState(null); // { kind, id, name }
   const [historyOpen, setHistoryOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
@@ -652,10 +661,23 @@ export function CarePlanView({ patientId, program }) {
   // A picked row is the whole library goal, so a goal added here carries the
   // same definition (measure, target, duration) and the same linked items as
   // one arriving through a template.
-  const handleAddGoalsFromPicker = async (picked) => {
+  const handleAddGoalsFromPicker = async (picked, removed = []) => {
     setAddGoalsDrawerOpen(false);
-    if (!picked?.length) return;
+    if (!picked?.length && !removed?.length) return;
     const norm = v => (v || '').trim().toLowerCase();
+
+    // Removals first: an "Added goal" the user unchecked. Map it to the plan
+    // goal by title and delete it (which logs a "deleted" audit entry and
+    // leaves its prior activity-log entries in place).
+    let removedCount = 0;
+    if (removed?.length) {
+      const planGoalByTitle = new Map(data.goals.map(g => [norm(g.title), g]));
+      for (const g of removed) {
+        const planGoal = planGoalByTitle.get(norm(g.title));
+        if (planGoal) { await deletePatientCarePlanGoal(patientId, program.id, planGoal.id, { cascade: true }); removedCount += 1; }
+      }
+    }
+
     const existingTitles = new Set(data.goals.map(g => norm(g.title)));
     const existingIntvTitles = new Set((data.interventions || []).map(i => norm(i.title)));
     const existingBarrierTitles = new Set((data.barriers || []).map(b => norm(b.title)));
@@ -689,12 +711,13 @@ export function CarePlanView({ patientId, program }) {
         }
       }
     }
-    if (added) {
-      showToast(linked
-        ? `Added ${added} goal${added === 1 ? '' : 's'} with ${linked} linked item${linked === 1 ? '' : 's'}`
-        : `Added ${added} goal${added === 1 ? '' : 's'}`);
+    if (added || removedCount) {
+      const parts = [];
+      if (added) parts.push(`Added ${added} goal${added === 1 ? '' : 's'}${linked ? ` with ${linked} linked item${linked === 1 ? '' : 's'}` : ''}`);
+      if (removedCount) parts.push(`removed ${removedCount} goal${removedCount === 1 ? '' : 's'}`);
+      showToast(parts.join(', '));
       refreshCarePlanDuplicates(patientId, program);
-    } else showToast('Selected goals are already on this plan');
+    } else showToast('No changes to the plan goals');
   };
 
   const handleAddIntervention = async (values) => {
@@ -889,9 +912,10 @@ export function CarePlanView({ patientId, program }) {
 
   const saveTemplate = async () => {
     if (!templateName.trim()) return;
-    const saved = await savePatientCarePlanAsTemplate(patientId, program, templateName);
+    const saved = await savePatientCarePlanAsTemplate(patientId, program, templateName, templateConditions);
     setTemplateOpen(false);
     setTemplateName('');
+    setTemplateConditions([]);
     if (saved) showToast(`Saved as template "${saved.name}"`);
   };
 
@@ -1283,6 +1307,8 @@ export function CarePlanView({ patientId, program }) {
         <AddGoalsDrawer
           onClose={() => setAddGoalsDrawerOpen(false)}
           onAdd={handleAddGoalsFromPicker}
+          existingGoalTitles={data.goals.map(g => g.title)}
+          patientProblems={patientProblems}
         />
       )}
 
@@ -1572,22 +1598,27 @@ export function CarePlanView({ patientId, program }) {
         />
       )}
 
-      {templateOpen && (
-        <Drawer
-          title="Save as Template"
-          onClose={() => setTemplateOpen(false)}
-          secondaryAction={<Button variant="secondary" size="L" onClick={() => setTemplateOpen(false)}>Cancel</Button>}
-          primaryAction={<Button variant="primary" size="L" onClick={saveTemplate} disabled={!templateName.trim()}>Save</Button>}
-        >
-          <div className={styles.drawerBody}>
-            <p className={styles.drawerHint}>Saves this plan's goals and interventions to the Care Plan Library so it can be reused for similar patients.</p>
+      <Dialog open={templateOpen} onOpenChange={open => !open && setTemplateOpen(false)}>
+        <DialogContent className={styles.templateDialog}>
+          <DialogHeader>
+            <DialogTitle>Save as Template</DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            Saves this plan's goals and interventions to the Care Plan Library so it can be reused for similar patients.
+          </DialogDescription>
+          <div className={styles.templateForm}>
             <div className={styles.drawerField}>
               <span className={styles.drawerLabel}>Template Name <span className={styles.required}>*</span></span>
               <Input autoFocus value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder="e.g. Type 2 Diabetes — Standard" aria-label="Template name" />
             </div>
+            <ChronicConditionSelect value={templateConditions} onChange={setTemplateConditions} label="Conditions" />
           </div>
-        </Drawer>
-      )}
+          <DialogFooter>
+            <Button variant="secondary" size="L" onClick={() => setTemplateOpen(false)}>Cancel</Button>
+            <Button variant="primary" size="L" onClick={saveTemplate} disabled={!templateName.trim()}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {deleteTarget?.kind === 'goal' && (
         <RemoveGoalDialog

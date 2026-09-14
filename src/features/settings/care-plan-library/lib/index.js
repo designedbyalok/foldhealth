@@ -2,3 +2,4 @@ export { MEASURE_CONFIG, formatGoalTarget, formatGoalDuration } from './goalForm
 export { VITAL_OPTIONS } from './vitalOptions.js';
 export { GOAL_CATEGORIES, normalizeCategory, goalCategoryIcon } from './goalCategories.js';
 export { CARE_PLAN_NAME_MAX } from './carePlanLimits.js';
+export { recommendedGoalIds } from './conditionRecommendations.js';

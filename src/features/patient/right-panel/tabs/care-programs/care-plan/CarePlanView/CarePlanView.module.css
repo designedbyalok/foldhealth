@@ -758,6 +758,17 @@
   flex-direction: column;
   gap: var(--space-4);
 }
+/* Save-as-Template modal: a touch wider than the default dialog so the
+   condition multi-select breathes; fields stacked with room for its dropdown. */
+.templateDialog {
+  max-width: 480px;
+}
+.templateForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+}
 .drawerField {
   display: flex;
   flex-direction: column;

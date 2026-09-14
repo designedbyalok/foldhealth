@@ -127,6 +127,30 @@
   align-items: center;
   justify-content: space-between;
 }
+.sectionHeadLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.collapseToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.collapseChevron {
+  transition: transform 0.15s ease;
+}
+.collapseChevronCollapsed {
+  transform: rotate(-90deg);
+}
 .sectionTitle {
   font-size: var(--font-base);
   font-weight: 500;
