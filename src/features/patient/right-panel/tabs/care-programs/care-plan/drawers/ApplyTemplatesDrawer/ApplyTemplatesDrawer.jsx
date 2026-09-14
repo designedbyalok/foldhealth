@@ -9,6 +9,7 @@ import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/Shad
 import { PriorityIcon } from '../../../../../../../../components/PriorityIcon/PriorityIcon';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
+import { recommendedTemplateMatches } from '../../../../../../../settings/care-plan-library/lib';
 import { TemplatePreviewDrawer } from '../TemplatePreviewDrawer';
 import styles from './ApplyTemplatesDrawer.module.css';
 
@@ -22,6 +23,9 @@ import styles from './ApplyTemplatesDrawer.module.css';
 // selected template reads Medium here to match what the care plan shows.
 const PRIORITIES = ['high', 'medium', 'low'];
 const DEFAULT_PRIORITY = 'medium';
+// Stable empty snapshot so the favorites-grouping memo deps don't churn before
+// the frozen set exists.
+const EMPTY_SET = new Set();
 
 // The condition(s) a template addresses, as a single display string. A
 // template with no explicit condition reads as an em-dash placeholder.
@@ -51,11 +55,14 @@ const conditionSortKey = (t) => {
  *   template applied to a plan; a template being authored has nowhere to
  *   keep it, so that column and its header row come off.
  * @param {boolean} [props.showCreateNew=true]
+ * @param {Array} [props.patientProblems=[]]  The patient's problem list; drives
+ *   the "Recommended" group (templates whose conditions match an active problem).
  */
 export function ApplyTemplatesDrawer({
   onClose,
   appliedTemplateIds = [],
   appliedTemplatePriorities = {},
+  patientProblems = [],
   onApply,
   showPriority = true,
   showCreateNew = true,
@@ -103,6 +110,18 @@ export function ApplyTemplatesDrawer({
   // Barriers drawer's "Already Added" group.
   const appliedSet = useMemo(() => new Set(appliedTemplateIds), [appliedTemplateIds]);
 
+  // Favorites grouping is a frozen snapshot taken the first render the favorites
+  // are loaded, not the live `favorites`, so starring a row in-session does NOT
+  // make it jump to the Favorites group — it re-buckets only on the next open,
+  // exactly like "Selected". The live `favorites` still drives each row's star
+  // icon. Captured with the "adjust state during render" pattern (React docs)
+  // so it's frozen on the same render the list first paints, once and only once.
+  const [favSnapshotState, setFavSnapshotState] = useState(null);
+  if (favSnapshotState === null && carePlanFavoritesLoaded) {
+    setFavSnapshotState(new Set(favorites));
+  }
+  const favSnapshot = favSnapshotState || EMPTY_SET;
+
   // Every distinct condition across the library, for the filter chip.
   const conditionOptions = useMemo(() => {
     const set = new Set();
@@ -136,27 +155,45 @@ export function ApplyTemplatesDrawer({
     return list;
   }, [templates, query, conditionFilter, sortDir]);
 
-  // Star lookup for the current render. Kept live (not a frozen snapshot) so a
-  // row's star flips the instant it is toggled; rows re-bucket on the next open.
-  const favSet = useMemo(() => new Set(favorites), [favorites]);
-  const isFavorite = (id) => favSet.has(id);
+  // Live star state — flips a row's star icon the instant it is toggled. The
+  // GROUPING uses the frozen `favSnapshot` instead, so a freshly starred row
+  // keeps its place until the drawer is re-opened.
+  const isFavorite = (id) => favorites.includes(id);
 
-  // Three buckets, in display order: Favorites (starred) → Selected (already on
-  // the plan, not starred) → everything else. A starred template floats to the
-  // top even if it is also applied, so the user's explicit pin always wins.
-  // Order within each bucket is inherited from `rows` (search / sort applied).
-  const favRows = useMemo(() => rows.filter(t => favSet.has(t.id)), [rows, favSet]);
+  // Templates recommended for this patient, mapped to WHY: the active problems
+  // (by title) whose condition a template's conditions / name match. Empty when
+  // there are no matching problems.
+  const recommendedMatches = useMemo(
+    () => recommendedTemplateMatches(patientProblems, templates),
+    [patientProblems, templates],
+  );
+  const recommendedSet = useMemo(() => new Set(recommendedMatches.keys()), [recommendedMatches]);
+  const reasonFor = (id) => recommendedMatches.get(id) || null;
+
+  // Buckets, in display order: Recommended (matches the patient's conditions) →
+  // Favorites (frozen star snapshot) → Selected (already on the plan) →
+  // everything else. A template lands in the first bucket it qualifies for, so
+  // the order above is also the precedence. Order within each bucket is
+  // inherited from `rows` (search / sort applied).
+  const recRows = useMemo(
+    () => rows.filter(t => recommendedSet.has(t.id)),
+    [rows, recommendedSet],
+  );
+  const favRows = useMemo(
+    () => rows.filter(t => !recommendedSet.has(t.id) && favSnapshot.has(t.id)),
+    [rows, recommendedSet, favSnapshot],
+  );
   const addedRows = useMemo(
-    () => rows.filter(t => !favSet.has(t.id) && appliedSet.has(t.id)),
-    [rows, favSet, appliedSet],
+    () => rows.filter(t => !recommendedSet.has(t.id) && !favSnapshot.has(t.id) && appliedSet.has(t.id)),
+    [rows, recommendedSet, favSnapshot, appliedSet],
   );
   const restRows = useMemo(
-    () => rows.filter(t => !favSet.has(t.id) && !appliedSet.has(t.id)),
-    [rows, favSet, appliedSet],
+    () => rows.filter(t => !recommendedSet.has(t.id) && !favSnapshot.has(t.id) && !appliedSet.has(t.id)),
+    [rows, recommendedSet, favSnapshot, appliedSet],
   );
-  // When nothing is starred or applied there is only one flat list — drop the
-  // group labels entirely so the drawer reads as a simple table.
-  const flat = favRows.length === 0 && addedRows.length === 0;
+  // When nothing is recommended, starred, or applied there is only one flat
+  // list — drop the group labels so the drawer reads as a simple table.
+  const flat = recRows.length === 0 && favRows.length === 0 && addedRows.length === 0;
 
   const toggle = (id) => {
     const nowSelected = !selected.has(id);
@@ -212,10 +249,14 @@ export function ApplyTemplatesDrawer({
     </>
   );
 
-  const renderRow = (t) => {
+  const renderRow = (t, { showReason = false } = {}) => {
     const isChecked = selected.has(t.id);
     const activePriority = priorities[t.id] || null;
     const condition = conditionTextOf(t);
+    // In the Recommended group, spell out which of the patient's problems put
+    // this template here, so the basis for the recommendation is explicit.
+    const reasons = showReason ? reasonFor(t.id) : null;
+    const reasonText = reasons?.length ? `Recommended for ${reasons.join(', ')}` : null;
     return (
       <div key={t.id} className={styles.row}>
         <Checkbox
@@ -225,6 +266,7 @@ export function ApplyTemplatesDrawer({
         />
         <span className={styles.rowText}>
           <span className={styles.rowTitle}>{templateNameOf(t)}</span>
+          {reasonText && <span className={styles.rowReason} title={reasonText}>{reasonText}</span>}
         </span>
         <span className={styles.conditionCell} title={condition || undefined}>
           {condition || <span className={styles.conditionEmpty}>—</span>}
@@ -339,32 +381,28 @@ export function ApplyTemplatesDrawer({
           ) : flat ? (
             restRows.map(renderRow)
           ) : (
-            <>
-              {favRows.length > 0 && (
-                <>
-                  <span className={styles.groupLabel}>Favorites</span>
-                  {favRows.map(renderRow)}
-                </>
-              )}
-              {favRows.length > 0 && addedRows.length > 0 && (
-                <span className={styles.groupDivider} aria-hidden />
-              )}
-              {addedRows.length > 0 && (
-                <>
-                  <span className={styles.groupLabel}>Selected</span>
-                  {addedRows.map(renderRow)}
-                </>
-              )}
-              {(favRows.length > 0 || addedRows.length > 0) && restRows.length > 0 && (
-                <span className={styles.groupDivider} aria-hidden />
-              )}
-              {restRows.length > 0 && (
-                <>
-                  <span className={styles.groupLabel}>All Templates</span>
-                  {restRows.map(renderRow)}
-                </>
-              )}
-            </>
+            [
+              {
+                label: 'Recommended',
+                rows: recRows,
+                caption: "From this patient's problem list (PAMI)",
+                showReason: true,
+              },
+              { label: 'Favorites', rows: favRows },
+              { label: 'Selected', rows: addedRows },
+              { label: 'All Templates', rows: restRows },
+            ]
+              .filter(g => g.rows.length > 0)
+              .map((g, i) => (
+                <div key={g.label} className={styles.group}>
+                  {i > 0 && <span className={styles.groupDivider} aria-hidden />}
+                  <div className={styles.groupHead}>
+                    <span className={styles.groupLabel}>{g.label}</span>
+                    {g.caption && <span className={styles.groupCaption}>{g.caption}</span>}
+                  </div>
+                  {g.rows.map(t => renderRow(t, { showReason: g.showReason }))}
+                </div>
+              ))
           )}
         </div>
       </div>

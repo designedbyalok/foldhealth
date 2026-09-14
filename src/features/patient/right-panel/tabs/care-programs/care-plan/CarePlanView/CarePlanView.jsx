@@ -1593,6 +1593,7 @@ export function CarePlanView({ patientId, program }) {
         <ApplyTemplatesDrawer
           appliedTemplateIds={appliedTemplateIds}
           appliedTemplatePriorities={appliedTemplatePriorities}
+          patientProblems={patientProblems}
           onClose={() => setTemplatesDrawerOpen(false)}
           onApply={handleApplyTemplates}
         />

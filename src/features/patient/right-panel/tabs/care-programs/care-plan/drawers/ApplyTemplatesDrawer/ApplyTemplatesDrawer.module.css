@@ -41,6 +41,13 @@
   gap: var(--space-3);
 }
 
+/* A labelled bucket (Recommended / Favorites / Selected / All Templates). */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
 .tableHead {
   display: flex;
   align-items: center;
@@ -135,6 +142,14 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Why a recommended template is here — the matched patient problem(s). */
+.rowReason {
+  font-size: var(--font-sm);
+  color: var(--primary-300);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* Condition value — aligns under the Condition head column width. */
 .conditionCell {
@@ -150,11 +165,23 @@
   color: var(--neutral-200);
 }
 
-/* "Selected" group heading + hairline, mirroring the Barriers drawer. */
+/* Group heading (label + optional caption) + hairline, mirroring the Barriers
+   drawer. */
+.groupHead {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  padding: 0 var(--space-2);
+}
 .groupLabel {
   font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+/* Explains the basis for a group (e.g. why templates are recommended). */
+.groupCaption {
+  font-size: var(--font-sm);
   color: var(--neutral-300);
-  padding: 0 var(--space-2);
 }
 .groupDivider {
   height: 0.5px;

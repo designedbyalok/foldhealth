@@ -45,3 +45,41 @@ export function recommendedGoalIds(problems, libraryGoals = []) {
   }
   return out;
 }
+
+// The keyword tokens a single problem implies — the union of every condition
+// group whose keywords appear in the problem title.
+const problemTokens = (problem) => {
+  const t = (problem?.title || '').toLowerCase();
+  const toks = new Set();
+  for (const words of Object.values(CONDITION_KEYWORDS)) {
+    if (words.some(w => t.includes(w))) words.forEach(w => toks.add(w));
+  }
+  return [...toks];
+};
+
+/**
+ * Same keyword matching as {@link recommendedGoalIds}, over care-plan
+ * templates, but keeping WHY each template matched: a template is recommended
+ * when its conditions or name mention any keyword of a condition the patient
+ * has an active problem for, and the matching problem titles are the reason.
+ *
+ * @returns {Map<string, string[]>} template id → the active problem titles that
+ *   put it in the recommended set. Templates with no match are absent.
+ */
+export function recommendedTemplateMatches(problems, templates = []) {
+  const active = (problems || [])
+    .filter(p => (p?.status || 'Active') === 'Active')
+    .map(p => ({ title: p?.title || '', toks: problemTokens(p) }))
+    .filter(p => p.toks.length);
+  const map = new Map();
+  if (!active.length) return map;
+  for (const t of templates) {
+    const hay = [
+      (Array.isArray(t?.conditions) ? t.conditions.join(' ') : ''),
+      t?.name || '',
+    ].join(' ').toLowerCase();
+    const reasons = active.filter(p => p.toks.some(tok => hay.includes(tok))).map(p => p.title);
+    if (reasons.length) map.set(t.id, reasons);
+  }
+  return map;
+}
