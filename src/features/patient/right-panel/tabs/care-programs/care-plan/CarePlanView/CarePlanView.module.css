@@ -783,6 +783,16 @@
   gap: var(--space-4);
   margin-top: var(--space-3);
 }
+/* Left-aligned primary-first footer (Save · Cancel) — avoids shadcn
+   DialogFooter’s default sm:justify-end fighting caller overrides. */
+.templateDialogFooter {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
 .drawerField {
   display: flex;
   flex-direction: column;

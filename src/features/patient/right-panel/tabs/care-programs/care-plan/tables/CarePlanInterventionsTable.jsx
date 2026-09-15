@@ -174,6 +174,7 @@ const DUE_DATE_COL_WIDTH  = 108;
 const DUE_DATE_COLUMN = {
   key: 'dueDate',
   label: 'Due Date',
+  popoverLabel: 'Due Date',
   width: DUE_DATE_COL_WIDTH,
   sortKey: '_sortDueDate',
   sortType: 'date',
@@ -298,7 +299,11 @@ export function CarePlanInterventionsTable({
         onSelectAll={onSelectAll}
         minTableWidth={0}
         emptyState={emptyState}
-        renderRow={(i) => (
+        worklistKey={template ? undefined : 'carePlan:interventions'}
+        renderRow={(i, _idx, ctx) => {
+          const hidden = ctx?.hiddenSet || null;
+          const isHidden = (k) => (hidden ? hidden.has(k) : false);
+          return (
             <tr
               key={i.id}
               className={`${styles.row} ${styles.rowClickable} ${styles.gbiRow}`}
@@ -312,6 +317,7 @@ export function CarePlanInterventionsTable({
                   disabled={!canEdit}
                 />
               )}
+              {!isHidden('priority') && (
               <td className={styles.priorityTd} onClick={e => e.stopPropagation()}>
                 {canEdit ? (
                   <button
@@ -326,6 +332,8 @@ export function CarePlanInterventionsTable({
                   <PriorityIcon priority={i.priority} size={16} />
                 )}
               </td>
+              )}
+              {!isHidden('title') && (
               <td className={styles.titleTd}>
                 <GbiNameCell
                   // Look up the kind-based icon so rows stay in sync with
@@ -356,7 +364,8 @@ export function CarePlanInterventionsTable({
                   canEdit={canEdit}
                   />
               </td>
-              {!template && (() => {
+              )}
+              {!template && !isHidden('dueDate') && (() => {
                 /* Due Date cell — click opens an inline calendar
                    popover. Recurring glyph sits next to the date so
                    cadence + schedule read as one column; hover
@@ -426,6 +435,7 @@ export function CarePlanInterventionsTable({
                   && (!effectiveName || effectiveName === 'Unassigned');
                 return (
                 <>
+                  {!isHidden('assignee') && (
                   <td className={styles.assigneeTd} onClick={e => e.stopPropagation()}>
                     {/* Full pill — avatar + name — matches the earlier
                         Assigned To column. Member tasks still lock the
@@ -444,9 +454,13 @@ export function CarePlanInterventionsTable({
                       disabled={!canEdit || isMemberTask}
                     />
                   </td>
+                  )}
+                  {!isHidden('adherence') && (
                   <td className={styles.adherenceTd} onClick={e => e.stopPropagation()}>
                     <GbiProgressCell progress={i.adherence} />
                   </td>
+                  )}
+                  {!isHidden('status') && (
                   <td className={styles.statusTd} onClick={e => e.stopPropagation()}>
                     <GbiStatusButton
                       value={i.status}
@@ -454,6 +468,7 @@ export function CarePlanInterventionsTable({
                       onOpen={rect => onStatusMenu({ kind: 'intv', item: i, rect })}
                     />
                   </td>
+                  )}
                 </>
                 );
               })()}
@@ -471,7 +486,8 @@ export function CarePlanInterventionsTable({
                 </td>
               )}
             </tr>
-        )}
+          );
+        }}
       />
       {duePicker && (
         <DatePickerPopover

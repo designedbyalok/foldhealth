@@ -95,23 +95,22 @@ export const GOAL_COLUMNS = [
   { key: 'targetDate', label: 'Target', popoverLabel: 'Target Date', width: GBI_COL_WIDTH.assignee, sortKey: '_sortTargetDate', sortType: 'generic', thStyle: HEADER_COMPACT },
   // Optional columns — off by default; users opt in through the picker.
   { key: 'currentValue', label: 'Current Value', width: GBI_COL_WIDTH.progress, defaultHidden: true, thStyle: HEADER_COMPACT },
-  { key: 'progress', label: 'Progress', width: GBI_COL_WIDTH.progress, sortKey: '_sortProgress', sortType: 'number', thStyle: HEADER_COMPACT },
+  { key: 'progress', label: 'Progress', width: GBI_COL_WIDTH.progress, sortKey: '_sortProgress', sortType: 'number', defaultHidden: true, thStyle: HEADER_COMPACT },
   { key: 'trend', label: 'Trend', width: GBI_COL_WIDTH.progress, defaultHidden: true, thStyle: HEADER_COMPACT },
   // Status is intentionally non-hideable — the row is meaningless without
   // its Status pill. It stays in-flow (not sticky) so it reads next to
-  // Progress the way it always has; only the picker's Hide toggle is
-  // locked off.
+  // optional metrics; only the picker's Hide toggle is locked off.
   { key: 'status', label: 'Status', width: GBI_COL_WIDTH.status, sortKey: 'status', sortType: 'alpha', locked: true, thStyle: HEADER_COMPACT },
   { key: 'actions', label: '', popoverLabel: 'Action', width: GBI_COL_WIDTH.actions, sticky: 'right', thStyle: { paddingLeft: 4, paddingRight: 4 } },
 ];
 
 export const INTERVENTION_COLUMNS = [
-  { key: 'priority', label: 'P', width: GBI_COL_WIDTH.priority, align: 'center', sortKey: '_sortPriority', sortType: 'priority', hideSortIcon: true, thStyle: { paddingLeft: 4, paddingRight: 4 } },
+  { key: 'priority', label: 'P', popoverLabel: 'Priority', width: GBI_COL_WIDTH.priority, align: 'center', sortKey: '_sortPriority', sortType: 'priority', hideSortIcon: true, thStyle: { paddingLeft: 4, paddingRight: 4 } },
   { key: 'title', label: 'Name', sortKey: 'title', sortType: 'alpha' },
   { key: 'assignee', label: 'Assigned To', width: GBI_COL_WIDTH.assignee, sortKey: '_sortAssignee', sortType: 'alpha', thStyle: HEADER_COMPACT },
-  { key: 'adherence', label: 'Adherence', width: GBI_COL_WIDTH.progress, sortKey: '_sortAdherence', sortType: 'number', thStyle: HEADER_COMPACT },
+  { key: 'adherence', label: 'Adherence', width: GBI_COL_WIDTH.progress, sortKey: '_sortAdherence', sortType: 'number', defaultHidden: true, thStyle: HEADER_COMPACT },
   { key: 'status', label: 'Status', width: GBI_COL_WIDTH.status, sortKey: 'status', sortType: 'alpha', thStyle: HEADER_COMPACT },
-  { key: 'actions', label: '', width: GBI_COL_WIDTH.actions, thStyle: { paddingLeft: 4, paddingRight: 4 } },
+  { key: 'actions', label: '', popoverLabel: 'Action', width: GBI_COL_WIDTH.actions, sticky: 'right', thStyle: { paddingLeft: 4, paddingRight: 4 } },
 ];
 
 export const BARRIER_COLUMNS = [

@@ -42,12 +42,10 @@ const SIGN_MENU_ITEMS = [
 
 // Care plan sign-menu — split button. The main half signs directly
 // (Sign is the primary action), the chevron opens a menu with the
-// two alternate paths (send to a reviewer, save the working copy as
-// a draft). Same split pattern the med-recon signer uses so the two
-// step surfaces read consistently.
+// alternate path (send to a reviewer). Same split pattern the med-recon
+// signer uses so the two step surfaces read consistently.
 const CARE_PLAN_SIGN_MENU_ITEMS = [
   { key: 'review', icon: 'solar:checklist-minimalistic-linear', label: 'Send for Review' },
-  { key: 'draft', icon: 'solar:bookmark-linear', label: 'Save as Draft' },
 ];
 
 export function ProgramDetailViewContentHeader({
@@ -84,6 +82,7 @@ export function ProgramDetailViewContentHeader({
   const createTask = useAppStore(s => s.createTask);
   const showToast = useAppStore(s => s.showToast);
   const requestCarePlanShare = useAppStore(s => s.requestCarePlanShare);
+  const carePlanShareRequest = useAppStore(s => s.carePlanShareRequest);
   const requestCarePlanPanel = useAppStore(s => s.requestCarePlanPanel);
   const carePlanBulkMode = useAppStore(s => s.carePlanBulkMode);
   const toggleCarePlanBulkMode = useAppStore(s => s.toggleCarePlanBulkMode);
@@ -213,12 +212,6 @@ export function ProgramDetailViewContentHeader({
     showToast?.(created
       ? `Care plan sent to ${user.name} for review`
       : 'Could not send the care plan for review');
-  };
-  const saveCarePlanAsDraft = () => {
-    // Care plans persist edits in-place until signed, so "Save as Draft"
-    // is confirmation UX rather than a distinct write path. The button
-    // just acknowledges the working copy is safely stored.
-    showToast?.('Care plan saved as draft');
   };
 
   // Signing is gated on the mandatory Medication Checklist — every box has to
@@ -368,7 +361,13 @@ export function ProgramDetailViewContentHeader({
             <>
               <BulkSelectToggle size="S" active={carePlanBulkMode} onToggle={toggleCarePlanBulkMode} />
               <span className={styles.headerDivider} aria-hidden="true" />
-              <ActionButton icon="solar:download-minimalistic-linear" size="L" tooltip="Download" onClick={() => requestCarePlanShare('preview')} />
+              <ActionButton
+                icon="solar:eye-linear"
+                size="L"
+                tooltip="Preview"
+                active={carePlanShareRequest === 'preview'}
+                onClick={() => requestCarePlanShare('preview')}
+              />
               <span className={styles.headerDivider} aria-hidden="true" />
               <Button
                 variant="ghost"
@@ -390,7 +389,6 @@ export function ProgramDetailViewContentHeader({
                 menuAriaLabel="Sign care plan options"
                 onMenuSelect={(key) => {
                   if (key === 'review') setCarePlanReviewOpen(true);
-                  else if (key === 'draft') saveCarePlanAsDraft();
                 }}
               >
                 Sign

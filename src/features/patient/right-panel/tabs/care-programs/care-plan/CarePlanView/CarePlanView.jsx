@@ -17,7 +17,7 @@ import { Select } from '../../../../../../../components/Select/Select';
 import { FilterChip } from '../../../../../../../components/FilterChip/FilterChip';
 import { useAppStore } from '../../../../../../../store/useAppStore';
 import { ChronicConditionSelect } from '../../../../../../settings/care-plan-library/shared';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../../../../../../components/ShadcnDialog/ShadcnDialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../../../../../../components/ShadcnDialog/ShadcnDialog';
 import { AddGoalsDrawer } from '../../../../../../settings/care-plan-library/goals/AddGoalsDrawer/AddGoalsDrawer';
 import { AddBarriersDrawer } from '../../../../../../settings/care-plan-library/barriers/AddBarriersDrawer/AddBarriersDrawer';
 import { BarrierDrawer } from '../../../../../../settings/care-plan-library/barriers/BarrierDrawer/BarrierDrawer';
@@ -1663,10 +1663,10 @@ export function CarePlanView({ patientId, program }) {
             </div>
             <ChronicConditionSelect value={templateConditions} onChange={setTemplateConditions} label="Conditions" />
           </div>
-          <DialogFooter>
-            <Button variant="secondary" size="L" onClick={() => setTemplateOpen(false)}>Cancel</Button>
+          <div className={styles.templateDialogFooter}>
             <Button variant="primary" size="L" onClick={saveTemplate} disabled={!templateName.trim()}>Save</Button>
-          </DialogFooter>
+            <Button variant="secondary" size="L" onClick={() => setTemplateOpen(false)}>Cancel</Button>
+          </div>
         </DialogContent>
       </Dialog>
 
