@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '../../store/useAppStore';
-import { renderEmailHtml } from './patchEmailHtml';
+import { renderPreviewHtml } from './renderEmail';
 import { Toggle } from '../../components/Toggle/Toggle';
 import styles from './DevicePreview.module.css';
 
@@ -157,7 +157,7 @@ export function DevicePreview({ device }) {
   if (htmlOverride) {
     emailHtml = htmlOverride;
   } else if (doc) {
-    emailHtml = renderEmailHtml(doc, { theme });
+    emailHtml = renderPreviewHtml(doc, { theme });
   }
 
   const avail = Math.max(280, stageW - 64);

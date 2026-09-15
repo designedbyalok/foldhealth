@@ -61,6 +61,12 @@
           "src/features/hedis-worklist/CareGapDetailDrawer.module.css"
         ],
         "createdAt": "2026-09-01T07:35:24.147Z"
+      },
+      {
+        "rule": "overused-font",
+        "value": "arial",
+        "createdAt": "2026-09-15T08:27:23.354Z",
+        "reason": "email-client fallback: Arial in the [if mso] Outlook conditional is the standard web-safe email font stack, not a UI font choice"
       }
     ]
   }

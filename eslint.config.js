@@ -73,7 +73,7 @@ export default defineConfig([globalIgnores(['dist', 'storybook-static', 'coverag
     ],
   },
 }, {
-  files: ['vite.config.js', 'vitest.config.js', 'vite-plugin-dev-api.js', 'scripts/**/*.{js,mjs}', 'api/**/*.js', 'api/**/*.jsx'],
+  files: ['vite.config.js', 'vitest.config.js', 'vite-plugin-dev-api.js', 'scripts/**/*.{js,mjs}', 'api/**/*.js', 'api/**/*.jsx', 'netlify/functions/**/*.js'],
   languageOptions: {
     globals: { ...globals.node },
     parserOptions: { ecmaVersion: 'latest', sourceType: 'module' },

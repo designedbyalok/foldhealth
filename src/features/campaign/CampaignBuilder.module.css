@@ -302,3 +302,45 @@
   background: var(--neutral-0);
   display: block;
 }
+
+/* ── Delivery results card (shown after a campaign is sent) ── */
+.deliveryCard {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 0.5px solid var(--neutral-150);
+  background: var(--neutral-0);
+  flex-shrink: 0;
+}
+.deliveryHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.deliveryTitle {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--neutral-400);
+}
+.deliveryMeta {
+  margin-left: auto;
+  font-size: var(--font-2xs);
+  color: var(--neutral-200);
+}
+.deliveryStats {
+  display: flex;
+  gap: var(--space-6);
+}
+.deliveryStat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.deliveryStatNum {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--neutral-500);
+}
+.deliveryStatLabel {
+  font-size: var(--font-2xs);
+  color: var(--neutral-300);
+}

@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useAppStore } from '../../store/useAppStore';
-import { renderEmailHtml } from '../email-builder/patchEmailHtml';
+import { renderPreviewHtml } from '../email-builder/renderEmail';
 import { Icon } from '../../components/Icon/Icon';
 import { Button } from '../../components/Button/Button';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
@@ -15,18 +15,8 @@ import { makeInitialDocument } from '../email-builder/initialDocument';
 import styles from './CampaignBuilder.module.css';
 
 // Static option lists — would come from Supabase audience / sender tables in
-// production. Kept here so the screen renders without extra fetches.
-const AUDIENCE_OPTIONS = [
-  { value: 'all-patients',   label: 'All Patients' },
-  { value: 'diabetics',      label: 'Diabetics (HbA1c > 9)' },
-  { value: 'maternal',       label: 'Maternal Care' },
-  { value: 'pediatric',      label: 'Pediatric' },
-  { value: 'cardiac',        label: 'Cardiac Care' },
-  { value: 'over-65',        label: 'Patients over 65' },
-  { value: 'rosewood',       label: 'Rosewood Clinic' },
-  { value: 'rome-office',    label: 'Rome Office' },
-];
-
+// production. Audience options now load from the audience_segments table via
+// the store (with a fallback); sender/from lists stay static.
 const SENDER_OPTIONS = [
   { value: 'stanford-care',  label: 'Stanford Care Center' },
   { value: 'fold-health',    label: 'Fold Health Team' },
@@ -65,10 +55,22 @@ export function CampaignBuilder() {
   const campaign = useAppStore(s => s.campaigns.find(c => c.id === id));
   const updateFields = useAppStore(s => s.updateCampaignFields);
   const closeBuilder = useAppStore(s => s.closeCampaignBuilder);
-  const runCampaign = useAppStore(s => s.runCampaignNow);
+  const sendCampaign = useAppStore(s => s.sendCampaignNow);
   const openTemplate = useAppStore(s => s.openEmailTemplateFromCampaign);
   const showToast = useAppStore(s => s.showToast);
+  const fetchEmailComplianceSettings = useAppStore(s => s.fetchEmailComplianceSettings);
+  const audienceSegments = useAppStore(s => s.audienceSegments);
+  const fetchAudienceSegments = useAppStore(s => s.fetchAudienceSegments);
+  const fetchCampaignSends = useAppStore(s => s.fetchCampaignSends);
+  const sends = useAppStore(s => s.campaignSends[id]);
   const [showTestEmail, setShowTestEmail] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => { fetchEmailComplianceSettings(); }, [fetchEmailComplianceSettings]);
+  useEffect(() => { fetchAudienceSegments(); }, [fetchAudienceSegments]);
+  useEffect(() => { if (id) fetchCampaignSends(id); }, [id, fetchCampaignSends]);
+
+  const audienceOptions = (audienceSegments || []).map(s => ({ value: s.id, label: s.label }));
 
   // Build a preview document on the fly when the campaign has no saved
   // template yet, so the user sees something instead of an empty pane.
@@ -79,7 +81,7 @@ export function CampaignBuilder() {
   const previewHtml = useMemo(() => {
     const doc = campaign?.emailTemplate
       || makeInitialDocument({ name: campaign?.name || 'Untitled Campaign' });
-    const html = renderEmailHtml(doc);
+    const html = renderPreviewHtml(doc);
     // Prepend a thin transparent scrollbar style so the preview iframe doesn't
     // render with the OS-default dark scrollbar. Preview-only — does not
     // affect the actual email HTML delivered to recipients. !important wins
@@ -109,6 +111,22 @@ export function CampaignBuilder() {
     const v = campaign[k];
     return Array.isArray(v) ? v.length > 0 : !!v;
   });
+
+  // Delivery summary from the campaign_sends log (plain derivation, not a hook,
+  // so it's safe after the early return above).
+  const deliverySummary = (() => {
+    if (!sends || !sends.length) return null;
+    const total = sends.length;
+    const delivered = sends.filter(s => s.status !== 'bounced' && s.status !== 'failed').length;
+    const opened = sends.filter(s => s.status === 'opened').length;
+    const bounced = sends.filter(s => s.status === 'bounced').length;
+    const lastSent = sends.reduce((m, s) => (s.sentAt && s.sentAt > m ? s.sentAt : m), '');
+    return {
+      total, bounced, lastSent,
+      deliveredPct: Math.round((delivered / total) * 100),
+      openedPct: Math.round((opened / total) * 100),
+    };
+  })();
 
   return (
     <div className={styles.builder}>
@@ -169,7 +187,7 @@ export function CampaignBuilder() {
               searchable
               label="Include"
               required
-              options={AUDIENCE_OPTIONS}
+              options={audienceOptions}
               value={campaign.audienceInclude || []}
               onChange={v => set({ audienceInclude: v })}
               placeholder="Search or Select Audience"
@@ -185,7 +203,7 @@ export function CampaignBuilder() {
                 multiple
                 searchable
                 label="Exclude"
-                options={AUDIENCE_OPTIONS}
+                options={audienceOptions}
                 value={(campaign.audienceExclude || []).filter(v => v !== '__placeholder__')}
                 onChange={v => set({ audienceExclude: v.length === 0 ? [] : v })}
                 placeholder="Search or Select Audience to exclude"
@@ -276,10 +294,18 @@ export function CampaignBuilder() {
             <Button
               variant="primary"
               size="S"
-              disabled={!isComplete}
-              onClick={async () => { const ok = await runCampaign(); if (ok) closeBuilder(); }}
+              disabled={!isComplete || sending}
+              onClick={async () => {
+                setSending(true);
+                try {
+                  const ok = await sendCampaign();
+                  if (ok) closeBuilder();
+                } finally {
+                  setSending(false);
+                }
+              }}
             >
-              Run Campaign Now
+              {sending ? 'Sending…' : 'Run Campaign Now'}
             </Button>
             <CloseButton onClick={closeBuilder} />
           </div>
@@ -307,6 +333,26 @@ export function CampaignBuilder() {
             />
           </FieldCol>
         </div>
+
+        {deliverySummary && (
+          <div className={styles.deliveryCard}>
+            <div className={styles.deliveryHead}>
+              <Icon name="solar:chart-2-linear" size={14} color="var(--primary-300)" />
+              <span className={styles.deliveryTitle}>Delivery results</span>
+              {deliverySummary.lastSent && (
+                <span className={styles.deliveryMeta}>
+                  Last sent {new Date(deliverySummary.lastSent).toLocaleString()}
+                </span>
+              )}
+            </div>
+            <div className={styles.deliveryStats}>
+              <DeliveryStat value={deliverySummary.total} label="Recipients" />
+              <DeliveryStat value={`${deliverySummary.deliveredPct}%`} label="Delivered" />
+              <DeliveryStat value={`${deliverySummary.openedPct}%`} label="Opened" />
+              <DeliveryStat value={deliverySummary.bounced} label="Bounced" />
+            </div>
+          </div>
+        )}
 
         <div className={styles.previewWrap}>
           <div className={styles.previewCard}>
@@ -368,6 +414,14 @@ function Label({ children, required, htmlFor }) {
 }
 function SectionTitle({ children }) {
   return <h3 className={styles.sectionTitle}>{children}</h3>;
+}
+function DeliveryStat({ value, label }) {
+  return (
+    <div className={styles.deliveryStat}>
+      <span className={styles.deliveryStatNum}>{value}</span>
+      <span className={styles.deliveryStatLabel}>{label}</span>
+    </div>
+  );
 }
 
 // ── Radio group ─────────────────────────────────────────────────────────

@@ -165,6 +165,24 @@ export function DesignTabAppearance({ ctx }) {
         </>
       )}
 
+      {/* ── Preview text (root only — the inbox preheader snippet) ── */}
+      {isLayout && (
+        <>
+          <SectionHeading>Preview text</SectionHeading>
+          <Section>
+            <Input
+              value={data.preheader || ''}
+              onChange={e => update(['data', 'preheader'], e.target.value)}
+              placeholder="Shown after the subject line in the inbox"
+              maxLength={150}
+            />
+            <p className={styles.fieldHint}>
+              The snippet inboxes show next to the subject. Supports personalization tokens.
+            </p>
+          </Section>
+        </>
+      )}
+
       {/* ── Color Variables (root only — global tokens) ── */}
       {isLayout && (
         <>

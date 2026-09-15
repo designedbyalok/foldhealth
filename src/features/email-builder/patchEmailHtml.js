@@ -7,6 +7,20 @@ import {
   splitAlpha, withAlpha, hasTranslucentHex, flattenAlpha, toRgbaCss, mapTranslucentHex,
 } from './colorHelpers';
 import { tintSvgMarkup } from './svgTint';
+import { sanitizeEmailHtml } from '../../lib/sanitizeHtml';
+
+// Author-supplied HTML (a RawHtml block, or a whole-document customHtml edit)
+// ships to the recipient's inbox, so strip the executable surface (<script>,
+// on* handlers, <iframe>, …) while keeping the table layout and <style> email
+// markup needs. sanitizeEmailHtml relies on the DOM (DOMPurify + DOMParser);
+// renderEmailHtml only runs client-side, but guard so the node test env — and
+// any non-browser caller — passes the markup through untouched instead of
+// throwing.
+function safeSanitizeEmailHtml(html) {
+  if (!html) return '';
+  if (typeof window === 'undefined' || typeof DOMParser === 'undefined') return html;
+  return sanitizeEmailHtml(html);
+}
 
 // ── Dark-mode color transforms ──────────────────────────────────────────
 // Real device dark mode (iOS Mail / Gmail auto-dark / Outlook) doesn't
@@ -292,7 +306,7 @@ function renderBlock(doc, id) {
         padding,
         'text-align': style.blockAlign || style.textAlign || 'left',
       };
-      return `<div style="${styleStr(wrap)}">${props.html || ''}</div>`;
+      return `<div style="${styleStr(wrap)}">${safeSanitizeEmailHtml(props.html)}</div>`;
     }
 
     case 'Heading':
@@ -742,13 +756,13 @@ function buildDividerSvg(props) {
 //     rule echoes the override. The email content itself (gradient headers,
 //     branded colors) stays untouched — most dark-mode-aware clients leave
 //     in-content colors alone and just darken the surrounding chrome.
-export function renderEmailHtml(doc, { wrapperPadding = '24px 0', theme = 'auto' } = {}) {
+export function renderEmailHtml(doc, { wrapperPadding = '24px 0', theme = 'auto', compliance = null } = {}) {
   if (!doc) return '';
   // Custom HTML body takes over ONLY when there are no parsed blocks —
   // mirrors the canvas precedence in PreviewCanvas so block edits never
   // diverge from the exported HTML at send time.
   const hasBlocks = (doc.root?.data?.childrenIds?.length ?? 0) > 0;
-  if (doc.root?.data?.customHtml && !hasBlocks) return doc.root.data.customHtml;
+  if (doc.root?.data?.customHtml && !hasBlocks) return safeSanitizeEmailHtml(doc.root.data.customHtml);
   // In dark mode, pre-transform every block in the document so individual
   // backgrounds / text colors invert too — not just the outer backdrop.
   // Vivid brand colors (gradient header, promo banner) pass through.
@@ -770,6 +784,26 @@ export function renderEmailHtml(doc, { wrapperPadding = '24px 0', theme = 'auto'
     root.data?.gap,
   );
   const colorScheme = theme === 'auto' ? 'light dark' : theme;
+
+  // Hidden preheader (the inbox preview snippet). Padded with zero-width chars
+  // so the client's preview doesn't pull the first line of body copy in after
+  // it. Tokens inside it are resolved downstream by applyMergeTags.
+  const preheaderText = root.data?.preheader ? String(root.data.preheader).trim() : '';
+  const preheaderHtml = preheaderText
+    ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;opacity:0;color:transparent;height:0;width:0;">${esc(preheaderText)}${'&#8199;&#65279;&nbsp;'.repeat(30)}</div>`
+    : '';
+
+  // Compliance footer (CAN-SPAM): physical mailing address + unsubscribe link.
+  // Appended below the template body so it is always present and can't be
+  // removed from the canvas. Colors are literal hex — this is email HTML, not
+  // app CSS, so design tokens don't apply.
+  const footerHtml = compliance
+    ? `<tr><td style="padding:20px 24px;text-align:center;font-family:${fontFamily.replace(/"/g, "'")};font-size:12px;line-height:18px;color:#98A2B3;border-top:1px solid #EAECF0;">
+      ${compliance.clinicName ? `<div style="margin:0 0 4px;">${esc(compliance.clinicName)}</div>` : ''}
+      ${compliance.physicalAddress ? `<div style="margin:0 0 8px;">${esc(compliance.physicalAddress)}</div>` : ''}
+      <div><a href="${esc(compliance.unsubscribeUrl || '#')}" style="color:#98A2B3;text-decoration:underline;">Unsubscribe</a> from these emails.</div>
+    </td></tr>`
+    : '';
 
   // Build a lean Google Fonts <link> covering only the families this email
   // actually references — keeps the email payload small and avoids loading
@@ -819,12 +853,14 @@ ${googleFontsLink}
 <![endif]-->
 </head>
 <body style="margin:0;padding:0;background-color:${backdropColor};font-family:${fontFamily.replace(/"/g, "'")};">
+${preheaderHtml}
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${backdropColor}">
 <tr><td align="center" style="padding:${wrapperPadding}">
   <table role="presentation" class="email-container" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;width:100%;background-color:${canvasColor};color:${textColor};font-family:${fontFamily.replace(/"/g, "'")};">
   <tr><td>
     ${bodyContent}
   </td></tr>
+  ${footerHtml}
   </table>
 </td></tr>
 </table>

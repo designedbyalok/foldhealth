@@ -28,6 +28,7 @@ export function makeInitialDocument(campaign) {
         canvasColor: '#FFFFFF',
         textColor: '#3A485F',
         fontFamily: 'MODERN_SANS',
+        preheader: 'A quick update from your care team',
         childrenIds: [header.rootId, bodyContainer, footer.rootId],
       },
     },
@@ -50,7 +51,7 @@ export function makeInitialDocument(campaign) {
     [greeting]: {
       type: 'Text',
       data: {
-        props: { text: 'Dear {Patient Name},' },
+        props: { text: 'Dear {{first_name}},' },
         style: { color: '#3A485F', fontSize: 14, textAlign: 'left', padding: { top: 4, bottom: 4, left: 24, right: 24 } },
       },
     },

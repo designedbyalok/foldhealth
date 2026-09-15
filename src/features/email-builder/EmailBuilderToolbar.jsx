@@ -5,6 +5,7 @@ import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Toggle } from '../../components/Toggle/Toggle';
 import { CloseButton } from '../../components/CloseButton/CloseButton';
 import { SendTestPopover } from './SendTestPopover';
+import { TokenPicker } from './TokenPicker';
 import { ShortcutsHelpButton } from './EmailBuilderShortcuts';
 import { formatTime } from './EmailBuilder.utils';
 import styles from './EmailBuilder.module.css';
@@ -56,6 +57,7 @@ export function EmailBuilderToolbar({
           onClick={redoEmailEdit}
         />
         <ShortcutsHelpButton />
+        {viewMode === 'builder' && <TokenPicker />}
         <Button
           variant="secondary"
           size="L"

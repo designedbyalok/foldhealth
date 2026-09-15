@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { Icon } from '../../components/Icon/Icon';
 import { Button } from '../../components/Button/Button';
-import { renderEmailHtml } from './patchEmailHtml';
+import { renderPreviewHtml, getComplianceSettings } from './renderEmail';
 import styles from './EmailBuilder.module.css';
 
 const parseEmails = (str) =>
@@ -81,12 +81,15 @@ export function SendTestPopover({ onClose, campaignId }) {
       setErrorMsg('No email template found for this campaign yet — edit one first.');
       return;
     }
-    const html = renderEmailHtml(doc);
+    // Test sends resolve merge tags with sample data (so the author sees
+    // "Dear Sarah," not the raw token) and carry the compliance footer.
+    const html = renderPreviewHtml(doc);
     if (!html || html.includes('Could not render')) {
       setStatus('error');
       setErrorMsg('Failed to render email template');
       return;
     }
+    const listUnsubscribe = getComplianceSettings()?.unsubscribeUrl || null;
 
     const subject = campaign?.subjectLine
       ? `[Test] ${campaign.subjectLine}`
@@ -98,7 +101,13 @@ export function SendTestPopover({ onClose, campaignId }) {
         fetch('/api/send-test-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ to: addr, subject, html, fromName }),
+          body: JSON.stringify({
+            to: addr,
+            subject,
+            html,
+            fromName,
+            listUnsubscribe: listUnsubscribe ? listUnsubscribe.replace(/\{\{\s*email\s*\}\}/gi, encodeURIComponent(addr)) : null,
+          }),
         }).then(async res => {
           const text = await res.text();
           let payload = null;

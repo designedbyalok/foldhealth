@@ -1857,6 +1857,15 @@
   line-height: 1.2;
 }
 
+/* Small helper text under a property-panel field (e.g. the preview-text
+   preheader input). */
+.fieldHint {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-2xs);
+  color: var(--neutral-200);
+  line-height: var(--leading-normal);
+}
+
 /* Text style chips — Title / Subtitle / Heading / Body quick presets, shown
    at the top of the Design tab for any selected Heading or Text block. */
 .textChipsRow {

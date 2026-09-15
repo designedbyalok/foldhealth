@@ -3,7 +3,7 @@ import { Drawer } from '../../../components/Drawer/Drawer';
 import { Toggle } from '../../../components/Toggle/Toggle';
 import { Button } from '../../../components/Button/Button';
 import { EmailIframe, MacBookPro, IPhone17Pro } from '../../email-builder/DevicePreview';
-import { renderEmailHtml } from '../../email-builder/patchEmailHtml';
+import { renderPreviewHtml } from '../../email-builder/renderEmail';
 import { makeInitialDocument } from '../../email-builder/initialDocument';
 import { useAppStore } from '../../../store/useAppStore';
 import styles from './EmailPreviewDrawer.module.css';
@@ -53,7 +53,7 @@ export function EmailPreviewDrawer({ campaign, onClose, onEdit }) {
     const doc = source?.emailTemplate || makeInitialDocument(source || {});
     // wrapperPadding: '0' strips the renderEmailHtml outer <td padding:24px 0>
     // so the preview iframe sits flush against the email's own design.
-    return renderEmailHtml(doc, { theme: 'light', wrapperPadding: '0' });
+    return renderPreviewHtml(doc, { theme: 'light', wrapperPadding: '0' });
   }, [fullCampaign, campaign]);
 
   // Track stage width so the device mockups can sit inside the 700px drawer

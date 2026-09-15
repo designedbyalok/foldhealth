@@ -9,6 +9,35 @@ import { generateFlowFromPrompt } from '../lib/flowGenerator';
 import { kpiRowToJs, tsRowToJs, tableRowToJs, barRowToJs, configRowToJs, groupTimeSeries } from '../lib/eventMapper';
 import { domainDbToJs, domainJsToDb, componentDbToJs, componentJsToDb, auditLogDbToJs } from '../lib/embedMapper';
 import { popGroupRowToJs, popGroupJsToDb } from '../lib/popGroupMapper';
+import { resolveCampaignAudience, simulateStatus } from '../features/campaign/audienceResolver';
+
+// campaign_sends row → JS shape for the delivery log / summary UI.
+function campaignSendRowToJs(row) {
+  return {
+    id: row.id,
+    campaignId: row.campaign_id,
+    memberId: row.member_id,
+    name: row.recipient_name,
+    email: row.recipient_email,
+    status: row.status,
+    subject: row.subject,
+    sentAt: row.sent_at,
+    openedAt: row.opened_at,
+    error: row.error,
+  };
+}
+
+// Selectable audiences before audience_segments is fetched (or if the table
+// isn't migrated yet). Mirrors supabase/audience_segments_migration.sql.
+const FALLBACK_AUDIENCE_SEGMENTS = [
+  { id: 'all-patients', label: 'All Patients',         resolverKey: 'all' },
+  { id: 'diabetic',     label: 'Diabetic',             resolverKey: 'diabetic' },
+  { id: 'cardiac',      label: 'Cardiac / Heart',      resolverKey: 'cardiac' },
+  { id: 'seniors',      label: 'Seniors (65+)',        resolverKey: 'seniors' },
+  { id: 'pediatric',    label: 'Pediatric (under 18)', resolverKey: 'pediatric' },
+  { id: 'nj-patients',  label: 'New Jersey patients',  resolverKey: 'nj' },
+  { id: 'ny-patients',  label: 'New York patients',    resolverKey: 'ny' },
+];
 import { hccDocumentRowToJs, hccDocumentJsToDb } from '../lib/hccDocumentMapper';
 import { readCachedWorklistOrder, getFirstWorklistLabel, populationEntryPatch } from '../lib/worklistDefaults';
 import { MONITORING_SEED, mapMonitoringRow } from '../features/patient/right-panel/tabs/monitoring/monitoringData';
@@ -13121,6 +13150,120 @@ export const useAppStore = create((set, get) => ({
     return true;
   },
 
+  // ── Audience segments (CampaignBuilder Include/Exclude options) ──
+  audienceSegments: FALLBACK_AUDIENCE_SEGMENTS,
+  fetchAudienceSegments: async () => {
+    const { data, error } = await supabase
+      .from('audience_segments')
+      .select('*')
+      .eq('active', true)
+      .order('sort_order', { ascending: true });
+    if (error || !data || !data.length) return; // keep the fallback list
+    set({
+      audienceSegments: data.map(r => ({
+        id: r.id, label: r.label, resolverKey: r.resolver_key, sortOrder: r.sort_order,
+      })),
+    });
+  },
+
+  // ── Delivery log (campaign_sends), keyed by campaign id ──
+  campaignSends: {},
+  campaignSendsLoading: {},
+  fetchCampaignSends: async (id) => {
+    if (!id) return;
+    set(s => ({ campaignSendsLoading: { ...s.campaignSendsLoading, [id]: true } }));
+    const { data, error } = await supabase
+      .from('campaign_sends')
+      .select('*')
+      .eq('campaign_id', id)
+      .order('created_at', { ascending: true });
+    if (error) {
+      console.warn('[store] campaign_sends fetch failed — run supabase/campaign_sends_migration.sql:', error.message);
+      set(s => ({ campaignSendsLoading: { ...s.campaignSendsLoading, [id]: false } }));
+      return;
+    }
+    set(s => ({
+      campaignSends: { ...s.campaignSends, [id]: (data || []).map(campaignSendRowToJs) },
+      campaignSendsLoading: { ...s.campaignSendsLoading, [id]: false },
+    }));
+  },
+
+  // Simulated send: resolve the audience from all_patients, assign each
+  // recipient a deterministic delivery status, write the campaign_sends log,
+  // and roll the results up into the campaign's audience/delivered/opened
+  // stats. No real email is sent to demo patients (test sends still go through
+  // Resend). Replaces the old flag-only runCampaignNow for the Run button.
+  sendCampaignNow: async () => {
+    const id = get().campaignBuilderId;
+    if (!id) return false;
+    const campaign = get().campaigns.find(c => c.id === id) || await get().fetchCampaignById(id);
+    if (!campaign) { get().showToast('Campaign not found'); return false; }
+    track('campaign.send_now', { campaignId: id });
+
+    // Flush any pending debounced field save so the audience we resolve
+    // reflects the latest edit.
+    const pending = _campaignSaveTimers.get(id);
+    if (pending) { clearTimeout(pending); _campaignSaveTimers.delete(id); }
+
+    let recipients = [];
+    try {
+      recipients = await resolveCampaignAudience(campaign, { segments: get().audienceSegments });
+    } catch (e) {
+      console.error('resolveCampaignAudience failed:', e);
+    }
+    if (!recipients.length) {
+      get().showToast('No patients match this audience — adjust it and try again');
+      return false;
+    }
+
+    const nowIso = new Date().toISOString();
+    const subject = campaign.subjectLine || campaign.name;
+    const rows = recipients.map(r => {
+      const status = simulateStatus(id, r.memberId);
+      const bounced = status === 'bounced';
+      return {
+        id: `${id}::${r.memberId}`,
+        campaign_id: id,
+        member_id: r.memberId,
+        recipient_name: r.name,
+        recipient_email: r.email,
+        status,
+        subject,
+        sent_at: bounced ? null : nowIso,
+        opened_at: status === 'opened' ? nowIso : null,
+        error: bounced ? 'Mailbox unavailable (simulated)' : null,
+      };
+    });
+
+    const { error } = await supabase.from('campaign_sends').upsert(rows, { onConflict: 'id' });
+    if (error) {
+      console.error('sendCampaignNow log error:', error);
+      get().showToast('Could not record campaign send — is the migration run?');
+      return false;
+    }
+
+    const N = rows.length;
+    const deliveredCount = rows.filter(r => r.status !== 'bounced' && r.status !== 'failed').length;
+    const openedCount = rows.filter(r => r.status === 'opened').length;
+    const deliveredPct = Math.round((deliveredCount / N) * 100);
+    const openedPct = Math.round((openedCount / N) * 100);
+    // Match CampaignView.computeHealth (delivered − opened gap) so the stored
+    // value agrees with the badge the list derives.
+    const gap = deliveredPct - openedPct;
+    const health = gap <= 10 ? 'Good' : gap <= 20 ? 'Moderate' : 'Poor';
+    const patch = { section: 'running', enabled: true, audience: N, delivered: deliveredPct, opened: openedPct, progress: 100, health };
+
+    const { error: upErr } = await supabase.from('campaigns').update(patch).eq('id', id);
+    if (upErr) console.error('sendCampaignNow stats error:', upErr);
+
+    set(s => ({
+      campaigns: s.campaigns.map(c => c.id === id ? { ...c, ...patch } : c),
+      campaignSends: { ...s.campaignSends, [id]: rows.map(campaignSendRowToJs) },
+    }));
+    get().showToast(`Sent to ${N} recipient${N !== 1 ? 's' : ''} · ${deliveredPct}% delivered · ${openedPct}% opened`);
+    return true;
+  },
+
   // Hand-off from the CampaignBuilder to the EmailBuilder for "Edit Template".
   // Reuses the existing email-builder takeover; closing it returns to the
   // CampaignBuilder because campaignBuilderId stays set.
@@ -13836,6 +13979,28 @@ export const useAppStore = create((set, get) => ({
   editingCampaignId: null,
   editingCampaignName: null,
   setEditingCampaignName: (name) => set({ editingCampaignName: name }),
+
+  // Org-level CAN-SPAM footer settings (physical address + unsubscribe URL).
+  // Single-row `email_compliance_settings` table; stays null until fetched,
+  // and renderEmail.js falls back to DEFAULT_COMPLIANCE while it is.
+  emailComplianceSettings: null,
+  fetchEmailComplianceSettings: async () => {
+    if (get().emailComplianceSettings) return;
+    const { data, error } = await supabase
+      .from('email_compliance_settings')
+      .select('clinic_name, physical_address, unsubscribe_url')
+      .eq('id', 'default')
+      .maybeSingle();
+    if (error || !data) return;
+    set({
+      emailComplianceSettings: {
+        clinicName: data.clinic_name,
+        physicalAddress: data.physical_address,
+        unsubscribeUrl: data.unsubscribe_url,
+      },
+    });
+  },
+
   emailDocument: null,
   selectedBlockId: 'root',
   selectedColumnIdx: null,
@@ -14000,6 +14165,7 @@ export const useAppStore = create((set, get) => ({
     // customFooterPresets which both default to [], so the builder renders
     // immediately and gets populated when the fetch resolves.
     get().fetchCustomPresets();
+    get().fetchEmailComplianceSettings();
     updateHash(get);
   },
   closeEmailBuilder: () => {

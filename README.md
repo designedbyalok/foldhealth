@@ -37,6 +37,18 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **Email campaigns: personalization, compliance, and a real send engine.**
+  The email builder gained a Personalize token picker (merge tags like
+  `{{first_name}}` resolved at preview and send time, with support for legacy
+  `{Patient Name}` styles), a preview-text preheader field, and a CAN-SPAM
+  footer (physical address plus unsubscribe) appended at render with a
+  List-Unsubscribe header on test sends. RawHtml and custom-HTML now ship
+  sanitized. "Run Campaign Now" is a real (simulated) send: it resolves the
+  audience from `all_patients` via Supabase-backed `audience_segments`, writes a
+  `campaign_sends` delivery log, and rolls the results into the campaign's
+  delivered/opened stats, surfaced in a delivery-results summary. New tables:
+  `email_compliance_settings`, `audience_segments`, `campaign_sends`.
+
 - **Care Plan Library: goal creation and its interventions** — the New Template
   flow now opens a full-screen New Care Plan view, and Add New opens Create New
   Goals (category → measure → chronic condition → target, with a Set Target

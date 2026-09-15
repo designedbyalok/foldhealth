@@ -1518,6 +1518,45 @@ async function main() {
     }
   }
 
+  // ── Email compliance settings (single row) ──
+  // Physical mailing address + unsubscribe URL appended to every campaign
+  // email's footer (CAN-SPAM). One canonical row keyed 'default'.
+  console.log('Seeding email_compliance_settings...');
+  {
+    const { error: ecsErr } = await supabase
+      .from('email_compliance_settings')
+      .upsert([{
+        id: 'default',
+        clinic_name: 'Stanford Care Center',
+        physical_address: '300 Pasteur Drive, Stanford, CA 94305',
+        unsubscribe_url: 'https://fold.health/unsubscribe?e={{email}}',
+      }], { onConflict: 'id' });
+    console.log(ecsErr ? `  ✗ ${ecsErr.message}` : '  ✓ email compliance settings');
+  }
+
+  // ── Audience segments (CampaignBuilder Include/Exclude options) ──
+  // Chosen to resolve against the real all_patients data; predicates live in
+  // src/features/campaign/audienceResolver.js keyed by resolver_key.
+  console.log('Seeding audience_segments...');
+  {
+    const segments = [
+      { id: 'all-patients', label: 'All Patients',         resolver_key: 'all',       sort_order: 0 },
+      { id: 'diabetic',     label: 'Diabetic',             resolver_key: 'diabetic',  sort_order: 1 },
+      { id: 'cardiac',      label: 'Cardiac / Heart',      resolver_key: 'cardiac',   sort_order: 2 },
+      { id: 'seniors',      label: 'Seniors (65+)',        resolver_key: 'seniors',   sort_order: 3 },
+      { id: 'pediatric',    label: 'Pediatric (under 18)', resolver_key: 'pediatric', sort_order: 4 },
+      { id: 'nj-patients',  label: 'New Jersey patients',  resolver_key: 'nj',        sort_order: 5 },
+      { id: 'ny-patients',  label: 'New York patients',    resolver_key: 'ny',        sort_order: 6 },
+    ];
+    const { error: asErr } = await supabase
+      .from('audience_segments')
+      .upsert(segments, { onConflict: 'id' });
+    console.log(asErr ? `  ✗ ${asErr.message}` : `  ✓ audience segments (${segments.length})`);
+  }
+
+  // campaign_sends has no seed — it is the delivery log, populated when a
+  // campaign is actually run from the CampaignBuilder.
+
   console.log('\n✅  Seed complete. Run `bun run dev` to verify.\n');
 }
 
