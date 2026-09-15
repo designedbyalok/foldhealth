@@ -786,6 +786,97 @@ function persistSnpMemberUpdate(id, patch) {
       }
     });
 }
+
+// The SNP program + care plan are the single source of truth for the worklist's
+// Program Sub Status, Care Plan Status, and Assignee columns. These helpers
+// derive the worklist labels from that source so the two never drift.
+//
+// Care Plan Status is derived from the plan row alone (cheap enough for the
+// bulk worklist projection). "In Review", which needs the plan's audit log,
+// stays a program-view-only distinction.
+function snpCarePlanStatusLabel(plan) {
+  if (!plan) return 'No Care Plan';
+  return plan.signed_at ? 'Signed' : 'Draft';
+}
+const snpInitialsFromName = (name) =>
+  (name || '').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+// A program assignee is a plain name string ("Unassigned" when none). Normalize
+// it to the worklist's { name, initials } shape (null when unassigned).
+function snpAssigneeFromProgram(assignee) {
+  const name = assignee && assignee !== 'Unassigned' ? assignee : null;
+  return { assigneeName: name, assigneeInitials: name ? snpInitialsFromName(name) : null };
+}
+
+// Overlay each worklist row with its SNP program + care plan status, so those
+// three columns project the single source of truth. Two bulk queries keyed by
+// patient_id / program_id; rows without a resolvable SNP program keep the
+// snapshot they came in with. `programId` is stamped on so worklist-side edits
+// know which program row to write back to.
+async function projectSnpProgramState(rows) {
+  const patientIds = [...new Set(rows.map(r => r.patientId).filter(Boolean))];
+  if (!patientIds.length) return rows;
+  const { data: progs, error: progErr } = await supabase
+    .from('patient_care_programs')
+    .select('id, patient_id, status, assignee, created_at')
+    .eq('code', 'SNP')
+    .in('patient_id', patientIds)
+    .order('created_at', { ascending: true });
+  if (progErr || !progs?.length) return rows;
+
+  // Latest SNP enrollment per patient (rows are created_at-ascending, so the
+  // last one seen wins).
+  const progByPatient = new Map();
+  progs.forEach(p => progByPatient.set(p.patient_id, p));
+  const progIds = [...progByPatient.values()].map(p => p.id);
+
+  const planByProgram = new Map();
+  if (progIds.length) {
+    const { data: plans } = await supabase
+      .from('patient_care_plans')
+      .select('program_id, signed_at')
+      .in('program_id', progIds);
+    (plans || []).forEach(pl => planByProgram.set(pl.program_id, pl));
+  }
+
+  return rows.map(row => {
+    const prog = row.patientId ? progByPatient.get(row.patientId) : null;
+    if (!prog) return row;
+    return {
+      ...row,
+      programId:        prog.id,
+      programSubStatus: prog.status || row.programSubStatus,
+      carePlanStatus:   snpCarePlanStatusLabel(planByProgram.get(prog.id)),
+      assigneeId:       null,
+      assigneeRole:     null,
+      ...snpAssigneeFromProgram(prog.assignee),
+    };
+  });
+}
+
+// Write a worklist-initiated status/assignee edit through to the SNP care
+// program (the source of truth), and mirror it into a loaded program slice so
+// an open program view reflects it immediately. `patch` keys (status, assignee)
+// match both the in-memory program shape and the DB columns.
+function writeSnpProgramField(get, set, member, patch) {
+  const { programId, patientId } = member;
+  if (!programId) return;
+  const now = new Date();
+  const stamp = `${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}/${now.getFullYear()}`;
+  if (patientId && get().careProgramsByPatient[patientId]) {
+    set(s => ({
+      careProgramsByPatient: {
+        ...s.careProgramsByPatient,
+        [patientId]: (s.careProgramsByPatient[patientId] || []).map(p =>
+          p.id === programId ? { ...p, ...patch, lastUpdated: stamp } : p,
+        ),
+      },
+    }));
+  }
+  supabase.from('patient_care_programs')
+    .update({ ...patch, last_updated: stamp })
+    .eq('id', programId)
+    .then(({ error }) => { if (error) reportPersistFailure(`writeSnpProgramField(${programId})`, error); });
+}
 function persistHccGapDelete(code, memberName) {
   if (!code) return;
   let q = supabase.from('hcc_diagnosis_gaps').delete().eq('code', code);
@@ -4220,6 +4311,18 @@ export const useAppStore = create((set, get) => ({
       const c = s.patientCarePlans[key];
       return c ? { patientCarePlans: { ...s.patientCarePlans, [key]: { ...c, plan: { ...c.plan, signedBy: name, signedAt, updatedAt: signedAt } } } } : {};
     });
+    // Care Plan Status on the SNP worklist is derived from the plan's signed
+    // state, so reflect the signature there immediately (the projection on next
+    // load would too, but this keeps an open worklist in sync).
+    if (program?.code === 'SNP') {
+      set(s => ({
+        snpWorklistMembers: (s.snpWorklistMembers || []).map(m => {
+          if (m.patientId !== patientId) return m;
+          if (m.programId && m.programId !== program.id) return m;
+          return { ...m, carePlanStatus: 'Signed' };
+        }),
+      }));
+    }
     // Signing is what cuts a version, so the templates this version carries are
     // recorded here — added ones with the goals / interventions / barriers
     // sitting under them, removed ones by name. Logged before the signature so
@@ -4751,6 +4854,24 @@ export const useAppStore = create((set, get) => ({
         careProgramsByPatient: { ...state.careProgramsByPatient, [patientId]: next },
       };
     });
+    // Mirror an SNP program's status / assignee edit into the worklist row so
+    // the two stay in agreement without a reload. Only touches the enrollment
+    // the worklist tracks (the latest); rows keyed only by patient (no known
+    // programId yet) match too.
+    if (updated && updated.code === 'SNP' && (patch.status !== undefined || patch.assignee !== undefined)) {
+      set(state => ({
+        snpWorklistMembers: (state.snpWorklistMembers || []).map(m => {
+          if (m.patientId !== patientId) return m;
+          if (m.programId && m.programId !== updated.id) return m;
+          const nextRow = { ...m, programId: updated.id };
+          if (patch.status !== undefined) nextRow.programSubStatus = updated.status;
+          if (patch.assignee !== undefined) {
+            Object.assign(nextRow, snpAssigneeFromProgram(updated.assignee), { assigneeId: null, assigneeRole: null });
+          }
+          return nextRow;
+        }),
+      }));
+    }
     // A status change is a program activity — log it so the Program Activity Log
     // reflects it, grouped under the program.
     if (updated && patch.status && patch.status !== prevStatus) {
@@ -7111,46 +7232,58 @@ export const useAppStore = create((set, get) => ({
       });
       return;
     }
-    set({
-      snpWorklistMembers: data.map(r => ({
-        id:               r.id,
-        initials:         r.initials,
-        name:             r.name,
-        gender:           r.gender,
-        age:              r.age,
-        memberId:         r.member_id,
-        language:         r.language || 'en',
-        programSubStatus: r.program_sub_status,
-        carePlanStatus:   r.care_plan_status,
-        nextActionDue:    r.next_action_due,
-        outreach:         r.outreach || null,
-        assigneeId:       r.assignee_id,
-        assigneeName:     r.assignee_name,
-        assigneeInitials: r.assignee_initials,
-        assigneeRole:     r.assignee_role,
-        triggerDate:      r.trigger_date,
-        lastAdmission:    r.last_admission,
-        trigger:          r.trigger,
-        riskIq:           r.risk_iq || 'Undetermined',
-        tags:             r.tags || [],
-        tagsMore:         r.tags_more ?? 0,
-        taskCount:        r.task_count ?? 0,
-        patientId:        r.patient_id,
-      })),
-      snpWorklistLoading: false,
-    });
+    const baseRows = data.map(r => ({
+      id:               r.id,
+      initials:         r.initials,
+      name:             r.name,
+      gender:           r.gender,
+      age:              r.age,
+      memberId:         r.member_id,
+      language:         r.language || 'en',
+      programSubStatus: r.program_sub_status,
+      carePlanStatus:   r.care_plan_status,
+      nextActionDue:    r.next_action_due,
+      outreach:         r.outreach || null,
+      assigneeId:       r.assignee_id,
+      assigneeName:     r.assignee_name,
+      assigneeInitials: r.assignee_initials,
+      assigneeRole:     r.assignee_role,
+      triggerDate:      r.trigger_date,
+      lastAdmission:    r.last_admission,
+      trigger:          r.trigger,
+      riskIq:           r.risk_iq || 'Undetermined',
+      tags:             r.tags || [],
+      tagsMore:         r.tags_more ?? 0,
+      taskCount:        r.task_count ?? 0,
+      patientId:        r.patient_id,
+      programId:        null,
+    }));
+
+    // Project the SNP care program + care plan onto Program Sub Status, Care
+    // Plan Status, and Assignee so those columns read from the same source the
+    // program view writes to. A patient can be enrolled in SNP more than once
+    // (triggers 1, 2, 3…); the latest enrollment drives the row. Rows with no
+    // patient link, or a patient with no SNP program yet, keep their snapshot.
+    const overlaid = await projectSnpProgramState(baseRows);
+    set({ snpWorklistMembers: overlaid, snpWorklistLoading: false });
   },
 
-  // Optimistic in-memory update for an SNP member's Program Sub Status,
-  // then persisted to snp_worklist_members. The filter chip options
-  // recompute from the updated array automatically.
+  // Program Sub Status is the SNP care program's `status`. Editing it from the
+  // worklist writes THROUGH to patient_care_programs (the single source), and
+  // mirrors into any loaded program slice so an open program view reflects it.
+  // Rows with no linked SNP program fall back to the worklist snapshot column.
   setSnpProgramSubStatus: (id, next) => {
+    const member = get().snpWorklistMembers.find(m => m.id === id);
     set(s => ({
       snpWorklistMembers: s.snpWorklistMembers.map(m =>
         m.id === id ? { ...m, programSubStatus: next } : m,
       ),
     }));
-    persistSnpMemberUpdate(id, { program_sub_status: next });
+    if (member?.programId) {
+      writeSnpProgramField(get, set, member, { status: next });
+    } else {
+      persistSnpMemberUpdate(id, { program_sub_status: next });
+    }
   },
 
   // Assign / re-assign an SNP member to a platform user. Accepts the shape
@@ -7160,6 +7293,7 @@ export const useAppStore = create((set, get) => ({
   // update so a reload keeps the new assignment.
   setSnpAssignee: (memberId, user) => {
     const role = user?.role || user?.clinicalRoles?.[0] || null;
+    const member = get().snpWorklistMembers.find(m => m.id === memberId);
     set(s => ({
       snpWorklistMembers: s.snpWorklistMembers.map(m =>
         m.id === memberId
@@ -7173,12 +7307,19 @@ export const useAppStore = create((set, get) => ({
           : m,
       ),
     }));
-    persistSnpMemberUpdate(memberId, {
-      assignee_id:       user?.id || null,
-      assignee_name:     user?.name || null,
-      assignee_initials: user?.initials || null,
-      assignee_role:     role,
-    });
+    // Assignee lives on the SNP care program (a plain name string). Write it
+    // through so the program and worklist stay in agreement; snapshot fallback
+    // for rows with no linked program.
+    if (member?.programId) {
+      writeSnpProgramField(get, set, member, { assignee: user?.name || 'Unassigned' });
+    } else {
+      persistSnpMemberUpdate(memberId, {
+        assignee_id:       user?.id || null,
+        assignee_name:     user?.name || null,
+        assignee_initials: user?.initials || null,
+        assignee_role:     role,
+      });
+    }
   },
 
   // Enrolling a patient in the SNP care program implies membership in the
