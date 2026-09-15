@@ -274,18 +274,6 @@ export function CarePlanCreateView({ onClose, onSave }) {
               onRowMenuGoal={(m) => setRowMenu({ list: 'goals', item: m.item, rect: m.rect })}
               onRowMenuIntervention={(m) => setRowMenu({ list: 'interventions', item: m.item, rect: m.rect })}
               onRowMenuBarrier={(m) => setRowMenu({ list: 'barriers', item: m.item, rect: m.rect })}
-              footer={(
-                <div className={styles.goalListActions}>
-                  <Button
-                    variant="tertiary"
-                    size="L"
-                    leadingIconElement={<AddIconMinimalist size={16} />}
-                    onClick={() => setPicker('goals')}
-                  >
-                    Add New
-                  </Button>
-                </div>
-              )}
             />
           )}
         </div>

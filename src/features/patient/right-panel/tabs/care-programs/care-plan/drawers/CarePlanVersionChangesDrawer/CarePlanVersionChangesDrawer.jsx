@@ -37,6 +37,11 @@ const ACTION_LABEL = {
   shared: 'Shared', restored: 'Restored',
 };
 const TONED_ACTIONS = new Set(['status_changed', 'progress_changed']);
+// A version mixes things that arrived in it with edits to things that were
+// already there. Only the first kind carries a tag, so "new here" reads at a
+// glance rather than having to be inferred from the heading.
+const ADDED_TAG = { label: 'Added in this version', tone: 'success' };
+const REMOVED_TAG = { label: 'Removed in this version', tone: 'error' };
 const TONE_WORDS = [
   [/completed|high|good|achieved|met|on track/i, 'success'],
   [/moderate|in progress|partial|fair/i, 'warning'],
@@ -148,6 +153,7 @@ function buildNodes(rawRows, links) {
       anchor: t.id,
       icon: TEMPLATE_ICON,
       heading: `${t.summary} Template ${t.action === 'created' ? 'Added' : 'Removed'}`,
+      tag: t.action === 'created' ? ADDED_TAG : REMOVED_TAG,
       stamp: stampOf(t),
       summary,
       groups,
@@ -166,6 +172,7 @@ function buildNodes(rawRows, links) {
         // A counted bucket spans several rows; the newest one dates it.
         stamp: stampOf(ofType.at(-1)),
         heading: `${countLabel(type, ofType.length)} ${verb}`,
+        tag: action === 'created' ? ADDED_TAG : REMOVED_TAG,
         items: ofType.map(r => r.summary).filter(Boolean),
       });
     }
@@ -304,6 +311,7 @@ export function CarePlanVersionChangesDrawer({ rows, signedAt, anchor, plan, onC
           {node.stamp && <MetaLine entry={node.stamp} />}
           <div className={htStyles.headlineRow}>
             <span className={htStyles.headline}>{node.heading}</span>
+            {node.tag && <Badge tone={node.tag.tone} size="S" label={node.tag.label} />}
             <ViewMoreButton expanded={open} onToggle={() => toggle(node.id)} />
           </div>
           {open && (

@@ -2,6 +2,14 @@
 .detailsWrap { padding-top: var(--space-2); }
 
 /* A standalone note's text, under its heading. */
+/* Third line of a version entry: what it changed, at a glance. */
+.summaryBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+
 .noteBody {
   margin-top: var(--space-1);
   font-size: var(--font-base);

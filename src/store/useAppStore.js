@@ -4302,6 +4302,11 @@ export const useAppStore = create((set, get) => ({
     const planId = cur?.plan?.id;
     if (!planId) { get().showToast('Add a goal before signing.'); return null; }
     const versionNumber = await get().snapshotCarePlanVersion(patientId, program, { reason: 'signed', note });
+    // The signature is what the version records, so a failed snapshot has to
+    // stop it: signing anyway leaves a History entry pointing at a version that
+    // does not exist and nothing to restore. snapshotCarePlanVersion has
+    // already said why it failed.
+    if (!versionNumber) return null;
     const name = get().currentUserProfile?.name || null;
     const signedAt = new Date().toISOString();
     const { error } = await supabase.from('patient_care_plans')
@@ -4484,12 +4489,29 @@ export const useAppStore = create((set, get) => ({
     if (!planId) return;
     const snap = version.snapshot || {};
     // Replace children: delete current, insert from the snapshot (new ids).
-    await supabase.from('patient_care_plan_goals').delete().eq('plan_id', planId);
-    await supabase.from('patient_care_plan_interventions').delete().eq('plan_id', planId);
+    // Every step is checked: the deletes run before the inserts, so a failure
+    // that went unreported would leave the plan emptied while the toast and
+    // the audit row claimed the restore worked.
+    const failed = (step, error) => {
+      console.warn(`restoreCarePlanVersion (${step}):`, error.message);
+      get().showToast('Could not restore this version — the plan may be incomplete, refresh to see its current state');
+      return undefined;
+    };
+    const delGoals = await supabase.from('patient_care_plan_goals').delete().eq('plan_id', planId);
+    if (delGoals.error) return failed('clear goals', delGoals.error);
+    const delIntv = await supabase.from('patient_care_plan_interventions').delete().eq('plan_id', planId);
+    if (delIntv.error) return failed('clear interventions', delIntv.error);
+
     const goalRows = (snap.goals || []).map((g, i) => ({ ...patientCarePlanGoalToRow(g, planId), sort_order: i }));
     const intvRows = (snap.interventions || []).map((x, i) => ({ ...patientCarePlanInterventionToRow(x, planId), sort_order: i }));
-    if (goalRows.length) await supabase.from('patient_care_plan_goals').insert(goalRows);
-    if (intvRows.length) await supabase.from('patient_care_plan_interventions').insert(intvRows);
+    if (goalRows.length) {
+      const { error } = await supabase.from('patient_care_plan_goals').insert(goalRows);
+      if (error) return failed('restore goals', error);
+    }
+    if (intvRows.length) {
+      const { error } = await supabase.from('patient_care_plan_interventions').insert(intvRows);
+      if (error) return failed('restore interventions', error);
+    }
     // Reload the plan from the DB and audit the restore.
     set(s => ({ patientCarePlanLoadedFor: { ...s.patientCarePlanLoadedFor, [key]: false } }));
     await get().fetchPatientCarePlan(patientId, program.id);

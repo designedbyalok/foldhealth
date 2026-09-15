@@ -6,6 +6,7 @@ import { groupByMonth } from '../../../../../../../../components/Timeline/Timeli
 import { AuditDetailCard } from '../../../../../../../../components/AuditDetailCard/AuditDetailCard';
 import { CarePlanVersionChangesDrawer } from '../CarePlanVersionChangesDrawer/CarePlanVersionChangesDrawer';
 import { Avatar } from '../../../../../../../../components/Avatar/Avatar';
+import { Badge } from '../../../../../../../../components/Badge/Badge';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import {
   templateContents,
@@ -172,6 +173,37 @@ function firstEntityType(rows) {
     || 'goal';
 }
 
+// Collapsed gist of a version, as badges: how many templates it brought in and
+// how many changes it made per entity. Built from the same net rows the
+// expanded card uses, so the counts cannot disagree with what opens below.
+function versionBadges(group) {
+  const rows = netVersionRows(group.rows);
+  const templates = rows.filter(r => r.entityType === 'template');
+  const owned = templateOwnedTitles(templates);
+  // A template's own goals and items are reported by its badge, not counted
+  // again as individual changes.
+  const plain = rows.filter(r => r.entityType !== 'template'
+    && r.action !== 'shared'
+    && !((r.action === 'created' || r.action === 'deleted')
+      && owned.has((r.summary || '').trim().toLowerCase())));
+
+  const badges = [];
+  const addedTemplates = templates.filter(t => t.action === 'created').length;
+  const removedTemplates = templates.filter(t => t.action === 'deleted').length;
+  if (addedTemplates) {
+    badges.push({ label: `${addedTemplates} Template${addedTemplates === 1 ? '' : 's'} Added`, icon: CARE_PLAN_ICON });
+  }
+  if (removedTemplates) {
+    badges.push({ label: `${removedTemplates} Template${removedTemplates === 1 ? '' : 's'} Removed`, icon: CARE_PLAN_ICON });
+  }
+  for (const type of Object.keys(ENTITY_NOUN)) {
+    const n = plain.filter(r => r.entityType === type).length;
+    if (!n) continue;
+    badges.push({ label: `${n} ${ENTITY_NOUN[type][0]} Change${n === 1 ? '' : 's'}`, icon: ENTITY_ICON[type] });
+  }
+  return badges;
+}
+
 function sectionsFor(group, openAt, links) {
   // Only the net difference between this signature and the previous one.
   const rows = netVersionRows(group.rows);
@@ -313,6 +345,7 @@ export function CarePlanHistoryDrawer({ patientId, program, onClose }) {
         const at = g.createdAt ? new Date(g.createdAt) : null;
         const isOpen = expanded.has(g.id);
         const version = versionLabel(g.signed);
+        const badges = versionBadges(g);
         const header = [
           `Signed by: ${g.actor || 'Unknown'}`,
           version,
@@ -334,6 +367,13 @@ export function CarePlanHistoryDrawer({ patientId, program, onClose }) {
                 <span className={htStyles.headline}>Care Plan Updated</span>
                 <ViewMoreButton expanded={isOpen} onToggle={() => toggle(g.id)} />
               </div>
+              {badges.length > 0 && (
+                <div className={styles.summaryBadges}>
+                  {badges.map(b => (
+                    <Badge key={b.label} tone="grey" size="S" icon={b.icon} label={b.label} />
+                  ))}
+                </div>
+              )}
               {isOpen && (
                 <div className={styles.detailsWrap}>
                   <AuditDetailCard
