@@ -32,7 +32,7 @@ import { OrgPanel } from './OrgPanel';
 import { UsersTab } from './users/UsersTab';
 import { LocationsTab } from './locations/LocationsTab';
 import { HCC_ROLES, ROLE_COLORS, getInitials } from './AccountPanel.constants';
-import { useLocationNames, TagInput, MultiSelectField, AddColumnDropdown } from './AccountPanelParts';
+import { useLocationNames, AddColumnDropdown } from './AccountPanelParts';
 import { ADMIN_ROLES, GENDER_OPTIONS, LANGUAGE_OPTIONS, MOCK_ROLES, isCapitalizedName } from './InviteUserDrawer.utils';
 import styles from './AccountPanel.module.css';
 
@@ -219,7 +219,7 @@ export function AccountPanel() {
 
 const VIEW_TABS = ['User Details', 'Business Hours', 'Assigned Patients', 'Audit Log'];
 
-export function ViewUserDrawer({ user, onClose, onEdit }) {
+export function ViewUserDrawer({ user, onClose, onEdit, canEdit = true }) {
   const raw = user._raw || {};
   const [viewTab, setViewTab] = useState('User Details');
   const setActivePage = useAppStore(s => s.setActivePage);
@@ -248,7 +248,7 @@ export function ViewUserDrawer({ user, onClose, onEdit }) {
         activeKey={viewTab}
         onChange={setViewTab}
         fullWidth={false}
-        trailing={<ActionButton icon="solar:pen-linear" size="S" tooltip="Edit Profile" onClick={onEdit} />}
+        trailing={canEdit ? <ActionButton icon="solar:pen-linear" size="S" tooltip="Edit Profile" onClick={onEdit} /> : undefined}
       />
 
       {viewTab === 'Audit Log' ? (
@@ -519,6 +519,18 @@ function InsurancePlansTab({
 
 const DRAWER_TABS = ['User Details', 'Business Hours', 'Assigned Patients'];
 const EHR_SYSTEMS = ['Athena Health', 'Epic', 'Cerner', 'eClinicalWorks', 'Allscripts', 'NextGen', 'Greenway Health', 'DrChrono'];
+// US states + DC — licence states are a fixed set, so a multi-select reads
+// cleaner than free-typed tags.
+const US_STATES = [
+  'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware',
+  'District of Columbia', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa',
+  'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota',
+  'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey',
+  'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon',
+  'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah',
+  'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming',
+];
+const toOptions = (arr) => arr.map(v => ({ value: v, label: v }));
 
 export function EditUserDrawer({ user, onClose, onSave }) {
   const uid = useId();
@@ -573,6 +585,15 @@ export function EditUserDrawer({ user, onClose, onSave }) {
   const [form, setForm] = useState(() => (initialDraft ? { ...initialForm, ...initialDraft } : initialForm));
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
+
+  // Credentials is a free-text list stored as an array; a plain DS Input backs
+  // it with a comma-separated string, kept locally so a trailing comma while
+  // typing isn't swallowed by a round-trip through the array.
+  const [credText, setCredText] = useState(() => (form.credentials || []).join(', '));
+  const setCredentials = (raw) => {
+    setCredText(raw);
+    set('credentials', raw.split(',').map(t => t.trim()).filter(Boolean));
+  };
 
   const isDirty = useMemo(
     () => JSON.stringify(form) !== JSON.stringify(initialForm),
@@ -690,11 +711,25 @@ export function EditUserDrawer({ user, onClose, onSave }) {
           {/* Clinical & Operational Roles */}
           <div className={styles.formField}>
             <p className={styles.formHint}>Select at least one role if the user interacts with patients or schedules appointments.</p>
-            <MultiSelectField label="Clinical & Operational Roles" options={MOCK_ROLES} value={form.clinical_roles} onChange={v => { set('clinical_roles', v); if (v.length > 0) set('role', v[0]); }} />
+            <Select
+              label="Clinical & Operational Roles"
+              multiple checkboxes searchable
+              options={toOptions(MOCK_ROLES)}
+              value={form.clinical_roles}
+              onChange={v => { set('clinical_roles', v); if (v.length > 0) set('role', v[0]); }}
+              placeholder="Select..."
+            />
           </div>
 
           {/* Location */}
-          <MultiSelectField label="Location" options={locationNames} value={form.locations} onChange={v => set('locations', v)} />
+          <Select
+            label="Location"
+            multiple checkboxes searchable
+            options={toOptions(locationNames)}
+            value={form.locations}
+            onChange={v => set('locations', v)}
+            placeholder="Select..."
+          />
 
           {/* Map User to EHR — each select carries its own built-in label. */}
           <div className={styles.formGrid}>
@@ -715,7 +750,14 @@ export function EditUserDrawer({ user, onClose, onSave }) {
           </div>
 
           {/* Languages */}
-          <MultiSelectField label="Languages" options={LANGUAGE_OPTIONS} value={form.languages} onChange={v => set('languages', v)} />
+          <Select
+            label="Languages"
+            multiple checkboxes searchable
+            options={toOptions(LANGUAGE_OPTIONS)}
+            value={form.languages}
+            onChange={v => set('languages', v)}
+            placeholder="Select..."
+          />
 
           {/* Basic Info */}
           <div className={styles.formSection}>
@@ -741,10 +783,14 @@ export function EditUserDrawer({ user, onClose, onSave }) {
                 errorText={lastNameError || undefined}
               />
               <DatePicker label="Date of Birth" id={`${uid}-dob`} value={form.date_of_birth || ''} onSelect={v => set('date_of_birth', v)} />
-              <div className={styles.formField}>
-                <label className={styles.formLabel} htmlFor={`${uid}-credentials`}>Credentials</label>
-                <TagInput inputId={`${uid}-credentials`} value={form.credentials} onChange={v => set('credentials', v)} placeholder="e.g. Dr, NP" />
-              </div>
+              <Input
+                label="Credentials"
+                id={`${uid}-credentials`}
+                value={credText}
+                onChange={e => setCredentials(e.target.value)}
+                placeholder="e.g. Dr, NP"
+                helperText="Separate multiple with commas"
+              />
               <Select
                 label="Gender"
                 id={`${uid}-gender`}
@@ -760,10 +806,14 @@ export function EditUserDrawer({ user, onClose, onSave }) {
           <Textarea title="Profile" id={`${uid}-bio`} rows={5} value={form.bio} onChange={e => set('bio', e.target.value)} placeholder="Brief bio or description..." />
 
           {/* Licence State */}
-          <div className={styles.formField}>
-            <label className={styles.formLabel} htmlFor={`${uid}-licence-states`}>Licence State</label>
-            <TagInput inputId={`${uid}-licence-states`} value={form.licence_states} onChange={v => set('licence_states', v)} placeholder="Add state..." />
-          </div>
+          <Select
+            label="Licence State"
+            multiple checkboxes searchable
+            options={toOptions(US_STATES)}
+            value={form.licence_states}
+            onChange={v => set('licence_states', v)}
+            placeholder="Add state..."
+          />
 
           {/* Contact Info */}
           <div className={styles.formSection}>

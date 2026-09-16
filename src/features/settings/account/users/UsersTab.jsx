@@ -111,6 +111,7 @@ export function UsersTab({ tabsForBar, activeTab, setActiveTab }) {
         <ViewUserDrawer
           user={tab.viewingUser}
           onClose={() => tab.setViewingUser(null)}
+          canEdit={tab.isCurrentUserAdmin}
           onEdit={() => { tab.setEditingUser(tab.viewingUser); tab.setViewingUser(null); }}
         />
       )}
