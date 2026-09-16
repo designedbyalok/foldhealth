@@ -311,8 +311,11 @@ export const Input = forwardRef(function Input(
   const shellInputValue = isDateType
     ? dateTyped
     : value;
+  // Keep `undefined` as `undefined` so a controlled date field (value set, no
+  // defaultValue) doesn't get a synthesized `defaultValue=""` alongside its
+  // `value` — React warns on an input carrying both.
   const shellInputDefault = isDateType
-    ? mdyFromIso(defaultValue)
+    ? (defaultValue !== undefined ? mdyFromIso(defaultValue) : undefined)
     : defaultValue;
   const shellInputPlaceholder = isDateType && props.placeholder == null
     ? 'MM/DD/YYYY'

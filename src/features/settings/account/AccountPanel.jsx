@@ -12,6 +12,8 @@ import { Drawer } from '../../../components/Drawer/Drawer';
 import { TabStrip } from '../../../components/TabStrip/TabStrip';
 import { UserProfileBanner } from './users/UserProfileBanner';
 import { Input } from '../../../components/Input/Input';
+import { Textarea } from '../../../components/Textarea/Textarea';
+import { DatePicker } from '../../../components/DatePicker/DatePicker';
 import { SectionTitleBar } from '../../../components/SectionTitleBar/SectionTitleBar';
 import { Select } from '../../../components/Select/Select';
 import { RadioButton } from '../../../components/RadioButton/RadioButton';
@@ -21,6 +23,7 @@ import { AddIconMinimalist } from '../../../components/Icon/AddIconMinimalist';
 import { CreateInsurancePlanDrawer } from './CreateInsurancePlanDrawer';
 import { InsurancePlanViewDrawer } from './InsurancePlanViewDrawer';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from '../../../components/ShadcnDialog/ShadcnDialog';
 import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { BulkBar } from '../../../components/BulkBar/BulkBar';
 import { BulkSelectToggle } from '../../../components/BulkSelect/BulkSelectToggle';
@@ -524,7 +527,10 @@ export function EditUserDrawer({ user, onClose, onSave }) {
   const logAudit = useAppStore(s => s.logAudit);
   const showToast = useAppStore(s => s.showToast);
   const [drawerTab, setDrawerTab] = useState('User Details');
-  const [form, setForm] = useState({
+
+  // The saved-state baseline: what the form equals when there are no unsaved
+  // edits. Both the dirty check and draft recovery measure against it.
+  const initialForm = useMemo(() => ({
     first_name: raw.first_name || user.name?.split(' ')[0] || '',
     middle_name: raw.middle_name || '',
     last_name: raw.last_name || user.name?.split(' ').slice(1).join(' ') || '',
@@ -548,11 +554,65 @@ export function EditUserDrawer({ user, onClose, onSave }) {
     clinical_roles: raw.clinical_roles || [],
     ehr_mapping: raw.ehr_mapping || '',
     ehr_user: raw.ehr_user || '',
+  }), [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Per-user draft so an accidental close (or a reload) never loses typing.
+  // localStorage is per-viewer and best-effort — every access is guarded.
+  const draftKey = `foldEditUserDraft:${user.id}`;
+  const clearDraft = () => { try { localStorage.removeItem(draftKey); } catch { /* ignore */ } };
+
+  // Read any saved draft once, at mount, so a recovered form and the "restored"
+  // toast agree without touching a ref during render.
+  const [initialDraft] = useState(() => {
+    try {
+      const v = localStorage.getItem(draftKey);
+      const draft = v ? JSON.parse(v) : null;
+      return draft && typeof draft === 'object' ? draft : null;
+    } catch { return null; }
   });
+  const [form, setForm] = useState(() => (initialDraft ? { ...initialForm, ...initialDraft } : initialForm));
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
 
+  const isDirty = useMemo(
+    () => JSON.stringify(form) !== JSON.stringify(initialForm),
+    [form, initialForm],
+  );
+
+  // Persist edits as they happen; drop the draft the moment the form is back
+  // at the saved baseline.
+  useEffect(() => {
+    try {
+      if (isDirty) localStorage.setItem(draftKey, JSON.stringify(form));
+      else localStorage.removeItem(draftKey);
+    } catch { /* ignore */ }
+  }, [form, isDirty, draftKey]);
+
+  // Let the user know we brought their unsaved work back.
+  useEffect(() => {
+    if (initialDraft) showToast('Restored your unsaved changes');
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Only the essential identity fields are required, so the form isn't a wall
+  // of asterisks. The capital-letter rule shows live; the required rule only
+  // after a save attempt.
+  const [submitted, setSubmitted] = useState(false);
+  const nameError = (v) => {
+    if (submitted && !v.trim()) return 'This field is required';
+    if (v && !isCapitalizedName(v)) return 'Must start with a capital letter';
+    return '';
+  };
+  const firstNameError = nameError(form.first_name);
+  const lastNameError = nameError(form.last_name);
+
+  const [confirmClose, setConfirmClose] = useState(false);
+
   const handleSave = () => {
+    setSubmitted(true);
+    if (!form.first_name.trim() || !form.last_name.trim()) {
+      showToast('First and last name are required');
+      return;
+    }
     if (!isCapitalizedName(form.first_name) || !isCapitalizedName(form.last_name)) {
       showToast('First and last name must start with a capital letter');
       return;
@@ -580,13 +640,27 @@ export function EditUserDrawer({ user, onClose, onSave }) {
     if (changes.length > 0) {
       logAudit('UserProfile', user.id, user.name, 'updated', `Profile updated: ${changes.map(c => c.field).join(', ')}`, 'Configuration', changes);
     }
+    // The save intent supersedes the draft; the parent unmounts this drawer on
+    // success, so clear it now rather than leaving a stale draft behind.
+    clearDraft();
     onSave(updates);
   };
 
-  const handleDiscard = () => { onClose(); };
+  // Close guards. A dirty overlay / X / Esc close is vetoed (beforeClose returns
+  // false) and routed to the save-or-discard dialog so nothing is lost by
+  // accident. The explicit Discard button is intentional, so it just drops the
+  // draft and closes.
+  const beforeClose = () => {
+    if (!isDirty) return true;
+    setConfirmClose(true);
+    return false;
+  };
+  const handleDiscard = () => { clearDraft(); onClose(); };
+  const discardFromDialog = () => { setConfirmClose(false); clearDraft(); onClose(); };
+  const saveFromDialog = () => { setConfirmClose(false); handleSave(); };
 
   return (
-    <Drawer title="User Profile" onClose={onClose} bodyClassName={styles.editDrawerBody} headerStyle={{ padding: '12px' }} titleStyle={{ fontSize: 'var(--font-base)' }}>
+    <Drawer title="User Profile" onClose={onClose} beforeClose={beforeClose} bodyClassName={styles.editDrawerBody} headerStyle={{ padding: '12px' }} titleStyle={{ fontSize: 'var(--font-base)' }}>
       <UserProfileBanner user={user} />
       <TabStrip
         items={DRAWER_TABS.map(t => ({ key: t, label: t }))}
@@ -601,10 +675,11 @@ export function EditUserDrawer({ user, onClose, onSave }) {
 
       {drawerTab === 'User Details' ? (
         <div className={styles.formScroll}>
-          {/* Administrative Roles */}
-          <div className={styles.formSection}>
-            {/* Names the radiogroup rather than a single control, so aria-labelledby not htmlFor. */}
-            <span className={styles.formLabel} id={`${uid}-admin-roles`}>Administrative Roles <span className={styles.required}>*</span></span>
+          {/* Administrative Roles — a radiogroup keeps an external group label
+              (aria-labelledby, no built-in control to own it), sized to match
+              the DS label + 4px gap via .formField. */}
+          <div className={styles.formField}>
+            <span className={styles.formLabel} id={`${uid}-admin-roles`}>Administrative Roles</span>
             <div className={styles.radioGroup} role="radiogroup" aria-labelledby={`${uid}-admin-roles`}>
               {ADMIN_ROLES.map(role => (
                 <RadioButton key={role} label={role} checked={form.admin_role === role} onChange={() => set('admin_role', role)} />
@@ -613,113 +688,80 @@ export function EditUserDrawer({ user, onClose, onSave }) {
           </div>
 
           {/* Clinical & Operational Roles */}
-          <div className={styles.formSection}>
+          <div className={styles.formField}>
             <p className={styles.formHint}>Select at least one role if the user interacts with patients or schedules appointments.</p>
-            <MultiSelectField label="Clinical & Operational Roles" required options={MOCK_ROLES} value={form.clinical_roles} onChange={v => { set('clinical_roles', v); if (v.length > 0) set('role', v[0]); }} />
+            <MultiSelectField label="Clinical & Operational Roles" options={MOCK_ROLES} value={form.clinical_roles} onChange={v => { set('clinical_roles', v); if (v.length > 0) set('role', v[0]); }} />
           </div>
 
           {/* Location */}
-          <MultiSelectField label="Location" required options={locationNames} value={form.locations} onChange={v => set('locations', v)} />
+          <MultiSelectField label="Location" options={locationNames} value={form.locations} onChange={v => set('locations', v)} />
 
-          {/* Map User to EHR */}
-          <div className={styles.formSection}>
-            {/* Names the pair of selects below, not one control. */}
-            <span className={styles.formLabel} id={`${uid}-ehr-map`}>Map User to EHR <span className={styles.required}>*</span></span>
-            <div className={styles.formGrid} role="group" aria-labelledby={`${uid}-ehr-map`}>
-              <div className={styles.formField}>
-                <Select
-                  options={EHR_SYSTEMS.map(s => ({ value: s, label: s }))}
-                  value={form.ehr_mapping || undefined}
-                  onChange={v => set('ehr_mapping', v)}
-                  placeholder="Select EHR system"
-                />
-              </div>
-              <div className={styles.formField}>
-                <Select
-                  options={[`${form.first_name} ${form.last_name} (${form.ehr_mapping || 'EHR'})`, 'Amy Brenneman (Athena Health)', 'John Doe (Epic)', 'Jane Smith (Cerner)'].filter(Boolean).map(u => ({ value: u, label: u }))}
-                  value={form.ehr_user || undefined}
-                  onChange={v => set('ehr_user', v)}
-                  placeholder="Select EHR user"
-                />
-              </div>
-            </div>
+          {/* Map User to EHR — each select carries its own built-in label. */}
+          <div className={styles.formGrid}>
+            <Select
+              label="EHR System"
+              options={EHR_SYSTEMS.map(s => ({ value: s, label: s }))}
+              value={form.ehr_mapping || undefined}
+              onChange={v => set('ehr_mapping', v)}
+              placeholder="Select EHR system"
+            />
+            <Select
+              label="EHR User"
+              options={[`${form.first_name} ${form.last_name} (${form.ehr_mapping || 'EHR'})`, 'Amy Brenneman (Athena Health)', 'John Doe (Epic)', 'Jane Smith (Cerner)'].filter(Boolean).map(u => ({ value: u, label: u }))}
+              value={form.ehr_user || undefined}
+              onChange={v => set('ehr_user', v)}
+              placeholder="Select EHR user"
+            />
           </div>
 
           {/* Languages */}
-          <MultiSelectField label="Languages" required options={LANGUAGE_OPTIONS} value={form.languages} onChange={v => set('languages', v)} />
+          <MultiSelectField label="Languages" options={LANGUAGE_OPTIONS} value={form.languages} onChange={v => set('languages', v)} />
 
           {/* Basic Info */}
           <div className={styles.formSection}>
             <h4 className={styles.formSectionTitle}>Basic Info</h4>
             <div className={styles.formGrid}>
+              <Input
+                label="First Name"
+                required
+                id={`${uid}-first-name`}
+                value={form.first_name}
+                onChange={e => set('first_name', e.target.value)}
+                placeholder="First name"
+                errorText={firstNameError || undefined}
+              />
+              <Input label="Middle Name" id={`${uid}-middle-name`} value={form.middle_name} onChange={e => set('middle_name', e.target.value)} placeholder="Middle name" />
+              <Input
+                label="Last Name"
+                required
+                id={`${uid}-last-name`}
+                value={form.last_name}
+                onChange={e => set('last_name', e.target.value)}
+                placeholder="Last name"
+                errorText={lastNameError || undefined}
+              />
+              <DatePicker label="Date of Birth" id={`${uid}-dob`} value={form.date_of_birth || ''} onSelect={v => set('date_of_birth', v)} />
               <div className={styles.formField}>
-                <label className={styles.formLabel} htmlFor={`${uid}-first-name`}>First Name <span className={styles.required}>*</span></label>
-                <Input
-                  id={`${uid}-first-name`}
-                  value={form.first_name}
-                  onChange={e => set('first_name', e.target.value)}
-                  placeholder="First name"
-                  variant={form.first_name && !isCapitalizedName(form.first_name) ? 'error' : 'default'}
-                />
-                {form.first_name && !isCapitalizedName(form.first_name) && (
-                  <span className={styles.fieldError}>Must start with a capital letter</span>
-                )}
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.formLabel} htmlFor={`${uid}-middle-name`}>Middle Name</label>
-                <Input id={`${uid}-middle-name`} value={form.middle_name} onChange={e => set('middle_name', e.target.value)} placeholder="Middle name" />
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.formLabel} htmlFor={`${uid}-last-name`}>Last Name <span className={styles.required}>*</span></label>
-                <Input
-                  id={`${uid}-last-name`}
-                  value={form.last_name}
-                  onChange={e => set('last_name', e.target.value)}
-                  placeholder="Last name"
-                  variant={form.last_name && !isCapitalizedName(form.last_name) ? 'error' : 'default'}
-                />
-                {form.last_name && !isCapitalizedName(form.last_name) && (
-                  <span className={styles.fieldError}>Must start with a capital letter</span>
-                )}
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.formLabel} htmlFor={`${uid}-dob`}>Date of Birth</label>
-                <div className={styles.dateInputWrap}>
-                  <input
-                    id={`${uid}-dob`}
-                    type="date"
-                    className={styles.dateInput}
-                    value={form.date_of_birth || ''}
-                    onChange={e => set('date_of_birth', e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.formLabel} htmlFor={`${uid}-credentials`}>Credentials <span className={styles.required}>*</span></label>
+                <label className={styles.formLabel} htmlFor={`${uid}-credentials`}>Credentials</label>
                 <TagInput inputId={`${uid}-credentials`} value={form.credentials} onChange={v => set('credentials', v)} placeholder="e.g. Dr, NP" />
               </div>
-              <div className={styles.formField}>
-                <label className={styles.formLabel} htmlFor={`${uid}-gender`}>Gender <span className={styles.required}>*</span></label>
-                <Select
-                  id={`${uid}-gender`}
-                  options={GENDER_OPTIONS.map(g => ({ value: g, label: g }))}
-                  value={form.gender || undefined}
-                  onChange={v => set('gender', v)}
-                  placeholder="Select gender"
-                />
-              </div>
+              <Select
+                label="Gender"
+                id={`${uid}-gender`}
+                options={GENDER_OPTIONS.map(g => ({ value: g, label: g }))}
+                value={form.gender || undefined}
+                onChange={v => set('gender', v)}
+                placeholder="Select gender"
+              />
             </div>
           </div>
 
           {/* Profile */}
-          <div className={styles.formSection}>
-            <label className={styles.formLabel} htmlFor={`${uid}-bio`}>Profile</label>
-            <textarea id={`${uid}-bio`} className={styles.formTextarea} rows={5} value={form.bio} onChange={e => set('bio', e.target.value)} placeholder="Brief bio or description..." />
-          </div>
+          <Textarea title="Profile" id={`${uid}-bio`} rows={5} value={form.bio} onChange={e => set('bio', e.target.value)} placeholder="Brief bio or description..." />
 
           {/* Licence State */}
-          <div className={styles.formSection}>
-            <label className={styles.formLabel} htmlFor={`${uid}-licence-states`}>Licence State <span className={styles.required}>*</span></label>
+          <div className={styles.formField}>
+            <label className={styles.formLabel} htmlFor={`${uid}-licence-states`}>Licence State</label>
             <TagInput inputId={`${uid}-licence-states`} value={form.licence_states} onChange={v => set('licence_states', v)} placeholder="Add state..." />
           </div>
 
@@ -727,22 +769,10 @@ export function EditUserDrawer({ user, onClose, onSave }) {
           <div className={styles.formSection}>
             <h4 className={styles.formSectionTitle}>Contact Info</h4>
             <div className={styles.formGrid}>
-              <div className={styles.formField}>
-                <label className={styles.formLabel} htmlFor={`${uid}-mobile`}>Mobile Number <span className={styles.required}>*</span></label>
-                <Input id={`${uid}-mobile`} value={form.mobile} onChange={e => set('mobile', e.target.value)} placeholder="+1 234 567 890" />
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.formLabel} htmlFor={`${uid}-email`}>Email <span className={styles.required}>*</span></label>
-                <Input id={`${uid}-email`} value={form.email} disabled />
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.formLabel} htmlFor={`${uid}-fax`}>Fax Number <span className={styles.required}>*</span></label>
-                <Input id={`${uid}-fax`} value={form.fax} onChange={e => set('fax', e.target.value)} placeholder="+1 234 567 890" />
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.formLabel} htmlFor={`${uid}-zip`}>Zip Code <span className={styles.required}>*</span></label>
-                <Input id={`${uid}-zip`} value={form.zip_code} onChange={e => set('zip_code', e.target.value)} placeholder="12345" />
-              </div>
+              <Input label="Mobile Number" id={`${uid}-mobile`} value={form.mobile} onChange={e => set('mobile', e.target.value)} placeholder="+1 234 567 890" />
+              <Input label="Email" required id={`${uid}-email`} value={form.email} disabled />
+              <Input label="Fax Number" id={`${uid}-fax`} value={form.fax} onChange={e => set('fax', e.target.value)} placeholder="+1 234 567 890" />
+              <Input label="Zip Code" id={`${uid}-zip`} value={form.zip_code} onChange={e => set('zip_code', e.target.value)} placeholder="12345" />
             </div>
           </div>
 
@@ -750,22 +780,10 @@ export function EditUserDrawer({ user, onClose, onSave }) {
           <div className={styles.formSection}>
             <h4 className={styles.formSectionTitle}>Additional Info</h4>
             <div className={styles.formGrid}>
-              <div className={styles.formField}>
-                <label className={styles.formLabel} htmlFor={`${uid}-address1`}>Address Line 1 <span className={styles.required}>*</span></label>
-                <Input id={`${uid}-address1`} value={form.address_line1} onChange={e => set('address_line1', e.target.value)} placeholder="Street address" />
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.formLabel} htmlFor={`${uid}-address2`}>Address Line 2 <span className={styles.required}>*</span></label>
-                <Input id={`${uid}-address2`} value={form.address_line2} onChange={e => set('address_line2', e.target.value)} placeholder="Apt, suite, etc." />
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.formLabel} htmlFor={`${uid}-state`}>State <span className={styles.required}>*</span></label>
-                <Input id={`${uid}-state`} value={form.state} onChange={e => set('state', e.target.value)} placeholder="State" />
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.formLabel} htmlFor={`${uid}-city`}>City <span className={styles.required}>*</span></label>
-                <Input id={`${uid}-city`} value={form.city} onChange={e => set('city', e.target.value)} placeholder="City" />
-              </div>
+              <Input label="Address Line 1" id={`${uid}-address1`} value={form.address_line1} onChange={e => set('address_line1', e.target.value)} placeholder="Street address" />
+              <Input label="Address Line 2" id={`${uid}-address2`} value={form.address_line2} onChange={e => set('address_line2', e.target.value)} placeholder="Apt, suite, etc." />
+              <Input label="State" id={`${uid}-state`} value={form.state} onChange={e => set('state', e.target.value)} placeholder="State" />
+              <Input label="City" id={`${uid}-city`} value={form.city} onChange={e => set('city', e.target.value)} placeholder="City" />
             </div>
           </div>
         </div>
@@ -776,6 +794,25 @@ export function EditUserDrawer({ user, onClose, onSave }) {
           <p className={styles.emptyDesc}>Coming soon.</p>
         </div>
       )}
+
+      {/* Unsaved-changes guard: shown when the user tries to close a dirty
+          form. Dismissing it (overlay / Esc) keeps the drawer open — the safe
+          default — so a stray click never discards work. */}
+      <Dialog open={confirmClose} onOpenChange={open => !open && setConfirmClose(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save your changes?</DialogTitle>
+            <DialogDescription>
+              You have unsaved changes on this profile. Save them before closing, or discard them.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" size="M" onClick={() => setConfirmClose(false)}>Keep editing</Button>
+            <Button variant="secondary" size="M" onClick={discardFromDialog}>Discard</Button>
+            <Button variant="primary" size="M" onClick={saveFromDialog}>Save changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Drawer>
   );
 }

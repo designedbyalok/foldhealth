@@ -58,7 +58,9 @@
 .enhRoot {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  /* Match the DS Input/Select label→field gap so a titled Textarea lines up
+     with the other form controls. */
+  gap: var(--space-1);
   width: 100%;
 }
 
@@ -71,7 +73,7 @@
 .enhLabel {
   font-size: var(--font-base);
   font-weight: 400;
-  color: var(--neutral-300);
+  color: var(--neutral-200);
   line-height: var(--leading-tight);
 }
 .enhInfo {

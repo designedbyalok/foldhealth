@@ -5,6 +5,32 @@ import { FALLBACK_USERS } from '../../fallbackUsers';
 import { getInitials } from '../AccountPanel.constants';
 import { ROLE_FIELDS } from './UsersTab.utils';
 
+// Map a raw `profiles` row to the user shape the table renders. Shared by the
+// list fetch and the single-row save so a save can update just its own row
+// (from the UPDATE's returned row) instead of re-fetching the whole table.
+function mapProfileRow(u) {
+  const displayName = u.full_name?.trim() || u.email?.split('@')[0] || 'Unknown';
+  return {
+    id: u.id,
+    name: displayName,
+    email: u.email || '',
+    initials: getInitials(displayName).toUpperCase(),
+    status: u.status || 'Active',
+    role: u.clinical_roles?.length > 0 ? u.clinical_roles[0] : (u.role || 'Viewer'),
+    clinicalRoles: u.clinical_roles || [],
+    extraRoles: u.clinical_roles?.length > 1 ? u.clinical_roles.length - 1 : (u.extra_roles || 0),
+    location: u.locations?.length > 0 ? u.locations[0] : (u.practice_location || ''),
+    locations: u.locations || [],
+    extraLocations: u.locations?.length > 1 ? u.locations.length - 1 : (u.extra_locations || 0),
+    department: u.department || '',
+    phone: u.phone || u.mobile || '',
+    avatarUrl: u.avatar_url || '',
+    lastActiveAt: u.last_active_at,
+    createdAt: u.created_at,
+    _raw: u,
+  };
+}
+
 export function useUsersTab() {
   const showToast = useAppStore(s => s.showToast);
   const [users, setUsers] = useState([]);
@@ -62,25 +88,7 @@ export function useUsersTab() {
         .order('created_at', { ascending: false });
 
       if (!error && data?.length > 0) {
-        setUsers(data.map(u => ({
-          id: u.id,
-          name: u.full_name?.trim() || u.email?.split('@')[0] || 'Unknown',
-          email: u.email || '',
-          initials: getInitials(u.full_name?.trim() || u.email?.split('@')[0] || '').toUpperCase(),
-          status: u.status || 'Active',
-          role: u.clinical_roles?.length > 0 ? u.clinical_roles[0] : (u.role || 'Viewer'),
-          clinicalRoles: u.clinical_roles || [],
-          extraRoles: u.clinical_roles?.length > 1 ? u.clinical_roles.length - 1 : (u.extra_roles || 0),
-          location: u.locations?.length > 0 ? u.locations[0] : (u.practice_location || ''),
-          locations: u.locations || [],
-          extraLocations: u.locations?.length > 1 ? u.locations.length - 1 : (u.extra_locations || 0),
-          department: u.department || '',
-          phone: u.phone || u.mobile || '',
-          avatarUrl: u.avatar_url || '',
-          lastActiveAt: u.last_active_at,
-          createdAt: u.created_at,
-          _raw: u,
-        })));
+        setUsers(data.map(mapProfileRow));
       } else {
         setUsers(FALLBACK_USERS);
       }
@@ -223,7 +231,10 @@ export function useUsersTab() {
       return;
     }
 
-    await fetchUsers();
+    // Update just this row from the UPDATE's returned record instead of
+    // re-fetching every profile — the full-table refetch (with a loading
+    // skeleton flash) was what made Save feel slow.
+    setUsers(prev => prev.map(u => (u.id === userId ? mapProfileRow(data[0]) : u)));
     showToast('Profile updated');
     setEditingUser(null);
   };
