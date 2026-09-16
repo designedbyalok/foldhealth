@@ -838,6 +838,19 @@ async function projectSnpProgramState(rows) {
     (plans || []).forEach(pl => planByProgram.set(pl.program_id, pl));
   }
 
+  // Tasks created inside the SNP program, tallied per patient. `tasks` are
+  // tagged by program_code (not a specific enrollment), so this is the count
+  // for the patient's SNP program as a whole — what the Tasks column shows.
+  const taskCountByPatient = new Map();
+  const { data: taskRows } = await supabase
+    .from('tasks')
+    .select('patient_id')
+    .eq('program_code', 'SNP')
+    .in('patient_id', patientIds);
+  (taskRows || []).forEach(t => {
+    taskCountByPatient.set(t.patient_id, (taskCountByPatient.get(t.patient_id) || 0) + 1);
+  });
+
   return rows.map(row => {
     const prog = row.patientId ? progByPatient.get(row.patientId) : null;
     if (!prog) return row;
@@ -846,6 +859,7 @@ async function projectSnpProgramState(rows) {
       programId:        prog.id,
       programSubStatus: prog.status || row.programSubStatus,
       carePlanStatus:   snpCarePlanStatusLabel(planByProgram.get(prog.id)),
+      taskCount:        taskCountByPatient.get(row.patientId) || 0,
       assigneeId:       null,
       assigneeRole:     null,
       ...snpAssigneeFromProgram(prog.assignee),
@@ -14913,6 +14927,17 @@ export const useAppStore = create((set, get) => ({
     const tempId = Date.now();
     const optimistic = { ...normalized, id: tempId };
     set(s => ({ tasks: [...s.tasks, optimistic] }));
+
+    // Keep the SNP worklist's Tasks count live when a task is created inside a
+    // patient's SNP program. The projection recomputes the authoritative count
+    // on the next worklist load, so this is just immediate feedback in-session.
+    if (normalized.program_code === 'SNP' && normalized.patient_id) {
+      set(s => ({
+        snpWorklistMembers: (s.snpWorklistMembers || []).map(m =>
+          m.patientId === normalized.patient_id ? { ...m, taskCount: (m.taskCount || 0) + 1 } : m,
+        ),
+      }));
+    }
 
     // dbOmit: client-only fields the tasks table has no columns for
     // (consolidatedPdf blob, duplicated state string). They stay on the
