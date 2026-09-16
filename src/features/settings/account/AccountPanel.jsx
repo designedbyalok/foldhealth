@@ -219,6 +219,103 @@ export function AccountPanel() {
 
 const VIEW_TABS = ['User Details', 'Business Hours', 'Assigned Patients', 'Audit Log'];
 
+// One read-only label/value pair in the profile grid. Empty values read as "-".
+function ViewField({ label, value }) {
+  return (
+    <div className={styles.viewField}>
+      <span className={styles.viewFieldLabel}>{label}</span>
+      <span className={styles.viewFieldValue}>{value || '-'}</span>
+    </div>
+  );
+}
+
+// A titled row of badges, rendered only when there's something to show.
+function ViewBadgeSection({ label, items, variant }) {
+  if (!items?.length) return null;
+  return (
+    <div className={styles.viewSection}>
+      <div className={styles.viewSectionLabel}>{label}</div>
+      <div className={styles.viewBadges}>
+        {items.map(v => <Badge key={v} variant={variant} label={v} />)}
+      </div>
+    </div>
+  );
+}
+
+// The read-only "User Details" tab body. Extracted from ViewUserDrawer so the
+// drawer shell stays simple and this stays flat via the two helpers above.
+function UserDetailsView({ user, raw }) {
+  const adminRole = raw.admin_role || 'Business/Practice Owner';
+  const roles = raw.clinical_roles?.length > 0
+    ? raw.clinical_roles
+    : (raw.role && raw.role !== 'Viewer' ? [raw.role] : []);
+  const firstName = raw.first_name || user.name?.split(' ')[0] || '';
+  const lastName = raw.last_name || user.name?.split(' ').slice(1).join(' ') || '';
+  const credentials = raw.credentials?.length > 0 ? raw.credentials.join(', ') : '';
+  const licenceStates = raw.licence_states?.length > 0 ? raw.licence_states.join(', ') : '';
+
+  return (
+    <div className={styles.formScroll}>
+      <div className={styles.viewSection}>
+        <div className={styles.viewSectionLabel}>Administrative Role</div>
+        <div className={styles.viewBadges}>
+          <Badge variant="ai-neutral" label={adminRole} />
+        </div>
+      </div>
+
+      <ViewBadgeSection label="Roles" items={roles} variant="ai-care" />
+      <ViewBadgeSection label="Location" items={raw.locations} variant="ai-neutral" />
+      <ViewBadgeSection label="Languages" items={raw.languages} variant="toc-engaged" />
+
+      <div className={styles.viewSection}>
+        <div className={styles.viewSectionTitle}>Basic Info</div>
+        <div className={styles.viewGrid}>
+          <ViewField label="First Name" value={firstName} />
+          <ViewField label="Middle Name" value={raw.middle_name} />
+          <ViewField label="Last Name" value={lastName} />
+          <ViewField label="Date of Birth" value={raw.date_of_birth} />
+          <ViewField label="Credentials" value={credentials} />
+          <ViewField label="Email" value={user.email} />
+        </div>
+      </div>
+
+      {raw.bio && (
+        <div className={styles.viewSection}>
+          <div className={styles.viewFieldLabel}>Profile</div>
+          <p className={styles.viewBio}>{raw.bio}</p>
+        </div>
+      )}
+
+      <div className={styles.viewSection}>
+        <div className={styles.viewGrid}>
+          <ViewField label="Licence State" value={licenceStates} />
+          <ViewField label="Gender" value={raw.gender} />
+        </div>
+      </div>
+
+      <div className={styles.viewSection}>
+        <div className={styles.viewSectionTitle}>Contact Info</div>
+        <div className={styles.viewGrid}>
+          <ViewField label="Mobile Number" value={raw.mobile || raw.phone} />
+          <ViewField label="Email" value={user.email} />
+          <ViewField label="Fax Number" value={raw.fax} />
+          <ViewField label="Zipcode" value={raw.zip_code} />
+        </div>
+      </div>
+
+      <div className={styles.viewSection}>
+        <div className={styles.viewSectionTitle}>Additional Info</div>
+        <div className={styles.viewGrid}>
+          <ViewField label="Address Line 1" value={raw.address_line1} />
+          <ViewField label="Address Line 2" value={raw.address_line2} />
+          <ViewField label="State" value={raw.state} />
+          <ViewField label="City" value={raw.city} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ViewUserDrawer({ user, onClose, onEdit, canEdit = true }) {
   const raw = user._raw || {};
   const [viewTab, setViewTab] = useState('User Details');
@@ -232,13 +329,6 @@ export function ViewUserDrawer({ user, onClose, onEdit, canEdit = true }) {
     setCurrentPage(1);
     onClose();
   };
-
-  const adminRole = raw.admin_role || 'Business/Practice Owner';
-  const roles = raw.clinical_roles?.length > 0 ? raw.clinical_roles : (raw.role && raw.role !== 'Viewer' ? [raw.role] : []);
-  const locations = raw.locations?.length > 0 ? raw.locations : [];
-  const languages = raw.languages?.length > 0 ? raw.languages : [];
-  const credentials = raw.credentials?.length > 0 ? raw.credentials : [];
-  const licenceStates = raw.licence_states?.length > 0 ? raw.licence_states : [];
 
   return (
     <Drawer title="User Profile" onClose={onClose} bodyClassName={styles.editDrawerBody} headerStyle={{ padding: '12px' }} titleStyle={{ fontSize: 'var(--font-base)' }}>
@@ -256,144 +346,7 @@ export function ViewUserDrawer({ user, onClose, onEdit, canEdit = true }) {
           <AuditLogContent entityType="UserProfile" entityId={user.id} />
         </div>
       ) : viewTab === 'User Details' ? (
-        <div className={styles.formScroll}>
-          {/* Administrative Role */}
-          <div className={styles.viewSection}>
-            <div className={styles.viewSectionLabel}>Administrative Role</div>
-            <div className={styles.viewBadges}>
-              <Badge variant="ai-neutral" label={adminRole} />
-            </div>
-          </div>
-
-          {/* Roles */}
-          {roles.length > 0 && (
-            <div className={styles.viewSection}>
-              <div className={styles.viewSectionLabel}>Roles</div>
-              <div className={styles.viewBadges}>
-                {roles.map(r => <Badge key={r} variant="ai-care" label={r} />)}
-              </div>
-            </div>
-          )}
-
-          {/* Location */}
-          {locations.length > 0 && (
-            <div className={styles.viewSection}>
-              <div className={styles.viewSectionLabel}>Location</div>
-              <div className={styles.viewBadges}>
-                {locations.map(l => <Badge key={l} variant="ai-neutral" label={l} />)}
-              </div>
-            </div>
-          )}
-
-          {/* Languages */}
-          {languages.length > 0 && (
-            <div className={styles.viewSection}>
-              <div className={styles.viewSectionLabel}>Languages</div>
-              <div className={styles.viewBadges}>
-                {languages.map(l => <Badge key={l} variant="toc-engaged" label={l} />)}
-              </div>
-            </div>
-          )}
-
-          {/* Basic Info */}
-          <div className={styles.viewSection}>
-            <div className={styles.viewSectionTitle}>Basic Info</div>
-            <div className={styles.viewGrid}>
-              <div className={styles.viewField}>
-                <span className={styles.viewFieldLabel}>First Name</span>
-                <span className={styles.viewFieldValue}>{raw.first_name || user.name?.split(' ')[0] || '-'}</span>
-              </div>
-              <div className={styles.viewField}>
-                <span className={styles.viewFieldLabel}>Middle Name</span>
-                <span className={styles.viewFieldValue}>{raw.middle_name || '-'}</span>
-              </div>
-              <div className={styles.viewField}>
-                <span className={styles.viewFieldLabel}>Last Name</span>
-                <span className={styles.viewFieldValue}>{raw.last_name || user.name?.split(' ').slice(1).join(' ') || '-'}</span>
-              </div>
-              <div className={styles.viewField}>
-                <span className={styles.viewFieldLabel}>Date of Birth</span>
-                <span className={styles.viewFieldValue}>{raw.date_of_birth || '-'}</span>
-              </div>
-              <div className={styles.viewField}>
-                <span className={styles.viewFieldLabel}>Credentials</span>
-                <span className={styles.viewFieldValue}>{credentials.length > 0 ? credentials.join(', ') : '-'}</span>
-              </div>
-              <div className={styles.viewField}>
-                <span className={styles.viewFieldLabel}>Email</span>
-                <span className={styles.viewFieldValue}>{user.email || '-'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Profile */}
-          {raw.bio && (
-            <div className={styles.viewSection}>
-              <div className={styles.viewFieldLabel}>Profile</div>
-              <p className={styles.viewBio}>{raw.bio}</p>
-            </div>
-          )}
-
-          {/* Licence State & Gender */}
-          <div className={styles.viewSection}>
-            <div className={styles.viewGrid}>
-              <div className={styles.viewField}>
-                <span className={styles.viewFieldLabel}>Licence State</span>
-                <span className={styles.viewFieldValue}>{licenceStates.length > 0 ? licenceStates.join(', ') : '-'}</span>
-              </div>
-              <div className={styles.viewField}>
-                <span className={styles.viewFieldLabel}>Gender</span>
-                <span className={styles.viewFieldValue}>{raw.gender || '-'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Contact Info */}
-          <div className={styles.viewSection}>
-            <div className={styles.viewSectionTitle}>Contact Info</div>
-            <div className={styles.viewGrid}>
-              <div className={styles.viewField}>
-                <span className={styles.viewFieldLabel}>Mobile Number</span>
-                <span className={styles.viewFieldValue}>{raw.mobile || raw.phone || '-'}</span>
-              </div>
-              <div className={styles.viewField}>
-                <span className={styles.viewFieldLabel}>Email</span>
-                <span className={styles.viewFieldValue}>{user.email || '-'}</span>
-              </div>
-              <div className={styles.viewField}>
-                <span className={styles.viewFieldLabel}>Fax Number</span>
-                <span className={styles.viewFieldValue}>{raw.fax || '-'}</span>
-              </div>
-              <div className={styles.viewField}>
-                <span className={styles.viewFieldLabel}>Zipcode</span>
-                <span className={styles.viewFieldValue}>{raw.zip_code || '-'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Additional Info */}
-          <div className={styles.viewSection}>
-            <div className={styles.viewSectionTitle}>Additional Info</div>
-            <div className={styles.viewGrid}>
-              <div className={styles.viewField}>
-                <span className={styles.viewFieldLabel}>Address Line 1</span>
-                <span className={styles.viewFieldValue}>{raw.address_line1 || '-'}</span>
-              </div>
-              <div className={styles.viewField}>
-                <span className={styles.viewFieldLabel}>Address Line 2</span>
-                <span className={styles.viewFieldValue}>{raw.address_line2 || '-'}</span>
-              </div>
-              <div className={styles.viewField}>
-                <span className={styles.viewFieldLabel}>State</span>
-                <span className={styles.viewFieldValue}>{raw.state || '-'}</span>
-              </div>
-              <div className={styles.viewField}>
-                <span className={styles.viewFieldLabel}>City</span>
-                <span className={styles.viewFieldValue}>{raw.city || '-'}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <UserDetailsView user={user} raw={raw} />
       ) : (
         <div className={styles.emptyState}>
           <Icon name="solar:widget-linear" size={40} color="var(--neutral-150)" />
