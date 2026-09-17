@@ -351,7 +351,9 @@ export function CarePlanView({ patientId, program }) {
   const [intvTypeMenu, setIntvTypeMenu] = useState(null); // null | { rect, goalId }
   // Goal a row-menu "Add …" is scoped to, so the new item pre-links to it.
   const [taskGoalId, setTaskGoalId] = useState(null);
-  const [barrierAddGoalId, setBarrierAddGoalId] = useState(null);
+  // Goal a row-menu "Add Barrier" is scoped to. Only read inside handlers
+  // (never rendered), so a ref avoids a needless re-render when it is set.
+  const barrierAddGoalIdRef = useRef(null);
   // Row-menu "Link existing …": checkbox popover staged against a goal.
   const [linkPopover, setLinkPopover] = useState(null); // null | { kind, goalId, rect, selected:Set }
   const [barrierDrawer, setBarrierDrawer] = useState(null); // null | { barrier }
@@ -777,8 +779,8 @@ export function CarePlanView({ patientId, program }) {
     setAddBarriersDrawerOpen(false);
     // When the drawer was opened from a goal row, every new barrier links
     // straight to that goal and the scope selector is bypassed.
-    const linkGoalId = barrierAddGoalId;
-    setBarrierAddGoalId(null);
+    const linkGoalId = barrierAddGoalIdRef.current;
+    barrierAddGoalIdRef.current = null;
     if (!picked?.length) return;
     // Broad-scope targets need cross-plan / all-goal fan-out we haven't
     // shipped yet — the picker fires them, we acknowledge and fall back to
@@ -1013,7 +1015,7 @@ export function CarePlanView({ patientId, program }) {
         }));
     }
     return (data.barriers || [])
-      .filter(b => !barrierGoalIdsOf(b).map(String).includes(gid))
+      .filter(b => !barrierGoalIdsOf(b).some(x => String(x) === gid))
       .map(b => ({ id: b.id, title: b.title, subtitle: b.status || 'Not Started' }));
   };
 
@@ -1023,18 +1025,23 @@ export function CarePlanView({ patientId, program }) {
     const ids = [...selected];
     setLinkPopover(null);
     if (!ids.length || !canEdit) return;
+    // The selected items are distinct rows linking to the same goal, so the
+    // writes are independent — run them together. Each item is resolved by a
+    // Map lookup rather than a per-id array scan.
     if (kind === 'intervention') {
-      for (const id of ids) {
-        const intv = (data.interventions || []).find(i => i.id === id);
-        if (intv) await savePatientCarePlanIntervention(patientId, program, { ...intv, goalId }, intv.id);
-      }
+      const byId = new Map((data.interventions || []).map(i => [i.id, i]));
+      await Promise.all(ids.map((id) => {
+        const intv = byId.get(id);
+        return intv ? savePatientCarePlanIntervention(patientId, program, { ...intv, goalId }, intv.id) : null;
+      }));
     } else {
-      for (const id of ids) {
-        const barrier = (data.barriers || []).find(b => b.id === id);
-        if (!barrier) continue;
+      const byId = new Map((data.barriers || []).map(b => [b.id, b]));
+      await Promise.all(ids.map((id) => {
+        const barrier = byId.get(id);
+        if (!barrier) return null;
         const nextIds = [...new Set([...barrierGoalIdsOf(barrier).map(String), String(goalId)])];
-        await savePatientCarePlanBarrier(patientId, program, { ...barrier, goalIds: nextIds, goalId: nextIds[0] || null }, barrier.id);
-      }
+        return savePatientCarePlanBarrier(patientId, program, { ...barrier, goalIds: nextIds, goalId: nextIds[0] || null }, barrier.id);
+      }));
     }
     showToast(`Linked ${ids.length} ${kind}${ids.length === 1 ? '' : 's'} to the goal`);
   };
@@ -1398,7 +1405,7 @@ export function CarePlanView({ patientId, program }) {
             setStatusMenu(null);
             if (k === 'add-intv') { setIntvTypeMenu({ rect, goalId: item.id }); return; }
             if (k === 'link-intv') { setLinkPopover({ kind: 'intervention', goalId: item.id, rect, selected: new Set() }); return; }
-            if (k === 'add-barrier') { setBarrierAddGoalId(item.id); setAddBarriersDrawerOpen(true); return; }
+            if (k === 'add-barrier') { barrierAddGoalIdRef.current = item.id; setAddBarriersDrawerOpen(true); return; }
             if (k === 'link-barrier') { setLinkPopover({ kind: 'barrier', goalId: item.id, rect, selected: new Set() }); return; }
             if (k === 'delete') setDeleteTarget({ kind: isGoal ? 'goal' : isBarrier ? 'barrier' : 'intv', id: item.id, name: item.title, item });
             else if (k === 'rename' && isBarrier) setBarrierDrawer({ barrier: item });
@@ -1622,7 +1629,7 @@ export function CarePlanView({ patientId, program }) {
 
       {addBarriersDrawerOpen && (
         <AddBarriersDrawer
-          onClose={() => { setAddBarriersDrawerOpen(false); setBarrierAddGoalId(null); }}
+          onClose={() => { setAddBarriersDrawerOpen(false); barrierAddGoalIdRef.current = null; }}
           onAdd={handleAddBarriersFromPicker}
           existingBarriers={data.barriers || []}
         />
