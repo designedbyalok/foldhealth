@@ -11,7 +11,7 @@ import { MenuPopover } from '../../../../../../../components/MenuPopover/MenuPop
 import { SelectAssigneeModal } from '../../../../../../../components/SelectAssigneeModal/SelectAssigneeModal';
 import { PriorityIcon } from '../../../../../../../components/PriorityIcon/PriorityIcon';
 import { ConfirmDialog } from '../../../../../../../components/ConfirmDialog/ConfirmDialog';
-import { goalCascade } from '../lib/carePlanGoalCascade';
+import { goalCascade, barrierGoalIdsOf } from '../lib/carePlanGoalCascade';
 import { RemoveGoalDialog } from '../drawers/RemoveGoalDialog';
 import { Select } from '../../../../../../../components/Select/Select';
 import { FilterChip } from '../../../../../../../components/FilterChip/FilterChip';
@@ -35,6 +35,7 @@ import { CarePlanVersionsDrawer } from '../drawers/CarePlanVersionsDrawer/CarePl
 import { CarePlanLinkDrawer } from '../drawers/CarePlanLinkDrawer/CarePlanLinkDrawer';
 import { CarePlanTrendsDrawer } from '../drawers/CarePlanTrendsDrawer/CarePlanTrendsDrawer';
 import { GoalPreviewDrawer } from '../drawers/GoalPreviewDrawer/GoalPreviewDrawer';
+import { LinkExistingItemsPopover } from '../drawers/GoalPreviewDrawer/LinkExistingItemsPopover';
 import { InterventionPreviewDrawer } from '../drawers/InterventionPreviewDrawer/InterventionPreviewDrawer';
 import { deriveGoalTableFields } from '../lib/goalMetrics';
 import { CarePlanGoalsTable } from '../tables/CarePlanGoalsTable';
@@ -342,9 +343,17 @@ export function CarePlanView({ patientId, program }) {
   const [previewIntervention, setPreviewIntervention] = useState(null);
   const [intvDrawer, setIntvDrawer] = useState(null);  // false | { intervention }
   const [intvTypeMenuOpen, setIntvTypeMenuOpen] = useState(false);
-  const [intvSpecialDrawer, setIntvSpecialDrawer] = useState(null); // null | { kind, intervention? }
+  const [intvSpecialDrawer, setIntvSpecialDrawer] = useState(null); // null | { kind, intervention?, presetGoalId? }
   const [taskDrawerOpen, setTaskDrawerOpen] = useState(null); // null | 'patient-task' | 'internal-task'
   const intvAddRef = useRef(null);
+  // Row-menu "Add Intervention" (goal row): the intervention-type submenu
+  // anchored at the row, carrying the goal to pre-link the new item onto.
+  const [intvTypeMenu, setIntvTypeMenu] = useState(null); // null | { rect, goalId }
+  // Goal a row-menu "Add …" is scoped to, so the new item pre-links to it.
+  const [taskGoalId, setTaskGoalId] = useState(null);
+  const [barrierAddGoalId, setBarrierAddGoalId] = useState(null);
+  // Row-menu "Link existing …": checkbox popover staged against a goal.
+  const [linkPopover, setLinkPopover] = useState(null); // null | { kind, goalId, rect, selected:Set }
   const [barrierDrawer, setBarrierDrawer] = useState(null); // null | { barrier }
   // Barrier preview drawer: shows goals/template linked to this barrier
   // in the current plan version, with delink + add-goal affordances.
@@ -748,8 +757,8 @@ export function CarePlanView({ patientId, program }) {
     setIntvTypeMenuOpen(v => !v);
   };
 
-  const saveInterventionFromConfig = async (kind, config, editingId = null) => {
-    const record = buildInterventionRecordFromConfig(kind, config, { editing: !!editingId });
+  const saveInterventionFromConfig = async (kind, config, editingId = null, preLinkedGoalId = null) => {
+    const record = buildInterventionRecordFromConfig(kind, config, { editing: !!editingId, preLinkedGoalId });
     const saved = await savePatientCarePlanIntervention(patientId, program, record, editingId);
     if (saved) {
       showToast(`"${saved.title}" ${editingId ? 'updated' : 'added'}`);
@@ -766,6 +775,10 @@ export function CarePlanView({ patientId, program }) {
 
   const handleAddBarriersFromPicker = async (picked, opts = {}) => {
     setAddBarriersDrawerOpen(false);
+    // When the drawer was opened from a goal row, every new barrier links
+    // straight to that goal and the scope selector is bypassed.
+    const linkGoalId = barrierAddGoalId;
+    setBarrierAddGoalId(null);
     if (!picked?.length) return;
     // Broad-scope targets need cross-plan / all-goal fan-out we haven't
     // shipped yet — the picker fires them, we acknowledge and fall back to
@@ -777,9 +790,11 @@ export function CarePlanView({ patientId, program }) {
     for (const b of picked) {
       const titleKey = b.title.trim().toLowerCase();
       if (existingTitles.has(titleKey)) continue;
-      const goalIdsForBarrier = target === 'thisPlanAllGoals'
-        ? (data.goals || []).map(g => g.id)
-        : [];
+      const goalIdsForBarrier = linkGoalId
+        ? [linkGoalId]
+        : target === 'thisPlanAllGoals'
+          ? (data.goals || []).map(g => g.id)
+          : [];
       const saved = await savePatientCarePlanBarrier(patientId, program, {
         title: b.title,
         description: b.description || '',
@@ -964,10 +979,65 @@ export function CarePlanView({ patientId, program }) {
     if (saved) showToast(`Saved as template "${saved.name}"`);
   };
 
-  const rowMenuItems = () => [
-    { key: 'rename', icon: 'solar:pen-linear', label: 'Edit', disabled: !canEdit },
-    { key: 'delete', icon: 'solar:trash-bin-trash-linear', label: 'Delete', danger: true, disabled: !canEdit },
-  ];
+  const rowMenuItems = (kind) => {
+    const edit = { key: 'rename', icon: 'solar:pen-linear', label: 'Edit', disabled: !canEdit };
+    const del = { key: 'delete', icon: 'solar:trash-bin-trash-linear', label: 'Delete', danger: true, disabled: !canEdit };
+    if (kind !== 'goal-menu') return [edit, del];
+    // Goal rows can grow the plan directly: add or link interventions and
+    // barriers onto this goal without opening the Goal Details drawer.
+    return [
+      edit,
+      { divider: true },
+      { key: 'add-intv', icon: 'solar:checklist-minimalistic-linear', label: 'Add Intervention', disabled: !canEdit },
+      { key: 'link-intv', icon: 'solar:link-linear', label: 'Link Existing Intervention', disabled: !canEdit },
+      { key: 'add-barrier', icon: 'solar:signpost-2-linear', label: 'Add Barrier', disabled: !canEdit },
+      { key: 'link-barrier', icon: 'solar:link-linear', label: 'Link Existing Barrier', disabled: !canEdit },
+      { divider: true },
+      del,
+    ];
+  };
+
+  // Interventions / barriers not yet on this goal, shaped for the
+  // "Link existing" checkbox popover. An intervention lives on a single
+  // goal, so already-linked ones note where they'd move from.
+  const linkCandidates = (kind, goalId) => {
+    const gid = String(goalId);
+    if (kind === 'intervention') {
+      const goalTitle = new Map((data.goals || []).map(g => [String(g.id), g.title]));
+      return (data.interventions || [])
+        .filter(i => String(i.goalId) !== gid)
+        .map(i => ({
+          id: i.id,
+          title: i.title,
+          subtitle: i.goalId ? `Linked to ${goalTitle.get(String(i.goalId)) || 'another goal'}` : (i.status || 'Not Started'),
+        }));
+    }
+    return (data.barriers || [])
+      .filter(b => !barrierGoalIdsOf(b).map(String).includes(gid))
+      .map(b => ({ id: b.id, title: b.title, subtitle: b.status || 'Not Started' }));
+  };
+
+  const confirmLinkExisting = async () => {
+    if (!linkPopover) return;
+    const { kind, goalId, selected } = linkPopover;
+    const ids = [...selected];
+    setLinkPopover(null);
+    if (!ids.length || !canEdit) return;
+    if (kind === 'intervention') {
+      for (const id of ids) {
+        const intv = (data.interventions || []).find(i => i.id === id);
+        if (intv) await savePatientCarePlanIntervention(patientId, program, { ...intv, goalId }, intv.id);
+      }
+    } else {
+      for (const id of ids) {
+        const barrier = (data.barriers || []).find(b => b.id === id);
+        if (!barrier) continue;
+        const nextIds = [...new Set([...barrierGoalIdsOf(barrier).map(String), String(goalId)])];
+        await savePatientCarePlanBarrier(patientId, program, { ...barrier, goalIds: nextIds, goalId: nextIds[0] || null }, barrier.id);
+      }
+    }
+    showToast(`Linked ${ids.length} ${kind}${ids.length === 1 ? '' : 's'} to the goal`);
+  };
 
   return (
     <div className={styles.container}>
@@ -1316,15 +1386,20 @@ export function CarePlanView({ patientId, program }) {
       {statusMenu && (statusMenu.kind === 'goal-menu' || statusMenu.kind === 'intv-menu' || statusMenu.kind === 'barrier-menu') && (
         <MenuPopover
           anchorRect={statusMenu.rect}
-          width={160}
+          width={statusMenu.kind === 'goal-menu' ? 232 : 160}
           ariaLabel="Row actions"
-          items={rowMenuItems()}
+          items={rowMenuItems(statusMenu.kind)}
           onSelect={(k) => {
             const kind = statusMenu.kind;
             const isGoal = kind === 'goal-menu';
             const isBarrier = kind === 'barrier-menu';
             const item = statusMenu.item;
+            const rect = statusMenu.rect;
             setStatusMenu(null);
+            if (k === 'add-intv') { setIntvTypeMenu({ rect, goalId: item.id }); return; }
+            if (k === 'link-intv') { setLinkPopover({ kind: 'intervention', goalId: item.id, rect, selected: new Set() }); return; }
+            if (k === 'add-barrier') { setBarrierAddGoalId(item.id); setAddBarriersDrawerOpen(true); return; }
+            if (k === 'link-barrier') { setLinkPopover({ kind: 'barrier', goalId: item.id, rect, selected: new Set() }); return; }
             if (k === 'delete') setDeleteTarget({ kind: isGoal ? 'goal' : isBarrier ? 'barrier' : 'intv', id: item.id, name: item.title, item });
             else if (k === 'rename' && isBarrier) setBarrierDrawer({ barrier: item });
             // Intervention "Edit" goes straight to the kind-specific
@@ -1338,6 +1413,51 @@ export function CarePlanView({ patientId, program }) {
           onClose={() => setStatusMenu(null)}
         />
       )}
+
+      {/* Row-menu "Add Intervention": pick a type, then open its editor
+          pre-linked to the goal the row belongs to. */}
+      {intvTypeMenu && (
+        <MenuPopover
+          anchorRect={intvTypeMenu.rect}
+          align="right"
+          width={200}
+          ariaLabel="Add intervention"
+          items={CARE_PLAN_INTERVENTION_MENU}
+          onSelect={(key) => {
+            const goalId = intvTypeMenu.goalId;
+            setIntvTypeMenu(null);
+            if (key === 'patient-task' || key === 'internal-task') { setTaskGoalId(goalId); setTaskDrawerOpen(key); }
+            else setIntvSpecialDrawer({ kind: key, presetGoalId: goalId });
+          }}
+          onClose={() => setIntvTypeMenu(null)}
+        />
+      )}
+
+      {/* Row-menu "Link existing intervention / barrier": staged checkbox
+          list, committed with the Link button. */}
+      {linkPopover && (() => {
+        const items = linkCandidates(linkPopover.kind, linkPopover.goalId)
+          .map(it => ({ ...it, checked: linkPopover.selected.has(it.id) }));
+        return (
+          <LinkExistingItemsPopover
+            anchorRect={linkPopover.rect}
+            width={280}
+            ariaLabel={`Link existing ${linkPopover.kind}`}
+            title={`Link existing ${linkPopover.kind === 'intervention' ? 'interventions' : 'barriers'}`}
+            items={items}
+            emptyLabel={`No ${linkPopover.kind === 'intervention' ? 'interventions' : 'barriers'} to link.`}
+            onToggle={(id, checked) => setLinkPopover(p => {
+              const selected = new Set(p.selected);
+              if (checked) selected.add(id); else selected.delete(id);
+              return { ...p, selected };
+            })}
+            confirmLabel="Link"
+            confirmDisabled={linkPopover.selected.size === 0}
+            onConfirm={confirmLinkExisting}
+            onClose={() => setLinkPopover(null)}
+          />
+        );
+      })()}
 
       {/* Priority change menu (goals / barriers / interventions) */}
       {priorityMenu && (
@@ -1430,7 +1550,8 @@ export function CarePlanView({ patientId, program }) {
           }) : [];
         const currentLinked = Array.isArray(intv?.goalIds) && intv.goalIds.length > 0
           ? intv.goalIds
-          : (intv?.goalId ? [intv.goalId] : []);
+          : (intv?.goalId ? [intv.goalId]
+            : (intvSpecialDrawer.presetGoalId ? [intvSpecialDrawer.presetGoalId] : []));
         // Merge the intervention row's top-level columns into the config
         // blob before handing it to the editor. Legacy rows either only
         // stored `title` / `priority` / `assignee` at the top level, or
@@ -1471,6 +1592,7 @@ export function CarePlanView({ patientId, program }) {
                 intvSpecialDrawer.kind,
                 config,
                 intv?.id || null,
+                intvSpecialDrawer.presetGoalId || null,
               );
               const restore = intvSpecialDrawer.previewOnClose;
               setIntvSpecialDrawer(null);
@@ -1487,18 +1609,20 @@ export function CarePlanView({ patientId, program }) {
           initialAssignedTo={taskDrawerOpen === 'internal-task' ? '' : patientName}
           showScheduleFields
           availableGoals={data.goals}
+          initialLinkedGoalIds={taskGoalId ? [taskGoalId] : []}
           onOpenGoal={(g) => { setTaskDrawerOpen(null); setPreviewGoal(g); }}
-          onClose={() => setTaskDrawerOpen(null)}
+          onClose={() => { setTaskDrawerOpen(null); setTaskGoalId(null); }}
           onTaskCreated={async (t) => {
-            await saveInterventionFromConfig(taskDrawerOpen, { title: t?.name || '', taskId: t?.id });
+            await saveInterventionFromConfig(taskDrawerOpen, { title: t?.name || '', taskId: t?.id }, null, taskGoalId);
             setTaskDrawerOpen(null);
+            setTaskGoalId(null);
           }}
         />
       )}
 
       {addBarriersDrawerOpen && (
         <AddBarriersDrawer
-          onClose={() => setAddBarriersDrawerOpen(false)}
+          onClose={() => { setAddBarriersDrawerOpen(false); setBarrierAddGoalId(null); }}
           onAdd={handleAddBarriersFromPicker}
           existingBarriers={data.barriers || []}
         />

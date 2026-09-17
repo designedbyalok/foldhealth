@@ -306,12 +306,35 @@ const SUMMARY_DUE_DATE_COLUMN = {
   thStyle: HEADER_COMPACT,
 };
 
-const SUMMARY_GOAL_COLUMNS = insertBefore(stripActions(GOAL_COLUMNS), 'status', CARE_PLAN_COLUMN);
-const SUMMARY_INTERVENTION_COLUMNS = insertBefore(
-  insertBefore(stripActions(INTERVENTION_COLUMNS), 'assignee', SUMMARY_DUE_DATE_COLUMN),
-  'status',
+const colByKey = (cols, key) => cols.find(c => c.key === key);
+
+// Declare the Comprehensive Goals / Interventions columns explicitly rather
+// than reusing every GBI column: the body renders a compact metric set
+// (Progress for goals, Adherence for interventions) plus a Program tag, so a
+// literal list keeps the header aligned with the body. The sticky `actions`
+// column is kept — it is where WorklistShell mounts the column picker button.
+// Progress and Adherence carry `defaultHidden` from the shared defs, so both
+// start hidden and users opt in through the picker.
+const SUMMARY_GOAL_COLUMNS = [
+  colByKey(GOAL_COLUMNS, 'priority'),
+  colByKey(GOAL_COLUMNS, 'title'),
+  colByKey(GOAL_COLUMNS, 'createdDate'),
+  colByKey(GOAL_COLUMNS, 'targetDate'),
+  colByKey(GOAL_COLUMNS, 'progress'),
   CARE_PLAN_COLUMN,
-);
+  colByKey(GOAL_COLUMNS, 'status'),
+  colByKey(GOAL_COLUMNS, 'actions'),
+];
+const SUMMARY_INTERVENTION_COLUMNS = [
+  colByKey(INTERVENTION_COLUMNS, 'priority'),
+  colByKey(INTERVENTION_COLUMNS, 'title'),
+  SUMMARY_DUE_DATE_COLUMN,
+  colByKey(INTERVENTION_COLUMNS, 'assignee'),
+  colByKey(INTERVENTION_COLUMNS, 'adherence'),
+  CARE_PLAN_COLUMN,
+  colByKey(INTERVENTION_COLUMNS, 'status'),
+  colByKey(INTERVENTION_COLUMNS, 'actions'),
+];
 const SUMMARY_BARRIER_COLUMNS = insertBefore(stripActions(BARRIER_COLUMNS), 'status', CARE_PLAN_COLUMN);
 
 // Program cell — first programCode as a badge, plus a `+N` badge
@@ -397,13 +420,18 @@ function GoalsTable({ rows, onOpen, onPriorityMenu, onStatusMenu, programOverlap
         sortDir={sortDir}
         onSort={requestSort}
         minTableWidth={0}
+        worklistKey="carePlan:summaryGoals"
         emptyState={<div className={styles.emptyRow}>No goals match.</div>}
-        renderRow={(g) => (
+        renderRow={(g, _idx, ctx) => {
+          const hidden = ctx?.hiddenSet || null;
+          const isHidden = (k) => (hidden ? hidden.has(k) : false);
+          return (
           <tr
             key={`${g.programCode}-${g.id}`}
             className={`${sharedRow.row} ${sharedRow.rowClickable} ${sharedRow.gbiRow}`}
             onClick={() => onOpen(g)}
           >
+            {!isHidden('priority') && (
             <td className={sharedRow.priorityTd} onClick={e => e.stopPropagation()}>
               <button
                 type="button"
@@ -414,6 +442,7 @@ function GoalsTable({ rows, onOpen, onPriorityMenu, onStatusMenu, programOverlap
                 <PriorityIcon priority={g.priority} size={16} />
               </button>
             </td>
+            )}
             <td className={sharedRow.titleTd}>
               <GbiNameCell
                 icon={goalCategoryIcon(g.category)}
@@ -423,26 +452,36 @@ function GoalsTable({ rows, onOpen, onPriorityMenu, onStatusMenu, programOverlap
                 layout="stacked"
               />
             </td>
+            {!isHidden('createdDate') && (
             <td className={sharedRow.dateTd} onClick={e => e.stopPropagation()}>
               <span className={sharedRow.dueDateText}>{fmtMMDDYYYY(g.createdAt)}</span>
             </td>
+            )}
+            {!isHidden('targetDate') && (
             <td className={sharedRow.dateTd} onClick={e => e.stopPropagation()}>
               <span className={sharedRow.dueDateText}>{fmtMMDDYYYY(goalTargetDateOrDefault(g))}</span>
             </td>
+            )}
+            {!isHidden('progress') && (
             <td className={sharedRow.progressTd} onClick={e => e.stopPropagation()}>
               <GbiProgressCell progress={g.progress} />
             </td>
+            )}
+            {!isHidden('carePlan') && (
             <td className={sharedRow.assigneeTd} onClick={e => e.stopPropagation()}>
               <ProgramCell code={g.programCode} overlap={overlapFor(programOverlap, g)} />
             </td>
+            )}
             <td className={sharedRow.statusTd} onClick={e => e.stopPropagation()}>
               <GbiStatusButton
                 value={g.status}
                 onOpen={rect => onStatusMenu({ kind: 'goal', item: g, rect })}
               />
             </td>
+            <td className={sharedRow.actionsTd} aria-hidden="true" />
           </tr>
-        )}
+          );
+        }}
       />
     </div>
   );
@@ -483,8 +522,11 @@ function InterventionsTable({ rows, onOpen, onPriorityMenu, onStatusMenu, onAssi
         sortDir={sortDir}
         onSort={requestSort}
         minTableWidth={0}
+        worklistKey="carePlan:summaryInterventions"
         emptyState={<div className={styles.emptyRow}>No interventions match.</div>}
-        renderRow={(i) => {
+        renderRow={(i, _idx, ctx) => {
+          const hidden = ctx?.hiddenSet || null;
+          const isHidden = (k) => (hidden ? hidden.has(k) : false);
           // Only Internal Task lets the user reassign — every other
           // intervention kind runs on the member and the assignee stays
           // locked to them. Fall back to the plan's patient when a
@@ -506,6 +548,7 @@ function InterventionsTable({ rows, onOpen, onPriorityMenu, onStatusMenu, onAssi
               className={`${sharedRow.row} ${sharedRow.rowClickable} ${sharedRow.gbiRow}`}
               onClick={() => onOpen(i)}
             >
+              {!isHidden('priority') && (
               <td className={sharedRow.priorityTd} onClick={e => e.stopPropagation()}>
                 <button
                   type="button"
@@ -516,6 +559,7 @@ function InterventionsTable({ rows, onOpen, onPriorityMenu, onStatusMenu, onAssi
                   <PriorityIcon priority={i.priority} size={16} />
                 </button>
               </td>
+              )}
               <td className={sharedRow.titleTd}>
                 <GbiNameCell
                   icon={CARE_PLAN_INTERVENTION_ICONS[i.kind] || i.icon || 'solar:clipboard-list-linear'}
@@ -524,6 +568,7 @@ function InterventionsTable({ rows, onOpen, onPriorityMenu, onStatusMenu, onAssi
                   meta={i.duration || null}
                 />
               </td>
+              {!isHidden('dueDate') && (
               <td className={sharedRow.valueTd} onClick={e => e.stopPropagation()}>
                 <span className={sharedRow.dueDateText}>
                   {(() => {
@@ -555,6 +600,8 @@ function InterventionsTable({ rows, onOpen, onPriorityMenu, onStatusMenu, onAssi
                   })()}
                 </span>
               </td>
+              )}
+              {!isHidden('assignee') && (
               <td className={sharedRow.assigneeTd} onClick={e => e.stopPropagation()}>
                 <AssigneeChange
                   size="S"
@@ -572,18 +619,26 @@ function InterventionsTable({ rows, onOpen, onPriorityMenu, onStatusMenu, onAssi
                   disabled={isMemberTask}
                 />
               </td>
+              )}
+              {!isHidden('adherence') && (
               <td className={sharedRow.adherenceTd} onClick={e => e.stopPropagation()}>
                 <GbiProgressCell progress={i.adherence} />
               </td>
+              )}
+              {!isHidden('carePlan') && (
               <td className={sharedRow.assigneeTd} style={{ width: CARE_PLAN_COLUMN.width, minWidth: CARE_PLAN_COLUMN.width, maxWidth: CARE_PLAN_COLUMN.width }} onClick={e => e.stopPropagation()}>
                 <ProgramCell code={i.programCode} overlap={overlapFor(programOverlap, i)} />
               </td>
+              )}
+              {!isHidden('status') && (
               <td className={sharedRow.statusTd} onClick={e => e.stopPropagation()}>
                 <GbiStatusButton
                   value={i.status}
                   onOpen={rect => onStatusMenu({ kind: 'intv', item: i, rect })}
                 />
               </td>
+              )}
+              <td className={sharedRow.actionsTd} aria-hidden="true" />
             </tr>
           );
         }}
@@ -898,51 +953,48 @@ export function CarePlanSummaryView({
   }, [programs, patientCarePlans, patientCarePlanAudit, patientId, currentPatient?.pcp]);
   const showToast = useAppStore(s => s.showToast);
 
-  // Summarize — three-state (idle → loading → ready). Generation goes through
-  // the /api/care-plan-summary proxy (Gemini), which keeps the API key
-  // server-side. Ready renders the recap card below the table; Regenerate
-  // asks the model for a fresh take and appends it so the pager can flip
-  // between them.
-  const [summaryState, setSummaryState] = useState('idle');
-  const [summaries, setSummaries] = useState([]);
-  const [summaryIndex, setSummaryIndex] = useState(0);
-  const summarizePrograms = async () => {
-    if (summaryState === 'loading') return;
+  // Summarize — the cross-program recap (via the /api/care-plan-summary proxy,
+  // which keeps the Gemini key server-side). It is persisted one row per patient
+  // in patient_care_plan_summaries, so the card renders straight from the store:
+  // a generated summary survives reload, and regenerating overwrites it.
+  const savedSummaryEntry = useAppStore(s => s.patientCarePlanSummaries[patientId]);
+  const fetchPatientCarePlanSummary = useAppStore(s => s.fetchPatientCarePlanSummary);
+  const savePatientCarePlanSummary = useAppStore(s => s.savePatientCarePlanSummary);
+  const deletePatientCarePlanSummary = useAppStore(s => s.deletePatientCarePlanSummary);
+
+  useEffect(() => {
+    if (patientId) fetchPatientCarePlanSummary(patientId);
+  }, [patientId, fetchPatientCarePlanSummary]);
+
+  // `generating` is the only local bit — the in-flight state while the model
+  // writes. The rest derives from the persisted recap.
+  const [generating, setGenerating] = useState(false);
+  const savedSummary = savedSummaryEntry?.summary || null;
+  const summaryState = generating ? 'loading' : (savedSummary ? 'ready' : 'idle');
+
+  const generateSummary = async ({ regenerate = false } = {}) => {
+    if (generating) return;
     if (goals.length + interventions.length + barriers.length === 0) {
       showToast?.('No care plan content to summarize yet');
       return;
     }
-    setSummaryState('loading');
+    setGenerating(true);
+    if (regenerate) showToast?.('Regenerating summary…');
     try {
       const summary = await fetchCarePlanSummary(buildSummaryPayload({
         patientName: currentPatient?.name, programs, conditions, goals, interventions, barriers,
       }));
-      setSummaries([summary]);
-      setSummaryIndex(0);
-      setSummaryState('ready');
+      await savePatientCarePlanSummary(patientId, summary);
     } catch (err) {
-      showToast?.(err.message || 'Could not generate the summary');
-      setSummaryState('idle');
+      showToast?.(err.message || (regenerate ? 'Could not regenerate the summary' : 'Could not generate the summary'));
+    } finally {
+      setGenerating(false);
     }
   };
-  const regenerateSummary = async () => {
-    if (summaryState !== 'ready') return;
-    showToast?.('Regenerating summary…');
-    try {
-      const summary = await fetchCarePlanSummary(buildSummaryPayload({
-        patientName: currentPatient?.name, programs, conditions, goals, interventions, barriers,
-      }));
-      setSummaries(prev => {
-        const next = [...prev, summary];
-        setSummaryIndex(next.length - 1);
-        return next;
-      });
-    } catch (err) {
-      showToast?.(err.message || 'Could not regenerate the summary');
-    }
-  };
+  const summarizePrograms = () => generateSummary();
+  const regenerateSummary = () => { if (savedSummary) generateSummary({ regenerate: true }); };
   const copySummary = () => {
-    const s = summaries[summaryIndex];
+    const s = savedSummary;
     if (!s) return;
     const bits = [
       `${s.intro}`,
@@ -956,11 +1008,7 @@ export function CarePlanSummaryView({
       () => showToast?.('Copy failed'),
     );
   };
-  const clearSummary = () => {
-    setSummaryState('idle');
-    setSummaries([]);
-    setSummaryIndex(0);
-  };
+  const clearSummary = () => { deletePatientCarePlanSummary(patientId); };
 
   // "Activity Since Review" drawer target — the row the user clicked;
   // null when the drawer is closed.
@@ -1107,13 +1155,13 @@ export function CarePlanSummaryView({
                 <Icon name="solar:refresh-linear" size={16} color="var(--primary-300)" className={styles.summarySpinner} />
               </div>
             )}
-            {openSections.programs && summaryState === 'ready' && summaries[summaryIndex] && (
+            {openSections.programs && summaryState === 'ready' && savedSummary && (
               <SummaryCard
-                data={summaries[summaryIndex]}
-                index={summaryIndex}
-                total={summaries.length}
-                onPrev={() => setSummaryIndex(i => (i - 1 + summaries.length) % summaries.length)}
-                onNext={() => setSummaryIndex(i => (i + 1) % summaries.length)}
+                data={savedSummary}
+                index={0}
+                total={1}
+                onPrev={() => {}}
+                onNext={() => {}}
                 onCopy={copySummary}
                 onRegenerate={regenerateSummary}
                 onDelete={clearSummary}

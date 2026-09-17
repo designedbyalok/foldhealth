@@ -3152,6 +3152,67 @@ export const useAppStore = create((set, get) => ({
   patientCarePlanAllLoading: {},   // { [patientId]: bool }
   patientCarePlanAllLoadedFor: {},  // { [patientId]: bool }
 
+  // Comprehensive Care Plan AI recap, persisted one row per patient
+  // (patient_care_plan_summaries) so a generated summary survives reload.
+  // Generating overwrites the saved row.
+  patientCarePlanSummaries: {},        // { [patientId]: { summary, generatedBy, generatedAt } | null }
+  patientCarePlanSummaryLoadedFor: {}, // { [patientId]: bool }
+
+  fetchPatientCarePlanSummary: async (patientId) => {
+    if (!patientId || get().patientCarePlanSummaryLoadedFor[patientId]) return;
+    const { data, error } = await supabase
+      .from('patient_care_plan_summaries')
+      .select('summary, generated_by, generated_at')
+      .eq('patient_id', patientId)
+      .maybeSingle();
+    if (error) console.warn('fetchPatientCarePlanSummary:', error.message);
+    set(s => ({
+      patientCarePlanSummaries: {
+        ...s.patientCarePlanSummaries,
+        [patientId]: data
+          ? { summary: data.summary, generatedBy: data.generated_by, generatedAt: data.generated_at }
+          : null,
+      },
+      patientCarePlanSummaryLoadedFor: { ...s.patientCarePlanSummaryLoadedFor, [patientId]: true },
+    }));
+  },
+
+  // Upsert on patient_id so a fresh generation overwrites the previous recap.
+  // Optimistic — the card already shows the new summary before this resolves.
+  savePatientCarePlanSummary: async (patientId, summary) => {
+    if (!patientId || !summary) return;
+    const now = new Date().toISOString();
+    const generatedBy = get().currentUserProfile?.name || null;
+    set(s => ({
+      patientCarePlanSummaries: {
+        ...s.patientCarePlanSummaries,
+        [patientId]: { summary, generatedBy, generatedAt: now },
+      },
+      patientCarePlanSummaryLoadedFor: { ...s.patientCarePlanSummaryLoadedFor, [patientId]: true },
+    }));
+    const { error } = await supabase
+      .from('patient_care_plan_summaries')
+      .upsert(
+        { patient_id: patientId, summary, generated_by: generatedBy, generated_at: now, updated_at: now },
+        { onConflict: 'patient_id' },
+      );
+    if (error) reportPersistFailure(`savePatientCarePlanSummary(${patientId})`, error);
+  },
+
+  // Dismissing the card removes the saved recap so it doesn't return on reload.
+  deletePatientCarePlanSummary: async (patientId) => {
+    if (!patientId) return;
+    set(s => ({
+      patientCarePlanSummaries: { ...s.patientCarePlanSummaries, [patientId]: null },
+      patientCarePlanSummaryLoadedFor: { ...s.patientCarePlanSummaryLoadedFor, [patientId]: true },
+    }));
+    const { error } = await supabase
+      .from('patient_care_plan_summaries')
+      .delete()
+      .eq('patient_id', patientId);
+    if (error) reportPersistFailure(`deletePatientCarePlanSummary(${patientId})`, error);
+  },
+
   fetchPatientCarePlan: async (patientId, programId) => {
     if (!patientId || !programId) return;
     const key = carePlanKey(patientId, programId);

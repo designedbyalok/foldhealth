@@ -1,15 +1,22 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { CheckboxTick } from '../../../../../../../../components/CheckboxTick/CheckboxTick';
+import { Button } from '../../../../../../../../components/Button/Button';
 import styles from './LinkExistingItemsPopover.module.css';
 
 /**
  * Checkbox list popover for linking existing plan items (interventions /
  * barriers) onto the open goal. Stays open while toggling; closes on outside
  * click or Escape.
+ *
+ * Two commit models:
+ *   - No `onConfirm`: each toggle persists immediately (Goal Details drawer).
+ *   - With `onConfirm`: toggles only stage a pending selection in the parent,
+ *     and a Cancel / Link footer commits or discards (care-plan row menu).
  */
 export function LinkExistingItemsPopover({
   anchorRef,
+  anchorRect,
   align = 'right',
   width = 280,
   ariaLabel = 'Link existing items',
@@ -17,6 +24,9 @@ export function LinkExistingItemsPopover({
   items = [],
   emptyLabel = 'Nothing to link yet.',
   onToggle,
+  onConfirm,
+  confirmLabel = 'Link',
+  confirmDisabled = false,
   onClose,
 }) {
   const popRef = useRef(null);
@@ -36,7 +46,7 @@ export function LinkExistingItemsPopover({
     };
   }, [onClose, anchorRef]);
 
-  const rect = anchorRef?.current?.getBoundingClientRect();
+  const rect = anchorRect || anchorRef?.current?.getBoundingClientRect();
   if (!rect) return null;
 
   const estHeight = Math.min(320, 56 + items.length * 36);
@@ -64,31 +74,39 @@ export function LinkExistingItemsPopover({
         aria-label={ariaLabel}
         onClick={(e) => e.stopPropagation()}
       >
-        {title && <div className={styles.title}>{title}</div>}
-        {items.length === 0 ? (
-          <div className={styles.empty}>{emptyLabel}</div>
-        ) : (
-          <ul className={styles.list}>
-            {items.map((item) => (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  role="checkbox"
-                  aria-checked={!!item.checked}
-                  className={styles.row}
-                  onClick={() => onToggle?.(item.id, !item.checked)}
-                >
-                  <span className={styles.check}>
-                    <CheckboxTick checked={!!item.checked} size={15} />
-                  </span>
-                  <span className={styles.stack}>
-                    <span className={styles.rowTitle}>{item.title}</span>
-                    {item.subtitle && <span className={styles.rowSub}>{item.subtitle}</span>}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
+        <div className={styles.scroll}>
+          {title && <div className={styles.title}>{title}</div>}
+          {items.length === 0 ? (
+            <div className={styles.empty}>{emptyLabel}</div>
+          ) : (
+            <ul className={styles.list}>
+              {items.map((item) => (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    role="checkbox"
+                    aria-checked={!!item.checked}
+                    className={styles.row}
+                    onClick={() => onToggle?.(item.id, !item.checked)}
+                  >
+                    <span className={styles.check}>
+                      <CheckboxTick checked={!!item.checked} size={15} />
+                    </span>
+                    <span className={styles.stack}>
+                      <span className={styles.rowTitle}>{item.title}</span>
+                      {item.subtitle && <span className={styles.rowSub}>{item.subtitle}</span>}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        {onConfirm && (
+          <div className={styles.footer}>
+            <Button variant="secondary" size="S" onClick={onClose}>Cancel</Button>
+            <Button size="S" disabled={confirmDisabled} onClick={onConfirm}>{confirmLabel}</Button>
+          </div>
         )}
       </div>
     </>,
