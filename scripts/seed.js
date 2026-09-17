@@ -320,6 +320,27 @@ DROP POLICY IF EXISTS "Allow all for snp_worklist_members" ON snp_worklist_membe
 CREATE POLICY "Allow all for snp_worklist_members" ON snp_worklist_members FOR ALL USING (true);
 `;
 
+// Self-heal duplicate worklist rows after seeding. The mock data still keys
+// worklist rows on a synthetic `id` (snpw-001, ccmw-002, ap-004, FOLD100001…),
+// while patient_reident_member_id_migration.sql made the canonical row key
+// `id = member_id` (the Fold ID). So a seed run can leave a synthetic-id row
+// next to the canonical `id = member_id` row for the same patient — a duplicate
+// in the worklist. This removes any synthetic row whose name already has a
+// canonical (`id = member_id`) row in the same table; the canonical row is kept.
+// Keyed on name + non-canonical id, never member_id (member_id is not unique
+// here — the same numeric belonged to more than one seeded person), so it can
+// only ever match a true duplicate. Idempotent. See
+// supabase/worklist_dedupe_synthetic_ids_migration.sql.
+const worklistDedupeSql = (table) => `
+DELETE FROM public.${table} d
+  WHERE d.id::text <> d.member_id::text
+    AND EXISTS (SELECT 1 FROM public.${table} c
+                WHERE c.id::text = c.member_id::text AND c.name = d.name);`;
+const WORKLIST_DEDUPE_SQL = [
+  'snp_worklist_members', 'ccm_worklist_members', 'awv_members',
+  'hedis_members', 'jsa_members',
+].map(worklistDedupeSql).join('\n');
+
 const CAREGAP_ACTIVITY_DDL = `
 CREATE TABLE IF NOT EXISTS caregap_activity (
   id         text PRIMARY KEY,
@@ -1559,6 +1580,29 @@ async function main() {
 
   // campaign_sends has no seed — it is the delivery log, populated when a
   // campaign is actually run from the CampaignBuilder.
+
+  // De-duplicate worklist rows (best-effort). Seeding synthetic-id rows on top
+  // of reident's canonical `id = member_id` rows can leave duplicates; this
+  // removes them so the same patient never shows twice in a worklist.
+  console.log('De-duplicating worklist rows...');
+  try {
+    const db = new pg.Client({
+      host: `db.${PROJECT_REF}.supabase.co`,
+      port: 5432,
+      database: 'postgres',
+      user: 'postgres',
+      password: DB_PASSWORD,
+      ssl: { rejectUnauthorized: false },
+      connectionTimeoutMillis: 6000,
+    });
+    await db.connect();
+    const res = await db.query(WORKLIST_DEDUPE_SQL);
+    const removed = Array.isArray(res) ? res.reduce((n, r) => n + (r.rowCount || 0), 0) : (res.rowCount || 0);
+    await db.end();
+    console.log(`  ✓ worklist dedupe (removed ${removed} duplicate row${removed === 1 ? '' : 's'})`);
+  } catch (e) {
+    console.warn(`  ⚠  Could not dedupe worklists (${e.message}) — run supabase/worklist_dedupe_synthetic_ids_migration.sql manually`);
+  }
 
   console.log('\n✅  Seed complete. Run `bun run dev` to verify.\n');
 }
