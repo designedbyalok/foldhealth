@@ -2,13 +2,16 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--space-4);
+  /* No padding here: the filter bar spans edge to edge and sticks to the top,
+     and the body carries its own padding below it. */
+  padding: 0;
 }
 
 .body {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
+  padding: var(--space-4);
 }
 
 .previewPane {
@@ -104,13 +107,18 @@
   background: var(--neutral-0);
 }
 
+/* Full-width, edge-to-edge filter bar pinned to the top of the editor pane
+   while its content scrolls beneath. */
 .filterBar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: var(--space-2);
   flex-wrap: wrap;
-  padding-bottom: var(--space-2);
-  margin-bottom: var(--space-1);
+  padding: var(--space-4) var(--space-4) var(--space-2);
+  background: var(--neutral-0);
   border-bottom: 0.5px solid var(--neutral-150);
 }
 .clearFilters {

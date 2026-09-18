@@ -238,8 +238,7 @@ export function CarePlanShareDrawer({ patientId, program, data, patientName, can
 
   const editorPane = (
     <div className={styles.editorScroll}>
-      <div className={styles.body}>
-        <div className={styles.filterBar}>
+      <div className={styles.filterBar}>
           <FilterChip
             label="Date"
             options={SHARE_DATE_OPTIONS.map(o => o.label)}
@@ -278,8 +277,9 @@ export function CarePlanShareDrawer({ patientId, program, data, patientName, can
               Clear all
             </button>
           )}
-        </div>
+      </div>
 
+      <div className={styles.body}>
         <div className={styles.field}>
           <SectionToggleHead
             title={<>Note <span className={styles.optional}>(optional)</span></>}

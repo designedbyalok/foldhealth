@@ -10,6 +10,18 @@
   color: var(--neutral-200);
 }
 
+/* Filter + sort bar in the Drawer's full-bleed banner slot: spans edge to
+   edge and stays pinned under the title while the change list scrolls. */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--neutral-0);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
 
 /* Arrived-here flash: the node a count badge pointed at, held briefly after
    the scroll settles so the eye can find it. */

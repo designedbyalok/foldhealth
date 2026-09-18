@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Drawer } from '../../../../../../../../components/Drawer/Drawer';
 import { Badge } from '../../../../../../../../components/Badge/Badge';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { DownChevronIcon } from '../../../../../../../../components/Icon/DownChevronIcon';
 import { Avatar } from '../../../../../../../../components/Avatar/Avatar';
+import { FilterChip } from '../../../../../../../../components/FilterChip/FilterChip';
+import { DateRangePopover } from '../../../../../../../../components/DateRangePopover/DateRangePopover';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import { ActivityLog, MetaLine, ViewMoreButton } from '../../../../../../../../components/ActivityLog/ActivityLog';
 import { historyTimelineStyles as htStyles } from '../../../../../../../../components/HistoryTimeline/HistoryTimeline';
@@ -13,8 +15,10 @@ import {
   withLiveLinks,
 } from '../../lib/carePlanAuditTemplates';
 import { NOTE_ACTIONS, netVersionRows } from '../../lib/carePlanVersions';
+import { isMemberAssignee } from '../../tables/CarePlanInterventionsTable';
 import styles from './CarePlanVersionChangesDrawer.module.css';
 
+const EMPTY_ARR = [];
 const ENTITY_NOUN = {
   goal: ['Goal', 'Goals'],
   intervention: ['Intervention', 'Interventions'],
@@ -36,6 +40,27 @@ const ACTION_LABEL = {
   description_changed: 'Description Updated', updated: 'Edited',
   shared: 'Shared', restored: 'Restored',
 };
+// Short activity labels for the "Activity type" filter (the field that
+// changed), derived from an audit row's action. Added/Removed are handled
+// separately on the counted buckets.
+const ACTIVITY_FROM_ACTION = {
+  status_changed: 'Status', progress_changed: 'Progress', value_changed: 'Value',
+  priority_changed: 'Priority', category_changed: 'Category', measure_changed: 'Measure',
+  target_changed: 'Target', target_date_changed: 'Target Date', due_date_changed: 'Due Date',
+  duration_changed: 'Duration', frequency_changed: 'Frequency', conditions_changed: 'Conditions',
+  type_changed: 'Type', assignee_changed: 'Assignee', adherence_changed: 'Adherence',
+  goal_link_changed: 'Linked Goal', description_changed: 'Description', updated: 'Edited',
+  shared: 'Shared', restored: 'Restored',
+};
+// A change node's label (e.g. "Status Updated" or an extracted "Due Date")
+// normalises to a filter value by dropping the trailing "Updated".
+const normActivity = (label) => (label || '').replace(/\s+Updated$/i, '').trim();
+// Entity labels shown in the "Change type" filter.
+const ENTITY_FILTER_LABEL = {
+  goal: 'Goal', intervention: 'Intervention', barrier: 'Barrier',
+  template: 'Template', note: 'Note', plan: 'Plan',
+};
+
 const TONED_ACTIONS = new Set(['status_changed', 'progress_changed']);
 // A version mixes things that arrived in it with edits to things that were
 // already there. Only the first kind carries a tag, so "new here" reads at a
@@ -57,6 +82,19 @@ const HIGHLIGHT_MS = 2000;
 
 const MM_DD_YYYY = { month: '2-digit', day: '2-digit', year: 'numeric' };
 const HH_MM = { hour: 'numeric', minute: '2-digit' };
+
+// Short date for the date-range chip's active summary (e.g. "09/18/2026").
+function fmtShortDate(iso) {
+  if (!iso) return '';
+  const d = new Date(`${iso}T00:00:00`);
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString('en-US', MM_DD_YYYY);
+}
+
+// Numeric timestamp for sorting a node by when its change happened.
+function tsOf(row) {
+  const at = row?.createdAt ? new Date(row.createdAt).getTime() : NaN;
+  return Number.isNaN(at) ? 0 : at;
+}
 
 // Every node came from an audit row, so it can say when it happened and who
 // did it, the same way the History timeline does.
@@ -155,6 +193,11 @@ function buildNodes(rawRows, links) {
       heading: `${t.summary} Template ${t.action === 'created' ? 'Added' : 'Removed'}`,
       tag: t.action === 'created' ? ADDED_TAG : REMOVED_TAG,
       stamp: stampOf(t),
+      ts: tsOf(t),
+      category: t.action === 'created' ? 'added' : 'removed',
+      entityKind: 'template',
+      activity: t.action === 'created' ? 'Added' : 'Removed',
+      actor: t.actor || null,
       summary,
       groups,
     });
@@ -171,6 +214,11 @@ function buildNodes(rawRows, links) {
         icon: ENTITY_ICON[type] || ENTITY_ICON.plan,
         // A counted bucket spans several rows; the newest one dates it.
         stamp: stampOf(ofType.at(-1)),
+        ts: Math.max(...ofType.map(tsOf)),
+        category: action === 'created' ? 'added' : 'removed',
+        entityKind: type,
+        activity: action === 'created' ? 'Added' : 'Removed',
+        actor: ofType.at(-1)?.actor || null,
         heading: `${countLabel(type, ofType.length)} ${verb}`,
         tag: action === 'created' ? ADDED_TAG : REMOVED_TAG,
         items: ofType.map(r => r.summary).filter(Boolean),
@@ -189,6 +237,11 @@ function buildNodes(rawRows, links) {
         anchor: r.id,
         icon: NOTE_ICON,
         stamp: stampOf(r),
+        ts: tsOf(r),
+        category: 'note',
+        entityKind: 'note',
+        activity: 'Note',
+        actor: r.actor || null,
         heading: removed ? 'Care Plan Note Removed' : 'Care Plan Note Updated',
         items: removed || !r.detail ? [] : [r.detail],
       });
@@ -208,18 +261,31 @@ function buildNodes(rawRows, links) {
         from = labelled[2].trim();
       }
       const toned = TONED_ACTIONS.has(r.action);
+      // Assignee changes colour the person by role: patient → primary,
+      // provider/staff → secondary (matches the assignee pills elsewhere).
+      const isAssignee = r.action === 'assignee_changed' || normActivity(label).toLowerCase() === 'assignee';
+      const assigneeTone = (v) => {
+        const role = links?.classifyAssignee?.(v);
+        return role === 'patient' ? 'primary' : role === 'provider' ? 'secondary' : 'grey';
+      };
+      const pickTone = (v) => (isAssignee ? assigneeTone(v) : toned ? toneFor(v) : 'grey');
       nodes.push({
         id: r.id,
         anchor: r.id,
         icon: CHANGE_ICON,
         stamp: stampOf(r),
+        ts: tsOf(r),
+        category: 'updated',
+        entityKind: r.entityType,
+        activity: normActivity(label) || ACTIVITY_FROM_ACTION[r.action] || 'Edited',
+        actor: r.actor || null,
         heading,
         change: {
           label,
           from,
           to,
-          fromTone: toned ? toneFor(from) : 'grey',
-          toTone: toned ? toneFor(to) : 'grey',
+          fromTone: pickTone(from),
+          toTone: pickTone(to),
         },
       });
       continue;
@@ -229,6 +295,11 @@ function buildNodes(rawRows, links) {
       anchor: r.id,
       icon: ENTITY_ICON[r.entityType] || CHANGE_ICON,
       stamp: stampOf(r),
+      ts: tsOf(r),
+      category: 'updated',
+      entityKind: r.entityType,
+      activity: ACTIVITY_FROM_ACTION[r.action] || normActivity(ACTION_LABEL[r.action]) || 'Edited',
+      actor: r.actor || null,
       heading,
       items: r.detail ? [r.detail] : [ACTION_LABEL[r.action] || r.action],
     });
@@ -247,12 +318,82 @@ function buildNodes(rawRows, links) {
  * @param {object} [props.plan]    Current plan slice, used to infer template
  *   linkage for rows signed before it was recorded.
  */
-export function CarePlanVersionChangesDrawer({ rows, signedAt, anchor, plan, onClose }) {
+export function CarePlanVersionChangesDrawer({ rows, signedAt, anchor, plan, patientId, onClose }) {
   const libraryGoals = useAppStore(s => s.carePlanGoals);
+  const platformUsers = useAppStore(s => s.platformUsers) || EMPTY_ARR;
+  // The patient's own name, so an assignee that IS the patient tones as a
+  // member (primary) rather than a provider (secondary). Look across every
+  // worklist slice by id or member id, like CarePlanSummaryView does.
+  const patientName = useAppStore(s => {
+    if (!patientId) return null;
+    const buckets = [s.patients, s.allPatients, s.snpMembers, s.ccmMembers, s.hccMembers, s.awvMembers, s.jsaMembers];
+    for (const list of buckets) {
+      if (!Array.isArray(list)) continue;
+      const hit = list.find(p => p && (p.id === patientId || String(p.memberId) === String(patientId)));
+      if (hit?.name) return hit.name;
+    }
+    return null;
+  });
+  // patient → 'patient', anyone else with a name → 'provider', blank → null.
+  const classifyAssignee = useCallback((name) => {
+    if (!name || name === 'Unassigned') return null;
+    const patients = patientName ? [{ name: patientName }] : [];
+    return isMemberAssignee(name, platformUsers, patients) ? 'patient' : 'provider';
+  }, [platformUsers, patientName]);
+
   const nodes = useMemo(
-    () => buildNodes(rows || [], { plan, libraryGoals }),
-    [rows, plan, libraryGoals],
+    () => buildNodes(rows || [], { plan, libraryGoals, classifyAssignee }),
+    [rows, plan, libraryGoals, classifyAssignee],
   );
+
+  // Newest change first by default; "Sort by" flips to oldest first.
+  const [sortDesc, setSortDesc] = useState(true);
+  const [dateRange, setDateRange] = useState([]); // [] or [startISO, endISO]
+  const [userFilter, setUserFilter] = useState([]);       // actor names
+  const [entityFilter, setEntityFilter] = useState([]);   // Goal / Intervention / …
+  const [activityFilter, setActivityFilter] = useState([]); // Status / Due Date / …
+
+  // Each filter only offers values actually present in this version.
+  const userOptions = useMemo(
+    () => [...new Set(nodes.map(n => n.actor).filter(Boolean))].sort(),
+    [nodes],
+  );
+  const entityOptions = useMemo(() => {
+    const present = new Set(nodes.map(n => n.entityKind).filter(Boolean));
+    return Object.keys(ENTITY_FILTER_LABEL).filter(k => present.has(k)).map(k => ENTITY_FILTER_LABEL[k]);
+  }, [nodes]);
+  const activityOptions = useMemo(
+    () => [...new Set(nodes.map(n => n.activity).filter(Boolean))].sort(),
+    [nodes],
+  );
+  const labelToEntity = useMemo(
+    () => Object.fromEntries(Object.entries(ENTITY_FILTER_LABEL).map(([k, v]) => [v, k])),
+    [],
+  );
+
+  const displayNodes = useMemo(() => {
+    const [rangeStart, rangeEnd] = dateRange.length === 2 ? dateRange : [];
+    const startMs = rangeStart ? new Date(`${rangeStart}T00:00:00`).getTime() : null;
+    const endMs = rangeEnd ? new Date(`${rangeEnd}T23:59:59.999`).getTime() : null;
+    const users = new Set(userFilter);
+    const entities = new Set(entityFilter.map(l => labelToEntity[l]).filter(Boolean));
+    const activities = new Set(activityFilter);
+    const filtered = nodes.filter(n => {
+      if (startMs != null && n.ts < startMs) return false;
+      if (endMs != null && n.ts > endMs) return false;
+      if (users.size && !users.has(n.actor)) return false;
+      if (entities.size && !entities.has(n.entityKind)) return false;
+      if (activities.size && !activities.has(n.activity)) return false;
+      return true;
+    });
+    // Stable sort by timestamp; equal timestamps keep their build order so a
+    // template's blocks stay together.
+    return filtered
+      .map((n, i) => [n, i])
+      .sort((a, b) => (sortDesc ? b[0].ts - a[0].ts : a[0].ts - b[0].ts) || a[1] - b[1])
+      .map(([n]) => n);
+  }, [nodes, dateRange, userFilter, entityFilter, activityFilter, sortDesc, labelToEntity]);
+
   const bodyRef = useRef(null);
   // Entries open by default; the toggle is there to fold long ones away.
   const [collapsed, setCollapsed] = useState(() => new Set());
@@ -284,7 +425,7 @@ export function CarePlanVersionChangesDrawer({ rows, signedAt, anchor, plan, onC
       clearTimeout(timer);
       target.classList.remove(styles.highlight);
     };
-  }, [anchor, nodes]);
+  }, [anchor, displayNodes]);
 
   const at = signedAt ? new Date(signedAt) : null;
   const stamp = at && !Number.isNaN(at.getTime())
@@ -300,7 +441,7 @@ export function CarePlanVersionChangesDrawer({ rows, signedAt, anchor, plan, onC
 
   // The version is one moment in time, so entries carry no timestamps of their
   // own — the drawer's subtitle already dates them.
-  const logEntries = nodes.map(node => ({
+  const logEntries = displayNodes.map(node => ({
     t: 'care_plan_change',
     id: node.id,
     avatar: <Avatar type="icon" variant="others" size="S" iconName={node.icon || ENTITY_ICON.plan} />,
@@ -395,10 +536,51 @@ export function CarePlanVersionChangesDrawer({ rows, signedAt, anchor, plan, onC
     },
   }));
 
+  // Full-width filter bar, mirroring the worklist FilterBar: date-range chip
+  // (same DateRangePopover the worklists use) plus User / Change type /
+  // Activity type / Sort by. Rendered in the Drawer's banner slot so it hugs
+  // the drawer edges and stays pinned under the title while the list scrolls.
+  const dateActive = dateRange.length === 2;
+  const controls = nodes.length > 0 ? (
+    <div className={styles.controls}>
+      <FilterChip
+        label="Date range"
+        active={dateActive}
+        activeSummary={dateActive ? `${fmtShortDate(dateRange[0])} – ${fmtShortDate(dateRange[1])}` : undefined}
+        onClear={() => setDateRange([])}
+        renderPopover={({ anchorRect, onClose: closePopover }) => (
+          <DateRangePopover
+            anchorRect={anchorRect}
+            label="Date range"
+            selected={dateRange}
+            onChange={setDateRange}
+            onClose={closePopover}
+          />
+        )}
+      />
+      {userOptions.length > 1 && (
+        <FilterChip label="User" options={userOptions} selected={userFilter} onChange={setUserFilter} searchable />
+      )}
+      {entityOptions.length > 1 && (
+        <FilterChip label="Change type" options={entityOptions} selected={entityFilter} onChange={setEntityFilter} />
+      )}
+      {activityOptions.length > 1 && (
+        <FilterChip label="Activity type" options={activityOptions} selected={activityFilter} onChange={setActivityFilter} searchable />
+      )}
+      <FilterChip
+        label="Sort by"
+        singleSelect
+        options={['Newest first', 'Oldest first']}
+        selected={[sortDesc ? 'Newest first' : 'Oldest first']}
+        onChange={(v) => setSortDesc((v[0] || 'Newest first') === 'Newest first')}
+      />
+    </div>
+  ) : null;
+
   return (
-    <Drawer title={title} onClose={onClose}>
+    <Drawer title={title} onClose={onClose} banner={controls}>
       <div ref={bodyRef}>
-        <ActivityLog entries={logEntries} emptyLabel="No changes recorded in this version." />
+        <ActivityLog entries={logEntries} emptyLabel="No changes match this filter." />
       </div>
     </Drawer>
   );

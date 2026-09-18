@@ -112,6 +112,7 @@ export function CarePlanVersionsDrawer({ patientId, program, onClose }) {
           rows={openVersion.rows}
           signedAt={openVersion.createdAt}
           plan={plan}
+          patientId={patientId}
           onClose={() => setOpenVersion(null)}
         />
       )}
