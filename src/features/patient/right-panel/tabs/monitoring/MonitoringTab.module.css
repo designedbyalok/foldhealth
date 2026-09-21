@@ -39,8 +39,8 @@
   padding: var(--space-12) var(--space-4);
   color: var(--neutral-400);
 }
-.stateTitle { margin: var(--space-2) 0 0; font-size: var(--font-md); font-weight: 500; color: var(--neutral-400); }
-.stateBody { margin: 0; font-size: var(--font-sm); color: var(--neutral-400); }
+.stateTitle { margin: var(--space-2) 0 0; font-size: var(--font-base); font-weight: 600; color: var(--neutral-500); }
+.stateBody { margin: 0; font-size: var(--font-sm); color: var(--neutral-300); }
 
 .adhDot {
   width: var(--space-2);
@@ -134,8 +134,8 @@
 .section { display: flex; flex-direction: column; gap: var(--space-2); }
 .sectionLabel {
   font-size: var(--font-base);
-  font-weight: 500;
-  color: var(--neutral-400);
+  font-weight: 600;
+  color: var(--neutral-500);
 }
 
 /* Snapshot */
@@ -160,13 +160,13 @@
 }
 .tileValue {
   font-size: var(--font-lg);
-  font-weight: 500;
-  color: var(--neutral-400);
+  font-weight: 600;
+  color: var(--neutral-500);
   font-variant-numeric: tabular-nums;
   line-height: var(--leading-tight);
 }
 .tileValueBad { color: var(--status-error); }
-.tileSub { font-size: var(--font-sm); color: var(--neutral-400); }
+.tileSub { font-size: var(--font-sm); color: var(--neutral-300); }
 .tileSubBad { color: var(--status-error); }
 
 /* Programs */
@@ -188,7 +188,7 @@
   text-align: left;
 }
 .programName { font-size: var(--font-base); font-weight: 500; color: var(--neutral-400); }
-.programProgress { font-size: var(--font-sm); color: var(--neutral-400); }
+.programProgress { font-size: var(--font-sm); color: var(--neutral-300); }
 .programNext {
   margin-left: auto;
   display: inline-flex;
@@ -247,7 +247,7 @@
 .step_current .stepLabel { color: var(--primary-300); font-weight: 400; }
 .step_upcoming .stepLabel { opacity: 0.72; }
 .stepSub { font-size: var(--font-sm); color: var(--neutral-400); text-transform: capitalize; }
-.stepMeta { margin-left: auto; font-size: var(--font-sm); color: var(--neutral-400); }
+.stepMeta { margin-left: auto; font-size: var(--font-sm); color: var(--neutral-300); }
 .step_done .stepMeta { color: var(--status-success); }
 .step .stepMeta + button, .step > button:last-child { margin-left: auto; }
 .step > button { margin-left: auto; flex-shrink: 0; }
@@ -408,9 +408,9 @@
 .railCardStack { display: flex; flex-direction: column; gap: var(--space-1); }
 .railSubError .railCardSub { color: var(--status-error); }
 .railCardTitle { font-size: var(--font-base); font-weight: 500; color: var(--neutral-400); }
-.railCardSub { font-size: var(--font-sm); color: var(--neutral-400); }
+.railCardSub { font-size: var(--font-sm); color: var(--neutral-300); }
 .railCardBody { font-size: var(--font-base); color: var(--neutral-400); font-style: italic; line-height: var(--leading-normal); }
-.railCardMeta { font-size: var(--font-sm); color: var(--neutral-400); }
+.railCardMeta { font-size: var(--font-sm); color: var(--neutral-300); }
 .railGapRow {
   composes: railCard;
   display: flex;
@@ -418,7 +418,7 @@
   gap: var(--space-2);
   color: var(--neutral-300);
 }
-.railGapMeta { margin-left: auto; font-size: var(--font-sm); color: var(--neutral-400); }
+.railGapMeta { margin-left: auto; font-size: var(--font-sm); color: var(--neutral-300); }
 
 /* ── Responsive snapshot tiles ────────────────────────────────
    Keep the 3-panel layout (main col + rail). Only reflow snapshot

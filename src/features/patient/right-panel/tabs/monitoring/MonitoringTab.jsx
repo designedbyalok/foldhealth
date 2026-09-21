@@ -20,7 +20,7 @@ const STORY_FILTERS = [
   { key: 'clinical', label: 'Clinical' },
   { key: 'outreach', label: 'Outreach' },
   { key: 'agent', label: 'Agent' },
-  { key: 'plan', label: 'Plan changes' },
+  { key: 'plan', label: 'Plan Changes' },
   { key: 'billing', label: 'Billing' },
 ];
 
@@ -204,7 +204,7 @@ export function MonitoringTab({ patient }) {
     return (
       <div className={styles.state}>
         <Icon name="solar:pulse-linear" size={32} color="var(--neutral-200)" />
-        <p className={styles.stateTitle}>No active monitoring episode</p>
+        <p className={styles.stateTitle}>No Active Monitoring Episode</p>
         <p className={styles.stateBody}>This patient has no open transition, escalation, or threshold-risk right now.</p>
       </div>
     );
@@ -226,10 +226,10 @@ export function MonitoringTab({ patient }) {
             <div className={styles.section}>
               <SectionLabel>Snapshot</SectionLabel>
               <div className={styles.tiles}>
-                <Tile label="Days since discharge" value={data.daysSinceDischarge} sub={data.dischargeLabel} />
+                <Tile label="Days Since Discharge" value={data.daysSinceDischarge} sub={data.dischargeLabel} />
                 <Tile label="Risk" value={data.riskTier} valueTone="error" sub={`RAF ${data.riskRaf}`} />
-                <Tile label="Program minutes" value={`${data.programMinutes} / ${data.programMinutesThreshold}`} sub={data.thresholdLabel} />
-                <Tile label="Open tasks" value={data.openTasks} sub="Overdue risk · 4h left" subTone="error" />
+                <Tile label="Program Minutes" value={`${data.programMinutes} / ${data.programMinutesThreshold}`} sub={data.thresholdLabel} />
+                <Tile label="Open Tasks" value={data.openTasks} sub="Overdue risk · 4h left" subTone="error" />
                 {data.adherence != null && (
                   <Tile
                     label="Adherence"
@@ -256,7 +256,7 @@ export function MonitoringTab({ patient }) {
                 <div className={styles.timeline}>
                   <div className={styles.timelineHead}>
                     <Icon name="solar:magic-stick-3-linear" size={13} />
-                    Since you last spoke · last touch 12 days ago
+                    Since You Last Spoke · last touch 12 days ago
                   </div>
                   {data.timeline.map((t, i) => (
                     <div key={i} className={styles.timelineItem}>
@@ -295,7 +295,7 @@ export function MonitoringTab({ patient }) {
           </Link>
 
           <div className={styles.railGroup}>
-            <div className={styles.railGroupLabel}>Open tasks</div>
+            <div className={styles.railGroupLabel}>Open Tasks</div>
             <TasksTab
               hideToolbar
               interactive
@@ -308,7 +308,7 @@ export function MonitoringTab({ patient }) {
 
           <MonitoringRailGoals patient={patient} />
 
-          <RailGroup label="Care gaps">
+          <RailGroup label="Care Gaps">
             {data.gaps.map((g, i) => (
               <div key={i} className={styles.railGapRow}>
                 <Icon name="solar:checklist-minimalistic-linear" size={14} />

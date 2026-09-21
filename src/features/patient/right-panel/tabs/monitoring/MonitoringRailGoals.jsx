@@ -66,7 +66,7 @@ export function MonitoringRailGoals({ patient }) {
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.railGroupLabel}>Active goals</div>
+      <div className={styles.railGroupLabel}>Active Goals</div>
       {loading && !loadedFor ? (
         <div className={styles.empty}>Loading goals…</div>
       ) : activeGoals.length === 0 ? (
