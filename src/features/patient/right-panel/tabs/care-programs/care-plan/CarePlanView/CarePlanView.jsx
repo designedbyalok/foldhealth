@@ -964,9 +964,9 @@ export function CarePlanView({ patientId, program }) {
       </div>
       </div>
 
-      <CarePlanViewOverlays o={overlayProps} />
+      <CarePlanViewOverlays {...overlayProps} />
 
-      <CarePlanViewDrawers d={drawerProps} />
+      <CarePlanViewDrawers {...drawerProps} />
     </div>
   );
 }
