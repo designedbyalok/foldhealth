@@ -6,17 +6,24 @@
   flex-direction: column;
 }
 
-/* Fixed top region — greeting, Panel Pulse, and the program tab strip, on a
-   white background through the tab strip. Never scrolls; the table below owns
-   the scroll. */
-.top {
+/* Greeting + Panel Pulse — a padded, bordered container above the tab strip.
+   Never scrolls; the table below owns the scroll. */
+.headerRegion {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  padding: var(--space-4) var(--space-5) var(--space-4);
+  padding: var(--space-4) var(--space-5);
   background: var(--neutral-0);
   border-bottom: 0.5px solid var(--neutral-150);
+}
+
+/* Full-width tab strip that sits flush against the table. No side padding so
+   the strip spans edge to edge; the TabStrip owns its own 16px tab inset and
+   bottom border (the divider above the table). */
+.tabBar {
+  flex-shrink: 0;
+  background: var(--neutral-0);
 }
 
 /* Table region — fills the remaining height; WorklistShell scrolls inside it. */
@@ -207,7 +214,12 @@
 }
 .stickyLeft { composes: stickyLeft from '../../../components/WorklistShell/WorklistRow.module.css'; }
 .stickyRight { composes: stickyRight from '../../../components/WorklistShell/WorklistRow.module.css'; }
-.membersTd { composes: membersTd from '../../../components/WorklistShell/WorklistRow.module.css'; }
+.membersTd {
+  composes: membersTd from '../../../components/WorklistShell/WorklistRow.module.css';
+  /* Today has no bulk-select column, so restore the standard 12px left inset
+     the shared cell trims to 4px for the worklist checkbox. */
+  padding: var(--space-2) var(--space-3);
+}
 .patientCell { composes: patientCell from '../../../components/WorklistShell/WorklistRow.module.css'; }
 .patientName { composes: patientName from '../../../components/WorklistShell/WorklistRow.module.css'; }
 .patientNameLink { composes: patientNameLink from '../../../components/WorklistShell/WorklistRow.module.css'; }
@@ -230,8 +242,8 @@
   composes: td from '../../../components/WorklistShell/WorklistRow.module.css';
   white-space: normal;
   vertical-align: top;
-  padding-top: var(--space-3);
-  padding-bottom: var(--space-3);
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
 }
 
 .programList { display: flex; gap: var(--space-1); flex-wrap: wrap; }
@@ -299,7 +311,7 @@
 /* Phone / narrow: stack the header. The table keeps its columns and scrolls
    horizontally within its own region (Member + Actions stay pinned). */
 @media (max-width: 700px) {
-  .top { padding: var(--space-3); gap: var(--space-3); }
+  .headerRegion { padding: var(--space-3); gap: var(--space-3); }
 
   .header { flex-direction: column; align-items: stretch; gap: var(--space-3); }
   .header > button { width: 100%; justify-content: center; }

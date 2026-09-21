@@ -57,6 +57,10 @@ function shortName(name) {
   return `${parts[0]} ${parts[parts.length - 1][0]}.`;
 }
 
+function showTouchModeSoon(what) {
+  toast(`${what} opens in Touch Mode. Coming soon.`);
+}
+
 // Bind each clinical scenario to a real patient from all_patients (adults, for
 // a plausible care-management panel). Falls back to the scenario's own identity
 // only until the patient database loads. `patientId` is the real profile id.
@@ -147,16 +151,15 @@ function MemberCell({ item, onOpen, showToast }) {
       className={`${styles.membersTd} ${styles.stickyLeft}`}
       style={{ left: 0, cursor: 'pointer' }}
       onClick={open}
-      role="button"
-      tabIndex={0}
       title="Open patient"
+      tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(e); } }}
     >
       <div className={styles.patientCell}>
         <Avatar variant="patient" initials={item.initials} />
         <div>
           <div className={styles.patientName}>
-            <button className={styles.patientNameLink} onClick={open} tabIndex={-1}>{item.patientName}</button>{' '}
+            <span className={styles.patientNameLink} onClick={open} role="link" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(e); } }}>{item.patientName}</span>{' '}
             <Tooltip label={dobLabel ? `DOB: ${dobLabel}` : ''} placement="bottom">
               <span className={styles.patientDemo}>({item.gender}•{item.age})</span>
             </Tooltip>
@@ -165,10 +168,10 @@ function MemberCell({ item, onOpen, showToast }) {
             <span onClick={e => e.stopPropagation()} style={{ display: 'inline-flex' }}>
               <FoldIdTag id={item.memberId} className={styles.foldId} showToast={showToast} />
             </span>{' '}•{' '}
-            <button type="button" className={styles.langBadge} onClick={e => e.stopPropagation()} tabIndex={-1}>
+            <span className={styles.langBadge} onClick={e => e.stopPropagation()} role="note">
               {(item.language || 'en').toUpperCase()}
               <span className={styles.langTooltip}>Preferred Language: {LANG_MAP[item.language] || 'English'}</span>
-            </button>
+            </span>
           </div>
         </div>
       </div>
@@ -181,11 +184,11 @@ const ROW_MENU_ITEMS = [
   { key: 'reassign', icon: 'solar:users-group-rounded-linear', label: 'Reassign' },
 ];
 
-function TodayRow({ item, onSnooze, onSoon, onOpen, showToast }) {
+function TodayRow({ item, onSnooze, onOpen, showToast }) {
   const open = () => onOpen(item);
   const [menuOpen, setMenuOpen] = useState(false);
   const moreRef = useRef(null);
-  const onMenuSelect = (key) => { if (key === 'snooze') onSnooze(item); else onSoon('Reassign'); };
+  const onMenuSelect = (key) => { if (key === 'snooze') onSnooze(item); else showTouchModeSoon('Reassign'); };
   return (
     <tr className={styles.row} onClick={open}>
       <MemberCell item={item} onOpen={onOpen} showToast={showToast} />
@@ -217,9 +220,9 @@ function TodayRow({ item, onSnooze, onSoon, onOpen, showToast }) {
 
       <td className={`${styles.actionsTd} ${styles.stickyRight}`} onClick={e => e.stopPropagation()}>
         <div className={styles.actionsCell}>
-          <ActionButton size="S" icon="solar:phone-calling-linear" tooltip="Call" onClick={() => onSoon('Call')} />
+          <ActionButton size="S" icon="solar:phone-calling-linear" tooltip="Call" onClick={() => showTouchModeSoon('Call')} />
           <span className={styles.actionDivider} />
-          <ActionButton size="S" icon="solar:chat-round-linear" tooltip="Text" onClick={() => onSoon('Text')} />
+          <ActionButton size="S" icon="solar:chat-round-linear" tooltip="Text" onClick={() => showTouchModeSoon('Text')} />
           <span className={styles.actionDivider} />
           <span style={{ position: 'relative', display: 'inline-flex' }}>
             <ActionButton ref={moreRef} size="S" icon="solar:menu-dots-linear" tooltip="More" onClick={() => setMenuOpen((v) => !v)} />
@@ -289,7 +292,6 @@ export function TodayView() {
     if (item.patientId) navigateToPatient(item.patientId, { profileTab: 'Monitoring' });
     else toast('Patient profile is still loading.');
   };
-  const onSoon = (what) => toast(`${what} opens in Touch Mode. Coming soon.`);
   const onSnooze = (item) => setDismissed((prev) => new Set(prev).add(item.id));
   const startRow = rows[0];
   const startName = startRow ? shortName(startRow.patientName) : null;
@@ -298,9 +300,10 @@ export function TodayView() {
 
   return (
     <div className={styles.today}>
-      {/* Fixed top region — white background through the tab strip. Only the
-          table below scrolls. */}
-      <div className={styles.top}>
+      {/* Fixed top region — greeting + Panel Pulse in a bordered container,
+          then the full-width tab strip flush to the table. Only the table
+          below scrolls. */}
+      <div className={styles.headerRegion}>
       {/* Header strip */}
       <div className={styles.header}>
         <div className={styles.greetBlock}>
@@ -331,11 +334,13 @@ export function TodayView() {
             onClick={() => setPulse((cur) => (cur === card.key ? null : card.key))}
           />
         ))}
-        <AdherenceCard onOpen={() => onSoon('Panel Health')} />
+        <AdherenceCard onOpen={() => showTouchModeSoon('Panel Health')} />
+      </div>
       </div>
 
-      {/* Program lens — standard app tab bar */}
-      <TabStrip items={LENS_TABS} activeKey={lens} onChange={setLens} fullWidth={false} />
+      {/* Program lens — full-width tab strip, flush to the table below */}
+      <div className={styles.tabBar}>
+        <TabStrip items={LENS_TABS} activeKey={lens} onChange={setLens} fullWidth={false} />
       </div>
 
       {/* Scrolling table — Member | Programs | Next Best Action | Status | Actions */}
@@ -359,7 +364,7 @@ export function TodayView() {
             </div>
           )}
           renderRow={(it) => (
-            <TodayRow key={it.id} item={it} onSnooze={onSnooze} onSoon={onSoon} onOpen={openPatient} showToast={showToast} />
+            <TodayRow key={it.id} item={it} onSnooze={onSnooze} onOpen={openPatient} showToast={showToast} />
           )}
         />
       </div>
