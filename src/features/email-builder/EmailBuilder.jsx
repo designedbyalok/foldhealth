@@ -49,19 +49,45 @@ export function EmailBuilder() {
 
   const unsavedCount = savedSnapshot ? countChanges(savedSnapshot, emailDocument) : 0;
 
+  // Each save rewrites the whole email_template and color_variables JSONB
+  // via TOAST (~35 shared blocks per call). On the free tier that is the
+  // top single write source. 15s debounce cuts autosave frequency roughly
+  // 3x during active editing without exposing more edits to loss, because
+  // the visibilitychange handler below flushes any pending save when the
+  // tab is backgrounded and beforeunload warns on hard close.
   const autosaveTimer = useRef(null);
+  const flushPendingAutosave = useCallback(async () => {
+    if (unsavedCount === 0 || saving) return;
+    clearTimeout(autosaveTimer.current);
+    autosaveTimer.current = null;
+    const ok = await saveEmailTemplate();
+    if (ok) {
+      setLastSavedAt(new Date());
+      setSavedSnapshot(structuredClone(useAppStore.getState().emailDocument));
+    }
+  }, [unsavedCount, saving, saveEmailTemplate]);
+
   useEffect(() => {
     if (unsavedCount === 0 || saving) return;
     clearTimeout(autosaveTimer.current);
-    autosaveTimer.current = setTimeout(async () => {
-      const ok = await saveEmailTemplate();
-      if (ok) {
-        setLastSavedAt(new Date());
-        setSavedSnapshot(structuredClone(useAppStore.getState().emailDocument));
-      }
-    }, 5000);
+    autosaveTimer.current = setTimeout(flushPendingAutosave, 15000);
     return () => clearTimeout(autosaveTimer.current);
-  }, [emailDocument]);
+  }, [emailDocument]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const onVisibility = () => { if (document.visibilityState === 'hidden') flushPendingAutosave(); };
+    const onBeforeUnload = (e) => {
+      if (unsavedCount === 0) return;
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('beforeunload', onBeforeUnload);
+    };
+  }, [flushPendingAutosave, unsavedCount]);
 
   useEffect(() => {
     if (!pendingNavTarget) return;
@@ -121,6 +147,13 @@ export function EmailBuilder() {
   };
 
   const handleSave = async () => {
+    // The Save button used to fire an UPDATE even when nothing had changed,
+    // rewriting the whole email_template + color_variables JSONB via TOAST.
+    // Autosave already gates on unsavedCount; the explicit button did not.
+    if (unsavedCount === 0) {
+      showToast('Nothing to save');
+      return;
+    }
     setSaving(true);
     let ok = false;
     try {
@@ -133,7 +166,7 @@ export function EmailBuilder() {
       setSavedSnapshot(structuredClone(useAppStore.getState().emailDocument));
       showToast('Template saved');
     } else {
-      showToast('Save failed — check console');
+      showToast('Save failed, check console');
     }
   };
 
