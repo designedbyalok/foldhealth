@@ -11,8 +11,8 @@ import { startUpdateChecker } from './lib/updateChecker'
 // Sentry — error + performance monitoring. browserTracingIntegration adds
 // the Web Vitals transactions (FCP / LCP / INP / TTFB / CLS) we want to
 // watch. Must run before createRoot so React errors are captured from
-// the first render. sendDefaultPii includes IP addresses — keep an eye
-// on this for any HIPAA-sensitive deployment.
+// the first render. v11's default dataCollection includes IP addresses and
+// cookies; keep an eye on this for any HIPAA-sensitive deployment.
 //
 // Only initialize on the deployed production site. `import.meta.env.PROD`
 // alone isn't enough because `bun run preview` serves the built bundle
@@ -33,12 +33,9 @@ if (isDeployedProd) {
     tunnel: '/api/monitoring',
     integrations: [Sentry.browserTracingIntegration()],
     tracesSampleRate: 1.0,
-    // Stream GenAI spans for Vercel AI SDK calls (generateText, streamText,
-    // ToolLoopAgent, etc.). Inert until we add the AI SDK. When we do, pass
-    // `experimental_telemetry: { isEnabled: true, functionId, recordInputs,
-    // recordOutputs }` on each call so spans land in Sentry's Agents tab.
-    streamGenAiSpans: true,
-    sendDefaultPii: true,
+    // v11 collects request/response bodies by default. Those are Supabase
+    // rows with patient data here, so keep them out of Sentry.
+    dataCollection: { httpBodies: [] },
     // Noise that isn't ours and isn't actionable:
     //   • navigator.locks contention on the Supabase auth token — expected
     //     whenever a user has the app open in more than one tab; the losing
