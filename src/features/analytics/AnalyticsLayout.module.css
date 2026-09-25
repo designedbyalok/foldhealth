@@ -10,14 +10,17 @@
 .body { display: flex; flex: 1; min-height: 0; overflow: hidden; }
 
 /* ──────────────────────────────────────────────
-   Slicer Bar — Global filters, always visible
+   Slicer Bar — Global filters, sticky at the top of each page.
+   Negative margins cancel the canvas padding so it spans edge to edge.
    ────────────────────────────────────────────── */
 .slicerBar {
+  position: sticky; top: calc(-1 * var(--space-5)); z-index: 5;
   display: flex; align-items: center; gap: 14px;
-  padding: 6px 20px;
+  margin: calc(-1 * var(--space-5)) calc(-1 * var(--space-6)) var(--space-4);
+  padding: calc(var(--space-3) / 2) var(--space-6);
   background: var(--neutral-0);
   border-bottom: 0.5px solid var(--neutral-150);
-  flex-shrink: 0; flex-wrap: wrap;
+  flex-wrap: wrap;
   font-size: var(--font-sm);
 }
 .slicerGroup { display: flex; align-items: center; gap: 6px; }
@@ -397,7 +400,7 @@
 .tagAco { background: var(--status-warning-light); color: var(--status-warning); border-color: rgba(217,165,11,0.2); }
 
 /* ── Scrollbar ── */
-.canvasWhite { background: var(--neutral-0); padding: 0; }
+.canvasFlush { padding: 0; }
 .canvas::-webkit-scrollbar { width: 5px; height: 5px; }
 .canvas::-webkit-scrollbar-thumb { background: var(--neutral-150); border-radius: 4px; }
 

@@ -48,10 +48,12 @@ const VIEW_MAP = {
 
 // Views that render their own title and filters in place of the shared header.
 const SELF_HEADED_VIEWS = new Set(['employer']);
-// Views laid out as white report pages rather than cards on the grey canvas.
-const WHITE_CANVAS_VIEWS = new Set(['employer']);
+// Views laid out edge to edge, with their own full-bleed rows, instead of padded.
+const FLUSH_CANVAS_VIEWS = new Set(['employer']);
 // Views that leave out the data-source recency bar.
 const NO_RECENCY_VIEWS = new Set(['employer']);
+// Views that leave out the global slicer bar (Organization, Period, Quarter, Persona).
+const NO_SLICER_VIEWS = new Set(['employer']);
 
 const PERIODS = [
   { value: '2026-03', label: 'Mar 2026' },
@@ -134,71 +136,6 @@ export function AnalyticsLayout() {
 
   return (
     <div className={s.wrap}>
-      {/* ── Slicer Bar (always visible at top) ── */}
-      <div className={s.slicerBar}>
-        <div className={s.slicerGroup}>
-          <span className={s.slicerLabel}>Organization</span>
-          <Select
-            className={s.filterSelect}
-            options={ORGANIZATIONS}
-            value={analyticsOrg}
-            onChange={setAnalyticsOrg}
-          />
-        </div>
-
-        <div className={s.slicerGroup}>
-          <span className={s.slicerLabel}>Period</span>
-          <div className={s.slicerToggle}>
-            <button className={`${s.slicerToggleBtn} ${analyticsPeriodMode === 'ytd' ? s.on : ''}`} onClick={() => setAnalyticsPeriodMode('ytd')}>YTD</button>
-            <button className={`${s.slicerToggleBtn} ${analyticsPeriodMode === 'r12' ? s.on : ''}`} onClick={() => setAnalyticsPeriodMode('r12')}>Rolling 12M</button>
-          </div>
-        </div>
-
-        <div className={s.slicerGroup}>
-          <span className={s.slicerLabel}>Quarter</span>
-          <Select
-            className={s.filterSelect}
-            options={QUARTERS}
-            value={analyticsQuarter}
-            onChange={setAnalyticsQuarter}
-          />
-        </div>
-
-        <div className={s.slicerDivider} />
-
-        <div className={s.slicerGroup}>
-          <span className={s.slicerLabel}>Persona</span>
-          <Select
-            className={s.filterSelect}
-            options={Object.entries(PERSONA_DETAILS).map(([k, d]) => ({
-              value: k,
-              label: (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: d.dot, flexShrink: 0, display: 'inline-block' }} />
-                  {d.name} — {d.role}
-                </span>
-              ),
-            }))}
-            value={analyticsPersona}
-            onChange={setAnalyticsPersona}
-          />
-        </div>
-
-        <div className={s.slicerDivider} />
-
-        <div className={s.askFoldSlicer} onClick={e => e.currentTarget.querySelector('input')?.focus()}>
-          <Icon name="solar:magic-stick-3-linear" size={14} color="var(--primary-300)" />
-          <input aria-label="Ask Fold a question"
-            className={s.askFoldInput}
-            type="text"
-            placeholder="Ask Fold anything..."
-            value={nlqValue}
-            onChange={e => setNlqValue(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && nlqValue.trim()) { showToast(`NLQ: "${nlqValue}"`); setNlqValue(''); } }}
-          />
-        </div>
-      </div>
-
       {/* ── Body (nav + canvas) ── */}
       <div className={s.body}>
         {/* ── Page Navigator — shared SideNav ── */}
@@ -221,7 +158,74 @@ export function AnalyticsLayout() {
         />
 
         {/* ── Canvas ── */}
-        <div className={[s.canvas, WHITE_CANVAS_VIEWS.has(view) ? s.canvasWhite : ''].filter(Boolean).join(' ')} ref={canvasRef}>
+        <div className={[s.canvas, FLUSH_CANVAS_VIEWS.has(view) ? s.canvasFlush : ''].filter(Boolean).join(' ')} ref={canvasRef}>
+          {/* ── Slicer Bar: global filters, sticky at the top of each page ── */}
+          {!NO_SLICER_VIEWS.has(view) && (
+          <div className={s.slicerBar}>
+            <div className={s.slicerGroup}>
+              <span className={s.slicerLabel}>Organization</span>
+              <Select
+                className={s.filterSelect}
+                options={ORGANIZATIONS}
+                value={analyticsOrg}
+                onChange={setAnalyticsOrg}
+              />
+            </div>
+
+            <div className={s.slicerGroup}>
+              <span className={s.slicerLabel}>Period</span>
+              <div className={s.slicerToggle}>
+                <button className={`${s.slicerToggleBtn} ${analyticsPeriodMode === 'ytd' ? s.on : ''}`} onClick={() => setAnalyticsPeriodMode('ytd')}>YTD</button>
+                <button className={`${s.slicerToggleBtn} ${analyticsPeriodMode === 'r12' ? s.on : ''}`} onClick={() => setAnalyticsPeriodMode('r12')}>Rolling 12M</button>
+              </div>
+            </div>
+
+            <div className={s.slicerGroup}>
+              <span className={s.slicerLabel}>Quarter</span>
+              <Select
+                className={s.filterSelect}
+                options={QUARTERS}
+                value={analyticsQuarter}
+                onChange={setAnalyticsQuarter}
+              />
+            </div>
+
+            <div className={s.slicerDivider} />
+
+            <div className={s.slicerGroup}>
+              <span className={s.slicerLabel}>Persona</span>
+              <Select
+                className={s.filterSelect}
+                options={Object.entries(PERSONA_DETAILS).map(([k, d]) => ({
+                  value: k,
+                  label: (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: d.dot, flexShrink: 0, display: 'inline-block' }} />
+                      {d.name} — {d.role}
+                    </span>
+                  ),
+                }))}
+                value={analyticsPersona}
+                onChange={setAnalyticsPersona}
+              />
+            </div>
+
+            <div className={s.slicerDivider} />
+
+            <div className={s.askFoldSlicer} onClick={e => e.currentTarget.querySelector('input')?.focus()}>
+              <Icon name="solar:magic-stick-3-linear" size={14} color="var(--primary-300)" />
+              <input aria-label="Ask Fold a question"
+                className={s.askFoldInput}
+                type="text"
+                placeholder="Ask Fold anything..."
+                value={nlqValue}
+                onChange={e => setNlqValue(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && nlqValue.trim()) { showToast(`NLQ: "${nlqValue}"`); setNlqValue(''); } }}
+              />
+            </div>
+          </div>
+          )}
+
           {/* Recency bar */}
           {!NO_RECENCY_VIEWS.has(view) && (
           <div className={s.recency}>

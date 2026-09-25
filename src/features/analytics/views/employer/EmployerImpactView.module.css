@@ -6,6 +6,7 @@
 .header, .filterBar {
   display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap;
   min-height: 48px; padding: var(--space-2) var(--space-4);
+  background: var(--neutral-0);
   border-bottom: 0.5px solid var(--neutral-150);
 }
 .header { justify-content: space-between; gap: var(--space-4); }
@@ -16,23 +17,9 @@
 /* Sticky so it stays reachable while scrolling. */
 .quickJump {
   position: sticky; top: 0; z-index: 2;
-  display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap;
-  padding: var(--space-3) var(--space-5); background: var(--neutral-0);
+  display: flex; align-items: center; overflow-x: auto;
+  padding: var(--space-2) var(--space-4); background: var(--neutral-0);
   border-bottom: 0.5px solid var(--neutral-150);
-}
-.quickJumpLabel { font-size: var(--font-sm); color: var(--neutral-400); font-weight: 500; }
-.quickJumpItem {
-  border: 0; background: transparent; cursor: pointer;
-  padding: 0 var(--space-1); border-radius: 4px;
-  font-size: var(--font-sm); color: var(--neutral-300);
-}
-.quickJumpItem:hover { background: var(--neutral-50); color: var(--neutral-400); }
-.quickJumpItem:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 1px; }
-.quickJumpActive { background: var(--neutral-50); color: var(--neutral-400); }
-
-.notice {
-  margin: var(--space-4) var(--space-4) 0; padding: var(--space-3) var(--space-4); border-radius: 8px;
-  background: var(--neutral-50); font-size: var(--font-md); color: var(--neutral-300);
 }
 
 /* ── Sections + grid ── */

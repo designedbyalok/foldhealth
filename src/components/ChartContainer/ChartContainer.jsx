@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { Fragment, useRef, useState } from 'react';
 import { ActionButton } from '../ActionButton/ActionButton';
 import { MenuPopover } from '../MenuPopover/MenuPopover';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -48,7 +48,26 @@ export function ChartContainer({
   const moreRef = useRef(null);
   const [menuRect, setMenuRect] = useState(null);
   const hasMenu = menuItems?.length > 0;
-  const hasActions = onExpand || onDownload || hasMenu;
+  // Hairline dividers sit between actions, so build the list first.
+  const actions = [
+    onExpand && { key: 'expand', node: <ActionButton icon="solar:maximize-square-linear" size="S" tooltip="Expand" aria-label={`Expand ${title}`} state={empty ? 'disabled' : 'active'} onClick={onExpand} /> },
+    onDownload && { key: 'download', node: <ActionButton icon="solar:download-minimalistic-linear" size="S" tooltip="Download" aria-label={`Download ${title}`} state={empty ? 'disabled' : 'active'} onClick={onDownload} /> },
+    hasMenu && {
+      key: 'more',
+      node: (
+        <span ref={moreRef} className={styles.menuAnchor}>
+          <ActionButton
+            icon="solar:menu-dots-linear"
+            size="S"
+            tooltip="More"
+            aria-label={`More actions for ${title}`}
+            onClick={() => setMenuRect(moreRef.current?.getBoundingClientRect() || null)}
+          />
+        </span>
+      ),
+    },
+  ].filter(Boolean);
+  const hasActions = actions.length > 0;
 
   return (
     <section
@@ -56,7 +75,7 @@ export function ChartContainer({
       style={height != null ? { ...style, '--chart-card-height': toCss(height) } : style}
       aria-label={title}
     >
-      <header className={styles.header}>
+      <header className={[styles.header, subtitle ? '' : styles.headerCompact].filter(Boolean).join(' ')}>
         <div className={styles.headText}>
           <div className={styles.titleRow}>
             <span className={styles.title}>{title}</span>
@@ -72,18 +91,12 @@ export function ChartContainer({
         </div>
         {hasActions && (
           <div className={styles.actions}>
-            {onExpand && <ActionButton icon="solar:maximize-square-linear" tooltip="Expand" aria-label={`Expand ${title}`} state={empty ? 'disabled' : 'active'} onClick={onExpand} />}
-            {onDownload && <ActionButton icon="solar:download-minimalistic-linear" tooltip="Download" aria-label={`Download ${title}`} state={empty ? 'disabled' : 'active'} onClick={onDownload} />}
-            {hasMenu && (
-              <span ref={moreRef} className={styles.menuAnchor}>
-                <ActionButton
-                  icon="solar:menu-dots-linear"
-                  tooltip="More"
-                  aria-label={`More actions for ${title}`}
-                  onClick={() => setMenuRect(moreRef.current?.getBoundingClientRect() || null)}
-                />
-              </span>
-            )}
+            {actions.map((action, i) => (
+              <Fragment key={action.key}>
+                {i > 0 && <span className={styles.divider} aria-hidden="true" />}
+                {action.node}
+              </Fragment>
+            ))}
           </div>
         )}
       </header>

@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppStore } from '../../../../store/useAppStore';
 import { Toggle } from '../../../../components/Toggle/Toggle';
+import { SubTabs } from '../../../../components/SubTabs/SubTabs';
 import { Button } from '../../../../components/Button/Button';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
 import { FilterChip } from '../../../../components/FilterChip/FilterChip';
 import { DateRangePopover } from '../../../../components/DateRangePopover/DateRangePopover';
 import { Select } from '../../../../components/Select/Select';
-import { Icon } from '../../../../components/Icon/Icon';
 import { CheckboxListPopover } from '../../../../components/CheckboxListPopover/CheckboxListPopover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../../components/ShadcnDialog/ShadcnDialog';
 import { ChartSkeleton, KpiSkeleton } from '../shared';
@@ -256,7 +256,6 @@ function SavingsCard({ card, loading, rangeText, onDownload, style }) {
 export function EmployerImpactView() {
   const filterOptions = useAppStore(s => s.employerImpactFilters);
   const filtersLoaded = useAppStore(s => s.employerImpactFiltersLoaded);
-  const usingSample = useAppStore(s => s.employerImpactLocal);
   const fetchFilters = useAppStore(s => s.fetchEmployerImpactFilters);
   const fetchRollup = useAppStore(s => s.fetchEmployerImpact);
 
@@ -457,7 +456,6 @@ export function EmployerImpactView() {
 
       {/* Filters */}
       <div className={styles.filterBar}>
-        <Icon name="custom:filter" size={20} color="var(--neutral-300)" />
         <FilterChip
           label="Employer"
           options={employers.map(e => e.name)}
@@ -465,6 +463,31 @@ export function EmployerImpactView() {
           onChange={(next) => setEmployerName(next[0] || null)}
           singleSelect
           searchable={employers.length > 6}
+        />
+        {/* Always shows the range the charts use: the default span reads as a
+            fixed value (no ✕); a picked range can be cleared back to it.
+            The report counts whole months, so a picked range widens to the
+            months it touches. */}
+        <FilterChip
+          label="Date Range"
+          active={filtersLoaded}
+          activeSummary={rangeText}
+          noClear={!range}
+          onClear={() => setRange(null)}
+          renderPopover={({ anchorRect, onClose }) => (
+            <DateRangePopover
+              anchorRect={anchorRect}
+              label="Date Range"
+              selected={[`${effectiveRange.from}-01`, lastDayOf(effectiveRange.to)]}
+              onChange={(vals) => {
+                if (vals.length !== 2) { setRange(null); return; }
+                const clamp = (m) => [firstMonth, [m, lastMonth].sort()[0]].sort()[1];
+                const [a, b] = [toMonthKey(vals[0]), toMonthKey(vals[1])].sort();
+                setRange({ from: clamp(a), to: clamp(b) });
+              }}
+              onClose={onClose}
+            />
+          )}
         />
         <FilterChip
           key={scope}
@@ -482,51 +505,18 @@ export function EmployerImpactView() {
           onChange={(next) => setTimeFrame(next[0] || 'Month')}
           singleSelect
         />
-        {/* The report counts whole months, so a picked range widens to the months it touches. */}
-        <FilterChip
-          label="Date Range"
-          active={!!range}
-          activeSummary={range ? rangeText : undefined}
-          onClear={() => setRange(null)}
-          renderPopover={({ anchorRect, onClose }) => (
-            <DateRangePopover
-              anchorRect={anchorRect}
-              label="Date Range"
-              selected={range ? [`${range.from}-01`, lastDayOf(range.to)] : []}
-              onChange={(vals) => {
-                if (vals.length !== 2) { setRange(null); return; }
-                const clamp = (m) => [firstMonth, [m, lastMonth].sort()[0]].sort()[1];
-                const [a, b] = [toMonthKey(vals[0]), toMonthKey(vals[1])].sort();
-                setRange({ from: clamp(a), to: clamp(b) });
-              }}
-              onClose={onClose}
-            />
-          )}
-        />
       </div>
 
-      {/* Quick jump: By Location has a single section, so it has none. */}
+      {/* Section tabs jump to a section and follow the scroll. By Location
+          has a single section, so it has none. */}
       {scope !== 'visit' && (
-        <nav className={styles.quickJump} aria-label="Quick jump">
-          <span className={styles.quickJumpLabel}>Quick Jump:</span>
-          {sectionsInOrder.map(s => (
-            <button
-              key={s.id}
-              type="button"
-              className={[styles.quickJumpItem, activeSection === s.id ? styles.quickJumpActive : ''].filter(Boolean).join(' ')}
-              aria-current={activeSection === s.id ? 'true' : undefined}
-              onClick={() => jumpTo(s.id)}
-            >
-              {s.title}
-            </button>
-          ))}
+        <nav className={styles.quickJump} aria-label="Report sections">
+          <SubTabs
+            tabs={sectionsInOrder.map(sec => ({ key: sec.id, label: sec.title }))}
+            activeKey={activeSection}
+            onChange={jumpTo}
+          />
         </nav>
-      )}
-
-      {filtersLoaded && usingSample && (
-        <p className={styles.notice}>
-          Showing sample data. Employer data hasn&apos;t been loaded into the database yet.
-        </p>
       )}
 
       {/* Sections */}
