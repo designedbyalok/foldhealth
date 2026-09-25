@@ -37,6 +37,15 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **Employer Impact Print drawer: Widgets and Personalize tabs.** Widgets
+  (first) holds the section cards, redesigned to Figma 937:52974: drag a card
+  from anywhere (all cards shrink to their titles mid-drag), switch a section
+  off to collapse it, and edit titles and subtitles in place with the new
+  reusable `EditableText` component. Each section has a default subtitle. A
+  filter button opens the report's own filters. Personalize holds the logo
+  preview (defaults to the filtered employer, Change to upload a
+  replacement), title and cover settings.
+
 - **Employer Impact Report: stock photo cover backgrounds and consistent
   loading.** The print drawer's Image background can now search free Pexels
   photos (photos only, never videos) through the server-side

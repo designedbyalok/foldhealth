@@ -484,6 +484,62 @@ export function EmployerImpactView() {
   const dialogWidget = dialog && WIDGETS.find(w => w.key === dialog.key);
   const dialogModel = dialogWidget && models[dialogWidget.key];
 
+  // The report's filters; the Print drawer shows the same chips, so a change
+  // in either place updates the report and its PDF.
+  const filterChips = (
+    <>
+      <FilterChip
+        label="Employer"
+        options={employers.map(e => e.name)}
+        selected={employerName ? [employerName] : []}
+        onChange={(next) => setEmployerName(next[0] || null)}
+        singleSelect
+        searchable={employers.length > 6}
+      />
+      {/* Always shows the range the charts use: the default span reads as a
+          fixed value (no ✕); a picked range can be cleared back to it.
+          The report counts whole months, so a picked range widens to the
+          months it touches. */}
+      <FilterChip
+        label="Date Range"
+        active={filtersLoaded}
+        activeSummary={rangeText}
+        noClear={!range}
+        onClear={() => setRange(null)}
+        renderPopover={({ anchorRect, onClose }) => (
+          <DateRangePopover
+            anchorRect={anchorRect}
+            label="Date Range"
+            selected={[`${effectiveRange.from}-01`, lastDayOf(effectiveRange.to)]}
+            onChange={(vals) => {
+              if (vals.length !== 2) { setRange(null); return; }
+              const clamp = (m) => [firstMonth, [m, lastMonth].sort()[0]].sort()[1];
+              const [a, b] = [toMonthKey(vals[0]), toMonthKey(vals[1])].sort();
+              setRange({ from: clamp(a), to: clamp(b) });
+            }}
+            onClose={onClose}
+          />
+        )}
+      />
+      <FilterChip
+        key={scope}
+        label={scope === 'visit' ? 'Visit Location' : 'Patient Location'}
+        options={locations}
+        selected={location ? [location] : []}
+        onChange={(next) => setLocation(next[0] || null)}
+        singleSelect
+      />
+      {/* Month is the default grouping, so the chip reads idle until another is picked. */}
+      <FilterChip
+        label="Time Frame"
+        options={TIME_FRAMES}
+        selected={timeFrame === 'Month' ? [] : [timeFrame]}
+        onChange={(next) => setTimeFrame(next[0] || 'Month')}
+        singleSelect
+      />
+    </>
+  );
+
   return (
     <div className={styles.page}>
       {/* Header, filter and quick-jump rows: full-bleed 48px rows split by
@@ -522,57 +578,7 @@ export function EmployerImpactView() {
       </div>
 
       {/* Filters */}
-      <div className={styles.filterBar}>
-        <FilterChip
-          label="Employer"
-          options={employers.map(e => e.name)}
-          selected={employerName ? [employerName] : []}
-          onChange={(next) => setEmployerName(next[0] || null)}
-          singleSelect
-          searchable={employers.length > 6}
-        />
-        {/* Always shows the range the charts use: the default span reads as a
-            fixed value (no ✕); a picked range can be cleared back to it.
-            The report counts whole months, so a picked range widens to the
-            months it touches. */}
-        <FilterChip
-          label="Date Range"
-          active={filtersLoaded}
-          activeSummary={rangeText}
-          noClear={!range}
-          onClear={() => setRange(null)}
-          renderPopover={({ anchorRect, onClose }) => (
-            <DateRangePopover
-              anchorRect={anchorRect}
-              label="Date Range"
-              selected={[`${effectiveRange.from}-01`, lastDayOf(effectiveRange.to)]}
-              onChange={(vals) => {
-                if (vals.length !== 2) { setRange(null); return; }
-                const clamp = (m) => [firstMonth, [m, lastMonth].sort()[0]].sort()[1];
-                const [a, b] = [toMonthKey(vals[0]), toMonthKey(vals[1])].sort();
-                setRange({ from: clamp(a), to: clamp(b) });
-              }}
-              onClose={onClose}
-            />
-          )}
-        />
-        <FilterChip
-          key={scope}
-          label={scope === 'visit' ? 'Visit Location' : 'Patient Location'}
-          options={locations}
-          selected={location ? [location] : []}
-          onChange={(next) => setLocation(next[0] || null)}
-          singleSelect
-        />
-        {/* Month is the default grouping, so the chip reads idle until another is picked. */}
-        <FilterChip
-          label="Time Frame"
-          options={TIME_FRAMES}
-          selected={timeFrame === 'Month' ? [] : [timeFrame]}
-          onChange={(next) => setTimeFrame(next[0] || 'Month')}
-          singleSelect
-        />
-      </div>
+      <div className={styles.filterBar}>{filterChips}</div>
 
       {/* Section tabs jump to a section and follow the scroll. By Location
           has a single section, so it has none. */}
@@ -641,10 +647,12 @@ export function EmployerImpactView() {
             location,
             `By ${timeFrame}`,
           ].filter(Boolean).join('  ·  ')}
+          filters={filterChips}
           filename={`employer-impact-report-${effectiveRange.from}-to-${effectiveRange.to}`}
           sections={sectionsInOrder.map(section => ({
             id: section.id,
             title: section.heading || section.title,
+            subtitle: section.subtitle,
             items: gridCells(section.id).map(cell => (cell.summary
               ? { key: cell.key, title: 'Cost Savings Comparison', kind: 'savings', summary: true, subtitle: rangeText, card: { ...savingsSummary, title: 'Cost Savings Comparison' } }
               : cell.widget
