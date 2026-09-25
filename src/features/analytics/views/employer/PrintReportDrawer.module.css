@@ -19,13 +19,7 @@
 .grow { flex: 1; min-width: 0; }
 
 
-/* Cover Page card: its fields sit directly in the card. */
-.fields { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-4) 0 0; }
-/* Nothing to show when the cover is switched off. */
-.fields:empty { display: none; }
-/* Report Settings: logos and title directly on the drawer, no card. */
-/* Each group: its title and content, 16px apart. */
-.settings { display: flex; flex-direction: column; gap: var(--space-4); }
+/* A labelled field: label over its control, 8px apart. */
 .fieldGroup { display: flex; flex-direction: column; gap: var(--space-2); }
 .fieldLabel { font-size: var(--font-base); line-height: var(--leading-tight); color: var(--neutral-200); }
 .toggleRow { display: flex; }
@@ -66,20 +60,16 @@
   font-size: var(--font-base); color: var(--neutral-400);
 }
 
-/* The Cover Page card has no grip, so no head indent; and it is white. */
 /* Wraps a section card's contents to note which section an edit is in;
    it takes no box of its own, so the card's layout is unchanged. */
 .focusScope { display: contents; }
 
-/* Doubled selectors: the shared card styles load after this file. */
-.settingsCard.settingsCard { background: var(--neutral-0); }
-.settingsHead.settingsHead { padding-left: 0; padding-right: 0; }
 
 /* ── Widgets / Personalize tabs (TabStrip draws its own bar), plus the
    report filters row, pinned above the scrolling editor ── */
 .tabBar { position: sticky; top: 0; z-index: 2; background: var(--neutral-0); }
 .tabs { position: relative; }
-.tabFilter { position: absolute; top: 0; bottom: 0; right: var(--space-4); display: flex; align-items: center; }
+.tabFilter { position: absolute; top: 0; bottom: 0; right: var(--space-4); display: flex; align-items: center; gap: var(--space-2); }
 .filterRow {
   display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
@@ -132,3 +122,16 @@
 /* Employer logo preview row. */
 .logoThumb { width: 96px; height: 40px; object-fit: contain; border-radius: 4px; background: var(--neutral-50); padding: var(--space-1); box-sizing: border-box; }
 .hiddenInput { display: none; }
+
+/* ── Personalize: groups split by hairlines. Each group is a title row
+   (with its switch) over its fields, 12px apart. ── */
+.personalize { display: flex; flex-direction: column; }
+.group {
+  display: flex; flex-direction: column; gap: var(--space-3);
+  padding: var(--space-5) 0; border-bottom: 0.5px solid var(--neutral-150);
+}
+.group:first-child { padding-top: 0; }
+.group:last-child { padding-bottom: 0; border-bottom: 0; }
+.groupHead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.groupTitle { margin: 0; font-size: var(--font-base); font-weight: 500; line-height: var(--leading-tight); color: var(--neutral-400); }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

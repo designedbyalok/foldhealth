@@ -676,13 +676,6 @@ export function EmployerImpactView({ snapshot = null } = {}) {
           })}
           range={rangeText}
           employerName={employerName}
-          meta={[
-            rangeText,
-            employerName || 'All Employers',
-            SCOPE_OPTIONS.find(o => o.key === scope)?.label,
-            location,
-            `By ${timeFrame}`,
-          ].filter(Boolean).join('  ·  ')}
           filters={filterChips}
           filename={`employer-impact-report-${effectiveRange.from}-to-${effectiveRange.to}`}
           sections={sectionsInOrder.map(section => ({

@@ -37,8 +37,6 @@ import interBoldItalicUrl from '../../../../assets/fonts/inter/Inter-BoldItalic.
 import { EMPLOYER_LOGOS, EMPLOYER_LOGO_HEIGHT, LOGO_ROOM, employerLogoUrl, logoForEmployer } from './employerLogos';
 import { SortableItem, SortableList } from './SortableParts';
 import styles from './PrintReportDrawer.module.css';
-// Section cards and rows match the Update Dashboard drawer.
-import cards from './UpdateDashboardDrawer.module.css';
 
 const SECTION_TITLE_MAX = 100;
 const EDITOR_TABS = [
@@ -142,10 +140,10 @@ function EmployerLogoField({ logo, custom, onPick, onReset }) {
             if (!IMAGE_MIME.includes(file.type)) { setError('Only PNG or SVG images can be used.'); return; }
             if (file.size > IMAGE_MAX_MB * 1024 * 1024) { setError(`That file is over ${IMAGE_MAX_MB} MB. Choose a smaller image.`); return; }
             setError('');
-            readImage(file).then((img) => {
-              if (img) onPick({ ...img, name: file.name });
-              else setError('That image couldn’t be read. Try another PNG or SVG.');
-            });
+            const unreadable = () => setError('That image couldn’t be read. Try another PNG or SVG.');
+            readImage(file)
+              .then((img) => { if (img) onPick({ ...img, name: file.name }); else unreadable(); })
+              .catch(unreadable);
           }}
         />
       </div>
@@ -372,13 +370,12 @@ function printBlob(blob) {
 /**
  * Print the Employer Impact Report: a live PDF preview on the left, and on
  * the right what to include, with an optional note per section. Each
- * section has its own switch; switching one off leaves it out and hides
- * its widget switches and note. The PDF lists sections and widgets in
- * the viewer's saved order. Modelled on the care plan's Preview & Share
- * drawer, with the Update Dashboard drawer's section cards.
+ * section has its own switch; switching one off leaves it out and
+ * collapses it to its title. Widgets with no data in the range start off.
+ * The PDF lists sections and widgets in the viewer's saved order.
+ * Modelled on the care plan's Preview & Share drawer.
  *
  * @param {object}   props
- * @param {string}   props.meta     – Range, employer, view and time frame, one line
  * @param {string}   props.range    – The date range, for the cover page
  * @param {string}   [props.employerName] – The report's employer, to preselect its logo
  * @param {string}   props.filename – Download name, without extension
@@ -387,7 +384,7 @@ function printBlob(blob) {
  * @param {function} props.pageSnapshot – () => the page's snapshot, for Download HTML
  * @param {function} props.onClose
  */
-export function PrintReportDrawer({ meta, range, employerName, filename, sections, filters, pageSnapshot, onClose }) {
+export function PrintReportDrawer({ range, employerName, filename, sections, filters, pageSnapshot, onClose }) {
   const [notes, setNotes] = useState({}); // { [sectionId]: { html, plain } }
   const [titles, setTitles] = useState({}); // { [sectionId]: custom title }
   // { [sectionId]: text }. Unset means the section's default subtitle; '' clears it.
@@ -396,11 +393,19 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
   const [editorTab, setEditorTab] = useState('widgets');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [reordering, setReordering] = useState(false);
-  const [off, setOff] = useState(() => new Set());
+  // Widgets with no data in the range start switched off; a switch flipped
+  // by hand wins over that default, whatever the filters do next.
+  const [widgetOverrides, setWidgetOverrides] = useState({}); // { [key]: boolean }
+  const isWidgetOn = (item) => widgetOverrides[item.key] ?? hasData(item);
   const [sectionsOff, setSectionsOff] = useState(() => new Set());
   // Print order, from the dashboard's saved order; drag to change it here.
   const [sectionOrder, setSectionOrder] = useState(() => sections.map(s => s.id));
   const [itemOrder, setItemOrder] = useState(() => Object.fromEntries(sections.map(s => [s.id, s.items.map(i => i.key)])));
+  // Back to the dashboard's order, for the sections and the widgets in them.
+  const resetOrder = () => {
+    setSectionOrder(sections.map(s => s.id));
+    setItemOrder(Object.fromEntries(sections.map(s => [s.id, s.items.map(i => i.key)])));
+  };
   // Sections and widgets in print order; any that arrive later go last.
   const orderedSections = useMemo(() => {
     const inOrder = (order, list, key) => {
@@ -411,6 +416,10 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
     return inOrder(sectionOrder, sections, s => s.id)
       .map(s => ({ ...s, items: inOrder(itemOrder[s.id], s.items, i => i.key) }));
   }, [sections, sectionOrder, itemOrder]);
+  // Reset is only offered once something has been moved.
+  const orderCustomized = orderedSections.some((s, i) => (
+    s.id !== sections[i]?.id || s.items.some((it, j) => it.key !== sections[i]?.items[j]?.key)
+  ));
   const [includeCover, setIncludeCover] = useState(true);
   const [coverDescription, setCoverDescription] = useState('');
   const [title, setTitle] = useState(DEFAULT_TITLE);
@@ -485,9 +494,9 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
       subtitle: (subtitles[s.id] ?? s.subtitle ?? '').slice(0, SECTION_SUBTITLE_MAX).trim(),
       // Rich text: printed from its HTML; blank when it has no visible text.
       note: notes[s.id]?.plain?.trim() ? notes[s.id].html : '',
-      items: s.items.filter(i => !off.has(i.key)),
+      items: s.items.filter(i => widgetOverrides[i.key] ?? hasData(i)),
     }))
-    .filter(s => s.items.length), [orderedSections, sectionsOff, off, notes, titles, subtitles]);
+    .filter(s => s.items.length), [orderedSections, sectionsOff, widgetOverrides, notes, titles, subtitles]);
   const nothingSelected = included.length === 0;
 
   // An image background falls back to the default gradient until one is uploaded.
@@ -547,7 +556,6 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
 
   const report = useMemo(() => ({
     title: reportTitle,
-    meta,
     generatedAt,
     logo: employerHeaderLogo,
     clientLogo: headerLogo,
@@ -564,16 +572,20 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
       clientLogo: coverLogo,
     } : null,
     sections: included,
-  }), [reportTitle, meta, generatedAt, assets, headerLogo, employerHeaderLogo, showHeader, headerImage, showFooter, footerImage, includeCover, range, coverDescription, background, employerCoverLogo, coverLogo, included]);
+  }), [reportTitle, generatedAt, assets, headerLogo, employerHeaderLogo, showHeader, headerImage, showFooter, footerImage, includeCover, range, coverDescription, background, employerCoverLogo, coverLogo, included]);
   const generate = useCallback(() => generateEmployerReport(report), [report]);
   // Where the preview should scroll after the next redraw: the part of the
   // report the last interaction was in ('cover', or a section id).
   const [focus, setFocus] = useState(null);
-  const focusOn = (key) => setFocus(prev => (prev?.key === key ? prev : { key, n: (prev?.n || 0) + 1 }));
-  const focusScope = (key) => ({
+  // `fallbackKey`: where to look when `key` isn't in the new PDF (a widget just
+  // switched off falls back to its section).
+  const focusOn = (key, fallbackKey) => setFocus(prev => (
+    prev?.key === key && prev?.fallbackKey === fallbackKey ? prev : { key, fallbackKey, n: (prev?.n || 0) + 1 }
+  ));
+  const focusScope = (key, fallbackKey) => ({
     className: styles.focusScope,
-    onPointerDownCapture: () => focusOn(key),
-    onKeyDownCapture: () => focusOn(key),
+    onPointerDownCapture: () => focusOn(key, fallbackKey),
+    onKeyDownCapture: () => focusOn(key, fallbackKey),
   });
 
   const showToast = useAppStore(s => s.showToast);
@@ -730,23 +742,24 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
                     key={item.key}
                     id={item.key}
                     label={item.title}
-                    className={[styles.cardRow, !off.has(item.key) && !hasData(item) ? styles.rowNoData : ''].filter(Boolean).join(' ')}
+                    className={[styles.cardRow, isWidgetOn(item) && !hasData(item) ? styles.rowNoData : ''].filter(Boolean).join(' ')}
                   >
-                  {rowHandle => (<>
+                  {rowHandle => (<div {...focusScope(item.key, section.id)}>
                     {rowHandle}
                     <span className={styles.rowText}>
                       {item.title}
-                      {/* Flag widgets that will print but have nothing to show. */}
-                      {!off.has(item.key) && !hasData(item) && (
+                      {/* Flag widgets with nothing to show, on or off; switched on,
+                          the row also turns red since it will print blank. */}
+                      {!hasData(item) && (
                         <span className={styles.noData}>No data available for this widget</span>
                       )}
                     </span>
                     <Switch
-                      checked={!off.has(item.key)}
-                      onChange={() => toggle(setOff, item.key)}
+                      checked={isWidgetOn(item)}
+                      onChange={() => setWidgetOverrides(prev => ({ ...prev, [item.key]: !isWidgetOn(item) }))}
                       ariaLabel={`Include ${item.title}`}
                     />
-                  </>)}
+                  </div>)}
                   </SortableItem>
                 ))}
                 </SortableList>
@@ -796,8 +809,20 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
             onChange={setEditorTab}
             fullWidth={false}
           />
-          {filters && editorTab === 'widgets' && (
+          {editorTab === 'widgets' && (
             <span className={styles.tabFilter}>
+              <ActionButton
+                icon="solar:refresh-linear"
+                size="S"
+                tooltip="Reset order"
+                tooltipBelow
+                tooltipLeft
+                aria-label="Reset sections and widgets to the dashboard order"
+                state={orderCustomized ? 'active' : 'disabled'}
+                onClick={resetOrder}
+              />
+              {filters && (<>
+              <span className={styles.headerDivider} aria-hidden="true" />
               <ActionButton
                 icon="custom:filter"
                 size="S"
@@ -808,6 +833,7 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
                 active={filtersOpen}
                 onClick={() => setFiltersOpen(o => !o)}
               />
+              </>)}
             </span>
           )}
         </div>
@@ -817,8 +843,9 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
       <div className={styles.body}>
         {editorTab === 'widgets' ? widgetsPanel : (
         <>
-        {/* Report settings: logos and title, straight on the drawer. */}
-        <div className={styles.settings} onPointerDownCapture={() => focusOn('cover')} onKeyDownCapture={() => focusOn('cover')}>
+        {/* Personalize: groups split by hairlines, no cards. */}
+        <div className={styles.personalize} onPointerDownCapture={() => focusOn('cover')} onKeyDownCapture={() => focusOn('cover')}>
+          <section className={styles.group}>
             <EmployerLogoField
               logo={EMPLOYER_LOGOS.find(l => l.key === logoChoice)}
               custom={customLogo}
@@ -841,52 +868,13 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
               placeholder={DEFAULT_TITLE}
               onChange={e => setTitle(e.target.value)}
             />
+          </section>
 
-        {/* Page header: a saved header component on every page. */}
-        <div className={[cards.section, styles.settingsCard].join(' ')} onPointerDownCapture={() => focusOn('cover')} onKeyDownCapture={() => focusOn('cover')}>
-          <div className={[cards.sectionHead, styles.settingsHead].join(' ')}>
-            <span className={[cards.sectionTitle, styles.grow].join(' ')}>Show Header</span>
-            <Switch checked={showHeader} onChange={setShowHeader} ariaLabel="Show header" />
-          </div>
-          <div className={styles.fields}>
-            {showHeader && (
-              <Select
-                label="Selected Header"
-                portal
-                options={headerComponents.map(h => ({ value: String(h.id), label: h.label }))}
-                value={String(headerComponent?.id ?? '')}
-                onChange={setPickedHeaderId}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* Page footer: a saved report footer component on every page. */}
-        <div className={[cards.section, styles.settingsCard].join(' ')} onPointerDownCapture={() => focusOn('cover')} onKeyDownCapture={() => focusOn('cover')}>
-          <div className={[cards.sectionHead, styles.settingsHead].join(' ')}>
-            <span className={[cards.sectionTitle, styles.grow].join(' ')}>Show Footer</span>
-            <Switch checked={showFooter} onChange={setShowFooter} ariaLabel="Show footer" />
-          </div>
-          <div className={styles.fields}>
-            {showFooter && (
-              <Select
-                label="Selected Footer"
-                portal
-                options={footerComponents.map(f => ({ value: String(f.id), label: f.label }))}
-                value={String(footerComponent?.id ?? '')}
-                onChange={setPickedFooterId}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* Cover page settings in their own card. */}
-        <div className={[cards.section, styles.settingsCard].join(' ')} onPointerDownCapture={() => focusOn('cover')} onKeyDownCapture={() => focusOn('cover')}>
-          <div className={[cards.sectionHead, styles.settingsHead].join(' ')}>
-            <span className={[cards.sectionTitle, styles.grow].join(' ')}>Cover Page</span>
-            <Switch checked={includeCover} onChange={setIncludeCover} ariaLabel="Include cover page" />
-          </div>
-          <div className={styles.fields}>
+          <section className={styles.group}>
+            <div className={styles.groupHead}>
+              <h3 className={styles.groupTitle}>Cover Page</h3>
+              <Switch checked={includeCover} onChange={setIncludeCover} ariaLabel="Include cover page" />
+            </div>
             {includeCover && (
               <>
                 <Textarea
@@ -966,12 +954,15 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
                         selectedId={bgImage?.photo?.id}
                         onSelect={(photo) => {
                           pickedPhotoId.current = photo.id;
-                          readPhotoUrl(photo.full).then((img) => {
-                            // Ignore a slow download if another image was picked meanwhile.
-                            if (img && pickedPhotoId.current === photo.id) {
-                              setBgImage({ ...img, name: `Photo by ${photo.photographer}`, photo });
-                            }
-                          });
+                          readPhotoUrl(photo.full)
+                            .then((img) => {
+                              // Ignore a slow download if another image was picked meanwhile.
+                              if (img && pickedPhotoId.current === photo.id) {
+                                setBgImage({ ...img, name: `Photo by ${photo.photographer}`, photo });
+                              }
+                            })
+                            // A failed download leaves the current background as it is.
+                            .catch(() => {});
                         }}
                       />
                       {bgImage?.photo && (
@@ -987,8 +978,46 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
                 </div>
               </>
             )}
-          </div>
-        </div>
+          </section>
+
+          {/* Page header and footer: a saved component on every page. */}
+          <section className={styles.group}>
+            <div className={styles.groupHead}>
+              <h3 className={styles.groupTitle}>Show Header</h3>
+              <Switch checked={showHeader} onChange={setShowHeader} ariaLabel="Show header" />
+            </div>
+            {showHeader && (
+              <>
+                <label className={styles.srOnly} htmlFor="print-report-header">Header</label>
+                <Select
+                  id="print-report-header"
+                  portal
+                  options={headerComponents.map(h => ({ value: String(h.id), label: h.label }))}
+                  value={String(headerComponent?.id ?? '')}
+                  onChange={setPickedHeaderId}
+                />
+              </>
+            )}
+          </section>
+          <section className={styles.group}>
+            <div className={styles.groupHead}>
+              <h3 className={styles.groupTitle}>Show Footer</h3>
+              <Switch checked={showFooter} onChange={setShowFooter} ariaLabel="Show footer" />
+            </div>
+            {showFooter && (
+              <>
+                <label className={styles.srOnly} htmlFor="print-report-footer">Footer</label>
+                <Select
+                  id="print-report-footer"
+                  portal
+                  options={footerComponents.map(f => ({ value: String(f.id), label: f.label }))}
+                  value={String(footerComponent?.id ?? '')}
+                  onChange={setPickedFooterId}
+                />
+              </>
+            )}
+          </section>
+
         </div>
         </>
         )}
@@ -1015,7 +1044,8 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
       onClose={onClose}
       headerRight={headerRight}
       noCloseDivider
-      width={1300}
+      // Same as the expanded HCC Diagnosis Gaps drawer: 1280px, never past the 8px inset.
+      width="min(1280px, calc(100vw - 16px))"
       bodyClassName={SplitDrawerLayout.bodyClassName}
     >
       <SplitDrawerLayout left={preview} right={editor} />
