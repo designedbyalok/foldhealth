@@ -7,13 +7,14 @@ import { Switch } from '../../../../components/Switch/Switch';
 import { Select } from '../../../../components/Select/Select';
 import { Input } from '../../../../components/Input/Input';
 import { Toggle } from '../../../../components/Toggle/Toggle';
+import { TabStrip } from '../../../../components/TabStrip/TabStrip';
+import { EditableText } from '../../../../components/EditableText/EditableText';
 // The form and email builders' colour field: swatch + hex, opening the full picker.
 import { ColorInput } from '../../../email-builder/ColorInput';
 import { useAppStore } from '../../../../store/useAppStore';
 import { Dropzone } from '../../../../components/Dropzone/Dropzone';
 import { PhotoSearch } from '../../../../components/PhotoSearch/PhotoSearch';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
-import { CloseIcon } from '../../../../components/Icon/CloseIcon';
 import { Link } from '../../../../components/Link/Link';
 import { AddIconMinimalist } from '../../../../components/Icon/AddIconMinimalist';
 import { PdfPreview } from '../../../../components/PdfPreview/PdfPreview';
@@ -36,6 +37,10 @@ import styles from './PrintReportDrawer.module.css';
 import cards from './UpdateDashboardDrawer.module.css';
 
 const SECTION_TITLE_MAX = 100;
+const EDITOR_TABS = [
+  { key: 'widgets', label: 'Widgets' },
+  { key: 'personalize', label: 'Personalize' },
+];
 const SECTION_SUBTITLE_MAX = 150;
 const COVER_DESCRIPTION_MAX = 300;
 const TITLE_MAX = 60;
@@ -45,7 +50,6 @@ const DEFAULT_TITLE = 'Employer Impact Report';
 // cover. The provider logo (Trailhead Clinics) is fixed.
 const DARK_INK = '#16181D';
 const WHITE_INK = '#FFFFFF';
-const LOGO_OPTIONS = EMPLOYER_LOGOS.map(l => ({ value: l.key, label: l.name }));
 const CLINIC_LOGO_OPTIONS = [{ value: 'trailhead', label: 'Trailhead Clinics' }];
 const BACKGROUND_TYPES = [
   { key: 'color', label: 'Color' },
@@ -58,36 +62,49 @@ const IMAGE_MAX_MB = 5;
 const TRAILHEAD_SIZE = { width: 190, height: 150, format: 'PNG' };
 
 /**
- * A section's title; clicking it renames it. Editing swaps the title for a
- * text input (SECTION_TITLE_MAX characters): Enter or leaving the field
- * saves, Escape cancels, and a blank title goes back to the original.
+ * The employer's logo as a preview row with a Change action (and Reset once
+ * replaced). The logo comes from the Employer filter; Change swaps in an
+ * upload (PNG or SVG, up to IMAGE_MAX_MB).
  */
-function EditableSectionTitle({ title, defaultTitle, onSave }) {
-  const [draft, setDraft] = useState(null); // null = not editing
-  if (draft != null) {
-    const save = () => { onSave(draft.trim() || defaultTitle); setDraft(null); };
-    return (
-      <div className={styles.titleEdit}>
-        <Input
-          value={draft}
-          autoFocus
-          maxLength={SECTION_TITLE_MAX}
-          characterLimit={SECTION_TITLE_MAX}
-          aria-label="Section title"
-          onChange={e => setDraft(e.target.value)}
-          onBlur={save}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') { e.preventDefault(); save(); }
-            if (e.key === 'Escape') { e.preventDefault(); setDraft(null); }
+function EmployerLogoField({ logo, custom, onPick, onReset }) {
+  const inputRef = useRef(null);
+  const [error, setError] = useState('');
+  const src = custom?.dataUrl || (logo && employerLogoUrl(logo, DARK_INK));
+  const name = custom?.name || logo?.name || 'No logo';
+  return (
+    <div className={styles.fieldGroup}>
+      <span className={styles.fieldLabel}>Employer Logo</span>
+      <div className={styles.picked}>
+        {src && <img className={styles.logoThumb} src={src} alt="" />}
+        <span className={styles.pickedName}>{name}</span>
+        {custom && (
+          <Button variant="tertiary" size="S" onClick={() => { setError(''); onReset(); }}>Reset</Button>
+        )}
+        <Button variant="secondary" size="S" leadingIcon="solar:upload-minimalistic-linear" onClick={() => inputRef.current?.click()}>
+          Change
+        </Button>
+        <input
+          ref={inputRef}
+          type="file"
+          accept={IMAGE_ACCEPT}
+          className={styles.hiddenInput}
+          aria-label="Upload employer logo"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = '';
+            if (!file) return;
+            if (!IMAGE_MIME.includes(file.type)) { setError('Only PNG or SVG images can be used.'); return; }
+            if (file.size > IMAGE_MAX_MB * 1024 * 1024) { setError(`That file is over ${IMAGE_MAX_MB} MB. Choose a smaller image.`); return; }
+            setError('');
+            readImage(file).then((img) => {
+              if (img) onPick({ ...img, name: file.name });
+              else setError('That image couldn’t be read. Try another PNG or SVG.');
+            });
           }}
         />
       </div>
-    );
-  }
-  return (
-    <button type="button" className={styles.titleButton} title="Click to edit" aria-label={`Edit title: ${title}`} onClick={() => setDraft(title)}>
-      {title}
-    </button>
+      {error && <span className={styles.dropError} role="alert">{error}</span>}
+    </div>
   );
 }
 
@@ -323,17 +340,15 @@ function printBlob(blob) {
  *   Items: `{ key, title, kind: 'widget'|'savings', ... }` (see generateEmployerReport)
  * @param {function} props.onClose
  */
-export function PrintReportDrawer({ meta, range, employerName, filename, sections, onClose }) {
+export function PrintReportDrawer({ meta, range, employerName, filename, sections, filters, onClose }) {
   const [notes, setNotes] = useState({}); // { [sectionId]: { html, plain } }
   const [titles, setTitles] = useState({}); // { [sectionId]: custom title }
-  const [subtitles, setSubtitles] = useState({}); // { [sectionId]: text }
-  // Sections whose subtitle field is open; each starts as an "Add Subtitle" link.
-  const [subtitleOpen, setSubtitleOpen] = useState(() => new Set());
-  // Clears the subtitle and folds the field back into the "Add Subtitle" link.
-  const removeSubtitle = (id) => {
-    setSubtitles((prev) => { const next = { ...prev }; delete next[id]; return next; });
-    setSubtitleOpen((prev) => { const next = new Set(prev); next.delete(id); return next; });
-  };
+  // { [sectionId]: text }. Unset means the section's default subtitle; '' clears it.
+  const [subtitles, setSubtitles] = useState({});
+  const subtitleOf = (s) => subtitles[s.id] ?? s.subtitle ?? '';
+  const [editorTab, setEditorTab] = useState('widgets');
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [reordering, setReordering] = useState(false);
   const [off, setOff] = useState(() => new Set());
   const [sectionsOff, setSectionsOff] = useState(() => new Set());
   // Print order, from the dashboard's saved order; drag to change it here.
@@ -354,6 +369,17 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
   const [title, setTitle] = useState(DEFAULT_TITLE);
   // Starts on the report's employer, else the first employer.
   const [logoChoice, setLogoChoice] = useState(() => logoForEmployer(employerName)?.key || EMPLOYER_LOGOS[0].key);
+  // The employer logo follows the Employer filter (here or on the page);
+  // an uploaded one replaces it until the employer changes.
+  const [logoEmployer, setLogoEmployer] = useState(employerName);
+  // An uploaded replacement for this employer's logo: { dataUrl, format, width, height, name }.
+  const [customLogo, setCustomLogo] = useState(null);
+  if (employerName !== logoEmployer) {
+    setLogoEmployer(employerName);
+    setCustomLogo(null);
+    const logo = logoForEmployer(employerName);
+    if (logo) setLogoChoice(logo.key);
+  }
   const [bgType, setBgType] = useState(DEFAULT_COVER_BACKGROUND.type);
   const [bgColor, setBgColor] = useState(DEFAULT_COVER_COLOR);
   // Recently applied colours (shared with the builders' picker, kept per
@@ -409,7 +435,7 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
     .map(s => ({
       id: s.id,
       title: titles[s.id] || s.title,
-      subtitle: (subtitles[s.id] || '').slice(0, SECTION_SUBTITLE_MAX).trim(),
+      subtitle: (subtitles[s.id] ?? s.subtitle ?? '').slice(0, SECTION_SUBTITLE_MAX).trim(),
       // Rich text: printed from its HTML; blank when it has no visible text.
       note: notes[s.id]?.plain?.trim() ? notes[s.id].html : '',
       items: s.items.filter(i => !off.has(i.key)),
@@ -438,10 +464,12 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
   // Employer logo (picked), in the cover's text colour. Each image carries
   // its own trimmed pixel size, which sets its proportions.
   const { employerHeaderLogo, employerCoverLogo } = useMemo(() => {
+    // An upload is used as it is, on the cover and in page headers.
+    if (customLogo) return { employerHeaderLogo: customLogo, employerCoverLogo: customLogo };
     const employer = assets.employerLogos?.[logoChoice];
     if (!employer) return { employerHeaderLogo: null, employerCoverLogo: null }; // still loading
     return { employerHeaderLogo: employer.dark, employerCoverLogo: lightCover ? employer.dark : employer.white };
-  }, [logoChoice, assets, lightCover]);
+  }, [logoChoice, customLogo, assets, lightCover]);
   const reportTitle = title.trim() || DEFAULT_TITLE;
 
   const report = useMemo(() => ({
@@ -495,18 +523,155 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
     </>
   );
 
+  // While a section is being dragged every card shrinks to its title row, so
+  // a card never has to travel far to reach its new place.
+  const widgetsPanel = (
+    <div className={[styles.cards, reordering ? styles.reordering : ''].filter(Boolean).join(' ')}>
+    <SortableList
+      ids={orderedSections.map(sec => sec.id)}
+      onReorder={setSectionOrder}
+      onDragStart={() => setReordering(true)}
+      onDragFinish={() => setReordering(false)}
+    >
+      {orderedSections.map((section) => {
+        const sectionOn = !sectionsOff.has(section.id);
+        const sectionTitle = titles[section.id] || section.title;
+        // Off, or mid-reorder: just the title row and switch.
+        const collapsed = !sectionOn || reordering;
+        const collapse = (children) => (
+          <div className={[styles.collapse, collapsed ? styles.collapsed : ''].filter(Boolean).join(' ')} inert={collapsed}>
+            <div className={styles.collapseInner}>{children}</div>
+          </div>
+        );
+        return (
+          <SortableItem key={section.id} id={section.id} label={sectionTitle} className={styles.sectionCard} dragOnItem>
+          {sectionHandle => (<div {...focusScope(section.id)}>
+            <div className={styles.cardHead}>
+              {/* The card drags from anywhere; the grip stays for keyboard reordering. */}
+              <span className={styles.keyboardHandle}>{sectionHandle}</span>
+              <div className={styles.cardHeadText}>
+                <EditableText
+                  className={styles.cardTitle}
+                  value={sectionTitle}
+                  maxLength={SECTION_TITLE_MAX}
+                  ariaLabel={`Title of ${sectionTitle}`}
+                  // Blank goes back to the original title.
+                  onCommit={t => setTitles(prev => ({ ...prev, [section.id]: t === section.title ? '' : t }))}
+                />
+                {collapse(
+                  <EditableText
+                    className={styles.cardSubtitle}
+                    value={subtitleOf(section)}
+                    placeholder="Add a subtitle"
+                    maxLength={SECTION_SUBTITLE_MAX}
+                    ariaLabel={`Subtitle of ${sectionTitle}`}
+                    onCommit={t => setSubtitles(prev => ({ ...prev, [section.id]: t }))}
+                  />,
+                )}
+              </div>
+              <Switch
+                checked={sectionOn}
+                onChange={() => toggle(setSectionsOff, section.id)}
+                ariaLabel={`Include ${sectionTitle}`}
+              />
+            </div>
+            {collapse(<>
+              <div className={styles.cardList} data-no-drag>
+                <SortableList
+                  ids={section.items.map(i => i.key)}
+                  onReorder={keys => setItemOrder(prev => ({ ...prev, [section.id]: keys }))}
+                >
+                {section.items.map(item => (
+                  <SortableItem
+                    key={item.key}
+                    id={item.key}
+                    label={item.title}
+                    className={[styles.cardRow, !off.has(item.key) && !hasData(item) ? styles.rowNoData : ''].filter(Boolean).join(' ')}
+                  >
+                  {rowHandle => (<>
+                    {rowHandle}
+                    <span className={styles.rowText}>
+                      {item.title}
+                      {/* Flag widgets that will print but have nothing to show. */}
+                      {!off.has(item.key) && !hasData(item) && (
+                        <span className={styles.noData}>No data available for this widget</span>
+                      )}
+                    </span>
+                    <Switch
+                      checked={!off.has(item.key)}
+                      onChange={() => toggle(setOff, item.key)}
+                      ariaLabel={`Include ${item.title}`}
+                    />
+                  </>)}
+                  </SortableItem>
+                ))}
+                </SortableList>
+              </div>
+              <div className={styles.cardFooter} data-no-drag>
+                {noteOpen.has(section.id) ? (
+                  <Textarea
+                    richText
+                    value={notes[section.id]?.html || ''}
+                    onChange={(html, plain) => setNotes(n => ({ ...n, [section.id]: { html, plain } }))}
+                    placeholder="Add a note for this section (optional)"
+                    aria-label={`Note for ${sectionTitle}`}
+                    rows={2}
+                    bottomButton={{ label: 'Remove Note', variant: 'secondary', onClick: () => removeNote(section.id) }}
+                  />
+                ) : (
+                  <Link
+                    className={styles.addNote}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openNote(section.id)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openNote(section.id); } }}
+                  >
+                    <AddIconMinimalist size={14} color="currentColor" />
+                    Add Note
+                  </Link>
+                )}
+              </div>
+            </>)}
+          </div>)}
+          </SortableItem>
+        );
+      })}
+    </SortableList>
+    </div>
+  );
+
   const editor = (
     <div className={styles.editorScroll}>
+      <div className={styles.tabBar}>
+        <TabStrip
+          items={EDITOR_TABS}
+          activeKey={editorTab}
+          onChange={setEditorTab}
+          fullWidth={false}
+          trailing={filters && editorTab === 'widgets' && (
+            <ActionButton
+              icon="custom:filter"
+              size="S"
+              tooltip={filtersOpen ? 'Hide filters' : 'Filters'}
+              aria-label={filtersOpen ? 'Hide report filters' : 'Show report filters'}
+              active={filtersOpen}
+              onClick={() => setFiltersOpen(o => !o)}
+            />
+          )}
+        />
+        {/* The report's own filters: changing one redraws the report and this preview. */}
+        {editorTab === 'widgets' && filtersOpen && filters && <div className={styles.filterRow}>{filters}</div>}
+      </div>
       <div className={styles.body}>
+        {editorTab === 'widgets' ? widgetsPanel : (
+        <>
         {/* Report settings: logos and title, straight on the drawer. */}
         <div className={styles.settings} onPointerDownCapture={() => focusOn('cover')} onKeyDownCapture={() => focusOn('cover')}>
-          <span className={styles.settingsTitle}>Report Settings</span>
-            <Select
-              label="Employer Logo"
-              portal
-              options={LOGO_OPTIONS}
-              value={logoChoice}
-              onChange={setLogoChoice}
+            <EmployerLogoField
+              logo={EMPLOYER_LOGOS.find(l => l.key === logoChoice)}
+              custom={customLogo}
+              onPick={setCustomLogo}
+              onReset={() => setCustomLogo(null)}
             />
             {/* The clinic providing the report; fixed to Trailhead Clinics for now. */}
             <Select
@@ -635,132 +800,8 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
           </div>
         </div>
         </div>
-
-        {/* Widget configuration: the report's sections and their widgets. */}
-        <div className={styles.group}>
-          <span className={styles.settingsTitle}>Widget Configuration</span>
-        <div className={cards.sections}>
-          <SortableList ids={orderedSections.map(sec => sec.id)} onReorder={setSectionOrder}>
-          {orderedSections.map((section) => {
-            const sectionOn = !sectionsOff.has(section.id);
-            return (
-              <SortableItem key={section.id} id={section.id} label={titles[section.id] || section.title} className={cards.section}>
-              {sectionHandle => (<div {...focusScope(section.id)}>
-                <div className={cards.sectionHead}>
-                  {sectionHandle}
-                  <span className={[cards.sectionTitle, styles.grow].join(' ')}>
-                    <EditableSectionTitle
-                      title={titles[section.id] || section.title}
-                      defaultTitle={section.title}
-                      onSave={(t) => setTitles(prev => ({ ...prev, [section.id]: t === section.title ? '' : t }))}
-                    />
-                  </span>
-                  <Switch
-                    checked={sectionOn}
-                    onChange={() => toggle(setSectionsOff, section.id)}
-                    ariaLabel={`Include ${titles[section.id] || section.title}`}
-                  />
-                </div>
-                {sectionOn && (
-                  <div className={cards.list}>
-                    <SortableList
-                      ids={section.items.map(i => i.key)}
-                      onReorder={keys => setItemOrder(prev => ({ ...prev, [section.id]: keys }))}
-                    >
-                    {section.items.map(item => (
-                      <SortableItem
-                        key={item.key}
-                        id={item.key}
-                        label={item.title}
-                        className={[cards.row, styles.widgetRow, !off.has(item.key) && !hasData(item) ? styles.rowNoData : ''].filter(Boolean).join(' ')}
-                      >
-                      {rowHandle => (<>
-                        {rowHandle}
-                        <span className={[cards.rowLabel, styles.rowText].join(' ')}>
-                          {item.title}
-                          {/* Flag widgets that will print but have nothing to show. */}
-                          {!off.has(item.key) && !hasData(item) && (
-                            <span className={styles.noData}>No data available for this widget</span>
-                          )}
-                        </span>
-                        <Switch
-                          checked={!off.has(item.key)}
-                          onChange={() => toggle(setOff, item.key)}
-                          ariaLabel={`Include ${item.title}`}
-                        />
-                      </>)}
-                      </SortableItem>
-                    ))}
-                    </SortableList>
-                  </div>
-                )}
-                {sectionOn && (subtitleOpen.has(section.id) ? (
-                  // Once added, the subtitle stays an input with a remove cross.
-                  <div className={styles.subtitle}>
-                    <div className={styles.subtitleInput}>
-                      <Input
-                        value={subtitles[section.id] || ''}
-                        placeholder="Add a subtitle"
-                        autoFocus
-                        aria-label={`Subtitle for ${titles[section.id] || section.title}`}
-                        maxLength={SECTION_SUBTITLE_MAX}
-                        characterLimit={SECTION_SUBTITLE_MAX}
-                        onChange={e => setSubtitles(prev => ({ ...prev, [section.id]: e.target.value }))}
-                      />
-                    </div>
-                    {/* Same remove control as the allergy drawer's reaction rows. */}
-                    <ActionButton
-                      size="S"
-                      tooltip="Remove"
-                      aria-label={`Remove subtitle for ${titles[section.id] || section.title}`}
-                      onClick={() => removeSubtitle(section.id)}
-                    >
-                      <CloseIcon size={14} color="var(--neutral-300)" />
-                    </ActionButton>
-                  </div>
-                ) : (
-                  <Link
-                    className={[styles.addSubtitle, styles.gripIndent].join(' ')}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setSubtitleOpen(prev => new Set(prev).add(section.id))}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSubtitleOpen(prev => new Set(prev).add(section.id)); } }}
-                  >
-                    <AddIconMinimalist size={14} color="currentColor" />
-                    Add Subtitle
-                  </Link>
-                ))}
-                {sectionOn && (noteOpen.has(section.id) ? (
-                  <div className={styles.note}>
-                    <Textarea
-                      richText
-                      value={notes[section.id]?.html || ''}
-                      onChange={(html, plain) => setNotes(n => ({ ...n, [section.id]: { html, plain } }))}
-                      placeholder="Add a note for this section (optional)"
-                      aria-label={`Note for ${section.title}`}
-                      rows={2}
-                      bottomButton={{ label: 'Remove Note', variant: 'secondary', onClick: () => removeNote(section.id) }}
-                    />
-                  </div>
-                ) : (
-                  <Link
-                    className={[styles.addNote, styles.gripIndent].join(' ')}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => openNote(section.id)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openNote(section.id); } }}
-                  >
-                    <AddIconMinimalist size={14} color="currentColor" />
-                    Add Note
-                  </Link>
-                ))}
-              </div>)}
-              </SortableItem>
-            );
-          })}
-          </SortableList>
-        </div>
-        </div>
+        </>
+        )}
       </div>
     </div>
   );

@@ -32,14 +32,16 @@ export const sectionsForScope = (scope) => (scope === 'visit' ? SECTIONS.filter(
 export const HOURS = Array.from({ length: 24 }, (_, h) =>
   `${String(h).padStart(2, '0')}-${String((h + 1) % 24).padStart(2, '0')}`);
 
+// `subtitle` is each section's default subtitle in the printed report; the
+// Print drawer lets it be edited or cleared.
 export const SECTIONS = [
-  { id: 'overview', title: 'Overview' },
-  { id: 'costSavings', title: 'Cost Savings', heading: 'Cost savings comparison' },
-  { id: 'engagement', title: 'Engagement' },
-  { id: 'communication', title: 'Communication' },
-  { id: 'clinicalVisits', title: 'Clinical Visits' },
-  { id: 'clinicalTrends', title: 'Clinical Trends' },
-  { id: 'demographics', title: 'Demographics' },
+  { id: 'overview', title: 'Overview', subtitle: 'Membership size, revenue, growth and retention' },
+  { id: 'costSavings', title: 'Cost Savings', heading: 'Cost savings comparison', subtitle: 'What care would have cost at traditional rates, against the actual cost' },
+  { id: 'engagement', title: 'Engagement', subtitle: 'How actively members use care and how satisfied they are' },
+  { id: 'communication', title: 'Communication', subtitle: 'How members reach the care team, by channel and time' },
+  { id: 'clinicalVisits', title: 'Clinical Visits', subtitle: 'Visit volume, format, timing and length' },
+  { id: 'clinicalTrends', title: 'Clinical Trends', subtitle: 'The most common prescriptions, orders and diagnoses' },
+  { id: 'demographics', title: 'Demographics', subtitle: 'Who the members are and their most common health conditions' },
 ];
 
 const MEMBER_MIX = [

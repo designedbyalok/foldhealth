@@ -10,27 +10,13 @@
 .body { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-4); }
 
 
-.rowText { display: flex; flex-direction: column; gap: var(--space-1); }
-/* Every widget row is 48px (Figma), so a row with the no-data line fits
-   the same box. */
-.widgetRow.widgetRow { height: 48px; padding-top: 0; padding-bottom: 0; box-sizing: border-box; }
 /* A switched-on widget with nothing to show: light red row. The name keeps
    its neutral-400; only the no-data line is error-dark. */
 .rowNoData.rowNoData { background: var(--status-error-light); }
 .noData { font-size: var(--font-sm); line-height: var(--leading-tight); color: var(--status-error-dark); }
 
-/* Section header: title left, switch right; the card styles come from
-   UpdateDashboardDrawer.module.css. Right padding lines the switch up with
-   the row switches below it. */
 .grow { flex: 1; min-width: 0; }
 
-/* The section note sits under the widget list; until opened it is an
-   "Add Note" link, on the list's left edge like the title. */
-.note { padding-top: var(--space-2); }
-.addNote {
-  display: inline-flex; align-items: center; gap: var(--space-1); align-self: flex-start;
-  padding: var(--space-2) 0 var(--space-1); font-size: var(--font-sm);
-}
 
 /* Cover Page card: its fields sit directly in the card. */
 .fields { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-4) 0 0; }
@@ -38,8 +24,7 @@
 .fields:empty { display: none; }
 /* Report Settings: logos and title directly on the drawer, no card. */
 /* Each group: its title and content, 16px apart. */
-.settings, .group { display: flex; flex-direction: column; gap: var(--space-4); }
-.settingsTitle { font-size: var(--font-base); font-weight: 500; line-height: var(--leading-tight); color: var(--neutral-400); }
+.settings { display: flex; flex-direction: column; gap: var(--space-4); }
 .fieldGroup { display: flex; flex-direction: column; gap: var(--space-2); }
 .fieldLabel { font-size: var(--font-base); line-height: var(--leading-tight); color: var(--neutral-200); }
 .toggleRow { display: flex; }
@@ -80,31 +65,6 @@
   font-size: var(--font-base); color: var(--neutral-400);
 }
 
-/* Section title: plain text that turns into an input on click. */
-.titleButton {
-  display: block; max-width: 100%; padding: 0; border: 0; background: none; cursor: text;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left;
-  font: inherit; color: inherit; border-radius: 4px;
-}
-.titleButton:hover { text-decoration: underline; text-underline-offset: 3px; }
-.titleButton:focus-visible { outline: 2px solid var(--primary-200); outline-offset: 2px; }
-.titleEdit { flex: 1; min-width: 0; font-weight: 400; }
-
-/* Subtitle: an "Add Subtitle" link under the title until opened. */
-/* Spans the full width, like the note box and widget list below and above. */
-.subtitle { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) 0 0; }
-.subtitleInput { flex: 1; min-width: 0; }
-.addSubtitle {
-  display: inline-flex; align-items: center; gap: var(--space-1); align-self: flex-start;
-  padding: var(--space-2) 0 0; font-size: var(--font-sm);
-}
-
-/* Section cards use the Update Dashboard drawer's trays, grips and rows.
-   Last, so it wins over the padding shorthands above: the subtitle and
-   note links start where the grips do (12px). The subtitle field, like the
-   note box, lines up with the widget list's edge. */
-.gripIndent { padding-left: var(--space-3); }
-
 /* The Cover Page card has no grip, so no head indent; and it is white. */
 /* Wraps a section card's contents to note which section an edit is in;
    it takes no box of its own, so the card's layout is unchanged. */
@@ -113,3 +73,59 @@
 /* Doubled selectors: the shared card styles load after this file. */
 .settingsCard.settingsCard { background: var(--neutral-0); }
 .settingsHead.settingsHead { padding-left: 0; padding-right: 0; }
+
+/* ── Widgets / Personalize tabs (TabStrip draws its own bar), plus the
+   report filters row, pinned above the scrolling editor ── */
+.tabBar { position: sticky; top: 0; z-index: 2; background: var(--neutral-0); }
+.filterRow {
+  display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
+/* ── Section card (Figma 937:52974). Drags from anywhere but its controls;
+   hovering shows it can be picked up. ── */
+.sectionCard {
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--neutral-0); border: 0.5px solid var(--neutral-150); border-radius: 8px;
+  cursor: grab;
+  transition: border-color var(--duration-instant) var(--ease-hover), box-shadow var(--duration-instant) var(--ease-hover);
+}
+.sectionCard:hover { border-color: var(--primary-300); box-shadow: 0 0 0 0.5px var(--primary-300), var(--shadow-popover); }
+.sectionCard[data-dragging] { cursor: grabbing; border-color: var(--primary-300); }
+.cardHead { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3); }
+.cardHeadText { display: flex; flex-direction: column; align-items: flex-start; flex: 1; min-width: 0; }
+.cardHeadText .collapseInner { padding-top: calc(var(--space-1) / 2); }
+.cardTitle { font-size: var(--font-lg); font-weight: 500; line-height: var(--leading-tight); color: var(--neutral-400); }
+.cardSubtitle { font-size: var(--font-base); line-height: var(--leading-tight); color: var(--neutral-300); }
+/* Hidden until a keyboard user tabs to it. */
+.keyboardHandle { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.keyboardHandle:focus-within { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+/* Rows and the note keep their own cursors; only the card frame grabs. */
+.cardList, .cardFooter { cursor: auto; }
+.cardList { display: flex; flex-direction: column; border-top: 0.5px solid var(--neutral-150); }
+.cardRow {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-3); background: var(--neutral-0);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+.rowText { display: flex; flex-direction: column; gap: var(--space-1); flex: 1; min-width: 0; font-size: var(--font-base); line-height: var(--leading-tight); color: var(--neutral-400); }
+.cardFooter { display: flex; flex-direction: column; padding: var(--space-2) var(--space-3); }
+.addNote { display: inline-flex; align-items: center; gap: var(--space-1); align-self: flex-start; font-size: var(--font-base); }
+
+/* Collapsible parts of a section card (subtitle, widget list, note): a
+   0fr/1fr grid row animates the height without measuring it. */
+.collapse {
+  display: grid; grid-template-rows: 1fr; align-self: stretch;
+  transition: grid-template-rows var(--duration-base) var(--ease-out);
+}
+.collapsed { grid-template-rows: 0fr; }
+.collapseInner { min-height: 0; overflow: hidden; }
+.cards { display: flex; flex-direction: column; gap: var(--space-4); }
+/* Mid-reorder the cards shrink at once, so drop targets stay put. */
+.reordering .collapse { transition: none; }
+.reordering .sectionCard { cursor: grabbing; }
+
+/* Employer logo preview row. */
+.logoThumb { width: 96px; height: 40px; object-fit: contain; border-radius: 4px; background: var(--neutral-50); padding: var(--space-1); box-sizing: border-box; }
+.hiddenInput { display: none; }
