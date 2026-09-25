@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Drawer } from '../../../../components/Drawer/Drawer';
 import { SplitDrawerLayout } from '../../../../components/Drawer/SplitDrawerLayout';
 import { Button } from '../../../../components/Button/Button';
@@ -9,6 +9,7 @@ import { Input } from '../../../../components/Input/Input';
 import { Toggle } from '../../../../components/Toggle/Toggle';
 import { ColorInput } from '../../../../components/ColorInput/ColorInput';
 import { UploadDropField } from '../../../../components/UploadDropField/UploadDropField';
+import { PhotoSearch } from '../../../../components/PhotoSearch/PhotoSearch';
 import { Link } from '../../../../components/Link/Link';
 import { AddIconMinimalist } from '../../../../components/Icon/AddIconMinimalist';
 import { PdfPreview } from '../../../../components/PdfPreview/PdfPreview';
@@ -67,6 +68,14 @@ function readImage(file) {
     reader.onerror = () => resolve(null);
     reader.readAsDataURL(file);
   });
+}
+
+/** A stock photo by URL, read the same way as an uploaded file. */
+function readImageUrl(url) {
+  return fetch(url)
+    .then(r => (r.ok ? r.blob() : Promise.reject(new Error(url))))
+    .then(readImage)
+    .catch(() => null);
 }
 
 // jsPDF places PNGs only, so each logo is drawn to a canvas once (at the
@@ -180,6 +189,10 @@ export function PrintReportDrawer({ meta, range, filename, sections, onClose }) 
   const [bgColor, setBgColor] = useState('#1376BC');
   const [bgGradient, setBgGradient] = useState(DEFAULT_COVER_BACKGROUND.gradient);
   const [bgImage, setBgImage] = useState(null);
+  // The Pexels photo behind bgImage, if it came from search, not an upload.
+  const [bgPhoto, setBgPhoto] = useState(null);
+  const [uploadKey, setUploadKey] = useState(0);
+  const pickedPhotoId = useRef(null);
   const [assets, setAssets] = useState({}); // logos and fonts for the PDF
   // "Generated On" is the moment the drawer opened, so edits don't move it.
   const [generatedAt] = useState(() => new Date());
@@ -363,12 +376,43 @@ export function PrintReportDrawer({ meta, range, filename, sections, onClose }) 
                   </div>
                 )}
                 {bgType === 'image' && (
-                  <UploadDropField
-                    accept={IMAGE_ACCEPT}
-                    helperText="Supported formats: PNG or JPG"
-                    secondaryText="Fills the page; text sits on a dark overlay"
-                    onChange={(file) => { if (!file) { setBgImage(null); return; } readImage(file).then(setBgImage); }}
-                  />
+                  <>
+                    <UploadDropField
+                      key={uploadKey}
+                      accept={IMAGE_ACCEPT}
+                      helperText="Supported formats: PNG or JPG"
+                      secondaryText="Fills the page; text sits on a dark overlay"
+                      onChange={(file) => {
+                        if (!file) { if (!bgPhoto) setBgImage(null); return; }
+                        setBgPhoto(null);
+                        pickedPhotoId.current = null;
+                        readImage(file).then(setBgImage);
+                      }}
+                    />
+                    <span className={styles.orDivider}>or search free photos</span>
+                    <PhotoSearch
+                      orientation="portrait"
+                      selectedId={bgPhoto?.id}
+                      onSelect={(photo) => {
+                        setBgPhoto(photo);
+                        pickedPhotoId.current = photo.id;
+                        // Clears any uploaded file so only one source is picked.
+                        setUploadKey(k => k + 1);
+                        readImageUrl(photo.full).then((img) => {
+                          // Ignore a slow download if another photo was picked meanwhile.
+                          if (pickedPhotoId.current === photo.id) setBgImage(img);
+                        });
+                      }}
+                    />
+                    {bgPhoto && (
+                      <span className={styles.photoCredit}>
+                        Photo by{' '}
+                        <a href={bgPhoto.photographerUrl} target="_blank" rel="noopener noreferrer">{bgPhoto.photographer}</a>
+                        {' '}on{' '}
+                        <a href={bgPhoto.url} target="_blank" rel="noopener noreferrer">Pexels</a>
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
             </div>

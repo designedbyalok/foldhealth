@@ -56,3 +56,13 @@
 .swatchOn { border-color: var(--primary-300); box-shadow: 0 0 0 1px var(--primary-300); }
 .swatchFill { display: block; width: 56px; height: 40px; border-radius: 4px; }
 .swatchLabel { font-size: var(--font-sm); color: var(--neutral-300); }
+
+/* "or search free photos" between the upload field and photo search. */
+.orDivider {
+  display: flex; align-items: center; gap: var(--space-2);
+  font-size: var(--font-sm); color: var(--neutral-200);
+}
+.orDivider::before, .orDivider::after { content: ''; flex: 1; height: 0.5px; background: var(--neutral-150); }
+.photoCredit { font-size: var(--font-sm); color: var(--neutral-300); }
+.photoCredit a { color: var(--primary-300); text-decoration: none; }
+.photoCredit a:hover { text-decoration: underline; }

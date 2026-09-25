@@ -37,6 +37,14 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **Employer Impact Report: stock photo cover backgrounds and consistent
+  loading.** The print drawer's Image background can now search free Pexels
+  photos (photos only, never videos) through the server-side
+  `/api/pexels-search` proxy, using the new reusable `PhotoSearch` component,
+  with photographer credit. Set `PEXEL_API_KEY` in Vercel. While loading, stat
+  and cost savings cards now show KPI skeletons like the other Analytics tabs,
+  and the data freshness bar no longer shows on this report.
+
 - **HEDIS Care Gap drawer: Outreach, Documents, and a complete Activity log.**
   Add Outreach and Add Document now open as left-pane workspaces, like Add
   Task and Schedule Appointment. The outreach form's Select Outcome lists

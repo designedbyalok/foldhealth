@@ -398,7 +398,6 @@
 
 /* ── Scrollbar ── */
 .canvasWhite { background: var(--neutral-0); padding: 0; }
-.canvasWhite > .recency { margin: var(--space-4) var(--space-4) 0; }
 .canvas::-webkit-scrollbar { width: 5px; height: 5px; }
 .canvas::-webkit-scrollbar-thumb { background: var(--neutral-150); border-radius: 4px; }
 

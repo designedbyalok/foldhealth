@@ -9,7 +9,7 @@ import { Select } from '../../../../components/Select/Select';
 import { Icon } from '../../../../components/Icon/Icon';
 import { CheckboxListPopover } from '../../../../components/CheckboxListPopover/CheckboxListPopover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../../components/ShadcnDialog/ShadcnDialog';
-import { ChartSkeleton } from '../shared';
+import { ChartSkeleton, KpiSkeleton } from '../shared';
 import { ChartContainer } from '../../../../components/ChartContainer/ChartContainer';
 import { StackedBars, Lines, HBars, Donut, ChartLegend } from './EmployerCharts';
 import { formatValue } from './employerImpactFormat';
@@ -216,10 +216,11 @@ function SatisfactionBody({ widget, model, onForm, hidden, onToggle, height }) {
   );
 }
 
-function SavingsCard({ card, rangeText, onDownload, style }) {
+function SavingsCard({ card, loading, rangeText, onDownload, style }) {
   const negative = card.savings < 0;
   return (
-    <ChartContainer title={card.title} info={card.info} empty={!card.hasData} onDownload={onDownload} style={style}>
+    <ChartContainer title={card.title} info={card.info} empty={!loading && !card.hasData} onDownload={onDownload} style={style}>
+      {loading ? <KpiSkeleton count={3} /> : (
       <div className={styles.savingsRow} aria-label={rangeText}>
         <span className={styles.savingsCol}>
           <span className={styles.savingsLabel}>Traditional Cost</span>
@@ -238,6 +239,7 @@ function SavingsCard({ card, rangeText, onDownload, style }) {
           </span>
         </span>
       </div>
+      )}
     </ChartContainer>
   );
 }
@@ -372,7 +374,8 @@ export function EmployerImpactView() {
         key={w.key}
         title={w.title}
         info={w.info}
-        subtitle={rangeText}
+        // Until the filters land the range is only a guess from today's date.
+        subtitle={filtersLoaded ? rangeText : undefined}
         empty={!loading && !model.hasData}
         height={CHART_CARD_HEIGHT}
         style={style}
@@ -381,7 +384,7 @@ export function EmployerImpactView() {
         menuItems={model.hasData ? WIDGET_MENU : WIDGET_MENU.filter(i => i.key !== 'table')}
         onMenuSelect={(key) => (key === 'table' ? setDialog({ key: w.key, mode: 'table' }) : hideWidget(w.key))}
       >
-        {loading ? <ChartSkeleton /> : body}
+        {loading ? (w.type === 'stats' ? <KpiSkeleton count={w.stats.windows.length} /> : <ChartSkeleton />) : body}
       </ChartContainer>
     );
   };
@@ -541,7 +544,8 @@ export function EmployerImpactView() {
                   <SavingsCard
                     key={key}
                     style={style}
-                    card={{ ...card, hasData: !loading && card.hasData }}
+                    card={card}
+                    loading={loading}
                     rangeText={rangeText}
                     onDownload={() => downloadCsv(csvName(card.title), toCsv(
                       [{ x: card.title, traditional: card.traditional, ours: card.ours, savings: card.savings }],

@@ -1,0 +1,29 @@
+.root { display: flex; flex-direction: column; gap: var(--space-3); }
+
+/* Portrait tiles, three to a row, matching an A4 cover's shape. */
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
+.tile {
+  position: relative; aspect-ratio: 3 / 4; padding: 0; overflow: hidden;
+  border: 0.5px solid var(--neutral-150); border-radius: 8px;
+  /* The photo's average colour holds its place while the thumbnail loads. */
+  background: var(--tile-bg, var(--neutral-50)); cursor: pointer;
+}
+.tile:hover { border-color: var(--neutral-200); }
+.tile:focus-visible { outline: 2px solid var(--primary-200); outline-offset: 2px; }
+.tileOn { border-color: var(--primary-300); box-shadow: 0 0 0 1px var(--primary-300); }
+.img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.check { position: absolute; top: var(--space-2); right: var(--space-2); display: flex; }
+
+.shimmer {
+  cursor: default;
+  background: linear-gradient(90deg, var(--neutral-50) 25%, var(--neutral-100) 50%, var(--neutral-50) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) { .shimmer { animation: none; } }
+
+.more { display: flex; justify-content: center; }
+
+.credit { font-size: var(--font-sm); color: var(--neutral-200); }
+.creditLink { color: var(--primary-300); text-decoration: none; }
+.creditLink:hover { text-decoration: underline; }
