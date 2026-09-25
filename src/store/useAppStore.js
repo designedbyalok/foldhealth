@@ -34,6 +34,30 @@ import { showBrowserNotification } from '../lib/browserNotifications';
 import { track } from '../lib/tracking';
 import { applyTheme, getResolvedTheme, getStoredTheme, subscribeToSystem, applyNavStyle, getStoredNavStyle, applyContrast, getStoredContrast, applyFontScale, getStoredFontScale } from '../lib/theme';
 import { createBlock, createBlockTree, collectBlockTree, buildParentMap, cloneBlockTree, extractSubtree, cloneStoredTree } from '../features/email-builder/blockHelpers';
+import { componentToDocument, documentToComponent } from '../features/email-builder/componentDocument';
+
+// email_header_footer_presets row → the preset / component shape the preset
+// pickers and Settings → Content → Components read.
+// Which store list holds each component role.
+const PRESET_LIST_BY_ROLE = {
+  header: 'customHeaderPresets',
+  footer: 'customFooterPresets',
+  report_header: 'customReportHeaderPresets',
+  report_footer: 'customReportFooterPresets',
+};
+
+const presetRowToJs = (row) => ({
+  id: row.id,
+  slug: row.slug || null,
+  role: row.role,
+  label: row.name,
+  description: row.description || '',
+  accent: row.accent || '#7C5CFA',
+  tree: row.tree,
+  isDefault: !!row.is_default,
+  updatedAt: row.updated_at || row.created_at || null,
+  isUserPreset: true,
+});
 import { extractEncountersSync } from '../features/hcc/upload/mockOcr';
 import { getChartDocs } from '../features/hcc/data/chartDocs';
 import { applyManualDecision as applyHccManualComplianceDecision } from '../features/hcc/compliance';
@@ -13106,6 +13130,7 @@ export const useAppStore = create((set, get) => ({
 
   saveEmailTemplate: async () => {
     const s = get();
+    if (s.editingComponent) return s.saveComponent();
     if (!s.editingCampaignId || !s.emailDocument) return false;
     track('email.template_saved', { templateId: s.editingCampaignId });
     const { error } = await supabase
@@ -13326,7 +13351,7 @@ export const useAppStore = create((set, get) => ({
   },
   closeEmailBuilder: () => {
     track('email.template_closed');
-    set({ editingCampaignId: null, editingCampaignName: null, emailDocument: null, selectedBlockId: 'root', selectedColumnIdx: null, bulkSelectedIds: [], htmlPreviewOverride: null, emailHistory: [], emailFuture: [], _lastEmailHistoryTime: 0 });
+    set({ editingCampaignId: null, editingComponent: null, editingCampaignName: null, emailDocument: null, selectedBlockId: 'root', selectedColumnIdx: null, bulkSelectedIds: [], htmlPreviewOverride: null, emailHistory: [], emailFuture: [], _lastEmailHistoryTime: 0 });
     updateHash(get);
   },
 
@@ -13337,8 +13362,17 @@ export const useAppStore = create((set, get) => ({
   // replaceHeaderFooter() consumes, re-IDed at apply time via cloneStoredTree.
   customHeaderPresets: [],
   customFooterPresets: [],
+  // Report components (roles 'report_header' / 'report_footer'): the same
+  // table, kept out of the email builder's pickers and read by printed reports.
+  customReportHeaderPresets: [],
+  customReportFooterPresets: [],
+  // Settings → Content → Components lists these same rows; the flags gate
+  // its skeleton (shown on a cold load only).
+  customPresetsLoading: false,
+  customPresetsLoaded: false,
 
   fetchCustomPresets: async () => {
+    set({ customPresetsLoading: true });
     const { data, error } = await supabase
       .from('email_header_footer_presets')
       .select('*')
@@ -13349,23 +13383,69 @@ export const useAppStore = create((set, get) => ({
       if (!msg.includes('does not exist') && !msg.includes('schema cache')) {
         console.error('fetchCustomPresets error:', error);
       }
+      set({ customPresetsLoading: false, customPresetsLoaded: true });
       return;
     }
-    const headers = [];
-    const footers = [];
+    const lists = Object.fromEntries(Object.values(PRESET_LIST_BY_ROLE).map(key => [key, []]));
     for (const row of data || []) {
-      const preset = {
-        id: row.id,
-        label: row.name,
-        description: row.description || '',
-        accent: row.accent || '#7C5CFA',
-        tree: row.tree,
-        isUserPreset: true,
-      };
-      if (row.role === 'header') headers.push(preset);
-      else if (row.role === 'footer') footers.push(preset);
+      const key = PRESET_LIST_BY_ROLE[row.role];
+      if (key) lists[key].push(presetRowToJs(row));
     }
-    set({ customHeaderPresets: headers, customFooterPresets: footers });
+    set({ ...lists, customPresetsLoading: false, customPresetsLoaded: true });
+  },
+
+  // ── Components (Settings → Content → Components) ──
+  // A component is a saved header / footer, edited on its own in the email
+  // builder. `editingComponent` switches the builder into component mode:
+  // `{ id | null, role, isDefault }`; the name lives in editingCampaignName.
+  editingComponent: null,
+  setEditingComponent: (patch) => set(s => ({ editingComponent: s.editingComponent ? { ...s.editingComponent, ...patch } : s.editingComponent })),
+
+  openComponentBuilder: (preset = null) => {
+    // The local report header stands in until the migration runs; editing
+    // it saves a real row.
+    const saved = preset && !preset.isLocal ? preset : null;
+    set({
+      editingComponent: { id: saved?.id ?? null, role: preset?.role || 'header', isDefault: !!preset?.isDefault },
+      editingCampaignName: preset?.label || '',
+      emailDocument: componentToDocument(preset?.tree),
+      colorVariables: [],
+      selectedBlockId: 'root',
+      emailHistory: [],
+      emailFuture: [],
+      _lastEmailHistoryTime: 0,
+    });
+    updateHash(get);
+  },
+
+  saveComponent: async () => {
+    const s = get();
+    const comp = s.editingComponent;
+    if (!comp || !s.emailDocument) return false;
+    const name = (s.editingCampaignName || '').trim();
+    if (!name) { s.showToast('Add a name for the component'); return false; }
+    const tree = documentToComponent(s.emailDocument, comp.role);
+    if (!tree) { s.showToast('Add some blocks to the component first'); return false; }
+    const row = { role: comp.role, name, tree, is_default: comp.isDefault, updated_at: new Date().toISOString() };
+    // One default per type: saving a default clears the others.
+    if (comp.isDefault) {
+      await supabase.from('email_header_footer_presets').update({ is_default: false }).eq('role', comp.role).neq('id', comp.id ?? -1);
+    }
+    const query = comp.id
+      ? supabase.from('email_header_footer_presets').update(row).eq('id', comp.id)
+      : supabase.from('email_header_footer_presets').insert(row);
+    const { data, error } = await query.select('*').single();
+    if (error) {
+      const msg = String(error.message || '');
+      s.showToast(msg.includes('is_default') || msg.includes('does not exist') || msg.includes('schema cache')
+        ? 'Run the email_components migration to save components'
+        : `Save failed: ${msg}`);
+      console.error('saveComponent error:', error);
+      return false;
+    }
+    set({ editingComponent: { ...comp, id: data.id } });
+    get().fetchCustomPresets();
+    return true;
   },
 
   saveCurrentAsPreset: async (role, { name, description }) => {
@@ -13401,14 +13481,7 @@ export const useAppStore = create((set, get) => ({
       console.error('saveCurrentAsPreset error:', error);
       return null;
     }
-    const fresh = {
-      id: data.id,
-      label: data.name,
-      description: data.description || '',
-      accent: data.accent || '#7C5CFA',
-      tree: data.tree,
-      isUserPreset: true,
-    };
+    const fresh = presetRowToJs(data);
     set(prev => ({
       customHeaderPresets: role === 'header' ? [fresh, ...prev.customHeaderPresets] : prev.customHeaderPresets,
       customFooterPresets: role === 'footer' ? [fresh, ...prev.customFooterPresets] : prev.customFooterPresets,
@@ -13451,14 +13524,8 @@ export const useAppStore = create((set, get) => ({
       get().showToast('Delete failed');
       return false;
     }
-    set(prev => ({
-      customHeaderPresets: role === 'header'
-        ? prev.customHeaderPresets.filter(p => p.id !== id)
-        : prev.customHeaderPresets,
-      customFooterPresets: role === 'footer'
-        ? prev.customFooterPresets.filter(p => p.id !== id)
-        : prev.customFooterPresets,
-    }));
+    const key = PRESET_LIST_BY_ROLE[role];
+    if (key) set(prev => ({ [key]: prev[key].filter(p => p.id !== id) }));
     return true;
   },
 

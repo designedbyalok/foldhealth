@@ -17,7 +17,10 @@ import { useEmailBuilderKeyboard } from './useEmailBuilderKeyboard';
 import styles from './EmailBuilder.module.css';
 
 export function EmailBuilder() {
-  const name = useAppStore(s => s.editingCampaignName) || 'Untitled Template';
+  const component = useAppStore(s => s.editingComponent);
+  const setComponent = useAppStore(s => s.setEditingComponent);
+  const storedName = useAppStore(s => s.editingCampaignName);
+  const name = component ? (storedName || '') : (storedName || 'Untitled Template');
   const setName = useAppStore(s => s.setEditingCampaignName);
   const closeEmailBuilder = useAppStore(s => s.closeEmailBuilder);
   const saveEmailTemplate = useAppStore(s => s.saveEmailTemplate);
@@ -57,7 +60,8 @@ export function EmailBuilder() {
   // tab is backgrounded and beforeunload warns on hard close.
   const autosaveTimer = useRef(null);
   const flushPendingAutosave = useCallback(async () => {
-    if (unsavedCount === 0 || saving) return;
+    // Components save only from the Save button: a new one needs its name first.
+    if (unsavedCount === 0 || saving || useAppStore.getState().editingComponent) return;
     clearTimeout(autosaveTimer.current);
     autosaveTimer.current = null;
     const ok = await saveEmailTemplate();
@@ -150,7 +154,9 @@ export function EmailBuilder() {
     // The Save button used to fire an UPDATE even when nothing had changed,
     // rewriting the whole email_template + color_variables JSONB via TOAST.
     // Autosave already gates on unsavedCount; the explicit button did not.
-    if (unsavedCount === 0) {
+    // A component's name, type and default aren't part of the document, so
+    // its Save always writes.
+    if (unsavedCount === 0 && !component) {
       showToast('Nothing to save');
       return;
     }
@@ -164,8 +170,8 @@ export function EmailBuilder() {
     if (ok) {
       setLastSavedAt(new Date());
       setSavedSnapshot(structuredClone(useAppStore.getState().emailDocument));
-      showToast('Template saved');
-    } else {
+      showToast(component ? 'Component saved' : 'Template saved');
+    } else if (!component) {
       showToast('Save failed, check console');
     }
   };
@@ -201,6 +207,8 @@ export function EmailBuilder() {
           onSave={handleSave}
           closeEmailBuilder={closeEmailBuilder}
           setPendingClose={setPendingClose}
+          component={component}
+          setComponent={setComponent}
         />
 
         {viewMode === 'builder' ? (

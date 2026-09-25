@@ -5,11 +5,21 @@ import { Input } from '../../components/Input/Input';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Toggle } from '../../components/Toggle/Toggle';
 import { CloseButton } from '../../components/CloseButton/CloseButton';
+import { Select } from '../../components/Select/Select';
+import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { SendTestPopover } from './SendTestPopover';
 import { TokenPicker } from './TokenPicker';
 import { ShortcutsHelpButton } from './EmailBuilderShortcuts';
 import { formatTime } from './EmailBuilder.utils';
 import styles from './EmailBuilder.module.css';
+
+// Header / Footer are for emails; Report Header / Report Footer for printed reports.
+const COMPONENT_TYPES = [
+  { value: 'header', label: 'Header' },
+  { value: 'footer', label: 'Footer' },
+  { value: 'report_header', label: 'Report Header' },
+  { value: 'report_footer', label: 'Report Footer' },
+];
 
 export function EmailBuilderToolbar({
   name, setName, viewMode, setViewMode,
@@ -17,13 +27,15 @@ export function EmailBuilderToolbar({
   showTestEmail, setShowTestEmail,
   lastSavedAt, unsavedCount, saving, onSave,
   closeEmailBuilder, setPendingClose,
+  component, setComponent,
 }) {
   return (
     <div className={styles.topBar}>
       <div className={styles.topLeft}>
         <Input
           className={styles.titleInput}
-          aria-label="Email name"
+          aria-label={component ? 'Component name' : 'Email name'}
+          placeholder={component ? 'Component name' : undefined}
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
@@ -59,6 +71,26 @@ export function EmailBuilderToolbar({
         />
         <ShortcutsHelpButton />
         {viewMode === 'builder' && <TokenPicker />}
+        {component ? (
+          <>
+            {/* A component's type and whether it's the default for that type. */}
+            <Select
+              aria-label="Component type"
+              options={COMPONENT_TYPES}
+              value={component.role}
+              onChange={(role) => setComponent({ role })}
+              style={{ width: 160 }}
+            />
+            <label className={styles.defaultToggle}>
+              <Checkbox
+                checked={component.isDefault}
+                onCheckedChange={(v) => setComponent({ isDefault: v === true })}
+              />
+              Default
+            </label>
+          </>
+        ) : (
+        <>
         <Button
           variant="secondary"
           size="L"
@@ -72,6 +104,8 @@ export function EmailBuilderToolbar({
             campaignId={useAppStore.getState().editingCampaignId}
             onClose={() => setShowTestEmail(false)}
           />
+        )}
+        </>
         )}
         {lastSavedAt && unsavedCount === 0 && (
           <span className={styles.saveStatus}>

@@ -47,3 +47,6 @@ build-storybook.log
 
 # Supabase CLI working directory (auto-populated by `supabase link`)
 supabase/.temp/
+
+# Built by bun run build:report-viewer (Print → Download HTML)
+public/report-viewer/

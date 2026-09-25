@@ -215,6 +215,22 @@ describe('generateEmployerReportPdf', () => {
     const head = new TextDecoder().decode(new Uint8Array(await blob.arrayBuffer()).slice(0, 5));
     expect(head).toBe('%PDF-');
   });
+
+  it('draws header and footer components, or none', async () => {
+    const { generateEmployerReport } = await import('./generateEmployerReportPdf');
+    // 1×1 PNG standing in for a drawn header component.
+    const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    const sections = [{ id: 's', title: 'Savings', items: [{ key: 's', kind: 'savings', card: { title: 'Lab Savings', traditional: 5, ours: 1, savings: 4, hasData: true } }] }];
+    for (const header of [{ dataUrl: png, width: 600, height: 110 }, null]) {
+      const { blob } = generateEmployerReport({ title: 'Report', sections, header });
+      expect(blob.type).toBe('application/pdf');
+    }
+    // Footers: one image per page, one for all pages, or none.
+    for (const footer of [{ width: 600, height: 24, images: [png] }, { width: 600, height: 24, dataUrl: png }, null]) {
+      const { blob } = generateEmployerReport({ title: 'Report', sections, footer });
+      expect(blob.type).toBe('application/pdf');
+    }
+  });
 });
 
 describe('parseRichText', () => {
@@ -281,3 +297,4 @@ describe('parseRichText lists', () => {
     expect(lines).toEqual(['Intro', '• One', '• Two', '1. First', '2. Second']);
   });
 });
+

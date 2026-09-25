@@ -19,9 +19,13 @@ import { Link } from '../../../../components/Link/Link';
 import { AddIconMinimalist } from '../../../../components/Icon/AddIconMinimalist';
 import { PdfPreview } from '../../../../components/PdfPreview/PdfPreview';
 import { PreviewLoader } from '../../../../components/PreviewLoader/PreviewLoader';
+import { MenuPopover } from '../../../../components/MenuPopover/MenuPopover';
+import { buildReportPage } from './downloadReportPage';
 import {
-  generateEmployerReport, COVER_GRADIENTS, DEFAULT_COVER_BACKGROUND, isLightBackground, gradientCss,
+  generateEmployerReport, generatedOnLabel, COVER_GRADIENTS, DEFAULT_COVER_BACKGROUND, isLightBackground, gradientCss,
 } from './generateEmployerReportPdf';
+import { withReportHeader, withReportFooter, defaultReportHeader, defaultReportFooter } from '../../../email-builder/reportHeaderComponent';
+import { rasterizeComponent, interFontFaces } from '../../../email-builder/rasterizeComponent';
 import clientLogoUrl from '../../../../assets/trailhead-clinics-logo.png';
 import clientLogoWhiteUrl from '../../../../assets/trailhead-clinics-logo-white.png';
 import interRegularUrl from '../../../../assets/fonts/inter/Inter-Regular.ttf?url';
@@ -60,6 +64,48 @@ const IMAGE_ACCEPT = '.png,.svg';
 const IMAGE_MIME = ['image/png', 'image/svg+xml'];
 const IMAGE_MAX_MB = 5;
 const TRAILHEAD_SIZE = { width: 190, height: 150, format: 'PNG' };
+const SEND_OPTIONS = [
+  { key: 'email', label: 'Send via Email', icon: 'solar:letter-linear' },
+  { key: 'chat', label: 'Send via Chat', icon: 'solar:chat-round-dots-linear' },
+  { key: 'efax', label: 'Send via eFax', icon: 'solar:file-send-linear' },
+  { key: 'internal', label: 'Internal Chat', icon: 'solar:chat-square-linear' },
+];
+// A footer showing the page number is drawn for each page up to this; any
+// page past it gets the built-in footer.
+const FOOTER_PAGES = 30;
+const PAGE_TOKEN = /\{\{\s*page[ _-]?number\s*\}\}/i;
+
+/**
+ * A report component (header / footer) drawn to PNG with its merge tags
+ * filled from `ctx`, for the PDF. Redrawn once edits pause; until the first
+ * drawing is ready, or if it can't be drawn, returns null so the PDF uses
+ * its built-in version. A component showing {{page_number}} comes back as
+ * one image per page: `{ width, height, images }`.
+ */
+function useComponentImage(component, ctx, fontFaces, enabled) {
+  const [result, setResult] = useState(null); // { key, image }
+  const key = [component?.id, component?.updatedAt, ctx.reportTitle, ctx.generatedOn, ctx.employerLogo.length, fontFaces.length].join('|');
+  useEffect(() => {
+    if (!enabled || !component) return undefined;
+    let live = true;
+    const timer = window.setTimeout(async () => {
+      const draw = (extra) => rasterizeComponent(component.tree, { ...ctx, ...extra }, { fontFaces });
+      let image = null;
+      if (PAGE_TOKEN.test(JSON.stringify(component.tree))) {
+        const pages = await Promise.all(Array.from({ length: FOOTER_PAGES }, (_, i) => draw({ pageNumber: i + 1 })));
+        if (pages[0]) image = { width: pages[0].width, height: pages[0].height, images: pages.map(p => p?.dataUrl) };
+      } else {
+        image = await draw({});
+      }
+      if (live) setResult({ key, image });
+    }, 250);
+    return () => { live = false; window.clearTimeout(timer); };
+    // `key` covers every input that changes the drawing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, key]);
+  // The last drawing stays up while a new one is made.
+  return result?.image || null;
+}
 
 /**
  * The employer's logo as a preview row with a Change action (and Reset once
@@ -338,9 +384,10 @@ function printBlob(blob) {
  * @param {string}   props.filename – Download name, without extension
  * @param {{ id: string, title: string, items: object[] }[]} props.sections –
  *   Items: `{ key, title, kind: 'widget'|'savings', ... }` (see generateEmployerReport)
+ * @param {function} props.pageSnapshot – () => the page's snapshot, for Download HTML
  * @param {function} props.onClose
  */
-export function PrintReportDrawer({ meta, range, employerName, filename, sections, filters, onClose }) {
+export function PrintReportDrawer({ meta, range, employerName, filename, sections, filters, pageSnapshot, onClose }) {
   const [notes, setNotes] = useState({}); // { [sectionId]: { html, plain } }
   const [titles, setTitles] = useState({}); // { [sectionId]: custom title }
   // { [sectionId]: text }. Unset means the section's default subtitle; '' clears it.
@@ -472,12 +519,42 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
   }, [logoChoice, customLogo, assets, lightCover]);
   const reportTitle = title.trim() || DEFAULT_TITLE;
 
+  // Page header and footer: Report Header / Report Footer components
+  // (Settings → Content → Components), drawn on every page. Each starts on
+  // the default one; email headers and footers aren't offered.
+  const savedHeaders = useAppStore(s => s.customReportHeaderPresets);
+  const savedFooters = useAppStore(s => s.customReportFooterPresets);
+  const fetchCustomPresets = useAppStore(s => s.fetchCustomPresets);
+  useEffect(() => { fetchCustomPresets(); }, [fetchCustomPresets]);
+  const headerComponents = useMemo(() => withReportHeader(savedHeaders), [savedHeaders]);
+  const footerComponents = useMemo(() => withReportFooter(savedFooters), [savedFooters]);
+  const [showHeader, setShowHeader] = useState(true);
+  const [showFooter, setShowFooter] = useState(true);
+  const [pickedHeaderId, setPickedHeaderId] = useState(null);
+  const [pickedFooterId, setPickedFooterId] = useState(null);
+  const headerComponent = headerComponents.find(h => String(h.id) === String(pickedHeaderId))
+    || defaultReportHeader(headerComponents);
+  const footerComponent = footerComponents.find(f => String(f.id) === String(pickedFooterId))
+    || defaultReportFooter(footerComponents);
+  const fontFaces = useMemo(() => interFontFaces(assets.fonts), [assets.fonts]);
+  const componentCtx = useMemo(() => ({
+    reportTitle,
+    generatedOn: generatedOnLabel(generatedAt).replace(/^Generated On\s*:\s*/, ''),
+    employerLogo: employerHeaderLogo?.dataUrl || '',
+  }), [reportTitle, generatedAt, employerHeaderLogo]);
+  const headerImage = useComponentImage(headerComponent, componentCtx, fontFaces, showHeader && !!employerHeaderLogo);
+  const footerImage = useComponentImage(footerComponent, componentCtx, fontFaces, showFooter && !!assets.fonts);
+
   const report = useMemo(() => ({
     title: reportTitle,
     meta,
     generatedAt,
     logo: employerHeaderLogo,
     clientLogo: headerLogo,
+    // null: no header. Until the component is drawn (or if it can't be),
+    // the built-in header stands in.
+    header: showHeader ? headerImage || undefined : null,
+    footer: showFooter ? footerImage || undefined : null,
     fonts: assets.fonts,
     cover: includeCover ? {
       range,
@@ -487,7 +564,7 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
       clientLogo: coverLogo,
     } : null,
     sections: included,
-  }), [reportTitle, meta, generatedAt, assets, headerLogo, employerHeaderLogo, includeCover, range, coverDescription, background, employerCoverLogo, coverLogo, included]);
+  }), [reportTitle, meta, generatedAt, assets, headerLogo, employerHeaderLogo, showHeader, headerImage, showFooter, footerImage, includeCover, range, coverDescription, background, employerCoverLogo, coverLogo, included]);
   const generate = useCallback(() => generateEmployerReport(report), [report]);
   // Where the preview should scroll after the next redraw: the part of the
   // report the last interaction was in ('cover', or a section id).
@@ -499,26 +576,93 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
     onKeyDownCapture: () => focusOn(key),
   });
 
+  const showToast = useAppStore(s => s.showToast);
+  const sendRef = useRef(null);
+  const [savingPage, setSavingPage] = useState(false);
+  const downloadPage = async () => {
+    setSavingPage(true);
+    try {
+      downloadBlob(await buildReportPage(pageSnapshot(), reportTitle), `${filename}.html`);
+    } catch (err) {
+      console.error('Download HTML failed:', err);
+      showToast('Could not prepare the HTML report. Run bun run build:report-viewer and try again.');
+    } finally {
+      setSavingPage(false);
+    }
+  };
+  const [sendOpen, setSendOpen] = useState(false);
+  const downloadRef = useRef(null);
+  const [downloadOpen, setDownloadOpen] = useState(false);
   const headerRight = (
     <>
-      <Button
-        variant="secondary"
+      <span ref={sendRef} className={styles.menuAnchor}>
+        <Button
+          variant="secondary"
+          size="L"
+          leadingIcon="solar:plain-2-linear"
+          trailingIcon="solar:alt-arrow-down-linear"
+          disabled={nothingSelected}
+          aria-haspopup="menu"
+          aria-expanded={sendOpen}
+          onClick={() => setSendOpen(v => !v)}
+        >
+          Send Report
+        </Button>
+      </span>
+      {sendOpen && (
+        <MenuPopover
+          anchorRef={sendRef}
+          ariaLabel="Send report"
+          items={SEND_OPTIONS}
+          width={200}
+          onSelect={(key, item) => { setSendOpen(false); showToast(`${item.label} is coming soon`); }}
+          onClose={() => setSendOpen(false)}
+        />
+      )}
+      <span ref={downloadRef} className={styles.menuAnchor}>
+        <Button
+          variant="primary"
+          size="L"
+          leadingIcon="solar:download-minimalistic-linear"
+          trailingIcon="solar:alt-arrow-down-linear"
+          disabled={savingPage}
+          aria-haspopup="menu"
+          aria-expanded={downloadOpen}
+          onClick={() => setDownloadOpen(v => !v)}
+        >
+          {savingPage ? 'Preparing…' : 'Download'}
+        </Button>
+      </span>
+      {downloadOpen && (
+        <MenuPopover
+          anchorRef={downloadRef}
+          ariaLabel="Download report"
+          // PDF: the report as printed. HTML: the report page itself, as
+          // filtered, saved as an interactive read-only file.
+          items={[
+            { key: 'pdf', label: 'Download PDF', icon: 'solar:file-download-linear', disabled: nothingSelected },
+            { key: 'html', label: 'Download HTML', icon: 'solar:code-file-linear' },
+          ]}
+          width={200}
+          onSelect={(key) => {
+            setDownloadOpen(false);
+            if (key === 'pdf') downloadBlob(generate().blob, `${filename}.pdf`);
+            else downloadPage();
+          }}
+          onClose={() => setDownloadOpen(false)}
+        />
+      )}
+      <span className={styles.headerDivider} aria-hidden="true" />
+      <ActionButton
+        icon="solar:printer-minimalistic-linear"
         size="L"
-        leadingIcon="solar:download-minimalistic-linear"
-        disabled={nothingSelected}
-        onClick={() => downloadBlob(generate().blob, `${filename}.pdf`)}
-      >
-        Download PDF
-      </Button>
-      <Button
-        variant="primary"
-        size="L"
-        leadingIcon="solar:printer-minimalistic-linear"
-        disabled={nothingSelected}
+        tooltip="Print"
+        // Below: above the drawer's top edge it would be clipped.
+        tooltipBelow
+        aria-label="Print report"
+        state={nothingSelected ? 'disabled' : 'active'}
         onClick={() => printBlob(generate().blob)}
-      >
-        Print
-      </Button>
+      />
       <span className={styles.headerDivider} aria-hidden="true" />
     </>
   );
@@ -643,22 +787,30 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
   const editor = (
     <div className={styles.editorScroll}>
       <div className={styles.tabBar}>
-        <TabStrip
-          items={EDITOR_TABS}
-          activeKey={editorTab}
-          onChange={setEditorTab}
-          fullWidth={false}
-          trailing={filters && editorTab === 'widgets' && (
-            <ActionButton
-              icon="custom:filter"
-              size="S"
-              tooltip={filtersOpen ? 'Hide filters' : 'Filters'}
-              aria-label={filtersOpen ? 'Hide report filters' : 'Show report filters'}
-              active={filtersOpen}
-              onClick={() => setFiltersOpen(o => !o)}
-            />
+        {/* The filter button sits over the tab row rather than in TabStrip's
+            trailing slot: the row scrolls sideways, which would clip its tooltip. */}
+        <div className={styles.tabs}>
+          <TabStrip
+            items={EDITOR_TABS}
+            activeKey={editorTab}
+            onChange={setEditorTab}
+            fullWidth={false}
+          />
+          {filters && editorTab === 'widgets' && (
+            <span className={styles.tabFilter}>
+              <ActionButton
+                icon="custom:filter"
+                size="S"
+                tooltip={filtersOpen ? 'Hide filters' : 'Filters'}
+                tooltipBelow
+                tooltipLeft
+                aria-label={filtersOpen ? 'Hide report filters' : 'Show report filters'}
+                active={filtersOpen}
+                onClick={() => setFiltersOpen(o => !o)}
+              />
+            </span>
           )}
-        />
+        </div>
         {/* The report's own filters: changing one redraws the report and this preview. */}
         {editorTab === 'widgets' && filtersOpen && filters && <div className={styles.filterRow}>{filters}</div>}
       </div>
@@ -689,6 +841,44 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
               placeholder={DEFAULT_TITLE}
               onChange={e => setTitle(e.target.value)}
             />
+
+        {/* Page header: a saved header component on every page. */}
+        <div className={[cards.section, styles.settingsCard].join(' ')} onPointerDownCapture={() => focusOn('cover')} onKeyDownCapture={() => focusOn('cover')}>
+          <div className={[cards.sectionHead, styles.settingsHead].join(' ')}>
+            <span className={[cards.sectionTitle, styles.grow].join(' ')}>Show Header</span>
+            <Switch checked={showHeader} onChange={setShowHeader} ariaLabel="Show header" />
+          </div>
+          <div className={styles.fields}>
+            {showHeader && (
+              <Select
+                label="Selected Header"
+                portal
+                options={headerComponents.map(h => ({ value: String(h.id), label: h.label }))}
+                value={String(headerComponent?.id ?? '')}
+                onChange={setPickedHeaderId}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Page footer: a saved report footer component on every page. */}
+        <div className={[cards.section, styles.settingsCard].join(' ')} onPointerDownCapture={() => focusOn('cover')} onKeyDownCapture={() => focusOn('cover')}>
+          <div className={[cards.sectionHead, styles.settingsHead].join(' ')}>
+            <span className={[cards.sectionTitle, styles.grow].join(' ')}>Show Footer</span>
+            <Switch checked={showFooter} onChange={setShowFooter} ariaLabel="Show footer" />
+          </div>
+          <div className={styles.fields}>
+            {showFooter && (
+              <Select
+                label="Selected Footer"
+                portal
+                options={footerComponents.map(f => ({ value: String(f.id), label: f.label }))}
+                value={String(footerComponent?.id ?? '')}
+                onChange={setPickedFooterId}
+              />
+            )}
+          </div>
+        </div>
 
         {/* Cover page settings in their own card. */}
         <div className={[cards.section, styles.settingsCard].join(' ')} onPointerDownCapture={() => focusOn('cover')} onKeyDownCapture={() => focusOn('cover')}>

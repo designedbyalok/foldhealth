@@ -12,6 +12,7 @@ import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { CloseIcon } from '../../../components/Icon/CloseIcon';
 import { useAppStore } from '../../../store/useAppStore';
 import { EmailPreviewDrawer } from './EmailPreviewDrawer';
+import { ComponentsTab } from './ComponentsTab';
 import { AddNoteTemplateDrawer } from './AddNoteTemplateDrawer';
 import { NoteTemplatePreviewDrawer } from './NoteTemplatePreviewDrawer';
 import { MenuPopover } from '../../../components/MenuPopover/MenuPopover';
@@ -1119,7 +1120,8 @@ export function ContentSettings() {
   const isEmails    = activeTab === 'emails';
   const isForms     = activeTab === 'forms';
   const isNotes     = activeTab === 'notes';
-  const isListTab   = isEmails || isForms || isNotes;
+  const isComponents = activeTab === 'components';
+  const isListTab   = isEmails || isForms || isNotes || isComponents;
   const statusBadge = STATUS_FILTER_BADGE[statusFilter];
 
   const [notesDrawerOpen, setNotesDrawerOpen] = useState(false);
@@ -1183,15 +1185,19 @@ export function ContentSettings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
+  const openComponentBuilder = useAppStore(s => s.openComponentBuilder);
   const primaryActionLabel = isListTab
-    ? isNotes
+    ? isComponents
+      ? 'New'
+      : isNotes
       ? 'New Note'
       : isForms
         ? (formBuilderSaving ? 'Creating…' : 'New Form')
         : (campaignBuilderSaving ? 'Creating…' : 'New Email')
     : undefined;
-  const primaryActionDisabled = isListTab && !isNotes && (isForms ? formBuilderSaving : campaignBuilderSaving);
+  const primaryActionDisabled = isListTab && !isNotes && !isComponents && (isForms ? formBuilderSaving : campaignBuilderSaving);
   const onPrimaryAction = () => {
+    if (isComponents) { openComponentBuilder(null); return; }
     if (isNotes) { setNotesDrawerOpen(true); return; }
     if (isForms) { openFormBuilder(null); return; }
     openContentEmailBuilder(null);
@@ -1204,7 +1210,7 @@ export function ContentSettings() {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         actions={isListTab ? ['search'] : []}
-        searchPlaceholder={isNotes ? 'Search note templates…' : isForms ? 'Search forms…' : 'Search emails…'}
+        searchPlaceholder={isComponents ? 'Search components…' : isNotes ? 'Search note templates…' : isForms ? 'Search forms…' : 'Search emails…'}
         searchValue={searchInputVal}
         onSearchChange={setSearchInputVal}
         primaryActionLabel={primaryActionLabel}
@@ -1224,7 +1230,7 @@ export function ContentSettings() {
                 <span>{notesShowArchived ? 'Hide archived' : 'Show archived'}</span>
               </button>
             )}
-            {!isNotes && (
+            {!isNotes && !isComponents && (
               <ActionButton
                 size="L"
                 tooltip={bulkMode ? 'Exit bulk select' : 'Bulk select'}
@@ -1287,6 +1293,8 @@ export function ContentSettings() {
             onToggleId={toggleId}
             onToggleAll={toggleAllOnPage}
           />
+        ) : isComponents ? (
+          <ComponentsTab searchVal={searchVal} />
         ) : activeTab === 'notes' ? (
           <NoteTemplatesTab searchVal={searchVal} showArchived={notesShowArchived} />
         ) : (

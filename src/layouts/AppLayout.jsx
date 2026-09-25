@@ -436,6 +436,7 @@ export function AppLayout() {
   const outreachStatusDrawerPatientId = useAppStore(s => s.outreachStatusDrawerPatientId);
   const aiTasksDrawerPatientId = useAppStore(s => s.aiTasksDrawerPatientId);
   const editingCampaignId = useAppStore(s => s.editingCampaignId);
+  const editingComponent = useAppStore(s => s.editingComponent);
   const campaignBuilderId = useAppStore(s => s.campaignBuilderId);
   const editingFormId = useAppStore(s => s.editingFormId);
   const formBuilderForm = useAppStore(s => s.formBuilderForm);
@@ -458,7 +459,7 @@ export function AppLayout() {
   // the CampaignBuilder so "Edit Template" from inside the campaign builder
   // pushes the email builder on top — closing it falls back to the campaign
   // builder (campaignBuilderId stays set).
-  if (editingCampaignId) {
+  if (editingCampaignId || editingComponent) {
     return (
       <div className={styles.app}>
         <Sidebar />

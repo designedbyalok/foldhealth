@@ -29,6 +29,9 @@ const EMPTY_SELECTED = [];
  *                                         receives a (0- or 1-element) array
  *                                         so callers don't need a second
  *                                         shape. Popover auto-closes on pick.
+ * @param {boolean}  [props.disabled]    – Read-only: shows the filter and its
+ *                                         value but can't be opened or cleared
+ *                                         (e.g. a saved report snapshot).
  */
 export function FilterChip({
   label,
@@ -72,6 +75,7 @@ export function FilterChip({
   // the icon + a hairline divider so it visually separates from the
   // chevron / clear glyph.
   info,
+  disabled = false,
 }) {
   const [rect, setRect] = useState(null);
   const custom = typeof renderPopover === 'function';
@@ -100,8 +104,10 @@ export function FilterChip({
           // pill is an information display, not a clearable filter.
           active && noClear && noClearNeutral ? styles.chipNeutral : '',
           size === 'S' ? styles.sizeS : '',
+          disabled ? styles.chipDisabled : '',
         ].filter(Boolean).join(' ')}
         aria-description={info || undefined}
+        disabled={disabled}
         onClick={(e) => {
           if (e.target.closest('[data-filter-clear]')) {
             handleClear(e);
@@ -136,7 +142,7 @@ export function FilterChip({
                 <span className={styles.infoDivider} aria-hidden="true" />
               </>
             )}
-            {noClear ? (
+            {disabled ? null : noClear ? (
               // Never-empty filters (e.g. Measurement Year) skip the clear
               // ✕ and reuse the idle chevron so users know clicking the
               // chip re-opens the picker — nothing to clear. The chevron
@@ -162,7 +168,7 @@ export function FilterChip({
             )}
           </>
         ) : (
-          <DownChevronIcon size={iconSize} />
+          !disabled && <DownChevronIcon size={iconSize} />
         )}
       </button>
       {rect && (custom
