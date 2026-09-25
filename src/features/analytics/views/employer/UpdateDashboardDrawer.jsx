@@ -1,16 +1,11 @@
 import { useState } from 'react';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import {
-  SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { Drawer } from '../../../../components/Drawer/Drawer';
 import { Button } from '../../../../components/Button/Button';
 import { Toggle } from '../../../../components/Toggle/Toggle';
 import { Switch } from '../../../../components/Switch/Switch';
-import { Icon } from '../../../../components/Icon/Icon';
 import { SECTIONS, WIDGETS, SAVINGS_CATEGORIES, SCOPE_OPTIONS } from './employerImpactConfig';
 import { defaultLayout, savingsKey } from './employerImpactLayout';
+import { SortableItem, SortableList } from './SortableParts';
 import styles from './UpdateDashboardDrawer.module.css';
 
 const SECTION_TITLES = Object.fromEntries(SECTIONS.map(s => [s.id, s.heading || s.title]));
@@ -18,60 +13,6 @@ const WIDGET_TITLES = {
   ...Object.fromEntries(WIDGETS.map(w => [w.key, w.title])),
   ...Object.fromEntries(SAVINGS_CATEGORIES.map(c => [savingsKey(c.key), c.title])),
 };
-
-function useReorderSensors() {
-  return useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
-}
-
-/**
- * A reorderable item. Only its grip starts a drag, so the Switch and text
- * stay clickable; `children(handle)` places the grip where the row needs it.
- */
-function SortableItem({ id, label, className, children }) {
-  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id });
-  const handle = (
-    <button
-      type="button"
-      ref={setActivatorNodeRef}
-      className={styles.handle}
-      aria-label={`Reorder ${label}`}
-      {...attributes}
-      {...listeners}
-    >
-      <Icon name="custom:drag-handle" size={16} color="var(--neutral-300)" />
-    </button>
-  );
-  return (
-    <div
-      ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={[className, isDragging ? styles.dragging : ''].filter(Boolean).join(' ')}
-    >
-      {children(handle)}
-    </div>
-  );
-}
-
-function SortableList({ ids, onReorder, children }) {
-  const sensors = useReorderSensors();
-  return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={({ active, over }) => {
-        if (!over || active.id === over.id) return;
-        onReorder(arrayMove(ids, ids.indexOf(active.id), ids.indexOf(over.id)));
-      }}
-    >
-      <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-        {children}
-      </SortableContext>
-    </DndContext>
-  );
-}
 
 /**
  * Update Dashboard: reorder the report's sections and the widgets inside

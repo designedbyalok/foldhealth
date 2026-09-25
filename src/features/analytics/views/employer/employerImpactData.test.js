@@ -203,7 +203,7 @@ describe('generateEmployerReportPdf', () => {
       title: 'Employer Impact Report',
       meta: 'Jan 2026 - Feb 2026',
       sections: [
-        { title: 'Charts', note: 'For the <b>Q1</b> review.<div><i>Draft</i> &amp; <u>internal</u></div>', items: [...items, ...items] },
+        { title: 'Charts', subtitle: 'Members and revenue, month by month', note: 'For the <b>Q1</b> review.<div><i>Draft</i> &amp; <u>internal</u></div>', items: [...items, ...items] },
         { title: 'Savings', items: [{ key: 's', kind: 'savings', card: { title: 'Imaging Savings', traditional: 97000, ours: 100000, savings: -3000, hasData: true } }] },
       ],
     });
@@ -249,6 +249,8 @@ describe('cover background', () => {
     expect(isLightBackground({ type: 'color', color: '#F6F7F8' })).toBe(true);
     expect(isLightBackground({ type: 'color', color: '#1376BC' })).toBe(false);
     expect(isLightBackground({ type: 'gradient', gradient: 'ocean' })).toBe(false);
+    expect(isLightBackground({ type: 'gradient', gradient: 'frost' })).toBe(true);
+    expect(isLightBackground({ type: 'gradient', gradient: 'amethyst' })).toBe(false);
     expect(isLightBackground({ type: 'image', dataUrl: 'x' })).toBe(false);
   });
 });

@@ -514,7 +514,12 @@ function pageHeader(doc, { title, generatedOn, logo, clientLogo }) {
   }
   text(doc, title, PAGE.w / 2, 40, { size: 16, color: C.black, weight: 'medium', align: 'center' });
   text(doc, generatedOn, PAGE.w / 2, 53, { size: 10, color: C.faint, align: 'center' });
-  if (logo?.dataUrl) doc.addImage(logo.dataUrl, 'PNG', PAGE.w - MARGIN - 108, 30, 108, 20);
+  // Employer logo on the right: the Fold Health wordmark by default, or
+  // an uploaded one fitted to the 108 × 20 slot and right-aligned.
+  if (logo?.dataUrl) {
+    const { w, h } = logo.width ? fitLogo(logo, 108, 20) : { w: 108, h: 20 };
+    doc.addImage(logo.dataUrl, logo.format || 'PNG', PAGE.w - MARGIN - w, 30 + (20 - h) / 2, w, h);
+  }
   // Brand band: a teal block, four slashes, then a blue bar to the edge.
   const top = HEADER_H;
   const bottom = HEADER_H + BAND_H;
@@ -538,19 +543,52 @@ function pageFooter(doc, page) {
 const GRID_CELL = 18.1818;
 
 /**
- * Cover background presets. RGB, since they go straight into the PDF;
- * the first is the Figma cover. Exported so the drawer can show swatches.
+ * Cover background presets: CSS-style angle (180 = top to bottom) and
+ * colour stops `[rgb, position 0–1]`. RGB, since they go straight into the
+ * PDF; the first is the Figma cover. The pastel and deep rows are from the
+ * Electronic ID Figma (834:44624). Exported so the drawer can show swatches.
  */
+const vertical = (from, to) => ({ angle: 180, stops: [[from, 0], [to, 1]] });
+const DIAGONAL = 138.08;
 export const COVER_GRADIENTS = [
-  { key: 'ocean', label: 'Ocean', from: [19, 118, 188], to: [4, 51, 85] },
-  { key: 'violet', label: 'Violet', from: [140, 90, 226], to: [52, 28, 110] },
-  { key: 'teal', label: 'Teal', from: [22, 160, 160], to: [8, 70, 82] },
-  { key: 'graphite', label: 'Graphite', from: [79, 90, 112], to: [22, 24, 29] },
+  { key: 'ocean', label: 'Ocean', ...vertical([19, 118, 188], [4, 51, 85]) },
+  { key: 'violet', label: 'Violet', ...vertical([140, 90, 226], [52, 28, 110]) },
+  { key: 'teal', label: 'Teal', ...vertical([22, 160, 160], [8, 70, 82]) },
+  { key: 'graphite', label: 'Graphite', ...vertical([79, 90, 112], [22, 24, 29]) },
+  // Pastels
+  { key: 'frost', label: 'Frost', angle: DIAGONAL, stops: [[[238, 244, 255], 0], [[243, 247, 255], 0.38], [[184, 208, 255], 1]] },
+  { key: 'honey', label: 'Honey', angle: DIAGONAL, stops: [[[255, 251, 236], 0], [[255, 228, 165], 1]] },
+  { key: 'mint', label: 'Mint', angle: DIAGONAL, stops: [[[255, 255, 255], 0], [[178, 254, 251], 1]] },
+  { key: 'blush', label: 'Blush', angle: DIAGONAL, stops: [[[255, 255, 255], 0], [[250, 206, 254], 1]] },
+  { key: 'lavender', label: 'Lavender', angle: DIAGONAL, stops: [[[255, 255, 255], 0], [[216, 195, 255], 1]] },
+  // Deep
+  { key: 'amethyst', label: 'Amethyst', angle: DIAGONAL, stops: [[[164, 65, 250], 0], [[94, 9, 173], 0.38], [[37, 3, 114], 1]] },
+  { key: 'lagoon', label: 'Lagoon', angle: DIAGONAL, stops: [[[53, 92, 118], 0], [[115, 188, 184], 1]] },
+  { key: 'forest', label: 'Forest', angle: DIAGONAL, stops: [[[6, 146, 101], 0], [[2, 57, 2], 1]] },
+  { key: 'sapphire', label: 'Sapphire', angle: DIAGONAL, stops: [[[17, 153, 244], 0], [[4, 23, 122], 1]] },
+  { key: 'magenta', label: 'Magenta', angle: 138.56, stops: [[[202, 17, 244], 0], [[31, 29, 133], 0.8933]] },
 ];
 export const DEFAULT_COVER_BACKGROUND = { type: 'gradient', gradient: 'ocean' };
 
 export const hexToRgb = (hex) => parseColor(hex) || [19, 118, 188];
 export const rgbCss = ([r, g, b]) => `rgb(${r}, ${g}, ${b})`;
+/** A preset as a CSS background, for the drawer's swatches. */
+export const gradientCss = (g) => `linear-gradient(${g.angle}deg, ${g.stops.map(([c, p]) => `${rgbCss(c)} ${Math.round(p * 1000) / 10}%`).join(', ')})`;
+const gradientByKey = (key) => COVER_GRADIENTS.find(x => x.key === key) || COVER_GRADIENTS[0];
+
+/** Colour at `t` (0–1) along a preset's stops. */
+function colorAt(stops, t) {
+  if (t <= stops[0][1]) return stops[0][0];
+  for (let i = 1; i < stops.length; i += 1) {
+    const [c1, p1] = stops[i];
+    const [c0, p0] = stops[i - 1];
+    if (t <= p1) {
+      const k = p1 === p0 ? 1 : (t - p0) / (p1 - p0);
+      return c0.map((c, j) => Math.round(c + (c1[j] - c) * k));
+    }
+  }
+  return stops[stops.length - 1][0];
+}
 
 /** Relative luminance (WCAG), to choose light or dark cover text. */
 function luminance([r, g, b]) {
@@ -562,20 +600,35 @@ function luminance([r, g, b]) {
 export function isLightBackground(bg) {
   if (bg?.type === 'color') return luminance(hexToRgb(bg.color)) > 0.4;
   if (bg?.type === 'gradient') {
-    const g = COVER_GRADIENTS.find(x => x.key === bg.gradient) || COVER_GRADIENTS[0];
-    return (luminance(g.from) + luminance(g.to)) / 2 > 0.4;
+    // Average over the gradient, sampled, so a long light stop counts for more.
+    const g = gradientByKey(bg.gradient);
+    const samples = Array.from({ length: 9 }, (_, i) => luminance(colorAt(g.stops, i / 8)));
+    return samples.reduce((a, b) => a + b, 0) / samples.length > 0.4;
   }
   return false; // images get a dark overlay
 }
 
-/** Vertical gradient as thin bands (jsPDF has no simple gradient fill). */
-function verticalGradient(doc, from, to, h) {
+/**
+ * A CSS-style linear gradient over the page, drawn as thin bands across the
+ * gradient line (jsPDF has no simple gradient fill). The gradient line runs
+ * through the page centre at `angle`, long enough that its ends touch the
+ * corners, as CSS does.
+ */
+function pageGradient(doc, { angle, stops }) {
+  const rad = (angle * Math.PI) / 180;
+  const dir = [Math.sin(rad), -Math.cos(rad)];   // CSS: 0deg points up
+  const perp = [-dir[1], dir[0]];
+  const len = Math.abs(PAGE.w * dir[0]) + Math.abs(PAGE.h * dir[1]);
+  const cx = PAGE.w / 2;
+  const cy = PAGE.h / 2;
+  const far = PAGE.w + PAGE.h; // band half-width, past every page edge
   const bands = 420;
-  const step = h / bands;
+  const at = (s, side) => [cx + dir[0] * s + perp[0] * far * side, cy + dir[1] * s + perp[1] * far * side];
   for (let i = 0; i < bands; i += 1) {
-    const t = i / (bands - 1);
-    fill(doc, from.map((c, k) => Math.round(c + (to[k] - c) * t)));
-    doc.rect(0, i * step, PAGE.w, step + 0.6, 'F');
+    const s0 = (i / bands - 0.5) * len - 0.4;       // slight overlap hides seams
+    const s1 = ((i + 1) / bands - 0.5) * len + 0.4;
+    fill(doc, colorAt(stops, (i + 0.5) / bands));
+    polygon(doc, [at(s0, -1), at(s0, 1), at(s1, 1), at(s1, -1)]);
   }
 }
 
@@ -635,8 +688,8 @@ function fadingGrid(doc, color, x0, y0, w, h, cx, cy, rx, ry) {
  * @param {string} [cover.description]
  * @param {object} [cover.background] – `{ type: 'color', color: '#RRGGBB' }`,
  *   `{ type: 'gradient', gradient: key }` or `{ type: 'image', dataUrl, format, width, height }`
- * @param {{ dataUrl }} [cover.logo]       – Fold wordmark in the cover's text colour
- * @param {{ dataUrl }} [cover.clientLogo] – Employer logo for "Provided By"
+ * @param {{ dataUrl }} [cover.logo]       – Employer logo (Fold Health wordmark by default)
+ * @param {{ dataUrl }} [cover.clientLogo] – Provider logo for "Provided By"
  */
 function coverPage(doc, { title, range, description, background = DEFAULT_COVER_BACKGROUND, logo, clientLogo }) {
   const light = isLightBackground(background);
@@ -650,8 +703,7 @@ function coverPage(doc, { title, range, description, background = DEFAULT_COVER_
       fill(doc, hexToRgb(background.color));
       doc.rect(0, 0, PAGE.w, PAGE.h, 'F');
     } else {
-      const g = COVER_GRADIENTS.find(x => x.key === background.gradient) || COVER_GRADIENTS[0];
-      verticalGradient(doc, g.from, g.to, PAGE.h);
+      pageGradient(doc, gradientByKey(background.gradient));
     }
     // Two grid panels, as placed in the Figma frame (top right, bottom left).
     fadingGrid(doc, ink1, 0, -120, 800.5, 346, 400.25, 53, 323, 173);
@@ -666,14 +718,18 @@ function coverPage(doc, { title, range, description, background = DEFAULT_COVER_
   setWeight(doc, 'semibold');
   doc.setFontSize(30);
   const titleLines = doc.splitTextToSize(title, 514);
-  const logoH = 28;
+  // Employer logo slot: 151 × 28 for the wordmark; uploads may be up to 48 tall.
+  const logoBox = logo?.dataUrl ? (logo.width ? fitLogo(logo, 151, 48) : { w: 151, h: 28 }) : { w: 0, h: 0 };
+  const logoH = logoBox.h;
   const titleH = titleLines.length * 36;
   const rangeH = 14.4;
   const descH = descLines.length * 12;
-  const stackH = logoH + 24 + titleH + 4 + rangeH + (descLines.length ? 4 + descH : 0);
+  const stackH = (logoH ? logoH + 24 : 0) + titleH + 4 + rangeH + (descLines.length ? 4 + descH : 0);
   let y = (PAGE.h - stackH) / 2;
-  if (logo?.dataUrl) doc.addImage(logo.dataUrl, 'PNG', (PAGE.w - 151) / 2, y, 151, 28);
-  y += logoH + 24;
+  if (logo?.dataUrl) {
+    doc.addImage(logo.dataUrl, logo.format || 'PNG', (PAGE.w - logoBox.w) / 2, y, logoBox.w, logoBox.h);
+    y += logoH + 24;
+  }
   titleLines.forEach((line, i) => {
     text(doc, line, PAGE.w / 2, y + 28 + i * 36, { size: 30, color: ink1, weight: 'semibold', align: 'center' });
   });
@@ -721,13 +777,13 @@ export function generatedOnLabel(date = new Date()) {
  * @param {string} report.title
  * @param {string} [report.meta]      – Filters in effect, one line (employer, view, time frame)
  * @param {Date}   [report.generatedAt]
- * @param {{ dataUrl: string }} [report.logo] – Fold Health wordmark as a PNG data URL
- * @param {{ dataUrl: string }} [report.clientLogo] – The client's logo (header left), PNG data URL
+ * @param {{ dataUrl: string }} [report.logo] – Employer logo, header right (Fold Health wordmark by default)
+ * @param {{ dataUrl: string }} [report.clientLogo] – Provider logo, header left (Trailhead Clinics)
  * @param {object} [report.cover] – Adds the cover page: `{ range, description?,
  *   background?, logo?, clientLogo? }` (see coverPage)
  * @param {{ regular, medium, semibold, bold, italic, boldItalic }} [report.fonts] – Inter TTFs, base64;
  *   without them the PDF falls back to Helvetica
- * @param {{ title: string, note?: string, items: object[] }[]} report.sections – `note` is
+ * @param {{ title: string, subtitle?: string, note?: string, items: object[] }[]} report.sections – `note` is
  *   the Textarea's rich-text HTML; items are
  *   `{ kind: 'widget', widget, model, full }` or `{ kind: 'savings', card }`
  * @returns {Blob} application/pdf
@@ -762,10 +818,14 @@ export function generateEmployerReportPdf(report) {
   report.sections.forEach((section) => {
     if (!section.items.length) return;
     const firstH = section.items[0].kind === 'savings' ? SAVINGS_H : CARD_H;
+    setWeight(doc, 'regular');
+    doc.setFontSize(10);
+    const subtitleLines = section.subtitle ? doc.splitTextToSize(section.subtitle, CONTENT_W) : [];
+    const subtitleH = subtitleLines.length ? subtitleLines.length * 12 + 6 : 0;
     const noteLines = section.note ? layoutRichText(doc, parseRichText(section.note), CONTENT_W, NOTE_SIZE) : [];
     const noteH = noteLines.length ? noteLines.length * NOTE_LINE + 4 : 0;
     // Title, note and the first row of cards stay on one page.
-    ensure(24 + noteH + firstH);
+    ensure(24 + subtitleH + noteH + firstH);
 
     // Title over a short rule (Figma: 12pt medium, 100pt × 0.5pt divider).
     text(doc, section.title, MARGIN, y + 11, { size: 12, color: C.black, weight: 'medium' });
@@ -773,6 +833,14 @@ export function generateEmployerReportPdf(report) {
     doc.setLineWidth(0.5);
     doc.line(MARGIN, y + 17, MARGIN + 100, y + 17);
     y += 24;
+    if (subtitleLines.length) {
+      // Subtitle under the rule, in grey, before the note.
+      setWeight(doc, 'medium');
+      doc.setFontSize(10);
+      ink(doc, C.muted);
+      doc.text(subtitleLines, MARGIN, y + 8, { lineHeightFactor: 1.2 });
+      y += subtitleH;
+    }
     if (noteLines.length) {
       drawRichLines(doc, noteLines, MARGIN, y + 8, NOTE_SIZE, NOTE_LINE, C.black);
       y += noteH;

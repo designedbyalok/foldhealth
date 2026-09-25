@@ -261,7 +261,9 @@ export function EmployerImpactView() {
   const fetchRollup = useAppStore(s => s.fetchEmployerImpact);
 
   const [scope, setScope] = useState('patient');
-  const [employerName, setEmployerName] = useState(null);
+  // `undefined` = not chosen yet, so the first (topmost) employer is used;
+  // `null` = cleared to All Employers.
+  const [pickedEmployer, setEmployerName] = useState(undefined);
   const [location, setLocation] = useState(null);
   const [timeFrame, setTimeFrame] = useState('Month');
   const [range, setRange] = useState(null); // { from, to } as 'YYYY-MM'
@@ -295,6 +297,7 @@ export function EmployerImpactView() {
   };
 
   const employers = filterOptions?.employers || [];
+  const employerName = pickedEmployer === undefined ? (employers[0]?.name ?? null) : pickedEmployer;
   const employerId = employers.find(e => e.name === employerName)?.id || null;
   const locations = (scope === 'visit' ? filterOptions?.visitLocations : filterOptions?.patientLocations) || [];
 
@@ -561,6 +564,7 @@ export function EmployerImpactView() {
       {printOpen && (
         <PrintReportDrawer
           range={rangeText}
+          employerName={employerName}
           meta={[
             rangeText,
             employerName || 'All Employers',

@@ -11,53 +11,59 @@
 
 /* "Include widgets with no data": the switch-row pattern from the
    insurance plan drawer (switch, label, supporting line). */
-.optionRow {
-  display: flex; align-items: center; gap: var(--space-2);
-  padding: var(--space-3); border: 0.5px solid var(--neutral-150); border-radius: 8px;
-}
 .optionText { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
 .optionLabel { font-size: var(--font-base); color: var(--neutral-300); }
 .optionLabelOn { color: var(--neutral-400); }
 .optionDesc { font-size: var(--font-sm); line-height: var(--leading-normal); color: var(--neutral-200); }
-.noData { color: var(--neutral-200); }
+.rowText { display: flex; flex-direction: column; gap: var(--space-1); }
+/* Every widget row is one height (12 + 19px switch + 12), so a row with
+   the no-data line fits the same box. */
+.widgetRow.widgetRow { height: 43px; padding-top: 0; padding-bottom: 0; box-sizing: border-box; }
+.noData { font-size: var(--font-sm); line-height: var(--leading-tight); color: var(--status-error-dark); }
 
 /* Section header: title left, switch right; the card styles come from
    UpdateDashboardDrawer.module.css. Right padding lines the switch up with
    the row switches below it. */
-.sectionHead { justify-content: space-between; padding: var(--space-1) var(--space-3); }
 .grow { flex: 1; min-width: 0; }
+
 /* The section note sits under the widget list; until opened it is an
-   "Add Note" link, inset like the section title. */
+   "Add Note" link, on the list's left edge like the title. */
 .note { padding-top: var(--space-2); }
 .addNote {
   display: inline-flex; align-items: center; gap: var(--space-1); align-self: flex-start;
-  padding: var(--space-2) var(--space-3) var(--space-1); font-size: var(--font-base);
+  padding: var(--space-2) 0 var(--space-1); font-size: var(--font-sm);
 }
 
-/* Report Details / Cover Page forms: a white panel inside the grey card,
-   like the widget lists. */
-.form {
-  display: flex; flex-direction: column; gap: var(--space-4);
-  padding: var(--space-3); border: 0.5px solid var(--neutral-150); border-radius: 12px;
-  background: var(--neutral-0);
+/* Report Settings: fields directly in the card, groups split by hairlines. */
+.fields { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-2) 0 var(--space-1); }
+.settingRow { padding-top: var(--space-3); border-top: 0.5px solid var(--neutral-150); }
+.optionRowInline { display: flex; align-items: center; gap: var(--space-2); }
+.coverRow {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);
+  padding-top: var(--space-3); border-top: 0.5px solid var(--neutral-150);
 }
+.coverLabel { font-size: var(--font-base); font-weight: 500; line-height: var(--leading-tight); color: var(--neutral-400); }
 .fieldGroup { display: flex; flex-direction: column; gap: var(--space-2); }
 .fieldLabel { font-size: var(--font-base); line-height: var(--leading-tight); color: var(--neutral-200); }
 .toggleRow { display: flex; }
 
-.swatches { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+/* All presets on one line: equal columns that share the width, square
+   swatches, names on hover (title) and for screen readers (aria-label). */
+.swatches { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--space-1); }
 .swatch {
-  display: flex; flex-direction: column; align-items: center; gap: var(--space-1);
-  padding: var(--space-1); border: 0.5px solid var(--neutral-150); border-radius: 8px;
+  display: flex; min-width: 0; padding: var(--space-1); border: 0.5px solid var(--neutral-150); border-radius: 6px;
   background: var(--neutral-0); cursor: pointer;
 }
 .swatch:hover { border-color: var(--neutral-200); }
 .swatch:focus-visible { outline: 2px solid var(--primary-200); outline-offset: 2px; }
 .swatchOn { border-color: var(--primary-300); box-shadow: 0 0 0 1px var(--primary-300); }
-.swatchFill { display: block; width: 56px; height: 40px; border-radius: 4px; }
-.swatchLabel { font-size: var(--font-sm); color: var(--neutral-300); }
+.swatchFill { display: block; width: 100%; aspect-ratio: 1; border-radius: 4px; }
 
-/* "or search free photos" between the upload field and photo search. */
+/* Image picker (Dropzone + picked-file row). */
+.dropField { display: flex; flex-direction: column; gap: var(--space-1); }
+.dropError { font-size: var(--font-sm); color: var(--status-error); }
+
+/* "or search free photos" between the image picker and photo search. */
 .orDivider {
   display: flex; align-items: center; gap: var(--space-2);
   font-size: var(--font-sm); color: var(--neutral-200);
@@ -66,3 +72,42 @@
 .photoCredit { font-size: var(--font-sm); color: var(--neutral-300); }
 .photoCredit a { color: var(--primary-300); text-decoration: none; }
 .photoCredit a:hover { text-decoration: underline; }
+.picked {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-2) var(--space-3); border: 0.5px solid var(--neutral-150); border-radius: 8px;
+}
+.pickedThumb { width: 40px; height: 40px; object-fit: contain; border-radius: 4px; background: var(--neutral-50); }
+.pickedName {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: var(--font-base); color: var(--neutral-400);
+}
+
+/* Section title: plain text that turns into an input on click. */
+.titleButton {
+  display: block; max-width: 100%; padding: 0; border: 0; background: none; cursor: text;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left;
+  font: inherit; color: inherit; border-radius: 4px;
+}
+.titleButton:hover { text-decoration: underline; text-underline-offset: 3px; }
+.titleButton:focus-visible { outline: 2px solid var(--primary-200); outline-offset: 2px; }
+.titleEdit { flex: 1; min-width: 0; font-weight: 400; }
+
+/* Subtitle: an "Add Subtitle" link under the title until opened. */
+/* Spans the full width, like the note box and widget list below and above. */
+.subtitle { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) 0 0; }
+.subtitleInput { flex: 1; min-width: 0; }
+.addSubtitle {
+  display: inline-flex; align-items: center; gap: var(--space-1); align-self: flex-start;
+  padding: var(--space-2) 0 0; font-size: var(--font-sm);
+}
+
+/* Section cards use the Update Dashboard drawer's trays, grips and rows.
+   Last, so it wins over the padding shorthands above: the subtitle and
+   note links start where the grips do (12px). The subtitle field, like the
+   note box, lines up with the widget list's edge. */
+.gripIndent { padding-left: var(--space-3); }
+
+/* Report Settings has no grip, so no head indent; and it is white. */
+/* Doubled selectors: the shared card styles load after this file. */
+.settingsCard.settingsCard { background: var(--neutral-0); }
+.settingsHead.settingsHead { padding-left: 0; padding-right: 0; }
