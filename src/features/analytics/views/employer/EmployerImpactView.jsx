@@ -22,7 +22,7 @@ import {
 } from './employerImpactData';
 import { VIEW_TITLES } from '../../analyticsData';
 import layout from '../../AnalyticsLayout.module.css';
-import { readLayouts, writeLayouts, savingsKey, packSpans, SPAN_COLUMNS } from './employerImpactLayout';
+import { readLayouts, writeLayouts, normalizeLayouts, savingsKey, packSpans, SPAN_COLUMNS } from './employerImpactLayout';
 import { UpdateDashboardDrawer } from './UpdateDashboardDrawer';
 import { PrintReportDrawer } from './PrintReportDrawer';
 import styles from './EmployerImpactView.module.css';
@@ -34,6 +34,8 @@ const WIDGET_MENU = [
   { key: 'table', label: 'View as table', icon: 'solar:list-linear' },
   { key: 'hide', label: 'Hide widget', icon: 'solar:eye-closed-linear' },
 ];
+// A saved report can't change its layout, so only the table view stays.
+const SNAPSHOT_MENU = WIDGET_MENU.filter(i => i.key === 'table');
 
 function downloadCsv(filename, csv) {
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
@@ -307,23 +309,38 @@ function SavingsSummaryCard({ summary, loading, subtitle, onDownload, style }) {
  * Every chart is computed from `employer_impact_metrics` through the
  * `employer_impact_rollup` SQL function, so the filters (employer,
  * location, time frame, date range) really change what each chart shows.
+ *
+ * With `snapshot` it renders a saved copy of the page (Print → Download
+ * HTML): the filters, layout and data it was saved with, read-only. The
+ * filters show but can't change, and the location toggle, Widget, Print
+ * and Settings are gone; every chart, tab, expand, table and CSV works.
+ * See pageSnapshot() below and src/report-viewer.
+ *
+ * @param {object} [props]
+ * @param {{ state: object }} [props.snapshot] – Saved page state (the data
+ *   itself comes through the store, which the viewer fills from the snapshot)
  */
-export function EmployerImpactView() {
+export function EmployerImpactView({ snapshot = null } = {}) {
+  const readOnly = !!snapshot;
+  const saved = snapshot?.state;
   const filterOptions = useAppStore(s => s.employerImpactFilters);
   const filtersLoaded = useAppStore(s => s.employerImpactFiltersLoaded);
   const fetchFilters = useAppStore(s => s.fetchEmployerImpactFilters);
   const fetchRollup = useAppStore(s => s.fetchEmployerImpact);
 
-  const [scope, setScope] = useState('patient');
+  const [scope, setScope] = useState(saved?.scope || 'patient');
   // `undefined` = not chosen yet, so the first (topmost) employer is used;
   // `null` = cleared to All Employers.
-  const [pickedEmployer, setEmployerName] = useState(undefined);
-  const [location, setLocation] = useState(null);
-  const [timeFrame, setTimeFrame] = useState('Month');
-  const [range, setRange] = useState(null); // { from, to } as 'YYYY-MM'
+  const [pickedEmployer, setEmployerName] = useState(saved ? saved.employerName : undefined);
+  const [pickedLocation, setLocation] = useState(saved?.location ?? null);
+  // All Locations has no location filter, so a location picked on By
+  // Location never narrows it.
+  const location = scope === 'visit' ? pickedLocation : null;
+  const [timeFrame, setTimeFrame] = useState(saved?.timeFrame || 'Month');
+  const [range, setRange] = useState(saved?.range ?? null); // { from, to } as 'YYYY-MM'
   const [rows, setRows] = useState(null);
   // One saved layout per location view; `dashboard` is the one on screen.
-  const [layouts, setLayouts] = useState(readLayouts);
+  const [layouts, setLayouts] = useState(() => (saved?.layouts ? normalizeLayouts(saved.layouts) : readLayouts()));
   const dashboard = layouts[scope];
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [printOpen, setPrintOpen] = useState(false);
@@ -353,7 +370,7 @@ export function EmployerImpactView() {
   const employers = filterOptions?.employers || [];
   const employerName = pickedEmployer === undefined ? (employers[0]?.name ?? null) : pickedEmployer;
   const employerId = employers.find(e => e.name === employerName)?.id || null;
-  const locations = (scope === 'visit' ? filterOptions?.visitLocations : filterOptions?.patientLocations) || [];
+  const locations = filterOptions?.visitLocations || [];
 
   // Refetch whenever a filter that the SQL narrows by changes. Time frame
   // only regroups months, so it doesn't need the network.
@@ -439,7 +456,7 @@ export function EmployerImpactView() {
         style={style}
         onExpand={w.type === 'stats' ? undefined : () => setDialog({ key: w.key, mode: 'expand' })}
         onDownload={() => downloadCsv(csvName(w.title), toCsv(model.rows, model.columns))}
-        menuItems={model.hasData ? WIDGET_MENU : WIDGET_MENU.filter(i => i.key !== 'table')}
+        menuItems={readOnly ? (model.hasData ? SNAPSHOT_MENU : undefined) : model.hasData ? WIDGET_MENU : WIDGET_MENU.filter(i => i.key !== 'table')}
         onMenuSelect={(key) => (key === 'table' ? setDialog({ key: w.key, mode: 'table' }) : hideWidget(w.key))}
       >
         {loading ? (w.type === 'stats' ? <KpiSkeleton count={w.stats.windows.length} /> : <ChartSkeleton />) : body}
@@ -495,6 +512,7 @@ export function EmployerImpactView() {
         onChange={(next) => setEmployerName(next[0] || null)}
         singleSelect
         searchable={employers.length > 6}
+        disabled={readOnly}
       />
       {/* Always shows the range the charts use: the default span reads as a
           fixed value (no ✕); a picked range can be cleared back to it.
@@ -505,6 +523,7 @@ export function EmployerImpactView() {
         active={filtersLoaded}
         activeSummary={rangeText}
         noClear={!range}
+        disabled={readOnly}
         onClear={() => setRange(null)}
         renderPopover={({ anchorRect, onClose }) => (
           <DateRangePopover
@@ -521,14 +540,17 @@ export function EmployerImpactView() {
           />
         )}
       />
-      <FilterChip
-        key={scope}
-        label={scope === 'visit' ? 'Visit Location' : 'Patient Location'}
-        options={locations}
-        selected={location ? [location] : []}
-        onChange={(next) => setLocation(next[0] || null)}
-        singleSelect
-      />
+      {/* Only By Location narrows to a location; All Locations covers them all. */}
+      {scope === 'visit' && (
+        <FilterChip
+          label="Visit Location"
+          options={locations}
+          selected={location ? [location] : []}
+          onChange={(next) => setLocation(next[0] || null)}
+          singleSelect
+          disabled={readOnly}
+        />
+      )}
       {/* Month is the default grouping, so the chip reads idle until another is picked. */}
       <FilterChip
         label="Time Frame"
@@ -536,6 +558,7 @@ export function EmployerImpactView() {
         selected={timeFrame === 'Month' ? [] : [timeFrame]}
         onChange={(next) => setTimeFrame(next[0] || 'Month')}
         singleSelect
+        disabled={readOnly}
       />
     </>
   );
@@ -547,13 +570,16 @@ export function EmployerImpactView() {
       <div className={styles.header}>
         <div className={styles.titleRow}>
           <div className={layout.viewTitle}>{VIEW_TITLES.employer.title}</div>
-          <Toggle
-            items={SCOPE_OPTIONS}
-            active={scope}
-            onChange={(k) => { setScope(k); setLocation(null); }}
-          />
+          {!readOnly && (
+            <Toggle
+              items={SCOPE_OPTIONS}
+              active={scope}
+              onChange={(k) => { setScope(k); setLocation(null); }}
+            />
+          )}
         </div>
         {/* Figma 1530:41988: Widget, then Print and Settings, split by hairlines. */}
+        {!readOnly && (
         <div className={styles.headerActions}>
           <span ref={widgetBtnRef}>
             <Button
@@ -566,15 +592,20 @@ export function EmployerImpactView() {
             </Button>
           </span>
           <span className={styles.actionDivider} aria-hidden="true" />
-          <ActionButton icon="solar:printer-minimalistic-linear" tooltip="Print" aria-label="Print report" onClick={() => setPrintOpen(true)} />
+          {/* Tooltips open below: above, the page's top bar clips them. */}
+          <ActionButton icon="solar:printer-minimalistic-linear" tooltip="Print" tooltipBelow aria-label="Print report" onClick={() => setPrintOpen(true)} />
           <span className={styles.actionDivider} aria-hidden="true" />
           <ActionButton
             icon="solar:settings-minimalistic-linear"
             tooltip="Update dashboard"
+            // Right-anchored too: it's the last button before the page edge.
+            tooltipBelow
+            tooltipLeft
             aria-label="Update dashboard"
             onClick={() => setSettingsOpen(true)}
           />
         </div>
+        )}
       </div>
 
       {/* Filters */}
@@ -638,6 +669,11 @@ export function EmployerImpactView() {
 
       {printOpen && (
         <PrintReportDrawer
+          pageSnapshot={() => ({
+            state: { scope, employerName, location, timeFrame, range: effectiveRange, layouts },
+            filters: filterOptions,
+            rows: loading ? [] : rows.rows,
+          })}
           range={rangeText}
           employerName={employerName}
           meta={[

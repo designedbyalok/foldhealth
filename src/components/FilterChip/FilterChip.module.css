@@ -91,3 +91,10 @@
   margin-left: calc(var(--space-1) / 2);
   background: var(--neutral-150);
 }
+
+/* Read-only: keeps its look (active or idle) but doesn't react. */
+.chipDisabled { cursor: default; }
+.chipDisabled:hover,
+.chipDisabled.chipNeutral:hover { background: var(--neutral-0); border-color: var(--neutral-150); }
+.chipDisabled.chipActive:hover { background: var(--primary-50); border-color: var(--primary-300); }
+.chipDisabled.chipActive.chipNeutral:hover { background: var(--neutral-0); border-color: var(--neutral-150); }

@@ -1,6 +1,7 @@
 /* Print drawer for the Employer Impact Report; mirrors the care plan's
    Preview & Share drawer. */
 
+.menuAnchor { display: inline-flex; }
 .headerDivider { width: 1px; height: 16px; background: var(--neutral-150); flex-shrink: 0; }
 
 .previewPane { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; background: var(--neutral-0); }
@@ -77,6 +78,8 @@
 /* ── Widgets / Personalize tabs (TabStrip draws its own bar), plus the
    report filters row, pinned above the scrolling editor ── */
 .tabBar { position: sticky; top: 0; z-index: 2; background: var(--neutral-0); }
+.tabs { position: relative; }
+.tabFilter { position: absolute; top: 0; bottom: 0; right: var(--space-4); display: flex; align-items: center; }
 .filterRow {
   display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2);
   padding: var(--space-2) var(--space-4);

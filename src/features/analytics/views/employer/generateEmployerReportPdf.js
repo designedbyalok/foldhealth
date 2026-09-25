@@ -11,6 +11,7 @@
 import jsPDF from 'jspdf';
 import { formatValue, compactTick, niceTicks } from './employerImpactFormat';
 import { parseGradient } from '../../../email-builder/colorHelpers';
+import { REPORT_FOOTER_NOTE } from '../../../email-builder/reportHeaderComponent';
 
 // A4 in points, laid out as in the Figma frame.
 const PAGE = { w: 595, h: 842 };
@@ -42,6 +43,8 @@ const C = {
   // Report brand band (header stripe and footer).
   bandTeal: [124, 206, 211],  // #7CCED3
   bandBlue: [19, 118, 188],   // #1376BC
+  footer: [246, 247, 248],    // Neutral/50 #F6F7F8
+  footerText: [95, 106, 126], // Neutral/200 #5F6A7E
 };
 
 const TICK = 6;     // axis tick and legend text
@@ -536,46 +539,65 @@ function savingsCard(doc, item, x, y, w) {
 function savingsSummaryCard(doc, item, palette, x, y, w, h) {
   const { card: c } = item;
   card(doc, x, y, w, h, c.title, item.subtitle);
-  const top = y + CARD_HEAD_H + CARD_PAD;
-  const bodyH = h - CARD_HEAD_H - CARD_PAD * 2;
+  const top = y + CARD_HEAD_H + CARD_PAD * 2;
+  const bodyH = h - CARD_HEAD_H - CARD_PAD * 4;
   if (!c.hasData) { emptyState(doc, x, top, w, bodyH); return; }
-  const leftW = (w - CARD_PAD * 3) * 0.45;
-  const lx = x + CARD_PAD;
   const money = (v) => formatValue(v, 'currency');
-  const divider = (dy) => { stroke(doc, C.border); doc.setLineWidth(0.5); doc.line(lx, dy, lx + leftW, dy); };
-
-  let cy = top;
-  const pair = (label, value, { color = C.body, size = 8, dot } = {}) => {
-    if (dot) { fill(doc, dot); doc.circle(lx + 2, cy + TICK - 2, 2, 'F'); }
-    text(doc, label, lx + (dot ? 7 : 0), cy + TICK, { size: TICK, color: C.muted });
-    text(doc, fitText(doc, value, leftW, size, 'bold'), lx, cy + TICK + 3 + size, { size, color, weight: 'bold' });
-    cy += TICK + size + 9;
-  };
-  pair('Traditional Cost', money(c.traditional));
-  divider(cy - 4);
-  cy += 2;
-  pair('Our Cost', money(c.ours));
-  pair('Membership Cost', money(c.membership), { size: 7, dot: palette[0] });
-  pair('Service Cost', money(c.service), { size: 7, dot: palette[1 % palette.length] });
-  divider(cy - 4);
-  cy += 2;
   const loss = c.savings < 0;
-  pair('Total Savings', `${loss ? '-' : ''}${money(Math.abs(c.savings))}`, { size: 11, color: loss ? C.loss : C.gain });
+
+  // Three blocks across: totals | chart (takes the rest) | its legend with
+  // values, so no block leaves a wide gap beside it.
+  const GUTTER = 20;
+  const leftW = 150;
+  const keyW = 76;
+  const lx = x + CARD_PAD * 2;
+  const cx = lx + leftW + GUTTER;
+  const keyX = x + w - CARD_PAD * 2 - keyW;
+  const chartW = keyX - GUTTER - cx;
+
+  // Totals spread down the body's full height, split by hairlines.
+  const totals = [
+    ['Traditional Cost', money(c.traditional), 9, C.body],
+    ['Our Cost', money(c.ours), 9, C.body],
+    ['Total Savings', `${loss ? '-' : ''}${money(Math.abs(c.savings))}`, 12, loss ? C.loss : C.gain],
+  ];
+  const blockH = (size) => TICK + 4 + size;
+  const used = totals.reduce((a, t) => a + blockH(t[2]), 0);
+  const space = (bodyH - used) / (totals.length - 1);
+  let cy = top;
+  totals.forEach(([label, value, size, color], i) => {
+    text(doc, label, lx, cy + TICK, { size: TICK, color: C.muted });
+    text(doc, fitText(doc, value, leftW, size, 'bold'), lx, cy + TICK + 4 + size * 0.8, { size, color, weight: 'bold' });
+    cy += blockH(size);
+    if (i < totals.length - 1) {
+      stroke(doc, C.border);
+      doc.setLineWidth(0.5);
+      doc.line(lx, cy + space / 2, lx + leftW, cy + space / 2);
+      cy += space;
+    }
+  });
+
+  // Hairline between the totals and the chart, centred in the gutter.
+  stroke(doc, C.border);
+  doc.setLineWidth(0.5);
+  doc.line(cx - GUTTER / 2, top, cx - GUTTER / 2, top + bodyH);
 
   // Traditional as one bar; ours stacked membership (bottom) then service.
-  const cx = lx + leftW + CARD_PAD;
-  const cw = x + w - CARD_PAD - cx;
   const ticks = niceTicks(Math.max(c.traditional, c.ours));
-  const plotTop = top + 4;
-  const plotH = bodyH - 16;
+  const plotTop = top + 3;
+  const plotH = bodyH - 14;
   const axisW = yLabels(doc, ticks, compactTick('currency'), cx, plotTop, plotH);
   const px = cx + axisW;
-  const pw = cw - axisW;
+  const pw = chartW - axisW;
   gridLines(doc, ticks, px, plotTop, pw, plotH);
   const max = ticks[ticks.length - 1] || 1;
   const slot = pw / 2;
-  const barW = Math.min(slot * 0.4, 18);
-  const bars = [[[c.traditional, palette[0]]], [[c.membership, palette[0]], [c.service, palette[1 % palette.length]]]];
+  const barW = Math.min(slot * 0.45, 28);
+  const parts = [
+    ['Membership Cost', c.membership, palette[0]],
+    ['Service Cost', c.service, palette[1 % palette.length]],
+  ];
+  const bars = [[[c.traditional, palette[0]]], parts.map(([, v, color]) => [v, color])];
   bars.forEach((segments, i) => {
     let acc = 0;
     const bx = px + slot * i + (slot - barW) / 2;
@@ -586,7 +608,19 @@ function savingsSummaryCard(doc, item, palette, x, y, w, h) {
       acc += v;
     });
   });
-  xLabels(doc, ['Traditional Cost', 'Our Cost'], px, slot, plotTop + plotH + 8);
+  xLabels(doc, ['Traditional Cost', 'Our Cost'], px, slot, plotTop + plotH + 9);
+
+  // Our Cost's parts beside the chart, centred on it.
+  const partH = TICK + 4 + 8;
+  const partGap = 12;
+  let ky = plotTop + (plotH - (parts.length * partH + partGap)) / 2;
+  parts.forEach(([label, v, color]) => {
+    fill(doc, color);
+    doc.circle(keyX + 2.5, ky + TICK - 2, 2.5, 'F');
+    text(doc, fitText(doc, label, keyW - 8, TICK), keyX + 8, ky + TICK, { size: TICK, color: C.muted });
+    text(doc, fitText(doc, money(v), keyW - 8, 8, 'bold'), keyX + 8, ky + TICK + 4 + 6.4, { size: 8, color: C.body, weight: 'bold' });
+    ky += partH + partGap;
+  });
 }
 
 // ── Page chrome ──
@@ -598,18 +632,17 @@ function polygon(doc, points) {
 }
 
 function pageHeader(doc, { title, generatedOn, logo, clientLogo }) {
-  // Client logo on the left, in the Figma's 108 × 48 slot.
-  if (clientLogo?.dataUrl) {
-    const { w, h } = fitLogo(clientLogo, 108, 48);
-    doc.addImage(clientLogo.dataUrl, clientLogo.format || 'PNG', MARGIN + (108 - w) / 2, 16 + (48 - h) / 2, w, h);
+  // Employer logo on the left, fitted to a 108 × 20 slot and left-aligned.
+  if (logo?.dataUrl) {
+    const { w, h } = logo.width ? fitLogo(logo, 108, 20) : { w: 108, h: 20 };
+    doc.addImage(logo.dataUrl, logo.format || 'PNG', MARGIN, 30 + (20 - h) / 2, w, h);
   }
   text(doc, title, PAGE.w / 2, 40, { size: 16, color: C.black, weight: 'medium', align: 'center' });
   text(doc, generatedOn, PAGE.w / 2, 53, { size: 10, color: C.faint, align: 'center' });
-  // Employer logo on the right: the Fold Health wordmark by default, or
-  // an uploaded one fitted to the 108 × 20 slot and right-aligned.
-  if (logo?.dataUrl) {
-    const { w, h } = logo.width ? fitLogo(logo, 108, 20) : { w: 108, h: 20 };
-    doc.addImage(logo.dataUrl, logo.format || 'PNG', PAGE.w - MARGIN - w, 30 + (20 - h) / 2, w, h);
+  // Clinic logo on the right, centred in a 108 × 48 slot.
+  if (clientLogo?.dataUrl) {
+    const { w, h } = fitLogo(clientLogo, 108, 48);
+    doc.addImage(clientLogo.dataUrl, clientLogo.format || 'PNG', PAGE.w - MARGIN - 108 + (108 - w) / 2, 16 + (48 - h) / 2, w, h);
   }
   // Brand band: a teal block, four slashes, then a blue bar to the edge.
   const top = HEADER_H;
@@ -625,9 +658,12 @@ function pageHeader(doc, { title, generatedOn, logo, clientLogo }) {
 }
 
 function pageFooter(doc, page) {
-  fill(doc, C.bandTeal);
+  fill(doc, C.footer);
   doc.rect(0, PAGE.h - FOOTER_H, PAGE.w, FOOTER_H, 'F');
-  text(doc, String(page), PAGE.w / 2, PAGE.h - FOOTER_H / 2, { size: 10, color: C.white, align: 'center', baseline: 'middle' });
+  // As the Report Print Footer component: note on the left, page on the right.
+  const mid = PAGE.h - FOOTER_H / 2;
+  text(doc, REPORT_FOOTER_NOTE, MARGIN, mid, { size: 10, color: C.footerText, baseline: 'middle' });
+  text(doc, String(page), PAGE.w - MARGIN, mid, { size: 10, color: C.footerText, align: 'right', baseline: 'middle' });
 }
 
 // ── Cover page (Figma 5634:11783) ──
@@ -818,7 +854,7 @@ function fadingGrid(doc, color, x0, y0, w, h, cx, cy, rx, ry) {
  * @param {{ dataUrl }} [cover.logo]       – Employer logo (Fold Health wordmark by default)
  * @param {{ dataUrl }} [cover.clientLogo] – Provider logo for "Provided By"
  */
-function coverPage(doc, { title, range, description, background = DEFAULT_COVER_BACKGROUND, logo, clientLogo }) {
+function coverPage(doc, { title, range, description, background = DEFAULT_COVER_BACKGROUND, logo, clientLogo, withFooter = false }) {
   const light = isLightBackground(background);
   const ink1 = light ? C.black : [255, 255, 255];
   const ink2 = light ? C.body : [182, 216, 239]; // Figma #B6D8EF on the blue
@@ -884,7 +920,8 @@ function coverPage(doc, { title, range, description, background = DEFAULT_COVER_
     doc.addImage(clientLogo.dataUrl, clientLogo.format || 'PNG', gx + labelW + 4 + (54 - logoW.w) / 2, 755 + (24 - logoW.h) / 2, logoW.w, logoW.h);
   }
 
-  text(doc, '1', PAGE.w / 2, PAGE.h - 12, { size: 10, color: ink1, align: 'center', baseline: 'middle' });
+  // With no report footer the cover still carries its page number.
+  if (!withFooter) text(doc, '1', PAGE.w / 2, PAGE.h - 12, { size: 10, color: ink1, align: 'center', baseline: 'middle' });
 }
 
 /** A logo's size fitted inside a box, keeping its proportions. */
@@ -908,6 +945,13 @@ export function generatedOnLabel(date = new Date()) {
  * @param {Date}   [report.generatedAt]
  * @param {{ dataUrl: string }} [report.logo] – Employer logo, header right (Fold Health wordmark by default)
  * @param {{ dataUrl: string }} [report.clientLogo] – Provider logo, header left (Trailhead Clinics)
+ * @param {{ dataUrl: string, width: number, height: number } | null} [report.header] – A header
+ *   component drawn to a PNG (see rasterizeComponent), placed at the top of every page at
+ *   full width; null for no header. Omitted, the built-in header (title, logos, band) is drawn.
+ * @param {{ width: number, height: number, dataUrl?: string, images?: string[] } | null} [report.footer] –
+ *   A footer component drawn to PNGs, at the foot of every page: `images[n - 1]` for page n when it
+ *   shows the page number, else `dataUrl`. null for no footer; omitted (or a page with no image),
+ *   the built-in footer.
  * @param {object} [report.cover] – Adds the cover page: `{ range, description?,
  *   background?, logo?, clientLogo? }` (see coverPage)
  * @param {{ regular, medium, semibold, bold, italic, boldItalic }} [report.fonts] – Inter TTFs, base64;
@@ -936,15 +980,24 @@ export function generateEmployerReport(report) {
   const anchors = {};
   if (hasCover) {
     anchors.cover = 1;
-    coverPage(doc, { title: report.title, ...report.cover });
+    coverPage(doc, { title: report.title, ...report.cover, withFooter: report.footer !== null });
     doc.addPage();
   }
-  let y = BODY_TOP;
+  // Page header: a drawn header component (an image at the page's full
+  // width), none (null), or, when not given, the built-in one.
+  const header = report.header;
+  const headerH = header ? (PAGE.w * header.height) / header.width : 0;
+  const bodyTop = header === null ? MARGIN : header ? headerH + 12 : BODY_TOP;
+  // Page footer, the same way: drawn component, none, or built-in.
+  const footer = report.footer;
+  const footerH = footer ? (PAGE.w * footer.height) / footer.width : 0;
+  const bodyBottom = footer === null ? PAGE.h - MARGIN : footer ? PAGE.h - footerH - 12 : BODY_BOTTOM;
+  let y = bodyTop;
 
   const ensure = (needed) => {
-    if (y + needed <= BODY_BOTTOM) return;
+    if (y + needed <= bodyBottom) return;
     doc.addPage();
-    y = BODY_TOP;
+    y = bodyTop;
   };
 
   if (report.meta) {
@@ -984,7 +1037,7 @@ export function generateEmployerReport(report) {
     // Every section after the first starts on a fresh page.
     if (sectionCount > 0) {
       doc.addPage();
-      y = BODY_TOP;
+      y = bodyTop;
     }
     sectionCount += 1;
     if (section.id) anchors[section.id] = doc.getNumberOfPages();
@@ -1016,24 +1069,17 @@ export function generateEmployerReport(report) {
       const summary = section.items.find(it => it.summary);
       const cards = section.items.filter(it => !it.summary);
       if (summary) {
-        // As on the page: the comparison card in a wider first column, the
-        // category cards two per row beside it.
-        const rows = Math.ceil(cards.length / 2);
-        const cardsH = rows * SAVINGS_H + Math.max(0, rows - 1) * GAP;
-        const h = Math.max(CARD_H, cardsH);
-        ensure(h);
-        const sumW = cards.length ? (CONTENT_W - GAP * 2) * (1.5 / 3.5) : CONTENT_W;
-        savingsSummaryCard(doc, summary, palette, MARGIN, y, sumW, h);
-        const colW = (CONTENT_W - sumW - GAP * 2) / 2;
-        cards.forEach((item, i) => {
-          const last = i === cards.length - 1 && i % 2 === 0;
-          const cx = MARGIN + sumW + GAP + (colW + GAP) * (i % 2);
-          savingsCard(doc, item, cx, y + Math.floor(i / 2) * (SAVINGS_H + GAP), last ? colW * 2 + GAP : colW);
-        });
-        y += h + GAP * 2;
-        drawNote(section.note);
-        y += 12;
-        return;
+        // The comparison card first, across the page, then the category
+        // cards three per row below it.
+        ensure(CARD_H);
+        savingsSummaryCard(doc, summary, palette, MARGIN, y, CONTENT_W, CARD_H);
+        y += CARD_H + GAP;
+        if (!cards.length) {
+          y += GAP;
+          drawNote(section.note);
+          y += 12;
+          return;
+        }
       }
       cards.forEach((item, i) => {
         const col = i % 3;
@@ -1065,11 +1111,19 @@ export function generateEmployerReport(report) {
 
   const chrome = { title: report.title, generatedOn: generatedOnLabel(report.generatedAt), logo: report.logo, clientLogo: report.clientLogo };
   const pages = doc.getNumberOfPages();
-  // The cover carries its own number (1); content pages continue from it.
-  for (let p = hasCover ? 2 : 1; p <= pages; p += 1) {
+  // The header is for content pages; the footer goes on every page, the
+  // cover (page 1) included.
+  for (let p = 1; p <= pages; p += 1) {
     doc.setPage(p);
-    pageHeader(doc, chrome);
-    pageFooter(doc, p);
+    const isCover = hasCover && p === 1;
+    if (!isCover) {
+      if (header) doc.addImage(header.dataUrl, 'PNG', 0, 0, PAGE.w, headerH);
+      else if (header === undefined) pageHeader(doc, chrome);
+    }
+    // A footer with the page number is drawn once per page number.
+    const footerImg = footer && (footer.images ? footer.images[p - 1] : footer.dataUrl);
+    if (footerImg) doc.addImage(footerImg, 'PNG', 0, PAGE.h - footerH, PAGE.w, footerH);
+    else if (footer !== null) pageFooter(doc, p);
   }
   return { blob: doc.output('blob'), anchors };
 }

@@ -46,6 +46,25 @@ build requires esbuild ≥ 0.28 on Node 26.
   preview (defaults to the filtered employer, Change to upload a
   replacement), title and cover settings.
 
+- **Employer Impact Report: Download HTML and Send Report.** The Print
+  drawer's Download HTML saves the report page itself, with its filters,
+  layout and data, as one self-contained interactive file (read-only
+  filters; no location toggle, Widget, Print or Settings). It inlines the
+  report viewer bundle, `src/report-viewer`, which `bun run dev` and
+  `bun run build` now build first (`bun run build:report-viewer` on its own).
+  Send Report lists Email, Chat, eFax and Internal Chat (not wired yet).
+
+- **Components, and report headers built from them.** Settings → Content →
+  Components lists saved headers and footers (Name, Type, Default, Last
+  Updated). New and Edit open the email builder in component mode, with Name,
+  Type (Header, Footer, Report Header, Report Footer) and Default in the
+  toolbar. The Employer Impact print header and footer are now seeded report
+  components (`report-print-header`, `report-print-footer`) using the new
+  Report merge tags `{{report_title}}`, `{{generated_on}}`, `{{employer_logo}}`
+  and `{{page_number}}`. The Print drawer's Show Header and Show Footer
+  toggles pick which report components print on every page. Needs `supabase/email_components_migration.sql` and `bun run
+  seed`.
+
 - **Employer Impact Report: stock photo cover backgrounds and consistent
   loading.** The print drawer's Image background can now search free Pexels
   photos (photos only, never videos) through the server-side

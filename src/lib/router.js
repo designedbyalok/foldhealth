@@ -147,6 +147,9 @@ export function stateToHash(state) {
     return view === 'executive' ? buildHash('analytics') : buildHash('analytics', view);
   }
   if (activePage === 'calendar') return buildHash('calendar');
+  // A component (saved header / footer) is edited from Settings → Content →
+  // Components; closing the builder lands back on that list.
+  if (state.editingComponent) return buildHash('settings', 'content', 'components');
   if (state.editingCampaignId) {
     // Email builder opened from Settings → Content keeps the settings path so
     // the URL is sharable AND the close action falls back to #/settings/content/emails.

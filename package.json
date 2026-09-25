@@ -5,8 +5,9 @@
   "type": "module",
   "packageManager": "bun@1.4.0",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "bun run build:report-viewer && vite",
+    "build": "bun run build:report-viewer && vite build",
+    "build:report-viewer": "vite build -c vite.report-viewer.config.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "docs": "cd docs && mint dev",

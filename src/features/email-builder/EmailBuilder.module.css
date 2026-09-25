@@ -68,6 +68,17 @@
 .titleInput:hover { border-bottom-color: var(--neutral-200); }
 .titleInput:focus { border-bottom-color: var(--primary-300); }
 
+/* Component mode: "Default" checkbox beside the type select. */
+.defaultToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 .saveStatus {
   display: flex;
   align-items: center;

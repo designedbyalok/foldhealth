@@ -61,7 +61,10 @@ export function ColorInput({ label, value, onChange, allowGradient = true, gradi
       const r = fieldRef.current?.getBoundingClientRect();
       if (!r) return;
       const popoverWidth = 264;
-      const popoverMaxH = Math.min(window.innerHeight - 16, 720);
+      // The picker's real height (solid is much shorter than gradient), so
+      // opening above the field sits flush with it rather than a max height
+      // away. offsetHeight ignores the entrance scale transform.
+      const popoverH = popoverRef.current?.offsetHeight || Math.min(window.innerHeight - 16, 720);
       const margin = 8;
       let left = r.right - popoverWidth;
       if (left < margin) left = Math.min(r.left, window.innerWidth - popoverWidth - margin);
@@ -72,13 +75,14 @@ export function ColorInput({ label, value, onChange, allowGradient = true, gradi
       // Placement also drives the popover's transform-origin, so it grows out
       // of the edge of the field it belongs to.
       let placement = 'bottom';
-      if (spaceBelow >= 200 || spaceBelow >= spaceAbove) {
+      if (spaceBelow >= popoverH || spaceBelow >= spaceAbove) {
         top = r.bottom + 4;
       } else {
-        top = Math.max(margin, r.top - 4 - popoverMaxH);
+        top = Math.max(margin, r.top - 4 - popoverH);
         placement = 'top';
       }
-      top = Math.max(margin, Math.min(top, window.innerHeight - margin - 40));
+      // Keep it on screen, as close to the field as the viewport allows.
+      top = Math.max(margin, Math.min(top, window.innerHeight - margin - popoverH));
       setPopoverPos({ top, left, placement });
     };
     update();
@@ -87,6 +91,8 @@ export function ColorInput({ label, value, onChange, allowGradient = true, gradi
     window.addEventListener('scroll', update, true);
     const ro = new ResizeObserver(update);
     ro.observe(fieldRef.current);
+    // Switching solid ↔ gradient changes the picker's height.
+    if (popoverRef.current) ro.observe(popoverRef.current);
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', update);

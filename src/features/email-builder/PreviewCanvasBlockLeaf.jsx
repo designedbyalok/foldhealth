@@ -1,5 +1,6 @@
 import { sanitizeSvg } from '../../lib/sanitizeHtml';
 import { tintSvgMarkup } from './svgTint';
+import { applyMergeTags, SAMPLE_CONTEXT } from './mergeTags';
 import { paddingCss, bgProps, BUTTON_SIZE_STYLES, BUTTON_PRESET_RADIUS, NO_IMAGE_PLACEHOLDER_STYLE } from './PreviewCanvas.utils';
 import { ResizeWrap } from './PreviewCanvasResize';
 
@@ -40,7 +41,7 @@ export function renderLeafBlock(type, ctx, { id, props, style, block }) {
         }}
       />
     ) : props.url ? (
-      <img src={props.url} alt={props.alt || ''} style={imgStyle} />
+      <img src={applyMergeTags(props.url, SAMPLE_CONTEXT)} alt={props.alt || ''} style={imgStyle} />
     ) : (
       <div style={{ ...NO_IMAGE_PLACEHOLDER_STYLE, width: imgStyle.width }}>
         No image

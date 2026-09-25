@@ -29,6 +29,7 @@ import { CARE_PLAN_TEMPLATE_LIBRARY, carePlanTemplateLibraryToRow } from '../src
 import { MONITORING_SEED, monitoringToRow } from '../src/features/patient/right-panel/tabs/monitoring/monitoringData.js';
 import { CCM_WORKLIST_MEMBERS } from '../src/features/ccm-worklist/data/mock.js';
 import { EMPLOYER_IMPACT_EMPLOYERS, employerImpactRows } from '../src/features/analytics/views/employer/employerImpactSeed.js';
+import { REPORT_HEADER_COMPONENT, REPORT_FOOTER_COMPONENT } from '../src/features/email-builder/reportHeaderComponent.js';
 import { SNP_WORKLIST_MEMBERS } from '../src/features/snp-worklist/data/mock.js';
 import { CAREGAP_ACTIVITY_MOCK } from '../src/features/hedis-worklist/data/caregapActivityMock.js';
 import { PRACTICE_LOCATIONS } from '../src/features/settings/account/locations/data/mock.js';
@@ -794,6 +795,8 @@ async function main() {
     await db.query(SOCIAL_HISTORY_DDL);
     // Run the migration itself rather than a copy of it, so the two can't drift.
     await db.query(readFileSync(new URL('../supabase/employer_impact_migration.sql', import.meta.url), 'utf8'));
+    await db.query(readFileSync(new URL('../supabase/email_components_migration.sql', import.meta.url), 'utf8'));
+    console.log('  ✓ email_header_footer_presets: is_default / slug / updated_at trigger');
     console.log('  ✓ patient_problems — created / already exists');
     console.log('  ✓ patient_allergies — created / already exists');
     console.log('  ✓ patient_immunizations — created / already exists');
@@ -893,6 +896,16 @@ async function main() {
     .from('patient_history_entries')
     .upsert(withPatient(PATIENT_HISTORY_ENTRIES), { onConflict: 'id' });
   if (phe) { console.error('  ✗', phe.message); } else { console.log(`  ✓ ${PATIENT_HISTORY_ENTRIES.length} rows`); }
+
+  // Components: the report print header and footer, the default Report
+  // Header and Report Footer.
+  console.log('Seeding email_header_footer_presets (report print header + footer)...');
+  for (const c of [REPORT_HEADER_COMPONENT, REPORT_FOOTER_COMPONENT]) {
+    const { error } = await supabase
+      .from('email_header_footer_presets')
+      .upsert({ slug: c.slug, role: c.role, name: c.label, description: c.description, accent: c.accent, tree: c.tree, is_default: true }, { onConflict: 'slug' });
+    if (error) { console.error('  ✗', error.message); } else { console.log(`  ✓ ${c.label}`); }
+  }
 
   // Employer Impact Report: a year of monthly metrics ending last month.
   console.log('Seeding employer_impact_employers...');

@@ -1,0 +1,8 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='144' height='40' viewBox='0 0 144 40'>
+      <circle cx='20' cy='20' r='17' fill='none' stroke='#0E7C86' stroke-width='3'/>
+      <path d='M20 7 L25 20 L20 17.5 L15 20 Z' fill='#0E7C86'/>
+      <path d='M20 33 L15 20 L20 22.5 L25 20 Z' fill='#0E7C86' fill-opacity='0.45'/>
+      <circle cx='20' cy='20' r='2' fill='#0E7C86'/>
+      
+  <text x='50' y='21' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='19' font-weight='700' fill='#16181D' letter-spacing='-0.3'>Northwind</text>
+  <text x='51' y='34' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='8.5' font-weight='600' fill='#16181D' fill-opacity='0.72' letter-spacing='2.2'>LOGISTICS</text></svg>

@@ -29,12 +29,18 @@ export const MERGE_TOKENS = [
   { key: 'current_date',   label: "Today's date",   group: 'System',    sample: 'September 15, 2026',       resolve: () => new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) },
   { key: 'current_year',   label: 'Current year',   group: 'System',    sample: String(new Date().getFullYear()), resolve: () => String(new Date().getFullYear()) },
   { key: 'unsubscribe_url', label: 'Unsubscribe link', group: 'System', sample: '#',                        resolve: c => c.unsubscribeUrl || '#' },
+  // Report: filled in when a component (e.g. a print header) is drawn on a
+  // generated report. The logo token is an image URL, for an Image block.
+  { key: 'report_title',   label: 'Report title',   group: 'Report',    sample: 'Employer Impact Report',   resolve: c => c.reportTitle },
+  { key: 'generated_on',   label: 'Generated on',   group: 'Report',    sample: '09/25/2026 at 5:47 PM',    resolve: c => c.generatedOn },
+  { key: 'employer_logo',  label: 'Employer logo',  group: 'Report',    sample: '/brand/employer-logo-sample.svg', resolve: c => c.employerLogo },
+  { key: 'page_number',    label: 'Page number',    group: 'Report',    sample: '2',                        resolve: c => c.pageNumber },
 ];
 
 const TOKEN_BY_KEY = Object.fromEntries(MERGE_TOKENS.map(t => [t.key, t]));
 
 // Group order + membership for the picker UI.
-export const TOKEN_GROUPS = ['Patient', 'Care team', 'System'].map(group => ({
+export const TOKEN_GROUPS = ['Patient', 'Care team', 'System', 'Report'].map(group => ({
   group,
   tokens: MERGE_TOKENS.filter(t => t.group === group),
 }));
@@ -113,6 +119,10 @@ export const SAMPLE_CONTEXT = {
   providerName: 'Dr. Patel',
   clinicName: 'Stanford Care Center',
   unsubscribeUrl: '#',
+  reportTitle: 'Employer Impact Report',
+  generatedOn: '09/25/2026 at 5:47 PM',
+  employerLogo: '/brand/employer-logo-sample.svg',
+  pageNumber: '2',
 };
 
 /**
