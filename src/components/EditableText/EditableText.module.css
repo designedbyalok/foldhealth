@@ -4,8 +4,9 @@
   display: inline-block; max-width: 100%; min-width: var(--space-4);
   border-radius: 4px; outline: none; cursor: text;
   overflow-wrap: anywhere;
-  transition: background var(--duration-instant) var(--ease-hover), box-shadow var(--duration-instant) var(--ease-hover);
+  transition: background var(--duration-instant) var(--ease-hover);
 }
 .editable:hover { background: var(--neutral-50); }
-.editable:focus { background: var(--neutral-0); box-shadow: 0 0 0 2px var(--primary-200); }
+/* No ring while editing: the caret shows where you are typing. */
+.editable:focus { background: transparent; }
 .editable:empty::before { content: attr(data-placeholder); color: var(--placeholder-text); pointer-events: none; }

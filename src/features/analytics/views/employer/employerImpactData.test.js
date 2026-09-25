@@ -279,13 +279,39 @@ describe('report pages', () => {
   it('starts every section on a fresh page and reports where', async () => {
     const { generateEmployerReport } = await import('./generateEmployerReportPdf');
     const widget = { key: 'w', title: 'W', type: 'line', series: [{ key: 'a', label: 'A' }] };
-    const item = { key: 'w', kind: 'widget', widget, model: { hasData: true, data: [{ x: 'Jan 26', a: 1 }] } };
+    const item = (key) => ({ key, kind: 'widget', widget, model: { hasData: true, data: [{ x: 'Jan 26', a: 1 }] } });
     const { anchors } = generateEmployerReport({
       title: 'Employer Impact Report',
       cover: { range: 'Jan 2026 - Mar 2026' },
-      sections: [{ id: 'one', title: 'One', items: [item] }, { id: 'two', title: 'Two', items: [item] }, { id: 'three', title: 'Three', items: [item] }],
+      sections: [
+        { id: 'one', title: 'One', items: [item('w1')] },
+        { id: 'two', title: 'Two', items: [item('w2')] },
+        { id: 'three', title: 'Three', items: [item('w3')] },
+      ],
     });
-    expect(anchors).toEqual({ cover: 1, one: 2, two: 3, three: 4 });
+    const pages = Object.fromEntries(Object.entries(anchors).map(([k, a]) => [k, a.page]));
+    expect(pages).toEqual({ cover: 1, one: 2, w1: 2, two: 3, w2: 3, three: 4, w3: 4 });
+    // A widget sits below its section title on the same page.
+    expect(anchors.w1.top).toBeGreaterThan(anchors.one.top);
+  });
+
+  it('fits four rows of chart cards on a page', async () => {
+    const { generateEmployerReport } = await import('./generateEmployerReportPdf');
+    const widget = { key: 'w', title: 'W', type: 'line', series: [{ key: 'a', label: 'A' }] };
+    const item = (key) => ({ key, kind: 'widget', widget, model: { hasData: true, data: [{ x: 'Jan 26', a: 1 }] } });
+    const { anchors } = generateEmployerReport({
+      title: 'Employer Impact Report',
+      cover: null,
+      sections: [{
+        id: 'big',
+        title: 'Big',
+        subtitle: 'A one-line subtitle',
+        items: Array.from({ length: 9 }, (_, i) => item(`w${i + 1}`)),
+      }],
+    });
+    // Two per row: w1..w8 are four rows on the section's page; w9 starts the next.
+    expect(anchors.w8.page).toBe(anchors.big.page);
+    expect(anchors.w9.page).toBe(anchors.big.page + 1);
   });
 });
 

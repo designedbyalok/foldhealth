@@ -23,7 +23,8 @@ const FOOTER_H = 24;
 const BODY_TOP = HEADER_H + BAND_H + 12;
 const BODY_BOTTOM = PAGE.h - FOOTER_H - 12;
 const GAP = 6;
-const CARD_H = 161;
+const CARD_H = 161;       // tallest a chart card gets; see cardH per section
+const ROWS_PER_PAGE = 4;
 const CARD_PAD = 6;       // Figma: 6pt padding in the card header and the chart area
 const CARD_HEAD_H = 30;   // 6 + title (8pt) + 0.8 gap + range (6pt) + 6
 const SAVINGS_H = 62;
@@ -941,7 +942,6 @@ export function generatedOnLabel(date = new Date()) {
 /**
  * @param {object} report
  * @param {string} report.title
- * @param {string} [report.meta]      – Filters in effect, one line (employer, view, time frame)
  * @param {Date}   [report.generatedAt]
  * @param {{ dataUrl: string }} [report.logo] – Employer logo, header right (Fold Health wordmark by default)
  * @param {{ dataUrl: string }} [report.clientLogo] – Provider logo, header left (Trailhead Clinics)
@@ -967,10 +967,12 @@ export function generateEmployerReportPdf(report) {
 }
 
 /**
- * The same PDF, plus where things landed: `anchors` maps 'cover' and each
- * section's `id` to its 1-based page, so a preview can scroll to what changed.
+ * The same PDF, plus where things landed: `anchors` maps 'cover', each
+ * section's `id` and each widget's `key` to `{ page, top }` (1-based page;
+ * `top` in points down from the page top, a little above the element),
+ * so a preview can open right at what changed.
  *
- * @returns {{ blob: Blob, anchors: Object<string, number> }}
+ * @returns {{ blob: Blob, anchors: Object<string, { page: number, top?: number }> }}
  */
 export function generateEmployerReport(report) {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
@@ -978,8 +980,11 @@ export function generateEmployerReport(report) {
   const palette = tokenPalette();
   const hasCover = !!report.cover;
   const anchors = {};
+  // Where y sits on the current page, with a little room above it. `top` is
+  // points down from the page top, as Chrome's viewer reads view=FitH,<top>.
+  const here = (yTop) => ({ page: doc.getNumberOfPages(), top: Math.max(0, Math.round(yTop - 12)) });
   if (hasCover) {
-    anchors.cover = 1;
+    anchors.cover = { page: 1 };
     coverPage(doc, { title: report.title, ...report.cover, withFooter: report.footer !== null });
     doc.addPage();
   }
@@ -999,11 +1004,6 @@ export function generateEmployerReport(report) {
     doc.addPage();
     y = bodyTop;
   };
-
-  if (report.meta) {
-    text(doc, report.meta, MARGIN, y + 6, { size: 8, color: C.faint });
-    y += 18;
-  }
 
   /**
    * A section's note, after its cards: "Note:" in bold on its own line, then
@@ -1040,14 +1040,18 @@ export function generateEmployerReport(report) {
       y = bodyTop;
     }
     sectionCount += 1;
-    if (section.id) anchors[section.id] = doc.getNumberOfPages();
-    const firstH = section.items[0].kind === 'savings' ? (section.items[0].summary ? CARD_H : SAVINGS_H) : CARD_H;
     setWeight(doc, 'regular');
     doc.setFontSize(10);
     const subtitleLines = section.subtitle ? doc.splitTextToSize(section.subtitle, CONTENT_W) : [];
     const subtitleH = subtitleLines.length ? subtitleLines.length * 12 + 6 : 0;
+    // Chart cards shrink (never grow) so the title block and four rows of
+    // cards fit on one page, rather than the fourth row starting a new one.
+    const titleBlockH = 24 + subtitleH + 8;
+    const cardH = Math.min(CARD_H, Math.floor((bodyBottom - bodyTop - titleBlockH - GAP * (ROWS_PER_PAGE - 1)) / ROWS_PER_PAGE));
+    const firstH = section.items[0].kind === 'savings' ? (section.items[0].summary ? cardH : SAVINGS_H) : cardH;
     // Title, subtitle and the first row of cards stay on one page.
-    ensure(24 + subtitleH + firstH);
+    ensure(titleBlockH - 8 + firstH);
+    if (section.id) anchors[section.id] = here(y);
 
     // Title over a short rule (Figma: 12pt medium, 100pt × 0.5pt divider).
     text(doc, section.title, MARGIN, y + 11, { size: 12, color: C.black, weight: 'medium' });
@@ -1071,9 +1075,10 @@ export function generateEmployerReport(report) {
       if (summary) {
         // The comparison card first, across the page, then the category
         // cards three per row below it.
-        ensure(CARD_H);
-        savingsSummaryCard(doc, summary, palette, MARGIN, y, CONTENT_W, CARD_H);
-        y += CARD_H + GAP;
+        ensure(cardH);
+        anchors[summary.key] = here(y);
+        savingsSummaryCard(doc, summary, palette, MARGIN, y, CONTENT_W, cardH);
+        y += cardH + GAP;
         if (!cards.length) {
           y += GAP;
           drawNote(section.note);
@@ -1085,6 +1090,7 @@ export function generateEmployerReport(report) {
         const col = i % 3;
         if (col === 0 && i) y += SAVINGS_H + GAP;
         if (col === 0) ensure(SAVINGS_H);
+        anchors[item.key] = here(y);
         savingsCard(doc, item, MARGIN + (thirdW + GAP) * col, y, thirdW);
       });
       y += SAVINGS_H + GAP * 2;
@@ -1096,15 +1102,16 @@ export function generateEmployerReport(report) {
     // Two cards per row; wide charts (24 hourly bars) take a full row.
     let col = 0;
     section.items.forEach((item) => {
-      if (item.full && col === 1) { y += CARD_H + GAP; col = 0; }
-      if (col === 0) ensure(CARD_H);
+      if (item.full && col === 1) { y += cardH + GAP; col = 0; }
+      if (col === 0) ensure(cardH);
+      anchors[item.key] = here(y);
       const w = item.full ? CONTENT_W : halfW;
       const x = MARGIN + (item.full ? 0 : (halfW + GAP) * col);
-      card(doc, x, y, w, CARD_H, item.widget.title, item.subtitle);
-      widgetBody(doc, item, palette, x + CARD_PAD, y + CARD_HEAD_H + CARD_PAD, w - CARD_PAD * 2, CARD_H - CARD_HEAD_H - CARD_PAD * 2);
-      if (item.full || col === 1) { y += CARD_H + GAP; col = 0; } else col = 1;
+      card(doc, x, y, w, cardH, item.widget.title, item.subtitle);
+      widgetBody(doc, item, palette, x + CARD_PAD, y + CARD_HEAD_H + CARD_PAD, w - CARD_PAD * 2, cardH - CARD_HEAD_H - CARD_PAD * 2);
+      if (item.full || col === 1) { y += cardH + GAP; col = 0; } else col = 1;
     });
-    if (col === 1) y += CARD_H + GAP;
+    if (col === 1) y += cardH + GAP;
     drawNote(section.note);
     y += 12;
   });

@@ -96,6 +96,28 @@ function textWidth(str) {
   return measureCtx.measureText(String(str)).width;
 }
 
+// Month labels read "Feb 26"; when a tick's slot is too narrow for them,
+// the whole axis drops the year ("Feb") rather than letting labels overlap.
+const MONTH_LABEL = /^([A-Z][a-z]{2}) \d{2}$/;
+const TICK_GAP = 6;
+/**
+ * A category-axis tick that fits its slot. The decision is per axis, from
+ * the widest label, so every tick reads the same way.
+ */
+function fitTick(labels) {
+  const monthly = labels.length > 0 && labels.every(l => MONTH_LABEL.test(String(l)));
+  const widest = monthly ? Math.max(...labels.map(textWidth)) : 0;
+  return function FitTick({ x, y, payload, width, visibleTicksCount }) {
+    const slot = width / Math.max(1, visibleTicksCount);
+    const value = String(payload.value);
+    const text = monthly && widest + TICK_GAP > slot ? value.replace(MONTH_LABEL, '$1') : value;
+    return (
+      <text x={x} y={y} dy="0.71em" textAnchor="middle" fill={AXIS_TICK.fill} fontSize={AXIS_TICK.fontSize}>
+        {text}
+      </text>
+    );
+  };
+}
 
 /** Title for a left axis, drawn LABEL_GAP left of the widest tick. */
 function YTitle({ viewBox, value }) {
@@ -167,7 +189,7 @@ export function StackedBars({ data, series, line, hidden, yLabel, xLabel, format
         <CartesianGrid {...GRID} vertical={false} />
         <XAxis
           dataKey="x"
-          tick={denseX ? { ...AXIS_TICK, angle: -60, textAnchor: 'end' } : AXIS_TICK}
+          tick={denseX ? { ...AXIS_TICK, angle: -60, textAnchor: 'end' } : fitTick(data.map(r => r.x))}
           interval={0}
           tickLine={false}
           axisLine={{ stroke: 'var(--neutral-150)' }}
@@ -243,7 +265,7 @@ export function Lines({ data, series, hidden, yLabel, xLabel, format, height = '
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
         <CartesianGrid {...GRID} verticalCoordinatesGenerator={lineColumns(data.length)} />
-        <XAxis dataKey="x" tick={AXIS_TICK} tickLine={false} axisLine={{ stroke: 'var(--neutral-150)' }} padding={{ left: LINE_INSET, right: LINE_INSET }} {...xAxisLayout(data.map(r => r.x), xLabel)} />
+        <XAxis dataKey="x" tick={fitTick(data.map(r => r.x))} tickLine={false} axisLine={{ stroke: 'var(--neutral-150)' }} padding={{ left: LINE_INSET, right: LINE_INSET }} {...xAxisLayout(data.map(r => r.x), xLabel)} />
         <YAxis
           tick={AXIS_TICK}
           tickLine={false}

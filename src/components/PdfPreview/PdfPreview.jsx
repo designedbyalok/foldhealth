@@ -6,10 +6,21 @@ import styles from './PdfPreview.module.css';
 // (the native viewer can't animate its own scrolling); --duration-slow, the
 // design system's ceiling for UI motion.
 const CROSSFADE_MS = 300;
+// The browser's PDF viewer fires `load` before it has drawn the first page,
+// so the new version waits this long, hidden behind the old one, before the
+// crossfade starts. Without it the preview flashes blank on every edit.
+const SETTLE_MS = 350;
 // Rebuild only once edits pause, so typing doesn't refresh the viewer per keystroke.
 const DEBOUNCE_MS = 600;
 
 const emptySlot = () => ({ url: null, ready: false });
+
+/** The viewer's open parameters: fit to width, at a page and position if known. */
+function viewHash(anchor) {
+  if (anchor == null) return '#view=FitH';
+  const { page, top } = typeof anchor === 'number' ? { page: anchor } : anchor;
+  return `#page=${page}&view=FitH${top != null ? `,${Math.round(top)}` : ''}`;
+}
 
 /**
  * Fold Health PdfPreview: a live, in-browser PDF preview. Regenerates when
@@ -21,12 +32,19 @@ const emptySlot = () => ({ url: null, ready: false });
  *
  * @param {object}   props
  * @param {function} props.generate     – () => Blob, or () => { blob, anchors }
- *                                         where `anchors` maps keys to 1-based
- *                                         pages. Memoize it: a new function
- *                                         means "the document changed".
- * @param {{ key: string }} [props.focus] – After a rebuild, open the viewer at
- *                                         `anchors[focus.key]` so the change is
- *                                         in view, not back on page 1.
+ *                                         where `anchors` maps keys to a 1-based
+ *                                         page, or to `{ page, top }` (`top` in
+ *                                         points down from the page top, as
+ *                                         Chrome's viewer reads it). Memoize
+ *                                         it: a new function means "the document
+ *                                         changed".
+ * @param {{ key: string, fallbackKey?: string }} [props.focus] – After a rebuild,
+ *                                         open the viewer at `anchors[focus.key]`
+ *                                         (else `fallbackKey`'s) so the change is
+ *                                         in view. With neither in this version,
+ *                                         it stays where the last one opened.
+ *
+ * The viewer always opens fit to width.
  * @param {React.ReactNode} [props.loader] – Shown while the first version is
  *                                         being built (e.g. <PreviewLoader />);
  *                                         later rebuilds crossfade instead.
@@ -45,6 +63,9 @@ export function PdfPreview({ generate, focus, loader, empty = false, emptyLabel 
   const frontRef = useRef(front);
   const fadeTimerRef = useRef(null);
   const focusRef = useRef(focus);
+  // Where the last version opened, reused when an edit has no anchor of its
+  // own (e.g. its widget was just switched off), so the view doesn't jump.
+  const lastHashRef = useRef('#view=FitH');
   useEffect(() => { focusRef.current = focus; }, [focus]);
 
   useLayoutEffect(() => {
@@ -73,9 +94,12 @@ export function PdfPreview({ generate, focus, loader, empty = false, emptyLabel 
       }
       const out = generate();
       const blob = out instanceof Blob ? out : out.blob;
-      const page = out instanceof Blob ? null : out.anchors?.[focusRef.current?.key];
-      // The browser viewer opens at #page=N, so the edited page stays in view.
-      const url = `${URL.createObjectURL(blob)}${page ? `#page=${page}` : ''}`;
+      const anchors = out instanceof Blob ? null : out.anchors;
+      const f = focusRef.current;
+      const anchor = anchors?.[f?.key] ?? anchors?.[f?.fallbackKey];
+      // The browser viewer honours these on load, so the edit stays in view.
+      if (anchor != null) lastHashRef.current = viewHash(anchor);
+      const url = `${URL.createObjectURL(blob)}${lastHashRef.current}`;
       if (!slotARef.current.url && !slotBRef.current.url) {
         setSlotA({ url, ready: false });
         setFront('A');
@@ -107,8 +131,10 @@ export function PdfPreview({ generate, focus, loader, empty = false, emptyLabel 
     setSlot(key, { ...getSlot(key), ready: true });
     if (key === frontRef.current) return;
     if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
-    setCrossfading(true);
-    fadeTimerRef.current = window.setTimeout(() => finishCrossfade(key), CROSSFADE_MS);
+    fadeTimerRef.current = window.setTimeout(() => {
+      setCrossfading(true);
+      fadeTimerRef.current = window.setTimeout(() => finishCrossfade(key), CROSSFADE_MS);
+    }, SETTLE_MS);
   };
 
   const renderSlot = (key) => {
