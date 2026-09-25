@@ -76,7 +76,7 @@ const TYPE_ICON = {
   task:            { icon: 'solar:clipboard-check-linear',  color: 'var(--primary-300)',    bg: 'var(--primary-50)',           border: 'rgba(107,68,168,0.2)' },
   reminder:        { icon: 'solar:bell-linear',             color: 'var(--status-warning)', bg: 'var(--status-warning-light)', border: 'rgba(217,165,11,0.2)' },
   appointment:     { icon: 'solar:calendar-linear',         color: 'var(--primary-300)',    bg: 'var(--primary-50)',           border: 'rgba(107,68,168,0.2)' },
-  referral:        { icon: 'solar:arrow-right-up-linear',   color: 'var(--primary-300)',    bg: 'var(--primary-50)',           border: 'rgba(107,68,168,0.2)' },
+  referral:        { icon: 'solar:square-share-line-linear', tileClass: 'referralTile' },
 };
 const DEFAULT_ICON = { icon: 'solar:document-text-linear', color: 'var(--neutral-300)', bg: 'var(--neutral-0)', border: 'var(--neutral-150)' };
 
@@ -270,6 +270,7 @@ function Rail({ entry, isFirst, isLast }) {
           variant={entry.avatarVariant || railVariantFor(entry)}
           size="S"
           iconName={entry.icon || cfg.icon}
+          className={cfg.tileClass ? styles[cfg.tileClass] : undefined}
         />
       )}
       <span className={[htStyles.connectorBottom, isLast ? htStyles.connectorBottomLast : ''].filter(Boolean).join(' ')} />
@@ -332,6 +333,8 @@ function ActivityLogEntry({ entry, isFirst, isLast, hideCommentTitle = false, on
               return <DetailCardEntryBody entry={entry} variant="task" onOpenTask={onOpenTask} />;
             case 'appointment':
               return <DetailCardEntryBody entry={entry} variant="appointment" />;
+            case 'referral':
+              return <ReferralEntryBody entry={entry} />;
             case 'assign_coder':
             case 'assignee_change':
               return <AssigneeChangeEntryBody entry={entry} />;
@@ -844,6 +847,88 @@ function CommentEntryBody({ entry, hideTitle = false }) {
         />
       )}
     </div>
+  );
+}
+
+/* ── Variant: Referral (Figma New Care Gap Workflow 1327:419983) ─────── */
+// Sender (name + role) → recipient (name, Fold Provider badge, specialty •
+// channel contact), then "Created on : date • status". The menu reopens a
+// still-draft referral, or opens a sent Email referral in Messages > Email.
+function ReferralEntryBody({ entry }) {
+  const [expanded, setExpanded] = useState(true);
+  const [menuAnchor, setMenuAnchor] = useState(null);
+  const setActivePage = useAppStore(s => s.setActivePage);
+  const setPendingEmailReferralId = useAppStore(s => s.setPendingEmailReferralId);
+  const dc = entry.detailCard || {};
+  const created = dc.createdAt ? new Date(dc.createdAt) : null;
+  const createdLabel = created && !Number.isNaN(created.getTime())
+    ? `${String(created.getMonth() + 1).padStart(2, '0')}/${String(created.getDate()).padStart(2, '0')}/${created.getFullYear()}, ${created.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+    : '';
+  const isDraft = dc.status === 'Draft';
+  const menuItems = [
+    ...(entry.onOpenReferralDraft ? [{ key: 'continue-draft', icon: 'solar:pen-linear', label: 'Continue Draft' }] : []),
+    ...(!isDraft && dc.channel === 'email' && dc.referralId ? [{ key: 'view-email', icon: 'solar:letter-linear', label: 'View Email' }] : []),
+  ];
+
+  return (
+    <>
+      <MetaLine entry={entry} />
+      <div className={htStyles.headlineRow}>
+        <span className={htStyles.headline}>{entry.title}</span>
+        <ViewMoreButton expanded={expanded} onToggle={() => setExpanded(v => !v)} leadingDot />
+      </div>
+      {expanded && (
+        <div className={[styles.detailCard, styles.referralCard].join(' ')}>
+          <div className={styles.referralMain}>
+            <div className={styles.referralParties}>
+              <div className={styles.referralParty}>
+                <span className={styles.referralName}>{dc.fromName}</span>
+                {dc.fromRole && <span className={styles.referralSub}>{dc.fromRole}</span>}
+              </div>
+              <Icon name="solar:arrow-right-linear" size={16} color="var(--neutral-300)" />
+              <div className={styles.referralParty}>
+                <span className={styles.referralNameRow}>
+                  <span className={styles.referralName}>{dc.toName}</span>
+                  {dc.toBadge && <Badge tone="primary" size="S" label={dc.toBadge} />}
+                </span>
+                {dc.toSubtitle && <span className={styles.referralSub}>{dc.toSubtitle}</span>}
+              </div>
+            </div>
+            <div className={styles.referralSub}>
+              {createdLabel && `Created on : ${createdLabel}`}
+              {createdLabel && dc.status && ' • '}
+              {dc.status && <span className={isDraft ? styles.referralStatusDraft : styles.referralStatus}>{dc.status}</span>}
+            </div>
+          </div>
+          {menuItems.length > 0 && (
+            <ActionButton
+              icon="solar:menu-dots-linear"
+              size="S"
+              tooltip="More actions"
+              tooltipLeft
+              onClick={(e) => setMenuAnchor(e.currentTarget.getBoundingClientRect())}
+            />
+          )}
+          {menuAnchor && (
+            <MenuPopover
+              anchorRect={menuAnchor}
+              width={168}
+              align="right"
+              items={menuItems}
+              onClose={() => setMenuAnchor(null)}
+              onSelect={(key) => {
+                setMenuAnchor(null);
+                if (key === 'continue-draft') entry.onOpenReferralDraft?.();
+                else if (key === 'view-email') {
+                  setActivePage?.('messages');
+                  setPendingEmailReferralId?.(dc.referralId);
+                }
+              }}
+            />
+          )}
+        </div>
+      )}
+    </>
   );
 }
 

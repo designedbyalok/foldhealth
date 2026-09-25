@@ -386,3 +386,55 @@
   opacity: 0.4;
 }
 .detailCardIconBtn:disabled:hover { background: none; }
+
+/* Referral entry (Figma 1327:419983) */
+.referralTile {
+  background: var(--accent-light-light-green);
+  border-color: color-mix(in srgb, var(--accent-light-green) 30%, transparent);
+}
+/* Avatar sets its icon colour inline; the referral tile wears accent green. */
+.referralTile svg { color: var(--accent-light-green) !important; }
+.referralCard {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+}
+.referralMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.referralParties {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.referralParty {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  min-width: 0;
+}
+.referralNameRow {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--space-1) / 2);
+  min-width: 0;
+}
+.referralName {
+  font-size: var(--font-base);
+  color: var(--neutral-500);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.referralSub {
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+}
+.referralStatus { color: var(--status-success); }
+.referralStatusDraft { color: var(--status-warning); }

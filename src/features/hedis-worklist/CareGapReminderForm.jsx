@@ -53,7 +53,7 @@ export function CareGapReminderForm({ form, users = [] }) {
         title="Note"
         rows={4}
         value={values.note}
-        onChange={e => set('note')(e.target.value)}
+        onChange={set('note')}
         placeholder="Add details for this reminder"
       />
     </div>

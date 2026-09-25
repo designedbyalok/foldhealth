@@ -122,8 +122,10 @@ import { mapNotificationRow, mergeNotifications } from './lib/notificationStoreL
 import { persistHccAddedChart, persistProgramDocument, persistProgramDocumentUpdate, persistProgramDocumentDelete } from './lib/documentUploadPersist';
 import { fetchCaregapCommentRows, persistCaregapCommentInsert, persistCaregapCommentUpdate, persistCaregapCommentDelete } from './lib/caregapCommentsPersist';
 import { fetchCaregapReminderRows, persistCaregapReminderInsert, persistCaregapReminderUpdate, persistCaregapReminderDelete } from './lib/caregapRemindersPersist';
-import { fetchReferralDirectoryRows, fetchCaregapReferralRows, persistCaregapReferralInsert } from './lib/caregapReferralsPersist';
+import { fetchReferralDirectoryRows, fetchCaregapReferralRows, persistCaregapReferralInsert, persistCaregapReferralUpdate, persistCaregapReferralRead } from './lib/caregapReferralsPersist';
 import { REFERRAL_SENDER_LINES_MOCK } from '../features/hedis-worklist/data/referralDirectoryMock';
+import { fetchEfaxNumberRows, persistEfaxNumberInsert, persistEfaxNumberUpdate, persistEfaxNumberDelete } from './lib/efaxNumbersPersist';
+import { EFAX_NUMBERS_MOCK } from '../features/settings/messages/efax/efaxNumbersMock';
 import {
   LIST_FILTER_KEY,
   detachSaved,
@@ -4112,12 +4114,17 @@ export const useAppStore = create((set, get) => ({
     const me = get().currentUserProfile;
     if (!me?.id) return;
     set({ notificationsLoading: true });
-    const { data, error } = await supabase
+    const COLS = 'id, type, title, body, action, task_id, hcc_member_id, read, created_at, actor_name';
+    const query = (cols) => supabase
       .from('notifications')
-      .select('id, type, title, body, action, task_id, hcc_member_id, read, created_at, actor_name')
+      .select(cols)
       .eq('recipient_id', me.id)
       .order('created_at', { ascending: false })
       .limit(50);
+    // referral_id comes with caregap_referrals_migration.sql; until it runs,
+    // read without it rather than losing the whole feed.
+    let { data, error } = await query(`${COLS}, referral_id`);
+    if (error && /referral_id/.test(error.message || '')) ({ data, error } = await query(COLS));
     if (error) {
       // Table missing (migration not run yet) or blocked — keep whatever is
       // already on screen rather than blanking the panel.
@@ -4173,6 +4180,9 @@ export const useAppStore = create((set, get) => ({
               get().openTaskFromNotification?.(row.taskId);
             } else if (row.action === 'openDiagPanel' && row.hccMemberId) {
               get().openDiagPanelFromNotification?.(row.hccMemberId);
+            } else if (row.action === 'openEmail' && row.referralId) {
+              get().setActivePage?.('messages');
+              get().setPendingEmailReferralId?.(row.referralId);
             }
           },
         });
@@ -6451,7 +6461,7 @@ export const useAppStore = create((set, get) => ({
     // If profiles can't be read, use the loaded people-picker roster
     // (names + emails only; chat still reaches them).
     const fallback = (get().platformUsers || []).map(u => ({
-      id: u.id, name: u.name, specialty: '', specialties: [], zip: '', network: 'In-Network', practice: '', fax: '', email: u.email || '', phone: '', chatEnabled: true,
+      id: u.id, name: u.name, specialty: '', specialties: [], zip: '', network: 'In-Network', practice: '', fax: '', email: u.email || '', phone: '',
     }));
     set({
       referralProviders: providers.length ? providers : fallback,
@@ -6463,8 +6473,9 @@ export const useAppStore = create((set, get) => ({
   caregapReferrals: {},
   caregapReferralsLoaded: false,
   caregapReferralsTableMissing: false,
-  fetchCaregapReferrals: async () => {
-    if (get()._caregapReferralsFetching || get().caregapReferralsLoaded) return;
+  // `force` re-reads the table (Messages > Email opens on the latest).
+  fetchCaregapReferrals: async ({ force = false } = {}) => {
+    if (get()._caregapReferralsFetching || (get().caregapReferralsLoaded && !force)) return;
     set({ _caregapReferralsFetching: true });
     const { rows, missing } = await fetchCaregapReferralRows();
     const byMember = {};
@@ -6477,7 +6488,9 @@ export const useAppStore = create((set, get) => ({
         ]),
       ),
       caregapReferralsLoaded: true,
-      caregapReferralsTableMissing: missing,
+      // Sticky: an insert can learn the schema is behind even when the
+      // select still works (older migration without the email columns).
+      caregapReferralsTableMissing: missing || s.caregapReferralsTableMissing,
       _caregapReferralsFetching: false,
     }));
   },
@@ -6503,6 +6516,40 @@ export const useAppStore = create((set, get) => ({
       },
     }));
   },
+
+  // Re-save a draft, or sign & refer it. `referral` is the full record with
+  // `documentAttachments` (kept attachments) and `files` (new uploads).
+  updateCaregapReferral: async (referral, files = []) => {
+    if (!referral?.id || !referral.memberId) return;
+    const attachments = [
+      ...(files || []).map(f => ({ name: f.name, size: f.size, type: f.type || '' })),
+      ...(referral.documentAttachments || []),
+    ];
+    const patchLocal = (extra) => set(s => ({
+      caregapReferrals: {
+        ...s.caregapReferrals,
+        [referral.memberId]: (s.caregapReferrals[referral.memberId] || []).map(r => (r.id === referral.id ? { ...r, ...referral, ...extra } : r)),
+      },
+    }));
+    patchLocal({ attachments });
+    if (get().caregapReferralsTableMissing) return;
+    const res = await persistCaregapReferralUpdate(referral, files);
+    if (res.missing) set({ caregapReferralsTableMissing: true });
+    else patchLocal({ attachments: res.attachments });
+  },
+  markCaregapReferralRead: (memberId, id) => {
+    const readAt = new Date().toISOString();
+    set(s => ({
+      caregapReferrals: {
+        ...s.caregapReferrals,
+        [memberId]: (s.caregapReferrals[memberId] || []).map(r => (r.id === id && !r.recipientReadAt ? { ...r, recipientReadAt: readAt } : r)),
+      },
+    }));
+    if (!get().caregapReferralsTableMissing) persistCaregapReferralRead(id, readAt);
+  },
+  // Referral id a notification asked Messages > Email to open.
+  pendingEmailReferralId: null,
+  setPendingEmailReferralId: (id) => set({ pendingEmailReferralId: id }),
 
   // ── Care Gap reminders (Supabase `caregap_reminders`) ──────────────────
   // Keyed by HEDIS member id. Local state updates first; until
@@ -6553,6 +6600,46 @@ export const useAppStore = create((set, get) => ({
       caregapReminders: { ...s.caregapReminders, [memberId]: (s.caregapReminders[memberId] || []).filter(r => r.id !== id) },
     }));
     if (!get().caregapRemindersTableMissing) persistCaregapReminderDelete(id);
+  },
+  // ── Practice eFax numbers (Supabase `efax_numbers`) ─────────────────────
+  // Settings > Messages > eFax. Local state updates first; falls back to the
+  // mock (same ids as the migration seed) until efax_numbers_migration.sql
+  // has run, and edits then stay session-only.
+  efaxNumbers: [],
+  efaxNumbersLoading: false,
+  efaxNumbersLoaded: false,
+  efaxNumbersTableMissing: false,
+  fetchEfaxNumbers: async () => {
+    if (get().efaxNumbersLoading || get().efaxNumbersLoaded) return;
+    set({ efaxNumbersLoading: true });
+    const { rows, missing } = await fetchEfaxNumberRows();
+    set(s => ({
+      // Keep numbers added locally before the fetch returned.
+      efaxNumbers: [
+        ...s.efaxNumbers.filter(l => !rows.some(r => r.id === l.id)),
+        ...(missing ? EFAX_NUMBERS_MOCK.filter(m => !s.efaxNumbers.some(l => l.id === m.id)) : rows),
+      ],
+      efaxNumbersLoading: false,
+      efaxNumbersLoaded: true,
+      efaxNumbersTableMissing: missing,
+    }));
+  },
+  addEfaxNumber: async (n) => {
+    if (!n?.id) return;
+    set(s => ({ efaxNumbers: [n, ...s.efaxNumbers] }));
+    if (get().efaxNumbersTableMissing) return;
+    const { missing } = await persistEfaxNumberInsert(n);
+    if (missing) set({ efaxNumbersTableMissing: true });
+  },
+  updateEfaxNumber: (id, patch) => {
+    if (!id || !patch) return;
+    set(s => ({ efaxNumbers: s.efaxNumbers.map(n => (n.id === id ? { ...n, ...patch } : n)) }));
+    if (!get().efaxNumbersTableMissing) persistEfaxNumberUpdate(id, patch);
+  },
+  deleteEfaxNumber: (id) => {
+    if (!id) return;
+    set(s => ({ efaxNumbers: s.efaxNumbers.filter(n => n.id !== id) }));
+    if (!get().efaxNumbersTableMissing) persistEfaxNumberDelete(id);
   },
   logCareGapActivity: (memberId, entry) => {
     // Random suffix: several entries can be logged in the same millisecond

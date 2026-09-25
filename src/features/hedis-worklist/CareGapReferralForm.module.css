@@ -93,3 +93,5 @@
   color: var(--primary-300);
 }
 .addNote:hover { color: var(--primary-400); }
+
+.hiddenInput { display: none; }

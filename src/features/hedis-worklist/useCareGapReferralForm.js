@@ -3,8 +3,6 @@ import { useState } from 'react';
 export const REFERRAL_CHANNELS = [
   { key: 'efax', label: 'eFax', icon: 'solar:printer-linear' },
   { key: 'email', label: 'Email', icon: 'solar:letter-linear' },
-  { key: 'sms', label: 'SMS', icon: 'solar:chat-square-linear' },
-  { key: 'chat', label: 'Chat', icon: 'solar:chat-round-linear' },
 ];
 export const REFERRAL_MAX_BYTES = 5 * 1024 * 1024;
 // "Send From" option for an email address typed in by the user instead of
@@ -26,14 +24,17 @@ export function providerContact(provider, channel) {
   if (!provider) return '';
   if (channel === 'efax') return provider.fax || '';
   if (channel === 'email') return provider.email || '';
-  if (channel === 'sms') return provider.phone || '';
-  if (channel === 'chat') return provider.chatEnabled ? 'Fold chat' : '';
   return '';
 }
 
 // `files` = new uploads; `docs` = the patient's existing documents picked
 // via "Select from Documents".
-const EMPTY = { channel: 'efax', senderId: '', customSender: '', providerId: '', files: [], docs: [], reason: '', note: '', noteOpen: false };
+// `draftId` is set while an existing draft referral is being edited.
+const EMPTY = { draftId: null, channel: 'efax', senderId: '', customSender: '', emailSubject: '', emailBody: '', providerId: '', files: [], docs: [], reason: '', note: '', noteOpen: false };
+
+// Statuses a saved referral can hold.
+export const REFERRAL_STATUS = { draft: 'Draft', referred: 'Signed & Referred' };
+export const isReferralDraft = (r) => r?.status === REFERRAL_STATUS.draft;
 
 /**
  * State for the Care Gap "Send Referral" pane. `reset(senderDefaults)`
@@ -60,6 +61,35 @@ export function useCareGapReferralForm() {
     docs: [...v.docs, ...(docs || []).filter(d => !v.docs.some(x => x.id === d.id))],
   }));
   const removeDoc = (id) => setValues(v => ({ ...v, docs: v.docs.filter(d => d.id !== id) }));
+  // Reopen a saved draft. Its stored attachments (uploaded files and picked
+  // documents alike) come back as `docs`, so they ride along by reference.
+  const loadDraft = (r, senderDefaults = {}) => {
+    setDefaults(senderDefaults);
+    const channel = r.channel === 'email' ? 'email' : 'efax';
+    const custom = channel === 'email' && !r.senderLineId && !!r.senderValue;
+    setValues({
+      ...EMPTY,
+      draftId: r.id,
+      channel,
+      senderId: custom ? CUSTOM_SENDER : (r.senderLineId || senderDefaults[channel] || ''),
+      customSender: custom ? r.senderValue : '',
+      providerId: r.providerId || '',
+      reason: channel === 'email' ? '' : (r.reason || ''),
+      note: r.note || '',
+      noteOpen: !!r.note,
+      emailSubject: r.emailSubject || '',
+      emailBody: r.emailBody || '',
+      docs: (r.attachments || []).map((a, i) => ({
+        id: a.documentId || a.storagePath || `att-${i}-${a.name}`,
+        name: a.name,
+        type: a.type || '',
+        url: a.url || '',
+        documentId: a.documentId || null,
+        storagePath: a.storagePath || null,
+        size: a.size,
+      })),
+    });
+  };
 
-  return { values, set, setChannel, addFiles, removeFile, addDocs, removeDoc, reset };
+  return { values, set, setChannel, addFiles, removeFile, addDocs, removeDoc, reset, loadDraft };
 }

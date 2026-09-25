@@ -1,0 +1,223 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* "Compose email with UnityAI" bar */
+.aiBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 0.5px solid var(--primary-200);
+  border-radius: 4px;
+  background: var(--primary-50);
+}
+.aiLabel {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.aiAction {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: var(--font-base);
+  color: var(--primary-300);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.aiAction:hover:not(:disabled) { color: var(--primary-400); }
+.aiAction:disabled { cursor: default; opacity: 0.7; }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+.required {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--status-error);
+}
+
+/* Message box: notice strip + type box */
+.box {
+  display: flex;
+  flex-direction: column;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 4px;
+  background: var(--neutral-0);
+  overflow: hidden;
+}
+.box:focus-within { border-color: var(--primary-300); }
+.notice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2) var(--space-2);
+  margin-bottom: calc(var(--space-1) * -1);
+  background: var(--status-warning-light);
+  font-size: var(--font-sm);
+  color: var(--neutral-400);
+}
+.typeBox {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-top: 0.5px solid var(--neutral-150);
+  border-radius: 4px;
+  background: var(--neutral-0);
+}
+.scroll {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 348px;
+  overflow-y: auto;
+}
+.textarea {
+  width: 100%;
+  min-height: 150px;
+  padding: 0;
+  border: none;
+  outline: none;
+  resize: vertical;
+  background: transparent;
+  font: inherit;
+  font-size: var(--font-base);
+  line-height: 1.4;
+  color: var(--neutral-400);
+}
+.textarea::placeholder { color: var(--neutral-200); }
+
+.signature {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  font-size: var(--font-sm);
+  color: var(--neutral-400);
+}
+.sigDash { line-height: 1.2; }
+.sigName {
+  font-size: var(--font-base);
+  font-weight: 700;
+  color: var(--status-info);
+}
+.sigLine { line-height: 1.2; }
+.sigDetails {
+  margin: var(--space-1) 0 0;
+  padding-left: calc(var(--space-1) * 4.5);
+  list-style: disc;
+}
+.sigDetails li { line-height: 1.4; }
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-top: var(--space-1);
+  border-top: 0.5px solid var(--neutral-100);
+}
+.toolbarDivider {
+  width: 0.5px;
+  height: 16px;
+  margin: 0 var(--space-1);
+  background: var(--neutral-150);
+}
+
+/* Attachment chips inside the message box, above the toolbar */
+.attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 4px;
+  background: var(--neutral-25);
+  font-size: var(--font-sm);
+  color: var(--neutral-400);
+}
+.attachmentName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.attachmentMeta {
+  flex-shrink: 0;
+  color: var(--neutral-300);
+}
+.attachmentRemove {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--neutral-300);
+  cursor: pointer;
+}
+.attachmentRemove:hover { color: var(--status-error); }
+
+.footerNote {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.footerNoteError { color: var(--status-error); }
+
+/* Read-only CC tags */
+.ccTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  min-height: 32px;
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 4px;
+  background: var(--neutral-25);
+}
+.ccTag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: calc(var(--space-1) / 2) var(--space-2) calc(var(--space-1) / 2) calc(var(--space-1) / 2);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 4px;
+  background: var(--neutral-0);
+  font-size: var(--font-sm);
+  color: var(--neutral-400);
+}
+.ccRole { color: var(--neutral-300); }

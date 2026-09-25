@@ -62,6 +62,7 @@ export function NotificationsPopover({ onClose, anchorRef }) {
   const openDiagPanelFromNotification = useAppStore(s => s.openDiagPanelFromNotification);
   const openAppointmentFromNotification = useAppStore(s => s.openAppointmentFromNotification);
   const setPendingChatUserEmail = useAppStore(s => s.setPendingChatUserEmail);
+  const setPendingEmailReferralId = useAppStore(s => s.setPendingEmailReferralId);
   const openPreferencesFromNotification = useAppStore(s => s.openPreferencesFromNotification);
 
   // Refetch on open. The realtime subscription is the fast path, not the
@@ -99,6 +100,9 @@ export function NotificationsPopover({ onClose, anchorRef }) {
       openDiagPanelFromNotification?.(n.hccMemberId);
     } else if (n.action === 'openAppointment' && n.appointmentId != null) {
       openAppointmentFromNotification?.(n.appointmentId);
+    } else if (n.action === 'openEmail' && n.referralId) {
+      setActivePage?.('messages');
+      setPendingEmailReferralId?.(n.referralId);
     } else if (n.action === 'openChat' && n.chatUserEmail) {
       setActivePage?.('messages');
       setPendingChatUserEmail?.(n.chatUserEmail);
@@ -205,6 +209,7 @@ function iconForType(type) {
   if (type === 'task.mentioned') return 'solar:mention-square-linear';
   if (type === 'appointment.assigned') return 'solar:calendar-linear';
   if (type === 'message.received') return 'solar:chat-round-linear';
+  if (type === 'referral.received') return 'solar:square-share-line-linear';
   if (type === 'hcc.extraction_complete') return 'solar:document-text-linear';
   if (type === 'hcc.document_uploaded') return 'solar:file-text-linear';
   if (type === 'hcc.comment_added') return 'solar:chat-round-line-linear';

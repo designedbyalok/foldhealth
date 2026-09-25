@@ -9,6 +9,8 @@ import { useAppStore } from '../../store/useAppStore';
 import { ChatArea } from './ChatArea';
 import { ConversationListPanel } from './ConversationListPanel';
 import { NewChatModal } from './NewChatModal';
+import { EmailWorkspace } from './email/EmailWorkspace';
+import { useReferralEmails } from './email/useReferralEmails';
 import { getDisplayName } from './messageUtils';
 import styles from './MessagesView.module.css';
 
@@ -37,6 +39,9 @@ export function MessagesView() {
   const pendingChatUserEmail = useAppStore(s => s.pendingChatUserEmail);
   const setPendingChatUserEmail = useAppStore(s => s.setPendingChatUserEmail);
   const addNotification = useAppStore(s => s.addNotification);
+  const pendingEmailReferralId = useAppStore(s => s.pendingEmailReferralId);
+  const fetchCaregapReferrals = useAppStore(s => s.fetchCaregapReferrals);
+  const { unread: unreadEmails } = useReferralEmails();
 
   const [currentUser, setCurrentUser]     = useState(null);
   const [profiles, setProfiles]           = useState({});
@@ -196,6 +201,15 @@ export function MessagesView() {
     return () => document.removeEventListener('mousedown', handler);
   }, [showNewChat]);
 
+  // Email count in the channel list needs referrals loaded before the Email
+  // channel is opened; a referral-email notification switches to it.
+  useEffect(() => { fetchCaregapReferrals(); }, [fetchCaregapReferrals]);
+  const [seenEmailReferralId, setSeenEmailReferralId] = useState(null);
+  if (pendingEmailReferralId && pendingEmailReferralId !== seenEmailReferralId) {
+    setSeenEmailReferralId(pendingEmailReferralId);
+    setActiveChannel('email');
+  }
+
   const showConversations = ['all', 'chat', 'internal'].includes(activeChannel);
 
   const filteredConversations = conversations.filter(conv => {
@@ -266,7 +280,9 @@ export function MessagesView() {
                 key: item.id,
                 label: item.label,
                 icon: item.icon,
-                count: ['all', 'chat', 'internal'].includes(item.id) && totalUnread > 0 ? totalUnread : undefined,
+                count: item.id === 'email'
+                  ? (unreadEmails || undefined)
+                  : ['all', 'chat', 'internal'].includes(item.id) && totalUnread > 0 ? totalUnread : undefined,
               })),
             },
           ]}
@@ -274,6 +290,7 @@ export function MessagesView() {
           onSelect={setActiveChannel}
         />
 
+        {activeChannel === 'email' ? <EmailWorkspace /> : (<>
         <ConversationListPanel
           activeChannel={activeChannel}
           showConversations={showConversations}
@@ -313,6 +330,7 @@ export function MessagesView() {
             </div>
           </div>
         )}
+        </>)}
       </div>
 
       {showNewChat && (

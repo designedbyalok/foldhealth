@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Drawer } from '../../components/Drawer/Drawer';
 import { Button } from '../../components/Button/Button';
 import { Input } from '../../components/Input/Input';
@@ -39,11 +39,12 @@ import { CareGapAppointmentsTab } from './CareGapAppointmentsTab';
 import { CareGapReminderForm } from './CareGapReminderForm';
 import { useCareGapReminderForm } from './useCareGapReminderForm';
 import { CareGapReferralForm } from './CareGapReferralForm';
-import { useCareGapReferralForm, REFERRAL_CHANNELS, CUSTOM_SENDER, isEmail, providerContact } from './useCareGapReferralForm';
+import { useCareGapReferralForm, REFERRAL_CHANNELS, REFERRAL_STATUS, isReferralDraft, CUSTOM_SENDER, isEmail, providerContact } from './useCareGapReferralForm';
+import { draftReferralEmail } from './referralEmail';
 import { ScheduleDrawer } from '../../components/ScheduleDrawer/ScheduleDrawer';
 import { FilePreview } from '../../components/FilePreview/FilePreview';
 import { useAppStore } from '../../store/useAppStore';
-import { TABS, MORE_ACTIONS, toActivityLogEntries, initialsOf } from './CareGapDetailDrawer.utils';
+import { TABS, MORE_ACTIONS, MEASURE_NAMES, toActivityLogEntries, initialsOf } from './CareGapDetailDrawer.utils';
 import { CareGapDetailDrawerHeader } from './CareGapDetailDrawerHeader';
 import styles from './CareGapDetailDrawer.module.css';
 
@@ -95,65 +96,157 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
   const deleteCaregapReminder = useAppStore(s => s.deleteCaregapReminder);
   useEffect(() => { fetchCaregapReminders(); }, [fetchCaregapReminders]);
   const reminderForm = useCareGapReminderForm();
-  // Send Referral workspace (caregap_referrals): eFax / Email / SMS / Chat.
-  const referralProviders = useAppStore(s => s.referralProviders);
-  const referralSenderLines = useAppStore(s => s.referralSenderLines);
+  // Send Referral workspace (caregap_referrals): eFax / Email.
+  const directoryProviders = useAppStore(s => s.referralProviders);
+  const practiceSenderLines = useAppStore(s => s.referralSenderLines);
+  // eFax senders are the practice eFax numbers (Settings > Messages > eFax)
+  // that are active and linked to the signed-in user; email lines come from
+  // referral_sender_lines.
+  const efaxNumbers = useAppStore(s => s.efaxNumbers);
+  const fetchEfaxNumbers = useAppStore(s => s.fetchEfaxNumbers);
+  const meId = useAppStore(s => s.currentUserProfile?.id);
+  useEffect(() => { fetchEfaxNumbers(); }, [fetchEfaxNumbers]);
+  const referralSenderLines = useMemo(() => [
+    ...efaxNumbers
+      .filter(n => n.isActive && meId && n.linkedUserIds.includes(meId))
+      .map((n, i) => ({ id: n.id, channel: 'efax', label: n.name, value: n.number, isDefault: i === 0 })),
+    ...practiceSenderLines.filter(l => l.channel !== 'efax'),
+  ], [efaxNumbers, meId, practiceSenderLines]);
   const fetchReferralDirectory = useAppStore(s => s.fetchReferralDirectory);
   const memberReferrals = useAppStore(s => s.caregapReferrals[member?.id]) || EMPTY_REMINDERS;
   const fetchCaregapReferrals = useAppStore(s => s.fetchCaregapReferrals);
   const addCaregapReferral = useAppStore(s => s.addCaregapReferral);
+  const updateCaregapReferral = useAppStore(s => s.updateCaregapReferral);
   useEffect(() => { fetchReferralDirectory(); fetchCaregapReferrals(); }, [fetchReferralDirectory, fetchCaregapReferrals]);
+  // A user linked to an active practice eFax number can receive referrals on
+  // it, so that number fills in when their profile has no fax of its own.
+  const referralProviders = useMemo(() => directoryProviders.map(p => {
+    if (p.fax) return p;
+    const linked = efaxNumbers.find(n => n.isActive && n.linkedUserIds.includes(p.id));
+    return linked ? { ...p, fax: linked.number } : p;
+  }), [directoryProviders, efaxNumbers]);
   const referralForm = useCareGapReferralForm();
   const referralProvider = referralProviders.find(p => p.id === referralForm.values.providerId);
   const referralContact = providerContact(referralProvider, referralForm.values.channel);
   const canSendReferral = !!(
     referralContact
-    && referralForm.values.reason.trim()
+    // Email states its purpose in the subject / body instead of a reason.
+    && (referralForm.values.channel === 'email' || referralForm.values.reason.trim())
     && (referralForm.values.files.length || referralForm.values.docs.length)
-    && (referralForm.values.channel === 'chat'
-      || (referralForm.values.senderId === CUSTOM_SENDER ? isEmail(referralForm.values.customSender) : referralForm.values.senderId))
+    && (referralForm.values.senderId === CUSTOM_SENDER ? isEmail(referralForm.values.customSender) : referralForm.values.senderId)
+    && (referralForm.values.channel !== 'email'
+      || (referralForm.values.emailSubject.trim() && referralForm.values.emailBody.trim()))
   );
-  const openReferral = () => {
+  // Email signature: the sender's own directory entry (profile).
+  const meProvider = referralProviders.find(p => p.id === meId);
+  const referralEmailSignature = meProvider && {
+    name: meProvider.name,
+    lines: [meProvider.specialty, meProvider.practice, meProvider.address],
+    details: [
+      { label: 'Phone', value: meProvider.phone },
+      { label: 'Fax', value: meProvider.fax },
+      { label: 'Email', value: meProvider.email },
+    ],
+  };
+  const [generatingReferralEmail, setGeneratingReferralEmail] = useState(false);
+  const handleGenerateReferralEmail = async () => {
+    const v = referralForm.values;
+    if (!referralProvider) {
+      showToast('Pick who to refer to first');
+      return;
+    }
+    setGeneratingReferralEmail(true);
+    const draft = await draftReferralEmail({
+      patientName: member?.name,
+      patientAge: member?.age,
+      patientSex: member?.gender,
+      gap: MEASURE_NAMES[currentCode] ? `${currentCode} - ${MEASURE_NAMES[currentCode]}` : currentCode,
+      providerName: referralProvider.name,
+      providerSpecialty: referralProvider.specialty,
+      // Email has no separate reason field; whatever is already typed in the
+      // message steers the draft.
+      reason: v.reason.trim() || v.emailBody.trim(),
+      attachments: [...v.docs.map(d => d.name), ...v.files.map(f => f.name)],
+      senderName: meProvider?.name,
+    });
+    setGeneratingReferralEmail(false);
+    referralForm.set('emailSubject')(draft.subject);
+    referralForm.set('emailBody')(draft.body);
+    showToast(draft.source === 'ai' ? 'Email drafted with UnityAI' : 'UnityAI is unavailable, drafted from the referral details');
+  };
+  const referralSenderDefaults = () => {
     const defaultFor = (ch) => (referralSenderLines.find(l => l.channel === ch && l.isDefault) || referralSenderLines.find(l => l.channel === ch))?.id || '';
-    referralForm.reset({ efax: defaultFor('efax'), email: defaultFor('email'), sms: defaultFor('sms') });
+    return { efax: defaultFor('efax'), email: defaultFor('email') };
+  };
+  const openReferral = () => {
+    referralForm.reset(referralSenderDefaults());
     setLeftWorkspace('referral');
   };
-  const handleSendReferral = () => {
-    if (!canSendReferral || !member?.id) return;
+  const openReferralDraft = (id) => {
+    const draft = memberReferrals.find(r => r.id === id);
+    if (!isReferralDraft(draft)) return;
+    referralForm.loadDraft(draft, referralSenderDefaults());
+    setLeftWorkspace('referral');
+  };
+  // A draft needs something worth keeping; Sign & Refer needs it all.
+  const canSaveReferralDraft = (() => {
+    const v = referralForm.values;
+    return !!(v.providerId || v.reason.trim() || v.emailSubject.trim() || v.emailBody.trim() || v.files.length || v.docs.length);
+  })();
+  const saveReferral = (status) => {
+    const isDraft = status === REFERRAL_STATUS.draft;
+    if (!member?.id || (isDraft ? !canSaveReferralDraft : !canSendReferral)) return;
     const v = referralForm.values;
     const sender = referralSenderLines.find(l => l.id === v.senderId);
     const channelLabel = REFERRAL_CHANNELS.find(c => c.key === v.channel)?.label || v.channel;
+    const isEmailChannel = v.channel === 'email';
+    const now = new Date();
+    const existing = v.draftId ? memberReferrals.find(r => r.id === v.draftId) : null;
     const referral = {
-      id: `cgref-${new Date().getTime()}`,
+      id: v.draftId || `cgref-${now.getTime()}`,
       memberId: member.id,
       memberName: member.name,
       gapCode: currentCode,
       channel: v.channel,
-      senderLineId: v.channel === 'chat' || v.senderId === CUSTOM_SENDER ? null : v.senderId,
-      senderValue: v.channel === 'chat' ? '' : v.senderId === CUSTOM_SENDER ? v.customSender.trim() : (sender?.value || ''),
-      providerId: referralProvider.id,
-      providerName: referralProvider.name,
+      status,
+      senderLineId: v.senderId === CUSTOM_SENDER ? null : (v.senderId || null),
+      senderValue: v.senderId === CUSTOM_SENDER ? v.customSender.trim() : (sender?.value || ''),
+      providerId: referralProvider?.id || null,
+      providerName: referralProvider?.name || '',
       providerContact: referralContact,
-      reason: v.reason.trim(),
-      note: v.noteOpen ? v.note.trim() : '',
-      sentBy: currentActorName(),
-      // Existing patient documents ride along by reference (no re-upload).
-      documentAttachments: v.docs.map(d => ({ name: d.name, type: d.type || '', url: d.url || '', documentId: d.id })),
+      reason: isEmailChannel ? v.emailSubject.trim() : v.reason.trim(),
+      note: !isEmailChannel && v.noteOpen ? v.note.trim() : '',
+      emailSubject: isEmailChannel ? v.emailSubject.trim() : '',
+      emailBody: isEmailChannel ? v.emailBody.trim() : '',
+      sentBy: existing?.sentBy || currentActorName(),
+      sentById: existing?.sentById || meId || null,
+      // Picked documents ride along by reference; attachments reloaded from a
+      // draft keep their stored file.
+      documentAttachments: v.docs.map(d => (d.storagePath
+        ? { name: d.name, type: d.type || '', url: d.url || '', size: d.size, storagePath: d.storagePath }
+        : { name: d.name, type: d.type || '', url: d.url || '', documentId: d.documentId || d.id })),
     };
-    addCaregapReferral(referral, v.files);
+    if (existing) updateCaregapReferral(referral, v.files);
+    else addCaregapReferral(referral, v.files);
     logCareGapActivity(member.id, {
-      when: new Date().toISOString(),
+      when: now.toISOString(),
       actor: currentActorName(),
-      t: 'appointment',
-      title: 'Referral Sent',
+      t: 'referral',
+      title: isDraft ? 'Referral Saved as Draft' : 'Referral Signed & Referred',
       gapCodes: [currentCode],
       detailCard: {
-        title: `Referral to ${referralProvider.name}`,
-        subtitle: [`${channelLabel} • ${referralContact}`, `${v.files.length + v.docs.length} attachment${v.files.length + v.docs.length === 1 ? '' : 's'}`].join(' • '),
-        status: 'Sent',
+        referralId: referral.id,
+        channel: v.channel,
+        fromName: currentActorName(),
+        fromRole: meProvider?.specialty || currentUserProfile?.role || '',
+        toName: referral.providerName || 'Provider not selected',
+        toBadge: referral.providerName ? 'Fold Provider' : '',
+        toSubtitle: [referralProvider?.specialty, referralContact && `${channelLabel} : ${referralContact}`].filter(Boolean).join(' • '),
+        createdAt: now.toISOString(),
+        status,
       },
     });
-    showToast(`Referral sent via ${channelLabel}`);
+    showToast(isDraft ? 'Referral saved as draft' : `Referral signed & referred via ${channelLabel}`);
     referralForm.reset();
     runLeftClose();
   };
@@ -749,7 +842,12 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
       } : {}),
     };
   });
-  const allActivityEntries = [...(activityEntries || []), ...commentEntries];
+  // A referral entry whose referral is still a draft can be picked back up.
+  const allActivityEntries = [...(activityEntries || []), ...commentEntries].map(e => (
+    e.t === 'referral' && e.detailCard?.referralId && isReferralDraft(memberReferrals.find(r => r.id === e.detailCard.referralId))
+      ? { ...e, onOpenReferralDraft: () => openReferralDraft(e.detailCard.referralId) }
+      : e
+  ));
   const activityLogEntries = toActivityLogEntries(allActivityEntries);
   // Clinical Notes tab is DB-driven (clinicalNotesByMember) so it shows the
   // current state per note — a Pending Review note that is later Signed
@@ -1241,9 +1339,14 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
                   // Appointment Details saves each field as it changes.
                   null
                 ) : leftWorkspace === 'referral' ? (
-                  <Button variant="primary" size="M" disabled={!canSendReferral} onClick={handleSendReferral}>
-                    Send
-                  </Button>
+                  <>
+                    <Button variant="secondary" size="M" disabled={!canSaveReferralDraft} onClick={() => saveReferral(REFERRAL_STATUS.draft)}>
+                      Save as Draft
+                    </Button>
+                    <Button variant="primary" size="M" disabled={!canSendReferral} onClick={() => saveReferral(REFERRAL_STATUS.referred)}>
+                      Sign &amp; Refer
+                    </Button>
+                  </>
                 ) : leftWorkspace === 'reminder' ? (
                   <Button variant="primary" size="M" disabled={!reminderForm.canSave} onClick={handleSaveReminder}>
                     Save
@@ -1329,6 +1432,10 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
                   patientDocuments={memberDocs.map(d => ({ id: d.id, name: d.name, type: d.type, addedAt: d.createdAt, url: d.fileUrl }))}
                   docTypes={DOC_TYPES}
                   onUploadDocument={createMemberDocument}
+                  onGenerateEmail={handleGenerateReferralEmail}
+                  generatingEmail={generatingReferralEmail}
+                  emailSignature={referralEmailSignature}
+                  ccMember={member && { id: member.id, name: member.name, initials: member.in }}
                 />
               ) : leftWorkspace === 'reminder' ? (
                 <CareGapReminderForm form={reminderForm} users={platformUsers} />
@@ -1457,9 +1564,12 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
                     r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : '',
                     r.sentBy,
                   ].filter(Boolean).join(' • '),
-                  status: { variant: 'status-completed', label: r.status || 'Sent' },
+                  status: isReferralDraft(r)
+                    ? { variant: 'status-review', label: 'Draft' }
+                    : { variant: 'status-completed', label: r.status || 'Sent' },
                 }))}
                 showStatus
+                onOpen={(d) => openReferralDraft(d.id)}
                 onUpload={openReferral}
                 uploadLabel="Send Referral"
                 emptyLabel="No referrals sent for this member yet."

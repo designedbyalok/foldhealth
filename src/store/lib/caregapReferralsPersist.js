@@ -5,9 +5,8 @@ import { reportPersistFailure } from './reportPersistFailure';
 
 const MISSING_RE = /referral|does not exist|schema cache/i;
 
-// "Refer to" lists the practice's own system users (profiles). Every active
-// user is reachable in Fold chat; eFax / SMS / Email use the fax, mobile
-// (or phone) and email on their profile.
+// "Refer to" lists the practice's own system users (profiles). eFax and
+// Email use the fax and email on their profile.
 const providerFromProfile = (p) => ({
   id: p.id,
   name: (p.full_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || p.email?.split('@')[0] || 'Unknown').trim(),
@@ -27,7 +26,6 @@ const providerFromProfile = (p) => ({
   fax: p.fax || '',
   email: p.email || '',
   phone: p.mobile || p.phone || '',
-  chatEnabled: true,
 });
 const senderFromRow = (r) => ({
   id: r.id, channel: r.channel, label: r.label, value: r.value, isDefault: !!r.is_default,
@@ -45,9 +43,13 @@ export const referralFromRow = (r) => ({
   providerContact: r.provider_contact || '',
   reason: r.reason || '',
   note: r.note || '',
+  emailSubject: r.email_subject || '',
+  emailBody: r.email_body || '',
   attachments: Array.isArray(r.attachments) ? r.attachments : [],
   status: r.status || 'Sent',
   sentBy: r.sent_by || '',
+  sentById: r.sent_by_id || null,
+  recipientReadAt: r.recipient_read_at || null,
   createdAt: r.created_at,
 });
 
@@ -112,6 +114,21 @@ async function uploadAttachments(referral, files) {
   return out;
 }
 
+// Columns a draft can change (everything except identity / member / sender).
+const referralFieldsToRow = (r) => ({
+  channel: r.channel,
+  sender_line_id: r.senderLineId || null,
+  sender_value: r.senderValue || null,
+  provider_id: r.providerId || null,
+  provider_name: r.providerName || '',
+  provider_contact: r.providerContact || null,
+  reason: r.reason || '',
+  note: r.note || null,
+  email_subject: r.emailSubject || null,
+  email_body: r.emailBody || null,
+  status: r.status || 'Sent',
+});
+
 /** @returns {Promise<{ missing: boolean, attachments: object[] }>} */
 export async function persistCaregapReferralInsert(referral, files) {
   const attachments = [...await uploadAttachments(referral, files), ...(referral.documentAttachments || [])];
@@ -120,20 +137,35 @@ export async function persistCaregapReferralInsert(referral, files) {
     hedis_member_id: referral.memberId,
     member_name: referral.memberName || null,
     gap_code: referral.gapCode || null,
-    channel: referral.channel,
-    sender_line_id: referral.senderLineId || null,
-    sender_value: referral.senderValue || null,
-    provider_id: referral.providerId || null,
-    provider_name: referral.providerName,
-    provider_contact: referral.providerContact || null,
-    reason: referral.reason,
-    note: referral.note || null,
+    ...referralFieldsToRow(referral),
     attachments,
-    status: referral.status || 'Sent',
     sent_by: referral.sentBy || null,
+    sent_by_id: referral.sentById || null,
   });
   if (!error) return { missing: false, attachments };
   if (MISSING_RE.test(error.message || '')) return { missing: true, attachments };
   reportPersistFailure(`persistCaregapReferralInsert(${referral.id})`, error);
   return { missing: false, attachments };
+}
+
+/** Save a draft again, or sign & refer it. @returns {Promise<{ missing: boolean, attachments: object[] }>} */
+export async function persistCaregapReferralUpdate(referral, files) {
+  const attachments = [...await uploadAttachments(referral, files), ...(referral.documentAttachments || [])];
+  const { error } = await supabase.from('caregap_referrals')
+    .update({ ...referralFieldsToRow(referral), attachments })
+    .eq('id', referral.id);
+  if (!error) return { missing: false, attachments };
+  if (MISSING_RE.test(error.message || '')) return { missing: true, attachments };
+  reportPersistFailure(`persistCaregapReferralUpdate(${referral.id})`, error);
+  return { missing: false, attachments };
+}
+
+export function persistCaregapReferralRead(id, readAt) {
+  if (!id) return;
+  supabase.from('caregap_referrals').update({ recipient_read_at: readAt }).eq('id', id)
+    .then(({ error }) => {
+      // Before caregap_referrals_email_migration.sql the column isn't there;
+      // read state then stays local, which isn't worth an error toast.
+      if (error && !MISSING_RE.test(error.message || '')) reportPersistFailure(`persistCaregapReferralRead(${id})`, error);
+    });
 }
