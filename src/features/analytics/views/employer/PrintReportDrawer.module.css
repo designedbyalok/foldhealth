@@ -52,7 +52,8 @@
 
 /* All presets on one line: equal columns that share the width, square
    swatches, names on hover (title) and for screen readers (aria-label). */
-.swatches { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--space-1); }
+/* 14 columns (the preset count), so colour rows with fewer swatches keep the same size. */
+.swatches { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: var(--space-1); }
 .swatch {
   display: flex; min-width: 0; padding: var(--space-1); border: 0.5px solid var(--neutral-150); border-radius: 6px;
   background: var(--neutral-0); cursor: pointer;

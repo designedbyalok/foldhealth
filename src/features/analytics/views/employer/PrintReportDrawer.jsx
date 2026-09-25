@@ -7,7 +7,9 @@ import { Switch } from '../../../../components/Switch/Switch';
 import { Select } from '../../../../components/Select/Select';
 import { Input } from '../../../../components/Input/Input';
 import { Toggle } from '../../../../components/Toggle/Toggle';
-import { ColorInput } from '../../../../components/ColorInput/ColorInput';
+// The form and email builders' colour field: swatch + hex, opening the full picker.
+import { ColorInput } from '../../../email-builder/ColorInput';
+import { useAppStore } from '../../../../store/useAppStore';
 import { Dropzone } from '../../../../components/Dropzone/Dropzone';
 import { PhotoSearch } from '../../../../components/PhotoSearch/PhotoSearch';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
@@ -125,6 +127,21 @@ function ImageDropField({ image, fileName, onPick, onRemove }) {
       {error && <span className={styles.dropError} role="alert">{error}</span>}
     </div>
   );
+}
+
+const toHex = ([r, g, b]) => `#${[r, g, b].map(n => n.toString(16).padStart(2, '0')).join('').toUpperCase()}`;
+// Default colour swatches: one per gradient preset, so both rows hold the same
+// number, each its most colourful stop (the tinted end of the lighter ones).
+const chroma = ([r, g, b]) => Math.max(r, g, b) - Math.min(r, g, b);
+const COLOR_SWATCH_COUNT = COVER_GRADIENTS.length;
+const DEFAULT_COLOR_SWATCHES = COVER_GRADIENTS.map(g => toHex(
+  g.stops.reduce((best, [c]) => (chroma(c) > chroma(best) ? c : best), g.stops[0][0]),
+));
+const DEFAULT_COVER_COLOR = DEFAULT_COLOR_SWATCHES[0];
+/** A preset gradient as the hex CSS the colour picker edits. */
+function presetPickerCss(key) {
+  const g = COVER_GRADIENTS.find(x => x.key === key) || COVER_GRADIENTS[0];
+  return `linear-gradient(${Math.round(g.angle)}deg, ${g.stops.map(([c, p]) => `${toHex(c)} ${Math.round(p * 100)}%`).join(', ')})`;
 }
 
 /** A stock photo by URL as what jsPDF needs; kept as JPEG so the PDF stays small. */
@@ -339,8 +356,17 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
   // Starts on the report's employer, else the first employer.
   const [logoChoice, setLogoChoice] = useState(() => logoForEmployer(employerName)?.key || EMPLOYER_LOGOS[0].key);
   const [bgType, setBgType] = useState(DEFAULT_COVER_BACKGROUND.type);
-  const [bgColor, setBgColor] = useState('#1376BC');
-  const [bgGradient, setBgGradient] = useState(DEFAULT_COVER_BACKGROUND.gradient);
+  const [bgColor, setBgColor] = useState(DEFAULT_COVER_COLOR);
+  // Recently applied colours (shared with the builders' picker, kept per
+  // browser) first; the defaults fill the rest and drop off the end as
+  // more colours are picked.
+  const recentColors = useAppStore(s => s.recentlyUsedColors);
+  const colorSwatches = useMemo(
+    () => [...new Set([...recentColors, ...DEFAULT_COLOR_SWATCHES].map(c => c.toUpperCase()))].slice(0, COLOR_SWATCH_COUNT),
+    [recentColors],
+  );
+  const [bgGradient, setBgGradient] = useState(DEFAULT_COVER_BACKGROUND.gradient); // preset key or 'custom'
+  const [bgCustomGradient, setBgCustomGradient] = useState(null); // CSS gradient from the picker
   const [bgImage, setBgImage] = useState(null); // { dataUrl, format, width, height, name, photo? }
   const pickedPhotoId = useRef(null);
   const [assets, setAssets] = useState({}); // logos and fonts for the PDF
@@ -397,8 +423,9 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
   const background = useMemo(() => (
     bgType === 'color' ? { type: 'color', color: bgColor }
       : bgType === 'image' && bgImage ? { type: 'image', ...bgImage }
-        : { type: 'gradient', gradient: bgType === 'gradient' ? bgGradient : DEFAULT_COVER_BACKGROUND.gradient }
-  ), [bgType, bgColor, bgGradient, bgImage]);
+        : bgType === 'gradient' && bgGradient === 'custom' && bgCustomGradient ? { type: 'gradient', css: bgCustomGradient }
+          : { type: 'gradient', gradient: bgType === 'gradient' ? bgGradient : DEFAULT_COVER_BACKGROUND.gradient }
+  ), [bgType, bgColor, bgGradient, bgCustomGradient, bgImage]);
   const lightCover = isLightBackground(background);
 
   // Provider logo (fixed): colour in page headers; on the cover, the white
@@ -531,9 +558,29 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
                     <Toggle size="S" items={BACKGROUND_TYPES} active={bgType} onChange={setBgType} />
                   </div>
                   {bgType === 'color' && (
-                    <ColorInput value={bgColor} onChange={setBgColor} ariaLabel="Cover background colour" />
+                    <>
+                      <div className={styles.swatches} role="radiogroup" aria-label="Recent colours">
+                        {colorSwatches.map(c => (
+                          <button
+                            key={c}
+                            type="button"
+                            role="radio"
+                            aria-checked={bgColor.toUpperCase() === c}
+                            aria-label={c}
+                            title={c}
+                            className={[styles.swatch, bgColor.toUpperCase() === c ? styles.swatchOn : ''].filter(Boolean).join(' ')}
+                            onClick={() => setBgColor(c)}
+                          >
+                            {/* The swatch shows report content (the PDF's own colours), not UI chrome. */}
+                            <span className={styles.swatchFill} style={{ background: c }} />
+                          </button>
+                        ))}
+                      </div>
+                      <ColorInput value={bgColor} onChange={setBgColor} allowGradient={false} />
+                    </>
                   )}
                   {bgType === 'gradient' && (
+                    <>
                     <div className={styles.swatches} role="radiogroup" aria-label="Cover gradient">
                       {COVER_GRADIENTS.map(g => (
                         <button
@@ -551,6 +598,14 @@ export function PrintReportDrawer({ meta, range, employerName, filename, section
                         </button>
                       ))}
                     </div>
+                    {/* Starts from the picked preset; any edit makes it the cover's custom gradient. */}
+                    <ColorInput
+                      label="Custom gradient"
+                      gradientOnly
+                      value={bgGradient === 'custom' && bgCustomGradient ? bgCustomGradient : presetPickerCss(bgGradient)}
+                      onChange={(css) => { setBgCustomGradient(css); setBgGradient('custom'); }}
+                    />
+                    </>
                   )}
                   {bgType === 'image' && (
                     <>

@@ -10,6 +10,7 @@
  */
 import jsPDF from 'jspdf';
 import { formatValue, compactTick, niceTicks } from './employerImpactFormat';
+import { parseGradient } from '../../../email-builder/colorHelpers';
 
 // A4 in points, laid out as in the Figma frame.
 const PAGE = { w: 595, h: 842 };
@@ -49,9 +50,10 @@ const LABEL = 6;    // axis titles
 // ── Colours from tokens ──
 function parseColor(value) {
   const v = (value || '').trim();
-  const hex = v.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  // Alpha (#RGBA / #RRGGBBAA) is dropped: a PDF page has nothing beneath to blend with.
+  const hex = v.match(/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i);
   if (hex) {
-    const h = hex[1].length === 3 ? hex[1].split('').map(c => c + c).join('') : hex[1];
+    const h = hex[1].length <= 4 ? hex[1].slice(0, 3).split('').map(c => c + c).join('') : hex[1].slice(0, 6);
     return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16));
   }
   const rgb = v.match(/rgba?\(([^)]+)\)/i);
@@ -604,6 +606,24 @@ export const rgbCss = ([r, g, b]) => `rgb(${r}, ${g}, ${b})`;
 export const gradientCss = (g) => `linear-gradient(${g.angle}deg, ${g.stops.map(([c, p]) => `${rgbCss(c)} ${Math.round(p * 1000) / 10}%`).join(', ')})`;
 const gradientByKey = (key) => COVER_GRADIENTS.find(x => x.key === key) || COVER_GRADIENTS[0];
 
+/**
+ * A custom CSS gradient from the colour picker (`linear-gradient(90deg, #hex 0%, …)`
+ * or `radial-gradient(…)`) in the preset shape: `{ type, angle, stops: [[rgb, 0–1]] }`.
+ */
+export function gradientFromCss(css) {
+  const g = parseGradient(css);
+  if (!g?.stops?.length) return null;
+  const stops = g.stops
+    .map(st => [parseColor(st.color), Math.max(0, Math.min(1, st.position / 100))])
+    .filter(([c]) => c)
+    .sort((a, b) => a[1] - b[1]);
+  if (!stops.length) return null;
+  return { type: g.type, angle: g.angle, stops };
+}
+
+/** The gradient a cover background describes: a custom CSS one, else a preset. */
+const resolveGradient = (bg) => (bg?.css && gradientFromCss(bg.css)) || gradientByKey(bg?.gradient);
+
 /** Colour at `t` (0–1) along a preset's stops. */
 function colorAt(stops, t) {
   if (t <= stops[0][1]) return stops[0][0];
@@ -629,7 +649,7 @@ export function isLightBackground(bg) {
   if (bg?.type === 'color') return luminance(hexToRgb(bg.color)) > 0.4;
   if (bg?.type === 'gradient') {
     // Average over the gradient, sampled, so a long light stop counts for more.
-    const g = gradientByKey(bg.gradient);
+    const g = resolveGradient(bg);
     const samples = Array.from({ length: 9 }, (_, i) => luminance(colorAt(g.stops, i / 8)));
     return samples.reduce((a, b) => a + b, 0) / samples.length > 0.4;
   }
@@ -657,6 +677,23 @@ function pageGradient(doc, { angle, stops }) {
     const s1 = ((i + 1) / bands - 0.5) * len + 0.4;
     fill(doc, colorAt(stops, (i + 0.5) / bands));
     polygon(doc, [at(s0, -1), at(s0, 1), at(s1, 1), at(s1, -1)]);
+  }
+}
+
+/**
+ * A CSS radial gradient (ellipse, farthest-corner, centred): filled ellipses
+ * from the outside in, each a step closer to the first stop.
+ */
+function pageRadialGradient(doc, { stops }) {
+  const rx = (PAGE.w / 2) * Math.SQRT2;
+  const ry = (PAGE.h / 2) * Math.SQRT2;
+  const rings = 240;
+  fill(doc, colorAt(stops, 1));
+  doc.rect(0, 0, PAGE.w, PAGE.h, 'F');
+  for (let i = rings; i > 0; i -= 1) {
+    const t = i / rings;
+    fill(doc, colorAt(stops, t));
+    doc.ellipse(PAGE.w / 2, PAGE.h / 2, rx * t, ry * t, 'F');
   }
 }
 
@@ -715,7 +752,8 @@ function fadingGrid(doc, color, x0, y0, w, h, cx, cy, rx, ry) {
  * @param {string} cover.range
  * @param {string} [cover.description]
  * @param {object} [cover.background] – `{ type: 'color', color: '#RRGGBB' }`,
- *   `{ type: 'gradient', gradient: key }` or `{ type: 'image', dataUrl, format, width, height }`
+ *   `{ type: 'gradient', gradient: key }`, `{ type: 'gradient', css }` (a custom CSS
+ *   gradient) or `{ type: 'image', dataUrl, format, width, height }`
  * @param {{ dataUrl }} [cover.logo]       – Employer logo (Fold Health wordmark by default)
  * @param {{ dataUrl }} [cover.clientLogo] – Provider logo for "Provided By"
  */
@@ -731,7 +769,9 @@ function coverPage(doc, { title, range, description, background = DEFAULT_COVER_
       fill(doc, hexToRgb(background.color));
       doc.rect(0, 0, PAGE.w, PAGE.h, 'F');
     } else {
-      pageGradient(doc, gradientByKey(background.gradient));
+      const g = resolveGradient(background);
+      if (g.type === 'radial') pageRadialGradient(doc, g);
+      else pageGradient(doc, g);
     }
     // Two grid panels, as placed in the Figma frame (top right, bottom left).
     fadingGrid(doc, ink1, 0, -120, 800.5, 346, 400.25, 53, 323, 173);

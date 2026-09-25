@@ -462,8 +462,8 @@ function GradientPicker({ value, onChange, variables, mode, onModeChange }) {
 // ── Top-level ColorPicker — mode toggle + popover frame ────────────────
 // Close behavior is owned by the host (ColorInput's outside-click handler).
 // We don't render a close button here so the chrome stays minimal.
-export function ColorPicker({ value, onChange, variables = [], recentlyUsed = [], onCommitRecent, allowGradient = true }) {
-  const initialMode = isGradient(value) ? 'gradient' : 'solid';
+export function ColorPicker({ value, onChange, variables = [], recentlyUsed = [], onCommitRecent, allowGradient = true, gradientOnly = false }) {
+  const initialMode = gradientOnly || isGradient(value) ? 'gradient' : 'solid';
   const [mode, setMode] = useState(initialMode);
   // How the value field reads and accepts colors. A display preference, not
   // part of the value — the stored color is always a hex.
@@ -556,7 +556,8 @@ export function ColorPicker({ value, onChange, variables = [], recentlyUsed = []
       >
         <span className={styles.dragGrip} />
       </button>
-      {allowGradient && (
+      {/* gradientOnly: the host already chose gradient (e.g. a Gradient tab), so no switch. */}
+      {allowGradient && !gradientOnly && (
         <Toggle
           fullWidth
           size="S"

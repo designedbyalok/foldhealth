@@ -15,7 +15,7 @@ import styles from './EmailBuilder.module.css';
 // stays mounted this long after close so it can animate out.
 const EXIT_MS = 160;
 
-export function ColorInput({ label, value, onChange, allowGradient = true }) {
+export function ColorInput({ label, value, onChange, allowGradient = true, gradientOnly = false }) {
   const hexId = useId();
   const colorVariables = useAppStore(s => s.colorVariables);
   const recentlyUsedColors = useAppStore(s => s.recentlyUsedColors);
@@ -114,7 +114,7 @@ export function ColorInput({ label, value, onChange, allowGradient = true }) {
         value={displayText}
         onChange={(e) => { if (!isGrad) onChange(e.target.value); }}
         readOnly={isGrad}
-        leadingIconElement={(
+        leadingIcon={(
           <button
             type="button"
             className={styles.colorDotBtn}
@@ -148,6 +148,7 @@ export function ColorInput({ label, value, onChange, allowGradient = true }) {
             recentlyUsed={recentlyUsedColors}
             onCommitRecent={pushRecentColor}
             allowGradient={allowGradient}
+            gradientOnly={gradientOnly}
             onClose={closePicker}
           />
         </div>,
