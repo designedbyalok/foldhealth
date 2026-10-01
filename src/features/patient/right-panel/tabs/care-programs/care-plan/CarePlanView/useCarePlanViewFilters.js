@@ -101,19 +101,6 @@ export function useCarePlanViewFilters({
     };
   }, [filteredGoals, filteredInterventions, filteredBarriers]);
 
-  const templateGoalCounts = useMemo(() => {
-    const planTitles = new Set(data.goals.map(g => norm(g.title)));
-    const counts = new Map();
-    for (const t of carePlanTemplates) {
-      const titles = new Set((t.goals || []).map((e) => {
-        const lib = e?.id ? libraryGoals.find(g => g.id === e.id) : null;
-        return norm(lib?.title || e?.title || '');
-      }).filter(Boolean));
-      counts.set(t.id, [...titles].filter(title => planTitles.has(title)).length);
-    }
-    return counts;
-  }, [carePlanTemplates, libraryGoals, data.goals]);
-
   return {
     filtersOpen,
     setFiltersOpen,
@@ -126,7 +113,6 @@ export function useCarePlanViewFilters({
     filteredBarriers,
     filteredInterventions,
     planStats,
-    templateGoalCounts,
     norm,
   };
 }

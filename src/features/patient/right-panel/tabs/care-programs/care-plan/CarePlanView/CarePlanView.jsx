@@ -190,7 +190,6 @@ export function CarePlanView({ patientId, program }) {
     filteredBarriers,
     filteredInterventions,
     planStats,
-    templateGoalCounts,
   } = useCarePlanViewFilters({
     data,
     templateFilterId,
@@ -665,7 +664,6 @@ export function CarePlanView({ patientId, program }) {
         <AppliedTemplateStrip
           templates={appliedTemplates}
           appliedTemplatePriorities={appliedTemplatePriorities}
-          templateGoalCounts={templateGoalCounts}
           templateFilterId={templateFilterId}
           canRemove={canEdit && !live?.plan?.signedAt}
           onSelect={(id) => setTemplateFilterId(prev => (prev === id ? null : id))}

@@ -1,27 +1,3 @@
-import { FALLBACK_USERS } from '../fallbackUsers';
-import { ASTRANA_STAFF, ROLE_LABEL } from '../../hcc/assignment/astranaStaff';
-
-export const SYSTEM_USERS = (() => {
-  const astrana = ASTRANA_STAFF.map(s => ({
-    id: s.id,
-    name: s.name,
-    initials: s.initials,
-    role: ROLE_LABEL[s.role] || s.role,
-    status: s.active ? 'Active' : 'Inactive',
-    source: 'astrana',
-    tins: s.tins || [],
-    vendors: s.vendors || [],
-  }));
-  const astranaIds = new Set(astrana.map(u => u.id));
-  const account = [];
-  for (const u of FALLBACK_USERS) {
-    if (!astranaIds.has(u.id)) {
-      account.push({ ...u, source: 'account', tins: [], vendors: [] });
-    }
-  }
-  return [...astrana, ...account];
-})();
-
 export const NAME_MAX = 150;
 
 export function makeId(prefix) {

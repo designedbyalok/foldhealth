@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Drawer } from '../../../components/Drawer/Drawer';
 import { Button } from '../../../components/Button/Button';
 import { Icon } from '../../../components/Icon/Icon';
 import { useAppStore } from '../../../store/useAppStore';
 import { TEAM_TYPE_OPTIONS, KIND_LABEL } from './teamTypeConfig';
 import {
-  SYSTEM_USERS,
   makeId,
   todayMMDDYYYY,
   utilizationFor as calcUtilization,
@@ -26,6 +25,15 @@ export function ConfigureTeamDrawer({ kind = 'hcc', editTeam = null, onClose }) 
   const addHccCareTeam = useAppStore(s => s.addHccCareTeam);
   const updateHccCareTeam = useAppStore(s => s.updateHccCareTeam);
   const existingTeams = useAppStore(s => s.hccCareTeams);
+  const platformUsers = useAppStore(s => s.platformUsers);
+  const fetchPlatformUsers = useAppStore(s => s.fetchPlatformUsers);
+
+  useEffect(() => { fetchPlatformUsers?.(); }, [fetchPlatformUsers]);
+
+  const systemUsers = useMemo(
+    () => (platformUsers || []).map(u => ({ ...u, role: u.clinicalRoles?.[0] || 'Staff' })),
+    [platformUsers],
+  );
 
   const teamTypeOptions = TEAM_TYPE_OPTIONS[kind] || TEAM_TYPE_OPTIONS.hcc;
   const isEdit = !!editTeam;
@@ -34,35 +42,15 @@ export function ConfigureTeamDrawer({ kind = 'hcc', editTeam = null, onClose }) 
   const [teamType, setTeamType] = useState(editTeam?.teamType || teamTypeOptions[0]);
   const allocatedTins = editTeam?.allocatedTins || [];
   const [members, setMembers] = useState(() => editTeam?.members || []);
-  const [userSearch, setUserSearch] = useState('');
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const searchRef = useRef(null);
 
   useEffect(() => {
     if (!teamTypeOptions.includes(teamType)) setTeamType(teamTypeOptions[0]);
   }, [teamTypeOptions, teamType]);
 
-  useEffect(() => {
-    if (!userMenuOpen) return;
-    const onDoc = (e) => { if (!searchRef.current?.contains(e.target)) setUserMenuOpen(false); };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, [userMenuOpen]);
-
-  const selectedIds = new Set(members.map(m => m.userId));
-  const filteredUsers = useMemo(() => {
-    const q = userSearch.trim().toLowerCase();
-    const result = [];
-    for (const u of SYSTEM_USERS) {
-      if (selectedIds.has(u.id)) continue;
-      if (q
-        && !u.name.toLowerCase().includes(q)
-        && !(u.email || '').toLowerCase().includes(q)
-        && !(u.role || '').toLowerCase().includes(q)) continue;
-      result.push(u);
-    }
-    return result;
-  }, [userSearch, members]);
+  const availableUsers = useMemo(() => {
+    const selectedIds = new Set(members.map(m => m.userId));
+    return systemUsers.filter(u => !selectedIds.has(u.id));
+  }, [systemUsers, members]);
 
   const ctx = { existingTeams, editTeam, members, name, teamType };
   const utilizationFor = (userId) => calcUtilization(userId, ctx);
@@ -82,8 +70,6 @@ export function ConfigureTeamDrawer({ kind = 'hcc', editTeam = null, onClose }) 
         assignTo: [],
       },
     ]);
-    setUserSearch('');
-    setUserMenuOpen(false);
   };
   const removeMember = (userId) => setMembers(prev => prev.filter(m => m.userId !== userId));
   const clearAllMembers = () => setMembers([]);
@@ -152,13 +138,8 @@ export function ConfigureTeamDrawer({ kind = 'hcc', editTeam = null, onClose }) 
         />
 
         <ConfigureTeamDrawerUserPicker
-          searchRef={searchRef}
-          userSearch={userSearch}
-          userMenuOpen={userMenuOpen}
-          filteredUsers={filteredUsers}
+          availableUsers={availableUsers}
           utilizationFor={utilizationFor}
-          onSearchChange={(v) => { setUserSearch(v); setUserMenuOpen(true); }}
-          onFocus={() => setUserMenuOpen(true)}
           onAddMember={addMember}
         />
 

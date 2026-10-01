@@ -11,7 +11,6 @@ function TemplateBadge({
   templatePriority,
   isActive,
   canRemove,
-  goalCount,
   onSelect,
   onRemove,
 }) {
@@ -21,7 +20,7 @@ function TemplateBadge({
       className={`${styles.appliedTemplateBadge} ${isActive ? styles.appliedTemplateBadgeActive : ''}`}
       aria-pressed={isActive}
       onClick={() => onSelect(template.id)}
-      aria-label={`${templatePriority} priority, ${template.name}, ${goalCount} goals${isActive ? ', filter active' : ''}`}
+      aria-label={`${templatePriority} priority, ${template.name}${isActive ? ', filter active' : ''}`}
     >
       <Badge
         tone={isActive ? 'primary' : 'grey'}
@@ -32,9 +31,8 @@ function TemplateBadge({
             {template.name}
           </>
         )}
-        trailingIconElement={(
+        trailingIconElement={canRemove ? (
           <span className={styles.appliedTemplateTrail}>
-            <span className={styles.appliedTemplateCount}>{goalCount}</span>
             {canRemove && (
               <span
                 role="button"
@@ -48,7 +46,7 @@ function TemplateBadge({
               </span>
             )}
           </span>
-        )}
+        ) : undefined}
       />
     </button>
   );
@@ -57,12 +55,12 @@ function TemplateBadge({
 /**
  * Applied templates in priority order (high → medium → low) on one row. When the row
  * overflows, a right-aligned "View More N" reveals the rest; expanded wraps
- * all templates and offers "View Less".
+ * all templates and offers "View Less". Collapsed, the selected template
+ * moves to the front so it never hides behind "View More".
  */
 export function AppliedTemplateStrip({
   templates,
   appliedTemplatePriorities,
-  templateGoalCounts,
   templateFilterId,
   canRemove,
   onSelect,
@@ -73,7 +71,9 @@ export function AppliedTemplateStrip({
   const [expanded, setExpanded] = useState(false);
   const [visibleCount, setVisibleCount] = useState(templates.length);
   const [hasOverflow, setHasOverflow] = useState(false);
-  const templatesKey = templates.map(t => t.id).join('|');
+  const selected = !expanded && templateFilterId ? templates.find(t => t.id === templateFilterId) : null;
+  const ordered = selected ? [selected, ...templates.filter(t => t !== selected)] : templates;
+  const templatesKey = ordered.map(t => t.id).join('|');
 
   useLayoutEffect(() => {
     const row = chipsRef.current;
@@ -138,7 +138,7 @@ export function AppliedTemplateStrip({
 
   if (templates.length === 0) return null;
 
-  const shown = expanded ? templates : templates.slice(0, visibleCount);
+  const shown = expanded ? templates : ordered.slice(0, visibleCount);
   const hiddenCount = Math.max(0, templates.length - visibleCount);
 
   return (
@@ -157,14 +157,13 @@ export function AppliedTemplateStrip({
                 templatePriority={templatePriority}
                 isActive={templateFilterId === t.id}
                 canRemove={canRemove}
-                goalCount={templateGoalCounts.get(t.id) ?? 0}
                 onSelect={onSelect}
                 onRemove={onRemove}
               />
             );
           })}
           <span ref={measureRef} className={styles.templateMeasure} aria-hidden="true">
-            {templates.map(t => {
+            {ordered.map(t => {
               const templatePriority = appliedTemplatePriorities[t.id] || 'medium';
               return (
                 <TemplateBadge
@@ -173,8 +172,7 @@ export function AppliedTemplateStrip({
                   templatePriority={templatePriority}
                   isActive={false}
                   canRemove={canRemove}
-                  goalCount={templateGoalCounts.get(t.id) ?? 0}
-                  onSelect={() => {}}
+                    onSelect={() => {}}
                   onRemove={() => {}}
                 />
               );

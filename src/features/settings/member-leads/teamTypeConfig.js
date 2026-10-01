@@ -100,13 +100,12 @@ export function valueOptionsForDimension(dim) {
   }));
 }
 
-// Capacity color thresholds — mirrors the Figma user-picker badge palette.
-// 0%        → grey (unassigned)
-// 1–30%     → red   (under-utilized)
-// 31–70%    → yellow (transitional)
-// 71–100%   → green (well-utilized)
+// Color thresholds for REMAINING capacity in the user-picker badge.
+// 0–30%     → red    (nearly or fully booked)
+// 31–70%    → yellow (partially booked)
+// 71–100%   → green  (mostly free)
 export function capacityTone(pct) {
-  if (pct == null || pct === 0) return 'neutral';
+  if (pct == null) return 'neutral';
   if (pct <= 30) return 'error';
   if (pct <= 70) return 'warning';
   return 'success';
