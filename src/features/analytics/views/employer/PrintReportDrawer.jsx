@@ -24,11 +24,13 @@ import { AlignmentPicker } from '../../../../components/AlignmentPicker/Alignmen
 import { PdfPreview } from '../../../../components/PdfPreview/PdfPreview';
 import { PreviewLoader } from '../../../../components/PreviewLoader/PreviewLoader';
 import { MenuPopover } from '../../../../components/MenuPopover/MenuPopover';
+import { TypographyPopover } from '../../../../components/TypographyPopover/TypographyPopover';
 import { buildReportPage } from './downloadReportPage';
+import { REPORT_FONTS, loadReportFont, loadFontPreviews } from './reportFonts';
 // import { SendReportEmailDrawer } from './SendReportEmailDrawer'; // Send Report: hidden for now
 import {
   generateEmployerReport, generatedOnLabel, COVER_GRADIENTS, DEFAULT_COVER_BACKGROUND, isLightBackground, gradientCss,
-  DEFAULT_LOGO_SCALE, DEFAULT_CLIENT_LOGO_SCALE,
+  DEFAULT_LOGO_SCALE, DEFAULT_CLIENT_LOGO_SCALE, COVER_TITLE_STYLE, COVER_INTRO_STYLE,
 } from './generateEmployerReportPdf';
 import { withReportHeader, withReportFooter, defaultReportHeader, defaultReportFooter } from '../../../email-builder/reportHeaderComponent';
 import { rasterizeComponent, interFontFaces } from '../../../email-builder/rasterizeComponent';
@@ -69,6 +71,14 @@ const SECTION_SUBTITLE_MAX = 150;
 const COVER_DESCRIPTION_MAX = 300;
 const TITLE_MAX = 60;
 const DEFAULT_TITLE = 'Employer Impact Report';
+const FONT_WEIGHTS = [
+  { value: 'regular', label: 'Regular' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'semibold', label: 'Semi Bold' },
+  { value: 'bold', label: 'Bold' },
+];
+const TITLE_SIZE = { min: 16, max: 60 };
+const INTRO_SIZE = { min: 8, max: 16 };
 
 // The employer logo goes top right on every page and at the top of the
 // cover. The provider logo (Trailhead Clinics) is fixed.
@@ -588,6 +598,21 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
   const [includeCover, setIncludeCover] = useState(true);
   const [coverDescription, setCoverDescription] = useState('');
   const [title, setTitle] = useState(DEFAULT_TITLE);
+  const [titleStyle, setTitleStyle] = useState(COVER_TITLE_STYLE);
+  const [introStyle, setIntroStyle] = useState(COVER_INTRO_STYLE);
+  // The cover's non-Inter fonts for the PDF, fetched when picked: { [family]: base64 TTFs }.
+  const [coverFonts, setCoverFonts] = useState({});
+  useEffect(() => {
+    let live = true;
+    [titleStyle.family, introStyle.family].forEach((family) => {
+      if (coverFonts[family] !== undefined) return;
+      loadReportFont(family).then((files) => {
+        if (live && files) setCoverFonts(prev => ({ ...prev, [family]: files }));
+      });
+    });
+    return () => { live = false; };
+  }, [titleStyle.family, introStyle.family, coverFonts]);
+  const [typographyAt, setTypographyAt] = useState(null); // { rect, el } of the T button while its popover is open
   // Starts on the report's employer, else the first employer.
   const [logoChoice, setLogoChoice] = useState(() => logoForEmployer(employerName)?.key || EMPLOYER_LOGOS[0].key);
   // The employer logo follows the Employer filter (here or on the page);
@@ -813,12 +838,12 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
   const fetchReportSettings = useAppStore(s => s.fetchEmployerReportSettings);
   const saveReportSettings = useAppStore(s => s.saveEmployerReportSettings);
   const personalizeSettings = useMemo(() => ({
-    title, includeCover, coverDescription,
+    title, includeCover, coverDescription, titleStyle, introStyle,
     logoScale, logoAlign, clientLogoScale, clientLogoAlign,
     bgType, bgColor, bgGradient, customColors, customGradients, hiddenColors, hiddenGradients,
     bgImage: bgImage?.photo ? { photo: bgImage.photo } : bgImage,
     customLogo, showHeader, showFooter, headerId: pickedHeaderId, footerId: pickedFooterId,
-  }), [title, includeCover, coverDescription, logoScale, logoAlign, clientLogoScale, clientLogoAlign,
+  }), [title, includeCover, coverDescription, titleStyle, introStyle, logoScale, logoAlign, clientLogoScale, clientLogoAlign,
     bgType, bgColor, bgGradient, customColors, customGradients, hiddenColors, hiddenGradients, bgImage, customLogo, showHeader, showFooter, pickedHeaderId, pickedFooterId]);
   const settingsJson = JSON.stringify(personalizeSettings);
   const settingsJsonRef = useRef(settingsJson);
@@ -838,6 +863,8 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
         if (has('title')) setTitle(saved.title);
         if (has('includeCover')) setIncludeCover(saved.includeCover);
         if (has('coverDescription')) setCoverDescription(saved.coverDescription);
+        if (has('titleStyle')) setTitleStyle(saved.titleStyle);
+        if (has('introStyle')) setIntroStyle(saved.introStyle);
         if (has('logoScale')) setLogoScale(saved.logoScale);
         if (has('logoAlign')) setLogoAlign(saved.logoAlign);
         if (has('clientLogoScale')) setClientLogoScale(saved.clientLogoScale);
@@ -923,6 +950,7 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
     header: showHeader ? headerImage || undefined : null,
     footer: showFooter ? footerImage || undefined : null,
     fonts: assets.fonts,
+    coverFonts,
     cover: includeCover ? {
       range,
       description: coverDescription.slice(0, COVER_DESCRIPTION_MAX).trim(),
@@ -933,9 +961,11 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
       logoAlign,
       clientLogoScale,
       clientLogoAlign,
+      titleStyle,
+      introStyle,
     } : null,
     sections: included,
-  }), [reportTitle, generatedAt, assets, headerLogo, employerHeaderLogo, showHeader, headerImage, showFooter, footerImage, includeCover, range, coverDescription, background, employerCoverLogo, coverLogo, logoScale, logoAlign, clientLogoScale, clientLogoAlign, included]);
+  }), [reportTitle, generatedAt, assets, coverFonts, headerLogo, employerHeaderLogo, showHeader, headerImage, showFooter, footerImage, includeCover, range, coverDescription, titleStyle, introStyle, background, employerCoverLogo, coverLogo, logoScale, logoAlign, clientLogoScale, clientLogoAlign, included]);
   const generate = useCallback(() => {
     const out = generateEmployerReport(report);
     // Called from the preview's timer and from Download / Print, never
@@ -1277,7 +1307,36 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
           <section className={styles.coverGroup}>
             <div className={styles.groupHead}>
               <h3 className={styles.groupTitle}>Cover Page</h3>
-              <Switch checked={includeCover} onChange={setIncludeCover} ariaLabel="Include cover page" />
+              <span className={styles.groupActions}>
+                {includeCover && (
+                  <>
+                    <ActionButton
+                      icon="solar:text-linear"
+                      size="S"
+                      tooltip="Typography"
+                      tooltipLeft
+                      active={!!typographyAt}
+                      onClick={(e) => { const el = e.currentTarget; loadFontPreviews(); setTypographyAt(at => (at ? null : { rect: el.getBoundingClientRect(), el })); }}
+                    />
+                    <span className={styles.headerDivider} aria-hidden="true" />
+                  </>
+                )}
+                <Switch checked={includeCover} onChange={setIncludeCover} ariaLabel="Include cover page" />
+              </span>
+              {includeCover && typographyAt && (
+                <TypographyPopover
+                  anchorRect={typographyAt.rect}
+                  anchorEl={typographyAt.el}
+                  families={REPORT_FONTS}
+                  weights={FONT_WEIGHTS}
+                  rows={[
+                    { key: 'title', label: 'Report Title', value: titleStyle, ...TITLE_SIZE },
+                    { key: 'intro', label: 'Report Introduction', value: introStyle, ...INTRO_SIZE },
+                  ]}
+                  onChange={(key, next) => (key === 'title' ? setTitleStyle(next) : setIntroStyle(next))}
+                  onClose={() => setTypographyAt(null)}
+                />
+              )}
             </div>
             {includeCover && (
               <>

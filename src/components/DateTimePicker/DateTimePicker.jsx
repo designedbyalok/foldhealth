@@ -1,8 +1,9 @@
 import { useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Icon } from '../Icon/Icon';
+import { CalendarIcon } from '../Icon/CalendarIcon';
 import { ActionButton } from '../ActionButton/ActionButton';
 import { parsePickerValue } from './parsePickerValue';
+import inputStyles from '../Input/Input.module.css';
 import styles from './DateTimePicker.module.css';
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
@@ -26,7 +27,7 @@ const toDate = (mmddyyyy) => {
  * @param {string}   [props.value]       – "MM/DD/YYYY, HH:MM", or '' when unset
  * @param {function} props.onChange      – (value) => void
  * @param {string}   [props.label]       – Field label above the trigger
- * @param {boolean}  [props.required]    – Red dot after the label
+ * @param {boolean}  [props.required]    – Red dot after the label (field chrome comes from Input)
  * @param {string}   [props.placeholder='MM/DD/YYYY, HH:MM']
  * @param {string}   [props.errorText]   – Red border and message below
  * @param {Date}     [props.minDate]     – Days before this can't be picked
@@ -97,7 +98,7 @@ export function DateTimePicker({ value, onChange, label, required = false, place
   const box = (
     <div
       ref={triggerRef}
-      className={[styles.dateInputWrap, fullWidth ? styles.fullWidth : '', errorText || invalid ? styles.hasError : '', disabled ? styles.isDisabled : '', className || ''].filter(Boolean).join(' ')}
+      className={[inputStyles.shell, styles.dateInputWrap, fullWidth ? styles.fullWidth : '', errorText || invalid ? inputStyles.shellError : '', disabled ? `${inputStyles.shellDisabled} ${styles.isDisabled}` : '', className || ''].filter(Boolean).join(' ')}
     >
       <button
         id={id}
@@ -114,7 +115,7 @@ export function DateTimePicker({ value, onChange, label, required = false, place
             ? `${parsed.date}, ${pad(to12(parsed.hour))}:${pad(parsed.minute)}${parsed.hour < 12 ? 'AM' : 'PM'}`
             : value || placeholder}
         </span>
-        <Icon name="solar:calendar-linear" size={14} color="var(--neutral-300)" />
+        <CalendarIcon size={16} color={disabled ? 'var(--neutral-150)' : 'var(--neutral-300)'} />
       </button>
 
       {open && createPortal(
@@ -224,17 +225,17 @@ export function DateTimePicker({ value, onChange, label, required = false, place
 
   if (!label && !errorText && !helperText) return box;
   return (
-    <div className={styles.field}>
+    <div className={`${inputStyles.field} ${styles.field}`}>
       {label && (
-        <label htmlFor={id} className={styles.label}>
-          {label}
-          {required && <span className={styles.required} aria-hidden="true">•</span>}
+        <label htmlFor={id} className={inputStyles.label}>
+          <span className={inputStyles.labelText}>{label}</span>
+          {required && <span className={inputStyles.required} aria-hidden="true" />}
         </label>
       )}
       {box}
       {errorText
-        ? <span className={styles.errorText}>{errorText}</span>
-        : helperText && <span className={styles.helperText}>{helperText}</span>}
+        ? <span className={inputStyles.errorText}>{errorText}</span>
+        : helperText && <span className={inputStyles.helperText}>{helperText}</span>}
     </div>
   );
 }

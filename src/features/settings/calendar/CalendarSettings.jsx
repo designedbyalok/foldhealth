@@ -10,6 +10,7 @@ import { Icon } from '../../../components/Icon/Icon';
 import { useAppStore } from '../../../store/useAppStore';
 import { OooUserRecordsDrawer } from '../../ooo/OooRecordsDrawers';
 import { OOO_ICON } from '../../ooo/oooUtils';
+import { HolidaysTab } from './HolidaysTab';
 import { OooRecordsTab } from './OooRecordsTab';
 import styles from './CalendarSettings.module.css';
 
@@ -142,6 +143,7 @@ export function CalendarSettings() {
   const [query, setQuery] = useState('');
   // OOO Records owns its tab row's tools (search, filters, New OOO Record).
   if (tab === 'ooo') return <OooRecordsTab tabs={TABS} activeTab={tab} onTabChange={setTab} />;
+  if (tab === 'holidays') return <HolidaysTab tabs={TABS} activeTab={tab} onTabChange={setTab} />;
   return (
     <div className={styles.wrapper}>
       <SectionTitleBar

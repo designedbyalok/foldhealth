@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { OooIcon } from '../../components/Icon/OooIcon';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
+import { Icon } from '../../components/Icon/Icon';
+import { HOLIDAY_ICON } from '../holidays/holidayUtils';
 import { canEdit, daySpan, recordsFor, recordsOnDate } from './oooUtils';
 import styles from './CalendarOooLayer.module.css';
 
@@ -22,14 +24,18 @@ const GRID_HOURS = 23;
  * @param {object}   props
  * @param {string}   [props.focusUser]  – The user in view
  * @param {object[]} props.records
+ * @param {object[]} [props.holidays] – Holidays at the user's locations (shown green, not bookable)
+ * @param {function} [props.onHoliday] – (holiday) => void, a click on holiday time
  * @param {number}   props.renderTick   – Changes whenever schedule-x redraws its grid
  * @param {function} props.onEdit       – (record) => void
  */
-export function CalendarOooLayer({ focusUser, records, renderTick, onEdit }) {
+export function CalendarOooLayer({ focusUser, records, holidays = [], renderTick, onEdit, onHoliday }) {
   const [targets, setTargets] = useState([]);
   // Latest handler for the native click listeners added below.
   const onEditRef = useRef(onEdit);
   useEffect(() => { onEditRef.current = onEdit; }, [onEdit]);
+  const onHolidayRef = useRef(onHoliday);
+  useEffect(() => { onHolidayRef.current = onHoliday; }, [onHoliday]);
 
   useEffect(() => {
     let cancelled = false;
@@ -46,27 +52,58 @@ export function CalendarOooLayer({ focusUser, records, renderTick, onEdit }) {
       if (!cells.length && attempts++ < 60) { timer = setTimeout(collect, 50); return; }
       document.querySelectorAll('[data-ooo-host]').forEach(el => el.remove());
       document.querySelectorAll('[data-ooo-day]').forEach(el => el.removeAttribute('data-ooo-day'));
+      document.querySelectorAll('[data-holiday-day]').forEach(el => el.removeAttribute('data-holiday-day'));
       const heads = [...document.querySelectorAll('.sx__week-grid__date')];
       const next = [];
       cells.forEach((cell, i) => {
         const date = heads[i]?.getAttribute('data-date');
         if (!date || !focusUser) return;
         const mine = recordsFor(recordsOnDate(records, date), focusUser);
-        if (!mine.length) return;
+        const dayHolidays = recordsOnDate(holidays, date);
+        if (!mine.length && !dayHolidays.length) return;
         if (getComputedStyle(cell).position === 'static') cell.style.position = 'relative';
         // A day out for all of it gets an "Out of Office" strip at the foot
-        // of its header (so the label can't collide with an appointment);
-        // part of a day is labelled on its block instead.
+        // of its header (so the label can't collide with an appointment),
+        // and a whole-day holiday a green one; with both, Out of Office sits
+        // above. Part of a day is labelled on its block instead.
         const isFullDay = (r) => { const sp = daySpan(r, date); return !!sp && sp.start <= 0 && sp.end >= 1; };
-        if (mine.some(isFullDay)) {
-          heads[i].setAttribute('data-ooo-day', '1');
+        const fullHoliday = dayHolidays.find(isFullDay);
+        const fullOoo = mine.some(isFullDay);
+        const addStrip = (kind, extra, payload) => {
           const strip = document.createElement('span');
           strip.setAttribute('data-ooo-host', 'strip');
-          strip.className = styles.stripHost;
+          strip.className = [styles.stripHost, extra].filter(Boolean).join(' ');
           heads[i].appendChild(strip);
           hosts.push(strip);
-          next.push({ host: strip, kind: 'strip', date });
+          next.push({ host: strip, kind, date, ...payload });
+        };
+        if (fullHoliday) {
+          heads[i].setAttribute('data-holiday-day', '1');
+          addStrip('holidayStrip', null, { holiday: fullHoliday });
         }
+        if (fullOoo) {
+          heads[i].setAttribute('data-ooo-day', '1');
+          addStrip('strip', fullHoliday ? styles.stripHostUpper : null, {});
+        }
+        // Holiday time: green, under any OOO block (drawn first). It can't
+        // be booked; a click says why.
+        dayHolidays.forEach((holiday) => {
+          const span = daySpan(holiday, date);
+          if (!span) return;
+          const host = document.createElement('div');
+          host.setAttribute('data-ooo-host', 'holiday');
+          host.className = styles.holidayHost;
+          const px = (f) => Math.min(GRID_HEIGHT, f * 24 * (GRID_HEIGHT / GRID_HOURS));
+          host.style.top = `${px(span.start)}px`;
+          host.style.height = `${Math.max(24, px(span.end) - px(span.start))}px`;
+          const onClick = (e) => { e.stopPropagation(); onHolidayRef.current?.(holiday); };
+          host.addEventListener('click', onClick);
+          disposers.push(() => host.removeEventListener('click', onClick));
+          cell.appendChild(host);
+          hosts.push(host);
+          if (!isFullDay(holiday)) next.push({ host, kind: 'holidayLabel', date, holiday, record: holiday });
+          next.push({ host, kind: 'holidayTip', date, holiday, record: holiday });
+        });
         mine.forEach((record) => {
           const span = daySpan(record, date);
           if (!span) return;
@@ -123,10 +160,19 @@ export function CalendarOooLayer({ focusUser, records, renderTick, onEdit }) {
       disposers.forEach((off) => off());
       hosts.forEach(h => h.remove());
     };
-  }, [focusUser, records, renderTick]);
+  }, [focusUser, records, holidays, renderTick]);
 
   return targets.map((t) => createPortal(
-    t.kind === 'blockTip' ? (
+    t.kind === 'holidayStrip' || t.kind === 'holidayLabel' ? (
+      <span className={styles.holidayStrip}>
+        <Icon name={HOLIDAY_ICON} size={12} color="var(--neutral-0)" />
+        <span className={styles.stripText}>{t.holiday.name}</span>
+      </span>
+    ) : t.kind === 'holidayTip' ? (
+      <Tooltip label={`Holiday: ${t.holiday.name}`} followCursor>
+        <span className={styles.blockTipArea} aria-hidden="true" />
+      </Tooltip>
+    ) : t.kind === 'blockTip' ? (
       <Tooltip label="Edit Out of Office Record" followCursor>
         <span className={styles.blockTipArea} aria-hidden="true" />
       </Tooltip>

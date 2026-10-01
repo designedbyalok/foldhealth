@@ -98,3 +98,27 @@
 .eventSub { font-size: var(--font-sm); line-height: 1.2; color: var(--neutral-300); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .nowLine { position: absolute; left: 0; right: 0; z-index: 3; height: 2px; background: var(--primary-300); pointer-events: none; }
+
+/* Holidays (green): the header strip under any Out of Office one, and the
+   time in the column, under OOO time. Not bookable. */
+.holidayStrip {
+  display: flex; align-items: center; justify-content: center; gap: var(--space-1);
+  height: 20px; padding: 0 var(--space-2);
+  background: var(--accent-green);
+  font-size: var(--font-xs); font-weight: 500; line-height: 1; color: var(--neutral-0);
+  white-space: nowrap; overflow: hidden;
+}
+/* At the foot of the header, like the OOO strip; right under it when both. */
+.colHead > .holidayStrip { margin-top: auto; }
+.colHead > .oooStrip + .holidayStrip { margin-top: 0; }
+.stripText { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.holidayBlock {
+  position: absolute; left: 0; right: 0; z-index: 1;
+  display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
+  padding: 0; overflow: hidden;
+  border: 0.5px solid var(--accent-green);
+  background: var(--accent-light-green-tint); mix-blend-mode: multiply;
+  cursor: not-allowed;
+}
+.holidayBlock:focus-visible { outline: 2px solid var(--primary-300); outline-offset: -2px; }
+:global([data-theme="dark"]) .holidayBlock { mix-blend-mode: screen; }

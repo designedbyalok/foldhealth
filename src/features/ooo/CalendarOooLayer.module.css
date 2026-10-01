@@ -31,9 +31,13 @@
 .blockHost:focus-visible { outline: 2px solid var(--primary-300); outline-offset: -2px; }
 /* Week: the OOO day's header strip. Every header in that week gets room
    for it, so the day names stay in line. */
-:global(.sx__week-grid__date[data-ooo-day]) { position: relative; }
-:global(.sx__week-grid__date-axis:has([data-ooo-day])) :global(.sx__week-grid__date) { padding-bottom: var(--space-10) !important; }
+:global(.sx__week-grid__date[data-ooo-day]),
+:global(.sx__week-grid__date[data-holiday-day]) { position: relative; }
+:global(.sx__week-grid__date-axis:has([data-ooo-day], [data-holiday-day])) :global(.sx__week-grid__date) { padding-bottom: var(--space-10) !important; }
+/* A day with both strips: room for two, Out of Office above the holiday. */
+:global(.sx__week-grid__date-axis:has([data-ooo-day][data-holiday-day])) :global(.sx__week-grid__date) { padding-bottom: calc(var(--space-10) + var(--space-5)) !important; }
 .stripHost { position: absolute; left: 0; right: 0; bottom: 0; }
+.stripHostUpper { bottom: var(--space-5); }
 .oooStrip {
   display: flex; align-items: center; justify-content: center; gap: var(--space-1);
   height: 20px;
@@ -41,6 +45,25 @@
   font-size: var(--font-xs); font-weight: 500; line-height: 1; color: var(--neutral-0);
   white-space: nowrap;
 }
+/* Holidays (green): the header strip, and the time on the grid. A holiday
+   can't be booked; Out of Office time is drawn over it. */
+.holidayStrip {
+  display: flex; align-items: center; justify-content: center; gap: var(--space-1);
+  height: 20px; padding: 0 var(--space-2);
+  background: var(--accent-green);
+  font-size: var(--font-xs); font-weight: 500; line-height: 1; color: var(--neutral-0);
+  white-space: nowrap; overflow: hidden;
+}
+.stripText { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.holidayHost {
+  position: absolute; inset: 0; z-index: 1;
+  border: 0.5px solid var(--accent-green);
+  background: var(--accent-light-green-tint);
+  mix-blend-mode: multiply;
+  cursor: not-allowed; overflow: hidden;
+}
+:global([data-theme="dark"]) .holidayHost { mix-blend-mode: screen; }
+
 /* Week: appointments stay above the OOO area and open as usual. schedule-x
    writes an inline `z-index: 0` on each event (its overlap order), which
    otherwise tucks them under the block, so this has to be !important. */

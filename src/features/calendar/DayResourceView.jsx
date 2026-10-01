@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import { OooIcon } from '../../components/Icon/OooIcon';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
+import { HOLIDAY_ICON, holidaysForUser } from '../holidays/holidayUtils';
 import { canEdit, daySpan, recordsFor, recordsOnDate } from '../ooo/oooUtils';
 import styles from './DayResourceView.module.css';
 
@@ -32,13 +33,15 @@ const isoToAppt = (iso) => { const [y, m, d] = iso.split('-'); return `${m}-${d}
  * @param {string[]} props.users         – User names, one column each
  * @param {object[]} props.appointments  – Already filtered by the toolbar
  * @param {object[]} props.oooRecords
+ * @param {object[]} [props.holidays] – All holiday configurations (each column gets its user's)
+ * @param {object[]} [props.people]   – Staff with their locations, to match holidays to columns
  * @param {string}   [props.timezoneLabel]
  * @param {function} props.onSlotClick   – ({ year, month, day, hour, minute }, userName) => void
  * @param {function} props.onEventClick  – (appointment) => void
  * @param {function} props.onEditOoo     – (record) => void
  * @param {function} props.onBlocked     – (message) => void, for a slot that can't be booked
  */
-export function DayResourceView({ date, users, appointments, oooRecords, timezoneLabel, onSlotClick, onEventClick, onEditOoo, onBlocked }) {
+export function DayResourceView({ date, users, appointments, oooRecords, holidays = [], people = [], timezoneLabel, onSlotClick, onEventClick, onEditOoo, onBlocked }) {
   const scrollRef = useRef(null);
   const now = new Date();
   const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -65,8 +68,12 @@ export function DayResourceView({ date, users, appointments, oooRecords, timezon
         return start == null ? null : { appt: a, start, end: Math.max(end, start + 15) };
       })
       .filter(Boolean);
-    return { name, ooo, appts };
-  }), [users, onDay, appointments, date]);
+    // Holidays at this user's locations, green under any OOO time.
+    const hol = recordsOnDate(holidaysForUser(holidays, people, name), date)
+      .map(h => ({ holiday: h, span: daySpan(h, date) }))
+      .filter(x => x.span);
+    return { name, ooo, appts, hol };
+  }), [users, onDay, appointments, date, holidays, people]);
 
   const clickSlot = (col, slot) => {
     const minute = slot * SLOT_MIN;
@@ -75,6 +82,11 @@ export function DayResourceView({ date, users, appointments, oooRecords, timezon
     if (inOoo) {
       // A past record is read-only; its time still can't be booked.
       if (canEdit(inOoo.record)) onEditOoo(inOoo.record);
+      return;
+    }
+    const inHoliday = col.hol.find(({ span }) => minute < span.end * 1440 && minute + SLOT_MIN > span.start * 1440);
+    if (inHoliday) {
+      onBlocked(`${inHoliday.holiday.name} is a holiday here, so appointments can't be booked then.`);
       return;
     }
     if (isPastDay || (isToday && minute < nowMin + 15)) {
@@ -111,6 +123,13 @@ export function DayResourceView({ date, users, appointments, oooRecords, timezon
                 Out of Office
               </span>
             )}
+            {/* A whole-day holiday, under the Out of Office strip. */}
+            {col.hol.filter(({ span }) => span.start <= 0 && span.end >= 1).slice(0, 1).map(({ holiday }) => (
+              <span key={holiday.id} className={styles.holidayStrip}>
+                <Icon name={HOLIDAY_ICON} size={12} color="var(--neutral-0)" />
+                <span className={styles.stripText}>{holiday.name}</span>
+              </span>
+            ))}
           </div>
         ))}
 
@@ -127,7 +146,7 @@ export function DayResourceView({ date, users, appointments, oooRecords, timezon
               <button
                 key={slot}
                 type="button"
-                className={[styles.slot, slot % 2 ? styles.slotHalf : '', oooAt(col, slot * SLOT_MIN) ? styles.slotOoo : ''].filter(Boolean).join(' ')}
+                className={[styles.slot, slot % 2 ? styles.slotHalf : '', oooAt(col, slot * SLOT_MIN) || col.hol.some(({ span }) => slot * SLOT_MIN < span.end * 1440 && slot * SLOT_MIN + SLOT_MIN > span.start * 1440) ? styles.slotOoo : ''].filter(Boolean).join(' ')}
                 style={{ top: slot * (HOUR_PX / 2), height: HOUR_PX / 2 }}
                 aria-label={`${col.name}, ${hourLabel(Math.floor(slot / 2))}${slot % 2 ? ' 30' : ''}`}
                 onClick={() => clickSlot(col, slot)}
@@ -139,6 +158,26 @@ export function DayResourceView({ date, users, appointments, oooRecords, timezon
             {/* Figma Eventus 17587:116989: the OOO time as an outlined
                 area; its label lives in the header so it can't collide
                 with an appointment. */}
+            {/* Holiday time: green, not bookable (a click says why), under
+                OOO time. Part of a day is labelled along its top. */}
+            {col.hol.map(({ holiday, span }) => (
+              <Tooltip key={holiday.id} label={`Holiday: ${holiday.name}`} followCursor>
+                <button
+                  type="button"
+                  className={styles.holidayBlock}
+                  style={{ top: top(span.start * 1440), height: top((span.end - span.start) * 1440) }}
+                  aria-label={`${col.name}, holiday: ${holiday.name}`}
+                  onClick={() => onBlocked(`${holiday.name} is a holiday here, so appointments can't be booked then.`)}
+                >
+                  {!(span.start <= 0 && span.end >= 1) && (
+                    <span className={styles.holidayStrip}>
+                      <Icon name={HOLIDAY_ICON} size={12} color="var(--neutral-0)" />
+                      <span className={styles.stripText}>{holiday.name}</span>
+                    </span>
+                  )}
+                </button>
+              </Tooltip>
+            ))}
             {/* It takes the click (opening the record; a past one is read-only),
                 lifts on hover like an appointment and says what the click
                 does. A part-day block is labelled along its top. */}

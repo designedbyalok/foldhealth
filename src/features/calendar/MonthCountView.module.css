@@ -27,6 +27,8 @@
 .cell:focus-visible { outline: 2px solid var(--primary-300); outline-offset: -2px; }
 .past { background: var(--neutral-50); }
 .today { background: var(--primary-25); }
+/* A holiday where booking is blocked: a light green day. */
+.holiday { background: var(--accent-light-green-tint); box-shadow: inset 0 0 0 0.5px var(--accent-green); }
 /* The picked user is out: dashed pink, like the old month cell. */
 .ooo { background: var(--accent-light-magenta); box-shadow: inset 0 0 0 0.5px var(--accent-magenta); }
 .ooo::after {
@@ -61,3 +63,7 @@
 .oooLinePast:hover { color: var(--neutral-500); text-decoration: none; }
 .oooCount { margin-top: var(--space-1); }
 .oooLine:focus-visible, .oooCount:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 1px; border-radius: 2px; }
+
+/* A holiday that day (Out of Office shows above it). */
+.holidayLine { display: inline-flex; align-items: center; gap: var(--space-1); max-width: 100%; margin-top: var(--space-1); font-size: var(--font-sm); font-weight: 500; color: var(--neutral-500); }
+.holidayName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

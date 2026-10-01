@@ -67,6 +67,8 @@
 
   /* Elevation shadows (theme-aware so they stay readable on dark surfaces) */
   --shadow-popover: 0 12px 60px rgba(0, 0, 0, 0.06);
+  /* A popover that should stand clearly above busy content (e.g. the Typography editor). */
+  --shadow-popover-lifted: 0 8px 16px rgba(0, 0, 0, 0.10), 0 24px 64px rgba(0, 0, 0, 0.20);
   --shadow-chart:   0 12px 60px -15px rgba(0, 0, 0, 0.06);
   --shadow-drawer:  -2px 0 24px rgba(0, 0, 0, 0.04);
   --shadow-card:    0 1px 3px rgba(0, 0, 0, 0.04);
@@ -133,6 +135,7 @@
   --accent-purple:       #9C27B0;
   --accent-pink:         #E81E63;
   --accent-magenta:      #ED36D5; /* Out of Office (Figma Eventus 17581:115194) */
+  --accent-green:        #0E8F5B; /* Holidays on the calendar (emerald; white text stays readable) */
 
   /* Accent Light — soft background shades for tags, chips, tinted surfaces */
   --accent-light-blue-grey:    #EFF2F3;
@@ -146,6 +149,7 @@
   --accent-light-purple:       #F5E9F7;
   --accent-light-pink:         #FDE8EF;
   --accent-light-magenta:      #FEFAFE;
+  --accent-light-green-tint:   #EEF9F3; /* Holiday fill (--accent-light-green is a lime accent) */
 
   /* Native form / scrollbar coloring */
   color-scheme: light;
@@ -382,6 +386,7 @@ html[data-font-scale="larger"]  { --root-font-scale: 1.25; }
   --accent-purple:       #F5E9F7;
   --accent-pink:         #FDE8EF;
   --accent-magenta:      #F7B6EE;
+  --accent-green:        #7FD9AE;
 
   /* Accent Light — inverted: dark hues become the "light" surface on dark bg */
   --accent-light-blue-grey:    #607D8B;
@@ -395,9 +400,11 @@ html[data-font-scale="larger"]  { --root-font-scale: 1.25; }
   --accent-light-purple:       #9C27B0;
   --accent-light-pink:         #E81E63;
   --accent-light-magenta:      #3A1334;
+  --accent-light-green-tint:   #0F2A1E;
 
   /* Elevation shadows — deeper on dark for visual separation */
   --shadow-popover: 0 12px 60px rgba(0, 0, 0, 0.50);
+  --shadow-popover-lifted: 0 8px 16px rgba(0, 0, 0, 0.50), 0 24px 64px rgba(0, 0, 0, 0.70);
   --shadow-chart:   0 12px 60px -15px rgba(0, 0, 0, 0.50);
   --shadow-drawer:  -2px 0 24px rgba(0, 0, 0, 0.40);
   --shadow-card:    0 1px 3px rgba(0, 0, 0, 0.30);

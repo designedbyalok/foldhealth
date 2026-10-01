@@ -19,9 +19,10 @@ const GAP = 4;
  * @param {number}   [props.maxLines=2]   – Lines to fill before overflowing
  * @param {string}   [props.tone='grey']
  * @param {'S'|'M'|'L'} [props.size='S']
+ * @param {string}   [props.icon]         – Leading Solar icon on each item badge (not the +N)
  * @param {string}   [props.className]
  */
-export function BadgeRow({ items = [], maxLines = 2, tone = 'grey', size = 'S', className }) {
+export function BadgeRow({ items = [], maxLines = 2, tone = 'grey', size = 'S', icon, className }) {
   const rowRef = useRef(null);
   const measureRef = useRef(null);
   const [visibleCount, setVisibleCount] = useState(items.length);
@@ -86,7 +87,7 @@ export function BadgeRow({ items = [], maxLines = 2, tone = 'grey', size = 'S', 
   return (
     <div ref={rowRef} className={[styles.row, className].filter(Boolean).join(' ')}>
       {items.slice(0, visibleCount).map(label => (
-        <Badge key={label} tone={tone} size={size} label={label} />
+        <Badge key={label} tone={tone} size={size} label={label} icon={icon} />
       ))}
       {hidden.length > 0 && (
         <Tooltip label={hidden.join(', ')} maxWidth={280}>
@@ -94,7 +95,7 @@ export function BadgeRow({ items = [], maxLines = 2, tone = 'grey', size = 'S', 
         </Tooltip>
       )}
       <span ref={measureRef} className={styles.measure} aria-hidden="true">
-        {items.map(label => <Badge key={label} tone={tone} size={size} label={label} />)}
+        {items.map(label => <Badge key={label} tone={tone} size={size} label={label} icon={icon} />)}
         <Badge tone={tone} size={size} label={`+${items.length}`} />
       </span>
     </div>

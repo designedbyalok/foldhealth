@@ -12,6 +12,7 @@ import {
   MONTH_NAMES,
 } from './calendarUtils';
 import { canEdit, recordsFor } from '../ooo/oooUtils';
+import { holidayDuring, holidaysAt, holidaysForUser } from '../holidays/holidayUtils';
 import styles from './CalendarView.module.css';
 
 // "8:30 am" → "9:00 am" (reminders have no end time; show a 30-min block).
@@ -55,6 +56,8 @@ export function useCalendarView({ onOooSlot } = {}) {
   const onOooSlotRef = useRef(onOooSlot);
   useEffect(() => { onOooSlotRef.current = onOooSlot; }, [onOooSlot]);
   const oooRecords = useAppStore(s => s.oooRecords);
+  const holidayConfigs = useAppStore(s => s.holidayConfigs);
+  const platformUsers = useAppStore(s => s.platformUsers);
   const [currentView, setCurrentView] = useState('week');
   const [showSchedule, setShowSchedule] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
@@ -296,25 +299,39 @@ export function useCalendarView({ onOooSlot } = {}) {
     // rather than the timing flag this used to keep.
     if (e?.target?.closest?.('.sx__event')) return;
 
+    // The half hour (or, in Month, the day) the click is asking to book.
+    let from, to;
+    if (typeof dateTime?.epochMilliseconds === 'number') {
+      const snapped = dateTime.with ? dateTime.with({ minute: dateTime.minute < 30 ? 0 : 30, second: 0, millisecond: 0, microsecond: 0, nanosecond: 0 }) : dateTime;
+      from = snapped.epochMilliseconds;
+      to = from + 30 * 60000;
+    } else if (typeof dateTime?.day === 'number') {
+      from = new Date(dateTime.year, dateTime.month - 1, dateTime.day).getTime();
+      to = from + 86400000;
+    }
+
     // Out-of-office time can't be booked, wherever the click lands (the
     // magenta block leaves a margin at the column edges). It opens the
     // record instead; a past record is read-only.
     const oooUser = currentView === 'week' ? viewUsers[0]
       : currentView === 'month-grid' && filterUser.length === 1 ? filterUser[0] : null;
-    if (oooUser && dateTime) {
-      let from, to;
-      if (typeof dateTime.epochMilliseconds === 'number') {
-        const snapped = dateTime.with ? dateTime.with({ minute: dateTime.minute < 30 ? 0 : 30, second: 0, millisecond: 0, microsecond: 0, nanosecond: 0 }) : dateTime;
-        from = snapped.epochMilliseconds;
-        to = from + 30 * 60000;
-      } else if (typeof dateTime.day === 'number') {
-        from = new Date(dateTime.year, dateTime.month - 1, dateTime.day).getTime();
-        to = from + 86400000;
-      }
-      const hit = from != null && recordsFor(oooRecords, oooUser)
+    if (oooUser && from != null) {
+      const hit = recordsFor(oooRecords, oooUser)
         .find(r => from < new Date(r.endAt).getTime() && to > new Date(r.startAt).getTime());
       if (hit) {
         if (canEdit(hit)) onOooSlotRef.current?.(hit);
+        return;
+      }
+    }
+
+    // Nor can holiday time at the shown provider's locations (or, in Month
+    // with no one picked, the filtered locations).
+    if (from != null) {
+      const scoped = oooUser ? holidaysForUser(holidayConfigs, platformUsers, oooUser)
+        : currentView === 'month-grid' && filterLocation.length ? holidaysAt(holidayConfigs, filterLocation) : [];
+      const holiday = holidayDuring(scoped, from, to);
+      if (holiday) {
+        showToast(`${holiday.name} is a holiday here, so appointments can't be booked then.`);
         return;
       }
     }
@@ -391,7 +408,7 @@ export function useCalendarView({ onOooSlot } = {}) {
         _options: { additionalClasses: ['is-selection'] },
       });
     }
-  }, [clearSelection, timezone, showToast, appointments, currentView, viewUsers, filterUser, oooRecords]);
+  }, [clearSelection, timezone, showToast, appointments, currentView, viewUsers, filterUser, oooRecords, holidayConfigs, platformUsers, filterLocation]);
 
   const handleEventClick = useCallback((event) => {
     const reminder = reminderEvents.find(r => r.id === event.id);
@@ -447,11 +464,11 @@ export function useCalendarView({ onOooSlot } = {}) {
       const rect = col.getBoundingClientRect();
       const y = e.clientY - rect.top;
       // No "new appointment" preview for a half hour that touches
-      // out-of-office time at all (e.g. 11:00–11:30 when OOO starts at
+      // out-of-office or holiday time at all (e.g. 11:00–11:30 when OOO starts at
       // 11:07): that slot can't be booked, and the preview would sit on the
       // block's label.
       const slotTop = Math.floor(y / PX_PER_30) * PX_PER_30;
-      const inOoo = Array.from(col.querySelectorAll('[data-ooo-host="block"]'))
+      const inOoo = Array.from(col.querySelectorAll('[data-ooo-host="block"], [data-ooo-host="holiday"]'))
         .some(b => slotTop < b.offsetTop + b.offsetHeight && slotTop + PX_PER_30 > b.offsetTop);
       if (inOoo) {
         const overlay = hoverRef.current;

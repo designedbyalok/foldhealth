@@ -148,6 +148,7 @@
 /* ── Personalize (Figma 1031:21133): blocks 24px apart, no hairlines. ── */
 .personalize { display: flex; flex-direction: column; gap: var(--space-6); }
 .groupHead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.groupActions { display: inline-flex; align-items: center; gap: var(--space-2); }
 .groupTitle { margin: 0; font-size: var(--font-base); font-weight: 500; line-height: var(--leading-tight); color: var(--neutral-400); }
 
 /* A cover logo: its box on the left, the alignment picker filling the

@@ -4,6 +4,8 @@ import { CalendarContent } from './CalendarContent';
 import { CalendarToolbar } from './CalendarToolbar';
 import { DayResourceView } from './DayResourceView';
 import { MonthCountView } from './MonthCountView';
+import { HolidaysDrawer } from '../holidays/HolidaysDrawer';
+import { holidaysAt, holidaysForUser } from '../holidays/holidayUtils';
 import { useCalendarView } from './useCalendarView';
 import { useAppStore } from '../../store/useAppStore';
 import { CalendarOooLayer } from '../ooo/CalendarOooLayer';
@@ -32,6 +34,20 @@ export function CalendarView() {
     ? calendar.viewUsers[0] || null
     : calendar.filterUser.length === 1 ? calendar.filterUser[0] : null;
   const [dayProvider, setDayProvider] = useState(null);
+  // Holidays apply by location: the shown provider's, else (Month) the
+  // Location filter's; with neither, Month shows every holiday but none
+  // blocks booking.
+  const holidayConfigs = useAppStore(s => s.holidayConfigs);
+  const fetchHolidayConfigs = useAppStore(s => s.fetchHolidayConfigs);
+  const platformUsers = useAppStore(s => s.platformUsers);
+  useEffect(() => { fetchHolidayConfigs(); }, [fetchHolidayConfigs]);
+  const [showHolidays, setShowHolidays] = useState(false);
+  const scopedHolidays = useMemo(() => {
+    if (focusUser) return holidaysForUser(holidayConfigs, platformUsers, focusUser);
+    if (calendar.filterLocation.length) return holidaysAt(holidayConfigs, calendar.filterLocation);
+    return holidayConfigs;
+  }, [focusUser, holidayConfigs, platformUsers, calendar.filterLocation]);
+  const holidayBlocks = !!focusUser || calendar.filterLocation.length > 0;
 
   // Day columns: the picked users, else everyone with an appointment or an
   // OOO record that day, else the signed-in user.
@@ -67,6 +83,7 @@ export function CalendarView() {
         timezone={calendar.timezone}
         onTimezoneChange={calendar.setTimezone}
         onOpenOoo={() => setOooAll({})}
+        onOpenHolidays={() => setShowHolidays(true)}
         onScheduleSelect={(key) => {
           if (key === 'appointment') {
             setDayProvider(null);
@@ -89,6 +106,8 @@ export function CalendarView() {
           users={dayUsers}
           appointments={calendar.filteredAppointments}
           oooRecords={oooRecords}
+          holidays={holidayConfigs}
+          people={platformUsers}
           timezoneLabel={calendar.timezoneLabel}
           onSlotClick={(slot, userName) => {
             setDayProvider(userName);
@@ -115,6 +134,8 @@ export function CalendarView() {
           date={calendar.selectedDate}
           appointments={calendar.filteredAppointments}
           oooRecords={oooRecords}
+          holidays={scopedHolidays}
+          holidayBlocks={holidayBlocks}
           focusUser={focusUser}
           onOpenDay={calendar.openDay}
           onAdd={(day) => {
@@ -141,12 +162,15 @@ export function CalendarView() {
           <CalendarOooLayer
             focusUser={focusUser}
             records={oooRecords}
+            holidays={scopedHolidays}
+            onHoliday={(h) => showToast(`${h.name} is a holiday here, so appointments can't be booked then.`)}
             renderTick={`${calendar.renderTick}-${calendar.filteredAppointments.length}`}
             onEdit={oooActions.openEdit}
           />
         )}
       </div>
 
+      {showHolidays && <HolidaysDrawer onClose={() => setShowHolidays(false)} />}
       {oooAll && <OooAllRecordsDrawer highlightDate={oooAll.highlightDate} onClose={() => setOooAll(null)} />}
       {oooActions.elements}
       {calendar.showSchedule && (

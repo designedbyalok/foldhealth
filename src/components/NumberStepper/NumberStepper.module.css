@@ -1,0 +1,42 @@
+/* Figma Jan–Present 1123:10629: a white pill, 24px tall, − value + (matches a white Badge) */
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: 24px;
+  padding: 0 var(--space-1);
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+.value {
+  min-width: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 2px;
+  background: none;
+  outline: none;
+  text-align: center;
+  font-size: var(--font-base);
+  line-height: 1.2;
+  color: var(--neutral-300);
+  font-variant-numeric: tabular-nums;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: 2px;
+  background: none;
+  color: var(--neutral-300);
+  cursor: pointer;
+}
+.btn:hover:not(:disabled) { background: var(--neutral-50); color: var(--neutral-400); }
+.btn:disabled { color: var(--neutral-150); cursor: not-allowed; }
+.btn:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 1px; }
+.value:focus { background: var(--neutral-50); color: var(--neutral-400); }

@@ -1,31 +1,14 @@
 /* DateTimePicker: trigger box plus a calendar + hour/minute popover. */
 
-/* Optional label / error wrapper, matching Input's field. */
-.field { display: flex; flex-direction: column; gap: var(--space-1); width: 100%; min-width: 0; }
-.label {
-  display: inline-flex; align-items: center; gap: var(--space-1);
-  font-size: var(--font-base); font-weight: 400; line-height: 1.2; color: var(--neutral-300);
-}
-.required { width: 4px; height: 4px; border-radius: 50%; background: var(--status-error); flex-shrink: 0; font-size: 0; }
-.errorText { font-size: var(--font-sm); line-height: 1.2; color: var(--status-error); }
-.helperText { font-size: var(--font-sm); line-height: 1.2; color: var(--neutral-300); }
+/* Label, required dot, box, focus ring and messages come from Input's
+   styles so this sits identical to text fields; only the width is ours. */
+.field { min-width: 0; }
 
-.dateInputWrap {
-  width: 200px;
-  background: var(--neutral-0);
-  border: 0.5px solid var(--neutral-200);
-  border-radius: 4px;
-  height: 32px;
-  padding: 0 var(--space-2);
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  box-sizing: border-box;
-}
-.fullWidth { width: 100%; }
-.hasError { border-color: var(--status-error); }
-.isDisabled { background: var(--neutral-50); }
+.dateInputWrap:not(.fullWidth) { width: 200px; flex-shrink: 0; }
 .isDisabled .datePickerTrigger { cursor: not-allowed; }
+.isDisabled .datePickerText { color: var(--neutral-200); }
+
+.datePickerTrigger { cursor: not-allowed; }
 .isDisabled .datePickerText { color: var(--neutral-200); }
 
 .datePickerTrigger {
@@ -40,7 +23,7 @@
   padding: 0;
   cursor: pointer;
 }
-.datePickerTrigger:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 2px; border-radius: 2px; }
+.datePickerTrigger:focus-visible { outline: none; }
 
 .datePickerText {
   font-size: var(--font-base);
@@ -54,7 +37,7 @@
 
 .datePickerPlaceholder {
   font-size: var(--font-base);
-  color: var(--neutral-200);
+  color: var(--placeholder-text);
   flex: 1;
   text-align: left;
   overflow: hidden;

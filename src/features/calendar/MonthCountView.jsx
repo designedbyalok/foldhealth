@@ -3,6 +3,7 @@ import { Icon } from '../../components/Icon/Icon';
 import { OooIcon } from '../../components/Icon/OooIcon';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { canEdit, recordsFor, recordsOnDate } from '../ooo/oooUtils';
+import { HOLIDAY_ICON } from '../holidays/holidayUtils';
 import styles from './MonthCountView.module.css';
 
 const DAY_NAMES = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
@@ -25,12 +26,14 @@ const isoToAppt = (s) => { const [y, m, d] = s.split('-'); return `${m}-${d}-${y
  * @param {object[]} props.appointments  – Already filtered by the toolbar
  * @param {object[]} props.oooRecords
  * @param {string}   [props.focusUser]   – The one user picked, if any
+ * @param {object[]} [props.holidays]    – Holidays for what's shown (the user's or filtered locations, else all)
+ * @param {boolean}  [props.holidayBlocks] – Holidays block booking here (a user or location is picked)
  * @param {function} props.onOpenDay     – (iso) => void, a day's Day view
  * @param {function} props.onAdd         – (iso) => void, book on that day
  * @param {function} props.onEditOoo     – (record) => void
  * @param {function} props.onOpenOooDay  – (iso) => void, everyone out that day
  */
-export function MonthCountView({ date, appointments, oooRecords, focusUser, onOpenDay, onAdd, onEditOoo, onOpenOooDay }) {
+export function MonthCountView({ date, appointments, oooRecords, holidays = [], holidayBlocks = false, focusUser, onOpenDay, onAdd, onEditOoo, onOpenOooDay }) {
   const todayIso = iso(new Date());
   const weeks = useMemo(() => {
     const [y, m] = date.split('-').map(Number);
@@ -71,10 +74,12 @@ export function MonthCountView({ date, appointments, oooRecords, focusUser, onOp
           const mine = focusUser ? recordsFor(on, focusUser)[0] : null;
           const othersOut = !focusUser ? new Set(on.map(r => r.userName)).size : 0;
           const dayNum = day.slice(8);
+          const dayHolidays = recordsOnDate(holidays, day);
+          const blockedByHoliday = holidayBlocks && dayHolidays.length > 0;
           return (
             <div
               key={day}
-              className={[styles.cell, past ? styles.past : '', isToday ? styles.today : '', mine ? styles.ooo : ''].filter(Boolean).join(' ')}
+              className={[styles.cell, past ? styles.past : '', isToday ? styles.today : '', blockedByHoliday && !mine ? styles.holiday : '', mine ? styles.ooo : ''].filter(Boolean).join(' ')}
               role="button"
               tabIndex={0}
               aria-label={`${day}, ${c.appts} appointments, ${c.groups} group events`}
@@ -82,7 +87,7 @@ export function MonthCountView({ date, appointments, oooRecords, focusUser, onOp
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenDay(day); } }}
             >
               <div className={styles.cellHead}>
-                {!past && !mine ? (
+                {!past && !mine && !blockedByHoliday ? (
                   <button
                     type="button"
                     className={styles.add}
@@ -118,6 +123,14 @@ export function MonthCountView({ date, appointments, oooRecords, focusUser, onOp
                   </span>
                 )
               )}
+              {/* Holidays that day, under any Out of Office line. */}
+              {dayHolidays.slice(0, 2).map(h => (
+                <span key={h.id} className={styles.holidayLine} title={`Holiday: ${h.name}`}>
+                  <Icon name={HOLIDAY_ICON} size={14} color="var(--accent-green)" />
+                  <span className={styles.holidayName}>{h.name}</span>
+                </span>
+              ))}
+              {dayHolidays.length > 2 && <span className={styles.line}>+{dayHolidays.length - 2} more holidays</span>}
               {othersOut > 0 && (
                 <button type="button" className={styles.oooCount} onClick={(e) => { e.stopPropagation(); onOpenOooDay(day); }}>
                   <OooIcon size={14} color="var(--accent-magenta)" />

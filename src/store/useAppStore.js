@@ -12278,6 +12278,60 @@ export const useAppStore = create((set, get) => ({
     return true;
   },
 
+  // ── Holiday configurations (Settings → Calendar, calendar Holidays) ──
+  // Until holiday_configurations exists, sample holidays are kept for the
+  // session only (holidaysLocal).
+  holidayConfigs: [],
+  holidayConfigsLoading: false,
+  holidayConfigsFetched: false,
+  holidaysLocal: false,
+  fetchHolidayConfigs: async ({ force = false } = {}) => {
+    if (get().holidayConfigsLoading || (get().holidayConfigsFetched && !force)) return;
+    set({ holidayConfigsLoading: true });
+    const { rowToHoliday, sampleHolidays } = await import('../features/holidays/holidaySeed');
+    const { data, error } = await supabase.from('holiday_configurations').select('*').order('start_at', { ascending: true });
+    if (!error) {
+      set({ holidayConfigs: (data || []).map(rowToHoliday), holidayConfigsLoading: false, holidayConfigsFetched: true, holidaysLocal: false });
+      return;
+    }
+    console.warn('fetchHolidayConfigs:', error.message);
+    set({ holidayConfigs: sampleHolidays(), holidayConfigsLoading: false, holidayConfigsFetched: true, holidaysLocal: true });
+  },
+  saveHolidayConfig: async (holiday) => {
+    const { holidayToRow } = await import('../features/holidays/holidaySeed');
+    const now = new Date().toISOString();
+    const existing = holiday.id && get().holidayConfigs.find(h => h.id === holiday.id);
+    const next = {
+      ...holiday,
+      id: holiday.id || `hol-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      createdBy: existing?.createdBy || holiday.createdBy || get().currentUserProfile?.name || null,
+      createdAt: existing?.createdAt || now,
+      updatedAt: now,
+    };
+    if (!get().holidaysLocal) {
+      const { error } = await supabase.from('holiday_configurations').upsert(holidayToRow(next), { onConflict: 'id' });
+      if (error) {
+        console.warn('saveHolidayConfig:', error.message);
+        get().showToast?.('Could not save the holiday. Try again.');
+        return null;
+      }
+    }
+    set(s => ({ holidayConfigs: existing ? s.holidayConfigs.map(h => (h.id === next.id ? next : h)) : [...s.holidayConfigs, next] }));
+    return next;
+  },
+  deleteHolidayConfig: async (id) => {
+    if (!get().holidaysLocal) {
+      const { error } = await supabase.from('holiday_configurations').delete().eq('id', id);
+      if (error) {
+        console.warn('deleteHolidayConfig:', error.message);
+        get().showToast?.('Could not delete the holiday. Try again.');
+        return false;
+      }
+    }
+    set(s => ({ holidayConfigs: s.holidayConfigs.filter(h => h.id !== id) }));
+    return true;
+  },
+
   // ── Appointment reassignment (Reassign Appointments drawer → Confirm) ──
   // A job carries out a confirmed plan on `appointments` and keeps the
   // outcome in reassignment_jobs (summary drawer, History tab). Until that

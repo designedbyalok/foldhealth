@@ -18,8 +18,14 @@ const PAGE = { w: 595, h: 842 };
 const MARGIN = 24;
 // Cover logo placement: default scales (the sizes the cover was designed
 // at), the inset from the page edge, and the top of the "Provided By" row.
-export const DEFAULT_LOGO_SCALE = 50;
-export const DEFAULT_CLIENT_LOGO_SCALE = 35;
+/** Cover title and introduction type: Inter, a weight, a size in pt. */
+export const COVER_TITLE_STYLE = { family: 'Inter', weight: 'semibold', size: 30 };
+export const COVER_INTRO_STYLE = { family: 'Inter', weight: 'regular', size: 10 };
+export const DEFAULT_LOGO_SCALE = 30;
+export const DEFAULT_CLIENT_LOGO_SCALE = 25;
+// Cover logo height for a scale (10–100): 24 at 15%, 104 at 100%, in a
+// straight line. Both the employer and the clinic logo use it.
+const logoHeight = (scale) => 24 + (scale - 15) * (80 / 85);
 const COVER_EDGE = 48;
 const COVER_FOOT_Y = 755;
 const CONTENT_W = PAGE.w - MARGIN * 2;
@@ -129,14 +135,36 @@ export function registerFonts(doc, fonts) {
   SEMIBOLD = fonts.semibold ? ['InterSemiBold', 'normal'] : ['Inter', 'bold'];
 }
 
-function setWeight(doc, weight) {
-  if (weight === 'medium') doc.setFont(MEDIUM[0], MEDIUM[1]);
+// Cover fonts other than Inter, registered for this document: family → true.
+let EXTRA_FAMILIES = new Set();
+const EXTRA_WEIGHTS = ['regular', 'medium', 'semibold', 'bold'];
+
+/**
+ * Registers the cover's other fonts: `{ [family]: { regular, medium, semibold, bold } }`
+ * (base64 TTFs). A family that isn't here draws in Inter.
+ */
+export function registerCoverFonts(doc, fonts = {}) {
+  EXTRA_FAMILIES = new Set();
+  Object.entries(fonts).forEach(([family, files]) => {
+    if (!files || EXTRA_WEIGHTS.some(w => !files[w])) return;
+    EXTRA_WEIGHTS.forEach((w) => {
+      const file = `${family.replace(/\s+/g, '')}-${w}.ttf`;
+      doc.addFileToVFS(file, files[w]);
+      doc.addFont(file, `${family}-${w}`, 'normal');
+    });
+    EXTRA_FAMILIES.add(family);
+  });
+}
+
+function setWeight(doc, weight, family) {
+  if (family && EXTRA_FAMILIES.has(family)) doc.setFont(`${family}-${EXTRA_WEIGHTS.includes(weight) ? weight : 'regular'}`, 'normal');
+  else if (weight === 'medium') doc.setFont(MEDIUM[0], MEDIUM[1]);
   else if (weight === 'semibold') doc.setFont(SEMIBOLD[0], SEMIBOLD[1]);
   else doc.setFont(FAMILY, weight === 'bold' ? 'bold' : 'normal');
 }
 
-function text(doc, str, x, y, { size = 8, color = C.body, weight = 'regular', align = 'left', baseline = 'alphabetic', angle } = {}) {
-  setWeight(doc, weight);
+function text(doc, str, x, y, { size = 8, color = C.body, weight = 'regular', family, align = 'left', baseline = 'alphabetic', angle } = {}) {
+  setWeight(doc, weight, family);
   doc.setFontSize(size);
   ink(doc, color);
   doc.text(String(str), x, y, { align, baseline, ...(angle != null ? { angle } : {}) });
@@ -1072,15 +1100,18 @@ function fadingGrid(doc, color, x0, y0, w, h, cx, cy, rx, ry) {
  *   gradient) or `{ type: 'image', dataUrl, format, width, height }`
  * @param {{ dataUrl }} [cover.logo]       – Employer logo (Fold Health wordmark by default)
  * @param {{ dataUrl }} [cover.clientLogo] – Provider logo for "Provided By"
- * @param {number} [cover.logoScale]       – Employer logo size, 10–100 (50 is the default size)
+ * @param {number} [cover.logoScale]       – Employer logo size, 10–100 (30 is the default size)
  * @param {string} [cover.logoAlign]       – '{top|middle|bottom}-{left|center|right}'. Middle keeps
  *   the logo above the title, aligned to the title block; top and bottom move it to the page edge.
- * @param {number} [cover.clientLogoScale] – "Provided By" logo size, 10–100 (35 is the default size)
+ * @param {number} [cover.clientLogoScale] – "Provided By" logo size, 10–100 (25 is the default size)
  * @param {string} [cover.clientLogoAlign] – 'left' | 'center' | 'right'
+ * @param {{ weight: string, size: number }} [cover.titleStyle] – Title weight and size (pt)
+ * @param {{ weight: string, size: number }} [cover.introStyle] – Introduction weight and size (pt)
  */
 function coverPage(doc, {
   title, range, description, background = DEFAULT_COVER_BACKGROUND, logo, clientLogo,
   logoScale = DEFAULT_LOGO_SCALE, logoAlign = 'middle-center', clientLogoScale = DEFAULT_CLIENT_LOGO_SCALE, clientLogoAlign = 'center',
+  titleStyle = COVER_TITLE_STYLE, introStyle = COVER_INTRO_STYLE,
 }) {
   const light = isLightBackground(background);
   const ink1 = light ? C.black : [255, 255, 255];
@@ -1104,25 +1135,29 @@ function coverPage(doc, {
 
   // Centre stack: wordmark, 24pt gap, title, date range, description.
   const descW = 366;
-  setWeight(doc, 'regular');
-  doc.setFontSize(10);
+  // Lines are 1.2× the size; at the defaults (30 / 10) that's the Figma 36 / 12.
+  const titleLine = titleStyle.size * 1.2;
+  const descLine = introStyle.size * 1.2;
+  setWeight(doc, introStyle.weight, introStyle.family);
+  doc.setFontSize(introStyle.size);
   const descLines = description ? doc.splitTextToSize(description, descW) : [];
-  setWeight(doc, 'semibold');
-  doc.setFontSize(30);
+  setWeight(doc, titleStyle.weight, titleStyle.family);
+  doc.setFontSize(titleStyle.size);
   const titleLines = doc.splitTextToSize(title, 514);
-  // Employer logo slot at the default scale: 151 × 28 for the wordmark;
-  // uploads may be up to 48 tall. Scale grows or shrinks the slot.
-  const k = logoScale / DEFAULT_LOGO_SCALE;
+  // Employer logo: logoHeight tall, its width from its own proportions
+  // (never wider than the title block).
+  const logoH0 = logoHeight(logoScale);
   const logoBox = logo?.dataUrl
-    ? (logo.width ? fitLogo(logo, 151 * k, 48 * k) : { w: 151 * k, h: 28 * k })
+    ? (logo.width ? fitLogo(logo, 514, logoH0) : { w: logoH0 * (151 / 28), h: logoH0 })
     : { w: 0, h: 0 };
   const [vAlign, hAlign] = logoAlign.split('-');
   const inStack = !!logo?.dataUrl && vAlign === 'middle';
   const logoH = inStack ? logoBox.h : 0;
-  const titleH = titleLines.length * 36;
+  const titleH = titleLines.length * titleLine;
   const rangeH = 14.4;
-  const descH = descLines.length * 12;
-  const stackH = (logoH ? logoH + 24 : 0) + titleH + 4 + rangeH + (descLines.length ? 4 + descH : 0);
+  const descH = descLines.length * descLine;
+  const STACK_GAP = 8; // title → date range → introduction
+  const stackH = (logoH ? logoH + 24 : 0) + titleH + STACK_GAP + rangeH + (descLines.length ? STACK_GAP + descH : 0);
   let y = (PAGE.h - stackH) / 2;
   if (logo?.dataUrl) {
     // Middle row lines up with the title block; top and bottom rows with the page margins.
@@ -1133,16 +1168,17 @@ function coverPage(doc, {
     if (inStack) y += logoH + 24;
   }
   titleLines.forEach((line, i) => {
-    text(doc, line, PAGE.w / 2, y + 28 + i * 36, { size: 30, color: ink1, weight: 'semibold', align: 'center' });
+    text(doc, line, PAGE.w / 2, y + titleLine - titleStyle.size * 0.27 + i * titleLine, { size: titleStyle.size, color: ink1, weight: titleStyle.weight, family: titleStyle.family, align: 'center' });
   });
-  y += titleH + 4;
-  text(doc, range, PAGE.w / 2, y + 11, { size: 12, color: ink1, weight: 'medium', align: 'center' });
+  y += titleH + STACK_GAP;
+  // The date range follows the introduction's font, keeping its own weight and size.
+  text(doc, range, PAGE.w / 2, y + 11, { size: 12, color: ink1, weight: 'medium', family: introStyle.family, align: 'center' });
   y += rangeH;
   if (descLines.length) {
-    setWeight(doc, 'regular');
-    doc.setFontSize(10);
+    setWeight(doc, introStyle.weight, introStyle.family);
+    doc.setFontSize(introStyle.size);
     ink(doc, ink2);
-    doc.text(descLines, PAGE.w / 2, y + 4 + 9, { align: 'center', lineHeightFactor: 1.2 });
+    doc.text(descLines, PAGE.w / 2, y + STACK_GAP + introStyle.size * 0.9, { align: 'center', lineHeightFactor: 1.2 });
   }
 
   // "Provided By:" with the employer's logo, centred near the foot.
@@ -1151,10 +1187,10 @@ function coverPage(doc, {
     doc.setFontSize(12);
     const label = 'Provided By:';
     const labelW = doc.getTextWidth(label);
-    const ck = clientLogoScale / DEFAULT_CLIENT_LOGO_SCALE;
-    const boxW = 54 * ck;
-    const boxH = 24 * ck;
-    const logoW = fitLogo(clientLogo, boxW, boxH);
+    // logoHeight tall, its width from its proportions, the row kept on the page.
+    const logoW = fitLogo(clientLogo, PAGE.w - COVER_EDGE * 2 - labelW - 4, logoHeight(clientLogoScale));
+    const boxW = logoW.w;
+    const boxH = logoW.h;
     const groupW = labelW + 4 + boxW;
     const gx = clientLogoAlign === 'left' ? COVER_EDGE
       : clientLogoAlign === 'right' ? PAGE.w - COVER_EDGE - groupW
@@ -1199,6 +1235,7 @@ export function generatedOnLabel(date = new Date()) {
  *   the built-in footer. The cover has no header or footer, and page 1 is the first content page.
  * @param {object} [report.cover] – Adds the cover page: `{ range, description?,
  *   background?, logo?, clientLogo? }` (see coverPage)
+ * @param {object} [report.coverFonts] – The cover's other fonts, `{ [family]: { regular, medium, semibold, bold } }` (base64)
  * @param {{ regular, medium, semibold, bold, italic, boldItalic }} [report.fonts] – Inter TTFs, base64;
  *   without them the PDF falls back to Helvetica
  * @param {{ id?: string, title: string, subtitle?: string, note?: string, items: object[] }[]} report.sections – `note` is
@@ -1223,6 +1260,7 @@ export function generateEmployerReportPdf(report) {
 export function generateEmployerReport(report) {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   registerFonts(doc, report.fonts);
+  registerCoverFonts(doc, report.coverFonts);
   const palette = tokenPalette();
   const hasCover = !!report.cover;
   const anchors = {};

@@ -33,6 +33,7 @@ import { CCM_WORKLIST_MEMBERS } from '../src/features/ccm-worklist/data/mock.js'
 import { EMPLOYER_IMPACT_EMPLOYERS, employerImpactRows, employerImpactExportRows } from '../src/features/analytics/views/employer/employerImpactSeed.js';
 import { sampleOooRecords, demoOooForUser, oooToRow } from '../src/features/ooo/oooSeed.js';
 import { sampleOnCallSchedules, onCallToRow } from '../src/features/ooo/onCallSeed.js';
+import { sampleHolidays, holidayToRow } from '../src/features/holidays/holidaySeed.js';
 import { REPORT_HEADER_OPTIONS, REPORT_FOOTER_OPTIONS } from '../src/features/email-builder/reportHeaderComponent.js';
 import { SNP_WORKLIST_MEMBERS } from '../src/features/snp-worklist/data/mock.js';
 import { CAREGAP_ACTIVITY_MOCK } from '../src/features/hedis-worklist/data/caregapActivityMock.js';
@@ -1031,6 +1032,14 @@ async function main() {
       const { error } = rows.length ? await supabase.from('on_call_schedules').upsert(rows, { onConflict: 'id' }) : { error: null };
       if (error) { console.error('  ✗', error.message); } else { console.log(`  ✓ ${rows.length} schedules`); }
     }
+  }
+
+  // Holiday configurations: past, ongoing and upcoming, at the demo departments.
+  console.log('Seeding holiday_configurations...');
+  {
+    const rows = sampleHolidays().map(holidayToRow);
+    const { error } = await supabase.from('holiday_configurations').upsert(rows, { onConflict: 'id' });
+    if (error) { console.error('  ✗', error.message); } else { console.log(`  ✓ ${rows.length} holidays`); }
   }
 
   console.log('Seeding patient_social_history...');
