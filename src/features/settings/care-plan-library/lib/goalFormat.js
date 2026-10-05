@@ -35,6 +35,20 @@ export const MEASURE_CONFIG = {
   Walking: { unit: 'steps' },
   Running: { unit: 'minutes' },
 
+  // Diet — the goal editor offers these measures, so each needs its unit or
+  // the target renders as a bare number. Per-day intake is expressed by the
+  // goal's frequency (Daily), so the unit is the base unit.
+  Sodium: { unit: 'mg' },
+  Carbohydrates: { unit: 'g' },
+  Protein: { unit: 'g' },
+  Fiber: { unit: 'g' },
+  Sugar: { unit: 'g' },
+  'Saturated Fat': { unit: 'g' },
+  Water: { unit: 'oz' },
+  'Fruits & Vegetables': { unit: 'servings' },
+  'DASH Adherence': { unit: '%' },
+  'Mediterranean Adherence': { unit: '%' },
+
   // Lab results — units so a saved lab target renders as "< 7 %".
   'Hemoglobin A1c': { unit: '%' },
   'Estim. Avg Glu (eAG)': { unit: 'mg/dL' },
@@ -107,6 +121,12 @@ export function goalTargetUnitMissing(g) {
   if ((MEASURE_CONFIG[g.measure] || {}).kind === 'select') return false;
   if (goalTargetUnit(g)) return false;
   return /^\s*-?\d+(\.\d+)?\s*$/.test(String(g.targetValue));
+}
+
+/** "Daily" / "Weekly" — how often the target applies, when one is set. */
+export function formatGoalFrequency(g) {
+  if (!g || g.setTarget === false || !g.frequency) return '';
+  return String(g.frequency);
 }
 
 export function formatGoalDuration(g) {

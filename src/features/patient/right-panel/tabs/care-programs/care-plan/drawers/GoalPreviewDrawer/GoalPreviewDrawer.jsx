@@ -38,7 +38,7 @@ import { computeDueDate, formatRecurrenceLabel } from '../../tables/CarePlanInte
 import { parseCarePlanDate } from '../../tables/carePlanTableModel';
 import { useScrollToSection } from '../../lib/useScrollToSection';
 import { Tooltip } from '../../../../../../../../components/Tooltip/Tooltip';
-import { formatGoalTarget, formatGoalDuration } from '../../../../../../../settings/care-plan-library/lib';
+import { formatGoalTarget, formatGoalDuration, formatGoalFrequency } from '../../../../../../../settings/care-plan-library/lib';
 import { goalProgressBand, goalProgressTone } from '../../lib/goalMetrics';
 import { goalCascade, barrierGoalIdsOf } from '../../lib/carePlanGoalCascade';
 import { RemoveGoalDialog } from '../RemoveGoalDialog';
@@ -147,13 +147,15 @@ function fmtStamp(iso) {
 const initialsOf = (name) => (name || '').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
 // Rebuild the goal's descriptive subtitle from its structured values so the
-// hero line ("Blood pressure < 140/90 mmHg • 3 Months") reflects edits made in
+// hero line ("Blood pressure < 140/90 mmHg • Daily • 3 Months") reflects edits made in
 // the Edit Goal drawer. Returns '' when there's nothing structured to show.
 function buildGoalSubtitle(g) {
   const target = formatGoalTarget(g);
   const dur = formatGoalDuration(g);
   const left = [g.measure, target].filter(Boolean).join(' ').trim();
-  return [left, dur].filter(Boolean).join(' • ');
+  // Frequency stays its own part (see the plan table's meta line).
+  const freq = target ? formatGoalFrequency(g) : '';
+  return [left, freq, dur].filter(Boolean).join(' • ');
 }
 
 function splitArrow(detail) {

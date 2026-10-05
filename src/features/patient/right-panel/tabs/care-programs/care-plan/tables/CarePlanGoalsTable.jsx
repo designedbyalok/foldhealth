@@ -26,6 +26,7 @@ import {
   normalizeCategory,
   goalCategoryIcon,
   formatGoalTarget,
+  formatGoalFrequency,
   goalTargetUnitMissing,
 } from '../../../../../../settings/care-plan-library/lib';
 import styles from './carePlanTables.module.css';
@@ -174,6 +175,8 @@ export function CarePlanGoalsTable({
     const isHidden = (k) => (hidden ? hidden.has(k) : false);
     const hasReading = g.currentValue && g.currentValue !== 'No Data';
     const start = fmtCarePlanDate(g.createdAt);
+    const hasTarget = normalizeCategory(g.category) !== 'Assessment' && !!formatGoalTarget(g);
+    const frequency = formatGoalFrequency(g);
     const targetDate = (prefix) => (
       <GbiMetaDate
         label={prefix}
@@ -196,6 +199,9 @@ export function CarePlanGoalsTable({
           },
           isHidden('targetDate') && { key: 'target', node: targetDate('Target date') },
           { key: 'goal', node: <GoalTargetValue goal={g} /> },
+          // Frequency is its own segment: glued to the unit, "< 160 lbs
+          // weekly" would read as a rate when it means "checked weekly".
+          hasTarget && frequency && { key: 'freq', node: <span className={styles.metaText}>{frequency}</span> },
           hasReading && {
             key: 'current',
             node: <span className={styles.metaText}>Current {g.currentValue}</span>,
