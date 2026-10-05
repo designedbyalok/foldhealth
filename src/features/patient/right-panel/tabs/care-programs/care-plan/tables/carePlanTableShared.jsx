@@ -59,10 +59,6 @@ export const GBI_STATUS_TONE = {
   'Not Met': 'error',
 };
 
-export const CLOSED_BARRIER_STATUSES = new Set(['Met', 'Not Met']);
-
-export const isClosedBarrier = (status) => CLOSED_BARRIER_STATUSES.has(status);
-
 const HEADER_COMPACT = { paddingLeft: 6, paddingRight: 6 };
 
 /** Fixed widths shared across Goals / Interventions / Barriers so columns align when stacked. */

@@ -21,13 +21,12 @@ import {
   GbiNameCell,
   GbiProgressCell,
   GbiStatusButton,
-  isClosedBarrier,
   GBI_COL_WIDTH,
   GOAL_COLUMNS,
   INTERVENTION_COLUMNS,
   BARRIER_COLUMNS,
 } from '../../tables/carePlanTableShared';
-import { fmtCarePlanDate } from '../../tables/carePlanTableModel';
+import { fmtCarePlanDate, isCompletedStatus } from '../../tables/carePlanTableModel';
 import { enrichGoalRows, enrichInterventionRows } from '../../tables/carePlanTableSort';
 import { CARE_PLAN_INTERVENTION_ICONS } from '../../lib/carePlanInterventionMenu';
 import { assigneeAvatarVariant, computeDueDate } from '../../tables/CarePlanInterventionsTable';
@@ -648,11 +647,13 @@ function BarrierRow({ b, onOpen, onStatusMenu, overlap }) {
 function BarriersTable({ rows, onOpen, onStatusMenu, programOverlap }) {
   const [closedOpen, setClosedOpen] = useState(false);
   const { sorted, sortKey, sortDir, requestSort } = useTableSort(rows, 'title', 'asc');
+  // Only a Met barrier is resolved; Not Met stays in the open list so an
+  // unresolved blocker can't be tucked away (same rule as the plan view).
   const { openRows, closedRows } = useMemo(() => {
     const open = [];
     const closed = [];
     for (const row of sorted) {
-      if (isClosedBarrier(row.status)) closed.push(row);
+      if (isCompletedStatus(row.status)) closed.push(row);
       else open.push(row);
     }
     return { openRows: open, closedRows: closed };
@@ -696,7 +697,8 @@ function BarriersTable({ rows, onOpen, onStatusMenu, programOverlap }) {
               color="var(--neutral-300)"
               className={`${sharedRow.closedBarriersChevron} ${closedOpen ? '' : sharedRow.closedBarriersChevronClosed}`}
             />
-            <span className={sharedRow.closedBarriersLabel}>Closed Barriers</span>
+            <span className={sharedRow.closedBarriersLabel}>Resolved Barriers</span>
+            <span className={sharedRow.completedCount}>{closedRows.length}</span>
           </button>
           {closedOpen && (
             <table className={sharedRow.closedBarriersTable}>
