@@ -118,6 +118,14 @@
   font-weight: 500;
   color: var(--neutral-500);
 }
+/* Read-only description in the resolved (Met) card. */
+.descriptionText {
+  margin: 0;
+  font-size: var(--font-base);
+  line-height: var(--leading-normal);
+  color: var(--neutral-400);
+  white-space: pre-wrap;
+}
 
 
 /* Note editor — plain Textarea sits above a Discard / Save row. */

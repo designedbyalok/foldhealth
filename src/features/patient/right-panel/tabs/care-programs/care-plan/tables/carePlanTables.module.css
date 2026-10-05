@@ -228,6 +228,19 @@
 .nameTextStacked .nameSecondary {
   width: 100%;
 }
+/* Editable title: only the text itself is the edit target, so a click on
+   the empty space beside it still opens the drawer. While typing it wraps
+   instead of clipping under an ellipsis. */
+.nameTextStacked .nameEditable,
+.nameEditable {
+  width: fit-content;
+  max-width: 100%;
+}
+.nameEditable:focus {
+  white-space: normal;
+  text-overflow: clip;
+  overflow: visible;
+}
 .namePrimary {
   flex-shrink: 1;
   min-width: 0;

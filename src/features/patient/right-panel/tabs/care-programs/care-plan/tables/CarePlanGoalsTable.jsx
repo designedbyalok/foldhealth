@@ -68,6 +68,8 @@ export function CarePlanGoalsTable({
   onTargetDateChange,
   // Notes icon → open the goal drawer at its Note section.
   onOpenNotes,
+  // (goal, title) => void — saves an in-place title edit.
+  onTitleChange,
   // (goal) => boolean — whether the goal has a current (undeleted) note.
   hasNote,
   linked,
@@ -173,7 +175,9 @@ export function CarePlanGoalsTable({
     if (template) return renderTemplateRow(g);
     const hidden = ctx?.hiddenSet || null;
     const isHidden = (k) => (hidden ? hidden.has(k) : false);
-    const hasReading = g.currentValue && g.currentValue !== 'No Data';
+    // An Assessment's reading is its "Completed" mark; Met already says so.
+    const hasReading = g.currentValue && g.currentValue !== 'No Data'
+      && normalizeCategory(g.category) !== 'Assessment';
     const start = fmtCarePlanDate(g.createdAt);
     const hasTarget = normalizeCategory(g.category) !== 'Assessment' && !!formatGoalTarget(g);
     const frequency = formatGoalFrequency(g);
@@ -198,7 +202,7 @@ export function CarePlanGoalsTable({
             node: <span className={styles.metaDate}>Start {start}</span>,
           },
           isHidden('targetDate') && { key: 'target', node: targetDate('Target date') },
-          { key: 'goal', node: <GoalTargetValue goal={g} /> },
+          hasTarget && { key: 'goal', node: <GoalTargetValue goal={g} /> },
           // Frequency is its own segment: glued to the unit, "< 160 lbs
           // weekly" would read as a rate when it means "checked weekly".
           hasTarget && frequency && { key: 'freq', node: <span className={styles.metaText}>{frequency}</span> },
@@ -235,6 +239,8 @@ export function CarePlanGoalsTable({
             meta={meta}
             layout="stacked"
             showLink={false}
+            onTitleCommit={canEdit && onTitleChange ? (t) => onTitleChange(g, t) : undefined}
+            titleLabel="Goal title"
           />
         </td>
         {!isHidden('createdDate') && (

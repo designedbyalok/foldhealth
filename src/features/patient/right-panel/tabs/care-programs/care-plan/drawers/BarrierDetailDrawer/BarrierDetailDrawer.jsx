@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useScrollToSection } from '../../lib/useScrollToSection';
 import { Drawer } from '../../../../../../../../components/Drawer/Drawer';
+import { EditableText } from '../../../../../../../../components/EditableText/EditableText';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { Input } from '../../../../../../../../components/Input/Input';
@@ -15,8 +16,13 @@ import { LinkGoalToBarrierDrawer } from './LinkGoalToBarrierDrawer';
 import { MenuPopover } from '../../../../../../../../components/MenuPopover/MenuPopover';
 import { ConfirmDialog } from '../../../../../../../../components/ConfirmDialog/ConfirmDialog';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
-import { formatGoalTarget, formatGoalDuration } from '../../../../../../../settings/care-plan-library/lib';
+import { formatGoalTarget, formatGoalDuration, formatGoalFrequency } from '../../../../../../../settings/care-plan-library/lib';
+import { norm } from '../../CarePlanView/carePlanViewNorm';
+import { TemplatePreviewDrawer } from '../TemplatePreviewDrawer/TemplatePreviewDrawer';
 import styles from './BarrierDetailDrawer.module.css';
+
+// Stable fallback so memo deps don't change every render.
+const NO_ITEMS = [];
 import goalStyles from '../GoalPreviewDrawer/GoalPreviewDrawer.module.css';
 
 // Match the plan-level Barriers table exactly — same option list and
@@ -140,7 +146,10 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
   // `goalIds`. We also merge in every legacy title-clone's goal_id so
   // pre-migration data reads as one logical barrier here too (matches
   // the same consolidation the Barriers table does).
-  const normalizedTitle = (barrier?.title || '').trim().toLowerCase();
+  // The drawer opens with a snapshot; saves land in the store, so read the
+  // live row for anything compared against or written back.
+  const liveBarrier = barriersInPlan.find(b => b.id === barrier?.id) || barrier;
+  const normalizedTitle = (liveBarrier?.title || '').trim().toLowerCase();
   const legacyClones = useMemo(
     () => barriersInPlan.filter(b => (b.title || '').trim().toLowerCase() === normalizedTitle),
     [barriersInPlan, normalizedTitle],
@@ -169,22 +178,27 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
   // authored under a plan template drags that template into the
   // barrier's linked set. Dedupe by label so a barrier linked to two
   // goals under the same template only shows the template once.
+  // Applied templates this barrier came from: the same title match the plan's
+  // template chips filter by — the template lists this barrier, or one of the
+  // goals it's linked to. (Template names often equal a condition's name, so
+  // listing conditions here used to look right without being right.)
+  const carePlanTemplates = useAppStore(s => s.carePlanTemplates) ?? NO_ITEMS;
+  const libraryGoals = useAppStore(s => s.carePlanGoals) ?? NO_ITEMS;
   const linkedTemplates = useMemo(() => {
-    const seen = new Map();
-    for (const { goal } of linkedGoals) {
-      const conditions = Array.isArray(goal?.conditions) ? goal.conditions : [];
-      for (const c of conditions) {
-        const label = typeof c === 'string' ? c : c?.label;
-        if (!label || seen.has(label)) continue;
-        seen.set(label, { label, sourceGoalId: goal.id, sourceGoalTitle: goal.title });
-      }
-    }
-    return Array.from(seen.values());
-  }, [linkedGoals]);
+    const applied = slice?.plan?.appliedTemplateIds || [];
+    const barrierKey = norm(liveBarrier?.title);
+    const goalKeys = new Set(linkedGoals.map(({ goal }) => norm(goal?.title)));
+    const goalTitleOf = (e) => norm((e?.id ? libraryGoals.find(g => g.id === e.id)?.title : null) || e?.title);
+    return applied
+      .map(id => carePlanTemplates.find(t => t.id === id))
+      .filter(Boolean)
+      .filter(t => (t.barriers || []).some(b => norm(b?.title) === barrierKey)
+        || (t.goals || []).some(g => goalKeys.has(goalTitleOf(g))));
+  }, [slice?.plan?.appliedTemplateIds, carePlanTemplates, libraryGoals, linkedGoals, liveBarrier?.title]);
 
-  // Editable barrier fields — title + status are the two live editors
-  // in the header; the rest is preserved as-is.
   const [title, setTitle] = useState(barrier.title || '');
+  const [description, setDescription] = useState(barrier.description || '');
+  const [previewTemplate, setPreviewTemplate] = useState(null);
   const [status, setStatus] = useState(barrier.status || 'Not Started');
   // Typeahead — surface library barriers matching the current input so
   // the user can pick an existing entry instead of re-typing / creating
@@ -212,7 +226,9 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
   // Terminal state: once a barrier is Met or Not Met the record locks —
   // no rename, no link / unlink, no note edits. Users flip status back to
   // In Progress / On Hold to reopen the drawer for editing.
-  const isTerminal = status === 'Met' || status === 'Not Met';
+  // Only a Met barrier is resolved; Not Met is still an open blocker, so it
+  // stays editable (same rule as the plan's Resolved Barriers group).
+  const isTerminal = status === 'Met';
   const [linkDrawerOpen, setLinkDrawerOpen] = useState(false);
   const [unlinkConfirm, setUnlinkConfirm] = useState(null);
   const [confirmDeleteBarrier, setConfirmDeleteBarrier] = useState(false);
@@ -294,8 +310,8 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
   // header "Update" button — auto-save was rolling too many tiny writes
   // to Supabase for each keystroke / dropdown click. Note edits still
   // save via their own "Add Note" / "Update Note" button.
-  const persistedTitle = (barrier.title || '').trim();
-  const persistedStatus = barrier.status || 'Not Started';
+  const persistedTitle = (liveBarrier.title || '').trim();
+  const persistedStatus = liveBarrier.status || 'Not Started';
   const persistBarrier = async (nextTitle, nextStatus, doneVerb) => {
     const rows = legacyClones.length ? legacyClones : [barrier];
     for (const row of rows) {
@@ -303,15 +319,33 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
         ...row,
         title: nextTitle,
         status: nextStatus,
+        description: description.trim(),
         goalIds: Array.from(linkedGoalIdSet),
       }, row.id);
     }
     if (doneVerb) showToast?.(doneVerb);
   };
-  const barrierDirty = title.trim() !== persistedTitle || status !== persistedStatus;
+  // The title saves on its own, so Update covers status + description only;
+  // `title` is just the typing draft used for suggestions.
+  const barrierDirty = status !== persistedStatus
+    || description.trim() !== (liveBarrier.description || '').trim();
+
+  // Title auto-saves on its own (status and description keep the Update
+  // button). Every legacy clone is renamed so the table keeps one row.
+  const titleElRef = useRef(null);
+  const saveTitle = async (next) => {
+    setTitleFocused(false);
+    if (!next || next === persistedTitle) return;
+    const rows = legacyClones.length ? legacyClones : [liveBarrier];
+    await Promise.all(rows.map(row => savePatientCarePlanBarrier(patientId, program, {
+      ...row,
+      title: next,
+      goalIds: Array.from(linkedGoalIdSet),
+    }, row.id)));
+  };
   const handleUpdateBarrier = async () => {
     if (!barrierDirty) return;
-    await persistBarrier(title.trim(), status, 'Barrier updated');
+    await persistBarrier(persistedTitle, status, 'Barrier updated');
   };
 
   const handleAddGoalClick = () => {
@@ -330,11 +364,11 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
       ...goalIds.filter(Boolean),
     ]));
     await savePatientCarePlanBarrier(patientId, program, {
-      ...barrier,
-      title: title.trim() || barrier.title,
-      description: barrier.description,
+      ...liveBarrier,
+      title: liveBarrier.title,
+      description: liveBarrier.description,
       status,
-      priority: barrier.priority || 'medium',
+      priority: liveBarrier.priority || 'medium',
       goalIds: nextGoalIds,
     }, barrier.id);
     showToast?.(goalIds.length === 1
@@ -437,8 +471,11 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
             <div className={styles.field}>
               <div className={styles.terminalCard}>
                 <div className={styles.terminalHead}>
-                  <span className={styles.terminalTitle}>{title || barrier.title}</span>
+                  <span className={styles.terminalTitle}>{liveBarrier.title}</span>
                 </div>
+                {(description || barrier.description) && (
+                  <p className={styles.descriptionText}>{description || barrier.description}</p>
+                )}
                 <div className={styles.metaLine}>
                   {startDate && <>Start Date : {startDate}</>}
                   {startDate && updatedDate && <span className={styles.metaDot}>&bull;</span>}
@@ -448,31 +485,39 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
             </div>
           ) : (
             <div className={styles.field}>
-              <span className={styles.label}>
-                Edit Barrier <span className={styles.required} aria-hidden>•</span>
-              </span>
+              {/* Title edits where it stands and saves on Enter / click away;
+                  matching library barrier names show below while typing. */}
               <div className={styles.titleFieldWrap}>
-                <Input
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  onFocus={() => setTitleFocused(true)}
-                  onBlur={() => { setTimeout(() => setTitleFocused(false), 120); }}
+                <EditableText
+                  value={liveBarrier.title || ''}
+                  onCommit={saveTitle}
+                  onDraftChange={(t) => { setTitle(t); setTitleFocused(true); }}
+                  onEditEnd={() => setTitleFocused(false)}
+                  elementRef={titleElRef}
                   placeholder="Barrier name"
-                  aria-label="Barrier name"
+                  ariaLabel="Barrier title"
+                  className={goalStyles.titleText}
                 />
                 {titleFocused && titleSuggestions.length > 0 && (
                   <ul className={styles.titleSuggestions} role="listbox" aria-label="Existing barriers">
-                    {titleSuggestions.map(s => (
-                      <li key={s.id}>
+                    {titleSuggestions.map(sug => (
+                      <li key={sug.id}>
                         <button
                           type="button"
                           className={styles.titleSuggestionRow}
                           role="option"
                           aria-selected="false"
+                          // Keep focus in the title so picking replaces the
+                          // text, then blur commits it like a typed edit.
                           onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => { setTitle(s.title); setTitleFocused(false); }}
+                          onClick={() => {
+                            const el = titleElRef.current;
+                            if (!el) return;
+                            el.textContent = sug.title;
+                            el.blur();
+                          }}
                         >
-                          {s.title}
+                          {sug.title}
                         </button>
                       </li>
                     ))}
@@ -484,6 +529,15 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
                 {startDate && updatedDate && <span className={styles.metaDot}>&bull;</span>}
                 {updatedDate && <>Last Update : {updatedDate} by {updatedByName}</>}
               </div>
+              {/* The plan table is single-line now, so the drawer is where a
+                  barrier's description is read and edited. */}
+              <span className={styles.label}>Description</span>
+              <Input
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="What is getting in the way, and why"
+                aria-label="Barrier description"
+              />
             </div>
           )}
 
@@ -521,8 +575,11 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
                 <ul className={styles.linkList}>
                   {linkedGoals.map(({ goal }) => {
                     const target = formatGoalTarget(goal);
-                    const duration = formatGoalDuration(goal);
-                    const subtitle = [target, duration].filter(Boolean).join(' for ');
+                    const subtitle = [
+                      target && `Target ${target}`,
+                      target && formatGoalFrequency(goal),
+                      formatGoalDuration(goal),
+                    ].filter(Boolean).join(' • ');
                     return (
                       <li key={goal.id} className={styles.linkRow}>
                         <span className={styles.linkIcon}>
@@ -586,39 +643,31 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
             {open.templates && (
               linkedTemplates.length === 0 ? (
                 <div className={styles.empty}>
-                  Link this barrier to a goal to inherit that goal&apos;s care-plan template.
+                  Not part of a care plan template applied to this plan.
                 </div>
               ) : (
                 <ul className={styles.linkList}>
-                  {linkedTemplates.map((t, i) => (
-                    <li key={`${t.label}-${i}`} className={styles.linkRow}>
+                  {linkedTemplates.map(t => (
+                    <li key={t.id} className={styles.linkRow}>
                       <span className={styles.linkIcon}>
                         <Icon name="solar:hand-heart-linear" size={16} color="var(--neutral-400)" />
                       </span>
                       <div className={styles.linkStack}>
-                        <span className={styles.linkTitle}>{t.label}</span>
+                        <span className={styles.linkTitle}>{t.name}</span>
+                        {(t.conditions || []).length > 0 && (
+                          <span className={styles.linkSubtitle}>{t.conditions.join(', ')}</span>
+                        )}
                       </div>
-                      {!isTerminal && (
-                        <div className={styles.linkActions}>
-                          <ActionButton
-                            icon="solar:arrow-right-up-linear"
-                            size="S"
-                            tooltip="Open template"
-                            onClick={() => { /* template detail route pending */ }}
-                          />
-                          {!consolidated && (
-                            <>
-                              <span className={styles.linkActionsDivider} aria-hidden />
-                              <ActionButton
-                                icon="solar:link-broken-minimalistic-linear"
-                                size="S"
-                                tooltip="Unlink"
-                                onClick={() => showToast?.('Unlink the associated goal to remove this template link')}
-                              />
-                            </>
-                          )}
-                        </div>
-                      )}
+                      {/* Template links come from the linked goals and the
+                          template contents, so they're not unlinked here. */}
+                      <div className={styles.linkActions}>
+                        <ActionButton
+                          icon="solar:arrow-right-up-linear"
+                          size="S"
+                          tooltip="Preview template"
+                          onClick={() => setPreviewTemplate(t)}
+                        />
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -736,7 +785,10 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
             emptyLabel="No activity for this barrier yet."
           />
         </div>
-      </Drawer>
+        {previewTemplate && (
+        <TemplatePreviewDrawer template={previewTemplate} onClose={() => setPreviewTemplate(null)} />
+      )}
+    </Drawer>
 
       {linkDrawerOpen && (
         <LinkGoalToBarrierDrawer

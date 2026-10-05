@@ -101,7 +101,7 @@ export function formatGoalTarget(g) {
 // other category and never clears it, so a customUnit elsewhere can be stale.
 // The category enum was renamed ('Other' → 'Others') — normalise so a
 // free-form goal still picks up its typed unit instead of dropping it.
-function goalTargetUnit(g) {
+export function goalTargetUnit(g) {
   const cfg = MEASURE_CONFIG[g.measure] || {};
   if (normalizeCategory(g.category) === 'Others') return g.customUnit || '';
   return (cfg.dual ? cfg.units?.[1] : cfg.unit) || '';

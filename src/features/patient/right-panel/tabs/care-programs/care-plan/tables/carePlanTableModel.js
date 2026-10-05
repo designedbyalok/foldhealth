@@ -33,3 +33,25 @@ export function isPastDue(v, status) {
   today.setHours(0, 0, 0, 0);
   return d < today;
 }
+
+/**
+ * Who owns an intervention. Only Internal Task is assigned to a staff
+ * member; every other kind runs on the member, so its owner is BY DESIGN
+ * the patient even when the row hasn't been backfilled yet.
+ * `patients` is the plan's patient as a one-item list.
+ */
+export function interventionOwner(i, patients) {
+  const isMemberTask = i?.kind !== 'internal-task';
+  const memberRow = (patients || [])[0] || null;
+  const rawName = i?.assignee?.name || '';
+  const rawInitials = i?.assignee?.initials || '';
+  const name = isMemberTask ? (memberRow?.name || rawName) : rawName;
+  const initials = isMemberTask ? (memberRow?.initials || rawInitials) : rawInitials;
+  return {
+    isMemberTask,
+    name,
+    initials,
+    // A member task is never truly unassigned — the patient owns it.
+    unassigned: !isMemberTask && (!name || name === 'Unassigned'),
+  };
+}

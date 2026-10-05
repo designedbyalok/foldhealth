@@ -20,6 +20,7 @@ import { useCarePlanOpenSections } from './useCarePlanOpenSections';
 import { useCarePlanNoteDrawer } from './useCarePlanNoteDrawer';
 import { useCarePlanViewFilters } from './useCarePlanViewFilters';
 import { linkedForGoal, linkedForChild, currentNoteLookup } from './carePlanLinkedItems';
+import { norm } from './carePlanViewNorm';
 import {
   CARE_PLAN_INTERVENTION_MENU,
   buildInterventionRecordFromConfig,
@@ -343,7 +344,16 @@ export function CarePlanView({ patientId, program }) {
     });
   };
 
-  const renameBarrier = (barrier, title) => savePatientCarePlanBarrier(patientId, program, { ...barrier, title }, barrier.id);
+  // The barrier table shows one row per title (legacy clones merged), so a
+  // rename updates every clone with the merged goal links, the same way the
+  // Barrier drawer saves, and they stay one row.
+  const renameBarrier = async (barrier, title) => {
+    const key = norm(barrier.title);
+    const clones = (data.barriers || []).filter(b => norm(b.title) === key);
+    await Promise.all((clones.length ? clones : [barrier]).map(row => (
+      savePatientCarePlanBarrier(patientId, program, { ...row, title, goalIds: barrier.goalIds || row.goalIds }, row.id)
+    )));
+  };
 
   // A picked row is the whole library goal, so a goal added here carries the
   // same definition (measure, target, duration) and the same linked items as
@@ -866,6 +876,7 @@ export function CarePlanView({ patientId, program }) {
             onRowMenu={setStatusMenu}
             onTargetDateChange={(goal, iso) => savePatientCarePlanGoal(patientId, program, { ...goal, targetDate: iso }, goal.id)}
             onOpenNotes={(g) => openNotesFor('goal', g)}
+            onTitleChange={(goal, title) => savePatientCarePlanGoal(patientId, program, { ...goal, title }, goal.id)}
             hasNote={(g) => noteLookup('goal', g.id)}
             linked={linkedForGoalRow}
             emptyState={filteredGoals.length === 0 ? <div className={styles.emptyRow}>No goals match the filters.</div> : null}
@@ -937,6 +948,7 @@ export function CarePlanView({ patientId, program }) {
               config: { ...(intv.config || {}), ...next },
             }, intv.id)}
             onOpenNotes={(i) => openNotesFor('intervention', i)}
+            onTitleChange={(intv, title) => savePatientCarePlanIntervention(patientId, program, { ...intv, title }, intv.id)}
             hasNote={(i) => noteLookup('intervention', i.id)}
             linked={linkedForChildRow}
             platformUsers={platformUsers}
@@ -985,6 +997,7 @@ export function CarePlanView({ patientId, program }) {
             onRowMenu={setStatusMenu}
             onOpenBarrier={setPreviewBarrier}
             onOpenNotes={(b) => openNotesFor('barrier', b)}
+            onTitleChange={renameBarrier}
             hasNote={(b) => noteLookup('barrier', b.id)}
             linked={linkedForChildRow}
             emptyState={filteredBarriers.length === 0 ? <div className={styles.emptyRow}>No barriers match the filters.</div> : null}

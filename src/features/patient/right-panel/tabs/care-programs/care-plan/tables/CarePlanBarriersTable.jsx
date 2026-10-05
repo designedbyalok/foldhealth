@@ -26,6 +26,7 @@ function BarrierRow({
   onOpenBarrier,
   onOpenNotes,
   hasNote,
+  onTitleChange,
   linked,
   template,
 }) {
@@ -58,6 +59,8 @@ function BarrierRow({
           meta={template ? (b.description || null) : null}
           linked={linked(b)}
           showLink={template}
+          onTitleCommit={!template && canEdit && onTitleChange ? (t) => onTitleChange(b, t) : undefined}
+          titleLabel="Barrier title"
         />
       </td>
       {!template && (
@@ -110,6 +113,8 @@ export function CarePlanBarriersTable({
   onOpenNotes,
   // (barrier) => boolean — whether it has a current (undeleted) note.
   hasNote,
+  // (barrier, title) => void — saves an in-place title edit.
+  onTitleChange,
   linked,
   template = false,
   emptyState,
@@ -173,6 +178,7 @@ export function CarePlanBarriersTable({
       onOpenBarrier={onOpenBarrier}
       onOpenNotes={onOpenNotes}
       hasNote={hasNote}
+      onTitleChange={onTitleChange}
       linked={linked}
       template={template}
     />

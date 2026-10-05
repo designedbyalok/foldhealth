@@ -208,6 +208,69 @@
 }
 .favorableOn { color: var(--status-success); border-color: var(--status-success); }
 .favorableOff { color: var(--status-error); border-color: var(--status-error); }
+/* Neither in nor out yet — the target couldn't be judged automatically. */
+.favorableIdle { color: var(--neutral-300); }
+
+/* ── Measure-aware reading entry ── */
+.readingEntry {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.readingDual {
+  display: flex;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.readingDual > * { flex: 1; min-width: 0; }
+.favorableGroup {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+.readingCaption {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+/* ── Goal target line + editable target date (hero) ── */
+.targetLine {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+}
+.targetWarn { display: inline-flex; align-items: center; }
+.metaRow {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: var(--font-sm);
+  line-height: 1.2;
+  color: var(--neutral-300);
+}
+.metaRowSep { padding: 0 var(--space-1); color: var(--neutral-200); }
+.metaDateBtn {
+  padding: 0 var(--space-1);
+  margin: 0 calc(-1 * var(--space-1));
+  border: none;
+  border-radius: var(--space-1);
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.metaDateBtn:hover { background: color-mix(in srgb, var(--neutral-500) 8%, transparent); }
+.metaDateBtn:focus-visible { outline: 2px solid var(--primary-200); outline-offset: 1px; }
+.metaDateBtn:disabled { cursor: default; background: none; }
+.metaDateOverdue { color: var(--status-error); }
+.metaDateUnset { color: var(--neutral-200); font-style: italic; }
+
+/* ── Assessment completion ── */
+.completionDone { color: var(--status-success); font-weight: 500; }
+.completionLate { color: var(--status-warning); font-weight: 400; }
+.completionAction { display: inline-flex; margin-left: var(--space-2); }
 
 /* ── Last Trends card ── */
 .trendsCard {
@@ -785,47 +848,17 @@
   outline: none;
 }
 .priorityTrigger:disabled { cursor: default; }
-.titleEditable,
-.titleInlineInput {
-  /* Shared box so the edit input drops into the exact spot the display
-     button occupied — no font-size / padding shift on click. */
-  display: inline-flex;
-  align-items: center;
+/* Drawer title, edited in place via EditableText (no input box, no ring).
+   The padding + negative margin give the hover tint room without shifting
+   the text. */
+.titleText {
   padding: var(--space-1);
   margin: calc(var(--space-1) * -1);
-  border: none;
-  background: transparent;
-  border-radius: var(--space-1);
   font-size: var(--font-lg);
   font-weight: 600;
   line-height: 1.25;
   color: var(--neutral-500);
   min-width: 0;
-  text-align: left;
-  transition: background 0.12s ease;
-}
-.titleEditable { cursor: text; }
-.titleEditable:hover:not(:disabled),
-.titleEditable:focus-visible:not(:disabled) {
-  background: var(--neutral-50);
-  outline: none;
-}
-.titleEditable:disabled { cursor: default; }
-.titleInlineInput {
-  width: 100%;
-  outline: none;
-  background: var(--neutral-0);
-  /* Match the shared Input primitive: 0.5px placeholder-text stroke,
-     4px radius, primary focus ring. */
-  border: 0.5px solid var(--placeholder-text);
-  border-radius: var(--space-1);
-  transition: border-color .15s, box-shadow .15s;
-  cursor: text;
-}
-.titleInlineInput:focus {
-  outline: none;
-  border-color: var(--primary-300);
-  box-shadow: 0 0 0 2px var(--primary-100);
 }
 .titleLarge {
   /* Retained for callers that render a static title outside the button. */
@@ -872,4 +905,37 @@
   font-size: var(--font-sm);
   font-weight: 400;
   line-height: 1.2;
+}
+
+/* ── Intervention schedule (no per-day completion is recorded) ── */
+.scheduleMet {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-base);
+  color: var(--status-success);
+}
+.scheduleList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.scheduleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) 0;
+  border-top: 0.5px solid var(--neutral-150);
+}
+.scheduleRow:first-child { border-top: none; }
+.scheduleDate {
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+  font-variant-numeric: tabular-nums;
+}
+.scheduleHint {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
 }

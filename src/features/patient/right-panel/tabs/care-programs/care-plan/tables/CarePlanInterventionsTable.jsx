@@ -22,7 +22,7 @@ import {
   GBI_COL_WIDTH,
 } from './carePlanTableShared';
 import { COMPACT_INTERVENTION_COLUMNS } from './carePlanTableColumns';
-import { isCompletedStatus, parseCarePlanDate, toPickerValue } from './carePlanTableModel';
+import { isCompletedStatus, parseCarePlanDate, toPickerValue, interventionOwner } from './carePlanTableModel';
 import { enrichInterventionRows } from './carePlanTableSort';
 import { CARE_PLAN_INTERVENTION_ICONS } from '../lib/carePlanInterventionMenu';
 import { KIND_LABELS } from '../../../../../../settings/care-plan-library/interventions/shared/interventionKinds';
@@ -53,17 +53,17 @@ function fmtDate(d) {
   return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}/${d.getFullYear()}`;
 }
 const NO_DUE_DATE = { iso: null, formatted: null };
-// Due date = user-picked override when present, else createdAt + the
-// configured duration. With neither, the intervention has no due date and
-// this returns nulls: callers show "No due date" rather than a projected
+// Due date, in order: the user-picked override, the paired task's due date
+// (kinds that spawn a Task), a legacy `config.dueDate`, then createdAt + the
+// configured duration. With none of these the intervention has no due date
+// and this returns nulls: callers show "No due date" rather than a projected
 // one. Returns { iso, formatted } so the calendar can seed itself and the
-// cell has a display string in one call.
-export function computeDueDate(intv) {
-  const override = intv?.config?.dueDateOverride;
-  if (override) {
-    // Picked dates are stored date-only; parse locally so they don't
-    // render a day early west of UTC.
-    const d = parseCarePlanDate(override);
+// cell has a display string in one call. Table and drawers share it.
+export function computeDueDate(intv, pairedTask = null) {
+  // Stored dates are date-only; parse locally so they don't render a day
+  // early west of UTC.
+  for (const raw of [intv?.config?.dueDateOverride, pairedTask?.dueDate || pairedTask?.due_date, intv?.config?.dueDate]) {
+    const d = raw ? parseCarePlanDate(raw) : null;
     if (d) return { iso: d.toISOString(), formatted: fmtDate(d) };
   }
   const raw = intv?.config?.dueOffset != null && intv?.config?.dueUnit
@@ -209,25 +209,14 @@ export function assigneeAvatarVariant(name, users, patients) {
   return isMemberAssignee(name, users, patients) ? 'patient' : 'staff';
 }
 
-// Who actually owns an intervention. Only Internal Task lets the user
-// reassign — every other kind runs on the member, so the assignee is BY
-// DESIGN the patient even when the row hasn't been backfilled yet.
+// The table adds the avatar colour to the shared ownership rule.
 function effectiveAssignee(i, patients, assigneeUsers) {
-  const isMemberTask = i.kind !== 'internal-task';
-  const memberRow = (patients || [])[0] || null;
-  const rawName = i.assignee?.name || '';
-  const rawInitials = i.assignee?.initials || '';
-  const name = isMemberTask ? (memberRow?.name || rawName) : rawName;
-  const initials = isMemberTask ? (memberRow?.initials || rawInitials) : rawInitials;
+  const owner = interventionOwner(i, patients);
   return {
-    isMemberTask,
-    name,
-    initials,
+    ...owner,
     // Member tasks always render the patient variant, even when the stored
     // name is still "Unassigned" (legacy data).
-    avatarVariant: isMemberTask ? 'patient' : assigneeAvatarVariant(name, assigneeUsers, patients),
-    // A member task is never truly unassigned — the patient owns it.
-    unassigned: !isMemberTask && (!name || name === 'Unassigned'),
+    avatarVariant: owner.isMemberTask ? 'patient' : assigneeAvatarVariant(owner.name, assigneeUsers, patients),
   };
 }
 
@@ -251,6 +240,8 @@ export function CarePlanInterventionsTable({
   onRecurrenceChange,
   // Notes icon → open the intervention drawer at its Note section.
   onOpenNotes,
+  // (intervention, title) => void — saves an in-place title edit.
+  onTitleChange,
   // (intervention) => boolean — whether it has a current (undeleted) note.
   hasNote,
   linked,
@@ -462,6 +453,8 @@ export function CarePlanInterventionsTable({
             meta={meta}
             layout="stacked"
             showLink={false}
+            onTitleCommit={canEdit && onTitleChange ? (t) => onTitleChange(i, t) : undefined}
+            titleLabel="Intervention title"
           />
         </td>
         {!isHidden('dueDate') && (

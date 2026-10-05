@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Drawer } from '../../../../../../../../components/Drawer/Drawer';
+import { EditableText } from '../../../../../../../../components/EditableText/EditableText';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { FilterChip } from '../../../../../../../../components/FilterChip/FilterChip';
 import { Badge } from '../../../../../../../../components/Badge/Badge';
@@ -35,10 +36,13 @@ import { CreateGoalDrawer } from '../../../../../../../settings/care-plan-librar
 import { GoalLinkedInterventionsList } from './GoalLinkedInterventionsList';
 import { GoalLinkedBarriersList } from './GoalLinkedBarriersList';
 import { computeDueDate, formatRecurrenceLabel } from '../../tables/CarePlanInterventionsTable';
-import { parseCarePlanDate } from '../../tables/carePlanTableModel';
+import { parseCarePlanDate, toPickerValue, isPastDue } from '../../tables/carePlanTableModel';
+import { DatePickerPopover } from '../../../../../../../../components/DatePicker/DatePickerPopover';
+import { goalReadingSpec, goalReadingUnit, ASSESSMENT_COMPLETED } from '../../lib/goalReadings';
+import { GoalReadingEntry, GoalCompletion } from './GoalReadingEntry';
 import { useScrollToSection } from '../../lib/useScrollToSection';
 import { Tooltip } from '../../../../../../../../components/Tooltip/Tooltip';
-import { formatGoalTarget, formatGoalDuration, formatGoalFrequency } from '../../../../../../../settings/care-plan-library/lib';
+import { formatGoalTarget, formatGoalDuration, formatGoalFrequency, goalTargetUnitMissing } from '../../../../../../../settings/care-plan-library/lib';
 import { goalProgressBand, goalProgressTone } from '../../lib/goalMetrics';
 import { goalCascade, barrierGoalIdsOf } from '../../lib/carePlanGoalCascade';
 import { RemoveGoalDialog } from '../RemoveGoalDialog';
@@ -564,8 +568,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
     persistGoalPreviewSectionsOpen(open);
   }, [open]);
   const [addingReading, setAddingReading] = useState(false);
-  const [readingValue, setReadingValue] = useState('');
-  const [readingFavorable, setReadingFavorable] = useState(true);
+  const [targetPickerRect, setTargetPickerRect] = useState(null);
   const [addingAutomation, setAddingAutomation] = useState(false);
   const [automationTitle, setAutomationTitle] = useState('');
   const [addingBarrier, setAddingBarrier] = useState(false);
@@ -589,8 +592,19 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
   const [activityFilter, setActivityFilter] = useState('all');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [moreMenu, setMoreMenu] = useState(null);
-  const [editingTitle, setEditingTitle] = useState(false);
-  const [titleDraft, setTitleDraft] = useState('');
+  // The editable title; "Rename" focuses it with the text selected.
+  const titleRef = useRef(null);
+  // Deferred a frame so a closing menu can't take focus back.
+  const focusTitle = () => requestAnimationFrame(() => {
+    const el = titleRef.current;
+    if (!el) return;
+    el.focus();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  });
   const [editGoalOpen, setEditGoalOpen] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState(null);
   const [noteDraft, setNoteDraft] = useState('');
@@ -689,7 +703,11 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
   if (!live) return null;
 
   const canEdit = !!(patientId && program);
-  const unit = live.customUnit || measurements[0]?.unit || '';
+  // The measure's unit (or an "Others" goal's own); customUnit is stale on
+  // other categories. Falls back to what earlier readings were saved with.
+  const unit = goalReadingUnit(live) || measurements[0]?.unit || '';
+  const readingSpec = goalReadingSpec(live);
+  const isAssessment = readingSpec.kind === 'assessment';
   const youSuffix = (name) => (name && currentUserName && name === currentUserName ? ` by ${name} (You)` : name ? ` by ${name}` : '');
 
   const toggle = (k) => patchSectionsOpen(s => ({ ...s, [k]: !s[k] }));
@@ -706,12 +724,6 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
     savePatientCarePlanGoal(patientId, program, { ...live, status }, live.id);
   };
 
-  const commitTitle = () => {
-    const next = titleDraft.trim();
-    setEditingTitle(false);
-    if (!next || next === live.title) return;
-    savePatientCarePlanGoal(patientId, program, { ...live, title: next }, live.id);
-  };
 
   // Full-detail edit via the shared Goals Library drawer. Its onSave returns the
   // whole goal shape (title/priority/target/duration/…); merge onto the live
@@ -729,10 +741,26 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
     if (saved) showToast?.('Goal updated');
   };
 
-  const submitReading = async () => {
-    if (!readingValue.trim()) return;
-    await saveGoalMeasurement(patientId, program.id, live.id, { value: readingValue.trim(), unit, favorable: readingFavorable });
-    setReadingValue(''); setReadingFavorable(true); setAddingReading(false);
+  const submitReading = async (reading) => {
+    await saveGoalMeasurement(patientId, program.id, live.id, { ...reading, unit: reading.unit || unit });
+    setAddingReading(false);
+  };
+
+  // An Assessment is done on a date: record it as a dated reading (history +
+  // audit) and set the goal to Met.
+  const completeAssessment = async (takenAt) => {
+    const saved = await saveGoalMeasurement(patientId, program.id, live.id, {
+      value: ASSESSMENT_COMPLETED, unit: '', favorable: true, takenAt,
+    });
+    if (saved && live.status !== 'Met') {
+      await savePatientCarePlanGoal(patientId, program, { ...live, status: 'Met' }, live.id);
+    }
+  };
+
+  const commitTargetDate = (ymd) => {
+    setTargetPickerRect(null);
+    if (!canEdit || (ymd || '') === (live.targetDate || '')) return;
+    savePatientCarePlanGoal(patientId, program, { ...live, targetDate: ymd || '' }, live.id);
   };
 
   const submitAutomation = async () => {
@@ -853,11 +881,22 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
   // "by <name>" attribution when we know who saved it). A goal without a
   // target date says so; no date is projected for it. The target is a
   // date-only value, so it's formatted without a UTC shift.
-  const metaParts = [
-    live.createdAt ? `Start Date : ${fmtDate(live.createdAt)}` : null,
-    `Target Date : ${fmtDate(live.targetDate) || 'Not set'}`,
-    live.updatedAt ? `Last Updated : ${fmtDate(live.updatedAt)}${youSuffix(live.updatedBy)}` : null,
-  ].filter(Boolean);
+  const targetDateLabel = fmtDate(live.targetDate);
+  const targetDateEditable = canEdit && !consolidated;
+  const targetOverdue = isPastDue(live.targetDate, live.status);
+  // Structured target, same formatter as the plan table: "≤ 130 / 80 mmHg •
+  // Daily • 3 Months". Assessments are done on a date, which the Completion
+  // section and Target Date already show.
+  const targetText = formatGoalTarget(live);
+  const targetLine = isAssessment ? '' : [
+    targetText,
+    targetText ? formatGoalFrequency(live) : '',
+    formatGoalDuration(live),
+  ].filter(Boolean).join(' • ');
+  // The stored subtitle is either a description or a copy generated from the
+  // target (before or after frequency was added); only show a description.
+  const legacySubtitle = [[live.measure, targetText].filter(Boolean).join(' '), formatGoalDuration(live)].filter(Boolean).join(' • ');
+  const showSubtitle = !!live.subtitle && live.subtitle !== buildGoalSubtitle(live) && live.subtitle !== legacySubtitle;
   // Goal type / category (Vitals, Exercise, Diet, Labs, Assessment,
   // Others) — same field the plan-level Goals table renders as a
   // right-aligned Type badge. Falls back to `type` for older records.
@@ -940,35 +979,63 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
                 </DetailDropdown>
               )}
             </span>
-            {editingTitle && !consolidated ? (
-              <input
-                autoFocus
-                type="text"
-                className={styles.titleInlineInput}
-                value={titleDraft}
-                onChange={e => setTitleDraft(e.target.value)}
-                onBlur={commitTitle}
-                onKeyDown={e => { if (e.key === 'Enter') commitTitle(); if (e.key === 'Escape') setEditingTitle(false); }}
-                aria-label="Goal title"
-              />
-            ) : (
-              <button
-                type="button"
-                className={styles.titleEditable}
-                onClick={() => {
-                  if (!canEdit || consolidated) return;
-                  setTitleDraft(live.title || '');
-                  setEditingTitle(true);
-                }}
-                disabled={!canEdit || consolidated}
-                aria-label="Edit goal title"
-              >
-                {live.title}
-              </button>
-            )}
+            {/* The title edits where it stands: click the text, type, then
+                Enter or click away to save; Escape cancels. No input box. */}
+            <EditableText
+              value={live.title || ''}
+              onCommit={(next) => { if (next && next !== live.title) savePatientCarePlanGoal(patientId, program, { ...live, title: next }, live.id); }}
+              ariaLabel="Goal title"
+              className={styles.titleText}
+              elementRef={titleRef}
+              disabled={!canEdit || consolidated}
+            />
           </div>
-          {live.subtitle && <span className={styles.subtitle}>{live.subtitle}</span>}
-          {metaParts.length > 0 && <span className={styles.meta}>{metaParts.join(' • ')}</span>}
+          {showSubtitle && <span className={styles.subtitle}>{live.subtitle}</span>}
+          {targetLine && (
+            <span className={styles.targetLine}>
+              Target {targetLine}
+              {goalTargetUnitMissing(live) && (
+                <Tooltip label="No unit recorded for this target. Edit the goal to add one.">
+                  <span className={styles.targetWarn} aria-label="No unit recorded for this target">
+                    <Icon name="solar:danger-triangle-linear" size={14} color="var(--status-warning)" />
+                  </span>
+                </Tooltip>
+              )}
+            </span>
+          )}
+          <span className={styles.metaRow}>
+            {live.createdAt && (
+              <>
+                Start Date : {fmtDate(live.createdAt)}
+                <span className={styles.metaRowSep} aria-hidden="true">•</span>
+              </>
+            )}
+            Target Date :&nbsp;
+            <button
+              type="button"
+              className={`${styles.metaDateBtn} ${targetOverdue ? styles.metaDateOverdue : ''} ${targetDateLabel ? '' : styles.metaDateUnset}`}
+              disabled={!targetDateEditable}
+              onClick={(e) => setTargetPickerRect(e.currentTarget.getBoundingClientRect())}
+              aria-label={targetDateLabel ? `Change target date (${targetDateLabel}${targetOverdue ? ', past due' : ''})` : 'Set target date'}
+            >
+              {targetDateLabel || 'Not set'}
+            </button>
+            {live.updatedAt && (
+              <>
+                <span className={styles.metaRowSep} aria-hidden="true">•</span>
+                Last Updated : {fmtDate(live.updatedAt)}{youSuffix(live.updatedBy)}
+              </>
+            )}
+          </span>
+          {targetPickerRect && (
+            <DatePickerPopover
+              open
+              value={toPickerValue(live.targetDate)}
+              anchorRect={targetPickerRect}
+              onChange={commitTargetDate}
+              onClose={() => setTargetPickerRect(null)}
+            />
+          )}
           {(goalTypeLabel || programBadges.length > 0 || conditionBadges.length > 0) && (
             <div className={styles.badges}>
               {goalTypeLabel && <Badge tone="grey" label={goalTypeLabel} />}
@@ -1019,35 +1086,25 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
 
         <section className={styles.section}>
           <AccordionHead
-            title="Last Trends"
+            title={isAssessment ? 'Completion' : 'Last Trends'}
             open={open.trends}
             onToggle={() => toggle('trends')}
-            canEdit={canEdit}
+            canEdit={canEdit && !isAssessment}
             muted
             addTooltip="Add reading"
             onAdd={() => expandAnd('trends', () => setAddingReading(v => !v))}
           />
-          {open.trends && (
+          {open.trends && isAssessment && (
+            <GoalCompletion
+              goal={live}
+              readings={measurements}
+              canEdit={canEdit}
+              onComplete={completeAssessment}
+            />
+          )}
+          {open.trends && !isAssessment && (
             <>
-              {addingReading && (
-                <div className={styles.addRow}>
-                  <Input
-                    placeholder={unit ? `Value (${unit})` : 'Value'}
-                    value={readingValue}
-                    onChange={e => setReadingValue(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') submitReading(); }}
-                    aria-label="Reading value"
-                  />
-                  <button
-                    type="button"
-                    className={`${styles.favorableToggle} ${readingFavorable ? styles.favorableOn : styles.favorableOff}`}
-                    onClick={() => setReadingFavorable(v => !v)}
-                  >
-                    {readingFavorable ? 'In target' : 'Out of target'}
-                  </button>
-                  <Button variant="primary" size="S" onClick={submitReading} disabled={!readingValue.trim()}>Save</Button>
-                </div>
-              )}
+              {addingReading && <GoalReadingEntry goal={live} onSave={submitReading} />}
               {measurements.length === 0 ? (
                 <div className={styles.emptyCard}>No readings recorded yet.</div>
               ) : (
@@ -1424,7 +1481,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
           ]}
           onSelect={(k) => {
             setMoreMenu(null);
-            if (k === 'rename') { setTitleDraft(live.title); setEditingTitle(true); }
+            if (k === 'rename') focusTitle();
             if (k === 'delete') setConfirm({ kind: 'goal' });
           }}
           onClose={() => setMoreMenu(null)}

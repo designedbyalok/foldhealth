@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Drawer } from '../../../../../../../../components/Drawer/Drawer';
+import { EditableText } from '../../../../../../../../components/EditableText/EditableText';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { Badge } from '../../../../../../../../components/Badge/Badge';
 import { Button } from '../../../../../../../../components/Button/Button';
@@ -18,9 +19,11 @@ import { LinkGoalToBarrierDrawer } from '../BarrierDetailDrawer/LinkGoalToBarrie
 import { DetailDropdown } from '../../../../../../../tasks/TasksViewDropdowns';
 import { PRIORITY_OPTIONS } from '../../../../../../../tasks/TasksView.utils';
 import { GbiProgressCell } from '../../tables/carePlanTableShared';
+import { interventionOwner, toPickerValue } from '../../tables/carePlanTableModel';
+import { formatGoalTarget, formatGoalFrequency } from '../../../../../../../settings/care-plan-library/lib';
 import { computeDueDate, computeOccurrenceDates, formatRecurrenceLabel } from '../../tables/CarePlanInterventionsTable';
 import { useScrollToSection } from '../../lib/useScrollToSection';
-import { CARE_PLAN_INTERVENTION_ICONS, interventionDurationFromConfig } from '../../lib/carePlanInterventionMenu';
+import { interventionDurationFromConfig } from '../../lib/carePlanInterventionMenu';
 import { KIND_LABELS } from '../../../../../../../settings/care-plan-library/interventions/shared/interventionKinds';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import { adherenceBand, adherenceTone } from '../../lib/goalMetrics';
@@ -196,6 +199,11 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
   const logCarePlanAudit = useAppStore(s => s.logCarePlanAudit);
   const fetchCarePlanAudit = useAppStore(s => s.fetchCarePlanAudit);
   const currentUserName = useAppStore(s => s.currentUserProfile?.name);
+  const patientName = useAppStore(s => {
+    const p = (s.patients || []).find(x => x.id === patientId)
+      || (s.allPatients || []).find(x => x.id === patientId);
+    return p?.name;
+  });
   // Content lookup — a Patient Education intervention stores the linked
   // material id as `config.content` (prefixed `email:<id>` / `form:<id>`);
   // Send Form stores it as `config.form`. Resolve to a name so the
@@ -231,8 +239,19 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
   const [noteEditing, setNoteEditing] = useState(false);
   const [moreMenu, setMoreMenu] = useState(null);
   const [linkGoalOpen, setLinkGoalOpen] = useState(false);
-  const [editingTitle, setEditingTitle] = useState(false);
-  const [titleDraft, setTitleDraft] = useState('');
+  // The editable title; "Rename" focuses it with the text selected.
+  const titleRef = useRef(null);
+  // Deferred a frame so a closing menu can't take focus back.
+  const focusTitle = () => requestAnimationFrame(() => {
+    const el = titleRef.current;
+    if (!el) return;
+    el.focus();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  });
   const [editingNoteId, setEditingNoteId] = useState(null);
   const [noteDraft, setNoteDraft] = useState('');
   const [confirm, setConfirm] = useState(null);
@@ -336,12 +355,6 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
     savePatientCarePlanIntervention(patientId, program, { ...live, status }, live.id);
   };
 
-  const commitTitle = () => {
-    const next = titleDraft.trim();
-    setEditingTitle(false);
-    if (!next || next === live.title) return;
-    savePatientCarePlanIntervention(patientId, program, { ...live, title: next }, live.id);
-  };
 
   const submitAutomation = async () => {
     if (!automationTitle.trim() || !live.goalId) return;
@@ -357,35 +370,10 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
     setNoteEditing(false);
   };
 
-  // Prefer the paired task's due date (kinds that spawn a Task); fall
-  // back to an explicit `config.dueDate`; finally derive from
-  // `config.dueOffset` + `config.dueUnit` relative to `createdAt` so
-  // library-form kinds (patient-education, send-form) that only carry
-  // an offset still surface a Due Date.
-  const derivedDueFromConfig = (() => {
-    const off = Number(live?.config?.dueOffset);
-    if (!Number.isFinite(off) || off <= 0) return null;
-    const start = live?.createdAt ? new Date(live.createdAt) : null;
-    if (!start || Number.isNaN(start.getTime())) return null;
-    const unit = String(live?.config?.dueUnit || '').toLowerCase();
-    const d = new Date(start);
-    if (unit.startsWith('week')) d.setDate(d.getDate() + off * 7);
-    else if (unit.startsWith('month')) d.setMonth(d.getMonth() + off);
-    else d.setDate(d.getDate() + off);
-    return d.toISOString();
-  })();
-  const dueDate = pairedTask?.dueDate || pairedTask?.due_date
-    || live.config?.dueDate || derivedDueFromConfig || null;
+  // One due-date rule for the table, this drawer and the schedule below:
+  // picked date, paired task, legacy config date, then created + duration.
+  const displayDueIso = computeDueDate(live, pairedTask).iso;
   const hasRepeat = !!(pairedTask?.repeat || live.config?.repeat);
-
-  // Prefer the same computeDueDate helper the plan table + inline
-  // date picker use so this line, the picker, and the Day Wise Task
-  // Progress rows all read the same date. Falls back to the legacy
-  // paired-task / config paths for older records that only carry
-  // those fields.
-  const computedDueIso = computeDueDate(live).iso;
-  const displayDueIso = computedDueIso
-    || (dueDate ? (typeof dueDate === 'string' ? dueDate : null) : null);
   const durationLabel = interventionDurationFromConfig(live.config);
   const recurringLabel = hasRepeat ? formatRecurrenceLabel(live) : null;
 
@@ -393,9 +381,12 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
   // scheduling — start, due, duration, recurrence. Audit line
   // (Last Update) drops to its own row so the primary line stays
   // scannable at any width.
+  // Same ownership rule as the plan table: member tasks belong to the patient.
+  const owner = interventionOwner(live, patientName ? [{ name: patientName }] : []);
   const metaParts = [
     live.createdAt ? `Start Date : ${fmtDate(live.createdAt)}` : null,
-    displayDueIso ? `Due Date : ${fmtDate(displayDueIso)}` : null,
+    `Due Date : ${displayDueIso ? fmtDate(displayDueIso) : 'Not set'}`,
+    owner.unassigned ? 'Unassigned' : `Assigned to ${owner.name || 'Member'}`,
     durationLabel ? `Duration : ${durationLabel}` : null,
     recurringLabel ? recurringLabel : null,
   ].filter(Boolean);
@@ -433,7 +424,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
                     // (opens the kind-specific InterventionDrawer with every
                     // field). Fall back to inline title-edit otherwise.
                     if (onEdit) onEdit(live);
-                    else { setTitleDraft(live.title); setEditingTitle(true); }
+                    else focusTitle();
                   }}
                 />
                 <span className={styles.headerDivider} />
@@ -471,32 +462,16 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
                 <PriorityIcon priority={live.priority} size={20} />
               </DetailDropdown>
             </span>
-            {editingTitle ? (
-              <input
-                autoFocus
-                type="text"
-                className={styles.titleInlineInput}
-                value={titleDraft}
-                onChange={e => setTitleDraft(e.target.value)}
-                onBlur={commitTitle}
-                onKeyDown={e => { if (e.key === 'Enter') commitTitle(); if (e.key === 'Escape') setEditingTitle(false); }}
-                aria-label="Intervention title"
-              />
-            ) : (
-              <button
-                type="button"
-                className={styles.titleEditable}
-                onClick={() => {
-                  if (!canEdit) return;
-                  setTitleDraft(live.title || '');
-                  setEditingTitle(true);
-                }}
-                disabled={!canEdit}
-                aria-label="Edit intervention title"
-              >
-                {live.title}
-              </button>
-            )}
+            {/* The title edits where it stands: click the text, type, then
+                Enter or click away to save; Escape cancels. No input box. */}
+            <EditableText
+              value={live.title || ''}
+              onCommit={(next) => { if (next && next !== live.title) savePatientCarePlanIntervention(patientId, program, { ...live, title: next }, live.id); }}
+              ariaLabel="Intervention title"
+              className={styles.titleText}
+              elementRef={titleRef}
+              disabled={!canEdit}
+            />
           </div>
           {metaParts.length > 0 && <span className={styles.meta}>{metaParts.join(' • ')}</span>}
           {lastUpdateLabel && <span className={styles.meta}>{lastUpdateLabel}</span>}
@@ -568,40 +543,21 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
         </section>
 
         {(() => {
-          // Day Wise Task Progress — every recurring intervention fans
-          // out into a series of dated task rows. Uses the same
-          // occurrence math as the plan-table due-date picker so this
-          // list stays in lockstep with the highlighted dates the user
-          // saw when scheduling the intervention. Non-recurring
-          // interventions still render one row (the due date itself).
-          const occurrenceIsos = live?.config?.repeat
+          // Schedule — the dates this intervention is due (each occurrence of a
+          // recurring one). Per-day completion isn't recorded anywhere, so rows
+          // say only where a date falls relative to today; a Met intervention
+          // gets one "Met on" line from the audit trail instead of per-day ticks.
+          const occurrences = live?.config?.repeat
             ? computeOccurrenceDates(live)
-            : (computeDueDate(live).iso ? [computeDueDate(live).iso] : []);
-          if (!occurrenceIsos.length) return null;
-          const todayIso = (() => {
-            const d = new Date();
-            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-          })();
-          // Row status is derived, not per-instance persisted: the
-          // intervention only carries one overall status today. Past
-          // dates read as "Completed" once the parent intervention is
-          // Completed, otherwise every row shows "Pending". This keeps
-          // the view honest without inventing per-day state.
-          const overallStatus = live?.status || 'Not Started';
-          const parentDone = ['Completed', 'Met'].includes(overallStatus);
-          const rowsForRow = occurrenceIsos.map(iso => {
-            const isPast = iso < todayIso;
-            const status = parentDone
-              ? 'Completed'
-              : (isPast ? 'Completed' : 'Pending');
-            return { iso, status };
-          });
-          const kindIcon = CARE_PLAN_INTERVENTION_ICONS[live?.kind] || live?.icon || 'solar:clipboard-list-linear';
-          const fmtRow = (iso) => {
-            const d = parseLocalDate(iso);
-            if (!d) return iso;
-            return d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
-          };
+            : (displayDueIso ? [toPickerValue(displayDueIso)] : []);
+          if (!occurrences.length) return null;
+          const today = toPickerValue(new Date().toISOString());
+          const metEntry = live.status === 'Met'
+            ? audit
+              .filter(a => String(a.entityId) === String(live.id) && a.action === 'status_changed' && /→\s*Met\s*$/.test(a.detail || ''))
+              .sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt))[0]
+            : null;
+          const whenOf = (ymd) => (ymd < today ? 'Past' : ymd === today ? 'Due today' : 'Upcoming');
           return (
             <section className={barrierStyles.section}>
               <div className={barrierStyles.sectionHead}>
@@ -611,7 +567,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
                   onClick={() => toggle('tasks')}
                   aria-expanded={open.tasks}
                 >
-                  <span className={barrierStyles.sectionTitle}>Day Wise Task Progress</span>
+                  <span className={barrierStyles.sectionTitle}>Schedule</span>
                   <DownChevronIcon
                     size={12}
                     color="var(--neutral-400)"
@@ -620,46 +576,26 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
                 </button>
               </div>
               {open.tasks && (
-                <table
-                  style={{
-                    width: '100%',
-                    borderCollapse: 'collapse',
-                    fontSize: 'var(--font-base)',
-                    color: 'var(--neutral-500)',
-                  }}
-                >
-                  <thead>
-                    <tr style={{ textAlign: 'left', color: 'var(--neutral-300)' }}>
-                      <th style={{ width: 32, padding: 'var(--space-2) 0', fontWeight: 400 }}>P</th>
-                      <th style={{ padding: 'var(--space-2) 0', fontWeight: 400 }}>Name</th>
-                      <th style={{ width: 140, padding: 'var(--space-2) 0', fontWeight: 400 }}>Status</th>
-                      <th style={{ width: 120, padding: 'var(--space-2) 0', fontWeight: 400 }}>Due Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rowsForRow.map(({ iso, status }) => (
-                      <tr key={iso} style={{ borderTop: '0.5px solid var(--neutral-150)' }}>
-                        <td style={{ padding: 'var(--space-2) 0' }}>
-                          <PriorityIcon priority={live?.priority} size={16} />
-                        </td>
-                        <td style={{ padding: 'var(--space-2) 0' }}>
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                            <Icon name={kindIcon} size={16} color="var(--neutral-400)" />
-                            {live?.title}
-                          </span>
-                        </td>
-                        <td style={{ padding: 'var(--space-2) 0' }}>
-                          <Badge
-                            size="S"
-                            tone={status === 'Completed' ? 'success' : 'grey'}
-                            label={status}
-                          />
-                        </td>
-                        <td style={{ padding: 'var(--space-2) 0', color: 'var(--neutral-300)' }}>{fmtRow(iso)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <>
+                  {live.status === 'Met' && (
+                    <div className={styles.scheduleMet}>
+                      <Icon name="solar:check-circle-linear" size={16} color="var(--status-success)" />
+                      {metEntry ? `Met on ${fmtDate(metEntry.createdAt)}` : 'Met'}
+                    </div>
+                  )}
+                  <ul className={styles.scheduleList}>
+                    {occurrences.map(ymd => {
+                      const when = whenOf(ymd);
+                      return (
+                        <li key={ymd} className={styles.scheduleRow}>
+                          <span className={styles.scheduleDate}>{fmtDate(ymd)}</span>
+                          <Badge size="S" tone={when === 'Due today' ? 'warning' : 'grey'} label={when} />
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <span className={styles.scheduleHint}>Completion isn't tracked per date.</span>
+                </>
               )}
             </section>
           );
@@ -705,7 +641,11 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
                     </span>
                     <div className={barrierStyles.linkStack}>
                       <span className={barrierStyles.linkTitle}>{g.title}</span>
-                      {g.subtitle && <span className={barrierStyles.linkSubtitle}>{g.subtitle}</span>}
+                      {formatGoalTarget(g) && (
+                        <span className={barrierStyles.linkSubtitle}>
+                          {[`Target ${formatGoalTarget(g)}`, formatGoalFrequency(g)].filter(Boolean).join(' • ')}
+                        </span>
+                      )}
                     </div>
                     <div className={barrierStyles.linkActions} style={{ gap: 'var(--space-2)' }}>
                       <PriorityIcon priority={g.priority} size={16} />
@@ -924,7 +864,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
           ]}
           onSelect={(k) => {
             setMoreMenu(null);
-            if (k === 'rename') { setTitleDraft(live.title); setEditingTitle(true); }
+            if (k === 'rename') focusTitle();
             if (k === 'delete') setConfirm({ kind: 'intervention' });
           }}
           onClose={() => setMoreMenu(null)}

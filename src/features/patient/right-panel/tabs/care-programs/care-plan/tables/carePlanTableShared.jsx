@@ -8,6 +8,7 @@ import { DownChevronIcon } from '../../../../../../../components/Icon/DownChevro
 import { CarePlanProgressRing } from '../../../../../../../components/CarePlanProgressRing/CarePlanProgressRing';
 import { useState } from 'react';
 import { GbiLinkButton } from './CarePlanLinkedPreview';
+import { EditableText } from '../../../../../../../components/EditableText/EditableText';
 import { fmtCarePlanDate, isPastDue } from './carePlanTableModel';
 import styles from './carePlanTables.module.css';
 
@@ -271,6 +272,11 @@ export function GbiNameCell({
   recurringLabel = 'Recurring',
   // The compact grid moves the link button into the Actions column.
   showLink = true,
+  // (next) => void — makes the title editable in place: click the text to
+  // type, Enter or click away saves, Escape cancels. Clicks anywhere else
+  // on the row still open the drawer.
+  onTitleCommit,
+  titleLabel = 'Title',
 }) {
   const stacked = layout === 'stacked';
 
@@ -290,7 +296,17 @@ export function GbiNameCell({
         )
       ) : null}
       <span className={stacked ? styles.nameTextStacked : styles.nameText}>
-        <span className={styles.namePrimary}>{title}</span>
+        {onTitleCommit ? (
+          <EditableText
+            value={title}
+            onCommit={(next) => { if (next && next !== title) onTitleCommit(next); }}
+            ariaLabel={titleLabel}
+            className={`${styles.namePrimary} ${styles.nameEditable}`}
+            stopClickPropagation
+          />
+        ) : (
+          <span className={styles.namePrimary}>{title}</span>
+        )}
         {meta && !stacked ? (
           <>
             <span className={styles.nameSep} aria-hidden="true">·</span>

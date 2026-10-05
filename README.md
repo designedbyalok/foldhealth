@@ -37,6 +37,20 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **Smarter Goal, Intervention and Barrier drawers, and in-place titles.**
+  Titles edit where they stand in the plan table and all three drawers (no
+  input box): click the text, Enter or click away saves, Escape cancels.
+  Goal readings use measure-aware inputs (Systolic/Diastolic for BP, a 0-10
+  scale for Pain, a number with its unit, free text for Others) and In/Out of
+  target is computed from the goal's target, with a clinician override.
+  Assessment goals are marked completed on a date (recorded as a reading, sets
+  Met). The Goal drawer shows the structured target and an editable target
+  date; the Intervention drawer shows the assignee and an honest Schedule
+  (Upcoming / Due today / Past, no invented completions) using the same
+  due-date rule as the table. The Barrier drawer shows and edits the
+  description, only locks when Met, and lists the real applied templates it
+  came from.
+
 - **Compact Care Plan layout, and no invented dates.** Goals, Interventions
   and Barriers share one drawer-width grid: P, Name with a meta line, Status,
   and Actions (Linked items, Notes, More). The meta line shows only recorded

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useImperativeHandle, useLayoutEffect, useRef } from 'react';
 import styles from './EditableText.module.css';
 
 /**
@@ -18,9 +18,23 @@ import styles from './EditableText.module.css';
  *  - ariaLabel   (string)               Accessible name for the text box
  *  - className   (string)               Carries the text styles (font, colour)
  *  - disabled    (boolean)              Plain, non-editable text
+ *  - onDraftChange (fn(text: string))   Fires on every keystroke with the
+ *                                        in-progress text (e.g. for suggestions)
+ *  - elementRef  (ref)                  Receives the editable element, so a
+ *                                        caller can replace the text and blur
+ *                                        to commit (e.g. picking a suggestion)
+ *  - stopClickPropagation (boolean)     Keep clicks on the text from reaching
+ *                                        a clickable parent such as a table row
+ *  - onEditEnd   (fn())                 Fires whenever editing ends (saved,
+ *                                        unchanged, or cancelled with Escape)
  */
-export function EditableText({ value = '', onCommit, placeholder, maxLength, ariaLabel, className, disabled = false }) {
+export function EditableText({
+  value = '', onCommit, placeholder, maxLength, ariaLabel, className, disabled = false,
+  onDraftChange, elementRef, stopClickPropagation = false, onEditEnd,
+}) {
   const ref = useRef(null);
+  // Hand the editable element to a caller that needs to set its text.
+  useImperativeHandle(elementRef, () => ref.current, []);
   const valueRef = useRef(value);
 
   // The DOM owns the text while editing; sync it from `value` otherwise.
@@ -36,6 +50,7 @@ export function EditableText({ value = '', onCommit, placeholder, maxLength, ari
     const next = el.textContent.replace(/\s+/g, ' ').trim();
     el.textContent = next;
     if (next !== value) onCommit?.(next);
+    onEditEnd?.();
     // If the caller maps the edit back to the same value (e.g. blank means
     // "use the default"), no re-render follows, so restore the text here.
     requestAnimationFrame(() => {
@@ -74,10 +89,14 @@ export function EditableText({ value = '', onCommit, placeholder, maxLength, ari
           el.textContent = el.textContent.slice(0, maxLength);
           placeCaretAtEnd(el);
         }
+        onDraftChange?.(el.textContent);
       }}
+      onClick={stopClickPropagation ? (e) => e.stopPropagation() : undefined}
       onKeyDown={(e) => {
         if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
-        if (e.key === 'Escape') { e.preventDefault(); e.currentTarget.textContent = value; e.currentTarget.blur(); }
+        // Escape only cancels the edit; it must not also close a drawer or
+        // popover listening further up.
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); e.currentTarget.textContent = value; e.currentTarget.blur(); }
       }}
       // Paste as plain, single-line text (Firefox ignores plaintext-only).
       onPaste={(e) => {
