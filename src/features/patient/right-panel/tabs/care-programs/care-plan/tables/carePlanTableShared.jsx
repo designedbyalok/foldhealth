@@ -3,9 +3,12 @@ import { Input } from '../../../../../../../components/Input/Input';
 import { Badge } from '../../../../../../../components/Badge/Badge';
 import { Checkbox } from '../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { Tooltip } from '../../../../../../../components/Tooltip/Tooltip';
+import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
+import { DownChevronIcon } from '../../../../../../../components/Icon/DownChevronIcon';
 import { CarePlanProgressRing } from '../../../../../../../components/CarePlanProgressRing/CarePlanProgressRing';
 import { useState } from 'react';
 import { GbiLinkButton } from './CarePlanLinkedPreview';
+import { fmtCarePlanDate, isPastDue } from './carePlanTableModel';
 import styles from './carePlanTables.module.css';
 
 export function EditableInlineTitle({ title, editable, onCommit }) {
@@ -125,6 +128,116 @@ export const BARRIER_COLUMNS = [
   { key: 'actions', label: '', width: GBI_COL_WIDTH.actions, thStyle: { paddingLeft: 4, paddingRight: 4 } },
 ];
 
+/** "Start 09/15/2026 • Due 12/14/2026" — segments joined with a muted bullet. */
+export function GbiMetaLine({ segments }) {
+  const shown = segments.filter(Boolean);
+  if (shown.length === 0) return null;
+  return (
+    <span className={styles.metaLine}>
+      {shown.map((seg, i) => (
+        <span key={seg.key} className={styles.metaSegment}>
+          {i > 0 && <span className={styles.metaSep} aria-hidden="true">•</span>}
+          {seg.node}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/**
+ * Editable date inside a meta line. A missing date renders as an explicit
+ * placeholder ("No target date"), never a projected one.
+ */
+export function GbiMetaDate({ label, noun, value, emptyLabel, status, editable, onEdit, trailing = null }) {
+  const formatted = fmtCarePlanDate(value);
+  const overdue = isPastDue(value, status);
+  const text = formatted ? [label, formatted].filter(Boolean).join(' ') : emptyLabel;
+  const cls = [
+    styles.metaDate,
+    !formatted ? styles.metaDateEmpty : '',
+    overdue ? styles.metaDateOverdue : '',
+  ].filter(Boolean).join(' ');
+  const content = (
+    <>
+      {text}
+      {overdue && <span className={styles.srOnly}> (past due)</span>}
+    </>
+  );
+  const node = editable ? (
+    <button
+      type="button"
+      className={`${cls} ${styles.metaDateBtn}`}
+      onClick={(e) => { e.stopPropagation(); onEdit(e.currentTarget.getBoundingClientRect()); }}
+      aria-label={formatted ? `Change ${noun} (${formatted}${overdue ? ', past due' : ''})` : `Set ${noun}`}
+    >
+      {content}
+    </button>
+  ) : <span className={cls}>{content}</span>;
+  const withTip = overdue ? <Tooltip label="Past due and not yet resolved">{node}</Tooltip> : node;
+  return trailing ? <span className={styles.metaInline}>{withTip}{trailing}</span> : withTip;
+}
+
+/** Linked items · Notes · More — the fixed Actions cell for every GBI row. */
+export function GbiRowActions({ linked, hasNote, onNotes, onMenu, menuDisabled = false }) {
+  return (
+    <span className={styles.rowActions}>
+      <GbiLinkButton data={linked} keepSlot />
+      <span className={styles.actionDivider} aria-hidden="true" />
+      <ActionButton
+        icon="solar:notes-linear"
+        size="S"
+        tooltip={hasNote ? 'View note' : 'Add note'}
+        tooltipBelow
+        tooltipLeft
+        dot={hasNote}
+        iconColor={hasNote ? 'var(--neutral-400)' : undefined}
+        onClick={onNotes}
+      />
+      <span className={styles.actionDivider} aria-hidden="true" />
+      <ActionButton
+        icon="solar:menu-dots-linear"
+        size="S"
+        tooltip="More"
+        tooltipBelow
+        tooltipLeft
+        disabled={menuDisabled}
+        onClick={onMenu}
+      />
+    </span>
+  );
+}
+
+/**
+ * Collapsible "Completed Goals" group rendered inside the table body (via
+ * WorklistShell `renderTbodyFooter`) so its rows keep the live column layout.
+ */
+export function CompletedRowsGroup({ label, rows, open, onToggle, colSpan, renderRow, ctx }) {
+  if (!rows.length) return null;
+  return (
+    <>
+      <tr className={styles.completedToggleRow}>
+        <td colSpan={colSpan} className={styles.completedToggleTd}>
+          <button
+            type="button"
+            className={styles.closedBarriersToggle}
+            onClick={onToggle}
+            aria-expanded={open}
+          >
+            <DownChevronIcon
+              size={6}
+              color="var(--neutral-300)"
+              className={`${styles.closedBarriersChevron} ${open ? '' : styles.closedBarriersChevronClosed}`}
+            />
+            <span className={styles.closedBarriersLabel}>{label}</span>
+            <span className={styles.completedCount}>{rows.length}</span>
+          </button>
+        </td>
+      </tr>
+      {open && rows.map((row, i) => renderRow(row, i, ctx))}
+    </>
+  );
+}
+
 // The per-row bulk checkbox cell shared by all three GBI tables — stops click
 // propagation so ticking never fires the row action.
 export function GbiCheckboxCell({ checked, onToggle, label, disabled }) {
@@ -160,6 +273,8 @@ export function GbiNameCell({
   // 2 weeks · 5 times, ends in 3 months"). Falls back to "Recurring"
   // when the caller hasn't computed a schedule label.
   recurringLabel = 'Recurring',
+  // The compact grid moves the link button into the Actions column.
+  showLink = true,
 }) {
   const stacked = layout === 'stacked';
 
@@ -195,7 +310,7 @@ export function GbiNameCell({
           </span>
         </Tooltip>
       )}
-      <GbiLinkButton data={linked} />
+      {showLink && <GbiLinkButton data={linked} />}
     </div>
   );
 }

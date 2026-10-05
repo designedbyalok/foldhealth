@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useScrollToSection } from '../../lib/useScrollToSection';
 import { Drawer } from '../../../../../../../../components/Drawer/Drawer';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
@@ -114,7 +115,7 @@ function mapBarrierAuditEntry(e) {
   }
 }
 
-export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOpenGoal, consolidated = false }) {
+export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOpenGoal, consolidated = false, focusSection = null }) {
   const key = patientId && program ? `${patientId}::${program.id}` : null;
   const slice = useAppStore(s => (key ? s.patientCarePlans[key] : null));
   const auditAll = useAppStore(s => (key ? s.patientCarePlanAudit[key] : null)) || [];
@@ -243,6 +244,8 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
   }, [auditAll, barrierIdSet]);
   const [note, setNote] = useState(latestBarrierNote?.detail || '');
   const [noteEditing, setNoteEditing] = useState(false);
+  const noteSectionRef = useRef(null);
+  useScrollToSection(noteSectionRef, focusSection === 'notes', barrier?.id);
   // Whenever a new note lands (either the drawer just opened on a
   // different barrier or the user just submitted), re-seed the textarea
   // to the current latest so the editor keeps reading "Update Note".
@@ -626,7 +629,7 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
           {/* Note surface — matches the InterventionPreviewDrawer so the
               read-only card, hover-delete, and Cancel / Update Note flow
               read identically across both drawers. */}
-          <div className={styles.noteEditor}>
+          <div ref={noteSectionRef} className={styles.noteEditor}>
             {latestBarrierNote && !noteEditing ? (
               <section className={styles.section}>
                 <div className={styles.sectionHead}>

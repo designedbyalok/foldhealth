@@ -386,21 +386,16 @@ export function ProgramDetailViewContentHeader({
             <>
               <BulkSelectToggle size="S" active={carePlanBulkMode} onToggle={toggleCarePlanBulkMode} />
               <span className={styles.headerDivider} aria-hidden="true" />
-              <ActionButton
-                icon="solar:eye-linear"
-                size="L"
-                tooltip="Preview"
-                active={carePlanShareRequest === 'preview'}
-                onClick={() => requestCarePlanShare('preview')}
-              />
-              <span className={styles.headerDivider} aria-hidden="true" />
+              {/* Templates moved to the plan's chip row, next to the
+                  applied templates it manages. */}
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="L"
-                leadingIcon="solar:add-linear"
-                onClick={() => requestCarePlanPanel('templates')}
+                leadingIcon="solar:eye-linear"
+                aria-pressed={carePlanShareRequest === 'preview'}
+                onClick={() => requestCarePlanShare('preview')}
               >
-                Template
+                Preview
               </Button>
               <span className={styles.headerDivider} aria-hidden="true" />
               <Button

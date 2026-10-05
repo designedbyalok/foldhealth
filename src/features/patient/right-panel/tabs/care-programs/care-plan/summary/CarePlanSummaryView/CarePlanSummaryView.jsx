@@ -27,9 +27,10 @@ import {
   INTERVENTION_COLUMNS,
   BARRIER_COLUMNS,
 } from '../../tables/carePlanTableShared';
+import { fmtCarePlanDate } from '../../tables/carePlanTableModel';
 import { enrichGoalRows, enrichInterventionRows } from '../../tables/carePlanTableSort';
 import { CARE_PLAN_INTERVENTION_ICONS } from '../../lib/carePlanInterventionMenu';
-import { assigneeAvatarVariant } from '../../tables/CarePlanInterventionsTable';
+import { assigneeAvatarVariant, computeDueDate } from '../../tables/CarePlanInterventionsTable';
 import { KIND_LABELS } from '../../../../../../../settings/care-plan-library/interventions/shared/interventionKinds';
 import { normalizeCategory, goalCategoryIcon } from '../../../../../../../settings/care-plan-library/lib';
 import { GoalPreviewDrawer } from '../../drawers/GoalPreviewDrawer/GoalPreviewDrawer';
@@ -388,17 +389,6 @@ function dedupeByTitle(rows) {
   return out;
 }
 
-// Match the per-plan CarePlanGoalsTable date fallback: legacy goals
-// without a targetDate project createdAt + 90 days so the Target
-// column always shows a real date rather than "—".
-function goalTargetDateOrDefault(g) {
-  if (g?.targetDate) return g.targetDate;
-  const anchor = g?.createdAt ? new Date(g.createdAt) : new Date();
-  if (Number.isNaN(anchor.getTime())) return '';
-  const out = new Date(anchor);
-  out.setDate(out.getDate() + 90);
-  return out.toISOString();
-}
 function fmtMMDDYYYY(v) {
   if (!v) return '-';
   const d = new Date(v);
@@ -463,7 +453,7 @@ function GoalsTable({ rows, onOpen, onPriorityMenu, onStatusMenu, programOverlap
             )}
             {!isHidden('targetDate') && (
             <td className={sharedRow.dateTd} onClick={e => e.stopPropagation()}>
-              <span className={sharedRow.dueDateText}>{fmtMMDDYYYY(goalTargetDateOrDefault(g))}</span>
+              <span className={sharedRow.dueDateText}>{fmtCarePlanDate(g.targetDate) || 'No target date'}</span>
             </td>
             )}
             {!isHidden('progress') && (
@@ -575,33 +565,7 @@ function InterventionsTable({ rows, onOpen, onPriorityMenu, onStatusMenu, onAssi
               {!isHidden('dueDate') && (
               <td className={sharedRow.valueTd} onClick={e => e.stopPropagation()}>
                 <span className={sharedRow.dueDateText}>
-                  {(() => {
-                    // Match the per-plan due-date semantics: user override
-                    // wins, then createdAt + parsed duration, otherwise
-                    // fall back to createdAt + 30 days so the column
-                    // always renders a real date.
-                    const cfg = i?.config || {};
-                    const override = cfg.dueDateOverride;
-                    if (override) return fmtMMDDYYYY(override);
-                    const start = i?.createdAt ? new Date(i.createdAt) : new Date();
-                    if (Number.isNaN(start.getTime())) return '-';
-                    const raw = cfg.dueOffset != null && cfg.dueUnit
-                      ? `${cfg.dueOffset}${String(cfg.dueUnit)[0]}`
-                      : i?.duration;
-                    const m = raw && String(raw).trim().match(/^(\d+)\s*([dwmy])$/i);
-                    const end = new Date(start);
-                    if (m) {
-                      const n = Number(m[1]);
-                      const u = m[2].toLowerCase();
-                      if (u === 'd') end.setDate(end.getDate() + n);
-                      else if (u === 'w') end.setDate(end.getDate() + n * 7);
-                      else if (u === 'm') end.setMonth(end.getMonth() + n);
-                      else if (u === 'y') end.setFullYear(end.getFullYear() + n);
-                    } else {
-                      end.setDate(end.getDate() + 30);
-                    }
-                    return fmtMMDDYYYY(end.toISOString());
-                  })()}
+                  {computeDueDate(i).formatted || 'No due date'}
                 </span>
               </td>
               )}

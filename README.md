@@ -37,6 +37,21 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **Compact Care Plan layout, and no invented dates.** Goals, Interventions
+  and Barriers share one drawer-width grid: P, Name with a meta line, Status,
+  and Actions (Linked items, Notes, More). The meta line shows only recorded
+  data: start and target date, the goal target exactly as stored (a bare
+  number is flagged "No unit recorded"), and the current value only when a
+  reading exists. Interventions show due date and owner; barriers are a single
+  line. Only Met items collapse into Completed/Resolved groups, so Not Met
+  stays visible. The Notes action opens the item's drawer at its Note section.
+  The store no longer seeds goal (+90 days) or intervention (+30 days) dates
+  on save, and `supabase/care_plan_seeded_dates_cleanup_migration.sql` clears
+  previously seeded values (keeping any date with an audited edit). Plan dates
+  now parse as local dates, so they no longer show a day early west of UTC.
+  The shared column picker also stops revealing every default-hidden column
+  on the first toggle or Reset.
+
 - **Admin approval for self sign-ups.** Accounts created from the login page
   (password or OAuth) start as **Pending**. Every admin gets a "New sign-up
   awaiting approval" notification that opens Settings → Users filtered to

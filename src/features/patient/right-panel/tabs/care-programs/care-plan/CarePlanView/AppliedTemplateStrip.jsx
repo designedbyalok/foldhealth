@@ -57,6 +57,8 @@ function TemplateBadge({
  * overflows, a right-aligned "View More N" reveals the rest; expanded wraps
  * all templates and offers "View Less". Collapsed, the selected template
  * moves to the front so it never hides behind "View More".
+ * `trailing` (the Templates action) sits at the row's end, so the strip also
+ * renders when nothing is applied yet.
  */
 export function AppliedTemplateStrip({
   templates,
@@ -65,6 +67,7 @@ export function AppliedTemplateStrip({
   canRemove,
   onSelect,
   onRemove,
+  trailing = null,
 }) {
   const chipsRef = useRef(null);
   const measureRef = useRef(null);
@@ -136,7 +139,17 @@ export function AppliedTemplateStrip({
     };
   }, [templatesKey, expanded, templates.length]);
 
-  if (templates.length === 0) return null;
+  if (templates.length === 0) {
+    if (!trailing) return null;
+    return (
+      <div className={styles.templatePriorityBar}>
+        <div className={styles.priorityRow}>
+          <span className={`${styles.priorityChips} ${styles.noTemplates}`}>No templates applied</span>
+          {trailing}
+        </div>
+      </div>
+    );
+  }
 
   const shown = expanded ? templates : ordered.slice(0, visibleCount);
   const hiddenCount = Math.max(0, templates.length - visibleCount);
@@ -191,6 +204,7 @@ export function AppliedTemplateStrip({
             {expanded ? 'View Less' : `View More ${hiddenCount}`}
           </button>
         )}
+        {trailing}
       </div>
     </div>
   );

@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
 import { WorklistShell } from '../../../../../../../components/WorklistShell/WorklistShell';
 import { PriorityIcon } from '../../../../../../../components/PriorityIcon/PriorityIcon';
+import { Icon } from '../../../../../../../components/Icon/Icon';
+import { Tooltip } from '../../../../../../../components/Tooltip/Tooltip';
 import { useTableSort } from '../../../../../../../components/HeaderCell/useTableSort';
 import { DatePickerPopover } from '../../../../../../../components/DatePicker/DatePickerPopover';
 import {
@@ -11,33 +13,42 @@ import {
   GbiNameCell,
   GbiProgressCell,
   GbiStatusButton,
+  GbiMetaLine,
+  GbiMetaDate,
+  GbiRowActions,
+  CompletedRowsGroup,
   TrendCell,
 } from './carePlanTableShared';
+import { COMPACT_GOAL_COLUMNS } from './carePlanTableColumns';
+import { isCompletedStatus, toPickerValue, fmtCarePlanDate } from './carePlanTableModel';
 import { enrichGoalRows } from './carePlanTableSort';
-import { normalizeCategory, goalCategoryIcon } from '../../../../../../settings/care-plan-library/lib';
+import {
+  normalizeCategory,
+  goalCategoryIcon,
+  formatGoalTarget,
+  goalTargetUnitMissing,
+} from '../../../../../../settings/care-plan-library/lib';
 import styles from './carePlanTables.module.css';
 
-// MM/DD/YYYY, matches the grey read-only date look used across the
-// intervention Due Date column so all care-plan tables read the same.
-function formatGoalDate(v) {
-  if (!v) return '-';
-  const d = new Date(v);
-  if (Number.isNaN(d.getTime())) return '-';
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${mm}/${dd}/${d.getFullYear()}`;
-}
-// Legacy goals were persisted before the Target column existed, so their
-// `targetDate` is empty. Rather than render "-" for those rows, project
-// a default of createdAt + 90 days so the user always sees a date. Any
-// edit through the inline picker writes the real value back to the DB.
-function goalTargetDateOrDefault(g) {
-  if (g?.targetDate) return g.targetDate;
-  const anchor = g?.createdAt ? new Date(g.createdAt) : new Date();
-  if (Number.isNaN(anchor.getTime())) return '';
-  const out = new Date(anchor);
-  out.setDate(out.getDate() + 90);
-  return out.toISOString();
+// "Goal < 7 %" exactly as the goal editor formats it. Assessments are skipped:
+// their target IS the date, which the meta line already shows.
+function GoalTargetValue({ goal }) {
+  if (normalizeCategory(goal.category) === 'Assessment') return null;
+  const target = formatGoalTarget(goal);
+  if (!target) return null;
+  const unitMissing = goalTargetUnitMissing(goal);
+  return (
+    <span className={styles.metaInline}>
+      <span className={styles.metaText}>Goal {target}</span>
+      {unitMissing && (
+        <Tooltip label="No unit recorded for this target. Edit the goal to add one.">
+          <span className={styles.metaWarn} aria-label="No unit recorded for this target">
+            <Icon name="solar:danger-triangle-linear" size={14} color="var(--status-warning)" />
+          </span>
+        </Tooltip>
+      )}
+    </span>
+  );
 }
 
 export function CarePlanGoalsTable({
@@ -51,35 +62,216 @@ export function CarePlanGoalsTable({
   onPriorityMenu,
   onStatusMenu,
   onRowMenu,
-  // Target-date cell click hands the goal + the picked ISO date up
-  // so the parent can persist through its own save action. Omitted →
-  // the cell reads as static text (no pointer, no click).
+  // Target-date click hands the goal + the picked date up so the parent can
+  // persist through its own save action. Omitted → the date is static text.
   onTargetDateChange,
+  // Notes icon → open the goal drawer at its Note section.
+  onOpenNotes,
+  // (goal) => boolean — whether the goal has a current (undeleted) note.
+  hasNote,
   linked,
   template = false,
   emptyState,
 }) {
   const sortableRows = useMemo(() => enrichGoalRows(rows), [rows]);
   const { sorted, sortKey, sortDir, requestSort } = useTableSort(sortableRows, 'title', 'asc');
-  // Inline target-date picker state — one instance shared across
-  // rows; the anchor rect + active goal drive the popover position
-  // and its seeded value.
+  const [completedOpen, setCompletedOpen] = useState(false);
+  // One inline target-date picker shared across rows; the anchor rect +
+  // active goal drive the popover position and its seeded value.
   const [targetPicker, setTargetPicker] = useState(null); // { goal, rect } | null
+  const targetEditable = canEdit && !!onTargetDateChange;
   const openTargetPicker = (goal, rect) => {
-    if (!canEdit || !onTargetDateChange) return;
+    if (!targetEditable) return;
     setTargetPicker({ goal, rect });
   };
   const commitTargetDate = (iso) => {
     if (targetPicker?.goal) onTargetDateChange(targetPicker.goal, iso);
     setTargetPicker(null);
   };
+
   // A template row has no value, progress or status, but it still gets its
   // row menu when the caller can act on one.
   const showActions = !template || Boolean(onRowMenu);
   const columns = template
     ? GOAL_COLUMNS.filter(c => c.key === 'priority' || c.key === 'title'
       || (showActions && c.key === 'actions'))
-    : GOAL_COLUMNS;
+    : COMPACT_GOAL_COLUMNS;
+
+  // Met goals collapse into "Completed Goals"; templates have no status.
+  const { activeRows, completedRows } = useMemo(() => {
+    if (template) return { activeRows: sorted, completedRows: [] };
+    const active = [];
+    const done = [];
+    for (const g of sorted) (isCompletedStatus(g.status) ? done : active).push(g);
+    return { activeRows: active, completedRows: done };
+  }, [sorted, template]);
+
+  const openRowMenu = (g, e) => onRowMenu({ kind: 'goal-menu', item: g, rect: e.currentTarget.getBoundingClientRect() });
+
+  const renderPriority = (g) => (
+    <td className={styles.priorityTd} onClick={e => e.stopPropagation()}>
+      {canEdit ? (
+        <button
+          type="button"
+          className={styles.priorityBtn}
+          onClick={(e) => onPriorityMenu({ kind: 'goal', item: g, rect: e.currentTarget.getBoundingClientRect() })}
+          aria-label="Change priority"
+        >
+          <PriorityIcon priority={g.priority} size={16} />
+        </button>
+      ) : (
+        <PriorityIcon priority={g.priority} size={16} />
+      )}
+    </td>
+  );
+
+  // Library templates keep their original row: title + description, link
+  // button in the name cell, menu only.
+  const renderTemplateRow = (g) => (
+    <tr
+      key={g.id}
+      data-cp-row-id={g.id}
+      className={`${styles.row} ${styles.rowClickable} ${styles.gbiRow}`}
+      onClick={() => onOpenGoal(g)}
+    >
+      {bulkMode && (
+        <GbiCheckboxCell
+          checked={selectedIds.includes(g.id)}
+          onToggle={() => onToggleSelect(g.id)}
+          label={`Select ${g.title}`}
+          disabled={!canEdit}
+        />
+      )}
+      {renderPriority(g)}
+      <td className={styles.titleTd}>
+        <GbiNameCell
+          icon={goalCategoryIcon(g.category)}
+          iconTitle={g.category ? normalizeCategory(g.category) : 'Goal'}
+          title={g.title}
+          meta={g.subtitle || null}
+          layout="stacked"
+          linked={linked(g)}
+        />
+      </td>
+      {showActions && (
+        <td className={styles.actionsTd} onClick={e => e.stopPropagation()}>
+          <ActionButton
+            icon="solar:menu-dots-linear"
+            size="S"
+            tooltip="More"
+            tooltipBelow
+            tooltipLeft
+            onClick={(e) => openRowMenu(g, e)}
+          />
+        </td>
+      )}
+    </tr>
+  );
+
+  const renderRow = (g, _i, ctx) => {
+    if (template) return renderTemplateRow(g);
+    const hidden = ctx?.hiddenSet || null;
+    const isHidden = (k) => (hidden ? hidden.has(k) : false);
+    const hasReading = g.currentValue && g.currentValue !== 'No Data';
+    const start = fmtCarePlanDate(g.createdAt);
+    const targetDate = (prefix) => (
+      <GbiMetaDate
+        label={prefix}
+        noun="target date"
+        value={g.targetDate}
+        emptyLabel="No target date"
+        status={g.status}
+        editable={targetEditable}
+        onEdit={(rect) => openTargetPicker(g, rect)}
+      />
+    );
+    // A date column the user switched on carries the value, so the meta line
+    // drops its copy rather than show it twice.
+    const meta = (
+      <GbiMetaLine
+        segments={[
+          isHidden('createdDate') && start && {
+            key: 'start',
+            node: <span className={styles.metaDate}>Start {start}</span>,
+          },
+          isHidden('targetDate') && { key: 'target', node: targetDate('Target date') },
+          { key: 'goal', node: <GoalTargetValue goal={g} /> },
+          hasReading && {
+            key: 'current',
+            node: <span className={styles.metaText}>Current {g.currentValue}</span>,
+          },
+        ]}
+      />
+    );
+    return (
+      <tr
+        key={g.id}
+        /* `data-cp-row-id` lets the CarePlan linked-items popover scroll to
+           and flash this row on click. */
+        data-cp-row-id={g.id}
+        className={`${styles.row} ${styles.rowClickable} ${styles.gbiRow}`}
+        onClick={() => onOpenGoal(g)}
+      >
+        {bulkMode && (
+          <GbiCheckboxCell
+            checked={selectedIds.includes(g.id)}
+            onToggle={() => onToggleSelect(g.id)}
+            label={`Select ${g.title}`}
+            disabled={!canEdit}
+          />
+        )}
+        {!isHidden('priority') && renderPriority(g)}
+        <td className={styles.titleTd}>
+          <GbiNameCell
+            icon={goalCategoryIcon(g.category)}
+            iconTitle={g.category ? normalizeCategory(g.category) : 'Goal'}
+            title={g.title}
+            meta={meta}
+            layout="stacked"
+            showLink={false}
+          />
+        </td>
+        {!isHidden('createdDate') && (
+          <td className={styles.dateTd} onClick={e => e.stopPropagation()}>
+            <span className={styles.dueDateText}>{start || '-'}</span>
+          </td>
+        )}
+        {!isHidden('targetDate') && (
+          <td className={styles.dateTd} onClick={e => e.stopPropagation()}>
+            <span className={styles.metaLine}>{targetDate('')}</span>
+          </td>
+        )}
+        {!isHidden('progress') && (
+          <td className={styles.progressTd} onClick={e => e.stopPropagation()}>
+            <GbiProgressCell progress={g.progress} />
+          </td>
+        )}
+        {!isHidden('trend') && (
+          <td className={styles.progressTd} onClick={e => e.stopPropagation()}>
+            <TrendCell trend={g.trend} />
+          </td>
+        )}
+        <td className={styles.statusTd} onClick={e => e.stopPropagation()}>
+          <GbiStatusButton
+            value={g.status}
+            disabled={!canEdit}
+            onOpen={rect => onStatusMenu({ kind: 'goal', item: g, rect })}
+          />
+        </td>
+        <td className={`${styles.actionsTd} ${styles.actionsWide}`} onClick={e => e.stopPropagation()}>
+          <GbiRowActions
+            linked={linked(g)}
+            hasNote={!!hasNote?.(g)}
+            onNotes={() => onOpenNotes?.(g)}
+            onMenu={(e) => openRowMenu(g, e)}
+            menuDisabled={!canEdit}
+          />
+        </td>
+      </tr>
+    );
+  };
+
+  const noActive = activeRows.length === 0 && completedRows.length > 0;
 
   return (
     <div className={styles.tableWrap}>
@@ -89,147 +281,34 @@ export function CarePlanGoalsTable({
         header={null}
         hideBulkBar
         columns={withSelectColumn(columns, bulkMode)}
-        rows={sorted}
+        rows={activeRows}
         sortKey={sortKey}
         sortDir={sortDir}
         onSort={requestSort}
         selectedIds={selectedIds}
         onSelectAll={onSelectAll}
         minTableWidth={0}
-        emptyState={emptyState}
-        // Opts into the shell's column-prefs machinery — Actions header
-        // hosts a Show/Hide Columns button (checkbox popover), and the
-        // renderRow below skips the cells the user has hidden. Prefs
-        // persist per-user under this key.
-        worklistKey={template ? undefined : 'carePlan:goals'}
-        renderRow={(g, _i, ctx) => {
-          const hidden = ctx?.hiddenSet || null;
-          const isHidden = (k) => hidden ? hidden.has(k) : false;
-          return (
-          <tr
-            key={g.id}
-            /* `data-cp-row-id` lets the CarePlan linked-items popover
-               scroll to and flash this row on click. */
-            data-cp-row-id={g.id}
-            className={`${styles.row} ${styles.rowClickable} ${styles.gbiRow}`}
-            onClick={() => onOpenGoal(g)}
-          >
-            {bulkMode && (
-              <GbiCheckboxCell
-                checked={selectedIds.includes(g.id)}
-                onToggle={() => onToggleSelect(g.id)}
-                label={`Select ${g.title}`}
-                disabled={!canEdit}
-              />
-            )}
-            {!isHidden('priority') && (
-            <td className={styles.priorityTd} onClick={e => e.stopPropagation()}>
-              {canEdit ? (
-                <button
-                  type="button"
-                  className={styles.priorityBtn}
-                  onClick={(e) => onPriorityMenu({ kind: 'goal', item: g, rect: e.currentTarget.getBoundingClientRect() })}
-                  aria-label="Change priority"
-                >
-                  <PriorityIcon priority={g.priority} size={16} />
-                </button>
-              ) : (
-                <PriorityIcon priority={g.priority} size={16} />
-              )}
-            </td>
-            )}
-            {!isHidden('title') && (
-            <td className={styles.titleTd}>
-              <GbiNameCell
-                icon={goalCategoryIcon(g.category)}
-                iconTitle={g.category ? normalizeCategory(g.category) : 'Goal'}
-                title={g.title}
-                meta={g.subtitle || null}
-                layout="stacked"
-                linked={linked(g)}
-                canEdit={canEdit}
-              />
-            </td>
-            )}
-            {!template && (
-              <>
-                {!isHidden('createdDate') && (
-                <td className={styles.dateTd} onClick={e => e.stopPropagation()}>
-                  <span className={styles.dueDateText}>{formatGoalDate(g.createdAt)}</span>
-                </td>
-                )}
-                {!isHidden('targetDate') && (
-                <td className={styles.dateTd} onClick={e => e.stopPropagation()}>
-                  {canEdit && onTargetDateChange ? (
-                    <button
-                      type="button"
-                      className={styles.dateBtn}
-                      onClick={(e) => openTargetPicker(g, e.currentTarget.getBoundingClientRect())}
-                      aria-label={g.targetDate ? `Change target date (${formatGoalDate(goalTargetDateOrDefault(g))})` : 'Set target date'}
-                    >
-                      {formatGoalDate(goalTargetDateOrDefault(g))}
-                    </button>
-                  ) : (
-                    <span className={styles.dueDateText}>{formatGoalDate(goalTargetDateOrDefault(g))}</span>
-                  )}
-                </td>
-                )}
-                {!isHidden('currentValue') && (
-                <td className={styles.progressTd} onClick={e => e.stopPropagation()}>
-                  <span className={styles.dueDateText}>{g.currentValue ?? '-'}</span>
-                </td>
-                )}
-                {!isHidden('progress') && (
-                <td className={styles.progressTd} onClick={e => e.stopPropagation()}>
-                  <GbiProgressCell progress={g.progress} />
-                </td>
-                )}
-                {!isHidden('trend') && (
-                <td className={styles.progressTd} onClick={e => e.stopPropagation()}>
-                  <TrendCell trend={g.trend} />
-                </td>
-                )}
-                {!isHidden('status') && (
-                <td className={styles.statusTd} onClick={e => e.stopPropagation()}>
-                  <GbiStatusButton
-                    value={g.status}
-                    disabled={!canEdit}
-                    onOpen={rect => onStatusMenu({ kind: 'goal', item: g, rect })}
-                  />
-                </td>
-                )}
-              </>
-            )}
-            {showActions && (
-              <td className={styles.actionsTd} onClick={e => e.stopPropagation()}>
-                <ActionButton
-                  icon="solar:menu-dots-linear"
-                  size="S"
-                  tooltip="More"
-                  tooltipBelow
-                  tooltipLeft
-                  disabled={!template && !canEdit}
-                  onClick={(e) => onRowMenu({ kind: 'goal-menu', item: g, rect: e.currentTarget.getBoundingClientRect() })}
-                />
-              </td>
-            )}
-          </tr>
-          );
-        }}
+        emptyState={noActive ? <div className={styles.emptyRow}>No open goals.</div> : emptyState}
+        // Column prefs (Show/Hide Columns in the Actions header) persist per
+        // user. v2: the compact grid changed which columns exist and default.
+        worklistKey={template ? undefined : 'carePlan:goals:v2'}
+        renderRow={renderRow}
+        renderTbodyFooter={template ? undefined : (ctx) => (
+          <CompletedRowsGroup
+            label="Completed Goals"
+            rows={completedRows}
+            open={completedOpen}
+            onToggle={() => setCompletedOpen(v => !v)}
+            colSpan={ctx.colSpan}
+            renderRow={renderRow}
+            ctx={ctx}
+          />
+        )}
       />
       {targetPicker && (
         <DatePickerPopover
           open
-          value={(() => {
-            const iso = goalTargetDateOrDefault(targetPicker.goal);
-            if (!iso) return null;
-            const d = new Date(iso);
-            if (Number.isNaN(d.getTime())) return null;
-            const y = d.getFullYear();
-            const m = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${y}-${m}-${day}`;
-          })()}
+          value={toPickerValue(targetPicker.goal.targetDate)}
           anchorRect={targetPicker.rect}
           onChange={commitTargetDate}
           onClose={() => setTargetPicker(null)}

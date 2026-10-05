@@ -7,21 +7,6 @@ import {
   templateLinkOwners,
 } from '../../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanTemplateApply';
 
-// Seed default ISO date `days` after `anchorIso`. Falls back to `days`
-// after today when the anchor is missing/invalid. Used by the care plan
-// save handlers so every Goal has a Target date and every Intervention
-// has a Due date persisted to the DB from the moment the row is saved.
-function defaultTargetDateIso(anchorIso, days) {
-  const base = anchorIso ? new Date(anchorIso) : null;
-  const start = (base && !Number.isNaN(base.getTime())) ? base : new Date();
-  const out = new Date(start);
-  out.setDate(out.getDate() + Math.max(1, Number(days) || 30));
-  const y = out.getFullYear();
-  const m = String(out.getMonth() + 1).padStart(2, '0');
-  const d = String(out.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
 // public.notifications row → the shape the bell popover already renders.
 // `persisted: true` is what separates a DB-backed notification from a local
 // ephemeral one, which decides whether read/dismiss also writes to Supabase.
@@ -645,7 +630,6 @@ async function applyTemplateToPlan(get, patientId, program, template, libraryGoa
 }
 
 export {
-  defaultTargetDateIso,
   mapCarePlanGoalRow,
   mapPatientProblemRow,
   mapPatientAllergyRow,

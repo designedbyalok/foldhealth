@@ -60,9 +60,9 @@ export function useWorklistColumns(worklistKey, defaultColumns, options = {}) {
     orderedColumns,
     visibleColumns,
     hiddenSet,
-    onToggle: (k) => toggle(worklistKey, k),
-    onReorder: (fromKey, toKey) => reorder(worklistKey, fromKey, toKey),
-    onReset: () => reset(worklistKey),
+    onToggle: (k) => toggle(worklistKey, k, options.hiddenByDefault || []),
+    onReorder: (fromKey, toKey) => reorder(worklistKey, fromKey, toKey, options.hiddenByDefault || []),
+    onReset: () => reset(worklistKey, options.hiddenByDefault || []),
   };
 }
 

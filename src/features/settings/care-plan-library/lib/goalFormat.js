@@ -54,7 +54,10 @@ export const MEASURE_CONFIG = {
 // Stored dates are ISO (YYYY-MM-DD); the app shows MM/DD/YYYY everywhere.
 function formatDate(value) {
   if (!value) return '';
-  const d = new Date(value);
+  // Parse YYYY-MM-DD as a local date: `new Date()` reads it as UTC midnight,
+  // which renders a day early west of UTC.
+  const ymd = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value));
+  const d = ymd ? new Date(Number(ymd[1]), Number(ymd[2]) - 1, Number(ymd[3])) : new Date(value);
   if (Number.isNaN(d.getTime())) return value;
   return d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
 }
@@ -69,10 +72,7 @@ export function formatGoalTarget(g) {
   if (g.setTarget === false || !g.targetValue) return '';
   const cfg = MEASURE_CONFIG[g.measure] || {};
   const isRange = g.comparator === 'between';
-  // The category enum was renamed ('Other' → 'Others') — normalise so a
-  // free-form goal still picks up its typed unit instead of dropping it.
-  const isOther = normalizeCategory(g.category) === 'Others';
-  const unit = isOther ? g.customUnit : (cfg.dual ? cfg.units?.[1] : cfg.unit);
+  const unit = goalTargetUnit(g);
   const parts = [];
   if (!isRange && g.comparator && g.comparator !== '=') parts.push(g.comparator);
   if (cfg.dual || isRange) {
@@ -83,6 +83,30 @@ export function formatGoalTarget(g) {
   }
   if (unit) parts.push(unit);
   return parts.join(' ');
+}
+
+// Only "Others" goals take a typed unit; the editor hides that field for every
+// other category and never clears it, so a customUnit elsewhere can be stale.
+// The category enum was renamed ('Other' → 'Others') — normalise so a
+// free-form goal still picks up its typed unit instead of dropping it.
+function goalTargetUnit(g) {
+  const cfg = MEASURE_CONFIG[g.measure] || {};
+  if (normalizeCategory(g.category) === 'Others') return g.customUnit || '';
+  return (cfg.dual ? cfg.units?.[1] : cfg.unit) || '';
+}
+
+/**
+ * True when a goal's target is a bare number with no unit to show, so the
+ * plan can flag it rather than let "< 7" be read as mg/dL or %. Scales such as
+ * Pain (0–10) are unitless by design, and free-text targets carry their own
+ * meaning, so neither is flagged.
+ */
+export function goalTargetUnitMissing(g) {
+  if (!g || g.setTarget === false || !g.targetValue) return false;
+  if (normalizeCategory(g.category) === 'Assessment') return false;
+  if ((MEASURE_CONFIG[g.measure] || {}).kind === 'select') return false;
+  if (goalTargetUnit(g)) return false;
+  return /^\s*-?\d+(\.\d+)?\s*$/.test(String(g.targetValue));
 }
 
 export function formatGoalDuration(g) {

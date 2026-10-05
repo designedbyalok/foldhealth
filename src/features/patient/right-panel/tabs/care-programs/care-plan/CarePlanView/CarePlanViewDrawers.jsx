@@ -32,6 +32,7 @@ export function CarePlanViewDrawers(d) {
     addGoalsDrawerOpen, setAddGoalsDrawerOpen, handleAddGoalsFromPicker, data, patientProblems,
     previewGoal, setPreviewGoal, patientId, program, previewBarrier, setPreviewBarrier,
     previewIntervention, setPreviewIntervention, intvDrawer, setIntvDrawer, handleAddIntervention,
+    notesFocus, setNotesFocus,
     intvSpecialDrawer, setIntvSpecialDrawer, auditAll, saveInterventionFromConfig,
     taskDrawerOpen, setTaskDrawerOpen, taskGoalId, setTaskGoalId, patientName,
     addBarriersDrawerOpen, setAddBarriersDrawerOpen, barrierAddGoalIdRef, handleAddBarriersFromPicker,
@@ -46,6 +47,12 @@ export function CarePlanViewDrawers(d) {
     deleteTarget, setDeleteTarget, live, removeGoal, confirmDelete,
     bulkAssignOpen, setBulkAssignOpen, bulkAssign, bulkDeleteOpen, setBulkDeleteOpen, bulkDelete, selectedCount,
   } = d;
+  // A drawer opens at its Note section only when the row's Notes action
+  // opened that exact item; closing it drops the request.
+  const notesFor = (kind, item) => (
+    notesFocus && notesFocus.kind === kind && String(notesFocus.id) === String(item?.id) ? 'notes' : null
+  );
+  const closeWith = (setter) => () => { setter(null); setNotesFocus(null); };
 
   return (
     <>
@@ -63,7 +70,8 @@ export function CarePlanViewDrawers(d) {
           goal={previewGoal}
           patientId={patientId}
           program={program}
-          onClose={() => setPreviewGoal(null)}
+          focusSection={notesFor('goal', previewGoal)}
+          onClose={closeWith(setPreviewGoal)}
           onOpenIntervention={setPreviewIntervention}
           onOpenBarrier={setPreviewBarrier}
         />
@@ -74,7 +82,8 @@ export function CarePlanViewDrawers(d) {
           barrier={previewBarrier}
           patientId={patientId}
           program={program}
-          onClose={() => setPreviewBarrier(null)}
+          focusSection={notesFor('barrier', previewBarrier)}
+          onClose={closeWith(setPreviewBarrier)}
           onOpenGoal={(g) => { setPreviewBarrier(null); setPreviewGoal(g); }}
         />
       )}
@@ -84,7 +93,8 @@ export function CarePlanViewDrawers(d) {
           intervention={previewIntervention}
           patientId={patientId}
           program={program}
-          onClose={() => setPreviewIntervention(null)}
+          focusSection={notesFor('intervention', previewIntervention)}
+          onClose={closeWith(setPreviewIntervention)}
           onEdit={(intv) => {
             // Open the full intervention edit drawer for this kind so the
             // user can edit fields beyond just the title (Send Form,

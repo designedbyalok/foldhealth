@@ -435,6 +435,119 @@
   color: var(--neutral-300);
 }
 
+/* ── Compact grid (Figma 866:7336) ──────────────────────────── */
+
+/* Second line under a row's name: "Start 09/15/2026 • Due 12/14/2026".
+   12px hint tone so the title stays the row's anchor. */
+.metaLine {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  row-gap: calc(var(--space-1) / 2);
+  min-width: 0;
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  font-variant-numeric: tabular-nums;
+}
+.metaSegment,
+.metaInline {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--space-1) / 2);
+  min-width: 0;
+}
+.metaSep {
+  padding: 0 var(--space-1);
+  color: var(--neutral-200);
+}
+.metaText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.metaDate {
+  white-space: nowrap;
+}
+/* Missing date reads as an explicit gap, never a projected value. */
+.metaDateEmpty {
+  color: var(--neutral-200);
+  font-style: italic;
+}
+.metaDateOverdue {
+  color: var(--status-error);
+}
+/* Editable date — same hover target as the status / priority buttons. */
+.metaDateBtn {
+  padding: 0 var(--space-1);
+  margin: 0 calc(-1 * var(--space-1));
+  border: none;
+  border-radius: var(--space-1);
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+.metaDateBtn:not(.metaDateOverdue):not(.metaDateEmpty) {
+  color: inherit;
+}
+.metaDateBtn:hover {
+  background: color-mix(in srgb, var(--neutral-500) 8%, transparent);
+}
+.metaDateBtn:focus-visible {
+  outline: 2px solid var(--primary-200);
+  outline-offset: 1px;
+}
+/* "No unit recorded" flag next to a bare numeric target. */
+.metaWarn {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Fixed Actions cell: Linked items | Notes | More. */
+.actionsTd.actionsWide {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  padding: calc(var(--space-1) + var(--space-1) / 2) var(--space-2);
+  text-align: right;
+}
+.rowActions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.actionDivider {
+  width: 1px;
+  height: 16px;
+  background: var(--neutral-150);
+  flex-shrink: 0;
+}
+
+/* Completed group toggle — sits inside the table body as a full-width row. */
+.completedToggleRow {
+  border-top: 0.5px solid var(--neutral-100);
+}
+.completedToggleTd {
+  padding: 0;
+}
+.completedToggleRow .closedBarriersToggle {
+  padding: var(--space-1) var(--space-2);
+}
+.completedCount {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  font-variant-numeric: tabular-nums;
+}
+
 .emptyRow {
   padding: var(--space-4);
   font-size: var(--font-base);

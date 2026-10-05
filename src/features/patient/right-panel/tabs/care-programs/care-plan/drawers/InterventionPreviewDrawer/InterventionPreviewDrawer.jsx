@@ -19,6 +19,7 @@ import { DetailDropdown } from '../../../../../../../tasks/TasksViewDropdowns';
 import { PRIORITY_OPTIONS } from '../../../../../../../tasks/TasksView.utils';
 import { GbiProgressCell } from '../../tables/carePlanTableShared';
 import { computeDueDate, computeOccurrenceDates, formatRecurrenceLabel } from '../../tables/CarePlanInterventionsTable';
+import { useScrollToSection } from '../../lib/useScrollToSection';
 import { CARE_PLAN_INTERVENTION_ICONS, interventionDurationFromConfig } from '../../lib/carePlanInterventionMenu';
 import { KIND_LABELS } from '../../../../../../../settings/care-plan-library/interventions/shared/interventionKinds';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
@@ -176,7 +177,7 @@ function AccordionHead({ title, open, onToggle, onAdd, addTooltip, canEdit }) {
  * Intervention details — Paper 35-0. Mirrors Goal Details layout with
  * adherence, linked goals, automations, notes, and activity feed.
  */
-export function InterventionPreviewDrawer({ intervention, patientId, program, onClose, onEdit, onOpenGoal, consolidated = false }) {
+export function InterventionPreviewDrawer({ intervention, patientId, program, onClose, onEdit, onOpenGoal, consolidated = false, focusSection = null }) {
   const key = patientId && program ? `${patientId}::${program.id}` : null;
   const slice = useAppStore(s => (key ? s.patientCarePlans[key] : null));
   const audit = useAppStore(s => (key ? s.patientCarePlanAudit[key] : null)) || [];
@@ -314,6 +315,8 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
   const activity = useMemo(() => audit
     .filter(a => String(a.entityId) === String(live?.id))
     .map(mapAuditEntry), [audit, live]);
+  const noteSectionRef = useRef(null);
+  useScrollToSection(noteSectionRef, focusSection === 'notes', live?.id);
 
   if (!live) return null;
 
@@ -809,7 +812,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
         )}
 
         {canEdit && (
-          <div className={barrierStyles.noteEditor}>
+          <div ref={noteSectionRef} className={barrierStyles.noteEditor}>
             {latestInterventionNote && !noteEditing ? (
               <section className={barrierStyles.section}>
                 <div className={barrierStyles.sectionHead}>

@@ -101,6 +101,25 @@
   white-space: nowrap;
 }
 .viewMoreLink:hover { text-decoration: underline; }
+/* Templates action at the end of the chip row (moved from the header). */
+.stripActions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  align-self: flex-start;
+  height: 32px;
+  padding-left: var(--space-2);
+}
+.stripDivider {
+  width: 1px;
+  height: 16px;
+  background: var(--neutral-150);
+}
+.noTemplates {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
 .appliedTemplateTrail {
   display: inline-flex;
   align-items: center;

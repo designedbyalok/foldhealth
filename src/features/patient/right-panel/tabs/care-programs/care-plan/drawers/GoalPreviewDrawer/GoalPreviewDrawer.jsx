@@ -35,6 +35,8 @@ import { CreateGoalDrawer } from '../../../../../../../settings/care-plan-librar
 import { GoalLinkedInterventionsList } from './GoalLinkedInterventionsList';
 import { GoalLinkedBarriersList } from './GoalLinkedBarriersList';
 import { computeDueDate, formatRecurrenceLabel } from '../../tables/CarePlanInterventionsTable';
+import { parseCarePlanDate } from '../../tables/carePlanTableModel';
+import { useScrollToSection } from '../../lib/useScrollToSection';
 import { Tooltip } from '../../../../../../../../components/Tooltip/Tooltip';
 import { formatGoalTarget, formatGoalDuration } from '../../../../../../../settings/care-plan-library/lib';
 import { goalProgressBand, goalProgressTone } from '../../lib/goalMetrics';
@@ -127,9 +129,9 @@ function relativeLabel(iso) {
 }
 
 function fmtDate(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
+  // Date-only values (target dates) parse locally, never as UTC midnight.
+  const d = parseCarePlanDate(iso);
+  if (!d) return '';
   return d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' });
 }
 
@@ -370,7 +372,7 @@ function IntvDeleteScopePicker({ name, kindLabel = 'intervention', onCancel, onC
  * Every edit (status, progress, readings, automations, notes, interventions,
  * barriers) writes through the care-plan store into Supabase.
  */
-export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenIntervention, onOpenBarrier, consolidated = false }) {
+export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenIntervention, onOpenBarrier, consolidated = false, focusSection = null }) {
   const key = patientId && program ? `${patientId}::${program.id}` : null;
   const slice = useAppStore(s => (key ? s.patientCarePlans[key] : null));
   const audit = useAppStore(s => (key ? s.patientCarePlanAudit[key] : null)) || [];
@@ -678,6 +680,8 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
     }
     return out;
   }, [audit, live, interventions, barriers, activityTab, activityFilter, lastVisit]);
+  const noteSectionRef = useRef(null);
+  useScrollToSection(noteSectionRef, focusSection === 'notes', live?.id);
 
   if (!live) return null;
 
@@ -843,22 +847,12 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
   ).slice(0, 4);
 
   // Single hero meta line: Start · Target · Last Updated (with the
-  // "by <name>" attribution when we know who saved it). Legacy goals
-  // persisted before the Target column existed carry no explicit
-  // targetDate, so fall back to createdAt + 90 days — same rule the
-  // plan-level table uses via goalTargetDateOrDefault so both
-  // surfaces show the same date.
-  const targetDateIso = (() => {
-    if (live.targetDate) return live.targetDate;
-    if (!live.createdAt) return null;
-    const anchor = new Date(live.createdAt);
-    if (Number.isNaN(anchor.getTime())) return null;
-    anchor.setDate(anchor.getDate() + 90);
-    return anchor.toISOString();
-  })();
+  // "by <name>" attribution when we know who saved it). A goal without a
+  // target date says so; no date is projected for it. The target is a
+  // date-only value, so it's formatted without a UTC shift.
   const metaParts = [
     live.createdAt ? `Start Date : ${fmtDate(live.createdAt)}` : null,
-    targetDateIso ? `Target Date : ${fmtDate(targetDateIso)}` : null,
+    `Target Date : ${fmtDate(live.targetDate) || 'Not set'}`,
     live.updatedAt ? `Last Updated : ${fmtDate(live.updatedAt)}${youSuffix(live.updatedBy)}` : null,
   ].filter(Boolean);
   // Goal type / category (Vitals, Exercise, Diet, Labs, Assessment,
@@ -1267,7 +1261,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
         )}
 
         {canEdit && (
-          <div className={barrierStyles.noteEditor}>
+          <div ref={noteSectionRef} className={barrierStyles.noteEditor}>
             {latestGoalNote && !noteEditing ? (
               <section className={barrierStyles.section}>
                 <div className={barrierStyles.sectionHead}>

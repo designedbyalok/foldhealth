@@ -26,6 +26,41 @@ export function linkedForChild(item, live, programBadge) {
   };
 }
 
+/**
+ * `(kind, id) => boolean` — whether a goal / intervention / barrier has a
+ * current note. Same rule the Goal, Intervention and Barrier drawers use to
+ * show their Note card: the newest `note` entry for the item (logged under its
+ * kind or the generic 'note' type) counts unless a `note_deleted` entry is at
+ * least as new. The barrier drawer only honours deletes logged under
+ * barrier / note, so that difference is kept.
+ */
+export function currentNoteLookup(auditAll) {
+  const latest = new Map(); // `${kind}:${id}` → { note, clear }
+  const bump = (key, field, at) => {
+    const entry = latest.get(key) || { note: 0, clear: 0 };
+    if (at > entry[field]) entry[field] = at;
+    latest.set(key, entry);
+  };
+  for (const a of auditAll || []) {
+    if (a.action !== 'note' && a.action !== 'note_deleted') continue;
+    const t = new Date(a.createdAt).getTime();
+    // The drawers compare Date objects, so an undated note still shows and an
+    // undated delete never hides one.
+    if (a.action === 'note_deleted' && !Number.isFinite(t)) continue;
+    const at = Number.isFinite(t) ? t : Infinity;
+    const id = String(a.entityId);
+    for (const kind of ['goal', 'intervention', 'barrier']) {
+      const typeMatches = a.entityType === kind || a.entityType === 'note';
+      if (a.action === 'note' && typeMatches) bump(`${kind}:${id}`, 'note', at);
+      if (a.action === 'note_deleted' && (kind !== 'barrier' || typeMatches)) bump(`${kind}:${id}`, 'clear', at);
+    }
+  }
+  return (kind, id) => {
+    const entry = latest.get(`${kind}:${String(id)}`);
+    return !!entry && entry.note > 0 && !(entry.clear && entry.clear >= entry.note);
+  };
+}
+
 export function interventionActivityEntries(auditAll, intervention) {
   if (!intervention?.id) return [];
   return auditAll

@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '@/components/Icon/Icon';
 import { AddIconMinimalist } from '@/components/Icon/AddIconMinimalist';
 import { ActionButton } from '@/components/ActionButton/ActionButton';
+import { Button } from '@/components/Button/Button';
 import { MenuPopover } from '@/components/MenuPopover/MenuPopover';
 import { goalCascade, barrierGoalIdsOf } from '../lib/carePlanGoalCascade';
 import { Select } from '@/components/Select/Select';
@@ -18,7 +19,7 @@ import { useCarePlanViewPanelRequest } from './useCarePlanViewPanelRequest';
 import { useCarePlanOpenSections } from './useCarePlanOpenSections';
 import { useCarePlanNoteDrawer } from './useCarePlanNoteDrawer';
 import { useCarePlanViewFilters } from './useCarePlanViewFilters';
-import { linkedForGoal, linkedForChild } from './carePlanLinkedItems';
+import { linkedForGoal, linkedForChild, currentNoteLookup } from './carePlanLinkedItems';
 import {
   CARE_PLAN_INTERVENTION_MENU,
   buildInterventionRecordFromConfig,
@@ -94,6 +95,10 @@ export function CarePlanView({ patientId, program }) {
   const programBadge = program?.name ? [program.name] : (program?.code ? [program.code] : []);
   const linkedForGoalRow = (g) => linkedForGoal(g, live, programBadge);
   const linkedForChildRow = (item) => linkedForChild(item, live, programBadge);
+  // Notes action: the dot shows when the item has a current note, and the
+  // click opens that item's drawer scrolled to its Note section.
+  const noteLookup = useMemo(() => currentNoteLookup(auditAll), [auditAll]);
+  const [notesFocus, setNotesFocus] = useState(null); // null | { kind, id }
 
   useCarePlanViewFetchEffects({
     patientId,
@@ -160,6 +165,12 @@ export function CarePlanView({ patientId, program }) {
   // Barrier preview drawer: shows goals/template linked to this barrier
   // in the current plan version, with delink + add-goal affordances.
   const [previewBarrier, setPreviewBarrier] = useState(null);
+  const openNotesFor = (kind, item) => {
+    setNotesFocus({ kind, id: item.id });
+    if (kind === 'goal') setPreviewGoal(item);
+    else if (kind === 'intervention') setPreviewIntervention(item);
+    else setPreviewBarrier(item);
+  };
   const [templatesDrawerOpen, setTemplatesDrawerOpen] = useState(false);
   // Applied-template filter: clicking a template badge in the sticky bar
   // scopes goals / interventions / barriers to items that came from that
@@ -642,6 +653,7 @@ export function CarePlanView({ patientId, program }) {
     addGoalsDrawerOpen, setAddGoalsDrawerOpen, handleAddGoalsFromPicker, data, patientProblems,
     previewGoal, setPreviewGoal, patientId, program, previewBarrier, setPreviewBarrier,
     previewIntervention, setPreviewIntervention, intvDrawer, setIntvDrawer, handleAddIntervention,
+    notesFocus, setNotesFocus,
     intvSpecialDrawer, setIntvSpecialDrawer, auditAll, saveInterventionFromConfig,
     taskDrawerOpen, setTaskDrawerOpen, taskGoalId, setTaskGoalId, patientName,
     addBarriersDrawerOpen, setAddBarriersDrawerOpen, barrierAddGoalIdRef, handleAddBarriersFromPicker,
@@ -668,6 +680,20 @@ export function CarePlanView({ patientId, program }) {
           canRemove={canEdit && !live?.plan?.signedAt}
           onSelect={(id) => setTemplateFilterId(prev => (prev === id ? null : id))}
           onRemove={handleRemoveTemplate}
+          trailing={(
+            <span className={styles.stripActions}>
+              <span className={styles.stripDivider} aria-hidden="true" />
+              <Button
+                variant="ghost"
+                size="S"
+                leadingIcon="solar:add-linear"
+                onClick={handleTemplates}
+                disabled={!canEdit}
+              >
+                Templates
+              </Button>
+            </span>
+          )}
         />
         {/* Conditions are intentionally not surfaced in the plan header; they
             still travel with the plan and appear in the Share / Download
@@ -839,6 +865,8 @@ export function CarePlanView({ patientId, program }) {
             onStatusMenu={setStatusMenu}
             onRowMenu={setStatusMenu}
             onTargetDateChange={(goal, iso) => savePatientCarePlanGoal(patientId, program, { ...goal, targetDate: iso }, goal.id)}
+            onOpenNotes={(g) => openNotesFor('goal', g)}
+            hasNote={(g) => noteLookup('goal', g.id)}
             linked={linkedForGoalRow}
             emptyState={filteredGoals.length === 0 ? <div className={styles.emptyRow}>No goals match the filters.</div> : null}
           />
@@ -908,6 +936,8 @@ export function CarePlanView({ patientId, program }) {
               ...intv,
               config: { ...(intv.config || {}), ...next },
             }, intv.id)}
+            onOpenNotes={(i) => openNotesFor('intervention', i)}
+            hasNote={(i) => noteLookup('intervention', i.id)}
             linked={linkedForChildRow}
             platformUsers={platformUsers}
             patients={patientName ? [{
@@ -920,10 +950,10 @@ export function CarePlanView({ patientId, program }) {
         ))}
       </div>
 
-      {/* Open Barriers */}
+      {/* Barriers (resolved ones collapse into their own footer) */}
       <div className={styles.section}>
         <GbiSectionHead
-          title="Open Barriers"
+          title="Barriers"
           count={filteredBarriers.length}
           open={openSections.barriers}
           onToggle={() => toggleSection('barriers')}
@@ -954,6 +984,8 @@ export function CarePlanView({ patientId, program }) {
             onStatusMenu={setStatusMenu}
             onRowMenu={setStatusMenu}
             onOpenBarrier={setPreviewBarrier}
+            onOpenNotes={(b) => openNotesFor('barrier', b)}
+            hasNote={(b) => noteLookup('barrier', b.id)}
             linked={linkedForChildRow}
             emptyState={filteredBarriers.length === 0 ? <div className={styles.emptyRow}>No barriers match the filters.</div> : null}
           />

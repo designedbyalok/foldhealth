@@ -89,7 +89,6 @@ import {
   clinicalNoteVersionRowToJs,
 } from './lib/contentStoreMappers';
 import {
-  defaultTargetDateIso,
   mapCarePlanGoalRow,
   mapPatientProblemRow,
   mapPatientAllergyRow,
@@ -2220,18 +2219,16 @@ export const useAppStore = create((set, get) => ({
     const derived = goalId
       ? deriveGoalTableFields({ ...values, id: goalId }, get().patientCarePlans[key]?.measurements || [])
       : null;
-    // Goals always carry a Target date — seed one when the caller hasn't
-    // supplied it so the surface never renders "-" for a persisted goal.
-    // Default = createdAt + 90 days (roughly a quarter, the shortest care
-    // plan review cadence).
-    const seededTargetDate = values.targetDate
-      || defaultTargetDateIso(prevGoal?.createdAt || values.createdAt || new Date().toISOString(), 90);
+    // Never invent a target date: a goal without one stays without one and
+    // the plan says so. A save that omits the field keeps the stored value
+    // rather than blanking it.
+    const targetDate = values.targetDate ?? prevGoal?.targetDate ?? '';
     const merged = derived ? {
       ...values,
-      targetDate: seededTargetDate,
+      targetDate,
       currentValue: derived.currentValue === 'No Data' ? '' : derived.currentValue,
       trend: derived.trend,
-    } : { ...values, targetDate: seededTargetDate };
+    } : { ...values, targetDate };
     const row = patientCarePlanGoalToRow(merged, planId);
     // Stamp the last editor so the Goal Details "Last Update … by <name>" line
     // has an actor.
@@ -2417,24 +2414,10 @@ export const useAppStore = create((set, get) => ({
     // no kind / priority / goalId / config). Merge over what is already stored
     // so a save only changes what it actually carries.
     const values = prevIntv ? { ...prevIntv, ...incoming } : incoming;
-    // Interventions always carry a Due date — seed a default when the
-    // caller has not supplied a manual override AND the duration-based
-    // computation would produce nothing. Default = createdAt + 30 days
-    // so the table cell never renders "-" for a persisted row.
+    // No due date is invented: an intervention without a picked date or a
+    // duration has no due date, and the plan says so.
     if (prevIntv && incoming.config) values.config = { ...(prevIntv.config || {}), ...incoming.config };
-    const cfg = values.config || {};
-    const hasOverride = !!cfg.dueDateOverride;
-    const hasDuration = (cfg.dueOffset != null && cfg.dueUnit) || !!values.duration;
-    const seededValues = (hasOverride || hasDuration)
-      ? values
-      : {
-        ...values,
-        config: {
-          ...cfg,
-          dueDateOverride: defaultTargetDateIso(prevIntv?.createdAt || values.createdAt || new Date().toISOString(), 30),
-        },
-      };
-    const row = patientCarePlanInterventionToRow(seededValues, planId);
+    const row = patientCarePlanInterventionToRow(values, planId);
     // Stamp the last editor so the Intervention Details "Last Updated … by <name>" line has an actor.
     row.updated_by = get().currentUserProfile?.name || row.updated_by || null;
     // Schema-tolerant write for `task_id` — if the column hasn't been
@@ -9417,10 +9400,12 @@ export const useAppStore = create((set, get) => ({
     }
   },
 
-  toggleWorklistColumn: (worklistKey, colKey) => {
+  // `defaultHidden` seeds a worklist that has no saved prefs yet, so the first
+  // toggle changes one column instead of revealing every default-hidden one.
+  toggleWorklistColumn: (worklistKey, colKey, defaultHidden = []) => {
     track('worklist.column_toggled', { worklist: worklistKey, column: colKey });
     set(s => {
-      const cur = s.worklistColumnPrefs[worklistKey] || { order: [], hidden: [] };
+      const cur = s.worklistColumnPrefs[worklistKey] || { order: [], hidden: [...defaultHidden] };
       const nextHidden = new Set(cur.hidden);
       if (nextHidden.has(colKey)) nextHidden.delete(colKey); else nextHidden.add(colKey);
       const next = { ...s.worklistColumnPrefs, [worklistKey]: { ...cur, hidden: [...nextHidden] } };
@@ -9429,11 +9414,11 @@ export const useAppStore = create((set, get) => ({
     get()._persistWorklistColumnPref(worklistKey);
   },
 
-  reorderWorklistColumn: (worklistKey, fromKey, toKey) => {
+  reorderWorklistColumn: (worklistKey, fromKey, toKey, defaultHidden = []) => {
     if (!fromKey || !toKey || fromKey === toKey) return;
     track('worklist.columns_reordered', { worklist: worklistKey, from: fromKey, to: toKey });
     set(s => {
-      const cur = s.worklistColumnPrefs[worklistKey] || { order: [], hidden: [] };
+      const cur = s.worklistColumnPrefs[worklistKey] || { order: [], hidden: [...defaultHidden] };
       const base = cur.order.length
         ? [...cur.order]
         : (s._worklistDefaultColumnKeys[worklistKey] || []);
@@ -9448,10 +9433,11 @@ export const useAppStore = create((set, get) => ({
     get()._persistWorklistColumnPref(worklistKey);
   },
 
-  resetWorklistColumns: (worklistKey) => {
+  // Reset restores the worklist's defaults, including its default-hidden columns.
+  resetWorklistColumns: (worklistKey, defaultHidden = []) => {
     track('worklist.columns_reset', { worklist: worklistKey });
     set(s => ({
-      worklistColumnPrefs: { ...s.worklistColumnPrefs, [worklistKey]: { order: [], hidden: [] } },
+      worklistColumnPrefs: { ...s.worklistColumnPrefs, [worklistKey]: { order: [], hidden: [...defaultHidden] } },
     }));
     get()._persistWorklistColumnPref(worklistKey);
   },

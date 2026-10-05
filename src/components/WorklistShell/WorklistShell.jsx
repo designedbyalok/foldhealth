@@ -147,6 +147,10 @@ export function WorklistShell({
   // Sticky columns (checkbox, sticky-left member, sticky-right actions) are
   // never reordered/hidden — they're locked in the popover.
   worklistKey,
+  // Optional `(ctx) => node` rendered inside <tbody> after the rows, with the
+  // same row ctx plus `colSpan`. Lets a caller append a collapsible group
+  // (e.g. completed items) that honours the user's hidden/ordered columns.
+  renderTbodyFooter,
 }) {
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -482,6 +486,7 @@ export function WorklistShell({
               {rows.length === 0 && emptyState
                 ? (<tr><td colSpan={columnsToRender.length} className={styles.emptyCell}>{emptyState}</td></tr>)
                 : rows.map((row, i) => renderRow(row, i, rowCtx))}
+              {renderTbodyFooter?.({ ...rowCtx, colSpan: columnsToRender.length })}
             </tbody>
           </table>
         )}
