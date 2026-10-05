@@ -54,6 +54,10 @@ const conditionSortKey = (t) => {
  *   template applied to a plan; a template being authored has nowhere to
  *   keep it, so that column and its header row come off.
  * @param {boolean} [props.showCreateNew=true]
+ * @param {Function} [props.onCreateNew]  Opens the new-template flow; the
+ *   Create New link only renders when this is provided.
+ * @param {string[]} [props.preselectedIds]  Extra template ids to start
+ *   checked (e.g. one the user just created from this drawer).
  * @param {Array} [props.patientProblems=[]]  The patient's problem list; drives
  *   the "Recommended" group (templates whose conditions match an active problem).
  */
@@ -65,6 +69,8 @@ export function ApplyTemplatesDrawer({
   onApply,
   showPriority = true,
   showCreateNew = true,
+  onCreateNew,
+  preselectedIds = EMPTY_TEMPLATE_IDS,
 }) {
   const templates = useAppStore(s => s.carePlanTemplates);
   const libraryDidFetch = useAppStore(s => s.carePlanLibraryDidFetch);
@@ -80,14 +86,14 @@ export function ApplyTemplatesDrawer({
   }, [libraryDidFetch, fetchCarePlanLibrary, fetchCarePlanFavorites]);
 
   const [query, setQuery] = useState('');
-  const [selected, setSelected] = useState(() => new Set(appliedTemplateIds));
+  const [selected, setSelected] = useState(() => new Set([...appliedTemplateIds, ...preselectedIds]));
   // Seed from the plan's persisted priorities so re-opening the drawer shows
   // what the user picked last time. Applied templates without an explicit pick
   // fall back to Medium (the priority the plan itself uses by default) so the
   // drawer never shows "no priority" for a template the plan ranks as Medium.
   const [priorities, setPriorities] = useState(() => {
     const seed = { ...appliedTemplatePriorities };
-    appliedTemplateIds.forEach(id => { if (!seed[id]) seed[id] = DEFAULT_PRIORITY; });
+    [...appliedTemplateIds, ...preselectedIds].forEach(id => { if (!seed[id]) seed[id] = DEFAULT_PRIORITY; });
     return seed;
   });
   // Condition filter chip — an OR set of conditions to keep. Empty = all.
@@ -211,10 +217,10 @@ export function ApplyTemplatesDrawer({
 
   const headerRight = (
     <>
-      {showCreateNew && (
+      {showCreateNew && onCreateNew && (
         <>
           <Link
-            onClick={() => { /* future: open Create New template flow */ }}
+            onClick={onCreateNew}
             style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-1)' }}
           >
             <Icon name="solar:add-linear" size={14} color="var(--primary-300)" />

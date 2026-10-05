@@ -1,0 +1,9 @@
+/* Full-viewport layer for the New Care Plan editor. z-index stays under the
+   shared Drawer (400) so drawers the editor opens still layer above it. */
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: 390;
+  display: flex;
+  background: var(--neutral-50);
+}

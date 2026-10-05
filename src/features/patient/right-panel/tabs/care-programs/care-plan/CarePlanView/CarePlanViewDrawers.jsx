@@ -23,6 +23,7 @@ import { CarePlanTrendsDrawer } from '../drawers/CarePlanTrendsDrawer/CarePlanTr
 import { GoalPreviewDrawer } from '../drawers/GoalPreviewDrawer/GoalPreviewDrawer';
 import { InterventionPreviewDrawer } from '../drawers/InterventionPreviewDrawer/InterventionPreviewDrawer';
 import { ApplyTemplatesDrawer } from '../drawers/ApplyTemplatesDrawer/ApplyTemplatesDrawer';
+import { TemplateCreateLayer } from './TemplateCreateLayer';
 import { interventionActivityEntries } from './carePlanLinkedItems';
 import styles from './CarePlanView.module.css';
 
@@ -42,7 +43,8 @@ export function CarePlanViewDrawers(d) {
     noteDiscardOpen, setNoteDiscardOpen, noteDeleteOpen, setNoteDeleteOpen, doClearCareNote,
     problemOpen, setProblemOpen, doAddProblem, problemText, setProblemText,
     trendsOpen, setTrendsOpen, measurements,
-    templatesDrawerOpen, setTemplatesDrawerOpen, appliedTemplateIds, appliedTemplatePriorities, handleApplyTemplates,
+    templatesDrawerOpen, setTemplatesDrawerOpen, appliedTemplateIds,
+    templateCreateOpen, setTemplateCreateOpen, createdTemplateIds, setCreatedTemplateIds, appliedTemplatePriorities, handleApplyTemplates,
     templateOpen, setTemplateOpen, templateName, setTemplateName, templateConditions, setTemplateConditions, saveTemplate,
     deleteTarget, setDeleteTarget, live, removeGoal, confirmDelete,
     bulkAssignOpen, setBulkAssignOpen, bulkAssign, bulkDeleteOpen, setBulkDeleteOpen, bulkDelete, selectedCount,
@@ -342,8 +344,23 @@ export function CarePlanViewDrawers(d) {
           appliedTemplateIds={appliedTemplateIds}
           appliedTemplatePriorities={appliedTemplatePriorities}
           patientProblems={patientProblems}
-          onClose={() => setTemplatesDrawerOpen(false)}
-          onApply={handleApplyTemplates}
+          onClose={() => { setTemplatesDrawerOpen(false); setCreatedTemplateIds([]); }}
+          onApply={(ids, priorities) => { setCreatedTemplateIds([]); handleApplyTemplates(ids, priorities); }}
+          onCreateNew={() => { setTemplatesDrawerOpen(false); setTemplateCreateOpen(true); }}
+          preselectedIds={createdTemplateIds}
+        />
+      )}
+
+      {templateCreateOpen && (
+        <TemplateCreateLayer
+          onClose={() => { setTemplateCreateOpen(false); setTemplatesDrawerOpen(true); }}
+          onCreated={(template) => {
+            // A draft isn't ready to apply, so only a published template
+            // comes back pre-checked.
+            if (template.status !== 'draft') setCreatedTemplateIds(ids => [...ids, template.id]);
+            setTemplateCreateOpen(false);
+            setTemplatesDrawerOpen(true);
+          }}
         />
       )}
 

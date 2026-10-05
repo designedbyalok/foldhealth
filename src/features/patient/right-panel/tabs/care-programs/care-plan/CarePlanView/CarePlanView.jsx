@@ -173,6 +173,10 @@ export function CarePlanView({ patientId, program }) {
     else setPreviewBarrier(item);
   };
   const [templatesDrawerOpen, setTemplatesDrawerOpen] = useState(false);
+  // Apply Templates → Create New: the library editor opens over the plan, and
+  // a template saved there comes back pre-checked in the reopened drawer.
+  const [templateCreateOpen, setTemplateCreateOpen] = useState(false);
+  const [createdTemplateIds, setCreatedTemplateIds] = useState([]);
   // Applied-template filter: clicking a template badge in the sticky bar
   // scopes goals / interventions / barriers to items that came from that
   // template. Click again (or another badge) to swap; the "+N more" chip
@@ -673,7 +677,8 @@ export function CarePlanView({ patientId, program }) {
     noteDiscardOpen, setNoteDiscardOpen, noteDeleteOpen, setNoteDeleteOpen, doClearCareNote,
     problemOpen, setProblemOpen, doAddProblem, problemText, setProblemText,
     trendsOpen, setTrendsOpen, measurements,
-    templatesDrawerOpen, setTemplatesDrawerOpen, appliedTemplateIds, appliedTemplatePriorities, handleApplyTemplates,
+    templatesDrawerOpen, setTemplatesDrawerOpen, appliedTemplateIds,
+    templateCreateOpen, setTemplateCreateOpen, createdTemplateIds, setCreatedTemplateIds, appliedTemplatePriorities, handleApplyTemplates,
     templateOpen, setTemplateOpen, templateName, setTemplateName, templateConditions, setTemplateConditions, saveTemplate,
     deleteTarget, setDeleteTarget, live, removeGoal, confirmDelete,
     bulkAssignOpen, setBulkAssignOpen, bulkAssign, bulkDeleteOpen, setBulkDeleteOpen, bulkDelete, selectedCount,
