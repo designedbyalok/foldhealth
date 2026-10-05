@@ -182,6 +182,14 @@ import { createHccWorklistFiltersSlice } from './slices/hccWorklistFiltersSlice'
 // Timer handle for the 3-second row-flash on the tasks page.
 let _flashTaskTimer = null;
 
+// Every table is RLS'd to `authenticated`, so a session-less read "succeeds"
+// with zero rows. Single-fire fetches check this (and skip latching their
+// DidFetch flag on errors) so one bad read doesn't blank a slice until reload.
+async function hasSession() {
+  const { data: { session } } = await supabase.auth.getSession();
+  return !!session;
+}
+
 // Central failure reporter for every persistHccXxx helper. Historically
 // each of these was fire-and-forget with only console.warn on error — so
 // when RLS blocked a write, or an UPDATE matched 0 rows (spawned row
@@ -973,13 +981,17 @@ export const useAppStore = create((set, get) => ({
   fetchHccAddedCharts: async () => {
     if (useAppStore.getState().hccAddedChartsDidFetch) return;
     set({ hccAddedChartsDidFetch: true });
+    if (!(await hasSession())) {
+      set({ hccAddedChartsLoaded: true, hccAddedChartsDidFetch: false });
+      return;
+    }
     const { data, error } = await supabase
       .from('hcc_added_charts')
       .select('*')
       .order('created_at', { ascending: true });
     if (error) {
       console.warn('fetchHccAddedCharts failed:', error.message);
-      set({ hccAddedChartsLoaded: true });
+      set({ hccAddedChartsLoaded: true, hccAddedChartsDidFetch: false });
       return;
     }
     const map = {};
@@ -1013,6 +1025,7 @@ export const useAppStore = create((set, get) => ({
   hccChartStatusDidFetch: false,
   fetchHccChartStatus: async () => {
     if (get().hccChartStatusDidFetch) return;
+    if (!(await hasSession())) return;
     try {
       const { data, error } = await supabase.from('hcc_chart_status').select('*');
       if (error) throw error;
@@ -1034,7 +1047,6 @@ export const useAppStore = create((set, get) => ({
       });
     } catch (err) {
       console.warn('fetchHccChartStatus:', err?.message || err);
-      set({ hccChartStatusDidFetch: true });
     }
   },
   // opts.failReasons / opts.failNote are only stored when status === 'Failed'.
@@ -1130,6 +1142,7 @@ export const useAppStore = create((set, get) => ({
   hccRemovedChartsDidFetch: false,
   fetchHccRemovedCharts: async () => {
     if (get().hccRemovedChartsDidFetch) return;
+    if (!(await hasSession())) return;
     try {
       const { data, error } = await supabase.from('hcc_removed_charts').select('*');
       if (error) throw error;
@@ -1140,7 +1153,6 @@ export const useAppStore = create((set, get) => ({
       set({ hccRemovedCharts: map, hccRemovedChartsDidFetch: true });
     } catch (err) {
       console.warn('fetchHccRemovedCharts:', err?.message || err);
-      set({ hccRemovedChartsDidFetch: true });
     }
   },
   removeChartDoc: (memberId, docId) => {
@@ -3254,6 +3266,10 @@ export const useAppStore = create((set, get) => ({
     if (get().carePlanLibraryDidFetch) return;
     if (get().carePlanLibraryLoading) return;
     set({ carePlanLibraryLoading: true });
+    if (!(await hasSession())) {
+      set({ carePlanLibraryLoading: false });
+      return;
+    }
     const [templates, goals, barriers, interventions, intvTemplates] = await Promise.all([
       supabase.from('care_plan_templates').select('*').order('created_at', { ascending: true }),
       supabase.from('care_plan_goals').select('*').order('created_at', { ascending: true }),
@@ -3269,7 +3285,7 @@ export const useAppStore = create((set, get) => ({
       // Table missing (migration not run yet) or blocked — keep the tabs as
       // they are rather than blanking work in progress.
       console.warn('care plan library fetch failed (run migration?):', firstError.message);
-      set({ carePlanLibraryLoading: false, carePlanLibraryDidFetch: true });
+      set({ carePlanLibraryLoading: false });
       return;
     }
     if (intvTemplates.error) console.warn('intervention templates fetch failed (run migration?):', intvTemplates.error.message);
@@ -3553,6 +3569,7 @@ export const useAppStore = create((set, get) => ({
   lettersDidFetch: false,
   fetchLetters: async () => {
     if (get().lettersDidFetch) return;
+    if (!(await hasSession())) return;
     try {
       const { data, error } = await supabase
         .from('letters')
@@ -3572,7 +3589,6 @@ export const useAppStore = create((set, get) => ({
       set({ letters: rows, lettersDidFetch: true });
     } catch (e) {
       console.warn('fetchLetters — falling back to PROGRAM_LETTERS_MOCK:', e?.message || e);
-      set({ lettersDidFetch: true });
     }
   },
 
@@ -3586,6 +3602,7 @@ export const useAppStore = create((set, get) => ({
   programDocumentsDidFetch: false,
   fetchProgramDocuments: async () => {
     if (get().programDocumentsDidFetch) return;
+    if (!(await hasSession())) return;
     try {
       const { data, error } = await supabase
         .from('program_documents')
@@ -3610,7 +3627,6 @@ export const useAppStore = create((set, get) => ({
       set({ programDocuments: rows, programDocumentsDidFetch: true });
     } catch (e) {
       console.warn('fetchProgramDocuments — starting empty:', e?.message || e);
-      set({ programDocumentsDidFetch: true });
     }
   },
   // `file` (when present) is kept on the in-memory row so FilePreview can show
@@ -3658,7 +3674,10 @@ export const useAppStore = create((set, get) => ({
     set({ orgFeaturesDidFetch: true });
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) return;
+      if (!session?.user?.id) {
+        set({ orgFeaturesDidFetch: false });
+        return;
+      }
       const { data, error } = await supabase
         .from('org_settings')
         .select('show_patient_app_indicator')
@@ -3666,11 +3685,13 @@ export const useAppStore = create((set, get) => ({
         .maybeSingle();
       if (error) {
         console.warn('fetchOrgFeatures error:', error.message);
+        set({ orgFeaturesDidFetch: false });
         return;
       }
       set({ showPatientAppIndicator: !!data?.show_patient_app_indicator });
     } catch (err) {
       console.warn('fetchOrgFeatures failed:', err?.message || err);
+      set({ orgFeaturesDidFetch: false });
     }
   },
 
@@ -8154,6 +8175,7 @@ export const useAppStore = create((set, get) => ({
   hccGapActivityDidFetch: false,
   fetchHccGapActivity: async () => {
     if (get().hccGapActivityDidFetch) return;
+    if (!(await hasSession())) return;
     try {
       const { data, error } = await supabase
         .from('hcc_gap_activity')
@@ -8169,7 +8191,6 @@ export const useAppStore = create((set, get) => ({
       set({ hccGapActivity: map, hccGapActivityDidFetch: true });
     } catch (err) {
       console.warn('fetchHccGapActivity error — components will fall back to mock:', err?.message || err);
-      set({ hccGapActivityDidFetch: true });
     }
   },
 
@@ -8183,6 +8204,7 @@ export const useAppStore = create((set, get) => ({
   hccGapSweepDidFetch: false,
   fetchHccGapSweep: async () => {
     if (get().hccGapSweepDidFetch) return;
+    if (!(await hasSession())) return;
     try {
       const { data, error } = await supabase
         .from('hcc_gap_sweep')
@@ -8209,7 +8231,6 @@ export const useAppStore = create((set, get) => ({
       set({ hccGapSweep: map, hccGapSweepDidFetch: true });
     } catch (err) {
       console.warn('fetchHccGapSweep error — components will fall back to mock:', err?.message || err);
-      set({ hccGapSweepDidFetch: true });
     }
   },
 

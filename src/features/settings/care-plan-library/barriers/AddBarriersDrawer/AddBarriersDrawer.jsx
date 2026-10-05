@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Drawer } from '../../../../../components/Drawer/Drawer';
 import { Button } from '../../../../../components/Button/Button';
 import { Input } from '../../../../../components/Input/Input';
@@ -54,6 +54,16 @@ export function AddBarriersDrawer({
       .filter(b => addedTitles.has(normTitle(b.title)))
       .map(b => b.id),
   ));
+  // The drawer can open before the library arrives (e.g. a retried fetch), so
+  // seed the already-added rows once it does, as AddGoalsDrawer does.
+  const seededRef = useRef(libraryBarriers.length > 0);
+  useEffect(() => {
+    if (seededRef.current || !libraryBarriers.length) return;
+    setSelected(new Set(
+      libraryBarriers.filter(b => addedTitles.has(normTitle(b.title))).map(b => b.id),
+    ));
+    seededRef.current = true;
+  }, [libraryBarriers, addedTitles]);
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
