@@ -12,6 +12,25 @@
   gap: var(--space-4);
 }
 
+/* Search fills the row; "Create New Barrier" sits at its right end. */
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.searchGrow {
+  flex: 1;
+  min-width: 0;
+}
+.createLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: var(--font-base);
+}
+
 .list {
   display: flex;
   flex-direction: column;

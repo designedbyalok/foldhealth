@@ -12,10 +12,12 @@ import styles from './BarrierDrawer.module.css';
  * both surfaces capture the same fields.
  *
  * @param {object} [props.barrier]  Existing barrier; omit to author a new one.
+ * @param {string} [props.initialTitle]  Prefill for a new barrier (e.g. what
+ *   the user typed into a picker's search).
  * @param {(values: {title: string, description: string}) => void} props.onSave
  */
-export function BarrierDrawer({ barrier, onClose, onSave }) {
-  const [title, setTitle] = useState(barrier?.title || '');
+export function BarrierDrawer({ barrier, initialTitle = '', onClose, onSave }) {
+  const [title, setTitle] = useState(barrier?.title || initialTitle);
   const [description, setDescription] = useState(barrier?.description || '');
   const canSave = title.trim().length > 0;
 

@@ -5,6 +5,10 @@ import { Input } from '../../../../../components/Input/Input';
 import { Badge } from '../../../../../components/Badge/Badge';
 import { Icon } from '../../../../../components/Icon/Icon';
 import { Checkbox } from '../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Link } from '../../../../../components/Link/Link';
+import { AddIconMinimalist } from '../../../../../components/Icon/AddIconMinimalist';
+import { toast } from '../../../../../components/Toast/sonnerToast';
+import { BarrierDrawer } from '../BarrierDrawer/BarrierDrawer';
 import { useAppStore } from '../../../../../store/useAppStore';
 import { CARE_PLAN_TITLE_MAX } from '../../lib/carePlanLimits';
 import styles from './AddBarriersDrawer.module.css';
@@ -33,6 +37,11 @@ export function AddBarriersDrawer({
   selectable = true,
 }) {
   const libraryBarriers = useAppStore(s => s.carePlanBarriers);
+  const saveCarePlanBarrier = useAppStore(s => s.saveCarePlanBarrier);
+  // Plan picker: "Create New Barrier" authors a library barrier in the shared
+  // BarrierDrawer (same as Add Goals → Create New Goal), then checks it.
+  // null | { title } — the prefill.
+  const [createDraft, setCreateDraft] = useState(null);
   const libraryDidFetch = useAppStore(s => s.carePlanLibraryDidFetch);
   const fetchCarePlanLibrary = useAppStore(s => s.fetchCarePlanLibrary);
 
@@ -93,6 +102,25 @@ export function AddBarriersDrawer({
   const duplicateName = !!trimmed && knownTitles.has(normTitle(trimmed));
   const canCreate = !!trimmed && !duplicateName;
 
+  // A new barrier goes to the library and comes back checked. A name that's
+  // already there selects the existing barrier instead of duplicating it.
+  const saveNewBarrier = async ({ title, description }) => {
+    const existing = libraryBarriers.find(b => normTitle(b.title) === normTitle(title));
+    if (existing) {
+      setSelected(prev => new Set(prev).add(existing.id));
+      toast.success(`"${existing.title}" is already in the library, so it's selected`);
+      setCreateDraft(null);
+      setQuery('');
+      return;
+    }
+    const saved = await saveCarePlanBarrier({ title, description });
+    if (!saved) return;
+    toast.success('Barrier created successfully');
+    setSelected(prev => new Set(prev).add(saved.id));
+    setCreateDraft(null);
+    setQuery('');
+  };
+
   const toggle = (id) => setSelected(prev => {
     const next = new Set(prev);
     if (next.has(id)) next.delete(id);
@@ -149,15 +177,26 @@ export function AddBarriersDrawer({
             plan picker keeps a plain search. Either way the list below filters
             as you type, which is what stops duplicates. */}
         {selectable ? (
-          <Input
-            type="search"
-            aria-label="Search or Enter Barrier"
-            placeholder="Search or Enter Barrier"
-            leadingIcon="solar:magnifer-linear"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && canCreate) { e.preventDefault(); handleCreate(); } }}
-          />
+          // Search and "Create New Barrier" share one row: the link has no
+          // filter beside it (unlike Add Goals' category toggle), so on its
+          // own row it left an empty band above the search.
+          <div className={styles.filterRow}>
+            <span className={styles.searchGrow}>
+              <Input
+                type="search"
+                aria-label="Search or Enter Barrier"
+                placeholder="Search or Enter Barrier"
+                leadingIcon="solar:magnifer-linear"
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && canCreate) { e.preventDefault(); setCreateDraft({ title: trimmed }); } }}
+              />
+            </span>
+            <Link className={styles.createLink} onClick={() => setCreateDraft({ title: trimmed })}>
+              <AddIconMinimalist size={14} color="currentColor" />
+              Create New Barrier
+            </Link>
+          </div>
         ) : (
           <Input
             autoFocus
@@ -181,7 +220,11 @@ export function AddBarriersDrawer({
 
         <div className={styles.list}>
           {canCreate && (
-            <button type="button" className={styles.createRow} onClick={handleCreate}>
+            <button
+              type="button"
+              className={styles.createRow}
+              onClick={selectable ? () => setCreateDraft({ title: trimmed }) : handleCreate}
+            >
               <Icon name="solar:add-circle-linear" size={18} color="var(--primary-300)" />
               <span className={styles.createText}>Create “{trimmed}”</span>
             </button>
@@ -215,6 +258,13 @@ export function AddBarriersDrawer({
           )}
         </div>
       </div>
+      {createDraft && (
+        <BarrierDrawer
+          initialTitle={createDraft.title}
+          onClose={() => setCreateDraft(null)}
+          onSave={saveNewBarrier}
+        />
+      )}
     </Drawer>
   );
 }
