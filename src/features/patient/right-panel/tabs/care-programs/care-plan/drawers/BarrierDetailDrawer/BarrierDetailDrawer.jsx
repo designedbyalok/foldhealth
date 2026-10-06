@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useScrollToSection } from '../../lib/useScrollToSection';
+import { itemNoteHistory } from '../../lib/carePlanNotes';
+import { CarePlanNoteChangeLog } from '../CarePlanNoteChangeLog/CarePlanNoteChangeLog';
 import { Drawer } from '../../../../../../../../components/Drawer/Drawer';
 import { EditableText } from '../../../../../../../../components/EditableText/EditableText';
 import { Button } from '../../../../../../../../components/Button/Button';
@@ -258,6 +260,10 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
     if (latestClear && new Date(latestClear.createdAt) >= new Date(latestNote.createdAt)) return null;
     return latestNote;
   }, [auditAll, barrierIdSet]);
+  const barrierNoteHistory = useMemo(
+    () => itemNoteHistory(auditAll, barrierIdSet, 'barrier'),
+    [auditAll, barrierIdSet],
+  );
   const [note, setNote] = useState(latestBarrierNote?.detail || '');
   const [noteEditing, setNoteEditing] = useState(false);
   const noteSectionRef = useRef(null);
@@ -770,6 +776,7 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
                     </div>
                   );
                 })()}
+                <CarePlanNoteChangeLog notes={barrierNoteHistory} />
               </>
             )}
           </div>

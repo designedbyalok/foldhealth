@@ -13,6 +13,7 @@ import { PriorityIcon } from '../../../../../components/PriorityIcon/PriorityIco
 import { VITAL_OPTIONS } from '../../lib/vitalOptions';
 import { MEASURE_CONFIG } from '../../lib/goalFormat';
 import { useAppStore } from '../../../../../store/useAppStore';
+import { InterventionLibrarySelect } from '../shared/InterventionLibrarySelect';
 import { InterventionKindToggle } from '../shared/InterventionKindToggle';
 import { ActionButton } from '../../../../../components/ActionButton/ActionButton';
 import { Icon } from '../../../../../components/Icon/Icon';
@@ -104,6 +105,9 @@ export function InterventionDrawer({
   // Open Goal action so the intervention's linked goals surface the same
   // interaction. Optional; the arrow just no-ops when the caller omits it.
   onOpenGoal,
+  // Offer a "From library" picker on a new intervention. Off for the
+  // library's own editor, where the item being written is the library.
+  showLibrary = false,
 }) {
   const [linkedGoalIds, setLinkedGoalIds] = useState(() => (
     Array.isArray(linkedGoalIdsProp) && linkedGoalIdsProp.length > 0
@@ -352,6 +356,18 @@ export function InterventionDrawer({
     <Drawer title={heading} onClose={onClose} headerRight={headerRight} noCloseDivider>
       <div className={styles.body}>
         <InterventionKindToggle kind={kind} onKindChange={onKindChange} />
+        {showLibrary && !intervention && (
+          <InterventionLibrarySelect
+            key={kind}
+            kind={kind}
+            onPick={(item) => {
+              setTitle(item.title || '');
+              setDescription(item.description || '');
+              const p = String(item.config?.priority || '').toLowerCase();
+              if (p === 'high' || p === 'medium' || p === 'low') setPriority(p[0].toUpperCase() + p.slice(1));
+            }}
+          />
+        )}
 
         {/* Task Title — reuses the care-plan Add Task drawer's title
             treatment: big 2xl label + auto-growing textarea, char

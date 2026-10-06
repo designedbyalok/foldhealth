@@ -259,8 +259,11 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
   // Count the value on screen: the prop when controlled (local `text` is
   // only kept for uncontrolled use, so it would stay at its first value).
   const current = isControlled ? (value ?? '') : text;
+  // Controlled rich text counts the prop: the sync effect writes innerHTML
+  // after this render, so the editor's innerText would still be the old
+  // value and a value set from code would keep showing the placeholder.
   const plainLen = richText
-    ? (editorRef.current?.innerText?.length ?? plainTextLen(current))
+    ? (isControlled ? plainTextLen(current) : (editorRef.current?.innerText?.length ?? plainTextLen(current)))
     : current.length;
 
   const handleTextareaChange = (e) => {

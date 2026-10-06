@@ -72,6 +72,7 @@ import { hccRoleDefaultFilters } from '../features/hcc/filters';
 import { deriveGoalTableFields } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/goalMetrics';
 import { barrierPayloadFromTemplateEntry, goalPayloadFromTemplateEntry, interventionPayloadFromTemplateEntry, templateLinkOwners } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanTemplateApply';
 import { barrierGoalIdsOf, goalCascade } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanGoalCascade';
+import { templateContentFromApplied, templateContentFromWholePlan } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanTemplateSave';
 import { resolvePatientStoreId } from '../lib/resolvePatientStoreId';
 import { resolvePatientForCall } from '../lib/patientCall';
 
@@ -2611,17 +2612,24 @@ export const useAppStore = create((set, get) => ({
     });
   },
 
-  savePatientCarePlanAsTemplate: async (patientId, program, name, conditionsArg) => {
+  // `sourceTemplateId` saves just that applied template (what's left of it on
+  // the plan); without it the whole plan is saved.
+  savePatientCarePlanAsTemplate: async (patientId, program, name, conditionsArg, sourceTemplateId = null) => {
     const key = carePlanKey(patientId, program.id);
     const cur = get().patientCarePlans[key];
     if (!cur) return null;
-    // Caller-picked conditions win; otherwise fall back to the plan's own.
+    const templates = get().carePlanTemplates;
+    const libraryGoals = get().carePlanGoals;
+    const source = sourceTemplateId ? templates.find(t => t.id === sourceTemplateId) : null;
+    // Caller-picked conditions win; otherwise the source template's, then the plan's.
     const conditions = Array.isArray(conditionsArg) && conditionsArg.length
       ? conditionsArg
-      : (cur.plan?.conditions || []).map(c => c.label);
-    const goals = (cur.goals || []).map(g => ({ id: `g-${g.id}`, title: g.title, subtitle: g.subtitle || '' }));
-    const interventions = (cur.interventions || []).map(i => ({ id: `i-${i.id}`, title: i.title, duration: i.duration || '' }));
-    return get().saveCarePlanTemplate({ name: name.trim(), conditions, goals, interventions });
+      : (source?.conditions?.length ? source.conditions : (cur.plan?.conditions || []).map(c => c.label));
+    const applied = (cur.plan?.appliedTemplateIds || []).map(id => templates.find(t => t.id === id)).filter(Boolean);
+    const content = source
+      ? templateContentFromApplied(cur, source, libraryGoals)
+      : templateContentFromWholePlan(cur, applied, libraryGoals);
+    return get().saveCarePlanTemplate({ name: name.trim(), conditions, ...content });
   },
 
   setPatientCarePlanAppliedTemplates: async (patientId, program, templateIds, priorityUpdates) => {

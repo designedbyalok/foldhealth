@@ -16,6 +16,8 @@ import { DetailDropdown } from '../../../../../../../tasks/TasksViewDropdowns';
 import { PRIORITY_OPTIONS } from '../../../../../../../tasks/TasksView.utils';
 import { TabStrip } from '../../../../../../../../components/TabStrip/TabStrip';
 import { ActivityLog } from '../../../../../../../../components/ActivityLog/ActivityLog';
+import { CarePlanNoteChangeLog } from '../CarePlanNoteChangeLog/CarePlanNoteChangeLog';
+import { itemNoteHistory } from '../../lib/carePlanNotes';
 import { MenuPopover } from '../../../../../../../../components/MenuPopover/MenuPopover';
 import { ConfirmDialog } from '../../../../../../../../components/ConfirmDialog/ConfirmDialog';
 import {
@@ -635,6 +637,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
     if (latestClear && new Date(latestClear.createdAt) >= new Date(latestNote.createdAt)) return null;
     return latestNote;
   }, [audit, live?.id]);
+  const goalNoteHistory = useMemo(() => itemNoteHistory(audit, [live?.id], 'goal'), [audit, live?.id]);
 
   // Re-seed the editor whenever a new note lands (drawer opens on a
   // different goal or a fresh note was just saved). Exit edit mode after
@@ -1413,6 +1416,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
                     </div>
                   );
                 })()}
+                <CarePlanNoteChangeLog notes={goalNoteHistory} />
               </>
             )}
           </div>
@@ -1504,6 +1508,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
               initialMember={patientName}
               initialAssignedTo={intvSelectedKind === 'internal-task' ? '' : patientName}
               showScheduleFields
+              libraryKind={intvSelectedKind}
               availableGoals={slice?.goals || []}
               initialLinkedGoalIds={[live.id]}
               onClose={closeAll}
@@ -1525,6 +1530,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
           <Editor
             kind={intvSelectedKind}
             intervention={null}
+            showLibrary
             linkToGoalsAllowed
             availableGoals={slice?.goals || []}
             linkedGoalIds={[live.id]}

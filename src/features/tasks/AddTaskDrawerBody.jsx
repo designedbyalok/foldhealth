@@ -17,6 +17,7 @@ import { LinkGoalToBarrierDrawer } from '../patient/right-panel/tabs/care-progra
 import { formatGoalTarget, formatGoalDuration } from '../settings/care-plan-library/lib';
 import styles from './TasksView.module.css';
 import scheduleStyles from '../settings/care-plan-library/interventions/shared/InterventionDrawer.module.css';
+import { InterventionLibrarySelect } from '../settings/care-plan-library/interventions/shared/InterventionLibrarySelect';
 
 const CREATION_TIMINGS = ['day', 'week', 'immediate'];
 const CREATION_TRIGGERS = ['Program Start Date', 'Discharge Date', 'Care Plan Signed'];
@@ -85,6 +86,9 @@ export function AddTaskDrawerBody({
   // tasks hide Task Pool / Repeat / Subtasks and keep the Assigned To
   // picker limited to platform users (no members).
   taskKind,
+  // Care plan task interventions: offer the intervention library of this
+  // kind above the title.
+  libraryKind,
 }) {
   const isInternalTask = taskKind === 'internal-task';
   const [creationTimingOpen, setCreationTimingOpen] = useState(false);
@@ -266,6 +270,18 @@ export function AddTaskDrawerBody({
             <ActionButton icon="solar:trash-bin-trash-linear" size="L" tooltip="Delete" state="disabled" />
           </div>
         </div>
+      )}
+
+      {libraryKind && (
+        <InterventionLibrarySelect
+          kind={libraryKind}
+          onPick={(item) => {
+            setName(item.title || '');
+            setDescription(item.description || '');
+            const p = String(item.config?.priority || '').toLowerCase();
+            if (p === 'high' || p === 'medium' || p === 'low') setPriority(p);
+          }}
+        />
       )}
 
       <div className={styles.drawerSection}>

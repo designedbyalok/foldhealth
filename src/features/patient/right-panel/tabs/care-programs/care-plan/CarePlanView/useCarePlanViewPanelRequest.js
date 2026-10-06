@@ -9,7 +9,7 @@ export function runCarePlanPanelRequest(request, actions) {
       break;
     case 'template':
       actions.setTemplateName('');
-      actions.setTemplateConditions((actions.planConditions || []).map(c => c.label));
+      actions.pickTemplateSource(actions.defaultTemplateSourceId);
       actions.setTemplateOpen(true);
       break;
     case 'templates':

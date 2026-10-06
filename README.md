@@ -37,6 +37,17 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **Care plan notes keep their history, Save as Template saves one template,
+  and new interventions can start from the library.** Goal, Intervention and
+  Barrier drawers show a "Change log" of every note under the note editor,
+  like the plan-level Care Note, so adding a note on a signed plan no longer
+  looks like it overwrote the last one. Save as Template has a "Save from"
+  picker (one applied template or the entire plan) and now keeps barriers and
+  each goal's library link. New interventions and care plan tasks have a
+  "From library" picker that fills in the title, description and priority.
+  The shared rich-text `Textarea` now hides its placeholder when its value is
+  set from code.
+
 - **Smarter Goal, Intervention and Barrier drawers, and in-place titles.**
   Titles edit where they stand in the plan table and all three drawers (no
   input box): click the text, Enter or click away saves, Escape cancels.

@@ -23,6 +23,8 @@ import { interventionOwner, toPickerValue } from '../../tables/carePlanTableMode
 import { formatGoalTarget, formatGoalFrequency } from '../../../../../../../settings/care-plan-library/lib';
 import { computeDueDate, computeOccurrenceDates, formatRecurrenceLabel } from '../../tables/CarePlanInterventionsTable';
 import { useScrollToSection } from '../../lib/useScrollToSection';
+import { itemNoteHistory } from '../../lib/carePlanNotes';
+import { CarePlanNoteChangeLog } from '../CarePlanNoteChangeLog/CarePlanNoteChangeLog';
 import { interventionDurationFromConfig } from '../../lib/carePlanInterventionMenu';
 import { KIND_LABELS } from '../../../../../../../settings/care-plan-library/interventions/shared/interventionKinds';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
@@ -321,6 +323,10 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
     if (latestClear && new Date(latestClear.createdAt) >= new Date(latestNote.createdAt)) return null;
     return latestNote;
   }, [audit, live?.id]);
+  const interventionNoteHistory = useMemo(
+    () => itemNoteHistory(audit, [live?.id], 'intervention'),
+    [audit, live?.id],
+  );
 
   // Seed the note textarea from the latest saved note whenever it changes
   // (drawer opens on a new intervention OR a new note was just saved). Exit
@@ -841,6 +847,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
                     </div>
                   );
                 })()}
+                <CarePlanNoteChangeLog notes={interventionNoteHistory} />
               </>
             )}
           </div>

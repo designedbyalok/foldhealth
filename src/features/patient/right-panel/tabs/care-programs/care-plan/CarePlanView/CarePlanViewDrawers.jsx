@@ -1,6 +1,7 @@
 import { ActivityLog } from '@/components/ActivityLog/ActivityLog';
 import { Button } from '@/components/Button/Button';
 import { Input } from '@/components/Input/Input';
+import { Select } from '@/components/Select/Select';
 import { Textarea } from '@/components/Textarea/Textarea';
 import { Drawer } from '@/components/Drawer/Drawer';
 import { SelectAssigneeModal } from '@/components/SelectAssigneeModal/SelectAssigneeModal';
@@ -46,6 +47,7 @@ export function CarePlanViewDrawers(d) {
     templatesDrawerOpen, setTemplatesDrawerOpen, appliedTemplateIds,
     templateCreateOpen, setTemplateCreateOpen, createdTemplateIds, setCreatedTemplateIds, appliedTemplatePriorities, handleApplyTemplates,
     templateOpen, setTemplateOpen, templateName, setTemplateName, templateConditions, setTemplateConditions, saveTemplate,
+    templateSourceId, pickTemplateSource, appliedTemplates,
     deleteTarget, setDeleteTarget, live, removeGoal, confirmDelete,
     bulkAssignOpen, setBulkAssignOpen, bulkAssign, bulkDeleteOpen, setBulkDeleteOpen, bulkDelete, selectedCount,
   } = d;
@@ -149,6 +151,7 @@ export function CarePlanViewDrawers(d) {
           <Editor
             kind={intvSpecialDrawer.kind}
             intervention={editorIntervention}
+            showLibrary
             linkToGoalsAllowed
             availableGoals={data.goals}
             linkedGoalIds={currentLinked}
@@ -185,6 +188,7 @@ export function CarePlanViewDrawers(d) {
           initialMember={patientName}
           initialAssignedTo={taskDrawerOpen === 'internal-task' ? '' : patientName}
           showScheduleFields
+          libraryKind={taskDrawerOpen}
           availableGoals={data.goals}
           initialLinkedGoalIds={taskGoalId ? [taskGoalId] : []}
           onOpenGoal={(g) => { setTaskDrawerOpen(null); setPreviewGoal(g); }}
@@ -370,9 +374,22 @@ export function CarePlanViewDrawers(d) {
             <DialogTitle>Save as Template</DialogTitle>
           </DialogHeader>
           <DialogDescription>
-            Saves this plan's goals and interventions to the Care Plan Library so it can be reused for similar patients.
+            Saves the goals, interventions and barriers to the Care Plan Library so they can be reused for similar patients.
           </DialogDescription>
           <div className={styles.templateForm}>
+            {appliedTemplates.length > 0 && (
+              <Select
+                label="Save from"
+                options={[
+                  { value: 'all', label: 'Entire plan' },
+                  ...appliedTemplates.map(t => ({ value: t.id, label: t.name })),
+                ]}
+                value={templateSourceId}
+                onChange={pickTemplateSource}
+                searchable={appliedTemplates.length > 6}
+                searchPlaceholder="Search templates"
+              />
+            )}
             <div className={styles.drawerField}>
               <span className={styles.drawerLabel}>Template Name <span className={styles.required}>*</span></span>
               <Input autoFocus value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder="e.g. Type 2 Diabetes — Standard" aria-label="Template name" />

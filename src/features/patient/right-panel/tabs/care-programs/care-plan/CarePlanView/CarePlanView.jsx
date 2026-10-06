@@ -252,6 +252,8 @@ export function CarePlanView({ patientId, program }) {
   const [templateOpen, setTemplateOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [templateConditions, setTemplateConditions] = useState([]);
+  // 'all' = the whole plan; otherwise the id of one applied template.
+  const [templateSourceId, setTemplateSourceId] = useState('all');
   const [deleteTarget, setDeleteTarget] = useState(null); // { kind, id, name }
   const [historyOpen, setHistoryOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
@@ -487,6 +489,10 @@ export function CarePlanView({ patientId, program }) {
       setTemplateName,
       setTemplateConditions,
       setTemplateOpen,
+      pickTemplateSource,
+      defaultTemplateSourceId: appliedTemplateIds.includes(templateFilterId)
+        ? templateFilterId
+        : (appliedTemplates[0]?.id || 'all'),
       setTemplatesDrawerOpen,
       setHistoryOpen,
       setFiltersOpen,
@@ -494,7 +500,6 @@ export function CarePlanView({ patientId, program }) {
       setSignNote,
       setSignOpen,
       scanForDuplicates,
-      planConditions: live?.plan?.conditions || [],
     };
   });
   useCarePlanViewPanelRequest(carePlanPanelRequest, clearCarePlanPanelRequest, panelActionsRef);
@@ -579,9 +584,21 @@ export function CarePlanView({ patientId, program }) {
     showToast(`Assigned to ${user.name}`);
   };
 
+  // Switching what gets saved also switches the conditions to match it.
+  function pickTemplateSource(id) {
+    setTemplateSourceId(id);
+    const source = id === 'all' ? null : appliedTemplates.find(t => t.id === id);
+    setTemplateConditions(source
+      ? (source.conditions || [])
+      : (live?.plan?.conditions || []).map(c => c.label));
+  }
+
   const saveTemplate = async () => {
     if (!templateName.trim()) return;
-    const saved = await savePatientCarePlanAsTemplate(patientId, program, templateName, templateConditions);
+    const saved = await savePatientCarePlanAsTemplate(
+      patientId, program, templateName, templateConditions,
+      templateSourceId === 'all' ? null : templateSourceId,
+    );
     setTemplateOpen(false);
     setTemplateName('');
     setTemplateConditions([]);
@@ -680,6 +697,7 @@ export function CarePlanView({ patientId, program }) {
     templatesDrawerOpen, setTemplatesDrawerOpen, appliedTemplateIds,
     templateCreateOpen, setTemplateCreateOpen, createdTemplateIds, setCreatedTemplateIds, appliedTemplatePriorities, handleApplyTemplates,
     templateOpen, setTemplateOpen, templateName, setTemplateName, templateConditions, setTemplateConditions, saveTemplate,
+    templateSourceId, pickTemplateSource, appliedTemplates,
     deleteTarget, setDeleteTarget, live, removeGoal, confirmDelete,
     bulkAssignOpen, setBulkAssignOpen, bulkAssign, bulkDeleteOpen, setBulkDeleteOpen, bulkDelete, selectedCount,
   };

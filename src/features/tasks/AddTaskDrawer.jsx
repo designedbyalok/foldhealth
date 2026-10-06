@@ -10,7 +10,7 @@ export function AddTaskDrawer(props) {
   return <AddTaskDrawerInner key={defaultsKey} {...props} />;
 }
 
-function AddTaskDrawerInner({ onClose, defaultStatus, initialMember, initialAssignedTo, onTaskCreated, extraFields, className, availableGoals, onOpenGoal, initialLinkedGoalIds, showScheduleFields = false, taskKind }) {
+function AddTaskDrawerInner({ onClose, defaultStatus, initialMember, initialAssignedTo, onTaskCreated, extraFields, className, availableGoals, onOpenGoal, initialLinkedGoalIds, showScheduleFields = false, taskKind, libraryKind }) {
   const drawer = useAddTaskDrawer({ defaultStatus, initialMember, initialAssignedTo, onTaskCreated, extraFields, initialLinkedGoalIds, includeScheduleFields: showScheduleFields });
   const title = taskKind === 'internal-task' ? 'Add Internal Task'
     : taskKind === 'patient-task' ? 'Add Patient Task'
@@ -33,6 +33,7 @@ function AddTaskDrawerInner({ onClose, defaultStatus, initialMember, initialAssi
           {...drawer}
           showScheduleFields={showScheduleFields}
           taskKind={taskKind}
+          libraryKind={libraryKind}
           availableGoals={availableGoals}
           onOpenGoal={onOpenGoal}
         />
