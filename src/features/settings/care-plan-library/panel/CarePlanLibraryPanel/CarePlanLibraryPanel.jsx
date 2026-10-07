@@ -14,6 +14,7 @@ import { BulkSelectToggle } from '../../../../../components/BulkSelect/BulkSelec
 import { WorklistShell } from '../../../../../components/WorklistShell/WorklistShell';
 import { Drawer } from '../../../../../components/Drawer/Drawer';
 import { ConfirmDialog } from '../../../../../components/ConfirmDialog/ConfirmDialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../../../../components/ShadcnDialog/ShadcnDialog';
 import { RingEmptyState } from '../../../../../components/RingEmptyState/RingEmptyState';
 import { TableSkeleton } from '../../../../../components/TableSkeleton/TableSkeleton';
 import { INTERVENTION_EDITORS, interventionTemplateFromValues, interventionDrawerValues } from '../../interventions';
@@ -248,7 +249,9 @@ export function CarePlanLibraryPanel() {
   const [draft, setDraft] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null); // { kind, id, name }
 
-  const [templateSort, setTemplateSort] = useState({ key: null, dir: 'asc' });
+  // Newest first, so a template just created or duplicated leads the
+  // non-favorites.
+  const [templateSort, setTemplateSort] = useState({ key: 'createdAt', dir: 'desc' });
   const handleTemplateSort = (key) => {
     setTemplateSort(prev => (prev.key === key ? { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' }));
   };
@@ -281,7 +284,7 @@ export function CarePlanLibraryPanel() {
       const favDiff = Number(favoriteSet.has(b.id)) - Number(favoriteSet.has(a.id));
       if (favDiff) return favDiff;
       if (!templateSort.key) return 0;
-      return valueOf(a).localeCompare(valueOf(b)) * dir;
+      return (valueOf(a) || '').localeCompare(valueOf(b) || '') * dir;
     });
   };
 
@@ -376,15 +379,37 @@ export function CarePlanLibraryPanel() {
     setDeleteTarget(null);
   };
 
-  const duplicateTemplate = async (t) => {
+  const [duplicateTarget, setDuplicateTarget] = useState(null); // { template, name }
+  // The template just created here, so its row can shimmer once.
+  const [justAddedTemplateId, setJustAddedTemplateId] = useState(null);
+  const justAddedTimer = useRef(null);
+  useEffect(() => () => clearTimeout(justAddedTimer.current), []);
+  // Hands the shimmer the row width and each cell's offset so the band reads
+  // as one sweep across the row rather than one per cell.
+  const measureJustAddedRow = (tr) => {
+    if (!tr) return;
+    tr.style.setProperty('--row-w', `${tr.offsetWidth}px`);
+    for (const td of tr.cells) td.style.setProperty('--cell-x', `${td.offsetLeft}px`);
+  };
+  const duplicateTemplate = async () => {
+    const { template: t, name } = duplicateTarget;
+    if (!name.trim()) return;
+    setDuplicateTarget(null);
     const saved = await saveCarePlanTemplate({
-      name: `${t.name} (Copy)`,
+      name: name.trim(),
+      status: t.status,
       conditions: t.conditions,
       goals: t.goals.map(g => ({ ...g })),
       interventions: t.interventions.map(i => ({ ...i })),
       barriers: (t.barriers || []).map(b => ({ ...b })),
     });
-    if (saved) toast.success(`"${t.name}" duplicated`);
+    if (saved) {
+      setTemplateSort({ key: 'createdAt', dir: 'desc' });
+      setJustAddedTemplateId(saved.id);
+      clearTimeout(justAddedTimer.current);
+      justAddedTimer.current = setTimeout(() => setJustAddedTemplateId(null), 2400);
+      toast.success(`"${saved.name}" created`);
+    }
   };
 
   const duplicateGoal = async (g) => {
@@ -395,7 +420,11 @@ export function CarePlanLibraryPanel() {
 
 
   const renderTemplateRow = (t) => (
-    <tr key={t.id} className={styles.row}>
+    <tr
+      key={t.id}
+      ref={t.id === justAddedTemplateId ? measureJustAddedRow : undefined}
+      className={`${styles.row} ${t.id === justAddedTemplateId ? styles.rowJustAdded : ''}`}
+    >
       <td className={checkTdClass} onClick={e => e.stopPropagation()}>
         {bulkMode && (
           <Checkbox
@@ -431,7 +460,7 @@ export function CarePlanLibraryPanel() {
           <div className={styles.vDivider} />
           <ActionButton icon="solar:pen-linear" size="S" tooltip="Edit" onClick={() => openEditTemplate(t)} />
           <div className={styles.vDivider} />
-          <ActionButton icon="solar:copy-linear" size="S" tooltip="Duplicate" onClick={() => duplicateTemplate(t)} />
+          <ActionButton icon="solar:copy-linear" size="S" tooltip="Duplicate" onClick={() => setDuplicateTarget({ template: t, name: `${t.name} (Copy)` })} />
           <div className={styles.vDivider} />
           <TemplateRowMenu onDelete={() => setDeleteTarget({ kind: 'template', id: t.id, name: t.name })} />
         </div>
@@ -762,6 +791,35 @@ export function CarePlanLibraryPanel() {
           />
         );
       })()}
+
+      <Dialog open={!!duplicateTarget} onOpenChange={open => !open && setDuplicateTarget(null)}>
+        <DialogContent className={styles.duplicateDialog}>
+          <DialogHeader>
+            <DialogTitle>Duplicate Template</DialogTitle>
+          </DialogHeader>
+          <DialogDescription>
+            Creates a copy of "{duplicateTarget?.template.name}" with the same goals, interventions and barriers.
+          </DialogDescription>
+          <form
+            className={styles.duplicateForm}
+            onSubmit={(e) => { e.preventDefault(); duplicateTemplate(); }}
+          >
+            <Input
+              label="Template Name"
+              required
+              autoFocus
+              onFocus={e => e.target.select()}
+              value={duplicateTarget?.name || ''}
+              onChange={e => setDuplicateTarget(d => ({ ...d, name: e.target.value }))}
+              aria-label="Template name"
+            />
+            <div className={styles.duplicateFooter}>
+              <Button type="submit" variant="primary" size="L" disabled={!duplicateTarget?.name.trim()}>Duplicate</Button>
+              <Button type="button" variant="secondary" size="L" onClick={() => setDuplicateTarget(null)}>Cancel</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {deleteTarget && (
         <ConfirmDialog

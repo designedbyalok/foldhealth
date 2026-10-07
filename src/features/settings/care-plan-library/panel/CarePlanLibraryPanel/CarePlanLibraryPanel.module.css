@@ -320,3 +320,50 @@
 .bulkOn :global(thead th:first-child) {
   padding-left: var(--space-5);
 }
+
+/* Duplicate Template name prompt: same shape as the care plan's
+   Save as Template dialog, primary-first footer on the left. */
+.duplicateDialog {
+  max-width: 480px;
+}
+.duplicateForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+}
+.duplicateFooter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Just-added row (e.g. a duplicate): a light primary band sweeps across the
+   row twice while the row's tint fades back to white, so the new template is
+   easy to spot. Each cell paints its own slice of one row-wide band: the
+   panel sets --row-w (row width) and --cell-x (the cell's offset) so the
+   slices line up, sticky cells included. Cleared by the panel after ~2.4s. */
+@keyframes rowJustAddedSweep {
+  from { background-position: calc(-0.4 * var(--row-w, 100vw) - var(--cell-x, 0px)) 0; }
+  to   { background-position: calc(var(--row-w, 100vw) - var(--cell-x, 0px)) 0; }
+}
+@keyframes rowJustAddedTint {
+  from { background-color: var(--primary-100); }
+  to   { background-color: var(--neutral-0); }
+}
+.rowJustAdded > td {
+  background-color: var(--neutral-0);
+  background-image: linear-gradient(90deg, transparent, color-mix(in srgb, var(--primary-200) 60%, transparent), transparent);
+  background-size: calc(0.4 * var(--row-w, 100vw)) 100%;
+  background-repeat: no-repeat;
+  background-position: calc(-0.4 * var(--row-w, 100vw)) 0;
+  animation:
+    rowJustAddedSweep 1.1s var(--ease-in-out) 2,
+    rowJustAddedTint 2.2s var(--ease-out) forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rowJustAdded > td {
+    background-image: none;
+    animation: rowJustAddedTint 2.2s var(--ease-out) forwards;
+  }
+}
