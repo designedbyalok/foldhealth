@@ -98,9 +98,12 @@ export function useCarePlanViewFilters({
     [data.barriers, filters, templateScope, q],
   );
   const filteredInterventions = useMemo(
-    () => data.interventions.filter(i =>
-      matchesSearch(i) && matchesSP(i) && matchesTemplate(i, 'interventions')
-      && (!filters.assignee.length || filters.assignee.includes(ownerKey(i)))),
+    () => {
+      const assignees = new Set(filters.assignee);
+      return data.interventions.filter(i =>
+        matchesSearch(i) && matchesSP(i) && matchesTemplate(i, 'interventions')
+        && (!assignees.size || assignees.has(ownerKey(i))));
+    },
     [data.interventions, filters, templateScope, q, patientLabel], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
