@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
 import { AssigneeChange } from '../../../../../../../components/AssigneeChange/AssigneeChange';
+import { UserPickerPopover } from '../../../../../../../components/UserPickerPopover/UserPickerPopover';
 import { WorklistShell } from '../../../../../../../components/WorklistShell/WorklistShell';
 import { PriorityIcon } from '../../../../../../../components/PriorityIcon/PriorityIcon';
 import { useTableSort } from '../../../../../../../components/HeaderCell/useTableSort';
@@ -258,6 +259,7 @@ export function CarePlanInterventionsTable({
   // The active intervention plus the anchor rect drive positioning
   // and the seeded value in the calendar.
   const [duePicker, setDuePicker] = useState(null); // { intv, rect } | null
+  const [ownerPicker, setOwnerPicker] = useState(null); // { intv, rect } | null
   const dueEditable = canEdit && !!onDueDateChange;
   const openDuePicker = (intv, rect) => {
     if (!dueEditable) return;
@@ -420,7 +422,18 @@ export function CarePlanInterventionsTable({
           isHidden('dueDate') && { key: 'due', node: dueDate('Due') },
           isHidden('assignee') && {
             key: 'owner',
-            node: (
+            // Internal tasks are owned by the care team, so the owner text
+            // re-assigns in place. Member tasks always belong to the patient.
+            node: canEdit && onAssigneeChange && !owner.isMemberTask ? (
+              <button
+                type="button"
+                className={`${styles.metaText} ${styles.metaDateBtn} ${owner.unassigned ? styles.metaDateEmpty : ''}`}
+                onClick={(e) => { e.stopPropagation(); setOwnerPicker({ intv: i, rect: e.currentTarget.getBoundingClientRect() }); }}
+                aria-label={owner.unassigned ? 'Assign intervention' : `Change assignee, currently ${owner.name}`}
+              >
+                {ownerLabel}
+              </button>
+            ) : (
               <span className={`${styles.metaText} ${owner.unassigned ? styles.metaDateEmpty : ''}`}>
                 {ownerLabel}
               </span>
@@ -538,6 +551,20 @@ export function CarePlanInterventionsTable({
           />
         )}
       />
+      {ownerPicker && (
+        <UserPickerPopover
+          anchorRect={ownerPicker.rect}
+          title="Change assignee"
+          users={assigneeUsers.filter(u => u.role !== 'Member')}
+          selected={interventionOwner(ownerPicker.intv, patients).name}
+          onSelect={(u) => { onAssigneeChange(ownerPicker.intv, u); setOwnerPicker(null); }}
+          onUnassign={interventionOwner(ownerPicker.intv, patients).unassigned ? undefined : () => {
+            onAssigneeChange(ownerPicker.intv, { name: 'Unassigned', initials: '' });
+            setOwnerPicker(null);
+          }}
+          onClose={() => setOwnerPicker(null)}
+        />
+      )}
       {duePicker && (
         <DatePickerPopover
           open

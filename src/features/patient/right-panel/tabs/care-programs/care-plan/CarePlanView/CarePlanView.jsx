@@ -211,6 +211,7 @@ export function CarePlanView({ patientId, program }) {
     templateFilterId,
     carePlanTemplates,
     libraryGoals,
+    patientName,
   });
 
   const canEdit = !!(patientId && program);
@@ -580,8 +581,15 @@ export function CarePlanView({ patientId, program }) {
   const handleTrends = () => setTrendsOpen(true);
   const handleAssigneeChange = (intervention, user) => {
     if (!canEdit) return;
-    savePatientCarePlanIntervention(patientId, program, { ...intervention, assignee: { name: user.name, initials: user.initials } }, intervention.id);
-    showToast(`Assigned to ${user.name}`);
+    const unassign = user.name === 'Unassigned';
+    // config.assignedTo is what the intervention editor opens with, so it
+    // moves with the assignee instead of reopening on the old name.
+    savePatientCarePlanIntervention(patientId, program, {
+      ...intervention,
+      assignee: { name: user.name, initials: user.initials || '' },
+      config: { ...(intervention.config || {}), assignedTo: unassign ? '' : user.name },
+    }, intervention.id);
+    showToast(unassign ? `"${intervention.title}" unassigned` : `Assigned to ${user.name}`);
   };
 
   // Switching what gets saved also switches the conditions to match it.
@@ -731,6 +739,20 @@ export function CarePlanView({ patientId, program }) {
         {/* Conditions are intentionally not surfaced in the plan header; they
             still travel with the plan and appear in the Share / Download
             preview (see CarePlanShareDrawer). */}
+        {/* Pinned under the templates strip so the filters stay in reach
+            while the plan scrolls. */}
+        {filtersOpen && (
+          <div className={styles.filterBar}>
+            <FilterChip label="Status" options={GBI_STATUSES} selected={filters.status} onChange={v => setFilter('status', v)} />
+            <FilterChip label="Priority" options={PRIORITY_LABELS} selected={filters.priority} onChange={v => setFilter('priority', v)} />
+            {filtersActive ? (
+              <button type="button" className={styles.clearAll} onClick={clearFilters}>
+                <Icon name="solar:backspace-linear" size={16} color="var(--primary-300)" />
+                Clear All
+              </button>
+            ) : null}
+          </div>
+        )}
       </div>
 
       <div className={styles.scrollArea}>
@@ -806,19 +828,6 @@ export function CarePlanView({ patientId, program }) {
             </div>
           )}
         </section>
-      )}
-      {filtersOpen && (
-        <div className={styles.filterBar}>
-          <FilterChip label="Status" options={GBI_STATUSES} selected={filters.status} onChange={v => setFilter('status', v)} />
-          <FilterChip label="Priority" options={PRIORITY_LABELS} selected={filters.priority} onChange={v => setFilter('priority', v)} />
-          <FilterChip label="Assignee" searchable options={assigneeOptions} selected={filters.assignee} onChange={v => setFilter('assignee', v)} />
-          {filtersActive ? (
-            <button type="button" className={styles.clearAll} onClick={clearFilters}>
-              <Icon name="solar:backspace-linear" size={16} color="var(--primary-300)" />
-              Clear All
-            </button>
-          ) : null}
-        </div>
       )}
 
       {selectedCount > 0 && (
@@ -902,7 +911,7 @@ export function CarePlanView({ patientId, program }) {
             onTitleChange={(goal, title) => savePatientCarePlanGoal(patientId, program, { ...goal, title }, goal.id)}
             hasNote={(g) => noteLookup('goal', g.id)}
             linked={linkedForGoalRow}
-            emptyState={filteredGoals.length === 0 ? <div className={styles.emptyRow}>No goals match the filters.</div> : null}
+            emptyState={filteredGoals.length === 0 ? <div className={styles.emptyRow}>No goals match the search or filters.</div> : null}
           />
         ))}
       </div>
@@ -914,7 +923,23 @@ export function CarePlanView({ patientId, program }) {
           count={filteredInterventions.length}
           open={openSections.interventions}
           onToggle={() => toggleSection('interventions')}
-          rightAccessory={renderDuplicateBadge('intervention')}
+          rightAccessory={(
+            <>
+              {renderDuplicateBadge('intervention')}
+              {/* Assignee only applies to interventions, so it filters here
+                  rather than in the plan-wide filter bar. */}
+              {assigneeOptions.length > 0 && (
+                <FilterChip
+                  label="Assignee"
+                  size="XS"
+                  searchable
+                  options={assigneeOptions}
+                  selected={filters.assignee}
+                  onChange={v => setFilter('assignee', v)}
+                />
+              )}
+            </>
+          )}
           addButton={(
             <ActionButton
               ref={intvAddRef}
@@ -980,7 +1005,7 @@ export function CarePlanView({ patientId, program }) {
               name: patientName,
               initials: (patientName || '').split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase(),
             }] : []}
-            emptyState={filteredInterventions.length === 0 ? <div className={styles.emptyRow}>No interventions match the filters.</div> : null}
+            emptyState={filteredInterventions.length === 0 ? <div className={styles.emptyRow}>No interventions match the search or filters.</div> : null}
           />
         ))}
       </div>
@@ -1023,7 +1048,7 @@ export function CarePlanView({ patientId, program }) {
             onTitleChange={renameBarrier}
             hasNote={(b) => noteLookup('barrier', b.id)}
             linked={linkedForChildRow}
-            emptyState={filteredBarriers.length === 0 ? <div className={styles.emptyRow}>No barriers match the filters.</div> : null}
+            emptyState={filteredBarriers.length === 0 ? <div className={styles.emptyRow}>No barriers match the search or filters.</div> : null}
           />
         ))}
       </div>

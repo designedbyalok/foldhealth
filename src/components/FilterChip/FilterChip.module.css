@@ -19,6 +19,10 @@
    next to a page title and 32px reads too heavy. */
 .sizeS { height: 28px; font-size: var(--font-sm); }
 .sizeS .chipExtra { font-size: var(--font-sm); }
+/* Extra-small 20px variant — sits in a row with size-S Badges (e.g. a
+   section header's "possible duplicates" badge) and matches their height. */
+.sizeXS { height: 20px; padding: 0 var(--space-1); font-size: var(--font-sm); }
+.sizeXS .chipExtra { font-size: var(--font-sm); }
 .chip:hover { background: var(--neutral-50); border-color: var(--neutral-200); }
 .chipActive {
   background: var(--primary-50);

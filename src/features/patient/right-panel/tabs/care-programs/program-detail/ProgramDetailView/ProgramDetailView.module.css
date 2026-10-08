@@ -53,6 +53,12 @@
   background: var(--neutral-150);
   flex-shrink: 0;
 }
+/* Pressed state for a header toggle (care plan Filter) — matches the
+   worklist toolbar's active filter button. */
+.iconActive {
+  background: var(--primary-100);
+  color: var(--primary-300);
+}
 /* Assignee chip — mirrors the Care Gaps drawer chip (avatar when assigned,
    dashed "add user" when unassigned). */
 .assigneeChip {

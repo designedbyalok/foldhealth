@@ -90,7 +90,7 @@ export function FilterChip({
     else onChange([]);
   };
 
-  const iconSize = size === 'S' ? 14 : 16;
+  const iconSize = size === 'XS' ? 12 : size === 'S' ? 14 : 16;
 
   return (
     <>
@@ -104,6 +104,7 @@ export function FilterChip({
           // pill is an information display, not a clearable filter.
           active && noClear && noClearNeutral ? styles.chipNeutral : '',
           size === 'S' ? styles.sizeS : '',
+          size === 'XS' ? styles.sizeXS : '',
           disabled ? styles.chipDisabled : '',
         ].filter(Boolean).join(' ')}
         aria-description={info || undefined}

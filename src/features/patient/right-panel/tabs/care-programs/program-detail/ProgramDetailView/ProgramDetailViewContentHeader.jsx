@@ -11,6 +11,7 @@ import { SelectAssigneeModal } from '../../../../../../../components/SelectAssig
 import { useAppStore } from '../../../../../../../store/useAppStore';
 import { PenIcon } from '../../../../../../../components/Icon/PenIcon';
 import { SearchBar } from '../../../../../../../components/SearchBar/SearchBar';
+import { SearchIconButton } from '../../../../../../../components/SearchIconButton/SearchIconButton';
 import { FilterChip } from '../../../../../../../components/FilterChip/FilterChip';
 import { MenuPopover } from '../../../../../../../components/MenuPopover/MenuPopover';
 import { DownChevronIcon } from '../../../../../../../components/Icon/DownChevronIcon';
@@ -112,6 +113,11 @@ export function ProgramDetailViewContentHeader({
   const requestCarePlanPanel = useAppStore(s => s.requestCarePlanPanel);
   const carePlanBulkMode = useAppStore(s => s.carePlanBulkMode);
   const toggleCarePlanBulkMode = useAppStore(s => s.toggleCarePlanBulkMode);
+  const carePlanSearchText = useAppStore(s => s.carePlanSearchText);
+  const setCarePlanSearchText = useAppStore(s => s.setCarePlanSearchText);
+  const carePlanFiltersOpen = useAppStore(s => s.carePlanFiltersOpen);
+  const toggleCarePlanFiltersOpen = useAppStore(s => s.toggleCarePlanFiltersOpen);
+  const [carePlanSearchOpen, setCarePlanSearchOpen] = useState(false);
   const selectedPatientId = useAppStore(s => s.selectedPatientId);
   const carePlanKey = selectedPatientId && program?.id ? `${selectedPatientId}::${program.id}` : null;
   const liveCarePlan = useAppStore(s => (carePlanKey ? s.patientCarePlans[carePlanKey] : null));
@@ -385,7 +391,28 @@ export function ProgramDetailViewContentHeader({
         <div className={isCarePlanStep ? styles.carePlanActionBar : styles.contentActions}>
           {isCarePlanStep ? (
             <>
-              <BulkSelectToggle size="S" active={carePlanBulkMode} onToggle={toggleCarePlanBulkMode} />
+              {carePlanSearchOpen || carePlanSearchText ? (
+                <SearchBar
+                  className={styles.taskSearch}
+                  placeholder="Search goals, interventions, barriers"
+                  value={carePlanSearchText}
+                  onChange={e => setCarePlanSearchText(e.target.value)}
+                  onClose={() => { setCarePlanSearchOpen(false); setCarePlanSearchText(''); }}
+                />
+              ) : (
+                <SearchIconButton onClick={() => setCarePlanSearchOpen(true)} />
+              )}
+              <span className={styles.headerDivider} aria-hidden="true" />
+              {/* Same filter glyph and active tint as the worklist toolbar. */}
+              <ActionButton
+                icon="custom:filter"
+                size="L"
+                tooltip="Filter"
+                className={carePlanFiltersOpen ? styles.iconActive : ''}
+                onClick={toggleCarePlanFiltersOpen}
+              />
+              <span className={styles.headerDivider} aria-hidden="true" />
+              <BulkSelectToggle active={carePlanBulkMode} onToggle={toggleCarePlanBulkMode} />
               <span className={styles.headerDivider} aria-hidden="true" />
               {/* Templates moved to the plan's chip row, next to the
                   applied templates it manages. */}

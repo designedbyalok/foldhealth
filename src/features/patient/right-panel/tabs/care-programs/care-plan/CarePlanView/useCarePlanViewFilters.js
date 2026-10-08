@@ -1,27 +1,56 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useAppStore } from '../../../../../../../store/useAppStore';
 import { GBI_STATUS_TONE } from '../tables/carePlanTableShared';
 import { norm } from './carePlanViewNorm';
+import { interventionOwner } from '../tables/carePlanTableModel';
 
 /**
- * Status/priority/assignee filters plus template-scoped list filtering and summary stats.
+ * Search, status/priority/assignee filters plus template-scoped list filtering
+ * and summary stats. Search text and filter-bar visibility come from the store
+ * because their buttons live in the program-detail content header.
  */
 export function useCarePlanViewFilters({
   data,
   templateFilterId,
   carePlanTemplates,
   libraryGoals,
+  patientName,
 }) {
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtersOpen = useAppStore(s => s.carePlanFiltersOpen);
+  const setFiltersOpen = useAppStore(s => s.setCarePlanFiltersOpen);
+  const searchText = useAppStore(s => s.carePlanSearchText);
+  const setSearchText = useAppStore(s => s.setCarePlanSearchText);
+  // Leaving the plan (another step, patient or program) starts the next one
+  // unsearched and unfiltered, like bulk mode.
+  useEffect(() => () => { setSearchText(''); setFiltersOpen(false); }, [setSearchText, setFiltersOpen]);
+  const q = norm(searchText);
+  const matchesSearch = (item) => !q
+    || norm(item.title).includes(q)
+    || norm(item.subtitle || item.description || '').includes(q);
   const [filters, setFilters] = useState({ status: [], priority: [], assignee: [] });
 
   const setFilter = (key, vals) => setFilters(f => ({ ...f, [key]: vals }));
   const clearFilters = () => setFilters({ status: [], priority: [], assignee: [] });
   const filtersActive = filters.status.length || filters.priority.length || filters.assignee.length;
 
-  const assigneeOptions = useMemo(
-    () => [...new Set((data.interventions || []).map(i => i.assignee?.name).filter(Boolean))],
-    [data.interventions],
-  );
+  // Same owner the intervention rows show: member tasks belong to the patient
+  // (labelled as such, so they don't merge with a staff member of the same
+  // name), internal tasks to their staff assignee or nobody.
+  const patientLabel = patientName ? `${patientName} (Patient)` : 'Patient';
+  const ownerKey = (i) => {
+    const owner = interventionOwner(i, patientName ? [{ name: patientName }] : []);
+    if (owner.isMemberTask) return patientLabel;
+    return owner.unassigned ? 'Unassigned' : owner.name;
+  };
+  const assigneeOptions = useMemo(() => {
+    const keys = new Set((data.interventions || []).map(ownerKey));
+    const staff = [...keys].filter(k => k !== patientLabel && k !== 'Unassigned').sort((a, b) => a.localeCompare(b));
+    return [
+      ...(keys.has(patientLabel) ? [patientLabel] : []),
+      ...staff,
+      ...(keys.has('Unassigned') ? ['Unassigned'] : []),
+    ];
+  }, [data.interventions, patientLabel]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const matchesSP = (item) =>
     (!filters.status.length || filters.status.includes(item.status)) &&
@@ -61,18 +90,18 @@ export function useCarePlanViewFilters({
   };
 
   const filteredGoals = useMemo(
-    () => data.goals.filter(g => matchesSP(g) && matchesTemplate(g, 'goals')),
-    [data.goals, filters, templateScope],
+    () => data.goals.filter(g => matchesSearch(g) && matchesSP(g) && matchesTemplate(g, 'goals')),
+    [data.goals, filters, templateScope, q],
   );
   const filteredBarriers = useMemo(
-    () => (data.barriers || []).filter(b => matchesSP(b) && matchesTemplate(b, 'barriers')),
-    [data.barriers, filters, templateScope],
+    () => (data.barriers || []).filter(b => matchesSearch(b) && matchesSP(b) && matchesTemplate(b, 'barriers')),
+    [data.barriers, filters, templateScope, q],
   );
   const filteredInterventions = useMemo(
     () => data.interventions.filter(i =>
-      matchesSP(i) && matchesTemplate(i, 'interventions')
-      && (!filters.assignee.length || filters.assignee.includes(i.assignee?.name))),
-    [data.interventions, filters, templateScope],
+      matchesSearch(i) && matchesSP(i) && matchesTemplate(i, 'interventions')
+      && (!filters.assignee.length || filters.assignee.includes(ownerKey(i)))),
+    [data.interventions, filters, templateScope, q, patientLabel], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const planStats = useMemo(() => {

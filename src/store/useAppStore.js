@@ -2854,6 +2854,14 @@ export const useAppStore = create((set, get) => ({
   carePlanBulkMode: false,
   toggleCarePlanBulkMode: () => set(s => ({ carePlanBulkMode: !s.carePlanBulkMode })),
   setCarePlanBulkMode: (on) => set({ carePlanBulkMode: on }),
+  // Care plan search text and filter-bar visibility. Same split as bulk
+  // mode: the Search / Filter buttons live in the content header, and
+  // CarePlanView filters the GBI tables with them.
+  carePlanSearchText: '',
+  setCarePlanSearchText: (text) => set({ carePlanSearchText: text }),
+  carePlanFiltersOpen: false,
+  setCarePlanFiltersOpen: (on) => set({ carePlanFiltersOpen: on }),
+  toggleCarePlanFiltersOpen: () => set(s => ({ carePlanFiltersOpen: !s.carePlanFiltersOpen })),
 
   // Record one share of a plan (or a selection of it) to an external party.
   // Returns the saved record, or null on failure.
