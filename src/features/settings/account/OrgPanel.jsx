@@ -6,6 +6,8 @@ import { Button } from '../../../components/Button/Button';
 import { Input } from '../../../components/Input/Input';
 import { Textarea } from '../../../components/Textarea/Textarea';
 import { Switch } from '../../../components/Switch/Switch';
+import { RadioButton } from '../../../components/RadioButton/RadioButton';
+import { CARE_PLAN_MODES, DEFAULT_CARE_PLAN_MODE, normalizeCarePlanMode } from '../../patient/right-panel/tabs/care-programs/care-plan/lib/carePlanMode';
 import { FoldHealthLogo } from '../../../components/FoldHealthLogo/FoldHealthLogo';
 import { ColorInput } from '../../email-builder/ColorInput';
 import styles from './OrgPanel.module.css';
@@ -26,6 +28,7 @@ export function OrgPanel() {
   const [name, setName] = useState('');
   const [showName, setShowName] = useState(false);
   const [showPatientAppIndicator, setShowPatientAppIndicator] = useState(false);
+  const [carePlanMode, setCarePlanMode] = useState(DEFAULT_CARE_PLAN_MODE);
   const [primaryColor, setPrimaryColor] = useState('#8C5AE2');
   const [about, setAbout] = useState('');
   const [socials, setSocials] = useState({ twitter: '', instagram: '', facebook: '', linkedin: '', website: '' });
@@ -54,6 +57,7 @@ export function OrgPanel() {
           setName(data.name || '');
           setShowName(!!data.show_name);
           setShowPatientAppIndicator(!!data.show_patient_app_indicator);
+          setCarePlanMode(normalizeCarePlanMode(data.care_plan_mode));
           setPrimaryColor(data.primary_color || '#8C5AE2');
           setAbout(data.about || '');
           setLogo(data.logo_url || null);
@@ -113,13 +117,12 @@ export function OrgPanel() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { showToast('Not authenticated'); return; }
 
-      const { error } = await supabase
-        .from('org_settings')
-        .upsert({
+      const row = {
           user_id: session.user.id,
           name,
           show_name: showName,
           show_patient_app_indicator: showPatientAppIndicator,
+          care_plan_mode: carePlanMode,
           primary_color: primaryColor,
           about,
           logo_url: logo,
@@ -129,10 +132,17 @@ export function OrgPanel() {
           linkedin: socials.linkedin,
           website: socials.website,
           updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id' });
+        };
+      const upsert = (r) => supabase.from('org_settings').upsert(r, { onConflict: 'user_id' });
+      let { error } = await upsert(row);
+      // Before the care_plan_mode migration runs, save everything else.
+      if (error && /care_plan_mode/.test(error.message || '')) {
+        const { care_plan_mode: _pending, ...rest } = row;
+        ({ error } = await upsert(rest));
+      }
 
       if (error) throw error;
-      useAppStore.setState({ showPatientAppIndicator });
+      useAppStore.setState({ showPatientAppIndicator, carePlanMode });
       showToast('Organization settings saved');
     } catch (err) {
       console.error('Failed to save org settings:', err);
@@ -249,6 +259,25 @@ export function OrgPanel() {
         <p className={styles.fieldHint}>
           When enabled, members active on the Fold patient mobile app show a green phone icon in the P360 banner and an extra column in All Patients.
         </p>
+      </div>
+
+      {/* Care plan level */}
+      <div className={styles.formGroup}>
+        <span className={styles.label}>Care plan level</span>
+        <div className={styles.radioGroup} role="radiogroup" aria-label="Care plan level">
+          {CARE_PLAN_MODES.map(m => (
+            <div key={m.value} className={styles.radioOption}>
+              <RadioButton
+                name="care-plan-mode"
+                value={m.value}
+                label={m.label}
+                checked={carePlanMode === m.value}
+                onChange={() => setCarePlanMode(m.value)}
+              />
+              <p className={styles.radioHint}>{m.hint}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* About */}

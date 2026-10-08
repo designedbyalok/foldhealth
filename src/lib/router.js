@@ -45,7 +45,8 @@ const SLUG_TO_PROFILE_TAB = Object.fromEntries(PROFILE_TABS.map(t => [tabSlug(t)
 
 // Care Programs is now a sub-tab of Care Management (alongside the
 // comprehensive plan and the activity log).
-const CM_SUBTABS = ['Care Programs', 'Comprehensive Care Plan', 'Program Activity Log'];
+// 'Care Plan' is the patient-level plan (patient- or both-level orgs).
+const CM_SUBTABS = ['Care Programs', 'Comprehensive Care Plan', 'Care Plan', 'Program Activity Log'];
 const SLUG_TO_CM_SUBTAB = Object.fromEntries(CM_SUBTABS.map(t => [tabSlug(t), t]));
 
 // The open program / step ride under the Care Programs sub-tab. 'summary' is

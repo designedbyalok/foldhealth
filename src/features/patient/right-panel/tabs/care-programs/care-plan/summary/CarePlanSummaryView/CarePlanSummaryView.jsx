@@ -13,6 +13,9 @@ import { RingEmptyState } from '../../../../../../../../components/RingEmptyStat
 import { TableSkeleton } from '../../../../../../../../components/TableSkeleton/TableSkeleton';
 import { WorklistShell } from '../../../../../../../../components/WorklistShell/WorklistShell';
 import { MenuPopover } from '../../../../../../../../components/MenuPopover/MenuPopover';
+import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
+import { AddIconMinimalist } from '../../../../../../../../components/Icon/AddIconMinimalist';
+import { CarePlanRollupAdd } from '../CarePlanRollupAdd';
 import { AssigneeChange } from '../../../../../../../../components/AssigneeChange/AssigneeChange';
 import { useTableSort } from '../../../../../../../../components/HeaderCell/useTableSort';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
@@ -260,12 +263,12 @@ function ActivityReviewDrawer({ target, onClose }) {
   );
 }
 
-// Read-only Goals/Interventions/Barriers section head — matches the
-// CarePlanView's GBI treatment (chevron + title + count pill), minus
-// the Add affordance since the Comprehensive Care Plan tab is a
-// consolidated snapshot across programs and can't spawn new rows.
-function SectionHead({ title, count, open, onToggle }) {
-  return (
+// Goals/Interventions/Barriers section head — matches the CarePlanView's GBI
+// treatment (chevron + title + count pill). The read-only roll-up has no Add;
+// the editable one (care_plan_mode = 'both') passes `onAdd`, which asks for
+// the owning program first.
+function SectionHead({ title, count, open, onToggle, onAdd }) {
+  const toggle = (
     <button type="button" className={styles.sectionHead} onClick={onToggle} aria-expanded={open}>
       <DownChevronIcon
         size={16}
@@ -275,6 +278,16 @@ function SectionHead({ title, count, open, onToggle }) {
       <span className={styles.sectionTitle}>{title}</span>
       {count > 0 ? <span className={styles.sectionCount}>{count}</span> : null}
     </button>
+  );
+  if (!onAdd) return toggle;
+  return (
+    <div className={styles.sectionHeadRow}>
+      {toggle}
+      <span className={styles.sectionActionDivider} aria-hidden="true" />
+      <ActionButton size="S" tooltip={`Add ${title.toLowerCase().replace(/s$/, '')}`} onClick={e => onAdd(e.currentTarget.getBoundingClientRect())}>
+        <AddIconMinimalist size={16} color="var(--neutral-300)" />
+      </ActionButton>
+    </div>
   );
 }
 
@@ -744,7 +757,11 @@ export function CarePlanSummaryView({
   dueDateFilter = [],
   createdDateFilter = [],
   embedded = false,
+  // care_plan_mode = 'both': the roll-up is the patient-level Care Plan, so
+  // its drawers edit in full and each section can add to a chosen program.
+  editable = false,
 }) {
+  const [rollupAdd, setRollupAdd] = useState(null); // { kind, rect } | null
   const fetchAllPatientCarePlans = useAppStore(s => s.fetchAllPatientCarePlans);
   const loading = useAppStore(s => s.patientCarePlanAllLoading[patientId]);
   const loadedFor = useAppStore(s => s.patientCarePlanAllLoadedFor[patientId]);
@@ -1143,6 +1160,7 @@ export function CarePlanSummaryView({
           <div className={styles.section}>
             <SectionHead
               title="Goals"
+              onAdd={editable ? (rect) => setRollupAdd({ kind: 'goal', rect }) : undefined}
               count={uniqueGoals.length}
               open={openSections.goals}
               onToggle={() => toggleSection('goals')}
@@ -1161,6 +1179,7 @@ export function CarePlanSummaryView({
           <div className={styles.section}>
             <SectionHead
               title="Interventions"
+              onAdd={editable ? (rect) => setRollupAdd({ kind: 'intervention', rect }) : undefined}
               count={uniqueInterventions.length}
               open={openSections.interventions}
               onToggle={() => toggleSection('interventions')}
@@ -1182,6 +1201,7 @@ export function CarePlanSummaryView({
           <div className={styles.section}>
             <SectionHead
               title="Barriers"
+              onAdd={editable ? (rect) => setRollupAdd({ kind: 'barrier', rect }) : undefined}
               count={uniqueBarriers.length}
               open={openSections.barriers}
               onToggle={() => toggleSection('barriers')}
@@ -1233,7 +1253,7 @@ export function CarePlanSummaryView({
           program={previewGoal.program}
           onClose={() => setPreviewGoal(null)}
           onOpenBarrier={(b) => setPreviewBarrier({ barrier: b, program: previewGoal.program })}
-          consolidated
+          consolidated={!editable}
         />
       )}
       {previewIntervention && (
@@ -1242,7 +1262,7 @@ export function CarePlanSummaryView({
           patientId={patientId}
           program={previewIntervention.program}
           onClose={() => setPreviewIntervention(null)}
-          consolidated
+          consolidated={!editable}
         />
       )}
       {previewBarrier && (
@@ -1251,7 +1271,16 @@ export function CarePlanSummaryView({
           patientId={patientId}
           program={previewBarrier.program}
           onClose={() => setPreviewBarrier(null)}
-          consolidated
+          consolidated={!editable}
+        />
+      )}
+      {rollupAdd && (
+        <CarePlanRollupAdd
+          start={rollupAdd}
+          patientId={patientId}
+          patientName={currentPatient?.name || ''}
+          programs={programs}
+          onDone={() => setRollupAdd(null)}
         />
       )}
       {activityReviewOpen && (

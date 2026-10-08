@@ -3,6 +3,7 @@ import { PriorityIcon } from '../../../../../components/PriorityIcon/PriorityIco
 import { MenuPopover } from '../../../../../components/MenuPopover/MenuPopover';
 import { useAppStore } from '../../../../../store/useAppStore';
 import { buildCarePlanSnapshot } from '../care-programs/care-plan/summary/carePlanSnapshot';
+import { carePlanSources } from '../care-programs/care-plan/lib/carePlanMode';
 import { GbiNameCell, GbiStatusButton } from '../care-programs/care-plan/tables/carePlanTableShared';
 import { enrichGoalRows } from '../care-programs/care-plan/tables/carePlanTableSort';
 import { normalizeCategory } from '../../../../settings/care-plan-library/lib';
@@ -27,9 +28,16 @@ export function MonitoringRailGoals({ patient }) {
   const [priorityMenu, setPriorityMenu] = useState(null);
   const [statusMenu, setStatusMenu] = useState(null);
 
+  const carePlanMode = useAppStore((s) => s.carePlanMode);
+  // Goals come from whichever level this org plans at: the patient's own plan,
+  // or its open programs' plans.
   const programs = useMemo(
-    () => (patientId ? (careProgramsByPatient[patientId] || []).filter((p) => p.status !== 'Closed') : []),
-    [careProgramsByPatient, patientId],
+    () => carePlanSources(
+      carePlanMode,
+      patientId ? (careProgramsByPatient[patientId] || []).filter((p) => p.status !== 'Closed') : [],
+      patientId,
+    ),
+    [careProgramsByPatient, patientId, carePlanMode],
   );
 
   useEffect(() => {

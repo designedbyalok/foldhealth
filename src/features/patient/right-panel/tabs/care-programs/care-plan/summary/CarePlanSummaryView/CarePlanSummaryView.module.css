@@ -68,6 +68,20 @@
 /* Read-only section header — mirrors the CarePlanView's GBI section head
    (chevron + title + count pill) minus the Add affordance, since this
    is a consolidated snapshot across programs. */
+/* Editable roll-up: title toggle, divider, then Add — the CarePlanView
+   section head's layout. */
+.sectionHeadRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  align-self: flex-start;
+}
+.sectionActionDivider {
+  width: 1px;
+  height: 16px;
+  background: var(--neutral-150);
+  flex-shrink: 0;
+}
 .sectionHead {
   display: inline-flex;
   align-items: center;

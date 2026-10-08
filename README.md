@@ -37,6 +37,18 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **Care plan level: program, patient or both.** Settings > Account > Org has
+  a "Care plan level" choice (`org_settings.care_plan_mode`, default
+  program). Program level works as before. Patient level hides each
+  program's Care Plan step (and drops it from progress) and adds Care
+  Management > Care Plan with the full plan, stored under a per-patient
+  PATIENT program. Both keeps program plans and turns Care Management >
+  Care Plan into an editable roll-up: drawers edit each item's own program,
+  "+" asks which program to add to, and one Sign signs every plan with
+  unsigned changes. A level the org isn't using stays hidden, including in
+  the Monitoring goals rail. The plan header (title, status, toolbar) is now
+  the shared `CarePlanHeader`.
+
 - **HEDIS worklist Age filter.** More Filters gains **Age** (Under 2, 2–17,
   18–44, 45–64, 65–74, 75+), a multi-select FilterChip. Age comes from DOB
   in whole years, falling back to the row's age text ("22m", "67y 2m").

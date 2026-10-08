@@ -73,6 +73,7 @@ import { deriveGoalTableFields } from '../features/patient/right-panel/tabs/care
 import { barrierPayloadFromTemplateEntry, goalPayloadFromTemplateEntry, interventionPayloadFromTemplateEntry, templateLinkOwners } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanTemplateApply';
 import { barrierGoalIdsOf, goalCascade } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanGoalCascade';
 import { templateContentFromApplied, templateContentFromWholePlan } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanTemplateSave';
+import { DEFAULT_CARE_PLAN_MODE, normalizeCarePlanMode } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanMode';
 import { resolvePatientStoreId } from '../lib/resolvePatientStoreId';
 import { resolvePatientForCall } from '../lib/patientCall';
 
@@ -3923,6 +3924,7 @@ export const useAppStore = create((set, get) => ({
 
   // Org-level feature flags (from org_settings).
   showPatientAppIndicator: false,
+  carePlanMode: DEFAULT_CARE_PLAN_MODE,
   orgFeaturesDidFetch: false,
   fetchOrgFeatures: async () => {
     if (useAppStore.getState().orgFeaturesDidFetch) return;
@@ -3933,17 +3935,29 @@ export const useAppStore = create((set, get) => ({
         set({ orgFeaturesDidFetch: false });
         return;
       }
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('org_settings')
-        .select('show_patient_app_indicator')
+        .select('show_patient_app_indicator, care_plan_mode')
         .eq('user_id', session.user.id)
         .maybeSingle();
+      // Schema-tolerant: before the care_plan_mode migration runs, read the
+      // indicator alone and stay on the program-level default.
+      if (error && /care_plan_mode/.test(error.message || '')) {
+        ({ data, error } = await supabase
+          .from('org_settings')
+          .select('show_patient_app_indicator')
+          .eq('user_id', session.user.id)
+          .maybeSingle());
+      }
       if (error) {
         console.warn('fetchOrgFeatures error:', error.message);
         set({ orgFeaturesDidFetch: false });
         return;
       }
-      set({ showPatientAppIndicator: !!data?.show_patient_app_indicator });
+      set({
+        showPatientAppIndicator: !!data?.show_patient_app_indicator,
+        carePlanMode: normalizeCarePlanMode(data?.care_plan_mode),
+      });
     } catch (err) {
       console.warn('fetchOrgFeatures failed:', err?.message || err);
       set({ orgFeaturesDidFetch: false });

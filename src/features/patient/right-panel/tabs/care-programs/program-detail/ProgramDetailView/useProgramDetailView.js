@@ -15,7 +15,9 @@ import {
   fmtCompletedDate,
   initialsOf,
   stepsFor,
+  withoutCarePlanStep,
 } from './ProgramDetailView.utils';
+import { showsProgramCarePlan } from '../../care-plan/lib/carePlanMode';
 import { deriveStepStatus, programProgressOf, STEP_STATUS } from './stepStatus';
 
 const EMPTY_LIST = [];
@@ -25,7 +27,10 @@ export function useProgramDetailView({ program, onSwitchProgram }) {
   const isCcm = program.code === 'CCM';
   const isSnp = program.code === 'SNP';
   // Step definitions only; each step's status is worked out per patient below.
-  const baseStepList = stepsFor(program.code);
+  // Patient-level orgs keep the care plan in Care Management, not here.
+  const programCarePlan = showsProgramCarePlan(useAppStore(s => s.carePlanMode));
+  const stepsForProgram = (code) => (programCarePlan ? stepsFor(code) : withoutCarePlanStep(stepsFor(code)));
+  const baseStepList = stepsForProgram(program.code);
   const ALL_STEPS = flatSteps(baseStepList);
   const firstStep = baseStepList[0];
 
@@ -189,11 +194,11 @@ export function useProgramDetailView({ program, onSwitchProgram }) {
   }, [patientId, currentPatient, manualStatus, carePlan, liveProgram, program, allStoreTasks, programDocuments, appointments]);
 
   // Same shape as the step list, with each step's real status filled in.
-  const stepList = useMemo(() => stepsFor(program.code).map(step => (
+  const stepList = useMemo(() => stepsForProgram(program.code).map(step => (
     step.type === 'section'
       ? { ...step, children: step.children.map(c => ({ ...c, ...deriveStepStatus(c, stepCtx) })) }
       : { ...step, ...deriveStepStatus(step, stepCtx) }
-  )), [program.code, stepCtx]);
+  )), [program.code, stepCtx, programCarePlan]); // eslint-disable-line react-hooks/exhaustive-deps
   const programProgress = programProgressOf(flatSteps(stepList));
 
   // Keep the enrollment's stored progress in step, so the program list and
