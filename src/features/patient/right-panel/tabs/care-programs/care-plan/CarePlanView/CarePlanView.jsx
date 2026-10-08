@@ -12,6 +12,7 @@ import {
   PRIORITY_LABELS,
   GbiSectionHead,
   SectionEmptyState,
+  SectionTitle,
 } from './CarePlanViewSections';
 import { useCarePlanViewData } from './useCarePlanViewData';
 import { useCarePlanViewFetchEffects } from './useCarePlanViewFetchEffects';
@@ -31,7 +32,6 @@ import { CarePlanInterventionsTable } from '../tables/CarePlanInterventionsTable
 import { CarePlanBarriersTable } from '../tables/CarePlanBarriersTable';
 import { RingEmptyState } from '@/components/RingEmptyState/RingEmptyState';
 import { SimpleTableSkeleton } from '@/components/SimpleTableSkeleton/SimpleTableSkeleton';
-import { DownChevronIcon } from '@/components/Icon/DownChevronIcon';
 import { BulkBar } from '@/components/BulkBar/BulkBar';
 import { Badge } from '@/components/Badge/Badge';
 import { CarePlanDuplicateGroup } from '../DuplicateFlag/CarePlanDuplicateGroup';
@@ -778,19 +778,12 @@ export function CarePlanView({ patientId, program }) {
       {!carePlanLoading && latestPlanNote && (
         <section className={styles.careNoteSection}>
           <div className={styles.careNoteHead}>
-            <button
-              type="button"
-              className={styles.careNoteToggle}
-              onClick={() => toggleSection('careNote')}
-              aria-expanded={openSections.careNote}
-            >
-              <DownChevronIcon
-                size={16}
-                color="var(--neutral-400)"
-                className={`${styles.sectionChevron} ${openSections.careNote ? '' : styles.sectionChevronClosed}`}
-              />
-              <span className={styles.careNoteHeadTitle}>Care Note</span>
-            </button>
+            {/* Same title treatment as the Goals / Interventions / Barriers heads. */}
+            <SectionTitle
+              label="Care Note"
+              open={openSections.careNote}
+              onToggle={() => toggleSection('careNote')}
+            />
           </div>
           {openSections.careNote && latestPlanNote && (
             <div className={styles.careNoteCardWrap}>
