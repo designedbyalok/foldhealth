@@ -30,14 +30,20 @@ export function RollupSignButton({ patientId, programs }) {
   );
   const names = pending.map(p => p.name || p.code).join(', ');
 
+  // Each plan belongs to a different program and signs on its own, so they
+  // run together; allSettled counts the ones that failed instead of stopping.
+  const succeeded = (results) => results.filter(r => r.status === 'fulfilled' && r.value).length;
+
   const signAll = async () => {
     setBusy(true);
-    let signed = 0;
-    for (const p of pending) {
-      if (await signCarePlan(patientId, p, '')) signed += 1;
+    let results;
+    try {
+      results = await Promise.allSettled(pending.map(p => signCarePlan(patientId, p, '')));
+    } finally {
+      setBusy(false);
+      setConfirmOpen(false);
     }
-    setBusy(false);
-    setConfirmOpen(false);
+    const signed = succeeded(results);
     showToast(signed === pending.length
       ? `${signed} care plan${signed === 1 ? '' : 's'} signed`
       : `Signed ${signed} of ${pending.length} care plans`);
@@ -45,10 +51,7 @@ export function RollupSignButton({ patientId, programs }) {
 
   const reviewAll = async (user) => {
     setReviewOpen(false);
-    let sent = 0;
-    for (const p of pending) {
-      if (await requestCarePlanReview(patientId, p, user)) sent += 1;
-    }
+    const sent = succeeded(await Promise.allSettled(pending.map(p => requestCarePlanReview(patientId, p, user))));
     showToast(sent
       ? `${sent} care plan${sent === 1 ? '' : 's'} sent to ${user.name} for review`
       : 'Could not send the care plans for review');

@@ -107,6 +107,29 @@ export function OrgPanel() {
 
   const setSocial = (key, value) => setSocials(prev => ({ ...prev, [key]: value }));
 
+  // Care plan level changes how the app behaves, not how the org looks, so it
+  // saves the moment it's picked (no trip to Save Changes) and applies at once.
+  const selectCarePlanMode = async (mode) => {
+    if (mode === carePlanMode) return;
+    const previous = carePlanMode;
+    setCarePlanMode(mode);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setCarePlanMode(previous); showToast('Not authenticated'); return; }
+    const { data, error } = await supabase
+      .from('org_settings')
+      .update({ care_plan_mode: mode, updated_at: new Date().toISOString() })
+      .eq('user_id', session.user.id)
+      .select('id');
+    if (error || !data?.length) {
+      setCarePlanMode(previous);
+      showToast(error ? 'Could not save the care plan level' : 'Save the organization details first');
+      return;
+    }
+    useAppStore.setState({ carePlanMode: mode });
+    const label = CARE_PLAN_MODES.find(m => m.value === mode)?.label || mode;
+    showToast(`Care plan level set to ${label}`);
+  };
+
   const saveOrgData = async () => {
     if (!name.trim()) {
       showToast('Organization name is required');
@@ -272,7 +295,7 @@ export function OrgPanel() {
                 value={m.value}
                 label={m.label}
                 checked={carePlanMode === m.value}
-                onChange={() => setCarePlanMode(m.value)}
+                onChange={() => selectCarePlanMode(m.value)}
               />
               <p className={styles.radioHint}>{m.hint}</p>
             </div>
