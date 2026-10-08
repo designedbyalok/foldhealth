@@ -109,10 +109,12 @@ export function OverflowTabStrip({ items, activeKey, onChange }) {
 
   return (
     <div className={styles.row} ref={rowRef}>
-      <div ref={measurerRef} aria-hidden className={styles.measurer}>
-        {items.map(tab => (
-          <div key={tab.key} data-tab-item className={tabStripStyles.tabItem}>{tab.label}</div>
-        ))}
+      <div aria-hidden className={styles.measureClip}>
+        <div ref={measurerRef} className={styles.measurer}>
+          {items.map(tab => (
+            <div key={tab.key} data-tab-item className={tabStripStyles.tabItem}>{tab.label}</div>
+          ))}
+        </div>
       </div>
 
       <TabStrip

@@ -3,6 +3,7 @@ import { SearchBar } from '../SearchBar/SearchBar';
 import { Button } from '../Button/Button';
 import { CheckboxTick } from '../CheckboxTick/CheckboxTick';
 import { RingEmptyState } from '../RingEmptyState/RingEmptyState';
+import { apiFetch } from '../../lib/apiFetch';
 import styles from './PhotoSearch.module.css';
 
 const DEBOUNCE_MS = 400;
@@ -12,7 +13,7 @@ const SKELETON_COUNT = 6;
 async function searchPexelsPhotos({ query, page = 1, orientation }) {
   const params = new URLSearchParams({ q: query, page: String(page) });
   if (orientation) params.set('orientation', orientation);
-  const res = await fetch(`/api/pexels-search?${params}`);
+  const res = await apiFetch(`/api/pexels-search?${params}`);
   if (!res.ok) return { photos: [], nextPage: null, source: 'error' };
   return res.json();
 }

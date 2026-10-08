@@ -52,8 +52,22 @@
   flex: 1;
 }
 
+/* Zero-size clip box: the measurer lays out at its natural width without
+   adding that width to an ancestor's scrollable overflow. */
+.measureClip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
 .measurer {
   position: absolute;
+  top: 0;
+  left: 0;
+  width: max-content;
   visibility: hidden;
   display: flex;
   gap: 12px;

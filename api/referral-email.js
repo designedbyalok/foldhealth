@@ -10,6 +10,8 @@
  *         providerSpecialty?, reason, note?, attachments?: string[], senderName? }
  */
 
+import { requireUser } from './_lib/requireUser.js';
+
 const MODEL = process.env.GOOGLE_AI_MODEL || 'gemini-3.8-flash';
 const ENDPOINT = (key) =>
   `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`;
@@ -39,6 +41,8 @@ function buildPrompt(d) {
 }
 
 export default async function handler(req, res) {
+  if (!(await requireUser(req, res))) return;
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: { message: 'Method not allowed' } });
   }

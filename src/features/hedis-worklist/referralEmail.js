@@ -1,6 +1,7 @@
 // Draft the Send Referral email. UnityAI (/api/referral-email, a server-side
 // Gemini proxy) writes it; when that isn't reachable (no key in local dev,
 // outage) the same details fill a plain template so Generate always works.
+import { apiFetch } from '../../lib/apiFetch';
 
 function templateDraft(d) {
   const who = d.providerName ? `Dear ${d.providerName},` : 'Hello,';
@@ -26,7 +27,7 @@ function templateDraft(d) {
 /** @returns {Promise<{ subject: string, body: string, source: 'ai'|'template' }>} */
 export async function draftReferralEmail(details) {
   try {
-    const res = await fetch('/api/referral-email', {
+    const res = await apiFetch('/api/referral-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(details),

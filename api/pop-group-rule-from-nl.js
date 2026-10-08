@@ -8,10 +8,11 @@
  * Returns: { rule, summary } or { error: { message } }
  */
 
-import { geminiGenerateContent } from './googleGemini.js';
+import { geminiGenerateContent } from './_lib/googleGemini.js';
 import { buildAiFieldCatalog, buildAiRuleInstructions } from '../src/features/population-groups/rule-builder/aiRuleCatalog.js';
 import { AI_RULE_RESPONSE_SCHEMA } from '../src/features/population-groups/rule-builder/aiRuleResponseSchema.js';
 import { normalizeAiRuleQuery } from '../src/features/population-groups/rule-builder/normalizeAiRuleQuery.js';
+import { requireUser } from './_lib/requireUser.js';
 
 function buildPrompt({ prompt, messages, currentRule }) {
   const catalog = buildAiFieldCatalog({ compact: true });
@@ -44,6 +45,8 @@ function buildPrompt({ prompt, messages, currentRule }) {
 }
 
 export default async function handler(req, res) {
+  if (!(await requireUser(req, res))) return;
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: { message: 'Method not allowed' } });
   }

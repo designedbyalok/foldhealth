@@ -9,6 +9,23 @@
  */
 import { loadEnv } from 'vite';
 
+// Vercel's res.status/json/send helpers on a plain Node response.
+function withVercelHelpers(res) {
+  return Object.assign(res, {
+    status(code) { res.statusCode = code; return this; },
+    json(payload) {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify(payload));
+      return this;
+    },
+    send(payload) {
+      if (typeof payload === 'object') return this.json(payload);
+      res.end(String(payload));
+      return this;
+    },
+  });
+}
+
 export function devApiPlugin() {
   return {
     name: 'dev-api',
@@ -44,10 +61,16 @@ export function devApiPlugin() {
         // For send-test-email specifically: if there's no local key, fall
         // back to the deployed API which already has RESEND_API_KEY set.
         if (req.url.startsWith('/api/send-test-email') && !hasResendKey) {
+          // Check the token locally too, so dev rejects what production would.
+          const { requireUser } = await server.ssrLoadModule(`${process.cwd()}/api/_lib/requireUser.js`);
+          if (!(await requireUser(req, withVercelHelpers(res)))) return;
           try {
             const upstream = await fetch(`${proxyBase}${req.url}`, {
               method: req.method,
-              headers: { 'Content-Type': req.headers['content-type'] || 'application/json' },
+              headers: {
+                'Content-Type': req.headers['content-type'] || 'application/json',
+                Authorization: req.headers.authorization,
+              },
               body: raw || undefined,
             });
             const text = await upstream.text();
@@ -76,20 +99,7 @@ export function devApiPlugin() {
             try { body = JSON.parse(raw); } catch { body = raw; }
           }
           const adaptedReq = Object.assign(req, { body });
-          const adaptedRes = Object.assign(res, {
-            status(code) { res.statusCode = code; return this; },
-            json(payload) {
-              res.setHeader('Content-Type', 'application/json');
-              res.end(JSON.stringify(payload));
-              return this;
-            },
-            send(payload) {
-              if (typeof payload === 'object') return this.json(payload);
-              res.end(String(payload));
-              return this;
-            },
-          });
-          await handler(adaptedReq, adaptedRes);
+          await handler(adaptedReq, withVercelHelpers(res));
         } catch (err) {
           console.error('[dev-api] handler error:', err);
           res.statusCode = 500;

@@ -12,6 +12,7 @@
  * sent as escaped HTML with its line breaks kept.
  */
 import { Resend } from 'resend';
+import { requireUser } from './_lib/requireUser.js';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -23,6 +24,8 @@ const escapeHtml = (t) => String(t).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '
 const list = (v) => (Array.isArray(v) ? v : []).map(s => String(s).trim()).filter(Boolean);
 
 export default async function handler(req, res) {
+  if (!(await requireUser(req, res))) return;
+
   if (req.method !== 'POST') return res.status(405).json({ error: { message: 'Method not allowed' } });
   if (!resend) {
     return res.status(500).json({ error: { message: 'Email isn\'t set up: RESEND_API_KEY is missing on the server.' } });

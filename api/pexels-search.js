@@ -6,10 +6,14 @@
  * Always responds 200 with `{ photos, nextPage, source }` so the picker can
  * show an empty or error state instead of breaking.
  */
+import { requireUser } from './_lib/requireUser.js';
+
 const PER_PAGE = 12;
 const ORIENTATIONS = new Set(['portrait', 'landscape', 'square']);
 
 export default async function handler(req, res) {
+  if (!(await requireUser(req, res))) return;
+
   try {
     const url = new URL(req.url, 'http://localhost');
     const q = (url.searchParams.get('q') || '').trim().slice(0, 100);
@@ -42,7 +46,8 @@ export default async function handler(req, res) {
       full: p.src?.large2x,
     }));
 
-    res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=3600');
+    // private: a shared (CDN) cache would serve signed-in results to anonymous callers.
+    res.setHeader('Cache-Control', 'private, max-age=300');
     return res.status(200).json({ photos, nextPage: data.next_page ? page + 1 : null, source: 'pexels' });
   } catch (err) {
     console.error('[pexels-search]', err?.message || err);

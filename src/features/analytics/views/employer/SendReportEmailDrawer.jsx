@@ -8,6 +8,7 @@ import { EmailComposer } from '../../../../components/EmailComposer/EmailCompose
 import { RecipientInput } from '../../../../components/RecipientInput/RecipientInput';
 import { isEmailAddress } from '../../../../components/RecipientInput/isEmailAddress';
 import { useAppStore } from '../../../../store/useAppStore';
+import { apiFetch } from '../../../../lib/apiFetch';
 import { toast } from '../../../../components/Toast/sonnerToast';
 import styles from './SendReportEmailDrawer.module.css';
 
@@ -81,7 +82,7 @@ export function SendReportEmailDrawer({ buildPdf, filename, title, employerName,
     setSending(true);
     try {
       const text = [body.trim(), signature ? `--\n${[signature.name, ...signature.lines].join('\n')}` : ''].filter(Boolean).join('\n\n');
-      const res = await fetch('/api/send-report-email', {
+      const res = await apiFetch('/api/send-report-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

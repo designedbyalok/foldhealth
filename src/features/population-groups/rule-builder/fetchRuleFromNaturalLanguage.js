@@ -1,11 +1,12 @@
 import { normalizeAiRuleQuery } from './normalizeAiRuleQuery';
+import { apiFetch } from '../../../lib/apiFetch';
 
 /**
  * @param {{ prompt: string, messages?: { role: string, content: string }[], currentRule?: object }} params
  * @returns {Promise<{ rule: object, summary: string }>}
  */
 export async function fetchRuleFromNaturalLanguage({ prompt, messages, currentRule }) {
-  const res = await fetch('/api/pop-group-rule-from-nl', {
+  const res = await apiFetch('/api/pop-group-rule-from-nl', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt, messages, currentRule }),

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
+import { apiFetch } from '../../lib/apiFetch';
 import { Icon } from '../../components/Icon/Icon';
 import { Button } from '../../components/Button/Button';
 import { Input } from '../../components/Input/Input';
@@ -99,7 +100,7 @@ export function SendTestPopover({ onClose, campaignId }) {
 
     const results = await Promise.allSettled(
       addresses.map(addr =>
-        fetch('/api/send-test-email', {
+        apiFetch('/api/send-test-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

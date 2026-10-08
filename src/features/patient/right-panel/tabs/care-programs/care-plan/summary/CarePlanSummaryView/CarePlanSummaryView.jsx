@@ -41,6 +41,7 @@ import { BarrierDetailDrawer } from '../../drawers/BarrierDetailDrawer/BarrierDe
 import sharedRow from '../../tables/carePlanTables.module.css';
 import styles from './CarePlanSummaryView.module.css';
 import { localDateMs } from '../../../../../../../../lib/localDate';
+import { apiFetch } from '../../../../../../../../lib/apiFetch';
 
 const GBI_STATUSES = ['Not Started', 'In Progress', 'On Hold', 'Met', 'Not Met'];
 const PRIORITIES = ['high', 'medium', 'low'];
@@ -64,7 +65,7 @@ function buildSummaryPayload({ patientName, programs, conditions, goals, interve
 // return one { intro, points, actions } summary. Throws a user-readable
 // message the caller can toast.
 async function fetchCarePlanSummary(payload) {
-  const res = await fetch('/api/care-plan-summary', {
+  const res = await apiFetch('/api/care-plan-summary', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),

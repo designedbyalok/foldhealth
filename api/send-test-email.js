@@ -1,10 +1,13 @@
 import { Resend } from 'resend';
+import { requireUser } from './_lib/requireUser.js';
 
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
 
 export default async function handler(req, res) {
+  if (!(await requireUser(req, res))) return;
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: { message: 'Method not allowed' } });
   }
