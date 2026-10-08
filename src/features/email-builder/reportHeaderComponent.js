@@ -296,6 +296,134 @@ export const PATIENT_SUMMARY_FOOTER_COMPONENT = {
   tree: patientSummaryFooterTree(),
 };
 
+// ── Astrana Health (Figma Mar-Present 2568:6418 / CCM-Story 11295:487395) ──
+// The Patient Summary layout in Astrana branding, for the Astrana team's
+// preview: their wordmark, page / title / Generated On on the right, the
+// maroon brand band, and a maroon footer with the contact details shown in
+// the frame. The Trailhead components above are unchanged.
+export const ASTRANA_HEADER_SLUG = 'astrana-report-header';
+export const ASTRANA_FOOTER_SLUG = 'astrana-report-footer';
+export const ASTRANA_BRAND = {
+  logo: '/brand/astrana-health-logo.svg',
+  logoSize: { width: 168.781, height: 16 },
+  band: '/brand/report-header-band-astrana.svg',
+  footer: '#6C0C46',
+};
+// Contact details as shown in the Figma frames.
+export const ASTRANA_CONTACT = {
+  phone: '+1 92841 36978',
+  email: 'support@fold.health',
+  address: 'Level 4, Office # 401, Amar Tech Park, 402, Balewadi, Pune',
+};
+
+export function astranaHeaderTree() {
+  const right = (value, color, size, weight) => ({
+    type: size === 14 ? 'Heading' : 'Text',
+    data: {
+      props: size === 14 ? { text: value, level: 'h1' } : { text: value },
+      style: { color, fontSize: size, fontWeight: weight, textAlign: 'right', fontFamily: 'Inter', lineHeight: 1.2, padding: noPad },
+    },
+  });
+  return {
+    rootId: 'as-h-root',
+    blocks: {
+      'as-h-logo': {
+        type: 'Image',
+        data: {
+          props: { url: ASTRANA_BRAND.logo, alt: 'Astrana Health', ...ASTRANA_BRAND.logoSize },
+          style: { blockAlign: 'left', padding: noPad },
+        },
+      },
+      'as-h-page': right('Page {{page_number}} of {{page_count}}', '#16181D', 10, '400'),
+      'as-h-title': right('{{report_title}}', '#16181D', 14, '500'),
+      'as-h-generated': right('Generated On : {{generated_on}}', '#8A94A8', 10, '400'),
+      'as-h-cols': {
+        type: 'ColumnsContainer',
+        data: {
+          style: { padding: { top: 16, bottom: 16, left: 24, right: 24 } },
+          props: {
+            columnsCount: 2,
+            columnsGap: 8,
+            columnWidths: [50, 50],
+            contentAlignment: 'middle',
+            columns: [
+              { childrenIds: ['as-h-logo'], valign: 'middle', align: 'left' },
+              { childrenIds: ['as-h-page', 'as-h-title', 'as-h-generated'], valign: 'middle', align: 'right' },
+            ],
+          },
+        },
+      },
+      'as-h-band': {
+        type: 'Image',
+        data: {
+          props: { url: ASTRANA_BRAND.band, alt: '', width: '100%' },
+          style: { padding: noPad },
+        },
+      },
+      'as-h-root': {
+        type: 'Container',
+        data: {
+          role: 'report_header',
+          style: { backgroundColor: '#FFFFFF', padding: noPad },
+          props: { childrenIds: ['as-h-cols', 'as-h-band'] },
+        },
+      },
+    },
+  };
+}
+
+export function astranaFooterTree() {
+  const item = (icon, text) => `<span style="display:inline-flex;align-items:center;gap:2px;white-space:nowrap"><img src="${icon}" alt="" width="12" height="12" style="display:block;width:12px;height:12px">${text}</span>`;
+  const divider = '<span style="display:inline-block;width:0.5px;height:12px;margin:0 4px;background:#E9ECF1"></span>';
+  const c = ASTRANA_CONTACT;
+  const html = `<div style="display:flex;align-items:center;gap:4px;color:#FFFFFF;font-family:Inter,Arial,sans-serif;font-size:10px;line-height:1.2">${[
+    item('/brand/icon-phone-white.svg', c.phone),
+    item('/brand/icon-mail-white.svg', c.email),
+    item('/brand/icon-map-point-white.svg', c.address),
+  ].join(divider)}</div>`;
+  return {
+    rootId: 'as-f-root',
+    blocks: {
+      'as-f-contact': {
+        type: 'RawHtml',
+        data: { props: { html }, style: { padding: { top: 8, bottom: 8, left: 24, right: 24 } } },
+      },
+      'as-f-root': {
+        type: 'Container',
+        data: {
+          role: 'report_footer',
+          style: { backgroundColor: ASTRANA_BRAND.footer, padding: noPad },
+          props: { childrenIds: ['as-f-contact'] },
+        },
+      },
+    },
+  };
+}
+
+export const ASTRANA_HEADER_COMPONENT = {
+  id: ASTRANA_HEADER_SLUG,
+  slug: ASTRANA_HEADER_SLUG,
+  role: 'report_header',
+  label: 'Astrana Report Header',
+  description: 'Astrana Health logo, page, report name and date, maroon brand band.',
+  accent: '#6C0C46',
+  isDefault: false,
+  isLocal: true,
+  tree: astranaHeaderTree(),
+};
+
+export const ASTRANA_FOOTER_COMPONENT = {
+  id: ASTRANA_FOOTER_SLUG,
+  slug: ASTRANA_FOOTER_SLUG,
+  role: 'report_footer',
+  label: 'Astrana Report Footer',
+  description: 'Maroon bar with Astrana\'s phone, email and address.',
+  accent: '#6C0C46',
+  isDefault: false,
+  isLocal: true,
+  tree: astranaFooterTree(),
+};
+
 // ── Options 3 and 4 ──
 export const HEADER_OPTION_3_SLUG = 'print-report-header-option-3';
 export const HEADER_OPTION_4_SLUG = 'print-report-header-option-4';
@@ -424,8 +552,8 @@ const withLocals = (saved, locals) => (saved.some(c => c.slug)
   ? saved
   : locals.reduceRight((list, local) => withLocalComponent(list, local), saved));
 // The built-in options, in order (Option 1 … 4).
-export const REPORT_HEADER_OPTIONS = [REPORT_HEADER_COMPONENT, PATIENT_SUMMARY_HEADER_COMPONENT, HEADER_OPTION_3_COMPONENT, HEADER_OPTION_4_COMPONENT];
-export const REPORT_FOOTER_OPTIONS = [REPORT_FOOTER_COMPONENT, PATIENT_SUMMARY_FOOTER_COMPONENT, FOOTER_OPTION_3_COMPONENT, FOOTER_OPTION_4_COMPONENT];
+export const REPORT_HEADER_OPTIONS = [REPORT_HEADER_COMPONENT, PATIENT_SUMMARY_HEADER_COMPONENT, HEADER_OPTION_3_COMPONENT, HEADER_OPTION_4_COMPONENT, ASTRANA_HEADER_COMPONENT];
+export const REPORT_FOOTER_OPTIONS = [REPORT_FOOTER_COMPONENT, PATIENT_SUMMARY_FOOTER_COMPONENT, FOOTER_OPTION_3_COMPONENT, FOOTER_OPTION_4_COMPONENT, ASTRANA_FOOTER_COMPONENT];
 export const withReportHeader = (saved) => withLocals(saved, REPORT_HEADER_OPTIONS);
 export const withReportFooter = (saved) => withLocals(saved, REPORT_FOOTER_OPTIONS);
 

@@ -50,7 +50,8 @@ import { CareGapReferralsTab } from './CareGapReferralsTab';
 import { useCareGapLabs } from './labs/useCareGapLabs';
 import { CareGapLabsTab } from './labs/CareGapLabsTab';
 import { CisImmunizationsTab } from './cis/CisImmunizationsTab';
-import { CIS_CODE, evaluateCis } from './cis/cisRules';
+import { CIS_CODE, CIS_EVALUATION, evaluateCis } from './cis/cisRules';
+import { appointmentForDose } from './cis/cisAppointments';
 import { CisAppointmentForm } from './cis/CisAppointmentForm';
 import { useCisAppointmentForm } from './cis/useCisAppointmentForm';
 import { LabOrderForm } from './labs/LabOrderForm';
@@ -461,19 +462,49 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
   }, [isCis, member?.id, fetchPatientImmunizations, fetchCisDoseNotes, fetchCisAppointments]);
   // CIS-CMB10 evaluation for the Schedule Vaccine Appointment pane's dose list.
   const docTypes = isCis ? [...DOC_TYPES, CIS_RECORD_DOC_TYPE] : DOC_TYPES;
+  const memberDob = member?.dob;
   const cisResult = useMemo(
-    () => (isCis ? evaluateCis({ dob: member?.dob, immunizations: immunizations || [], measurementYear: selectedYear }) : null),
-    [isCis, member?.dob, immunizations, selectedYear],
+    () => (isCis ? evaluateCis({ dob: memberDob, immunizations: immunizations || [], measurementYear: selectedYear }) : null),
+    [isCis, memberDob, immunizations, selectedYear],
   );
   const openCisAppointment = (appt) => {
     if (appt) cisApptForm.startEdit(appt);
     else cisApptForm.reset(cisResult);
     setLeftWorkspace('cis-appointment');
   };
+  // CIS-CMB10 gap status follows the work: Engaged once a dose is recorded
+  // or a visit booked, Engaged Requires Follow-Up when a booked visit passes
+  // with doses unrecorded, Completed once the measure is met. Only moves
+  // forward, and never touches a gap the team has closed.
+  const cisGapStatus = isCis ? (member?.gaps || []).find(g => g.code === CIS_CODE)?.status : null;
+  const advanceCisStatus = (next) => {
+    if (!member?.id || !cisGapStatus) return;
+    const from = {
+      Engaged: ['Open'],
+      'Engaged Requires Follow-Up': ['Open', 'Engaged'],
+      Completed: ['Open', 'Engaged', 'Engaged Requires Follow-Up', 'Submitted'],
+    }[next];
+    if (from?.includes(cisGapStatus)) updateGapStatus(member.id, CIS_CODE, next);
+  };
+  const cisMet = cisResult?.evaluation === CIS_EVALUATION.compliant;
+  const cisNeedsFollowUp = !!cisResult && (cisAppointments || []).length > 0 && cisResult.antigens
+    .some(a => a.rows.some(r => appointmentForDose(cisAppointments, a.key, r)?.passed));
+  useEffect(() => {
+    if (!immunizationsLoaded) return;
+    if (cisMet) advanceCisStatus('Completed');
+    else if (cisNeedsFollowUp) advanceCisStatus('Engaged Requires Follow-Up');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cisMet, cisNeedsFollowUp, cisGapStatus, immunizationsLoaded]);
+  const saveCisDoses = async (payload) => {
+    const ok = await saveCisTracker(member.id, payload);
+    if (ok && (payload.inserts?.length || payload.updates?.length)) advanceCisStatus('Engaged');
+    return ok;
+  };
   const saveCisAppointmentPane = () => {
     if (!cisApptForm.canSave || !member?.id) return;
     const { appt, doseText } = cisApptForm.payload();
     saveCisAppointment(member.id, appt, { memberName: member.name, doseText });
+    advanceCisStatus('Engaged');
     cisApptForm.reset();
     setLeftWorkspace(null);
   };
@@ -1918,7 +1949,7 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
                 loading={!immunizationsLoaded}
                 measurementYear={selectedYear}
                 lastSaved={cisLastSaved}
-                onSave={(payload) => saveCisTracker(member.id, payload)}
+                onSave={saveCisDoses}
                 appointments={cisAppointments}
                 onOpenSchedule={openCisAppointment}
                 // The immunization record PDF goes to this gap's Documents as

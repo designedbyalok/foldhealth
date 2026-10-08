@@ -1,13 +1,12 @@
-.chip {
+/* Appointment link under the dose's date. */
+.link {
   display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   margin-top: var(--space-1);
-  padding: 0;
-  border: none;
-  background: transparent;
-  border-radius: 4px;
-  cursor: pointer;
+  font-size: var(--font-sm);
 }
-.chip:focus-visible {
-  outline: 2px solid var(--primary-200);
-  outline-offset: 2px;
+/* Visit passed, dose still unrecorded. */
+.link.confirm {
+  color: var(--status-warning-dark);
 }

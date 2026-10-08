@@ -1,7 +1,10 @@
-// jsPDF loads on first use only.
+// jsPDF, Inter and the brand images load on first use only.
 const generate = async (params) => {
-  const { generateCisSchedulePdf } = await import('./generateCisSchedulePdf');
-  return generateCisSchedulePdf(params);
+  const [{ generateCisSchedulePdf }, { loadCisPdfAssets }] = await Promise.all([
+    import('./generateCisSchedulePdf'),
+    import('./cisPdfAssets'),
+  ]);
+  return generateCisSchedulePdf({ ...params, assets: await loadCisPdfAssets() });
 };
 
 /**

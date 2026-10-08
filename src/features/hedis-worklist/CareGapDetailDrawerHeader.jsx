@@ -241,15 +241,15 @@ export function CareGapDetailDrawerHeader({
           {/* CIS-CMB10 is outreach and care coordination (we don't give the
               vaccines), so Add Outreach leads there, as the primary action. */}
           {isCis && <Button variant="primary" size="L" onClick={() => onAddOutreach?.()}>Add Outreach</Button>}
-          <Button variant={isCis ? 'secondary' : 'primary'} size="L" onClick={() => onScheduleAppointment?.()}>Schedule with Specialist</Button>
+          <Button variant={isCis ? 'tertiary' : 'primary'} size="L" onClick={() => onScheduleAppointment?.()}>Schedule with Specialist</Button>
           {/* Hide Add Note once the note has moved past the "start" state:
               Submitted (pending review), Completed (signed), or any Closed
               status. The Add Note suggested action is for kicking off the
               flow; after review it would just create a duplicate. */}
           {!(status === 'Submitted' || status === 'Completed' || (status || '').startsWith('Closed')) && (
-            <Button variant="tertiary" size="L" onClick={() => (onOpenClinicalNote ? onOpenClinicalNote() : setShowClinicalNote(true))}>Add Note</Button>
+            <Button variant={isCis ? 'secondary' : 'tertiary'} size="L" onClick={() => (onOpenClinicalNote ? onOpenClinicalNote() : setShowClinicalNote(true))}>Add Note</Button>
           )}
-          <Button variant="tertiary" size="L" onClick={() => showToast('Add MRC Task — coming soon')}>Add MRC Task</Button>
+          <Button variant={isCis ? 'secondary' : 'tertiary'} size="L" onClick={() => showToast('Add MRC Task — coming soon')}>Add MRC Task</Button>
           {!isCis && <Button variant="secondary" size="L" onClick={() => onAddOutreach?.()}>Add Outreach</Button>}
         </div>
       </div>

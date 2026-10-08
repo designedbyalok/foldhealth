@@ -1,11 +1,12 @@
-import { Badge } from '../../../components/Badge/Badge';
+import { Icon } from '../../../components/Icon/Icon';
+import { Link } from '../../../components/Link/Link';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { apptDate } from './cisAppointments';
 import { fmtDate } from './cisStatusConfig';
 import styles from './DoseAppointmentChip.module.css';
 
 /**
- * A booked vaccine appointment on a dose: "Scheduled <date>" before the
+ * A booked vaccine appointment on a dose, as link text: "Scheduled <date>" before the
  * visit, "Confirm <date>" once it has passed with the dose still
  * unrecorded. Click to edit or cancel the appointment.
  *
@@ -25,21 +26,20 @@ export function DoseAppointmentChip({ match, onOpen }) {
     passed ? 'Record the date given, or reschedule.' : null,
     appt.bookedByName ? `Booked by ${appt.bookedByName}` : null,
   ].filter(Boolean).join('. ');
+  const open = () => onOpen(appt);
   return (
     <Tooltip label={tip} variant="light" maxWidth={260}>
-      <button
-        type="button"
-        className={styles.chip}
-        onClick={() => onOpen(appt)}
+      <Link
+        role="button"
+        tabIndex={0}
+        className={`${styles.link} ${passed ? styles.confirm : ''}`}
+        onClick={open}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } }}
         aria-label={`${passed ? 'Confirm dose given, appointment was' : 'Scheduled'} ${date}. Edit appointment`}
       >
-        <Badge
-          tone={passed ? 'warning' : 'primary'}
-          size="S"
-          icon="solar:calendar-add-linear"
-          label={passed ? `Confirm ${short}` : `Scheduled ${short}`}
-        />
-      </button>
+        <Icon name="solar:calendar-add-linear" size={12} color="currentColor" />
+        {passed ? `Confirm ${short}` : `Scheduled ${short}`}
+      </Link>
     </Tooltip>
   );
 }

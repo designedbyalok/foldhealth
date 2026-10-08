@@ -35,9 +35,11 @@ export function CisMoreMenu({ member, result, notes, onSchedule, onSaveEvidence,
     setRect(null);
     if (key === 'schedule-appt') onSchedule();
     else if (key === 'evidence') {
-      const file = await cisPdfFile({ ...params, mode: 'record' });
+      const file = await cisPdfFile({ ...params, mode: 'record', brand: 'astrana' });
       onSaveEvidence({ file, caption: `Immunization Record (CIS-CMB10) ${fmtDate(new Date())}` });
-    } else downloadCisSchedule({ ...params, mode: key });
+    // The immunization record carries Astrana's header and footer (their
+    // team's preview); the schedule keeps the Trailhead report branding.
+    } else downloadCisSchedule({ ...params, mode: key, brand: key === 'record' ? 'astrana' : 'trailhead' });
   };
   return (
     <>
