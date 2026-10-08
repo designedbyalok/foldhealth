@@ -155,6 +155,11 @@ function mapCarePlanTemplateRow(row) {
     updatedBy: row.updated_by || '',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    // Who it's for: 'org' (everyone), 'user' (owner only), 'patient'.
+    // Rows from before the scope column are the shared library.
+    scope: row.scope || 'org',
+    ownerUserId: row.owner_user_id || null,
+    patientId: row.patient_id || null,
   };
 }
 

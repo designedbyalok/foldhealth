@@ -37,6 +37,17 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **Care plan templates for the org, for yourself, or for one patient.**
+  `care_plan_templates` gains `scope` (`org`, `user`, `patient`),
+  `owner_user_id` and `patient_id`; existing templates are `org`, and RLS
+  keeps `user` templates readable and writable only by their owner. New
+  Care Plan (Settings and Apply Templates > Create New) and Duplicate ask
+  "Who is this template for?" (Organization / Only me). A patient's Save as
+  Template adds This patient, and that template is offered only in that
+  patient's Apply Templates. The Settings library lists org templates plus
+  your own; both lists show an Org / Private / Patient badge and a
+  Visibility filter.
+
 - **Care plan level: program, patient or both.** Settings > Account > Org has
   a "Care plan level" choice (`org_settings.care_plan_mode`, default
   program). Program level works as before. Patient level hides each

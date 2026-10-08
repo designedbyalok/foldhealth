@@ -255,6 +255,8 @@ export function CarePlanView({ patientId, program }) {
   const [templateConditions, setTemplateConditions] = useState([]);
   // 'all' = the whole plan; otherwise the id of one applied template.
   const [templateSourceId, setTemplateSourceId] = useState('all');
+  // Saved from a patient's plan, so it defaults to that patient.
+  const [templateScope, setTemplateScope] = useState('patient');
   const [deleteTarget, setDeleteTarget] = useState(null); // { kind, id, name }
   const [historyOpen, setHistoryOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
@@ -606,11 +608,16 @@ export function CarePlanView({ patientId, program }) {
     const saved = await savePatientCarePlanAsTemplate(
       patientId, program, templateName, templateConditions,
       templateSourceId === 'all' ? null : templateSourceId,
+      templateScope,
     );
     setTemplateOpen(false);
     setTemplateName('');
     setTemplateConditions([]);
-    if (saved) showToast(`Saved as template "${saved.name}"`);
+    setTemplateScope('patient');
+    if (saved) {
+      const where = { patient: 'for this patient', user: 'for you only', org: 'to the library' }[templateScope];
+      showToast(`Saved "${saved.name}" ${where}`);
+    }
   };
 
   const rowMenuItems = (kind) => {
@@ -705,7 +712,7 @@ export function CarePlanView({ patientId, program }) {
     templatesDrawerOpen, setTemplatesDrawerOpen, appliedTemplateIds,
     templateCreateOpen, setTemplateCreateOpen, createdTemplateIds, setCreatedTemplateIds, appliedTemplatePriorities, handleApplyTemplates,
     templateOpen, setTemplateOpen, templateName, setTemplateName, templateConditions, setTemplateConditions, saveTemplate,
-    templateSourceId, pickTemplateSource, appliedTemplates,
+    templateSourceId, pickTemplateSource, appliedTemplates, templateScope, setTemplateScope,
     deleteTarget, setDeleteTarget, live, removeGoal, confirmDelete,
     bulkAssignOpen, setBulkAssignOpen, bulkAssign, bulkDeleteOpen, setBulkDeleteOpen, bulkDelete, selectedCount,
   };

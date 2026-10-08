@@ -14,7 +14,8 @@ import { INTERVENTION_EDITORS } from '../../interventions';
 import { ApplyTemplatesDrawer } from '../../../../patient/right-panel/tabs/care-programs/care-plan/drawers/ApplyTemplatesDrawer/ApplyTemplatesDrawer';
 import { useAppStore } from '../../../../../store/useAppStore';
 import { MenuPopover } from '../../../../../components/MenuPopover/MenuPopover';
-import { CarePlanSections, ChronicConditionSelect } from '../../shared';
+import { CarePlanSections, ChronicConditionSelect, TemplateScopeChoice } from '../../shared';
+import { LIBRARY_SCOPE_CHOICES } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/templateScope';
 import { CARE_PLAN_NAME_MAX } from '../../lib/carePlanLimits';
 import {
   goalPayloadFromTemplateEntry,
@@ -36,6 +37,9 @@ const TEMPLATE_TYPES = [
  * first one is added.
  */
 export function CarePlanCreateView({ onClose, onSave }) {
+  // Who it's for. A library template is for the organization or just its
+  // creator; patient templates are only saved from a patient's care plan.
+  const [scope, setScope] = useState('org');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [templateType, setTemplateType] = useState('general');
@@ -155,6 +159,7 @@ export function CarePlanCreateView({ onClose, onSave }) {
     goals,
     interventions,
     barriers,
+    scope,
   });
 
   return (
@@ -207,6 +212,10 @@ export function CarePlanCreateView({ onClose, onSave }) {
                 />
               ))}
             </div>
+          </div>
+
+          <div className={styles.field}>
+            <TemplateScopeChoice value={scope} onChange={setScope} choices={LIBRARY_SCOPE_CHOICES} />
           </div>
 
           {/* A chronic-conditions template needs to say which conditions —

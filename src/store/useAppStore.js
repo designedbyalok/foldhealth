@@ -2854,10 +2854,13 @@ export const useAppStore = create((set, get) => ({
 
   // `sourceTemplateId` saves just that applied template (what's left of it on
   // the plan); without it the whole plan is saved.
-  savePatientCarePlanAsTemplate: async (patientId, program, name, conditionsArg, sourceTemplateId = null) => {
+  savePatientCarePlanAsTemplate: async (patientId, program, name, conditionsArg, sourceTemplateId = null, scope = 'org') => {
     const key = carePlanKey(patientId, program.id);
     const cur = get().patientCarePlans[key];
-    if (!cur) return null;
+    if (!cur) {
+      get().showToast('Add goals to the care plan before saving it as a template');
+      return null;
+    }
     const templates = get().carePlanTemplates;
     const libraryGoals = get().carePlanGoals;
     const source = sourceTemplateId ? templates.find(t => t.id === sourceTemplateId) : null;
@@ -2869,7 +2872,7 @@ export const useAppStore = create((set, get) => ({
     const content = source
       ? templateContentFromApplied(cur, source, libraryGoals)
       : templateContentFromWholePlan(cur, applied, libraryGoals);
-    return get().saveCarePlanTemplate({ name: name.trim(), conditions, ...content });
+    return get().saveCarePlanTemplate({ name: name.trim(), conditions, ...content, scope, patientId });
   },
 
   setPatientCarePlanAppliedTemplates: async (patientId, program, templateIds, priorityUpdates) => {
@@ -3463,6 +3466,7 @@ export const useAppStore = create((set, get) => ({
   carePlanGoals: [],
   carePlanBarriers: [],
   carePlanInterventionTemplates: [],
+  authUserId: null,
   carePlanLibraryLoading: false,
   carePlanLibraryDidFetch: false,
   // Per-user starred templates (roadmap #3), persisted in
@@ -3519,6 +3523,9 @@ export const useAppStore = create((set, get) => ({
   },
 
   fetchCarePlanLibrary: async () => {
+    // Which templates are "mine" (private ones, the Mine filter) is keyed on
+    // the auth user, so record it alongside the library.
+    supabase.auth.getSession().then(({ data }) => set({ authUserId: data?.session?.user?.id || null }));
     if (get().carePlanLibraryDidFetch) return;
     if (get().carePlanLibraryLoading) return;
     set({ carePlanLibraryLoading: true });
@@ -3685,6 +3692,17 @@ export const useAppStore = create((set, get) => ({
       barriers: values.barriers || [],
       status: values.status === 'draft' ? 'draft' : 'published',
     };
+    // Audience. An edit only changes it when the caller says so; a new
+    // template defaults to the organization library and records its creator.
+    if (values.scope || !id) {
+      row.scope = values.scope || 'org';
+      row.patient_id = row.scope === 'patient' ? (values.patientId != null ? String(values.patientId) : null) : null;
+    }
+    if (!id) {
+      // The owner must be the signed-in auth user: RLS checks it against auth.uid().
+      const { data: { session } } = await supabase.auth.getSession();
+      row.owner_user_id = session?.user?.id || null;
+    }
     const run = (writeRow) => (id
       ? supabase.from('care_plan_templates').update({ ...writeRow, updated_by: get().currentUserProfile?.name || null, updated_at: new Date().toISOString() }).eq('id', id)
       : supabase.from('care_plan_templates').insert({ ...writeRow, created_by: get().currentUserProfile?.name || null, updated_by: get().currentUserProfile?.name || null })
@@ -3695,6 +3713,12 @@ export const useAppStore = create((set, get) => ({
     if (error && /column .*status.* does not exist/i.test(error.message || '')) {
       const { status: _dropped, ...rowWithoutStatus } = row;
       ({ data, error } = await run(rowWithoutStatus));
+    }
+    // Same for the audience columns before their migration: save it as a
+    // library template rather than failing.
+    if (error && /column .*(scope|owner_user_id|patient_id).* does not exist/i.test(error.message || '')) {
+      const { scope: _s, owner_user_id: _o, patient_id: _p, ...rowWithoutScope } = row;
+      ({ data, error } = await run(rowWithoutScope));
     }
     if (error) {
       console.warn('save care plan template failed:', error.message);

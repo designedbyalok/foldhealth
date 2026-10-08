@@ -5,6 +5,8 @@ import { Input } from '../../../../../../../../components/Input/Input';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { Link } from '../../../../../../../../components/Link/Link';
 import { FilterChip } from '../../../../../../../../components/FilterChip/FilterChip';
+import { TemplateScopeBadge } from '../../../../../../../settings/care-plan-library/shared';
+import { availableForPatient, inLibrary, matchesScopeFilter, scopeFilterOptions } from '../../lib/templateScope';
 import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { PriorityIcon } from '../../../../../../../../components/PriorityIcon/PriorityIcon';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
@@ -71,8 +73,20 @@ export function ApplyTemplatesDrawer({
   showCreateNew = true,
   onCreateNew,
   preselectedIds = EMPTY_TEMPLATE_IDS,
+  // On a patient's plan, that patient's own templates are offered too;
+  // elsewhere (the library's New Care Plan) only library templates are.
+  patientId = null,
 }) {
-  const templates = useAppStore(s => s.carePlanTemplates);
+  const allTemplates = useAppStore(s => s.carePlanTemplates);
+  const authUserId = useAppStore(s => s.authUserId);
+  const templates = useMemo(
+    () => (allTemplates || []).filter(t => (patientId
+      ? availableForPatient(t, authUserId, patientId)
+      : inLibrary(t, authUserId))),
+    [allTemplates, authUserId, patientId],
+  );
+  const scopeOptions = scopeFilterOptions(patientId ? ['org', 'user', 'patient'] : ['org', 'user']);
+  const [scopeFilter, setScopeFilter] = useState([]);
   const libraryDidFetch = useAppStore(s => s.carePlanLibraryDidFetch);
   const libraryLoading = useAppStore(s => s.carePlanLibraryLoading);
   const fetchCarePlanLibrary = useAppStore(s => s.fetchCarePlanLibrary);
@@ -129,6 +143,7 @@ export function ApplyTemplatesDrawer({
     const q = query.trim().toLowerCase();
     const condSet = conditionFilter.length ? new Set(conditionFilter) : null;
     let list = templates.filter(t => {
+      if (!matchesScopeFilter(t, scopeFilter)) return false;
       if (condSet && !(t.conditions || []).some(c => condSet.has(c))) return false;
       if (!q) return true;
       const inName = (t.name || '').toLowerCase().includes(q);
@@ -148,7 +163,7 @@ export function ApplyTemplatesDrawer({
       });
     }
     return list;
-  }, [templates, query, conditionFilter, sortDir]);
+  }, [templates, query, conditionFilter, sortDir, scopeFilter]);
 
   const isFavorite = (id) => favoriteSet.has(id);
 
@@ -257,7 +272,10 @@ export function ApplyTemplatesDrawer({
           aria-label={`Select ${templateNameOf(t)}`}
         />
         <span className={styles.rowText}>
-          <span className={styles.rowTitle}>{templateNameOf(t)}</span>
+          <span className={styles.rowTitleLine}>
+            <span className={styles.rowTitle}>{templateNameOf(t)}</span>
+            <TemplateScopeBadge template={t} />
+          </span>
           {reasonText && <span className={styles.rowReason} title={reasonText}>{reasonText}</span>}
         </span>
         <span className={styles.conditionCell} title={condition || undefined}>
@@ -328,7 +346,7 @@ export function ApplyTemplatesDrawer({
             icon="custom:filter"
             size="L"
             tooltip="Filter"
-            active={filtersOpen || conditionFilter.length > 0}
+            active={filtersOpen || conditionFilter.length > 0 || scopeFilter.length > 0}
             aria-expanded={filtersOpen}
             onClick={() => setFiltersOpen(v => !v)}
           />
@@ -342,6 +360,12 @@ export function ApplyTemplatesDrawer({
               selected={conditionFilter}
               onChange={setConditionFilter}
               searchable
+            />
+            <FilterChip
+              label="Visibility"
+              options={scopeOptions}
+              selected={scopeFilter}
+              onChange={setScopeFilter}
             />
           </div>
         )}
