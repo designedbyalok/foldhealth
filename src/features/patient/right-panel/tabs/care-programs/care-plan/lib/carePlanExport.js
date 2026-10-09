@@ -130,8 +130,8 @@ export function buildCarePlanDownloadFilename({
 }
 
 /** Download the care plan as a PDF built from the current selection. */
-export function downloadCarePlanPdf(meta, selection, filename) {
-  const blob = generateCarePlanPdf(meta, selection);
+export function downloadCarePlanPdf(meta, selection, filename, options) {
+  const blob = generateCarePlanPdf(meta, selection, options);
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

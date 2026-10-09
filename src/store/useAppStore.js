@@ -237,6 +237,18 @@ const _cachedWorklistOrder = readCachedWorklistOrder();
 const _savedTab = sessionStorage.getItem('activeTab') || 'toc-worklist';
 const _savedSettingsTab = sessionStorage.getItem('settingsTab');
 
+function mapCarePlanPrintPresetRow(row) {
+  return {
+    id: row.id,
+    name: row.name || '',
+    scope: row.scope || 'org',
+    ownerUserId: row.owner_user_id || null,
+    isDefault: !!row.is_default,
+    settings: row.settings || {},
+    updatedAt: row.updated_at,
+  };
+}
+
 // A plan's items from earlier runs of reinstated templates, kept for history.
 const EMPTY_RETIRED = { goals: [], interventions: [], barriers: [] };
 function retiredItems(goalRows, intvRows, barrierRows) {
@@ -3194,6 +3206,70 @@ export const useAppStore = create((set, get) => ({
     else if (removed) get().showToast('Updated applied templates');
     else get().showToast('Templates updated');
     get().touchCarePlanModified(patientId, program.id);
+    return true;
+  },
+
+  // ── Care plan print presets (care_plan_print_presets migration) ──
+  // Saved Personalize settings for Preview & Share: the organization's plus
+  // the signed-in user's private ones (RLS hides other people's).
+  carePlanPrintPresets: [],
+  carePlanPrintPresetsLoaded: false,
+  fetchCarePlanPrintPresets: async () => {
+    const { data, error } = await supabase.from('care_plan_print_presets').select('*').order('name');
+    if (error) {
+      console.warn('fetchCarePlanPrintPresets:', error.message);
+      set({ carePlanPrintPresetsLoaded: true });
+      return;
+    }
+    set({ carePlanPrintPresets: (data || []).map(mapCarePlanPrintPresetRow), carePlanPrintPresetsLoaded: true });
+  },
+
+  // `values`: { name, scope, settings, isDefault }. Returns the saved preset or null.
+  saveCarePlanPrintPreset: async (values, id = null) => {
+    const actor = get().currentUserProfile?.name || null;
+    const row = { updated_by: actor, updated_at: new Date().toISOString() };
+    if (values.name != null) row.name = values.name.trim();
+    if (values.scope) row.scope = values.scope;
+    if (values.settings) row.settings = values.settings;
+    if (values.isDefault != null) row.is_default = !!values.isDefault && (values.scope || 'org') === 'org';
+    // One org default: clear the old one before setting a new one.
+    if (row.is_default) {
+      await supabase.from('care_plan_print_presets').update({ is_default: false }).eq('is_default', true);
+    }
+    let query;
+    if (id) {
+      query = supabase.from('care_plan_print_presets').update(row).eq('id', id);
+    } else {
+      const { data: { session } } = await supabase.auth.getSession();
+      query = supabase.from('care_plan_print_presets')
+        .insert({ ...row, owner_user_id: session?.user?.id || null, created_by: actor });
+    }
+    const { data, error } = await query.select().single();
+    if (error) {
+      console.warn('saveCarePlanPrintPreset:', error.message);
+      get().showToast('Could not save the preset');
+      return null;
+    }
+    const saved = mapCarePlanPrintPresetRow(data);
+    set(s => ({
+      carePlanPrintPresets: [
+        ...s.carePlanPrintPresets
+          .filter(p => p.id !== saved.id)
+          .map(p => (saved.isDefault ? { ...p, isDefault: false } : p)),
+        saved,
+      ].sort((a, b) => a.name.localeCompare(b.name)),
+    }));
+    return saved;
+  },
+
+  deleteCarePlanPrintPreset: async (id) => {
+    const { error } = await supabase.from('care_plan_print_presets').delete().eq('id', id);
+    if (error) {
+      console.warn('deleteCarePlanPrintPreset:', error.message);
+      get().showToast('Could not delete the preset');
+      return false;
+    }
+    set(s => ({ carePlanPrintPresets: s.carePlanPrintPresets.filter(p => p.id !== id) }));
     return true;
   },
 

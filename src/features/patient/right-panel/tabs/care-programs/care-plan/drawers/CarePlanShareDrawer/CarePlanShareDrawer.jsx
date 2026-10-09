@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Drawer } from '../../../../../../../../components/Drawer/Drawer';
 import { SplitDrawerLayout } from '../../../../../../../../components/Drawer/SplitDrawerLayout';
 import { Button } from '../../../../../../../../components/Button/Button';
@@ -9,6 +9,15 @@ import { DownChevronIcon } from '../../../../../../../../components/Icon/DownChe
 import { Badge } from '../../../../../../../../components/Badge/Badge';
 import { FilterChip } from '../../../../../../../../components/FilterChip/FilterChip';
 import { Toggle } from '../../../../../../../../components/Toggle/Toggle';
+import { TabStrip } from '../../../../../../../../components/TabStrip/TabStrip';
+import { withReportHeader, withReportFooter } from '../../../../../../../email-builder/reportHeaderComponent';
+import { interFontFaces } from '../../../../../../../email-builder/rasterizeComponent';
+import { useComponentImage, loadInter, loadPng } from '../../../../../../../email-builder/reportPrintAssets';
+import clinicLogoUrl from '../../../../../../../../assets/trailhead-clinics-logo.png';
+import {
+  DEFAULT_PRINT_SETTINGS, demographicRows, findPatientRecord, normalizePrintSettings, samePrintSettings,
+} from '../../lib/carePlanPrintSettings';
+import { CarePlanPrintPersonalize } from './CarePlanPrintPersonalize';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import { buildCarePlanDownloadFilename, downloadCarePlanPdf } from '../../lib/carePlanExport';
 import {
@@ -24,6 +33,80 @@ import { CarePlanPdfPreview } from './CarePlanPdfPreview';
 import styles from './CarePlanShareDrawer.module.css';
 
 const TARGET_ID = { EHR: 'ehr', Patient: 'patient', POA: 'poa' };
+const EDITOR_TABS = [
+  { key: 'content', label: 'Content' },
+  { key: 'personalize', label: 'Personalize' },
+];
+const BLANK_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+// The clinic logo, drawn once to PNG for jsPDF.
+const CLINIC_LOGO = { width: 190, height: 150 };
+
+/**
+ * Print settings and the presets that keep them. Opens on the organization's
+ * default preset when there is one, otherwise the standard settings.
+ */
+function usePrintPresets() {
+  const presets = useAppStore(s => s.carePlanPrintPresets);
+  const fetchPresets = useAppStore(s => s.fetchCarePlanPrintPresets);
+  const savePreset = useAppStore(s => s.saveCarePlanPrintPreset);
+  const deletePreset = useAppStore(s => s.deleteCarePlanPrintPreset);
+  const authUserId = useAppStore(s => s.authUserId);
+  const showToast = useAppStore(s => s.showToast);
+  const [presetId, setPresetId] = useState(null);
+  const [settings, setSettings] = useState(DEFAULT_PRINT_SETTINGS);
+  const touched = useRef(false);
+
+  useEffect(() => {
+    let live = true;
+    fetchPresets().then(() => {
+      // The default applies on open, unless someone already changed something.
+      const def = useAppStore.getState().carePlanPrintPresets.find(p => p.isDefault);
+      if (!live || !def || touched.current) return;
+      setPresetId(def.id);
+      setSettings(normalizePrintSettings(def.settings));
+    });
+    return () => { live = false; };
+  }, [fetchPresets]);
+
+  const preset = presets.find(p => p.id === presetId) || null;
+  const dirty = !samePrintSettings(settings, preset ? preset.settings : DEFAULT_PRINT_SETTINGS);
+  // Org presets are everyone's to edit; a private one only its owner's.
+  const canEditPreset = !!preset && (preset.scope === 'org' || preset.ownerUserId === authUserId);
+
+  return {
+    presets, presetId, settings, dirty, canEditPreset,
+    setSettings: (next) => { touched.current = true; setSettings(next); },
+    pickPreset: (id) => {
+      touched.current = true;
+      const next = presets.find(p => p.id === id);
+      setPresetId(next ? next.id : null);
+      setSettings(normalizePrintSettings(next?.settings));
+    },
+    saveToPreset: async () => {
+      if (!preset) return;
+      const saved = await savePreset({ settings }, preset.id);
+      if (saved) showToast(`Saved "${saved.name}"`);
+    },
+    saveAsPreset: async (values) => {
+      const saved = await savePreset({ ...values, settings });
+      if (!saved) return;
+      setPresetId(saved.id);
+      showToast(`Saved "${saved.name}" ${saved.scope === 'org' ? 'for everyone' : 'for you only'}`);
+    },
+    makeDefault: async () => {
+      if (!preset) return;
+      const saved = await savePreset({ isDefault: true, scope: 'org' }, preset.id);
+      if (saved) showToast(`"${saved.name}" is now the default`);
+    },
+    removePreset: async () => {
+      if (!preset) return;
+      if (await deletePreset(preset.id)) {
+        showToast(`Deleted "${preset.name}"`);
+        setPresetId(null);
+      }
+    },
+  };
+}
 
 function SectionSelectAll({ label, ids, off, setOff, collapsed, onToggle }) {
   const total = ids.length;
@@ -86,7 +169,8 @@ function SectionToggleHead({ title, collapsed, onToggle, trailing }) {
 // What is shared is the plan as last signed: unsigned changes stay out until
 // someone signs them, and a plan that was never signed can be previewed and
 // downloaded as a draft but not shared.
-export function CarePlanShareDrawer({ patientId, program, data: draftData, patientName, canShare: canEdit = true, onClose }) {
+// `carePlanNote` is the plan's latest Care Note ({ detail, actor, createdAt }) or null.
+export function CarePlanShareDrawer({ patientId, program, data: draftData, patientName, carePlanNote = null, canShare: canEdit = true, onClose }) {
   const sharePatientCarePlan = useAppStore(s => s.sharePatientCarePlan);
   const key = `${patientId}::${program.id}`;
   const signedCopy = useAppStore(s => s.patientSignedCarePlans[key]);
@@ -113,6 +197,74 @@ export function CarePlanShareDrawer({ patientId, program, data: draftData, patie
       || (s.allPatients || []).find(x => x.id === patientId);
     return p?.lastVisit || p?.last_visit || null;
   });
+
+  const [editorTab, setEditorTab] = useState('content');
+  const print = usePrintPresets();
+  const { settings: printSettings } = print;
+
+  // Header / footer components (Settings > Content > Components) and the
+  // fonts and clinic logo they're drawn with.
+  const savedHeaders = useAppStore(s => s.customReportHeaderPresets);
+  const savedFooters = useAppStore(s => s.customReportFooterPresets);
+  const fetchCustomPresets = useAppStore(s => s.fetchCustomPresets);
+  useEffect(() => { fetchCustomPresets(); }, [fetchCustomPresets]);
+  const headerComponents = useMemo(() => withReportHeader(savedHeaders), [savedHeaders]);
+  const footerComponents = useMemo(() => withReportFooter(savedFooters), [savedFooters]);
+  const [assets, setAssets] = useState({});
+  useEffect(() => {
+    let live = true;
+    Promise.all([loadInter(), loadPng(clinicLogoUrl, CLINIC_LOGO.width, CLINIC_LOGO.height)])
+      .then(([fonts, clinicLogo]) => { if (live) setAssets({ fonts, clinicLogo }); });
+    return () => { live = false; };
+  }, []);
+  // An uploaded logo, redrawn as PNG (jsPDF places PNGs).
+  const customLogo = printSettings.customLogo;
+  const [customLogoPng, setCustomLogoPng] = useState({ src: null, png: null });
+  useEffect(() => {
+    if (!customLogo?.dataUrl) return undefined;
+    let live = true;
+    const h = 150;
+    const w = Math.round((customLogo.width / customLogo.height) * h) || 190;
+    loadPng(customLogo.dataUrl, w, h, { trim: true, pad: 2 })
+      .then(png => { if (live) setCustomLogoPng({ src: customLogo.dataUrl, png }); });
+    return () => { live = false; };
+  }, [customLogo]);
+  const customPng = customLogo && customLogoPng.src === customLogo.dataUrl ? customLogoPng.png : null;
+  const logo = printSettings.showLogo ? (customLogo ? customPng : assets.clinicLogo) || null : null;
+
+  const fontFaces = useMemo(() => interFontFaces(assets.fonts), [assets.fonts]);
+  const generatedOn = useMemo(() => new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), []);
+  // The page count of the last PDF built, for "Page 1 of 5" in a header or
+  // footer; a change redraws those (and the PDF with them), then settles.
+  const [pageCount, setPageCount] = useState(0);
+  const componentCtx = useMemo(() => ({
+    reportTitle: printSettings.format === 'table' ? 'Care Plan' : 'Care Plan Summary',
+    generatedOn,
+    // A header with a logo slot gets a blank image when the logo is off, not
+    // a broken one.
+    employerLogo: logo?.dataUrl || BLANK_PNG,
+    pageCount: pageCount || '',
+  }), [generatedOn, logo, pageCount, printSettings.format]);
+  const headerComponent = headerComponents.find(h => String(h.id) === String(printSettings.headerId)) || headerComponents[0] || null;
+  const footerComponent = footerComponents.find(f => String(f.id) === String(printSettings.footerId)) || null;
+  const { image: headerImage } = useComponentImage(headerComponent, componentCtx, fontFaces, printSettings.showHeader && !!assets.fonts);
+  const { image: footerImage } = useComponentImage(footerComponent, componentCtx, fontFaces, printSettings.showFooter && !!footerComponent && !!assets.fonts);
+
+  // Read once on open: the patient record doesn't change while sharing.
+  const patientRecord = useMemo(() => findPatientRecord(useAppStore.getState(), patientId), [patientId]);
+  const pdfOptions = useMemo(() => ({
+    format: printSettings.format,
+    fonts: assets.fonts || null,
+    showCarePlanNote: printSettings.showCarePlanNote,
+    groupBy: printSettings.groupBy,
+    carePlanNote: printSettings.showCarePlanNote ? carePlanNote?.detail || '' : '',
+    demographics: demographicRows(patientRecord, printSettings.demographics),
+    header: printSettings.showHeader ? headerImage || null : null,
+    // undefined: the standard footer line; null: none.
+    footer: !printSettings.showFooter ? null : (footerComponent ? footerImage || undefined : undefined),
+    // A header shows the logo itself, so the page body doesn't repeat it.
+    logo: printSettings.showHeader ? null : logo,
+  }), [printSettings, carePlanNote, patientRecord, headerImage, footerImage, footerComponent, logo, assets.fonts]);
 
   const [shareFilters, setShareFilters] = useState(() => ({ ...SHARE_FILTERS_DEFAULT }));
   const setShareFilter = (key, value) => setShareFilters(f => ({ ...f, [key]: value }));
@@ -189,13 +341,28 @@ export function CarePlanShareDrawer({ patientId, program, data: draftData, patie
     && selection.interventions.length === 0
     && selection.barriers.length === 0;
 
-  const docMeta = useMemo(() => ({
-    patientName,
-    programName: program.name,
-    sharedBy: currentUserProfile?.name || '',
-    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-    note: note.trim(),
-  }), [patientName, program.name, currentUserProfile?.name, note]);
+  const plan = useAppStore(s => s.patientCarePlans[`${patientId}::${program.id}`]?.plan || null);
+  const docMeta = useMemo(() => {
+    // Plan progress: the average of the included goals' recorded progress.
+    const progresses = selection.goals.map(g => Number(g.progress)).filter(n => Number.isFinite(n));
+    return {
+      patientName,
+      programName: program.name,
+      sharedBy: currentUserProfile?.name || '',
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      note: note.trim(),
+      // For the Care Plan Summary format.
+      plan: plan ? {
+        createdBy: plan.createdBy,
+        createdAt: plan.createdDate,
+        signedBy: plan.signedBy,
+        signedAt: plan.signedAt,
+        progress: progresses.length ? Math.round(progresses.reduce((a, b) => a + b, 0) / progresses.length) : null,
+      } : null,
+      carePlanNote,
+      patient: patientRecord,
+    };
+  }, [patientName, program.name, currentUserProfile?.name, note, plan, selection.goals, carePlanNote, patientRecord]);
 
   const handleDownload = () => {
     downloadCarePlanPdf(
@@ -206,6 +373,7 @@ export function CarePlanShareDrawer({ patientId, program, data: draftData, patie
         programCode: program.code,
         programName: program.name,
       }),
+      pdfOptions,
     );
     showToast('Care plan downloaded');
   };
@@ -259,6 +427,25 @@ export function CarePlanShareDrawer({ patientId, program, data: draftData, patie
     return opt ? [opt.label] : [];
   }, [shareFilters.datePreset]);
 
+  const personalizePane = (
+    <CarePlanPrintPersonalize
+      settings={printSettings}
+      onChange={print.setSettings}
+      presets={print.presets}
+      presetId={print.presetId}
+      onPickPreset={print.pickPreset}
+      dirty={print.dirty}
+      canEditPreset={print.canEditPreset}
+      onSavePreset={print.saveToPreset}
+      onSaveAsPreset={print.saveAsPreset}
+      onDeletePreset={print.removePreset}
+      onMakeDefault={print.makeDefault}
+      headerComponents={headerComponents}
+      footerComponents={footerComponents}
+      clinicLogo={assets.clinicLogo}
+    />
+  );
+
   const editorPane = (
     <div className={styles.editorScroll}>
       {signed && draft.hasUnsignedChanges && (
@@ -274,6 +461,9 @@ export function CarePlanShareDrawer({ patientId, program, data: draftData, patie
           onChange={setView}
         />
       )}
+      <div className={styles.stickyTop}>
+      <TabStrip items={EDITOR_TABS} activeKey={editorTab} onChange={setEditorTab} fullWidth={false} />
+      {editorTab === 'content' && (
       <div className={styles.filterBar}>
           <FilterChip
             label="Date"
@@ -314,7 +504,10 @@ export function CarePlanShareDrawer({ patientId, program, data: draftData, patie
             </button>
           )}
       </div>
+      )}
+      </div>
 
+      {editorTab === 'personalize' ? personalizePane : (
       <div className={styles.body}>
         <div className={styles.field}>
           <SectionToggleHead
@@ -456,6 +649,7 @@ export function CarePlanShareDrawer({ patientId, program, data: draftData, patie
           </div>
         )}
       </div>
+      )}
     </div>
   );
 
@@ -464,7 +658,9 @@ export function CarePlanShareDrawer({ patientId, program, data: draftData, patie
       <CarePlanPdfPreview
         docMeta={docMeta}
         selection={selection}
+        options={pdfOptions}
         nothingSelected={nothingSelected}
+        onPageCount={setPageCount}
       />
     </div>
   );

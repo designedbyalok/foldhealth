@@ -14,7 +14,7 @@ function emptySlot() {
  * Live PDF preview with debounced regeneration and crossfade between
  * versions so toggling goals does not flash the iframe black.
  */
-export function CarePlanPdfPreview({ docMeta, selection, nothingSelected }) {
+export function CarePlanPdfPreview({ docMeta, selection, options, nothingSelected, onPageCount }) {
   const [slotA, setSlotA] = useState(emptySlot);
   const [slotB, setSlotB] = useState(emptySlot);
   const [front, setFront] = useState('A');
@@ -63,7 +63,9 @@ export function CarePlanPdfPreview({ docMeta, selection, nothingSelected }) {
     }
 
     const timer = window.setTimeout(() => {
-      const url = URL.createObjectURL(generateCarePlanPdf(docMeta, selection));
+      const blob = generateCarePlanPdf(docMeta, selection, options);
+      onPageCount?.(blob.pageCount);
+      const url = URL.createObjectURL(blob);
 
       if (!slotARef.current.url && !slotBRef.current.url) {
         setSlotA({ url, ready: false });
@@ -84,7 +86,7 @@ export function CarePlanPdfPreview({ docMeta, selection, nothingSelected }) {
     }, DEBOUNCE_MS);
 
     return () => window.clearTimeout(timer);
-  }, [docMeta, selection, nothingSelected]);
+  }, [docMeta, selection, options, nothingSelected]);
 
   useEffect(() => () => {
     if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);

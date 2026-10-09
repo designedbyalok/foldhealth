@@ -231,6 +231,7 @@ export function CarePlanViewDrawers(d) {
           program={program}
           data={data}
           patientName={patientName}
+          carePlanNote={latestPlanNote || null}
           canShare={canEdit}
           onClose={clearCarePlanShareRequest}
         />

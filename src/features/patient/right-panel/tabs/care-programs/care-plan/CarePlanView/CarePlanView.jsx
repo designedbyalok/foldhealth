@@ -34,7 +34,7 @@ import { RingEmptyState } from '@/components/RingEmptyState/RingEmptyState';
 import { SimpleTableSkeleton } from '@/components/SimpleTableSkeleton/SimpleTableSkeleton';
 import { BulkBar } from '@/components/BulkBar/BulkBar';
 import { Badge } from '@/components/Badge/Badge';
-import { CarePlanDuplicateGroup } from '../DuplicateFlag/CarePlanDuplicateGroup';
+import { CarePlanDuplicatePopover } from '../DuplicateFlag/CarePlanDuplicatePopover';
 import { CarePlanViewDrawers } from './CarePlanViewDrawers';
 import { CarePlanViewOverlays } from './CarePlanViewOverlays';
 import { AppliedTemplateStrip } from './AppliedTemplateStrip';
@@ -140,8 +140,8 @@ export function CarePlanView({ patientId, program }) {
   const { openSections, toggleSection } = useCarePlanOpenSections();
   // Which section's duplicate flags are expanded — { goal: bool, intervention: bool, barrier: bool }.
   // Default collapsed; clicking the section-header duplicates badge toggles the panel.
-  const [expandedDuplicates, setExpandedDuplicates] = useState({});
-  const toggleDuplicates = (kind) => setExpandedDuplicates(s => ({ ...s, [kind]: !s[kind] }));
+  // The section whose duplicates popover is open: { kind, rect } or null.
+  const [duplicatesOpen, setDuplicatesOpen] = useState(null);
   const [statusMenu, setStatusMenu] = useState(null); // { kind, item, rect }
   const [priorityMenu, setPriorityMenu] = useState(null); // { kind, item, rect }
   const [addGoalsDrawerOpen, setAddGoalsDrawerOpen] = useState(false);
@@ -524,19 +524,19 @@ export function CarePlanView({ patientId, program }) {
     dismissCarePlanDuplicate(key, flag.flagId);
   };
   const flagsForKind = (kind) => duplicateFlags.filter(f => f.kind === kind);
-  // Section-header duplicate badge: renders inline next to the title as a
-  // secondary Badge and toggles the CarePlanDuplicateGroup panel below.
-  // Nothing renders when the kind has no open duplicate flags.
+  // Section-header duplicate badge: opens the section's duplicates in a
+  // popover. Nothing renders when the kind has no open duplicate flags.
   const renderDuplicateBadge = (kind) => {
     const flags = flagsForKind(kind);
     if (!flags.length) return null;
-    const expanded = !!expandedDuplicates[kind];
+    const expanded = duplicatesOpen?.kind === kind;
     return (
       <button
         type="button"
         className={styles.duplicateBadgeBtn}
-        onClick={() => toggleDuplicates(kind)}
+        onClick={(e) => setDuplicatesOpen(expanded ? null : { kind, rect: e.currentTarget.getBoundingClientRect() })}
         aria-expanded={expanded}
+        aria-haspopup="dialog"
         aria-label={`${flags.length} possible duplicate${flags.length === 1 ? '' : 's'}`}
       >
         <Badge
@@ -548,19 +548,21 @@ export function CarePlanView({ patientId, program }) {
       </button>
     );
   };
-  // Expanded panel — hides the group's own summary since the section-header
-  // badge already surfaces the count.
-  const renderDuplicateFlags = (kind) => {
-    const flags = flagsForKind(kind);
-    if (!flags.length || !expandedDuplicates[kind]) return null;
+  // The open section's duplicates; closes once the last one is resolved.
+  const renderDuplicatesPopover = () => {
+    const flags = duplicatesOpen ? flagsForKind(duplicatesOpen.kind) : [];
+    if (!flags.length) return null;
+    const close = () => setDuplicatesOpen(null);
     return (
-      <CarePlanDuplicateGroup
+      <CarePlanDuplicatePopover
+        anchorRect={duplicatesOpen.rect}
+        kind={duplicatesOpen.kind}
         flags={flags}
-        hideSummary
+        onClose={close}
         onIgnore={handleDuplicateIgnore}
         onAcceptExisting={handleDuplicateAcceptExisting}
         onAcceptNew={handleDuplicateAcceptNew}
-        onEditExisting={handleDuplicateEditExisting}
+        onEditExisting={(flag) => { close(); handleDuplicateEditExisting(flag); }}
       />
     );
   };
@@ -895,7 +897,6 @@ export function CarePlanView({ patientId, program }) {
             </ActionButton>
           )}
         />
-        {renderDuplicateFlags('goal')}
         {openSections.goals && (carePlanLoading ? (
           <SimpleTableSkeleton rows={3} cols={6} />
         ) : filteredGoals.length === 0 && data.goals.length === 0 ? (
@@ -975,7 +976,6 @@ export function CarePlanView({ patientId, program }) {
             onClose={() => setIntvTypeMenuOpen(false)}
           />
         )}
-        {renderDuplicateFlags('intervention')}
         {openSections.interventions && (carePlanLoading ? (
           <SimpleTableSkeleton rows={3} cols={6} />
         ) : filteredInterventions.length === 0 && data.interventions.length === 0 ? (
@@ -1034,7 +1034,6 @@ export function CarePlanView({ patientId, program }) {
             </ActionButton>
           )}
         />
-        {renderDuplicateFlags('barrier')}
         {openSections.barriers && (carePlanLoading ? (
           <SimpleTableSkeleton rows={3} cols={3} />
         ) : filteredBarriers.length === 0 && (data.barriers || []).length === 0 ? (
@@ -1064,6 +1063,7 @@ export function CarePlanView({ patientId, program }) {
       </div>
 
       <PreviousTemplateRuns instances={live?.templateInstances} retired={live?.retired} />
+      {renderDuplicatesPopover()}
       </div>
       </div>
 

@@ -1,0 +1,72 @@
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+}
+.itemHead {
+  display: flex;
+  gap: var(--space-2);
+  min-height: 24px;
+  align-items: center;
+}
+.itemTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+.keepBoth {
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: var(--font-sm);
+  color: var(--primary-300);
+}
+.keepBoth:hover {
+  text-decoration: underline;
+}
+.copy {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 32px;
+  padding: var(--space-1) var(--space-1) var(--space-1) var(--space-2);
+  border-radius: var(--space-1);
+}
+/* The two copies read apart at a glance: grey for the one already there,
+   primary for the one just added. */
+.copyExisting {
+  background: var(--neutral-50);
+}
+.copyNew {
+  background: var(--primary-50);
+}
+.tag {
+  flex-shrink: 0;
+  min-width: 52px;
+  justify-content: center;
+}
+.where {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-md);
+  color: var(--neutral-400);
+}

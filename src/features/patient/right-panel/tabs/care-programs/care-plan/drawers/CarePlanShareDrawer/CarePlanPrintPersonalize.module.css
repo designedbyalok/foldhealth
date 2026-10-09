@@ -1,0 +1,94 @@
+/* Same rhythm as the Employer Impact Report's Personalize tab: blocks 24px
+   apart, no hairlines. */
+.personalize {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-4);
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.groupHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.groupTitle {
+  margin: 0;
+  font-size: var(--font-base);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+}
+.hint {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.error {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--status-error);
+}
+.presetRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.presetSelect {
+  flex: 1;
+  min-width: 0;
+}
+.checks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+  cursor: pointer;
+}
+.chromeRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+.logoRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.logoThumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 32px;
+  padding: var(--space-1);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-1);
+  background: var(--neutral-0);
+}
+.logoThumb img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.logoName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+}

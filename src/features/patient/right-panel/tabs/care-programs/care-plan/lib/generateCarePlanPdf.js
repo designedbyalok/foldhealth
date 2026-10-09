@@ -1,472 +1,424 @@
 import jsPDF from 'jspdf';
 import { parseLocalDate } from '../../../../../../../lib/localDate';
+import { formatGoalTarget, formatGoalDuration } from '../../../../../../settings/care-plan-library/lib/goalFormat';
+import { CARE_PLAN_INTERVENTION_MENU } from './carePlanInterventionMenu';
+import { matchesShareConditionFilter } from './carePlanShareFilters';
+import { generateCarePlanSummaryPdf } from './generateCarePlanSummaryPdf';
 
-const esc = (s) => String(s ?? '');
-
-const MARGIN = 36;
-const NOT_STARTED = 'Not Started';
+/**
+ * Care plan PDF, "Tables" format: a patient card, then Goals, Interventions
+ * and Barriers as one clean table each (or a block per condition), the Care
+ * Note and the note to the recipient. A4, Inter when the fonts are passed.
+ * Empty values print "—"; nothing is filled in.
+ */
+const PAGE = { w: 595, h: 842 };
+const M = 32;
+const CONTENT_W = PAGE.w - M * 2;
+const DASH = '—';
 
 const C = {
-  text: [26, 35, 32],
-  muted: [90, 106, 101],
-  faint: [151, 164, 160],
-  border: [226, 232, 229],
-  surface: [244, 248, 252],
-  activeRow: [245, 252, 248],
+  ink: [31, 41, 55],
+  body: [58, 72, 95],
+  muted: [95, 106, 126],
+  faint: [151, 160, 178],
+  rule: [229, 231, 235],
+  band: [246, 247, 249],
+  card: [248, 249, 251],
+  chip: [238, 240, 244],
   white: [255, 255, 255],
 };
 
 const STATUS_STYLE = {
-  'Not Started': { bg: [244, 245, 245], text: [90, 106, 101] },
-  'In Progress': { bg: [232, 248, 240], text: [0, 122, 66] },
-  'On Hold': { bg: [244, 245, 245], text: [90, 106, 101] },
-  Met: { bg: [232, 248, 240], text: [0, 122, 66] },
-  'Not Met': { bg: [255, 245, 245], text: [215, 40, 37] },
-  Overdue: { bg: [255, 245, 245], text: [215, 40, 37] },
+  'Not Started': { bg: [241, 243, 246], text: [95, 106, 126] },
+  'In Progress': { bg: [233, 242, 255], text: [32, 96, 199] },
+  'On Hold': { bg: [255, 244, 229], text: [176, 104, 0] },
+  Met: { bg: [230, 246, 236], text: [22, 128, 61] },
+  Completed: { bg: [230, 246, 236], text: [22, 128, 61] },
+  Resolved: { bg: [230, 246, 236], text: [22, 128, 61] },
+  'Not Met': { bg: [254, 236, 236], text: [196, 43, 28] },
+  Overdue: { bg: [254, 236, 236], text: [196, 43, 28] },
 };
+const statusStyle = s => STATUS_STYLE[s] || STATUS_STYLE['Not Started'];
 
-function statusStyle(status) {
-  return STATUS_STYLE[status] || STATUS_STYLE['Not Started'];
-}
+const STATUS_RANK = { 'In Progress': 0, 'On Hold': 1, 'Not Met': 2, Overdue: 2, 'Not Started': 3, Met: 4, Completed: 4, Resolved: 4 };
+const byStatus = (a, b) => ((STATUS_RANK[a.status] ?? 3) - (STATUS_RANK[b.status] ?? 3))
+  || (a.title || '').localeCompare(b.title || '');
 
-function formatPdfDate(value) {
-  const d = parseLocalDate(value);
-  if (!d) return '—';
+const KIND_LABEL = Object.fromEntries(CARE_PLAN_INTERVENTION_MENU.filter(i => i.key).map(i => [i.key, i.label]));
+
+function fmtDate(value) {
+  if (!value) return '';
+  const d = parseLocalDate(value) || new Date(value);
+  if (!d || Number.isNaN(d.getTime())) return '';
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function itemSortRank(status) {
-  if (status === 'In Progress') return 0;
-  if (status === 'Met') return 1;
-  if (status === 'Not Met' || status === 'Overdue') return 2;
-  if (status === 'On Hold') return 3;
-  return 4;
-}
-
-function splitPrimaryAdditional(items) {
-  const sortFn = (a, b) => {
-    const r = itemSortRank(a.status) - itemSortRank(b.status);
-    if (r !== 0) return r;
-    return (a.title || '').localeCompare(b.title || '');
+/**
+ * The selection split by the plan's conditions: each goal, intervention and
+ * barrier under the first condition it relates to, and any left over under
+ * Other. Conditions with nothing under them are left out.
+ */
+export function conditionGroups(selection) {
+  const labels = (selection.conditions || []).filter(Boolean);
+  const groups = [...labels, 'Other'].map(label => ({ label, goals: [], interventions: [], barriers: [] }));
+  const place = (kind, item) => {
+    const i = labels.findIndex(l => matchesShareConditionFilter(item, [l]));
+    groups[i === -1 ? labels.length : i][kind].push(item);
   };
-  return {
-    primary: items.filter((i) => i.status !== NOT_STARTED).sort(sortFn),
-    additional: items.filter((i) => i.status === NOT_STARTED).sort(sortFn),
-  };
+  for (const kind of ['goals', 'interventions', 'barriers']) {
+    for (const item of selection[kind] || []) place(kind, item);
+  }
+  return groups.filter(g => g.goals.length || g.interventions.length || g.barriers.length);
 }
 
 /**
- * Build a care plan PDF from the selected elements.
- *
+ * Build the care plan PDF from the selected elements.
+ * @param {{patientName?:string, programName?:string, sharedBy?:string, date?:string, note?:string}} meta
+ * @param {{conditions:string[], goals:Array, interventions:Array, barriers?:Array}} selection
+ * @param {object} [options] Personalize settings: format, groupBy, carePlanNote,
+ *   demographics ([{ label, value }]), header / footer (drawn components;
+ *   header undefined or null for none, footer undefined for the standard
+ *   line and null for none), logo, fonts
  * @returns {Blob}
  */
-export function generateCarePlanPdf(meta, selection) {
+export function generateCarePlanPdf(meta, selection, options = {}) {
+  // The Care Plan Summary format (goal by goal) has its own layout.
+  if (options.format === 'summary-compact' || options.format === 'summary-detailed') {
+    return generateCarePlanSummaryPdf(meta, selection, {
+      ...options,
+      detail: options.format === 'summary-detailed' ? 'detailed' : 'compact',
+    });
+  }
   const {
-    patientName = 'Patient',
-    programName = '',
-    sharedBy = '',
-    date = '',
-    note = '',
-  } = meta;
+    groupBy = 'type',
+    carePlanNote = '',
+    demographics = [],
+    header,
+    footer: footerImage,
+    logo = null,
+    fonts = null,
+  } = options;
+  const { patientName = 'Patient', programName = '', sharedBy = '', date = '', note = '' } = meta;
 
-  const doc = new jsPDF({ unit: 'pt', format: 'letter' });
-  const pageW = doc.internal.pageSize.getWidth();
-  const pageH = doc.internal.pageSize.getHeight();
-  const contentW = pageW - MARGIN * 2;
-  let y = MARGIN;
-  let pageNum = 1;
-
-  // Fixed column grid — shared by primary and additional tables within each GBI type.
-  const COL = {
-    title: { x: MARGIN + 2, w: contentW * 0.34 },
-    status: { x: MARGIN + contentW * 0.36, w: 68 },
-    col3: { x: MARGIN + contentW * 0.50, w: 62 },
-    col4: { x: MARGIN + contentW * 0.62, w: 62 },
-    col5: { x: MARGIN + contentW * 0.74, w: contentW * 0.26 - 4 },
+  const doc = new jsPDF({ unit: 'pt', format: [PAGE.w, PAGE.h] });
+  let REG = ['helvetica', 'normal'];
+  let MED = ['helvetica', 'bold'];
+  if (fonts?.regular && fonts?.medium) {
+    doc.addFileToVFS('Inter-Regular.ttf', fonts.regular);
+    doc.addFont('Inter-Regular.ttf', 'Inter', 'normal');
+    doc.addFileToVFS('Inter-Medium.ttf', fonts.medium);
+    doc.addFont('Inter-Medium.ttf', 'InterMedium', 'normal');
+    REG = ['Inter', 'normal'];
+    MED = ['InterMedium', 'normal'];
+  }
+  const font = (weight, size, color) => {
+    doc.setFont(...(weight === 'medium' ? MED : REG));
+    doc.setFontSize(size);
+    doc.setTextColor(...color);
   };
+  const wrap = (text, width) => doc.splitTextToSize(String(text ?? ''), width);
 
-  const footer = () => {
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.setTextColor(...C.faint);
-    doc.text('Generated from Fold Health', MARGIN, pageH - 24);
-    doc.text(`Page ${pageNum}`, pageW - MARGIN, pageH - 24, { align: 'right' });
-  };
+  const headerH = header ? (PAGE.w * header.height) / header.width : 0;
+  const footerH = footerImage ? (PAGE.w * footerImage.height) / footerImage.width : 0;
+  const top = header ? headerH + 20 : M;
+  const bottom = PAGE.h - (footerImage ? footerH + 16 : footerImage === null ? M : 44);
+  let y = top;
 
-  const newPage = () => {
-    footer();
-    doc.addPage();
-    pageNum += 1;
-    y = MARGIN;
-  };
-
-  const ensureRoom = (needed = 40) => {
-    if (y > pageH - MARGIN - needed) newPage();
-  };
-
-  const drawRule = () => {
-    doc.setDrawColor(...C.border);
+  const newPage = () => { doc.addPage([PAGE.w, PAGE.h]); y = top; };
+  const ensure = (needed) => { if (y + needed > bottom) newPage(); };
+  const rule = () => {
+    doc.setDrawColor(...C.rule);
     doc.setLineWidth(0.5);
-    doc.line(MARGIN, y, pageW - MARGIN, y);
+    doc.line(M, y, PAGE.w - M, y);
   };
 
-  const drawStatusPill = (status, x, baselineY, maxW = COL.status.w) => {
-    const style = statusStyle(status);
-    let label = esc(status || '—');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
-    const padX = 5;
-    let textW = doc.getTextWidth(label);
-    if (textW + padX * 2 > maxW) {
-      doc.setFontSize(6);
-      textW = doc.getTextWidth(label);
-    }
-    const pillW = Math.min(maxW, textW + padX * 2);
-    const pillH = 12;
-    const pillY = baselineY - pillH + 3;
-    doc.setFillColor(...style.bg);
-    doc.roundedRect(x, pillY, pillW, pillH, 2, 2, 'F');
-    doc.setTextColor(...style.text);
-    doc.text(label, x + padX, baselineY);
-    return pillW;
+  const pill = (label, x, midY, maxW) => {
+    const s = statusStyle(label);
+    font('medium', 7, s.text);
+    const text = label || DASH;
+    const w = Math.min(maxW, doc.getTextWidth(text) + 12);
+    doc.setFillColor(...s.bg);
+    doc.roundedRect(x, midY - 7, w, 14, 7, 7, 'F');
+    doc.text(text, x + 6, midY + 2.5);
   };
 
-  const drawDocumentHeader = () => {
-    const rightX = pageW - MARGIN;
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(20);
-    doc.setTextColor(...C.text);
-    doc.text('Care Plan', MARGIN, y);
-
-    if (date) {
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
-      doc.setTextColor(...C.faint);
-      doc.text('DATE', rightX - 120, y - 8, { align: 'left' });
-      doc.setFontSize(9);
-      doc.setTextColor(...C.text);
-      doc.text(date, rightX - 120, y + 4, { align: 'left' });
+  // ── Title block (a header component carries its own title) ──
+  if (!header) {
+    if (logo?.dataUrl) {
+      const lh = 26;
+      const lw = Math.min(150, (logo.width / logo.height) * lh);
+      doc.addImage(logo.dataUrl, 'PNG', M, y, lw, (lw / logo.width) * logo.height);
+      y += lh + 14;
     }
-
-    if (sharedBy) {
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
-      doc.setTextColor(...C.faint);
-      doc.text('PREPARED BY', rightX, y - 8, { align: 'right' });
-      doc.setFontSize(9);
-      doc.setTextColor(...C.text);
-      const nameLines = doc.splitTextToSize(esc(sharedBy), 110);
-      doc.text(nameLines[0], rightX, y + 4, { align: 'right' });
-    }
-
+    font('medium', 18, C.ink);
+    doc.text('Care Plan', M, y + 14);
+    const metaItems = [['Date', date], ['Prepared by', sharedBy]].filter(([, v]) => v);
+    metaItems.forEach(([label, value], i) => {
+      const x = PAGE.w - M - (metaItems.length - 1 - i) * 120;
+      font('regular', 7.5, C.faint);
+      doc.text(label, x, y + 4, { align: 'right' });
+      font('regular', 9, C.ink);
+      doc.text(value, x, y + 16, { align: 'right' });
+    });
     y += 22;
-
     if (programName) {
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.setTextColor(...C.muted);
-      for (const line of doc.splitTextToSize(esc(programName), contentW * 0.55)) {
-        doc.text(line, MARGIN, y);
-        y += 12;
-      }
+      font('regular', 9, C.muted);
+      doc.text(programName, M, y + 6);
+      y += 12;
     }
-
-    y += 10;
-    drawRule();
     y += 12;
-  };
-
-  const drawContextBar = (conditions) => {
-    const barH = 34;
-    ensureRoom(barH + 8);
-    doc.setFillColor(...C.surface);
-    doc.roundedRect(MARGIN, y, contentW, barH, 3, 3, 'F');
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.setTextColor(...C.faint);
-    doc.text('PATIENT', MARGIN + 10, y + 12);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.setTextColor(...C.text);
-    doc.text(esc(patientName), MARGIN + 10, y + 24);
-
-    const condX = MARGIN + contentW * 0.5;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.setTextColor(...C.faint);
-    doc.text('CONDITIONS', condX, y + 12);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(...C.muted);
-    const condText = conditions?.length ? conditions.join(', ') : 'None recorded';
-    doc.text(doc.splitTextToSize(esc(condText), contentW * 0.45)[0], condX, y + 24);
-
-    y += barH + 14;
-  };
-
-  const drawSectionHeader = (title, count, countNoun) => {
-    ensureRoom(28);
-    y += 6;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.setTextColor(...C.text);
-    doc.text(title, MARGIN, y);
-    if (count != null && countNoun) {
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      doc.setTextColor(...C.faint);
-      doc.text(`${count} ${countNoun}${count === 1 ? '' : 's'}`, pageW - MARGIN, y, { align: 'right' });
-    }
+  } else {
+    font('regular', 9, C.muted);
+    doc.text([programName, sharedBy && `Prepared by ${sharedBy}`, date].filter(Boolean).join('  •  '), M, y);
     y += 14;
-  };
+  }
 
-  const drawTableHeader = (headers) => {
-    ensureRoom(18);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.setTextColor(...C.faint);
-    for (const { label, x, align } of headers) {
-      doc.text(label, x, y, { align: align || 'left' });
+  // ── Patient card: name, conditions as chips, picked demographics ──
+  {
+    const PAD = 14;
+    const innerW = CONTENT_W - PAD * 2;
+    const conds = (selection.conditions || []).filter(Boolean);
+    // Lay the chips out first to know the card's height.
+    font('regular', 7.5, C.body);
+    const chipRows = [];
+    let row = [];
+    let rowW = 0;
+    for (const c of conds) {
+      const w = doc.getTextWidth(c) + 14;
+      if (row.length && rowW + w > innerW) { chipRows.push(row); row = []; rowW = 0; }
+      row.push({ c, w });
+      rowW += w + 6;
     }
-    y += 10;
-    drawRule();
-    y += 6;
-  };
-
-  const measureTextBlock = (title, subtitle, width) => {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    const titleLines = doc.splitTextToSize(esc(title), width);
-    let h = titleLines.length * 10;
-    if (subtitle) {
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
-      h += 3 + doc.splitTextToSize(esc(subtitle), width).length * 9;
-    }
-    return { titleLines, subtitleLines: subtitle ? doc.splitTextToSize(esc(subtitle), width) : [], h };
-  };
-
-  const drawTitleBlock = (titleLines, subtitleLines, x, startY) => {
-    let textY = startY;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.setTextColor(...C.text);
-    for (const line of titleLines) {
-      doc.text(line, x, textY);
-      textY += 10;
-    }
-    if (subtitleLines.length) {
-      textY += 2;
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7);
-      doc.setTextColor(...C.muted);
-      for (const line of subtitleLines) {
-        doc.text(line, x, textY);
-        textY += 9;
+    if (row.length) chipRows.push(row);
+    const COLS = 4;
+    const demoRows = Math.ceil(demographics.length / COLS);
+    const cardH = PAD + 14 + (chipRows.length ? 6 + chipRows.length * 20 : 0) + (demoRows ? 10 + demoRows * 28 : 0) + PAD - 4;
+    ensure(cardH + 16);
+    doc.setFillColor(...C.card);
+    doc.setDrawColor(...C.rule);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(M, y, CONTENT_W, cardH, 6, 6, 'FD');
+    let cy = y + PAD + 10;
+    font('medium', 11, C.ink);
+    doc.text(patientName, M + PAD, cy);
+    cy += 10;
+    if (chipRows.length) {
+      cy += 6;
+      for (const r of chipRows) {
+        let cx = M + PAD;
+        for (const { c, w } of r) {
+          doc.setFillColor(...C.chip);
+          doc.roundedRect(cx, cy, w, 15, 4, 4, 'F');
+          font('regular', 7.5, C.body);
+          doc.text(c, cx + 7, cy + 10.2);
+          cx += w + 6;
+        }
+        cy += 20;
       }
     }
-    return textY;
-  };
-
-  const drawCellText = (text, x, yPos, w, align = 'left') => {
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(...C.text);
-    const lines = doc.splitTextToSize(esc(text), w);
-    doc.text(lines[0], align === 'right' ? x + w : x, yPos, { align });
-    return lines.length > 1 ? lines[1] : null;
-  };
-
-  const GOAL_HEADERS = [
-    { label: 'GOAL', x: COL.title.x },
-    { label: 'STATUS', x: COL.status.x },
-    { label: 'START', x: COL.col3.x },
-    { label: 'TARGET', x: COL.col4.x },
-    { label: 'CURRENT VALUE', x: COL.col5.x + COL.col5.w, align: 'right' },
-  ];
-
-  const drawGoalRow = (goal, emphasize) => {
-    const { titleLines, subtitleLines, h } = measureTextBlock(
-      goal.title,
-      goal.subtitle,
-      COL.title.w - 4,
-    );
-    const rowH = Math.max(26, h + 10);
-    ensureRoom(rowH + 2);
-    const rowY = y;
-
-    if (emphasize && goal.status === 'In Progress') {
-      doc.setFillColor(...C.activeRow);
-      doc.rect(MARGIN, rowY, contentW, rowH, 'F');
+    if (demoRows) {
+      cy += 8;
+      const colW = innerW / COLS;
+      demographics.forEach((d, i) => {
+        const x = M + PAD + (i % COLS) * colW;
+        const ry = cy + Math.floor(i / COLS) * 28;
+        font('regular', 7, C.faint);
+        doc.text(d.label, x, ry + 6);
+        font('regular', 9, d.value ? C.ink : C.faint);
+        doc.text(wrap(d.value || 'Not recorded', colW - 10)[0], x, ry + 18);
+      });
     }
+    y += cardH + 26;
+  }
 
-    drawTitleBlock(titleLines, subtitleLines, COL.title.x, rowY + 11);
-
-    const midY = rowY + rowH / 2 + 3;
-    drawStatusPill(goal.status, COL.status.x, midY);
-    drawCellText(formatPdfDate(goal.createdAt), COL.col3.x, midY, COL.col3.w);
-    drawCellText(formatPdfDate(goal.targetDate), COL.col4.x, midY, COL.col4.w);
-    drawCellText(goal.currentValue || 'No Data', COL.col5.x, midY, COL.col5.w, 'right');
-
-    y = rowY + rowH;
-    drawRule();
-  };
-
-  const INTV_HEADERS = [
-    { label: 'INTERVENTION', x: COL.title.x },
-    { label: 'STATUS', x: COL.status.x },
-    { label: 'ASSIGNED TO', x: COL.col3.x },
-    { label: 'START', x: COL.col4.x },
-    { label: '', x: COL.col5.x },
-  ];
-
-  const drawInterventionRow = (item, emphasize) => {
-    const { titleLines, subtitleLines, h } = measureTextBlock(item.title, null, COL.title.w - 4);
-    const rowH = Math.max(24, h + 10);
-    ensureRoom(rowH + 2);
-    const rowY = y;
-
-    if (emphasize && item.status === 'In Progress') {
-      doc.setFillColor(...C.activeRow);
-      doc.rect(MARGIN, rowY, contentW, rowH, 'F');
+  // ── Tables ──
+  const sectionTitle = (title, count, size = 11) => {
+    ensure(64);
+    font('medium', size, C.ink);
+    doc.text(title, M, y);
+    if (count != null) {
+      const tw = doc.getTextWidth(title);
+      font('medium', 7.5, C.muted);
+      const label = String(count);
+      const w = doc.getTextWidth(label) + 10;
+      doc.setFillColor(...C.chip);
+      doc.roundedRect(M + tw + 6, y - 9.5, w, 13, 6.5, 6.5, 'F');
+      doc.text(label, M + tw + 11, y - 0.5);
     }
-
-    drawTitleBlock(titleLines, subtitleLines, COL.title.x, rowY + 11);
-    const midY = rowY + rowH / 2 + 3;
-    drawStatusPill(item.status, COL.status.x, midY);
-    drawCellText(item.assignee?.name || '—', COL.col3.x, midY, COL.col3.w);
-    drawCellText(formatPdfDate(item.createdAt), COL.col4.x, midY, COL.col4.w);
-
-    y = rowY + rowH;
-    drawRule();
+    y += 10;
   };
 
-  const BARRIER_HEADERS = [
-    { label: 'BARRIER', x: COL.title.x },
-    { label: 'STATUS', x: COL.status.x },
-    { label: '', x: COL.col3.x },
-    { label: '', x: COL.col4.x },
-    { label: '', x: COL.col5.x },
-  ];
-
-  const drawBarrierRow = (item, emphasize) => {
-    const { titleLines, subtitleLines, h } = measureTextBlock(
-      item.title,
-      item.description,
-      COL.title.w - 4,
-    );
-    const rowH = Math.max(24, h + 10);
-    ensureRoom(rowH + 2);
-    const rowY = y;
-
-    if (emphasize && item.status === 'In Progress') {
-      doc.setFillColor(...C.activeRow);
-      doc.rect(MARGIN, rowY, contentW, rowH, 'F');
-    }
-
-    drawTitleBlock(titleLines, subtitleLines, COL.title.x, rowY + 11);
-    const midY = rowY + rowH / 2 + 3;
-    drawStatusPill(item.status, COL.status.x, midY);
-
-    y = rowY + rowH;
-    drawRule();
-  };
-
-  const drawGbiSection = ({
-    items,
-    noun,
-    primaryTitle,
-    additionalTitle,
-    headers,
-    drawRow,
-  }) => {
-    if (!items.length) {
-      drawSectionHeader(primaryTitle, 0, noun);
-      doc.setFont('helvetica', 'italic');
-      doc.setFontSize(9);
-      doc.setTextColor(...C.faint);
-      doc.text(`No ${noun}s included.`, MARGIN, y + 4);
-      y += 18;
+  /**
+   * cols: [{ label, w (fraction of the width), kind: 'status' }]
+   * A row's first cell is { title, sub }; the rest are strings.
+   */
+  const table = (cols, rows, emptyText) => {
+    const widths = cols.map(c => c.w * CONTENT_W);
+    const xs = widths.map((_, i) => M + widths.slice(0, i).reduce((a, b) => a + b, 0));
+    const PADX = 8;
+    const head = () => {
+      doc.setFillColor(...C.band);
+      doc.rect(M, y, CONTENT_W, 20, 'F');
+      font('regular', 7.5, C.muted);
+      cols.forEach((c, i) => doc.text(c.label, xs[i] + PADX, y + 13));
+      y += 20;
+    };
+    if (!rows.length) {
+      ensure(30);
+      font('regular', 8.5, C.faint);
+      doc.text(emptyText, M, y + 12);
+      y += 30;
       return;
     }
-
-    const { primary, additional } = splitPrimaryAdditional(items);
-
-    if (primary.length) {
-      drawSectionHeader(primaryTitle, primary.length, noun);
-      drawTableHeader(headers);
-      for (const item of primary) drawRow(item, true);
-    }
-
-    if (additional.length) {
-      if (primary.length) y += 8;
-      const addTitle = primary.length ? additionalTitle : primaryTitle;
-      drawSectionHeader(addTitle, additional.length, noun);
-      drawTableHeader(headers);
-      for (const item of additional) drawRow(item, false);
-    }
+    ensure(20 + 34);
+    head();
+    rows.forEach((cells) => {
+      const first = cells[0];
+      font('medium', 8.5, C.ink);
+      const titleLines = wrap(first.title || DASH, widths[0] - PADX * 2);
+      font('regular', 7.5, C.muted);
+      const subLines = first.sub ? wrap(first.sub, widths[0] - PADX * 2).slice(0, 3) : [];
+      font('regular', 8, C.body);
+      const otherLines = cells.slice(1).map((cell, j) => (cols[j + 1].kind === 'status'
+        ? [''] : wrap(cell || DASH, widths[j + 1] - PADX * 2).slice(0, 3)));
+      const textH = titleLines.length * 11 + (subLines.length ? 2 + subLines.length * 10 : 0);
+      const h = Math.max(30, textH + 14, ...otherLines.map(l => l.length * 10.5 + 14));
+      if (y + h > bottom) { newPage(); head(); }
+      let ty = y + 7 + 8.5;
+      font('medium', 8.5, C.ink);
+      doc.text(titleLines, xs[0] + PADX, ty);
+      ty += titleLines.length * 11;
+      if (subLines.length) {
+        font('regular', 7.5, C.muted);
+        doc.text(subLines, xs[0] + PADX, ty + 1);
+      }
+      const mid = y + h / 2;
+      cells.slice(1).forEach((cell, j) => {
+        const i = j + 1;
+        if (cols[i].kind === 'status') { pill(cell, xs[i] + PADX, mid, widths[i] - PADX * 2); return; }
+        const lines = otherLines[j];
+        font('regular', 8, cell ? C.body : C.faint);
+        doc.text(lines, xs[i] + PADX, mid - ((lines.length - 1) * 10.5) / 2 + 3);
+      });
+      y += h;
+      rule();
+    });
+    y += 22;
   };
 
-  drawDocumentHeader();
-  drawContextBar(selection.conditions);
+  const goalRow = g => [
+    { title: g.title, sub: g.subtitle },
+    [formatGoalTarget(g), g.duration ? `in ${formatGoalDuration(g)}` : ''].filter(Boolean).join(' '),
+    [g.currentValue && g.currentValue !== 'No Data' ? g.currentValue : '', g.trend && g.trend !== '-' ? g.trend : ''].filter(Boolean).join(' · '),
+    fmtDate(g.createdAt),
+    g.status,
+  ];
+  const intvRow = i => [
+    { title: i.title, sub: [KIND_LABEL[i.kind], i.config?.dueDate ? `Due ${fmtDate(i.config.dueDate)}` : ''].filter(Boolean).join(' · ') },
+    i.assignee?.name && i.assignee.name !== 'Unassigned' ? i.assignee.name : '',
+    fmtDate(i.createdAt),
+    i.status,
+  ];
+  const barrierRow = b => [{ title: b.title, sub: b.description }, fmtDate(b.createdAt), b.status];
 
-  drawGbiSection({
-    items: selection.goals || [],
-    noun: 'goal',
-    primaryTitle: 'Goals',
-    additionalTitle: 'Additional Goals',
-    headers: GOAL_HEADERS,
-    drawRow: drawGoalRow,
-  });
+  const GOAL_COLS = [
+    { label: 'Goal', w: 0.38 }, { label: 'Target', w: 0.22 }, { label: 'Current', w: 0.13 },
+    { label: 'Start', w: 0.13 }, { label: 'Status', w: 0.14, kind: 'status' },
+  ];
+  const INTV_COLS = [
+    { label: 'Intervention', w: 0.46 }, { label: 'Assigned to', w: 0.27 },
+    { label: 'Start', w: 0.13 }, { label: 'Status', w: 0.14, kind: 'status' },
+  ];
+  const BARRIER_COLS = [
+    { label: 'Barrier', w: 0.73 }, { label: 'Start', w: 0.13 }, { label: 'Status', w: 0.14, kind: 'status' },
+  ];
 
-  y += 10;
-  drawGbiSection({
-    items: selection.interventions || [],
-    noun: 'intervention',
-    primaryTitle: 'Interventions',
-    additionalTitle: 'Additional Interventions',
-    headers: INTV_HEADERS,
-    drawRow: drawInterventionRow,
-  });
+  const drawTypeSections = (part, { skipEmpty = false, titleSize = 11 } = {}) => {
+    [
+      { title: 'Goals', items: part.goals || [], cols: GOAL_COLS, row: goalRow, empty: 'No goals included.' },
+      { title: 'Interventions', items: part.interventions || [], cols: INTV_COLS, row: intvRow, empty: 'No interventions included.' },
+      { title: 'Barriers', items: part.barriers || [], cols: BARRIER_COLS, row: barrierRow, empty: 'No barriers included.' },
+    ].filter(s => !skipEmpty || s.items.length).forEach(s => {
+      sectionTitle(s.title, s.items.length, titleSize);
+      table(s.cols, [...s.items].sort(byStatus).map(s.row), s.empty);
+    });
+  };
 
-  y += 10;
-  drawGbiSection({
-    items: selection.barriers || [],
-    noun: 'barrier',
-    primaryTitle: 'Barriers',
-    additionalTitle: 'Additional Barriers',
-    headers: BARRIER_HEADERS,
-    drawRow: drawBarrierRow,
-  });
+  if (groupBy === 'condition') {
+    // Each item sits under the first condition it relates to, so nothing
+    // prints twice; the rest go under Other.
+    const groups = conditionGroups(selection);
+    if (!groups.length) drawTypeSections(selection);
+    groups.forEach((g) => {
+      ensure(100);
+      doc.setFillColor(...C.body);
+      doc.roundedRect(M, y - 11, 3, 15, 1.5, 1.5, 'F');
+      font('medium', 13, C.ink);
+      doc.text(g.label, M + 10, y);
+      y += 22;
+      drawTypeSections(g, { skipEmpty: true, titleSize: 10 });
+      y += 4;
+    });
+  } else {
+    drawTypeSections(selection);
+  }
 
-  if (note?.trim()) {
-    y += 6;
-    drawSectionHeader('Additional Note');
-    ensureRoom(20);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(...C.text);
-    for (const line of doc.splitTextToSize(esc(note.trim()), contentW)) {
-      ensureRoom(12);
-      doc.text(line, MARGIN, y);
-      y += 11;
+  // ── Notes ──
+  const noteBlock = (title, text) => {
+    font('regular', 9, C.body);
+    const lines = wrap(text.trim(), CONTENT_W - 28);
+    sectionTitle(title);
+    let i = 0;
+    while (i < lines.length) {
+      ensure(40);
+      const fit = Math.max(1, Math.floor((bottom - y - 24) / 13));
+      const chunk = lines.slice(i, i + fit);
+      const h = chunk.length * 13 + 20;
+      doc.setFillColor(...C.card);
+      doc.roundedRect(M, y, CONTENT_W, h, 6, 6, 'F');
+      font('regular', 9, C.body);
+      doc.text(chunk, M + 14, y + 17);
+      y += h + 4;
+      i += chunk.length;
+    }
+    y += 18;
+  };
+  if (carePlanNote?.trim()) noteBlock('Care Plan Note', carePlanNote);
+  if (note?.trim()) noteBlock('Note', note);
+
+  ensure(30);
+  font('regular', 7, C.faint);
+  doc.text(wrap('This document reflects the selected parts of the care plan at the time it was exported. Review it before sharing with patients or external systems.', CONTENT_W), M, y);
+
+  // ── Header and footer on every page, now the page count is known ──
+  const total = doc.getNumberOfPages();
+  for (let p = 1; p <= total; p += 1) {
+    doc.setPage(p);
+    if (header) {
+      const src = header.images ? header.images[p - 1] || header.images[0] : header.dataUrl;
+      if (src) doc.addImage(src, 'PNG', 0, 0, PAGE.w, headerH);
+    }
+    if (footerImage) {
+      const src = footerImage.images ? footerImage.images[p - 1] : footerImage.dataUrl;
+      if (src) {
+        doc.addImage(src, 'PNG', 0, PAGE.h - footerH, PAGE.w, footerH);
+        if (!footerImage.images) {
+          font('regular', 8, footerImage.pageInk === 'light' ? C.white : C.muted);
+          doc.text(String(p), PAGE.w - M, PAGE.h - footerH / 2 + 3, { align: 'right' });
+        }
+      }
+    } else if (footerImage !== null) {
+      doc.setDrawColor(...C.rule);
+      doc.setLineWidth(0.5);
+      doc.line(M, PAGE.h - 30, PAGE.w - M, PAGE.h - 30);
+      font('regular', 7, C.faint);
+      doc.text([patientName, 'Care Plan'].filter(Boolean).join('  •  '), M, PAGE.h - 18);
+      doc.text(`Page ${p} of ${total}`, PAGE.w - M, PAGE.h - 18, { align: 'right' });
     }
   }
 
-  ensureRoom(30);
-  y += 12;
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7);
-  doc.setTextColor(...C.faint);
-  const disclaimer = 'This document reflects the selected elements of the care plan at export time. Review before sharing with patients or external systems.';
-  for (const line of doc.splitTextToSize(disclaimer, contentW)) {
-    ensureRoom(10);
-    doc.text(line, MARGIN, y);
-    y += 9;
-  }
-
-  footer();
-  return doc.output('blob');
+  const blob = doc.output('blob');
+  // For a header or footer showing "Page x of y".
+  blob.pageCount = total;
+  return blob;
 }

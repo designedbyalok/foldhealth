@@ -37,6 +37,20 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **Care plan print: Personalize tab, presets and a Care Plan Summary format.**
+  Preview & Share now has Content and Personalize tabs, as the Employer
+  Impact Report does. Personalize picks the format (Tables, Care Plan
+  Summary, or Care Plan Summary detailed, from the Figma "Care Plan PDF"
+  frames), group by condition, the Care Note on or off, patient
+  demographics (DOB / age / sex, Member / Fold ID, PCP and insurance), a
+  Report Header and Footer component, and a logo. Settings save as presets
+  (`care_plan_print_presets`), for the organization or just for you, with an
+  optional org default. The Tables format was redone (A4, Inter, a patient
+  card, one clean table per type). The employer report's header, footer,
+  font and logo drawing moved to `email-builder/reportPrintAssets.js` so
+  both reports share it. Possible duplicates now open in a centered
+  popover (`components/AnchoredPopover`) with Existing / New rows and Keep
+  or Keep both; the next duplicate lands under the pointer after each one.
 - **Care plan versions: signed plan vs draft, and a versioned History.**
   Signing snapshots the whole plan (goals, interventions, barriers, goal
   links, templates, conditions) into `patient_care_plan_versions`. Changes
