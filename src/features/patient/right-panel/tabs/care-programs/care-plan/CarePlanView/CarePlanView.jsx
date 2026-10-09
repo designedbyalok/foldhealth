@@ -39,7 +39,7 @@ import { CarePlanViewDrawers } from './CarePlanViewDrawers';
 import { CarePlanViewOverlays } from './CarePlanViewOverlays';
 import { AppliedTemplateStrip } from './AppliedTemplateStrip';
 import { addGoalsFromPicker, addBarriersFromPicker } from './carePlanPickerHandlers';
-import { PreviousTemplateRuns } from './PreviousTemplateRuns';
+import { formatInstanceDate } from '../lib/templateRenewal';
 import {
   createUndoGoalCascadeAction,
   createUndoToastAction,
@@ -185,6 +185,40 @@ export function CarePlanView({ patientId, program }) {
   // template. Click again (or another badge) to swap; the "+N more" chip
   // clears it. Null means show everything.
   const [templateFilterId, setTemplateFilterId] = useState(null);
+
+  // Templates added again: each earlier (auto-closed) run in order, the
+  // current run's version after them. Feeds the strip's V1 ✓ / V2 chips.
+  const runsByTemplate = useMemo(() => {
+    const out = {};
+    for (const inst of live?.templateInstances || []) {
+      if (!inst.autoClosed) continue;
+      const entry = (out[inst.templateId] ||= { previous: [] });
+      entry.previous.push({ id: inst.id, status: inst.status, version: entry.previous.length + 1 });
+    }
+    for (const entry of Object.values(out)) entry.version = entry.previous.length + 1;
+    return out;
+  }, [live?.templateInstances]);
+  // An earlier run picked on the strip (`run:<id>`): its own goals,
+  // interventions and barriers, shown read-only in the same tables.
+  const viewedRun = useMemo(() => {
+    if (typeof templateFilterId !== 'string' || !templateFilterId.startsWith('run:')) return null;
+    const id = templateFilterId.slice(4);
+    const run = (live?.templateInstances || []).find(i => i.id === id);
+    if (!run) return null;
+    const own = x => x.retiredInstanceId === id;
+    const r = live?.retired || {};
+    return {
+      run,
+      version: Object.values(runsByTemplate).flatMap(e => e.previous).find(p => p.id === id)?.version,
+      data: {
+        ...data,
+        goals: (r.goals || []).filter(own).map(g => ({ ...g, ...deriveGoalTableFields(g, []) })),
+        interventions: (r.interventions || []).filter(own),
+        barriers: (r.barriers || []).filter(own),
+      },
+    };
+  }, [templateFilterId, live?.templateInstances, live?.retired, data, runsByTemplate]);
+  const viewData = viewedRun ? viewedRun.data : data;
   const {
     noteOpen,
     noteText,
@@ -210,14 +244,15 @@ export function CarePlanView({ patientId, program }) {
     filteredInterventions,
     planStats,
   } = useCarePlanViewFilters({
-    data,
-    templateFilterId,
+    data: viewData,
+    templateFilterId: viewedRun ? null : templateFilterId,
     carePlanTemplates,
     libraryGoals,
     patientName,
   });
 
-  const canEdit = !!(patientId && program);
+  // An earlier run is history: shown, not edited.
+  const canEdit = !!(patientId && program) && !viewedRun;
   const {
     selected,
     bulkMenu,
@@ -528,7 +563,8 @@ export function CarePlanView({ patientId, program }) {
   // popover. Nothing renders when the kind has no open duplicate flags.
   const renderDuplicateBadge = (kind) => {
     const flags = flagsForKind(kind);
-    if (!flags.length) return null;
+    // An earlier run is history; duplicates are about the live plan.
+    if (!flags.length || viewedRun) return null;
     const expanded = duplicatesOpen?.kind === kind;
     return (
       <button
@@ -740,6 +776,7 @@ export function CarePlanView({ patientId, program }) {
           canRemove={canEdit && !live?.plan?.signedAt}
           onSelect={(id) => setTemplateFilterId(prev => (prev === id ? null : id))}
           onRemove={handleRemoveTemplate}
+          runsByTemplate={runsByTemplate}
           trailing={(
             <span className={styles.stripActions}>
               <span className={styles.stripDivider} aria-hidden="true" />
@@ -776,7 +813,22 @@ export function CarePlanView({ patientId, program }) {
 
       <div className={styles.scrollArea}>
       <div className={styles.contentBody}>
-      {!carePlanLoading && (data.goals.length + data.interventions.length + (data.barriers || []).length) > 0 && (
+      {viewedRun && (
+        <div className={styles.runBanner} role="status">
+          <Icon name="solar:check-circle-linear" size={16} color="var(--status-success)" />
+          <span className={styles.runBannerText}>
+            <strong>{viewedRun.run.templateName} V{viewedRun.version}</strong>
+            {` · ${viewedRun.run.status === 'completed' ? 'Completed' : 'Closed'}`}
+            {viewedRun.run.endedAt ? ` ${formatInstanceDate(viewedRun.run.endedAt)}` : ''}
+            {viewedRun.run.totalCount != null ? ` · ${viewedRun.run.doneCount} of ${viewedRun.run.totalCount} goals and interventions met` : ''}
+            {' · Read only'}
+          </span>
+          <button type="button" className={styles.runBannerBack} onClick={() => setTemplateFilterId(null)}>
+            Back to current plan
+          </button>
+        </div>
+      )}
+      {!carePlanLoading && (viewData.goals.length + viewData.interventions.length + (viewData.barriers || []).length) > 0 && (
         <div className={styles.summaryStrip}>
           <span className={styles.summaryMetric}><strong>{planStats.goals}</strong> goals</span>
           <span className={styles.summaryDot} aria-hidden="true" />
@@ -899,7 +951,7 @@ export function CarePlanView({ patientId, program }) {
         />
         {openSections.goals && (carePlanLoading ? (
           <SimpleTableSkeleton rows={3} cols={6} />
-        ) : filteredGoals.length === 0 && data.goals.length === 0 ? (
+        ) : filteredGoals.length === 0 && viewData.goals.length === 0 ? (
           <SectionEmptyState
             icon="solar:heart-pulse-linear"
             label="No Goals Added for Selected Problem"
@@ -978,7 +1030,7 @@ export function CarePlanView({ patientId, program }) {
         )}
         {openSections.interventions && (carePlanLoading ? (
           <SimpleTableSkeleton rows={3} cols={6} />
-        ) : filteredInterventions.length === 0 && data.interventions.length === 0 ? (
+        ) : filteredInterventions.length === 0 && viewData.interventions.length === 0 ? (
           <SectionEmptyState
             icon="solar:checklist-minimalistic-linear"
             label="No Interventions Created for Selected Problem"
@@ -1036,7 +1088,7 @@ export function CarePlanView({ patientId, program }) {
         />
         {openSections.barriers && (carePlanLoading ? (
           <SimpleTableSkeleton rows={3} cols={3} />
-        ) : filteredBarriers.length === 0 && (data.barriers || []).length === 0 ? (
+        ) : filteredBarriers.length === 0 && (viewData.barriers || []).length === 0 ? (
           <SectionEmptyState
             icon="solar:signpost-2-linear"
             label="No Barriers Created for Selected Problem"
@@ -1062,7 +1114,6 @@ export function CarePlanView({ patientId, program }) {
         ))}
       </div>
 
-      <PreviousTemplateRuns instances={live?.templateInstances} retired={live?.retired} />
       {renderDuplicatesPopover()}
       </div>
       </div>
