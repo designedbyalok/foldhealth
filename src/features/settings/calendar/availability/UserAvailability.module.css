@@ -1,0 +1,791 @@
+/* Settings → Calendar → User availability: table and Add / Edit drawer. */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--neutral-0);
+}
+
+/* The notice runs edge to edge under the tabs: only a bottom border. */
+.notice { flex-shrink: 0; }
+
+.notice .noticeBar {
+  /* Left: the ⓘ lines up with "User" and the avatars. Right: the × lines up
+     with the New button's edge (the close button carries 2px of its own). */
+  padding: var(--space-2) calc(var(--space-4) - 0.125rem) var(--space-2) var(--space-5);
+  border-width: 0 0 0.5px;
+  border-radius: 0;
+  font-weight: 500;
+}
+
+.tableWrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.tableWrap table { table-layout: fixed; }
+.tableWrap th:first-child { padding-left: var(--space-5); border-right: 0.5px solid var(--neutral-150); }
+.tableWrap th:last-child { border-left: 0.5px solid var(--neutral-150); }
+
+.empty { padding: calc(var(--space-10) * 2) var(--space-4) var(--space-6); }
+
+/* ── Rows ── */
+.row { composes: row from '../../../../components/WorklistShell/WorklistRow.module.css'; }
+/* The row fade-in keeps its final transform with fill "both", which makes
+   every <tr> its own stacking context, and a later row then paints over a
+   pinned User cell that spans several rows. Only fill backwards, so nothing
+   is left on the row once it has played. */
+.tableWrap .row { animation-fill-mode: backwards; }
+.td { composes: td from '../../../../components/WorklistShell/WorklistRow.module.css'; }
+/* Every cell reads from the top, so a user's name lines up with their first block. */
+.tableWrap .td { vertical-align: top; }
+.stickyLeft { composes: stickyLeft from '../../../../components/WorklistShell/WorklistRow.module.css'; }
+.stickyRight { composes: stickyRight from '../../../../components/WorklistShell/WorklistRow.module.css'; }
+
+.tableWrap .userTd { padding-left: var(--space-5); }
+
+/* The User and Actions cells span a user's whole group; each carries the
+   group's bottom line itself. A cell border (not a shadow) so it merges with
+   the row's own 0.5px line instead of doubling it. */
+/* Higher specificity than the slot rules below, which clear the line between
+   one block's time ranges in the rest of the row. */
+.tableWrap .row > .userTd.userTd,
+.tableWrap .row > .actionTd.actionTd { border-bottom: 0.5px solid var(--neutral-150); }
+
+/* Rows here aren't clickable, so they don't tint on hover (WorklistRow's
+   hover is for rows that open something). */
+.tableWrap .row:hover { background: none; }
+.tableWrap .row:hover .stickyLeft,
+.tableWrap .row:hover .stickyRight { background: var(--neutral-0) !important; }
+
+.userTd {
+  border-right: 0.5px solid var(--neutral-150);
+  background: var(--neutral-0);
+}
+
+.actionTd {
+  border-left: 0.5px solid var(--neutral-150);
+  background: var(--neutral-0);
+  text-align: center;
+  padding-left: var(--space-1);
+  padding-right: var(--space-1);
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.userText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.userName {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-500);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userSub {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cellText {
+  display: block;
+  font-size: var(--font-base);
+  line-height: 1.35;
+  color: var(--neutral-400);
+}
+
+/* Lines between one user's blocks are lighter than the line between users. */
+.tableWrap .rowInGroup,
+.tableWrap .rowInGroup > .td:not(.userTd):not(.actionTd) { border-bottom-color: var(--neutral-100); }
+
+/* Past blocks read quieter. */
+.rowExpired .cellText,
+.rowExpired .slotTime { color: var(--neutral-300); }
+
+.slot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.slotTime {
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+}
+
+/* A block's time ranges: no line between them, just the row's own space. */
+.tableWrap .rowSlot,
+.tableWrap .rowSlot > .td { border-bottom-color: transparent; }
+.tableWrap .rowSlot > .td { padding-bottom: var(--space-1); }
+.tableWrap .rowSlotNext > .td { padding-top: var(--space-1); }
+
+.slotType {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+/* No user availability: one muted line, starting where Location does. */
+.tableWrap .inheritedTd {
+  vertical-align: middle;
+  text-align: left;
+}
+
+.inherited {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  gap: var(--space-2);
+  font-size: var(--font-sm);
+  line-height: 1.4;
+  color: var(--neutral-200);
+  text-align: left;
+}
+
+.inherited :global(svg) { flex-shrink: 0; }
+
+/* Users with no availability of their own: name and email in a lighter grey. */
+.rowEmpty .userName,
+.rowEmpty .userSub { color: var(--neutral-300); }
+
+/* Actions start where the "Actions" header text does: 4px of cell padding
+   + the button's 4px padding + the + glyph's own inset ≈ the header's 12px. */
+.tableWrap .actionTd { text-align: left; padding-left: var(--space-1); }
+
+.actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-2);
+}
+
+.actionSlot {
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
+}
+
+/* Between Search and Add new in the tab bar (as in Member/Leads). */
+.toolDivider {
+  width: 0.5px;
+  height: 1rem;
+  background: var(--neutral-150);
+  flex-shrink: 0;
+}
+
+.actionDivider {
+  width: 0.5px;
+  height: 1rem;
+  background: var(--neutral-150);
+}
+
+/* Holds its place (so the ⋯ stays lined up) without drawing a line. */
+.actionDividerHidden { visibility: hidden; }
+
+.moreRow td { border-bottom: 0.5px solid var(--neutral-150); }
+
+.moreTd {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-sm);
+}
+
+.moreLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.moreChevron {
+  display: inline-flex;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.moreChevronOpen { transform: rotate(180deg); }
+
+/* Show more / Show less: the extra blocks ease in and out. */
+.rowReveal > .td > * { animation: rowIn 0.26s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.rowHide > .td > * { animation: rowOut 0.18s ease-in both; }
+
+@keyframes rowIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rowOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-4px); }
+}
+
+/* ── Drawer ── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  border: 0.5px solid var(--neutral-200);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+}
+
+/* 24px between one block card and the next (the form's own gap is 16px). */
+.block + .block { margin-top: var(--space-2); }
+
+/* Clone: section labels for the target's own blocks and the copies. */
+/* Same as the PAMI drawers' section headings (Active / Resolved). */
+.groupLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  margin-bottom: calc(var(--space-2) * -1);
+}
+
+.groupTitle {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+
+/* Clone: the target's own blocks, read-only. */
+.current {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.currentList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.currentItem {
+  padding: var(--space-2);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+}
+
+.currentConflict {
+  border-color: var(--status-warning);
+  background: var(--status-warning-light);
+}
+
+.conflictTag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--status-warning-dark);
+}
+
+/* A block that double-books hours another block already covers. */
+.block.blockConflict { border: 1px solid var(--status-warning); }
+
+.conflictNote { margin: var(--space-3) var(--space-3) 0; }
+/* Several overlaps stack as lines; the icon stays with the first one. */
+.conflictNote.conflictNote { align-items: flex-start; }
+.conflictNote :global(svg) { margin-top: 0.0625rem; }
+/* Folded: nothing below the note, so it needs its own bottom space. */
+.blockHeadShut ~ .conflictNote { margin-bottom: var(--space-3); }
+
+.conflictLine { display: block; }
+
+/* Read-only block (Clone list, Import dialog). */
+.summaryBlock {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.summaryHead {
+  /* The title keeps 4px to the metadata; the metadata lines sit 2px apart. */
+  margin-bottom: 0.125rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+/* The status sits right after the block number. */
+.summaryTitleBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.summaryTitle {
+  font-size: var(--font-base);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--neutral-400);
+}
+
+/* Location • dates, then Occurs … • hours: small grey runs that wrap. */
+.summaryLine {
+  /* Inline text flow: a line fills before wrapping, and a long fact breaks
+     mid-run instead of dropping whole to the next line. */
+  display: block;
+  font-size: var(--font-sm);
+  line-height: 1.4;
+  color: var(--neutral-300);
+}
+
+/* A light middle dot between facts, so the line reads as one run. */
+.summaryDot { color: var(--neutral-200); margin: 0 0.375rem; }
+
+.summaryItem { display: inline; }
+.summaryItem > :global(svg) {
+  display: inline-block;
+  vertical-align: -0.125rem;
+  margin-right: var(--space-1);
+}
+
+/* Pinned to the top of the drawer's scroll area (which has 16px padding):
+   the white backing covers that padding so blocks slide under cleanly. */
+.stickyTop {
+  position: sticky;
+  top: calc(var(--space-4) * -1);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: calc(var(--space-4) * -1) calc(var(--space-4) * -1) 0;
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  background: var(--neutral-0);
+}
+
+/* "Availability blocks" with its add / clone actions at the far end. */
+.blocksHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: calc(var(--space-1) * -1);
+}
+
+.blocksTitle {
+  font-size: var(--font-base);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--neutral-400);
+}
+
+/* ── Clone from another user (drawer) ── */
+.cloneBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.cloneSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.cloneHeading {
+  font-size: var(--font-base);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--neutral-500);
+}
+
+.cloneEmpty {
+  padding: var(--space-6) var(--space-4);
+  border: 0.5px dashed var(--neutral-150);
+  border-radius: var(--space-2);
+}
+
+/* The blocks table: WorklistShell inside a rounded frame. */
+.cloneTable {
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  overflow: hidden;
+}
+
+/* Fixed layout + wrapping cells: the columns keep their widths and the
+   table fits the drawer instead of growing past it. */
+.cloneTable table { table-layout: fixed; }
+.cloneTable .td { vertical-align: top; white-space: normal; overflow-wrap: anywhere; }
+.cloneTr { cursor: pointer; }
+/* The frame already draws the bottom edge; the last row skips its own line. */
+.cloneTable tbody > tr:last-child,
+.cloneTable tbody > tr:last-child > .td { border-bottom: 0; }
+.cloneTr:hover > .td { background: var(--neutral-25); }
+/* Already imported: greyed and not pickable again. */
+.cloneTrDone, .cloneTrDone * { cursor: not-allowed; }
+.cloneTip { display: block; }
+/* A location the user can't access: red, with an info icon right after
+   the name that explains on hover. */
+.cloneTable .cloneNoAccess { color: var(--status-error); }
+.cloneNoWrapTail { white-space: nowrap; }
+.cloneNoAccessIcon { display: block; }
+/* The tooltip's wrapper holds the icon; centre it on the text's line. */
+.cloneNoAccessTip {
+  display: inline-flex;
+  margin-left: var(--space-1);
+  vertical-align: middle;
+  /* "middle" sits ~1px under the text's centre at this size. */
+  position: relative;
+  top: -0.0625rem;
+}
+
+/* The one note about those locations, above the table. */
+.cloneAccessNote { margin-bottom: var(--space-1); }
+.cloneNoteTr:hover > .td { background: var(--neutral-25); }
+.cloneNoteTr.cloneTrOn > .td { background: var(--primary-50); }
+/* Greyed out: quiet text at 80%, and the checkbox ticked on grey, not primary. */
+/* The status badge keeps its own look. */
+.cloneTrDone .td:not(.cloneStatusTd),
+.cloneTrDone .td:not(.cloneStatusTd) * { color: var(--neutral-300); }
+.cloneTrDone .cloneCheckDone.cloneCheckDone {
+  background: var(--neutral-50);
+  border-color: var(--neutral-150);
+  opacity: 1;
+}
+.cloneTrDone > .td:not(.cloneStatusTd) > * { opacity: 0.8; }
+.cloneTrDone:hover > .td { background: none; }
+.cloneTrOn > .td,
+.cloneTrOn:hover > .td { background: var(--primary-50); }
+.cloneTable .cloneCheckTd { padding-left: var(--space-2); padding-right: var(--space-2); }
+
+.cloneDates {
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+  white-space: nowrap;
+}
+
+.cloneTable .cloneNoWrap { white-space: nowrap; overflow-wrap: normal; }
+
+.cloneDays {
+  font-size: var(--font-base);
+  color: var(--neutral-200);
+}
+
+.cloneBlockName {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-400);
+  white-space: nowrap;
+}
+
+.cloneStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Imported blocks: their own highlighted group under the user's blocks. */
+.newGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px dashed var(--primary-200);
+  border-radius: var(--space-3);
+  background: var(--primary-50);
+}
+.newGroup .groupLabel { margin-bottom: 0; }
+/* Count pill: a little more room either side so a single digit isn't boxed in. */
+/* It was being squeezed by the flex row below its content width, so a digit
+   sat tight to one edge: keep its size, centre the number. */
+.groupLabel .countBadge {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  min-width: 1.25rem;
+  justify-content: center;
+  padding-left: 0.375rem;
+  padding-right: 0.375rem;
+}
+
+/* The target's own blocks slide in, one after another, when they're picked. */
+.arrive { animation: blockArrive 0.36s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@keyframes blockArrive {
+  from { opacity: 0; transform: translateY(-10px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* A just-added block eases in. */
+.block {
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.blockFresh {
+  /* Scrolled to just below the pinned User + heading bar. */
+  scroll-margin-top: 8.5rem;
+  animation: blockIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) 0.24s both;
+}
+
+/* Held for 3 seconds on a new block, then eased off by .block's transition. */
+.blockHighlight {
+  border: 1px solid var(--primary-300);
+  box-shadow:
+    0 10px 28px -8px color-mix(in srgb, var(--primary-300) 35%, transparent),
+    0 2px 6px color-mix(in srgb, var(--primary-300) 12%, transparent);
+}
+
+@keyframes blockIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrive,
+  .blockFresh,
+  .rowReveal > .td > *,
+  .rowHide > .td > * { animation: none; }
+  .block,
+  .blockChevron,
+  .moreChevron { transition: none; }
+}
+
+.blockHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 1.5rem;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
+.blockHeadShut { border-bottom-color: transparent; }
+
+/* The card's fields fold away under the header. */
+.blockBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+
+.blockToggle {
+  display: flex;
+  align-items: center;
+  /* 6px, as in CollapsibleSection's header. */
+  gap: 0.375rem;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.blockChevron {
+  flex-shrink: 0;
+  transition: transform var(--duration-medium) var(--ease-out);
+}
+
+.blockChevronShut { transform: rotate(-90deg); }
+
+.blockTitleText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+/* Folded: one line saying what the block covers. */
+.blockSub {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.blockActions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.blockTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+@media (max-width: 560px) { .pair { grid-template-columns: 1fr; } }
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.label {
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+
+
+/* A little more room under the switch (16px total), so the days or the
+   panel below read as the group it turns on. */
+.cadenceSwitch { margin-bottom: var(--space-1); }
+
+/* Advanced cadence: its options, flush with the rest of the card. */
+.advPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+/* The "Repeats …" sentence sits 4px under the fields it reads out. */
+.advPanel .cadenceHint { margin-top: calc(var(--space-2) * -1); }
+
+
+/* "Repeats every" with its days (and, monthly, its "On") on one line;
+   whatever doesn't fit wraps below. */
+.cadenceRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  /* 12px across, as in the paired fields above, so the second column lines
+     up with Timezone and End date. */
+  gap: var(--space-3);
+}
+/* Monthly "On" and "Days": half the row each, labels 4px over their chips
+   (as WeekdayPicker does) so the two rows line up. */
+.halves .onField { gap: var(--space-1); }
+.halves > * { flex: 0 0 calc(50% - var(--space-3) / 2); min-width: 0; }
+/* Both chip rows stretch across their half, 4px apart, capped a little
+   (44px occurrences, 38px days) so the boxes don't get too wide. */
+.halves .chips { flex-wrap: nowrap; }
+.halves .chips > .chip { flex: 1 1 0; min-width: 0; max-width: 2.75rem; }
+.halves [role="group"] { flex-wrap: nowrap; }
+.halves [role="group"] > button { flex: 1 1 0; width: auto; min-width: 0; max-width: 2.375rem; }
+/* "Repeats every" always takes half the row. */
+.cadenceRow .everyField { flex: 0 0 calc(50% - var(--space-3) / 2); min-width: 0; }
+
+.hint {
+  font-size: var(--font-sm);
+  line-height: 1.45;
+  color: var(--neutral-300);
+}
+
+
+
+
+.error {
+  font-size: var(--font-sm);
+  color: var(--status-error);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+/* Occurrence chips (1st…Last) match the day chips beside them: grey,
+   filled purple when picked, same 32px height and 4px gaps. */
+.chip {
+  height: 2rem;
+  min-width: 2rem;
+  padding: 0 var(--space-2);
+  border: none;
+  border-radius: var(--space-1);
+  background: var(--neutral-100);
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-400);
+  cursor: pointer;
+  transition: background var(--duration-instant) var(--ease-hover), color var(--duration-instant) var(--ease-hover);
+}
+.chip:hover { background: var(--neutral-150); }
+.chip:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 2px; }
+
+.chipOn { background: var(--primary-300); color: var(--neutral-0); }
+.chipOn:hover { background: var(--primary-400); }
+
+.slotList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.slotRowWrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.slotRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.slotRow .slotType { flex: 1; min-width: 0; }
+.slotRow .slotTime { width: 7.5rem; flex-shrink: 0; }
+
+.to {
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+
+/* The card's footer: runs edge to edge under the fields. */
+.summary {
+  margin: 0 calc(var(--space-3) * -1) calc(var(--space-3) * -1);
+  padding: var(--space-2) var(--space-3);
+  border-top: 0.5px solid var(--neutral-150);
+  border-radius: 0 0 var(--space-2) var(--space-2);
+  background: var(--neutral-50);
+  /* Two meta lines (location • dates, Occurs … • hours), as in the
+     read-only block. */
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.addLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+}

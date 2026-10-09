@@ -13298,6 +13298,58 @@ export const useAppStore = create((set, get) => ({
     return true;
   },
 
+  // ── User availability (Settings → Calendar → User availability) ──
+  // One entry per availability block. Until user_availability exists, the
+  // samples are kept for the session only (userAvailabilityLocal).
+  userAvailability: [],
+  userAvailabilityLoading: false,
+  userAvailabilityFetched: false,
+  userAvailabilityLocal: false,
+  fetchUserAvailability: async ({ force = false } = {}) => {
+    if (get().userAvailabilityLoading || (get().userAvailabilityFetched && !force)) return;
+    set({ userAvailabilityLoading: true });
+    const { rowToBlock, sampleAvailability } = await import('../features/settings/calendar/availability/availabilityUtils');
+    const { data, error } = await supabase.from('user_availability').select('*').order('start_date', { ascending: true });
+    if (!error) {
+      set({ userAvailability: (data || []).map(rowToBlock), userAvailabilityLoading: false, userAvailabilityFetched: true, userAvailabilityLocal: false });
+      return;
+    }
+    console.warn('fetchUserAvailability — falling back to samples:', error.message);
+    set({ userAvailability: sampleAvailability(), userAvailabilityLoading: false, userAvailabilityFetched: true, userAvailabilityLocal: true });
+  },
+  /**
+   * Replace a user's availability with `blocks` (the drawer saves them all
+   * at once): new blocks are added, changed ones updated, dropped ones
+   * deleted.
+   */
+  saveUserAvailability: async (user, blocks) => {
+    const { blockToRow } = await import('../features/settings/calendar/availability/availabilityUtils');
+    const now = new Date().toISOString();
+    const same = (b) => b.userName === user.name;
+    const before = get().userAvailability.filter(same);
+    const next = blocks.map(b => ({
+      ...b,
+      id: b.id || `ua-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      userId: user.id ? String(user.id) : null,
+      userName: user.name,
+      userEmail: user.email || null,
+      updatedAt: now,
+    }));
+    const removed = before.filter(b => !next.some(n => n.id === b.id)).map(b => b.id);
+    if (!get().userAvailabilityLocal) {
+      if (next.length) {
+        const { error } = await supabase.from('user_availability').upsert(next.map(blockToRow), { onConflict: 'id' });
+        if (error) { console.warn('saveUserAvailability:', error.message); get().showToast?.('Could not save availability. Try again.'); return false; }
+      }
+      if (removed.length) {
+        const { error } = await supabase.from('user_availability').delete().in('id', removed);
+        if (error) { console.warn('saveUserAvailability (remove):', error.message); get().showToast?.('Could not remove a block. Try again.'); return false; }
+      }
+    }
+    set(s => ({ userAvailability: [...s.userAvailability.filter(b => !same(b)), ...next] }));
+    return true;
+  },
+
   // ── Appointment reassignment (Reassign Appointments drawer → Confirm) ──
   // A job carries out a confirmed plan on `appointments` and keeps the
   // outcome in reassignment_jobs (summary drawer, History tab). Until that

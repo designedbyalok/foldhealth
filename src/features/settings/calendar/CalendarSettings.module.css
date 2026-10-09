@@ -3,28 +3,4 @@
 .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 .empty { flex: 1; display: flex; align-items: center; justify-content: center; padding: var(--space-6); }
 
-.tableWrap { flex: 1; overflow: auto; }
-.table { width: 100%; min-width: 1100px; border-collapse: collapse; font-size: var(--font-base); color: var(--neutral-400); }
-.table th {
-  position: sticky; top: 0; z-index: 1;
-  padding: var(--space-3) var(--space-3);
-  text-align: left; font-size: var(--font-sm); font-weight: 400; letter-spacing: 0.04em;
-  color: var(--neutral-300); background: var(--neutral-0);
-  border-bottom: 0.5px solid var(--neutral-150);
-}
-.table td {
-  padding: var(--space-3);
-  border-bottom: 0.5px solid var(--neutral-150);
-  border-left: 0.5px solid var(--neutral-150);
-  vertical-align: middle;
-}
-.table td:first-child { border-left: none; }
-.userCol { width: 240px; }
-.userCell { display: flex; align-items: center; gap: var(--space-2); }
-.userText { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-.userName { color: var(--neutral-400); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.userSub { font-size: var(--font-sm); color: var(--neutral-300); }
-.noSchedule { display: inline-flex; flex-direction: column; gap: var(--space-1); font-size: var(--font-sm); color: var(--neutral-200); }
-.menuAnchor { display: inline-flex; }
-.pager { display: flex; justify-content: center; padding: var(--space-2); border-top: 0.5px solid var(--neutral-150); }
 .filterRow { border-bottom: 0.5px solid var(--neutral-150); flex-shrink: 0; }

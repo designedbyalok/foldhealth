@@ -18,9 +18,22 @@
   flex-shrink: 0;
 }
 .body {
+  flex: 1;
   min-width: 0;
   color: var(--neutral-400);
 }
+
+.close {
+  display: inline-flex;
+  flex-shrink: 0;
+  padding: 0.125rem;
+  border: none;
+  border-radius: var(--space-1);
+  background: none;
+  color: var(--neutral-300);
+  cursor: pointer;
+}
+.close:hover { color: var(--neutral-400); background: color-mix(in srgb, currentColor 8%, transparent); }
 
 /* Tones — surface tint + icon color follow the shared status palette. */
 .tone-info    { background: var(--status-info-light);    color: var(--status-info); }

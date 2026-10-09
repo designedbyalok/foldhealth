@@ -163,6 +163,32 @@
   display: none;
 }
 
+/* Time placeholder: drawn over an empty native time field ("--:-- --"
+   would show otherwise), and gone once it's focused or has a value. */
+.timeSlot {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+}
+.timePlaceholder {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  font-size: var(--font-base);
+  line-height: 1.2;
+  color: var(--placeholder-text);
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.timeEmpty .timePlaceholder { display: flex; }
+.timeEmpty .inputBorderless:not(:focus)::-webkit-datetime-edit { opacity: 0; }
+.timeEmpty .inputBorderless:not(:focus) { color: transparent; }
+.timeEmpty .inputBorderless:focus + .timePlaceholder { display: none; }
+
 /* ── Slot styles ── */
 
 .slotIcon {

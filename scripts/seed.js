@@ -36,6 +36,7 @@ import { EMPLOYER_IMPACT_EMPLOYERS, employerImpactRows, employerImpactExportRows
 import { sampleOooRecords, demoOooForUser, oooToRow } from '../src/features/ooo/oooSeed.js';
 import { sampleOnCallSchedules, onCallToRow } from '../src/features/ooo/onCallSeed.js';
 import { sampleHolidays, holidayToRow } from '../src/features/holidays/holidaySeed.js';
+import { sampleAvailability, blockToRow } from '../src/features/settings/calendar/availability/availabilityUtils.js';
 import { REPORT_HEADER_OPTIONS, REPORT_FOOTER_OPTIONS } from '../src/features/email-builder/reportHeaderComponent.js';
 import { SNP_WORKLIST_MEMBERS } from '../src/features/snp-worklist/data/mock.js';
 import { CAREGAP_ACTIVITY_MOCK } from '../src/features/hedis-worklist/data/caregapActivityMock.js';
@@ -1064,6 +1065,13 @@ async function main() {
     .from('patient_crm_activities')
     .upsert(crmRows, { onConflict: 'id' });
   if (crmErr) { console.error('  ✗', crmErr.message); } else { console.log(`  ✓ ${crmRows.length} activities`); }
+
+  console.log('Seeding user_availability (Settings → Calendar)...');
+  const availRows = sampleAvailability().map(blockToRow);
+  const { error: availErr } = await supabase
+    .from('user_availability')
+    .upsert(availRows, { onConflict: 'id' });
+  if (availErr) { console.error('  ✗', availErr.message); } else { console.log(`  ✓ ${availRows.length} availability blocks`); }
 
   console.log('Seeding patient_education_content (Send Education)...');
   const eduRows = EDUCATION_LIBRARY.map(educationToRow);
