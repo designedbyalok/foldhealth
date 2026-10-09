@@ -12,8 +12,7 @@ import { EditableText } from '../../../../components/EditableText/EditableText';
 // The form and email builders' colour field: swatch + hex, opening the full picker.
 import { ColorInput } from '../../../email-builder/ColorInput';
 import { useAppStore } from '../../../../store/useAppStore';
-import { Dropzone } from '../../../../components/Dropzone/Dropzone';
-import { PhotoSearch } from '../../../../components/PhotoSearch/PhotoSearch';
+import { ImageTileGallery } from '../../../../components/ImageTileGallery/ImageTileGallery';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
 import { Link } from '../../../../components/Link/Link';
 import { AddIconMinimalist } from '../../../../components/Icon/AddIconMinimalist';
@@ -39,6 +38,7 @@ import clientLogoUrl from '../../../../assets/trailhead-clinics-logo.png';
 import clientLogoWhiteUrl from '../../../../assets/trailhead-clinics-logo-white.png';
 import { EMPLOYER_LOGOS, EMPLOYER_LOGO_HEIGHT, LOGO_ROOM, employerLogoUrl, logoForEmployer } from './employerLogos';
 import { SortableItem, SortableList } from './SortableParts';
+import { PRESET_COVERS, loadCoverImage } from './reportCovers';
 import styles from './PrintReportDrawer.module.css';
 
 // Section notes are shared by everyone (employer_impact_report_notes). This
@@ -87,6 +87,10 @@ const BACKGROUND_TYPES = [
 const IMAGE_ACCEPT = '.png,.svg';
 const IMAGE_MIME = ['image/png', 'image/svg+xml'];
 const IMAGE_MAX_MB = 5;
+// Cover images people add: photos as well as artwork.
+const COVER_ACCEPT = '.png,.jpg,.jpeg,.svg';
+const COVER_MIME = ['image/png', 'image/jpeg', 'image/svg+xml'];
+const DEFAULT_COVER = { kind: 'preset', id: PRESET_COVERS[0].id };
 const TRAILHEAD_SIZE = { width: 190, height: 150, format: 'PNG' };
 // Send Report menu (hidden for now; kept for when it returns).
 const SEND_OPTIONS = [
@@ -242,44 +246,6 @@ function AddSwatch({ value, gradient, onPick }) {
   );
 }
 
-/**
- * An image picker built on the shared Dropzone: the drop area until a file
- * is picked, then a thumbnail row with a remove action. PNG or SVG, up to
- * IMAGE_MAX_MB; anything else shows why it was refused.
- */
-function ImageDropField({ image, fileName, onPick, onRemove }) {
-  const [error, setError] = useState('');
-  if (image) {
-    return (
-      <div className={styles.picked}>
-        <img className={styles.pickedThumb} src={image.dataUrl} alt="" />
-        <span className={styles.pickedName}>{fileName}</span>
-        <ActionButton icon="solar:trash-bin-minimalistic-linear" size="S" tooltip="Remove" aria-label={`Remove ${fileName}`} onClick={onRemove} />
-      </div>
-    );
-  }
-  return (
-    <div className={styles.dropField}>
-      <Dropzone
-        accept={IMAGE_ACCEPT}
-        acceptMime={IMAGE_MIME}
-        helperText="Supported formats: PNG or SVG"
-        secondaryText={`Max size: ${IMAGE_MAX_MB} MB`}
-        onPick={(file) => {
-          if (file.size > IMAGE_MAX_MB * 1024 * 1024) { setError(`That file is over ${IMAGE_MAX_MB} MB. Choose a smaller image.`); return; }
-          setError('');
-          readImage(file).then((img) => {
-            if (img) onPick(img, file.name);
-            else setError('That image couldn’t be read. Try another PNG or SVG.');
-          });
-        }}
-        onReject={() => setError('Only PNG or SVG images can be used.')}
-      />
-      {error && <span className={styles.dropError} role="alert">{error}</span>}
-    </div>
-  );
-}
-
 const toHex = ([r, g, b]) => `#${[r, g, b].map(n => n.toString(16).padStart(2, '0')).join('').toUpperCase()}`;
 // Default colour swatches: one per gradient preset, so both rows hold the same
 // number, each its most colourful stop (the tinted end of the lighter ones).
@@ -292,24 +258,6 @@ const DEFAULT_COVER_COLOR = DEFAULT_COLOR_SWATCHES[0];
 function presetPickerCss(key) {
   const g = COVER_GRADIENTS.find(x => x.key === key) || COVER_GRADIENTS[0];
   return `linear-gradient(${Math.round(g.angle)}deg, ${g.stops.map(([c, p]) => `${toHex(c)} ${Math.round(p * 100)}%`).join(', ')})`;
-}
-
-/** A stock photo by URL as what jsPDF needs; kept as JPEG so the PDF stays small. */
-function readPhotoUrl(url) {
-  return fetch(url)
-    .then(r => (r.ok ? r.blob() : Promise.reject(new Error(url))))
-    .then(blob => new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const img = new Image();
-        img.onload = () => resolve({ dataUrl: reader.result, format: 'JPEG', width: img.naturalWidth, height: img.naturalHeight });
-        img.onerror = () => resolve(null);
-        img.src = reader.result;
-      };
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    }))
-    .catch(() => null);
 }
 
 /**
@@ -521,8 +469,12 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
     else setCustomGradients(prev => prev.filter(g => g.id !== id));
     if (bgGradient === id) setBgGradient(gradientList.find(g => g.id !== id)?.id || DEFAULT_COVER_BACKGROUND.gradient);
   };
-  const [bgImage, setBgImage] = useState(null); // { dataUrl, format, width, height, name, photo? }
-  const pickedPhotoId = useRef(null);
+  // The picked cover image: a built-in one, one added for this employer, or
+  // ('inline') an image saved inside the settings before the gallery existed.
+  const [bgCover, setBgCover] = useState(DEFAULT_COVER); // { kind: 'preset'|'upload'|'inline', id }
+  const [bgImage, setBgImage] = useState(null); // the picked cover as jsPDF needs it
+  const [legacyImage, setLegacyImage] = useState(null); // an 'inline' cover's saved image
+  const [addedCovers, setAddedCovers] = useState([]); // [{ id, name, url, local? }]
   const [assets, setAssets] = useState({}); // logos and fonts for the PDF
   // "Generated On" is the moment the drawer opened, so edits don't move it.
   const [generatedAt] = useState(() => new Date());
@@ -688,10 +640,11 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
     title, includeCover, coverDescription, titleStyle, introStyle,
     logoScale, logoAlign, clientLogoScale, clientLogoAlign,
     bgType, bgColor, bgGradient, customColors, customGradients, hiddenColors, hiddenGradients,
-    bgImage: bgImage?.photo ? { photo: bgImage.photo } : bgImage,
+    bgCover,
+    ...(legacyImage ? { bgImage: legacyImage } : {}),
     customLogo, showHeader, showFooter, headerId: pickedHeaderId, footerId: pickedFooterId,
   }), [title, includeCover, coverDescription, titleStyle, introStyle, logoScale, logoAlign, clientLogoScale, clientLogoAlign,
-    bgType, bgColor, bgGradient, customColors, customGradients, hiddenColors, hiddenGradients, bgImage, customLogo, showHeader, showFooter, pickedHeaderId, pickedFooterId]);
+    bgType, bgColor, bgGradient, customColors, customGradients, hiddenColors, hiddenGradients, bgCover, legacyImage, customLogo, showHeader, showFooter, pickedHeaderId, pickedFooterId]);
   const settingsJson = JSON.stringify(personalizeSettings);
   const settingsJsonRef = useRef(settingsJson);
   useEffect(() => { settingsJsonRef.current = settingsJson; }, [settingsJson]);
@@ -728,15 +681,12 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
         if (has('showFooter')) setShowFooter(saved.showFooter);
         if (has('headerId')) setPickedHeaderId(saved.headerId);
         if (has('footerId')) setPickedFooterId(saved.footerId);
-        const photo = saved.bgImage?.photo;
-        if (photo && !saved.bgImage.dataUrl) {
-          pickedPhotoId.current = photo.id;
-          readPhotoUrl(photo.full).then((img) => {
-            if (live && img && pickedPhotoId.current === photo.id) setBgImage({ ...img, name: `Photo by ${photo.photographer}`, photo });
-          });
-        } else if (has('bgImage')) {
-          setBgImage(saved.bgImage);
-        }
+        // An image saved inside the settings (from before the gallery) stays
+        // available as a tile. Stock photos saved earlier are no longer used.
+        const legacy = saved.bgImage?.dataUrl ? saved.bgImage : null;
+        setLegacyImage(legacy);
+        if (has('bgCover')) setBgCover(saved.bgCover);
+        else if (legacy) setBgCover({ kind: 'inline', id: 'inline' });
         lastSavedRef.current = JSON.stringify(saved);
       } else {
         // Nothing saved for this employer: what's on screen stays, and is
@@ -748,6 +698,28 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
     return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settingsKey]);
+
+  // This employer's added cover images (newest first).
+  const fetchReportCovers = useAppStore(s => s.fetchEmployerReportCovers);
+  const addReportCover = useAppStore(s => s.addEmployerReportCover);
+  const removeReportCover = useAppStore(s => s.removeEmployerReportCover);
+  useEffect(() => {
+    let live = true;
+    fetchReportCovers(settingsKey).then((rows) => { if (live) setAddedCovers(rows); });
+    return () => { live = false; };
+  }, [settingsKey, fetchReportCovers]);
+
+  // The picked cover as the PDF needs it. A cover added on another device
+  // may not have loaded yet; until it does the cover shows the default.
+  const coverSrc = bgCover.kind === 'preset' ? PRESET_COVERS.find(c => c.id === bgCover.id)?.src
+    : bgCover.kind === 'upload' ? addedCovers.find(c => c.id === bgCover.id)?.url
+      : legacyImage?.dataUrl;
+  useEffect(() => {
+    let live = true;
+    if (!coverSrc) return undefined;
+    loadCoverImage(coverSrc).then((img) => { if (live) setBgImage(img); });
+    return () => { live = false; };
+  }, [coverSrc]);
   const pendingSaveRef = useRef(null); // { key, json, timer }
   useEffect(() => {
     if (settingsLoadedFor !== settingsKey || settingsMissingRef.current) return;
@@ -1234,37 +1206,35 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
                   )}
                   {bgType === 'image' && (
                     <>
-                      <ImageDropField
-                        image={bgImage}
-                        fileName={bgImage?.name}
-                        onPick={(img, name) => { pickedPhotoId.current = null; setBgImage({ ...img, name }); }}
-                        onRemove={() => { pickedPhotoId.current = null; setBgImage(null); }}
-                      />
-                      <span className={styles.orDivider}>or search free photos</span>
-                      <PhotoSearch
-                        orientation="portrait"
-                        selectedId={bgImage?.photo?.id}
-                        onSelect={(photo) => {
-                          pickedPhotoId.current = photo.id;
-                          readPhotoUrl(photo.full)
-                            .then((img) => {
-                              // Ignore a slow download if another image was picked meanwhile.
-                              if (img && pickedPhotoId.current === photo.id) {
-                                setBgImage({ ...img, name: `Photo by ${photo.photographer}`, photo });
-                              }
-                            })
-                            // A failed download leaves the current background as it is.
-                            .catch(() => {});
-                        }}
-                      />
-                      {bgImage?.photo && (
-                        <span className={styles.photoCredit}>
-                          Photo by{' '}
-                          <a href={bgImage.photo.photographerUrl} target="_blank" rel="noopener noreferrer">{bgImage.photo.photographer}</a>
-                          {' '}on{' '}
-                          <a href={bgImage.photo.url} target="_blank" rel="noopener noreferrer">Pexels</a>
-                        </span>
-                      )}
+                    <ImageTileGallery
+                      ariaLabel="Cover image"
+                      columns={5}
+                      items={[
+                        ...(legacyImage ? [{ id: 'inline:inline', src: legacyImage.dataUrl, label: legacyImage.name || 'Uploaded image', removable: true }] : []),
+                        ...addedCovers.map(c => ({ id: `upload:${c.id}`, src: c.url, label: c.name, removable: true })),
+                        ...PRESET_COVERS.map(c => ({ id: `preset:${c.id}`, src: c.src, label: c.label })),
+                      ]}
+                      selectedId={`${bgCover.kind}:${bgCover.id}`}
+                      onSelect={(key) => { const [kind, ...rest] = key.split(':'); setBgCover({ kind, id: rest.join(':') }); }}
+                      accept={COVER_ACCEPT}
+                      acceptMime={COVER_MIME}
+                      maxMb={IMAGE_MAX_MB}
+                      onAdd={async (file) => {
+                        const cover = await addReportCover(settingsKey, file);
+                        setAddedCovers(list => [cover, ...list]);
+                        setBgCover({ kind: 'upload', id: cover.id });
+                      }}
+                      onRemove={(key) => {
+                        const [kind, ...rest] = key.split(':');
+                        const id = rest.join(':');
+                        if (`${bgCover.kind}:${bgCover.id}` === key) setBgCover(DEFAULT_COVER);
+                        if (kind === 'inline') { setLegacyImage(null); return; }
+                        const cover = addedCovers.find(c => c.id === id);
+                        setAddedCovers(list => list.filter(c => c.id !== id));
+                        if (cover) removeReportCover(cover);
+                      }}
+                    />
+                    <span className={styles.coverHint}>PNG, JPG or SVG, up to {IMAGE_MAX_MB} MB. Added images are shared with everyone exporting this employer’s report.</span>
                     </>
                   )}
                 </div>

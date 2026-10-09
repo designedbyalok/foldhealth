@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="848" viewBox="0 0 600 848">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1B0E3D"/><stop offset="0.55" stop-color="#5B2A86"/><stop offset="1" stop-color="#C2457A"/></linearGradient>
+    <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFB86B"/><stop offset="1" stop-color="#F0567A"/></linearGradient>
+    <clipPath id="c"><circle cx="300" cy="560" r="150"/></clipPath>
+  </defs>
+  <rect width="600" height="848" fill="url(#sky)"/>
+  <circle cx="300" cy="560" r="150" fill="url(#sun)" opacity="0.9"/>
+  <g clip-path="url(#c)" fill="#5B2A86">
+    <rect x="140" y="580" width="320" height="6"/><rect x="140" y="604" width="320" height="9"/>
+    <rect x="140" y="630" width="320" height="12"/><rect x="140" y="660" width="320" height="16"/>
+    <rect x="140" y="694" width="320" height="20"/>
+  </g>
+  <rect y="710" width="600" height="138" fill="#24103F"/>
+  <g stroke="#C2457A" stroke-opacity="0.35" stroke-width="1">
+    <line x1="0" y1="740" x2="600" y2="740"/><line x1="0" y1="775" x2="600" y2="775"/><line x1="0" y1="815" x2="600" y2="815"/>
+  </g>
+</svg>
