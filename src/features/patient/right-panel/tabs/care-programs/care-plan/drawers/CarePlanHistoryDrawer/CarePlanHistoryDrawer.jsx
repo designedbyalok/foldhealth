@@ -177,7 +177,9 @@ function firstEntityType(rows) {
     || 'goal';
 }
 
-function sectionsFor(group, openAt, links) {
+// Shared with the Program Activity Log's version summary.
+// eslint-disable-next-line react-refresh/only-export-components
+export function sectionsFor(group, openAt, links) {
   // Only the net difference between this signature and the previous one.
   const rows = netVersionRows(group.rows);
   const templates = rows.filter(r => r.entityType === 'template');

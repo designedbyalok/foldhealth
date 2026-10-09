@@ -1,0 +1,10 @@
+/* The item an entry is on, quieter than what happened to it: Figma
+   "Grey/200", exposed in tokens as --placeholder-text. */
+.headlineSubject {
+  color: var(--placeholder-text);
+}
+
+/* A note keeps its own line breaks. */
+.noteText {
+  white-space: pre-wrap;
+}

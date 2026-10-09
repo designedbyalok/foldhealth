@@ -98,8 +98,11 @@ export function CareProgramsTab({ header }) {
     [programs, selectedCareProgramKey],
   );
 
+  // Waits for the patient's programs to load: deciding before then took every
+  // visit for a new enrollment.
+  const programsLoaded = Boolean(patientId && careProgramsLoadedFor[patientId]);
   useEffect(() => {
-    if (!pendingCareProgramCode || !patientId) return;
+    if (!pendingCareProgramCode || !patientId || !programsLoaded) return;
     const existing = programs.find(p => p.code === pendingCareProgramCode);
     if (existing) {
       setPendingProgram({ program: existing, firstStep: false });
@@ -113,7 +116,7 @@ export function CareProgramsTab({ header }) {
     }
     clearPendingCareProgramCode();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingCareProgramCode, patientId]);
+  }, [pendingCareProgramCode, patientId, programsLoaded]);
 
   const programOptions = useMemo(() => {
     const added = new Set(programs.map(p => p.code));
@@ -245,7 +248,6 @@ export function CareProgramsTab({ header }) {
     );
   }
 
-  const programsLoaded = Boolean(patientId && careProgramsLoadedFor[patientId]);
   if (selectedCareProgramKey && !selectedProgram && !programsLoaded) {
     return <ProgramDetailSkeleton />;
   }

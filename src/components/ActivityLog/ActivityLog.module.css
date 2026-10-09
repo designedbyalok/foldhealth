@@ -472,6 +472,38 @@
   font-size: var(--font-2xs);
 }
 
+/* An entry's `trailing` slot: right-aligned, level with the meta line and
+   headline (their two lines' height), whatever opens beneath. */
+.withTrailing {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.trailingMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.trailing {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  min-height: calc(var(--space-8) + var(--space-1));
+}
+
+.trailingHover {
+  display: inline-flex;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.withTrailing:hover .trailingHover,
+.trailingHover:focus-within {
+  opacity: 1;
+}
+
 /* Entries with `onOpen`: hovering tints the entry grey-25 and shows an open
    button centred on its right edge. The box bleeds a little past the text
    (negative margin, equal padding) so the tint has room without moving it. */

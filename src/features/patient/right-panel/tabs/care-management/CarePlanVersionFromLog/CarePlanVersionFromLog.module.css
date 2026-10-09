@@ -1,0 +1,4 @@
+/* Space between the entry's headline and the version's summary card. */
+.glance {
+  padding-top: var(--space-2);
+}

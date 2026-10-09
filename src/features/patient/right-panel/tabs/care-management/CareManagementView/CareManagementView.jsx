@@ -5,7 +5,6 @@ import { ActionButton } from '../../../../../../components/ActionButton/ActionBu
 import { Drawer } from '../../../../../../components/Drawer/Drawer';
 import { Textarea } from '../../../../../../components/Textarea/Textarea';
 import { FilterChip } from '../../../../../../components/FilterChip/FilterChip';
-import { AddIconMinimalist } from '../../../../../../components/Icon/AddIconMinimalist';
 import { SubTabs } from '../../../../../../components/SubTabs/SubTabs';
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { CareProgramsTab } from '../../care-programs/CareProgramsTab/CareProgramsTab';
@@ -19,11 +18,15 @@ import { PatientCarePlanPane } from '../PatientCarePlanPane/PatientCarePlanPane'
 import { RollupSignButton } from '../../care-programs/care-plan/summary/RollupSignButton';
 import { showsPatientCarePlan } from '../../care-programs/care-plan/lib/carePlanMode';
 import { ProgramActivityDay } from '../ProgramActivityCard/ProgramActivityCard.jsx';
-import { groupProgramActivity } from '../programActivity';
+import { carePlanActivityEntries, filterProgramActivity, groupProgramActivity, activityTypeLabel } from '../programActivity';
+import { DateRangePopover } from '../../../../../../components/DateRangePopover/DateRangePopover';
+import { CarePlanVersionFromLog, CarePlanVersionGlance } from '../CarePlanVersionFromLog/CarePlanVersionFromLog';
+import { GoalPreviewDrawer } from '../../care-programs/care-plan/drawers/GoalPreviewDrawer/GoalPreviewDrawer';
+import { InterventionPreviewDrawer } from '../../care-programs/care-plan/drawers/InterventionPreviewDrawer/InterventionPreviewDrawer';
+import { BarrierDetailDrawer } from '../../care-programs/care-plan/drawers/BarrierDetailDrawer/BarrierDetailDrawer';
 import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
 import { RingEmptyState } from '../../../../../../components/RingEmptyState/RingEmptyState';
 import { DownChevronIcon } from '../../../../../../components/Icon/DownChevronIcon';
-import { CM_FILTERS } from '../../../../data/programActivityMock';
 import { resolvePatientStoreId } from '../../../../../../lib/resolvePatientStoreId';
 import styles from './CareManagementView.module.css';
 
@@ -32,8 +35,8 @@ import styles from './CareManagementView.module.css';
 const CM_TABS_PROGRAM = ['Care Programs', 'Comprehensive Care Plan', 'Program Activity Log'];
 const CM_TABS_PATIENT = ['Care Programs', 'Care Plan', 'Program Activity Log'];
 
-/** Shared "Add Care Note" drawer used by both the Comprehensive
- *  Care Plan and Program Activity Log panes. Composer only for now —
+/** "Add Care Note" drawer for the Comprehensive Care Plan pane.
+ *  Composer only for now —
  *  hands the note body back to the caller, which decides how to
  *  persist it (toast placeholder until the patient-level notes API
  *  ships). */
@@ -236,11 +239,19 @@ function ComprehensiveCarePlanPane({ header, patientId, programs, onClose, onOpe
   );
 }
 
-/** Program Activity Log — the monthly activity timeline with its own search +
- *  filter and an Add Care Note CTA. */
-function ProgramActivityLog({ header }) {
+const shortDate = (iso) => {
+  const d = iso ? new Date(`${iso}T00:00:00`) : null;
+  return d && !Number.isNaN(d.getTime())
+    ? d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
+    : iso;
+};
+
+/** Program Activity Log — every care program's activity on one monthly
+ *  timeline (program events plus each care plan's own history), with search
+ *  and Activity Type / Program / Date / Activity By filters. `active` is true
+ *  while the tab is showing. */
+function ProgramActivityLog({ header, programs = [], active = false }) {
   const showToast = useAppStore(s => s.showToast);
-  const [addNoteOpen, setAddNoteOpen] = useState(false);
   const patientId = useAppStore(s => resolvePatientStoreId(s, s.selectedPatientId));
   const fetchPatientProgramActivity = useAppStore(s => s.fetchPatientProgramActivity);
   const activityByPatient = useAppStore(s => s.patientProgramActivity);
@@ -250,21 +261,91 @@ function ProgramActivityLog({ header }) {
   const [searchText, setSearchText] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [collapsedMonths, setCollapsedMonths] = useState({});
+  const [typeFilter, setTypeFilter] = useState([]);
+  const [programFilter, setProgramFilter] = useState([]);
+  const [dateRange, setDateRange] = useState([]); // [] or [startISO, endISO]
+  const [actorFilter, setActorFilter] = useState([]);
+  const carePlanSource = useAppStore(s => s.patientCarePlanActivitySource[patientId]);
+  // Care plans are keyed by the patient id as selected, not the resolved one.
+  const selectedPatientId = useAppStore(s => s.selectedPatientId);
+  const [openVersion, setOpenVersion] = useState(null); // { program, versionNumber, anchor }
+  const programOf = item => programs.find(p => String(p.id) === String(item.programId));
+  // `anchor` names a block in the drawer to scroll to (a count the summary
+  // card links from), or null for the top.
+  const openCarePlanVersion = (item, anchor = null) => {
+    const program = programOf(item);
+    if (program) setOpenVersion({ program, versionNumber: item.versionNumber, anchor });
+  };
+  // A care plan activity's goal, intervention or barrier, opened as the plan
+  // was last signed (the copy every surface outside the editor reads).
+  const fetchSignedCarePlans = useAppStore(s => s.fetchSignedCarePlans);
+  const fetchPatientCarePlan = useAppStore(s => s.fetchPatientCarePlan);
+  const [openItem, setOpenItem] = useState(null); // { type, item, program }
+  const openPlanItem = async (logItem) => {
+    const program = programOf(logItem);
+    const { entityType: type, entityId: id } = logItem.history || {};
+    if (!program || !type || id == null) return;
+    const key = `${selectedPatientId}::${program.id}`;
+    const find = slice => (slice?.[`${type}s`] || []).find(x => String(x.id) === String(id));
+    await fetchSignedCarePlans(selectedPatientId);
+    let found = find(useAppStore.getState().patientSignedCarePlans?.[key]);
+    if (!found) {
+      await fetchPatientCarePlan(selectedPatientId, program.id);
+      found = find(useAppStore.getState().patientCarePlans?.[key]);
+    }
+    if (found) setOpenItem({ type, item: found, program });
+    else showToast?.(`This ${type} is no longer on the care plan`);
+  };
+  const versionGlance = (item) => {
+    const program = programOf(item);
+    return program ? (
+      <CarePlanVersionGlance
+        patientId={selectedPatientId}
+        program={program}
+        versionNumber={item.versionNumber}
+        onOpen={anchor => openCarePlanVersion(item, anchor)}
+      />
+    ) : null;
+  };
+  const platformPeople = useAppStore(s => s.platformPeople);
 
+  // Re-read each time the tab opens: care plans and other screens write to
+  // the log while it sits hidden.
   useEffect(() => {
-    if (patientId) fetchPatientProgramActivity(patientId);
-  }, [patientId, fetchPatientProgramActivity]);
+    if (patientId && active) fetchPatientProgramActivity(patientId, { force: true });
+  }, [patientId, active, fetchPatientProgramActivity]);
 
-  const entries = activityByPatient[patientId] || [];
   const loading = !!loadingMap[patientId] && !loadedFor[patientId];
 
-  const months = useMemo(() => {
-    const q = searchText.trim().toLowerCase();
-    const filtered = q
-      ? entries.filter(e => `${e.programName} ${e.programCode} ${e.title} ${e.actorName}`.toLowerCase().includes(q))
-      : entries;
-    return groupProgramActivity(filtered);
-  }, [entries, searchText]);
+  // Program events and every care plan's history, newest first, each actor
+  // carrying their role when the directory knows them.
+  const entries = useMemo(() => {
+    const roleByName = new Map((platformPeople || []).map(p => [p.name, p.clinicalRoles?.[0] || '']));
+    const merged = [
+      ...(activityByPatient[patientId] || []),
+      ...carePlanActivityEntries(carePlanSource?.audit, carePlanSource?.versions, programs),
+    ];
+    return merged
+      .map(e => ({ ...e, actorRole: e.actorRole || roleByName.get(e.actorName) || '' }))
+      .sort((a, b) => new Date(b.occurredAt) - new Date(a.occurredAt));
+  }, [activityByPatient, patientId, carePlanSource, programs, platformPeople]);
+
+  // Each filter offers only what this patient's log holds.
+  const typeOptions = useMemo(() => [...new Set(entries.map(e => activityTypeLabel(e.activityKind)))].sort(), [entries]);
+  const programOptions = useMemo(() => [...new Set(entries.map(e => e.programCode).filter(Boolean))].sort(), [entries]);
+  const actorOptions = useMemo(() => [...new Set(entries.map(e => e.actorName).filter(Boolean))].sort(), [entries]);
+  const activeFilters = [typeFilter, programFilter, dateRange, actorFilter].filter(f => f.length > 0).length;
+  const clearAll = () => {
+    setTypeFilter([]);
+    setProgramFilter([]);
+    setDateRange([]);
+    setActorFilter([]);
+  };
+
+  const months = useMemo(() => groupProgramActivity(filterProgramActivity(entries, {
+    search: searchText, types: typeFilter, programs: programFilter, actors: actorFilter, range: dateRange,
+  })), [entries, searchText, typeFilter, programFilter, actorFilter, dateRange]);
+  const filtering = activeFilters > 0 || !!searchText.trim();
 
   return (
     <div className={styles.pane}>
@@ -274,21 +355,32 @@ function ProgramActivityLog({ header }) {
         searchText={searchText} setSearchText={setSearchText}
         searchPlaceholder="Search activity"
         showFilters={showFilters} setShowFilters={setShowFilters}
-        cta={(
-          <Button
-            variant="tertiary"
-            size="L"
-            leadingIconElement={<AddIconMinimalist size={16} />}
-            onClick={() => setAddNoteOpen(true)}
-          >
-            Add Care Note
-          </Button>
-        )}
         filterBar={(
           <div className={styles.filterBar}>
-            {CM_FILTERS.map(f => (
-              <FilterChip key={f.label} label={f.label} options={[]} selected={[]} onChange={() => {}} />
-            ))}
+            <FilterChip label="Activity Type" options={typeOptions} selected={typeFilter} onChange={setTypeFilter} searchable />
+            <FilterChip label="Program" options={programOptions} selected={programFilter} onChange={setProgramFilter} />
+            <FilterChip
+              label="Date"
+              active={dateRange.length === 2}
+              activeSummary={dateRange.length === 2 ? `${shortDate(dateRange[0])} – ${shortDate(dateRange[1])}` : undefined}
+              onClear={() => setDateRange([])}
+              renderPopover={({ anchorRect, onClose: closePopover }) => (
+                <DateRangePopover
+                  anchorRect={anchorRect}
+                  label="Date"
+                  selected={dateRange}
+                  onChange={setDateRange}
+                  onClose={closePopover}
+                />
+              )}
+            />
+            <FilterChip label="Activity By" options={actorOptions} selected={actorFilter} onChange={setActorFilter} searchable />
+            {activeFilters > 0 && (
+              <button type="button" className={styles.clearAll} onClick={clearAll}>
+                <Icon name="solar:backspace-linear" size={16} color="var(--primary-300)" />
+                Clear All
+              </button>
+            )}
           </div>
         )}
       />
@@ -296,7 +388,7 @@ function ProgramActivityLog({ header }) {
         {loading ? (
           <CardSkeleton count={4} />
         ) : months.length === 0 ? (
-          <RingEmptyState icon="solar:clipboard-list-linear" label={searchText ? 'No matching activity' : 'No program activity yet'} />
+          <RingEmptyState icon="solar:clipboard-list-linear" label={filtering ? 'No matching activity' : 'No program activity yet'} />
         ) : (
           months.map(month => {
             const collapsed = !!collapsedMonths[month.key];
@@ -316,20 +408,51 @@ function ProgramActivityLog({ header }) {
                   />
                 </button>
                 {!collapsed && month.days.map(day => (
-                  <ProgramActivityDay key={day.key} day={day} />
+                  <ProgramActivityDay key={day.key} day={day} onOpenVersion={openCarePlanVersion} versionGlance={versionGlance} onOpenItem={openPlanItem} />
                 ))}
               </div>
             );
           })
         )}
       </div>
-      {addNoteOpen && (
-        <AddCareNoteDrawer
-          onClose={() => setAddNoteOpen(false)}
-          onSave={() => {
-            setAddNoteOpen(false);
-            showToast?.('Care note saved');
-          }}
+      {openItem?.type === 'goal' && (
+        <GoalPreviewDrawer
+          goal={openItem.item}
+          patientId={selectedPatientId}
+          program={openItem.program}
+          signedView
+          onClose={() => setOpenItem(null)}
+          onOpenIntervention={i => setOpenItem(o => ({ ...o, type: 'intervention', item: i }))}
+          onOpenBarrier={b => setOpenItem(o => ({ ...o, type: 'barrier', item: b }))}
+        />
+      )}
+      {openItem?.type === 'intervention' && (
+        <InterventionPreviewDrawer
+          intervention={openItem.item}
+          patientId={selectedPatientId}
+          program={openItem.program}
+          signedView
+          onClose={() => setOpenItem(null)}
+          onOpenGoal={g => setOpenItem(o => ({ ...o, type: 'goal', item: g }))}
+        />
+      )}
+      {openItem?.type === 'barrier' && (
+        <BarrierDetailDrawer
+          barrier={openItem.item}
+          patientId={selectedPatientId}
+          program={openItem.program}
+          signedView
+          onClose={() => setOpenItem(null)}
+          onOpenGoal={g => setOpenItem(o => ({ ...o, type: 'goal', item: g }))}
+        />
+      )}
+      {openVersion && (
+        <CarePlanVersionFromLog
+          patientId={selectedPatientId}
+          program={openVersion.program}
+          versionNumber={openVersion.versionNumber}
+          anchor={openVersion.anchor}
+          onClose={() => setOpenVersion(null)}
         />
       )}
     </div>
@@ -413,7 +536,7 @@ export function CareManagementView() {
         />
       </div>
       <div className={styles.paneSlot} hidden={subTab !== 'Program Activity Log'}>
-        <ProgramActivityLog header={subTabBar} />
+        <ProgramActivityLog header={subTabBar} programs={programs} active={subTab === 'Program Activity Log'} />
       </div>
     </div>
   );

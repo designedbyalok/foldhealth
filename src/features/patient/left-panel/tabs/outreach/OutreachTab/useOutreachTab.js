@@ -13,6 +13,13 @@ import {
   matchesOutreachScope,
 } from './OutreachTab.utils';
 
+// Outreach type → Program Activity Log kind (icon) and outcome → status tone.
+const OUTREACH_ACTIVITY_KIND = {
+  Call: 'call', SMS: 'sms', Email: 'email', Letter: 'letter',
+  Chat: 'chat', Virtual: 'virtual', 'In Person': 'inperson', General: 'outreach',
+};
+const OUTREACH_STATUS_TYPE = { Successful: 'success', Unsuccessful: 'error', Note: 'warning' };
+
 export function useOutreachTab({
   programs,
   recipientOptions,
@@ -50,6 +57,7 @@ export function useOutreachTab({
   const patientId = patientIdProp || selectedPatientId;
   const addProgramTask = useAppStore(s => s.addProgramTask);
   const addProgramAppointment = useAppStore(s => s.addProgramAppointment);
+  const logProgramActivity = useAppStore(s => s.logProgramActivity);
 
   const [addTaskOpen, setAddTaskOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
@@ -246,6 +254,21 @@ export function useOutreachTab({
       }
       return [{ id: monthKey, label: monthLabel, logs: newEntries }, ...prev];
     });
+
+    // A new outreach attempt against a care program is program activity: it
+    // goes in that program's Program Activity Log.
+    if (logFor === 'care-program' && editingIdRef.current == null) {
+      for (const entry of newEntries) {
+        logProgramActivity({
+          patientId,
+          programCode: entry.programs[0],
+          title: `Outreach - ${entry.title}`,
+          activityKind: OUTREACH_ACTIVITY_KIND[entry.type] || 'outreach',
+          statusLabel: entry.outcome || '',
+          statusType: OUTREACH_STATUS_TYPE[outcome] || 'neutral',
+        });
+      }
+    }
 
     onSaved?.(newEntries, {
       isEdit: editingIdRef.current != null,

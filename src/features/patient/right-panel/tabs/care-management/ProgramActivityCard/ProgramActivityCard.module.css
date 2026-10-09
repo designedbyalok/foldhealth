@@ -1,6 +1,7 @@
+/* Program Activity Log day (Figma Care-Program-Overview 108:140523): the date
+   on the left, then the day's entries on the shared ActivityLog. */
 .day {
   display: flex;
-  gap: 0;
   align-items: flex-start;
   width: 100%;
 }
@@ -12,7 +13,9 @@
   gap: calc(var(--space-1) / 2);
   width: 44px;
   flex-shrink: 0;
-  padding: var(--space-3) calc(var(--space-1) / 2) var(--space-2);
+  /* The date's top meets the top of the day's first tile on the rail, which
+     the rail's top connector (16px) and the log's 8px lead put 24px down. */
+  padding: var(--space-6) calc(var(--space-1) / 2) var(--space-2);
   position: sticky;
   top: 0;
 }
@@ -28,110 +31,68 @@
 .dayEntries {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  padding-bottom: var(--space-2);
-}
-
-.entry {
-  display: flex;
-  gap: var(--space-2);
-  align-items: stretch;
-  width: 100%;
   padding-left: var(--space-3);
 }
 
-.entryBody {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding-bottom: var(--space-2);
-}
-
-.spineCol {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  /* Center the icon against the row's text; the connecting line is drawn as one
-     continuous rule behind it (::before) so the icon position no longer depends
-     on the fixed top segment. */
-  justify-content: center;
-  width: var(--space-5);
-  flex-shrink: 0;
-  align-self: stretch;
-  position: relative;
-}
-
-/* Continuous vertical spine line behind the centered icon. */
-.spineCol::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: var(--neutral-150);
-}
-
-/* The inline line segments are replaced by the continuous ::before rule. */
-.spineLine,
-.spineLineGrow,
-.spineLineEnd,
-.spineLineShort {
-  display: none;
-}
-
-.spineAvatar {
-  flex-shrink: 0;
-  position: relative;
-  z-index: 1;
-  /* Mask the line where it passes behind the icon. */
-  background: var(--neutral-0);
-  border-radius: 50%;
-}
-
-/* Collapsed stack — summary card over full peek activity rows */
+/* Folded stack: the summary card on top, the next one or two activities
+   peeking out beneath it, each a step narrower (Figma 50:98033). */
 .stack {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  display: block;
   width: 100%;
+  margin-bottom: var(--space-3);
+  text-align: left;
+  cursor: pointer;
   isolation: isolate;
-  --stack-layer-height: var(--space-16);
-  --stack-reveal: var(--space-2);
-  --stack-overlap: calc(var(--stack-layer-height) - var(--stack-reveal));
 }
 
-.peekLayer {
-  position: relative;
-  height: var(--stack-layer-height);
-  overflow: hidden;
+.layer,
+.summaryCard {
   background: var(--neutral-0);
   border: 0.5px solid var(--neutral-100);
   border-radius: var(--space-2);
   box-shadow: var(--shadow-card);
 }
 
-.peekLayer + .peekLayer,
-.peekLayer + .summaryCard,
-.summaryCard {
-  margin-top: calc(-1 * var(--stack-overlap));
+.layer {
+  position: absolute;
+  top: 0;
+  height: 100%;
+}
+
+.layer1 {
+  left: var(--space-2);
+  right: var(--space-2);
+  transform: translateY(calc(var(--space-1) + var(--space-1) / 2));
+  z-index: 2;
+}
+
+.layer2 {
+  left: var(--space-4);
+  right: var(--space-4);
+  transform: translateY(var(--space-3));
+  z-index: 1;
 }
 
 .summaryCard {
   position: relative;
+  z-index: 3;
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  min-height: calc(var(--stack-layer-height) - var(--space-1));
-  padding: var(--space-3) var(--space-5) var(--space-3) var(--space-3);
-  background: var(--neutral-0);
-  border: 0.5px solid var(--neutral-100);
-  border-radius: var(--space-2);
-  box-shadow: var(--shadow-card);
+  padding: var(--space-3);
+  transition: background 0.15s;
+}
+
+.stack:hover .summaryCard {
+  background: var(--neutral-25);
+}
+
+.summaryRight {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
 }
 
 .summaryText {
@@ -143,53 +104,173 @@
 }
 
 .programTitle {
-  font-size: var(--font-base);
+  font-size: var(--font-md);
   font-weight: 500;
   color: var(--neutral-400);
-  line-height: var(--leading-tight);
+  line-height: 1.2;
 }
 
 .summaryMeta {
-  font-size: var(--font-base);
+  font-size: var(--font-md);
   font-weight: 400;
   color: var(--neutral-300);
-  line-height: var(--leading-tight);
-}
-
-.expandedRows {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-/* Expanded stack rows sit flush so the spine reads as one continuous line. */
-.entryBodyCompact {
-  gap: 0;
-  padding-bottom: 0;
-}
-
-.entry + .entry .spineCol {
-  padding-top: 0;
+  line-height: 1.2;
 }
 
 .toggleLink {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  align-self: flex-start;
-  font-size: var(--font-base);
+  min-height: 24px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: var(--font-md);
   font-weight: 400;
   color: var(--primary-300);
-  line-height: var(--leading-tight);
-}
-
-button.toggleButton {
-  background: none;
-  border: none;
+  line-height: 1.2;
   cursor: pointer;
-  padding: 0;
 }
 
-button.toggleButton:hover {
+.toggleLink:hover {
   text-decoration: underline;
+}
+
+/* The stack's See all / Collapse link branches off the rail with a curved
+   connector, as a template's sections do in the version changes drawer.
+   The rail's line sits 20px left of the entry body (half the 24px rail plus
+   the 8px row gap). */
+.toggleLink {
+  position: relative;
+}
+
+.branch {
+  position: absolute;
+  left: calc((var(--space-2) + var(--space-3)) * -1);
+  bottom: 50%;
+  width: calc(var(--space-2) + var(--space-3));
+  height: var(--space-3);
+  border-left: 0.5px solid var(--neutral-150);
+  border-bottom: 0.5px solid var(--neutral-150);
+  border-bottom-left-radius: 8px;
+}
+
+/* The Collapse row has no tile on the rail, so the line runs straight on. */
+.railGap {
+  display: block;
+  height: 0;
+}
+
+/* "Changes in Care Plan": its own layout of the trailing slot (badge right,
+   level with the first two lines) so hovering anywhere on the entry shows
+   "View more", which stays once the summary is open. */
+.versionEntry {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.versionMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.versionRight {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  min-height: calc(var(--space-8) + var(--space-1));
+}
+
+.hoverReveal {
+  display: inline-flex;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.versionEntry:hover .hoverReveal,
+.versionEntry:focus-within .hoverReveal,
+.versionEntryOpen .hoverReveal {
+  opacity: 1;
+}
+
+/* A signature: the Care Plan History's one-line marker in the Unity colours
+   (Figma ICD-Import 7121:161868). */
+.signedMarker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  /* As tall as the pen in the rail, so the pill and the pen share a centre
+     line. */
+  min-height: 24px;
+  padding-top: calc(var(--space-1) / 2);
+}
+
+.signedPill {
+  display: inline-flex;
+  align-items: center;
+  padding: calc(var(--space-1) / 2) var(--space-2);
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(
+    175deg,
+    color-mix(in srgb, var(--unity-gradient-from) 18%, var(--neutral-0)) 2%,
+    color-mix(in srgb, var(--unity-gradient-mid) 15%, var(--neutral-0)) 52%,
+    color-mix(in srgb, var(--unity-gradient-to) 17%, var(--neutral-0)) 94%
+  );
+  cursor: pointer;
+}
+
+.signedPill:hover .signedPillText {
+  text-decoration: underline;
+  text-decoration-color: var(--unity-gradient-mid);
+}
+
+.signedPillText {
+  font-size: var(--font-base);
+  line-height: 1.2;
+  white-space: nowrap;
+  background: linear-gradient(
+    175deg,
+    var(--unity-gradient-from) 2%,
+    var(--unity-gradient-mid) 52%,
+    var(--unity-gradient-to) 94%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Same type and colour as an entry's meta line. */
+.signedMeta {
+  font-size: var(--font-sm);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--neutral-200);
+  white-space: nowrap;
+}
+
+/* The marker's rail glyph sits bare, without the usual tile. */
+.signedRailIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+/* A care plan entry's version in its meta line, as in the Care Plan History:
+   "v3" and a compact Current badge, centred on each other. */
+.versionTag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.currentBadge {
+  height: 16px;
+  padding: 0 var(--space-1);
+  font-size: var(--font-xs);
 }

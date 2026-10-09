@@ -21,7 +21,7 @@ export function CareManagementToolbar({
 }) {
   const filterBtn = (
     <ActionButton
-      icon="solar:filter-linear"
+      icon="custom:filter"
       size="S"
       tooltip="Filter"
       tooltipLeft

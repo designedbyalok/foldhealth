@@ -240,15 +240,6 @@ export const CP_FILTERS = [
   { key: 'endDate', label: 'End Date' },
 ];
 
-export const CM_FILTERS = [
-  { label: 'Date' },
-  { label: 'Assigned to' },
-  { label: 'Status' },
-  { label: 'Program', active: true, value: 'All' },
-  { label: 'Action Type' },
-  { label: 'Action Status' },
-];
-
 // Step definitions only: each step's status is worked out per patient in
 // ProgramDetailView/stepStatus.js.
 export const PROGRAM_STEPS_MOCK = [

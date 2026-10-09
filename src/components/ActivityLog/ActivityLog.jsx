@@ -165,7 +165,9 @@ function markSupersededDrafts(list) {
  * actions); `toolbarAbove` renders above that row (e.g. filter chips). Both
  * stay visible when filtering leaves nothing to show.
  */
-export function ActivityLog({ entries, emptyLabel = 'No activity recorded yet.', hideCommentTitle = false, onOpenTask, onOpenNote, toolbar, toolbarAbove, relaxed = false }) {
+export function ActivityLog({ entries, emptyLabel = 'No activity recorded yet.', hideCommentTitle = false, onOpenTask, onOpenNote, toolbar, toolbarAbove, relaxed = false, continuous = false }) {
+  // `continuous` keeps the rail running past the first and last entries, for a
+  // log rendered in slices (one per day) that should read as one line.
   // `relaxed` adds 8px between entries, for feeds whose entries carry more lines.
   const wrapClass = [htStyles.wrap, relaxed ? htStyles.relaxed : ''].filter(Boolean).join(' ');
   const [collapsed, setCollapsed] = useState(() => new Set());
@@ -212,7 +214,7 @@ export function ActivityLog({ entries, emptyLabel = 'No activity recorded yet.',
       out.push({ kind: 'item', entry, key: `i${i}`, isFirst: false, isLast: false });
     });
     const allItems = out.filter(it => it.kind === 'item');
-    if (allItems.length) {
+    if (allItems.length && !continuous) {
       allItems[0].isFirst = true;
       allItems[allItems.length - 1].isLast = true;
     }
@@ -355,6 +357,22 @@ export function ViewMoreButton({ expanded, onToggle, label = 'View more', leadin
   );
 }
 
+// `trailing` sits at the right of an entry, level with its first lines (a
+// program badge, say), however tall the entry grows. `trailingHover` goes
+// just before it and shows only while the entry is hovered (an open arrow).
+function withTrailing(entry, node) {
+  if (!entry.trailing && !entry.trailingHover) return node;
+  return (
+    <div className={styles.withTrailing}>
+      <div className={styles.trailingMain}>{node}</div>
+      <span className={styles.trailing}>
+        {entry.trailingHover && <span className={styles.trailingHover}>{entry.trailingHover}</span>}
+        {entry.trailing}
+      </span>
+    </div>
+  );
+}
+
 /* ── Type-branched entry ─────────────────────────────────────────────── */
 function ActivityLogEntry({ entry, isFirst, isLast, hideCommentTitle = false, onOpenTask, onOpenNote }) {
   const content = (() => {
@@ -399,7 +417,7 @@ function ActivityLogEntry({ entry, isFirst, isLast, hideCommentTitle = false, on
           // tints the entry and shows an open button centred at its right
           // (`openTooltip` names what it opens).
           <div className={styles.openable}>
-            {content}
+            {withTrailing(entry, content)}
             <span className={styles.openButton}>
               <ActionButton
                 icon="solar:arrow-right-up-linear"
@@ -409,7 +427,7 @@ function ActivityLogEntry({ entry, isFirst, isLast, hideCommentTitle = false, on
               />
             </span>
           </div>
-        ) : content}
+        ) : withTrailing(entry, content)}
       </div>
     </div>
   );

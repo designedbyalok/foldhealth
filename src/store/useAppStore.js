@@ -284,6 +284,12 @@ function signedSliceWithReadings(slice, measurements) {
   };
 }
 
+// Care plan audit actions the Program Activity Log shows one by one.
+const CARE_PLAN_LOG_ACTIONS = [
+  'status_changed', 'priority_changed', 'progress_changed', 'assignee_changed', 'updated',
+  'note', 'note_deleted', 'note_cleared', 'review_requested', 'discarded', 'restored',
+];
+
 export const useAppStore = create((set, get) => ({
   ...createShellSlice(set, get),
   ...createHccWorklistFiltersSlice(set, get),
@@ -1536,6 +1542,8 @@ export const useAppStore = create((set, get) => ({
   careProgramsLoadedFor: {},
   // Program Activity Log entries, keyed by patientId.
   patientProgramActivity: {},
+  // Each patient's care plan audit + signed versions, folded into the log.
+  patientCarePlanActivitySource: {},
   patientProgramActivityLoading: {},
   patientProgramActivityLoadedFor: {},
 
@@ -1716,17 +1724,49 @@ export const useAppStore = create((set, get) => ({
     return true;
   },
 
-  fetchPatientProgramActivity: async (patientId) => {
+  // `force` re-reads a log already loaded, so opening it shows what other
+  // screens (care plans above all) have written since.
+  fetchPatientProgramActivity: async (patientId, { force = false } = {}) => {
     if (!patientId) return;
     const resolvedId = resolvePatientStoreId(get(), patientId);
-    if (get().patientProgramActivityLoadedFor[resolvedId]) return;
+    if (!force && get().patientProgramActivityLoadedFor[resolvedId]) return;
     set(s => ({ patientProgramActivityLoading: { ...s.patientProgramActivityLoading, [resolvedId]: true } }));
-    const { data, error } = await supabase
-      .from('patient_program_activity')
-      .select('*')
-      .eq('patient_id', resolvedId)
-      .order('occurred_at', { ascending: false });
+    // Care plans write their own history (audit rows, signed versions); the
+    // log folds every program's in, so it reads everything that happened.
+    // Plans can be keyed by the raw or the resolved patient id.
+    const ids = [...new Set([String(resolvedId), String(patientId)])];
+    const [{ data, error }, { data: auditRows, error: auditError }, { data: versionRows, error: versionError }] = await Promise.all([
+      supabase
+        .from('patient_program_activity')
+        .select('*')
+        .eq('patient_id', resolvedId)
+        .order('occurred_at', { ascending: false }),
+      supabase
+        .from('care_plan_audit')
+        .select('id, program_id, program_code, entity_type, entity_id, action, summary, detail, actor, created_at')
+        .in('patient_id', ids)
+        // Only what the log lists as it happened (live changes, notes, plan
+        // events); a signature stands for the rest. Newest first, so the
+        // 1000-row cap trims the oldest rather than the latest.
+        .in('action', CARE_PLAN_LOG_ACTIONS)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('patient_care_plan_versions')
+        .select('id, program_id, version_number, created_by, created_at')
+        .in('patient_id', ids),
+    ]);
     if (error) console.warn('fetchPatientProgramActivity:', error.message);
+    if (auditError) console.warn('fetchPatientProgramActivity — care plan audit:', auditError.message);
+    if (versionError) console.warn('fetchPatientProgramActivity — care plan versions:', versionError.message);
+    const carePlanSource = {
+      audit: (auditRows || []).map(r => ({
+        id: r.id, programId: r.program_id, programCode: r.program_code || '', entityType: r.entity_type,
+        entityId: r.entity_id, action: r.action, summary: r.summary || '', detail: r.detail || '', actor: r.actor || '', createdAt: r.created_at,
+      })),
+      versions: (versionRows || []).map(r => ({
+        id: r.id, programId: r.program_id, versionNumber: r.version_number, createdBy: r.created_by || '', createdAt: r.created_at,
+      })),
+    };
     const rows = (data || []).map(r => ({
       id:            r.id,
       programCode:   r.program_code,
@@ -1741,6 +1781,7 @@ export const useAppStore = create((set, get) => ({
     }));
     set(s => ({
       patientProgramActivity: { ...s.patientProgramActivity, [resolvedId]: rows },
+      patientCarePlanActivitySource: { ...s.patientCarePlanActivitySource, [resolvedId]: carePlanSource },
       patientProgramActivityLoading: { ...s.patientProgramActivityLoading, [resolvedId]: false },
       patientProgramActivityLoadedFor: { ...s.patientProgramActivityLoadedFor, [resolvedId]: true },
     }));
@@ -1876,17 +1917,6 @@ export const useAppStore = create((set, get) => ({
     if (program && entry.code === 'SNP') {
       get().ensureSnpWorklistMembership(patientId);
     }
-    // Enrolling a program is a program activity.
-    if (program) {
-      get().logProgramActivity({
-        patientId,
-        programCode: program.code,
-        title: `${program.code} Program Enrolled`,
-        activityKind: 'status',
-        statusLabel: 'New',
-        statusType: 'success',
-      });
-    }
     // Persist. Fire-and-forget — the optimistic local update already
     // rendered the row; a slow network shouldn't block the UI.
     if (program) {
@@ -1915,8 +1945,20 @@ export const useAppStore = create((set, get) => ({
       // miss the seed row, INSERT, and trip the (patient_id, code) unique key.
       // DO UPDATE would rewrite the id column and dangle references in
       // care_plan_audit / patient_care_plans / patient_care_plan_versions.
-      }, { onConflict: 'patient_id, code', ignoreDuplicates: true }).then(({ error }) => {
-        if (error) console.warn('addCareProgram — insert failed:', error.message);
+      }, { onConflict: 'patient_id, code', ignoreDuplicates: true }).select('id').then(({ data, error }) => {
+        if (error) { console.warn('addCareProgram — insert failed:', error.message); return; }
+        // Enrolling is program activity, but only when it really enrolled: a
+        // duplicate is ignored above, and logging it anyway filled the log
+        // with "Program Enrolled" for a patient enrolled once.
+        if ((data || []).length === 0) return;
+        get().logProgramActivity({
+          patientId,
+          programCode: program.code,
+          title: `${program.code} Program Enrolled`,
+          activityKind: 'status',
+          statusLabel: 'New',
+          statusType: 'success',
+        });
       });
     }
   },
