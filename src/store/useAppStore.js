@@ -13182,6 +13182,53 @@ export const useAppStore = create((set, get) => ({
     return !error;
   },
 
+  // Cover images added in the Print drawer, per employer, newest first:
+  // [{ id, name, url }]. The built-in covers aren't stored; they ship with the app.
+  fetchEmployerReportCovers: async (employer) => {
+    const { data, error } = await supabase.from('employer_report_covers')
+      .select('id, name, public_url').eq('employer', employer).order('created_at', { ascending: false });
+    if (error) {
+      console.warn('fetchEmployerReportCovers:', error.message);
+      return [];
+    }
+    return (data || []).map(r => ({ id: r.id, name: r.name, url: r.public_url }));
+  },
+  // Uploads to the report-covers bucket and records it for the employer.
+  // Until the migration has run, the image is kept for this session only
+  // (`local: true`) so the drawer still works.
+  addEmployerReportCover: async (employer, file) => {
+    const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+    const path = `${employer.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}/${crypto.randomUUID()}.${ext}`;
+    const local = () => ({ id: `local-${crypto.randomUUID()}`, name: file.name, url: URL.createObjectURL(file), local: true });
+    const { error: upErr } = await supabase.storage.from('report-covers').upload(path, file, { contentType: file.type, upsert: false });
+    if (upErr) {
+      console.warn('addEmployerReportCover (upload):', upErr.message);
+      return local();
+    }
+    const url = supabase.storage.from('report-covers').getPublicUrl(path).data.publicUrl;
+    const { data, error } = await supabase.from('employer_report_covers').insert({
+      employer, name: file.name, storage_path: path, public_url: url,
+      created_by: get().currentUserProfile?.name || null,
+    }).select('id').single();
+    if (error) {
+      console.warn('addEmployerReportCover (row):', error.message);
+      await supabase.storage.from('report-covers').remove([path]);
+      return local();
+    }
+    return { id: data.id, name: file.name, url };
+  },
+  removeEmployerReportCover: async (cover) => {
+    if (cover.local) { URL.revokeObjectURL(cover.url); return true; }
+    const { data, error } = await supabase.from('employer_report_covers')
+      .delete().eq('id', cover.id).select('storage_path').maybeSingle();
+    if (error) {
+      console.warn('removeEmployerReportCover:', error.message);
+      return false;
+    }
+    if (data?.storage_path) await supabase.storage.from('report-covers').remove([data.storage_path]);
+    return true;
+  },
+
   // Export history (History button): newest first. Falls back to the
   // sample rows while the table isn't there yet; exports made meanwhile are
   // kept in memory so they still show up.

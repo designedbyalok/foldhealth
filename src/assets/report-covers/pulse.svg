@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="848" viewBox="0 0 600 848">
+  <defs>
+    <radialGradient id="g" cx="0.5" cy="0.62" r="0.7"><stop offset="0" stop-color="#123B5C"/><stop offset="1" stop-color="#071628"/></radialGradient>
+    <filter id="glow" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+  <rect width="600" height="848" fill="url(#g)"/>
+  <g fill="none" stroke="#2EC4B6" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+    <polyline filter="url(#glow)" stroke-opacity="0.6" points="0,560 170,560 200,560 220,520 245,610 275,470 305,640 330,560 600,560"/>
+    <polyline points="0,560 170,560 200,560 220,520 245,610 275,470 305,640 330,560 600,560"/>
+  </g>
+  <g stroke="#2EC4B6" stroke-opacity="0.08">
+    <line x1="0" y1="500" x2="600" y2="500"/><line x1="0" y1="620" x2="600" y2="620"/>
+    <line x1="150" y1="440" x2="150" y2="680"/><line x1="300" y1="440" x2="300" y2="680"/><line x1="450" y1="440" x2="450" y2="680"/>
+  </g>
+</svg>

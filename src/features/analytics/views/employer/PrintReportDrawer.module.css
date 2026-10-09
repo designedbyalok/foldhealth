@@ -55,23 +55,10 @@
 .swatchAdd { align-items: center; justify-content: center; width: 100%; height: 100%; }
 
 /* Image picker (Dropzone + picked-file row). */
-.dropField { display: flex; flex-direction: column; gap: var(--space-1); }
+/* Under the cover gallery: what can be added, and who sees it. */
+.coverHint { font-size: var(--font-sm); line-height: var(--leading-tight); color: var(--neutral-200); }
 .dropError { font-size: var(--font-sm); color: var(--status-error); }
 
-/* "or search free photos" between the image picker and photo search. */
-.orDivider {
-  display: flex; align-items: center; gap: var(--space-2);
-  font-size: var(--font-sm); color: var(--neutral-200);
-}
-.orDivider::before, .orDivider::after { content: ''; flex: 1; height: 0.5px; background: var(--neutral-150); }
-.photoCredit { font-size: var(--font-sm); color: var(--neutral-300); }
-.photoCredit a { color: var(--primary-300); text-decoration: none; }
-.photoCredit a:hover { text-decoration: underline; }
-.picked {
-  display: flex; align-items: center; gap: var(--space-3);
-  padding: var(--space-2) var(--space-3); border: 0.5px solid var(--neutral-150); border-radius: 8px;
-}
-.pickedThumb { width: 40px; height: 40px; object-fit: contain; border-radius: 4px; background: var(--neutral-50); }
 .pickedName {
   flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   font-size: var(--font-base); color: var(--neutral-400);
