@@ -17,6 +17,9 @@ import { UnityPenToolIcon } from '../../../../../../../../components/Icon/UnityP
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import { templateContents as templateContentsOnPlan } from '../../../../../../../../store/lib/carePlanStoreLib';
 import { CarePlanVersionChangesDrawer } from '../CarePlanVersionChangesDrawer/CarePlanVersionChangesDrawer';
+import { GoalPreviewDrawer } from '../GoalPreviewDrawer/GoalPreviewDrawer';
+import { InterventionPreviewDrawer } from '../InterventionPreviewDrawer/InterventionPreviewDrawer';
+import { BarrierDetailDrawer } from '../BarrierDetailDrawer/BarrierDetailDrawer';
 import {
   TEMPLATE_RENEWAL_ACTIVITY,
   isTemplateRenewal,
@@ -365,6 +368,7 @@ export function CarePlanHistoryDrawer({ patientId, program, onClose }) {
   const links = useMemo(() => ({ plan, libraryGoals }), [plan, libraryGoals]);
   const [expanded, setExpanded] = useState(() => new Set());
   const [openVersion, setOpenVersion] = useState(null);
+  const [openItem, setOpenItem] = useState(null); // { type, item } shown over History
   const [allShown, setAllShown] = useState(() => new Set()); // group labels showing every entry
   const toggleAllShown = label => setAllShown(prev => {
     const next = new Set(prev);
@@ -452,7 +456,13 @@ export function CarePlanHistoryDrawer({ patientId, program, onClose }) {
     const header = unsigned
       ? [e.neverSigned ? 'Not signed yet' : 'Unsigned changes', `Becomes v${e.nextVersion} when signed`]
       : [`Signed by: ${e.actor || 'Unknown'}`, `v${e.versionNumber}`, e.sharedTo].filter(Boolean);
-    const openChanges = anchor => setOpenVersion({ rows: group.rows, createdAt: e.at, anchor });
+    const openChanges = anchor => setOpenVersion({
+      rows: group.rows, createdAt: e.at, anchor,
+      versionNumber: unsigned ? e.nextVersion : e.versionNumber,
+      current: !unsigned && e.versionNumber === currentVersion,
+      draft: unsigned,
+      signedBy: unsigned ? '' : e.actor,
+    });
     const card = isOpen && (
       <div className={styles.detailsWrap}>
         <AuditDetailCard
@@ -527,6 +537,21 @@ export function CarePlanHistoryDrawer({ patientId, program, onClose }) {
   // Progress, notes, readings and plan events are ordinary activity-log
   // entries, so they read exactly like HCC's: a sentence headline, the
   // from → to pills under it, and the version in the meta line.
+  // An entry about a goal, intervention or barrier still on the plan opens
+  // that item's details over History.
+  const ITEM_LIST = { goal: 'goals', intervention: 'interventions', barrier: 'barriers' };
+  const openActionFor = (e) => {
+    const list = ITEM_LIST[e.entityType];
+    const item = list && e.entityId != null
+      ? (plan?.[list] || []).find(x => String(x.id) === String(e.entityId))
+      : null;
+    if (!item) return {};
+    return {
+      onOpen: () => setOpenItem({ type: e.entityType, item }),
+      openTooltip: `Open ${e.entityType}`,
+    };
+  };
+
   const activityItem = (e) => {
     const d = e.at ? new Date(e.at) : null;
     const base = {
@@ -541,6 +566,7 @@ export function CarePlanHistoryDrawer({ patientId, program, onClose }) {
       title: e.headlineAction
         ? <>{e.headlineAction} <span className={styles.headlineSubject}>{e.headlineSubject}</span></>
         : e.headline,
+      ...openActionFor(e),
     };
     if (e.type === 'progress') {
       // Progress and adherence read in their band colours ("3% - Low" red,
@@ -742,6 +768,34 @@ export function CarePlanHistoryDrawer({ patientId, program, onClose }) {
         entries={loading ? [] : logEntries}
         emptyLabel={loading ? 'Loading history…' : 'Nothing matches these filters.'}
       />
+      {openItem?.type === 'goal' && (
+        <GoalPreviewDrawer
+          goal={openItem.item}
+          patientId={patientId}
+          program={program}
+          onClose={() => setOpenItem(null)}
+          onOpenIntervention={(i) => setOpenItem({ type: 'intervention', item: i })}
+          onOpenBarrier={(b) => setOpenItem({ type: 'barrier', item: b })}
+        />
+      )}
+      {openItem?.type === 'intervention' && (
+        <InterventionPreviewDrawer
+          intervention={openItem.item}
+          patientId={patientId}
+          program={program}
+          onClose={() => setOpenItem(null)}
+          onOpenGoal={(g) => setOpenItem({ type: 'goal', item: g })}
+        />
+      )}
+      {openItem?.type === 'barrier' && (
+        <BarrierDetailDrawer
+          barrier={openItem.item}
+          patientId={patientId}
+          program={program}
+          onClose={() => setOpenItem(null)}
+          onOpenGoal={(g) => setOpenItem({ type: 'goal', item: g })}
+        />
+      )}
       {openVersion && (
         <CarePlanVersionChangesDrawer
           rows={openVersion.rows}
@@ -749,6 +803,10 @@ export function CarePlanHistoryDrawer({ patientId, program, onClose }) {
           anchor={openVersion.anchor}
           plan={plan}
           patientId={patientId}
+          versionNumber={openVersion.versionNumber}
+          current={openVersion.current}
+          draft={openVersion.draft}
+          signedBy={openVersion.signedBy}
           onClose={() => setOpenVersion(null)}
         />
       )}

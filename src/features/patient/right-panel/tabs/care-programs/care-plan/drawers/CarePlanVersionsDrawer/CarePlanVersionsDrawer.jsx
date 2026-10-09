@@ -50,7 +50,7 @@ export function CarePlanVersionsDrawer({ patientId, program, onClose }) {
   }, [auditEntries]);
   const openChanges = (v) => {
     const g = changesByVersion.get(v.versionNumber);
-    setOpenVersion(g || { rows: [], createdAt: v.createdAt });
+    setOpenVersion({ ...(g || { rows: [], createdAt: v.createdAt }), versionNumber: v.versionNumber, current: v.versionNumber === list[0]?.versionNumber, signedBy: v.createdBy });
   };
 
   useEffect(() => {
@@ -121,6 +121,9 @@ export function CarePlanVersionsDrawer({ patientId, program, onClose }) {
           signedAt={openVersion.createdAt}
           plan={plan}
           patientId={patientId}
+          versionNumber={openVersion.versionNumber}
+          current={openVersion.current}
+          signedBy={openVersion.signedBy}
           onClose={() => setOpenVersion(null)}
         />
       )}

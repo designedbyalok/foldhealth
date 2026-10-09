@@ -357,43 +357,59 @@ export function ViewMoreButton({ expanded, onToggle, label = 'View more', leadin
 
 /* ── Type-branched entry ─────────────────────────────────────────────── */
 function ActivityLogEntry({ entry, isFirst, isLast, hideCommentTitle = false, onOpenTask, onOpenNote }) {
+  const content = (() => {
+      // Escape hatch for surfaces whose entry shape none of the built-in
+      // variants covers (e.g. Care Plan History's version cards).
+      if (typeof entry.render === 'function') return entry.render(entry);
+      switch (entry.t) {
+        case 'outreach':
+        case 'call':
+        case 'sms':
+          return <OutreachEntryBody entry={entry} />;
+        case 'status_change':
+        case 'status_dos':
+          return <StatusChangeEntryBody entry={entry} />;
+        case 'clinical_note':
+        case 'note':
+          return <DetailCardEntryBody entry={entry} variant="note" onOpenTask={onOpenTask} onOpenNote={onOpenNote} />;
+        case 'task':
+          return <DetailCardEntryBody entry={entry} variant="task" onOpenTask={onOpenTask} />;
+        case 'appointment':
+          return <DetailCardEntryBody entry={entry} variant="appointment" />;
+        case 'referral':
+          return <ReferralEntryBody entry={entry} />;
+        case 'assign_coder':
+        case 'assignee_change':
+          return <AssigneeChangeEntryBody entry={entry} />;
+        case 'upload':
+        case 'document':
+          return <UploadEntryBody entry={entry} />;
+        case 'comment':
+          return <CommentEntryBody entry={entry} hideTitle={hideCommentTitle} />;
+        default:
+          return <GenericEntryBody entry={entry} />;
+      }
+    })();
   return (
     <div className={htStyles.row}>
       <Rail entry={entry} isFirst={isFirst} isLast={isLast} />
       <div className={[htStyles.body, isFirst ? htStyles.bodyFirst : '', isLast ? htStyles.bodyLast : ''].join(' ')}>
-        {(() => {
-          // Escape hatch for surfaces whose entry shape none of the built-in
-          // variants covers (e.g. Care Plan History's version cards).
-          if (typeof entry.render === 'function') return entry.render(entry);
-          switch (entry.t) {
-            case 'outreach':
-            case 'call':
-            case 'sms':
-              return <OutreachEntryBody entry={entry} />;
-            case 'status_change':
-            case 'status_dos':
-              return <StatusChangeEntryBody entry={entry} />;
-            case 'clinical_note':
-            case 'note':
-              return <DetailCardEntryBody entry={entry} variant="note" onOpenTask={onOpenTask} onOpenNote={onOpenNote} />;
-            case 'task':
-              return <DetailCardEntryBody entry={entry} variant="task" onOpenTask={onOpenTask} />;
-            case 'appointment':
-              return <DetailCardEntryBody entry={entry} variant="appointment" />;
-            case 'referral':
-              return <ReferralEntryBody entry={entry} />;
-            case 'assign_coder':
-            case 'assignee_change':
-              return <AssigneeChangeEntryBody entry={entry} />;
-            case 'upload':
-            case 'document':
-              return <UploadEntryBody entry={entry} />;
-            case 'comment':
-              return <CommentEntryBody entry={entry} hideTitle={hideCommentTitle} />;
-            default:
-              return <GenericEntryBody entry={entry} />;
-          }
-        })()}
+        {entry.onOpen ? (
+          // `onOpen`: an entry about a record the reader can open. Hovering
+          // tints the entry and shows an open button centred at its right
+          // (`openTooltip` names what it opens).
+          <div className={styles.openable}>
+            {content}
+            <span className={styles.openButton}>
+              <ActionButton
+                icon="solar:arrow-right-up-linear"
+                size="S"
+                tooltip={entry.openTooltip || 'Open'}
+                onClick={entry.onOpen}
+              />
+            </span>
+          </div>
+        ) : content}
       </div>
     </div>
   );

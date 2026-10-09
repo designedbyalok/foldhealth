@@ -17,6 +17,7 @@
 
 import { buildCarePlanSnapshot, diffCarePlanSnapshots, isFullSnapshot, uniqueById } from './carePlanDraft';
 import { NOTE_ACTIONS } from './carePlanVersions';
+import { templateTitles } from './carePlanAuditTemplates';
 
 /** Activity types the History filter offers, in display order. */
 export const HISTORY_TYPES = [
@@ -74,9 +75,36 @@ const FIELD_ACTION = {
   goalIds: 'goal_link_changed', description: 'description_changed', subtitle: 'description_changed',
 };
 
+/**
+ * Which template kept across two snapshots each goal, intervention and barrier
+ * belongs to, by title, so an edit inside a template already on the plan can be
+ * reported under that template. `type:title` → { id, name }.
+ */
+function templateOwners(before, after, templateDetail, templateName) {
+  const owners = new Map();
+  if (!before || !after || !templateDetail) return owners;
+  const kept = new Set((before.appliedTemplateIds || []).map(String));
+  for (const id of (after.appliedTemplateIds || []).map(String)) {
+    if (!kept.has(id)) continue;
+    // The after snapshot names what the template holds now, the before one
+    // what it held, so removed items are still claimed.
+    for (const snap of [after, before]) {
+      const titles = templateTitles({ detail: templateDetail(id, snap) });
+      for (const type of ['goal', 'intervention', 'barrier']) {
+        for (const title of titles[type]) {
+          const key = `${type}:${(title || '').trim().toLowerCase()}`;
+          if (!owners.has(key)) owners.set(key, { id, name: templateName(id) });
+        }
+      }
+    }
+  }
+  return owners;
+}
+
 /** A snapshot diff as audit-shaped rows, oldest first. */
 function changeRows(changes, ctx) {
-  const { audit, from, to, fallbackAt, fallbackActor, templateDetail, idPrefix } = ctx;
+  const { audit, from, to, fallbackAt, fallbackActor, templateDetail, idPrefix, before, after, owners } = ctx;
+  const ownerOf = c => owners?.get(`${c.entityType}:${(c.title || '').trim().toLowerCase()}`) || null;
   const who = (change, action) => {
     const hit = (audit || []).find(e => String(e.entityId) === String(change.entityId)
       && inRange(e.createdAt, from, to)
@@ -89,11 +117,15 @@ function changeRows(changes, ctx) {
   for (const c of changes) {
     if (c.entityType === 'template') {
       if (c.action === 'changed') {
-        push({ entityType: 'plan', entityId: c.entityId, action: 'updated', summary: `${c.title} template`, detail: `Priority: ${c.fields[0].from} → ${c.fields[0].to}`, ...who(c, null) });
+        push({
+          entityType: 'plan', entityId: c.entityId, action: 'updated', summary: `${c.title} template`,
+          detail: `Priority: ${c.fields[0].from} → ${c.fields[0].to}`, template: { id: String(c.entityId), name: c.title }, ...who(c, null),
+        });
       } else {
         push({
           entityType: 'template', entityId: c.entityId, action: c.action === 'added' ? 'created' : 'deleted',
-          summary: c.title, detail: c.action === 'added' ? (templateDetail?.(c.entityId) || '') : '', ...who(c, null),
+          summary: c.title, detail: c.action === 'added' ? (templateDetail?.(c.entityId) || '') : '',
+          scope: c.action === 'added' ? after : before, ...who(c, null),
         });
       }
       continue;
@@ -105,14 +137,18 @@ function changeRows(changes, ctx) {
     }
     if (c.action === 'added' || c.action === 'removed') {
       const action = c.action === 'added' ? 'created' : 'deleted';
-      push({ entityType: c.entityType, entityId: c.entityId, action, summary: c.title, detail: '', ...who(c, action) });
+      // The item as it stood, and the snapshot it stood in, so the changes
+      // drawer can show its details and links even once it's gone.
+      const scope = c.action === 'added' ? after : before;
+      const item = (scope?.[`${c.entityType}s`] || []).find(x => String(x.id) === String(c.entityId)) || null;
+      push({ entityType: c.entityType, entityId: c.entityId, action, summary: c.title, detail: '', item, scope, template: ownerOf(c), ...who(c, action) });
       continue;
     }
     for (const f of c.fields) {
       push({
         entityType: c.entityType, entityId: c.entityId, action: FIELD_ACTION[f.key] || 'updated', summary: c.title,
         detail: f.from || f.to ? `${f.label}: ${f.from || 'None'} → ${f.to || 'None'}` : `${f.label} updated`,
-        ...who(c, null),
+        template: ownerOf(c), ...who(c, null),
       });
     }
   }
@@ -149,7 +185,7 @@ function withHeadline(entry, action, subject) {
 function activityFromRow(row, type) {
   const noun = NOUN[row.entityType] || 'Plan';
   const title = row.summary || '';
-  const base = { id: `a-${row.id}`, kind: 'activity', type, entityType: row.entityType, title, at: row.createdAt, actor: row.actor || '' };
+  const base = { id: `a-${row.id}`, kind: 'activity', type, entityType: row.entityType, entityId: row.entityId ?? null, title, at: row.createdAt, actor: row.actor || '' };
   if (type === 'title') {
     const was = /^Renamed from "(.*)"$/.exec(row.detail || '')?.[1] || '';
     return withHeadline({ ...base, from: was, to: title }, 'Renamed', `${noun}: ${title}`);
@@ -200,6 +236,7 @@ function activityEntries(audit, measurements, goals) {
       const VERB = { added: 'Added', updated: 'Updated', removed: 'Removed' }[verb];
       out.push({
         id: `a-${e.id}`, kind: 'activity', type: onPlan ? 'care_note' : 'item_note', entityType: onPlan ? 'plan' : e.entityType,
+        entityId: onPlan ? null : (e.entityId ?? null),
         headline: onPlan
           ? `${VERB} ${verb === 'added' ? 'a' : 'the'} Care Plan Note`
           : `${VERB} ${verb === 'added' ? 'a' : 'the'} Note on ${NOUN[e.entityType] || 'Item'}: ${itemTitle}`,
@@ -237,7 +274,7 @@ function activityEntries(audit, measurements, goals) {
       && String(e.entityId) === String(m.goalId)
       && Math.abs(ms(e.createdAt) - ms(m.takenAt)) < 2 * 60 * 1000);
     out.push({
-      id: `m-${m.id}`, kind: 'activity', type: 'value', entityType: 'goal', title: goalTitle(m.goalId),
+      id: `m-${m.id}`, kind: 'activity', type: 'value', entityType: 'goal', entityId: m.goalId, title: goalTitle(m.goalId),
       headline: `Value Entered on Goal: ${goalTitle(m.goalId)}`,
       headlineAction: 'Value Entered on', headlineSubject: `Goal: ${goalTitle(m.goalId)}`,
       value: [m.value, m.unit].filter(Boolean).join(' '), inTarget: m.favorable !== false,
@@ -299,6 +336,8 @@ export function buildCarePlanHistory({ versions, audit, slice, templates, templa
       ? changeRows(diffCarePlanSnapshots(latest.snapshot, draft, { templateName }).changes, {
         audit, from, to: now, fallbackAt: null, fallbackActor: '',
         templateDetail: id => templateDetail?.(id, draft), idPrefix: 'u',
+        before: latest.snapshot, after: draft,
+        owners: templateOwners(latest.snapshot, draft, templateDetail, templateName),
       })
       : structuralRows(from, now);
     if (rows.length) {
@@ -318,6 +357,8 @@ export function buildCarePlanHistory({ versions, audit, slice, templates, templa
       ? changeRows(diffCarePlanSnapshots(prev.snapshot, v.snapshot, { templateName }).changes, {
         audit, from: start, to: end, fallbackAt: v.createdAt, fallbackActor: v.createdBy || '',
         templateDetail: id => templateDetail?.(id, v.snapshot), idPrefix: `v${v.versionNumber}`,
+        before: prev.snapshot, after: v.snapshot,
+        owners: templateOwners(prev.snapshot, v.snapshot, templateDetail, templateName),
       })
       : structuralRows(start, end);
     const nextEnd = i === 0 ? now : endOf(list[i - 1]);
