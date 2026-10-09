@@ -1,0 +1,6 @@
+/* TimePicker: the date-time picker's time columns, without the calendar. */
+.box { width: 100%; }
+
+/* No calendar to set the height, so the columns get their own. */
+.dropdown { overflow: hidden; }
+.columns { height: 15rem; }

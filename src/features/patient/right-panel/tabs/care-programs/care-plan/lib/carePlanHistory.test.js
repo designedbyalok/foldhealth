@@ -58,6 +58,16 @@ describe('buildCarePlanHistory', () => {
   });
 });
 
+describe('changes inside a kept template', () => {
+  it('tags each edit with the template that was already on the plan', () => {
+    const templateDetail = () => JSON.stringify({ goals: [{ title: 'A1c below 7%' }] });
+    const entries = buildCarePlanHistory({ versions: [v2, v1], audit: [], slice: slice({ goals: v2.snapshot.goals }), templates, templateDetail });
+    const rows = entries.find(e => e.id === 'v2').rows;
+    expect(rows.find(r => r.action === 'target_changed').template).toEqual({ id: 't1', name: 'Diabetes' });
+    expect(rows.find(r => r.action === 'created').template).toBe(null);
+  });
+});
+
 describe('liveActivityType', () => {
   it('recognises progress written by the save actions', () => {
     expect(liveActivityType({ action: 'updated', detail: 'Due Date: 2026-10-01 → 2026-11-01' })).toBe('assignment');

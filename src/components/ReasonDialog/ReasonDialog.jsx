@@ -65,7 +65,7 @@ export function ReasonDialog({
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onCancel?.(); }}>
-      <DialogContent className="max-w-[460px] gap-0 p-0">
+      <DialogContent className={styles.content}>
         <div className={styles.body}>
           <h3 className={styles.title}>{title}</h3>
           {description && <p className={styles.description}>{description}</p>}
@@ -101,8 +101,9 @@ export function ReasonDialog({
           )}
 
           <div className={styles.footer}>
-            <Button variant="secondary" size="L" onClick={onCancel}>Cancel</Button>
+            <Button variant="secondary" size="L" fullWidth onClick={onCancel}>Cancel</Button>
             <Button
+              fullWidth
               variant={confirmVariant || (decision === 'fail' ? 'danger' : 'primary')}
               size="L"
               disabled={!valid}
