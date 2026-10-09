@@ -368,6 +368,19 @@ export const Input = forwardRef(function Input(
     />
   );
 
+  // Native time fields ignore `placeholder` and show "--:-- --". When the
+  // caller gives one, it's drawn over the empty field instead (hidden while
+  // focused, so the segments are there to type into). The wrapper is always
+  // rendered for these, so the input never remounts mid-entry.
+  const timePlaceholder = isTimeLike && props.placeholder ? props.placeholder : null;
+  const timeIsEmpty = timePlaceholder && !shellInputValue;
+  const inputSlot = timePlaceholder ? (
+    <span className={[styles.timeSlot, timeIsEmpty ? styles.timeEmpty : ''].filter(Boolean).join(' ')}>
+      {bareInput}
+      <span className={styles.timePlaceholder} aria-hidden="true">{timePlaceholder}</span>
+    </span>
+  ) : bareInput;
+
   const leading = hasLeading ? (
     <>
       {leadingIcon && (
@@ -511,7 +524,7 @@ export const Input = forwardRef(function Input(
       )}
       <div className={shellCls} ref={shellRef}>
         {leading}
-        {bareInput}
+        {inputSlot}
         {trailing}
       </div>
       {typeof activeError === 'string' && activeError && (

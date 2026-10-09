@@ -1,5 +1,12 @@
+/* The dialog shell brings its own padding (and outranks Tailwind's p-0);
+   here .body owns all the spacing, so the shell's is cleared. */
+.content {
+  max-width: 460px;
+  padding: 0;
+}
+
 .body {
-  padding: 24px 24px 20px;
+  padding: var(--space-5);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -45,11 +52,10 @@
   flex-shrink: 0;
 }
 
+/* Two equal buttons across the dialog's width. */
 .footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 8px;
-  padding-top: 16px;
-  border-top: 0.5px solid var(--neutral-150);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
 }

@@ -69,13 +69,15 @@ export function Badge({
   const toneClass = tone ? styles[`tone-${tone}`] || styles[`tone${tone[0].toUpperCase()}${tone.slice(1)}`] || '' : '';
   const sizeClass = size ? styles[`size${size}`] || '' : '';
   const hoverClass = hover ? styles.hover : '';
+  // Only badges you can act on get a hover tint.
+  const interactiveClass = chevron || onTrailingIconClick ? styles.interactive : '';
   // Icons (leading, trailing, chevron) scale with the badge's size — S=14,
   // M=16, L=20. Unspecified size stays at the legacy 13.
   const iconPx = size === 'L' ? 20 : size === 'M' ? 16 : size === 'S' ? 14 : 13;
 
   return (
     <span
-      className={[styles.badge, sizeClass, toneClass, variantClass, hoverClass, className || '']
+      className={[styles.badge, sizeClass, toneClass, variantClass, hoverClass, interactiveClass, className || '']
         .filter(Boolean)
         .join(' ')}
       style={style}

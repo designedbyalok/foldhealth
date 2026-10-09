@@ -35,7 +35,8 @@
 /* Tones — the 10 canonical Types from the Figma matrix. Uses design-token
    backgrounds + color-mix borders (matches the pattern from .status-ready,
    .compliance-*, .awv-*). `.hover` forces the hover-state background for
-   Storybook demos; real usage relies on the :hover selector below. */
+   Storybook demos. Real hover only darkens badges that do something
+   (a chevron popover or a dismiss button); status / count badges stay still. */
 .tone-white     { background: var(--neutral-0);           color: var(--neutral-400);    border-color: var(--neutral-150); }
 .tone-grey      { background: var(--neutral-50);          color: var(--neutral-400);    border-color: var(--neutral-150); }
 .tone-ghost     { background: transparent;                color: var(--neutral-300);    border-color: transparent; }
@@ -47,15 +48,15 @@
 .tone-info      { background: var(--status-info-light);   color: var(--status-info);    border-color: color-mix(in srgb, var(--status-info) 20%, transparent); }
 .tone-disabled  { background: var(--neutral-50);          color: var(--neutral-200);    border-color: var(--neutral-100); }
 
-.tone-white.hover,     .tone-white:hover     { background: var(--neutral-50); }
-.tone-grey.hover,      .tone-grey:hover      { background: var(--neutral-100); }
-.tone-ghost.hover,     .tone-ghost:hover     { background: var(--neutral-50); }
-.tone-primary.hover,   .tone-primary:hover   { background: var(--primary-100); }
-.tone-secondary.hover, .tone-secondary:hover { background: var(--secondary-100); }
-.tone-success.hover,   .tone-success:hover   { background: color-mix(in srgb, var(--status-success) 12%, transparent); }
-.tone-warning.hover,   .tone-warning:hover   { background: color-mix(in srgb, var(--status-warning) 12%, transparent); }
-.tone-error.hover,     .tone-error:hover     { background: color-mix(in srgb, var(--status-error) 12%, transparent); }
-.tone-info.hover,      .tone-info:hover      { background: color-mix(in srgb, var(--status-info) 12%, transparent); }
+.tone-white.hover,     .interactive.tone-white:hover     { background: var(--neutral-50); }
+.tone-grey.hover,      .interactive.tone-grey:hover      { background: var(--neutral-100); }
+.tone-ghost.hover,     .interactive.tone-ghost:hover     { background: var(--neutral-50); }
+.tone-primary.hover,   .interactive.tone-primary:hover   { background: var(--primary-100); }
+.tone-secondary.hover, .interactive.tone-secondary:hover { background: var(--secondary-100); }
+.tone-success.hover,   .interactive.tone-success:hover   { background: color-mix(in srgb, var(--status-success) 12%, transparent); }
+.tone-warning.hover,   .interactive.tone-warning:hover   { background: color-mix(in srgb, var(--status-warning) 12%, transparent); }
+.tone-error.hover,     .interactive.tone-error:hover     { background: color-mix(in srgb, var(--status-error) 12%, transparent); }
+.tone-info.hover,      .interactive.tone-info:hover      { background: color-mix(in srgb, var(--status-info) 12%, transparent); }
 /* Disabled never darkens on hover — it's disabled. */
 
 .dot {

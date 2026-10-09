@@ -6,6 +6,7 @@
 }
 .open { grid-template-rows: 1fr; }
 .inner { overflow: hidden; min-height: 0; }
+.settled > .inner { overflow: visible; }
 
 @media (prefers-reduced-motion: reduce) {
   .outer { transition: none; }

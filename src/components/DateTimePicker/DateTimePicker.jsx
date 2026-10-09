@@ -3,14 +3,12 @@ import { createPortal } from 'react-dom';
 import { CalendarIcon } from '../Icon/CalendarIcon';
 import { ActionButton } from '../ActionButton/ActionButton';
 import { parsePickerValue } from './parsePickerValue';
+import { TimeColumns } from '../TimePicker/TimeColumns';
 import inputStyles from '../Input/Input.module.css';
 import styles from './DateTimePicker.module.css';
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'];
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
-const HOURS_12 = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-const MINUTES = Array.from({ length: 60 }, (_, i) => i);
 const pad = (n) => String(n).padStart(2, '0');
 
 const toDate = (mmddyyyy) => {
@@ -157,56 +155,15 @@ export function DateTimePicker({ value, onChange, label, required = false, place
                 </div>
               </div>
 
-              <div className={hour12 ? `${styles.timeColumnsSection} ${styles.timeColumns12}` : styles.timeColumnsSection}>
-                <div className={styles.timeColsRow}>
-                  <div className={styles.timeColWrap}>
-                    <span className={styles.timeColLabel}>Hr</span>
-                    <div className={styles.timeCol} ref={hourColRef}>
-                      {hour12
-                        ? HOURS_12.map(h => (
-                          <button key={h} type="button" data-h={h}
-                            className={`${styles.timeColItem} ${to12(pickerHour) === h ? styles.timeColItemSelected : ''}`}
-                            onClick={() => pickHour((h % 12) + (pickerHour >= 12 ? 12 : 0))}>
-                            {pad(h)}
-                          </button>
-                        ))
-                        : HOURS.map(h => (
-                          <button key={h} type="button" data-h={h}
-                            className={`${styles.timeColItem} ${pickerHour === h ? styles.timeColItemSelected : ''}`}
-                            onClick={() => pickHour(h)}>
-                            {pad(h)}
-                          </button>
-                        ))}
-                    </div>
-                  </div>
-                  <div className={styles.timeColWrap}>
-                    <span className={styles.timeColLabel}>Min</span>
-                    <div className={styles.timeCol} ref={minColRef}>
-                      {MINUTES.map(m => (
-                        <button key={m} type="button" data-m={m}
-                          className={`${styles.timeColItem} ${pickerMinute === m ? styles.timeColItemSelected : ''}`}
-                          onClick={() => pickMinute(m)}>
-                          {pad(m)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  {hour12 && (
-                    <div className={styles.timeColWrap}>
-                      <span className={styles.timeColLabel}>&nbsp;</span>
-                      <div className={styles.timeCol}>
-                        {['AM', 'PM'].map(p => (
-                          <button key={p} type="button"
-                            className={`${styles.timeColItem} ${(pickerHour >= 12) === (p === 'PM') ? styles.timeColItemSelected : ''}`}
-                            onClick={() => pickHour((pickerHour % 12) + (p === 'PM' ? 12 : 0))}>
-                            {p}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <TimeColumns
+                hour={pickerHour}
+                minute={pickerMinute}
+                hour12={hour12}
+                hourColRef={hourColRef}
+                minColRef={minColRef}
+                onHour={pickHour}
+                onMinute={pickMinute}
+              />
             </div>
             {!autoCommit && (
               <div className={styles.pickerFooter}>

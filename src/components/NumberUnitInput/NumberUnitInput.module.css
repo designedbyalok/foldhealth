@@ -1,0 +1,41 @@
+/* "[3 | Days ⌄]": the count, a hairline, then the unit picker. */
+.shell { gap: var(--space-2); }
+
+.count {
+  flex: 0 0 2rem;
+  width: 2rem;
+  -moz-appearance: textfield;
+}
+.count::-webkit-outer-spin-button,
+.count::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+.divider {
+  align-self: stretch;
+  width: 0.5px;
+  background: var(--neutral-150);
+  flex-shrink: 0;
+}
+
+.unit {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.unitText {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
