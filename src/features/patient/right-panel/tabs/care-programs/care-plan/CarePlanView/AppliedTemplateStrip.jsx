@@ -9,6 +9,7 @@ const CHIP_GAP = 4;
 function TemplateBadge({
   template,
   templatePriority,
+  version,
   isActive,
   canRemove,
   onSelect,
@@ -20,7 +21,7 @@ function TemplateBadge({
       className={`${styles.appliedTemplateBadge} ${isActive ? styles.appliedTemplateBadgeActive : ''}`}
       aria-pressed={isActive}
       onClick={() => onSelect(template.id)}
-      aria-label={`${templatePriority} priority, ${template.name}${isActive ? ', filter active' : ''}`}
+      aria-label={`${templatePriority} priority, ${template.name}${version ? `, version ${version}` : ''}${isActive ? ', filter active' : ''}`}
     >
       <Badge
         tone={isActive ? 'primary' : 'grey'}
@@ -29,6 +30,7 @@ function TemplateBadge({
           <>
             <PriorityIcon priority={templatePriority} size={12} />
             {template.name}
+            {version && <span className={styles.runVersion}>V{version}</span>}
           </>
         )}
         trailingIconElement={canRemove ? (
@@ -53,12 +55,47 @@ function TemplateBadge({
 }
 
 /**
+ * An earlier run of a reinstated template: done (check mark), its version,
+ * and selecting it shows that run's goals, interventions and barriers.
+ */
+function RunBadge({ template, run, isActive, onSelect }) {
+  const outcome = run.status === 'completed' ? 'completed' : 'closed';
+  return (
+    <button
+      type="button"
+      className={`${styles.appliedTemplateBadge} ${isActive ? styles.appliedTemplateBadgeActive : ''}`}
+      aria-pressed={isActive}
+      onClick={() => onSelect(`run:${run.id}`)}
+      aria-label={`${template.name}, version ${run.version}, done (${outcome})${isActive ? ', showing' : ''}`}
+      title={`Version ${run.version}, ${outcome === 'completed' ? 'completed' : 'closed'} when the template was added again`}
+    >
+      <Badge
+        tone={isActive ? 'primary' : 'grey'}
+        size="S"
+        label={(
+          <>
+            <Icon name="solar:check-circle-linear" size={12} color={isActive ? 'var(--primary-300)' : 'var(--status-success)'} />
+            <span className={styles.runDoneName}>{template.name}</span>
+            <span className={styles.runVersion}>V{run.version}</span>
+          </>
+        )}
+      />
+    </button>
+  );
+}
+
+/**
  * Applied templates in priority order (high → medium → low) on one row. When the row
  * overflows, a right-aligned "View More N" reveals the rest; expanded wraps
  * all templates and offers "View Less". Collapsed, the selected template
  * moves to the front so it never hides behind "View More".
  * `trailing` (the Templates action) sits at the row's end, so the strip also
  * renders when nothing is applied yet.
+ *
+ * `runsByTemplate`: { [templateId]: { version, previous: [{ id, version, status }] } }
+ * for templates added again. The current run's chip shows its version (V2);
+ * each earlier run follows it as a done chip (✓ V1). A selected id of
+ * `run:<id>` is an earlier run.
  */
 export function AppliedTemplateStrip({
   templates,
@@ -68,15 +105,26 @@ export function AppliedTemplateStrip({
   onSelect,
   onRemove,
   trailing = null,
+  runsByTemplate = {},
 }) {
   const chipsRef = useRef(null);
   const measureRef = useRef(null);
   const [expanded, setExpanded] = useState(false);
   const [visibleCount, setVisibleCount] = useState(templates.length);
   const [hasOverflow, setHasOverflow] = useState(false);
-  const selected = !expanded && templateFilterId ? templates.find(t => t.id === templateFilterId) : null;
+  const selectedRunTemplate = typeof templateFilterId === 'string' && templateFilterId.startsWith('run:')
+    ? templates.find(t => (runsByTemplate[t.id]?.previous || []).some(r => `run:${r.id}` === templateFilterId))
+    : null;
+  const selected = !expanded && templateFilterId
+    ? selectedRunTemplate || templates.find(t => t.id === templateFilterId)
+    : null;
   const ordered = selected ? [selected, ...templates.filter(t => t !== selected)] : templates;
-  const templatesKey = ordered.map(t => t.id).join('|');
+  // One entry per chip: each template, then its earlier runs right after it.
+  const entries = ordered.flatMap(t => [
+    { key: t.id, template: t },
+    ...(runsByTemplate[t.id]?.previous || []).map(run => ({ key: `run:${run.id}`, template: t, run })),
+  ]);
+  const templatesKey = entries.map(e => e.key).join('|');
 
   useLayoutEffect(() => {
     const row = chipsRef.current;
@@ -85,7 +133,7 @@ export function AppliedTemplateStrip({
 
     const recompute = () => {
       if (expanded) {
-        setVisibleCount(templates.length);
+        setVisibleCount(entries.length);
         return;
       }
 
@@ -137,7 +185,7 @@ export function AppliedTemplateStrip({
       cancelAnimationFrame(raf);
       ro.disconnect();
     };
-  }, [templatesKey, expanded, templates.length]);
+  }, [templatesKey, expanded, entries.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (templates.length === 0) {
     if (!trailing) return null;
@@ -151,8 +199,28 @@ export function AppliedTemplateStrip({
     );
   }
 
-  const shown = expanded ? templates : ordered.slice(0, visibleCount);
-  const hiddenCount = Math.max(0, templates.length - visibleCount);
+  const shown = expanded ? entries : entries.slice(0, visibleCount);
+  const hiddenCount = Math.max(0, entries.length - visibleCount);
+  const renderEntry = (e, live) => (e.run ? (
+    <RunBadge
+      key={e.key}
+      template={e.template}
+      run={e.run}
+      isActive={live && templateFilterId === e.key}
+      onSelect={live ? onSelect : () => {}}
+    />
+  ) : (
+    <TemplateBadge
+      key={e.key}
+      template={e.template}
+      templatePriority={appliedTemplatePriorities[e.template.id] || 'medium'}
+      version={runsByTemplate[e.template.id]?.version}
+      isActive={live && templateFilterId === e.key}
+      canRemove={canRemove}
+      onSelect={live ? onSelect : () => {}}
+      onRemove={live ? onRemove : () => {}}
+    />
+  ));
 
   return (
     <div className={styles.templatePriorityBar}>
@@ -161,37 +229,11 @@ export function AppliedTemplateStrip({
           ref={chipsRef}
           className={`${styles.priorityChips} ${expanded ? '' : styles.priorityChipsCollapsed}`}
         >
-          {shown.map(t => {
-            const templatePriority = appliedTemplatePriorities[t.id] || 'medium';
-            return (
-              <TemplateBadge
-                key={t.id}
-                template={t}
-                templatePriority={templatePriority}
-                isActive={templateFilterId === t.id}
-                canRemove={canRemove}
-                onSelect={onSelect}
-                onRemove={onRemove}
-              />
-            );
-          })}
+          {shown.map(e => renderEntry(e, true))}
           <span ref={measureRef} className={styles.templateMeasure} aria-hidden="true">
-            {ordered.map(t => {
-              const templatePriority = appliedTemplatePriorities[t.id] || 'medium';
-              return (
-                <TemplateBadge
-                  key={t.id}
-                  template={t}
-                  templatePriority={templatePriority}
-                  isActive={false}
-                  canRemove={canRemove}
-                    onSelect={() => {}}
-                  onRemove={() => {}}
-                />
-              );
-            })}
+            {entries.map(e => renderEntry(e, false))}
             <span className={styles.viewMoreMeasure}>
-              View More {templates.length}
+              View More {entries.length}
             </span>
           </span>
         </div>

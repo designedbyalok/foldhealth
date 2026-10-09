@@ -37,6 +37,12 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **Template versions on the care plan.** When a template is reinstated, the
+  current run's chip on the applied-templates strip reads V2 and each earlier
+  run follows it as a done chip (check mark, V1). Selecting V1 shows that
+  run's goals, interventions and barriers in the same tables, read-only,
+  under a banner with its close date and how many were met. This replaces
+  the Previous runs section.
 - **Care plan print: Personalize tab, presets and a Care Plan Summary format.**
   Preview & Share now has Content and Personalize tabs, as the Employer
   Impact Report does. Personalize picks the format (Tables, Care Plan
