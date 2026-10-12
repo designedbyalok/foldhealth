@@ -121,6 +121,32 @@
 .itemOpen {
   background: var(--neutral-50);
 }
+.itemSelected {
+  background: var(--primary-50);
+}
+.discussedMark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  vertical-align: bottom;
+  color: var(--status-success);
+}
+.detailLinks {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+/* Shared BulkBar, pinned to the bottom of the list instead of the window. */
+.bulkBar {
+  position: sticky;
+  bottom: var(--space-4);
+  left: auto;
+  align-self: center;
+  width: fit-content;
+  margin-top: var(--space-2);
+  transform: none;
+  z-index: 3;
+}
 .itemRow {
   display: flex;
   align-items: center;
@@ -355,7 +381,6 @@
   color: var(--primary-300);
 }
 .openDetails {
-  align-self: flex-start;
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);

@@ -85,8 +85,8 @@ function Facts({ kind, item, onPickDate }) {
  * a quick note with tags. "Open details" there opens the item's own drawer.
  */
 export function ReviewItemRow({
-  kind, item, discussed, expanded, note, latestNote,
-  onToggleDiscussed, onToggleExpanded, onOpen, onStatusMenu, onSaveNote, onTargetDate,
+  kind, item, discussed, selected, expanded, note, latestNote,
+  onToggleSelected, onToggleDiscussed, onToggleExpanded, onOpen, onStatusMenu, onSaveNote, onTargetDate,
 }) {
   const [text, setText] = useState('');
   const [tags, setTags] = useState(() => discussed?.tags || []);
@@ -98,21 +98,27 @@ export function ReviewItemRow({
   const canSave = !saving && (text.trim() || tagsChanged);
 
   return (
-    <div className={`${styles.item} ${expanded ? styles.itemOpen : ''}`}>
+    <div className={`${styles.item} ${expanded ? styles.itemOpen : ''} ${selected ? styles.itemSelected : ''}`}>
       <div className={styles.itemRow}>
         <Checkbox
-          checked={!!discussed}
-          onCheckedChange={onToggleDiscussed}
-          aria-label={`${discussed ? 'Discussed' : 'Mark discussed'}: ${item.title}`}
+          checked={!!selected}
+          onCheckedChange={onToggleSelected}
+          aria-label={`Select ${item.title}`}
         />
         <PriorityIcon priority={(item.priority || 'medium').toLowerCase()} size={14} />
         <button type="button" className={styles.itemMain} onClick={onToggleExpanded} aria-expanded={expanded}>
           <span className={`${styles.itemTitle} ${discussed ? styles.itemTitleDone : ''}`}>{item.title}</span>
-          {(meta.text || meta.badge) && (
+          {(discussed || meta.text || meta.badge) && (
             <span className={styles.itemMeta}>
+              {discussed && (
+                <span className={styles.discussedMark}>
+                  <Icon name="solar:check-circle-linear" size={12} color="currentColor" />
+                  Discussed
+                </span>
+              )}
               {[meta.text, meta.badge].filter(Boolean).map((part, i) => (
                 <span key={part}>
-                  {i > 0 && <span className={styles.dot} aria-hidden="true">•</span>}
+                  {(i > 0 || discussed) && <span className={styles.dot} aria-hidden="true">•</span>}
                   {part}
                 </span>
               ))}
@@ -193,10 +199,17 @@ export function ReviewItemRow({
             </div>
           </div>
 
-          <button type="button" className={styles.openDetails} onClick={onOpen}>
-            Open {kind} details
-            <Icon name="solar:arrow-right-up-linear" size={12} color="currentColor" />
-          </button>
+          <div className={styles.detailLinks}>
+            <button type="button" className={styles.openDetails} onClick={onToggleDiscussed}>
+              <Icon name={discussed ? 'solar:undo-left-linear' : 'solar:check-read-linear'} size={12} color="currentColor" />
+              {discussed ? 'Undo discussed' : 'Mark as discussed'}
+            </button>
+            <span className={styles.slotDivider} aria-hidden="true" />
+            <button type="button" className={styles.openDetails} onClick={onOpen}>
+              Open {kind} details
+              <Icon name="solar:arrow-right-up-linear" size={12} color="currentColor" />
+            </button>
+          </div>
         </div>
       )}
 

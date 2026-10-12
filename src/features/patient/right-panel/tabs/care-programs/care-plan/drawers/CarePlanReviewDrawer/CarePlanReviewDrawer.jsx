@@ -7,6 +7,7 @@ import { Button } from '../../../../../../../../components/Button/Button';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
 import { Textarea } from '../../../../../../../../components/Textarea/Textarea';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
+import { BulkBar } from '../../../../../../../../components/BulkBar/BulkBar';
 import { MenuPopover } from '../../../../../../../../components/MenuPopover/MenuPopover';
 import { PatientBanner } from '../../../../../../../../components/PatientBanner/PatientBanner';
 import { findPatientRecord } from '../../lib/carePlanPrintSettings';
@@ -52,6 +53,7 @@ const groupIcon = label => GROUP_ICONS.find(([re]) => re.test(label))?.[1] || 's
 const goalGroupOf = g => g?.conditions?.[0] || (g?.category && g.category !== 'Others' ? g.category : 'Other');
 const KIND_META = Object.fromEntries(CARE_PLAN_INTERVENTION_MENU.filter(i => i.key).map(i => [i.key, i]));
 const DONE = new Set(['Met', 'Completed', 'Resolved']);
+const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 // The call note is rich text: an emptied editor can still hold <br> or <p></p>.
 const plainText = html => (html || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
@@ -116,6 +118,7 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
   const fetchCarePlanNoteReads = useAppStore(s => s.fetchCarePlanNoteReads);
   const toggleItem = useAppStore(s => s.toggleCarePlanReviewItem);
   const markDiscussed = useAppStore(s => s.markCarePlanReviewItemDiscussed);
+  const markManyDiscussed = useAppStore(s => s.markCarePlanReviewItemsDiscussed);
   const setItemTags = useAppStore(s => s.setCarePlanReviewItemTags);
   const saveCallNote = useAppStore(s => s.saveCarePlanReviewNote);
   const finishReview = useAppStore(s => s.finishCarePlanReview);
@@ -140,7 +143,8 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
   const [stoppedAt, setStoppedAt] = useState(null);
   const [filter, setFilter] = useState('all');
   const [expanded, setExpanded] = useState(null); // `${kind}:${id}` with its note open
-  const [statusMenu, setStatusMenu] = useState(null); // { kind, item, rect }
+  const [statusMenu, setStatusMenu] = useState(null); // { kind, items, rect }
+  const [selected, setSelected] = useState(() => new Set()); // item ids on the current tab
   const [preview, setPreview] = useState(null); // { kind, item }: the item's own drawer
   // Patient context: the worklist row's details, filled in from the record.
   const record = useMemo(() => findPatientRecord(useAppStore.getState(), patientId), [patientId]);
@@ -309,7 +313,7 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
         <TabStrip
           fullWidth={false}
           activeKey={tab}
-          onChange={(k) => { setTab(k); setFilter('all'); setExpanded(null); }}
+          onChange={(k) => { setTab(k); setFilter('all'); setExpanded(null); setSelected(new Set()); }}
           items={[
             { key: 'goals', label: 'Goals', count: loaded ? lists.goals.length : undefined },
             { key: 'interventions', label: 'Interventions', count: loaded ? lists.interventions.length : undefined },
@@ -370,6 +374,12 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
                     kind={listTab.kind}
                     item={item}
                     discussed={discussed[`${listTab.kind}:${item.id}`]}
+                    selected={selected.has(item.id)}
+                    onToggleSelected={() => setSelected(prev => {
+                      const next = new Set(prev);
+                      if (next.has(item.id)) next.delete(item.id); else next.add(item.id);
+                      return next;
+                    })}
                     expanded={expanded === `${listTab.kind}:${item.id}`}
                     note={noteFor(listTab.kind, item.id)}
                     latestNote={expanded === `${listTab.kind}:${item.id}` ? latestItemNote(audit || [], [item.id], listTab.kind) : null}
@@ -380,7 +390,7 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
                       markDiscussed(patientId, program, 'goal', item.id);
                     }}
                     onOpen={() => openItem(listTab.kind, item)}
-                    onStatusMenu={(rect) => setStatusMenu({ kind: listTab.kind, item, rect })}
+                    onStatusMenu={(rect) => setStatusMenu({ kind: listTab.kind, items: [item], rect })}
                     onSaveNote={async (text, tags) => {
                       if (text.trim()) {
                         await addCarePlanNote(patientId, program, text.trim(), {
@@ -394,6 +404,35 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
               </div>
             </section>
           ))}
+
+          <BulkBar
+            className={styles.bulkBar}
+            selectedIds={[...selected]}
+            noun={selected.size === 1 ? capitalize(listTab.noun) : `${capitalize(listTab.noun)}s`}
+            onClear={() => setSelected(new Set())}
+            actions={[
+              {
+                label: 'Change status',
+                icon: 'solar:refresh-circle-linear',
+                onClick: (ids, e) => setStatusMenu({
+                  kind: listTab.kind,
+                  items: items.filter(i => selected.has(i.id)),
+                  rect: e.currentTarget.getBoundingClientRect(),
+                  bulk: true,
+                }),
+              },
+              {
+                label: 'Mark discussed',
+                icon: 'solar:check-read-linear',
+                variant: 'primary',
+                onClick: async (ids) => {
+                  await markManyDiscussed(patientId, program, listTab.kind, ids);
+                  showToast(`${plural(ids.length, listTab.noun)} marked discussed`);
+                  setSelected(new Set());
+                },
+              },
+            ]}
+          />
         </div>
       ) : (
         <div className={styles.activityPane}>
@@ -412,14 +451,18 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
       {statusMenu && (
         <MenuPopover
           anchorRect={statusMenu.rect}
-          align="right"
+          align={statusMenu.bulk ? 'left' : 'right'}
           width={160}
           ariaLabel="Change status"
           items={GBI_STATUSES.map(st => ({ key: st, label: st }))}
-          onSelect={(status) => {
-            if (status === statusMenu.item.status) return;
-            saveLive(patientId, program, statusMenu.kind, statusMenu.item.id, { status });
-            markDiscussed(patientId, program, statusMenu.kind, statusMenu.item.id);
+          onSelect={async (status) => {
+            const changed = statusMenu.items.filter(i => i.status !== status);
+            await Promise.all(changed.map(i => saveLive(patientId, program, statusMenu.kind, i.id, { status })));
+            if (changed.length) await markManyDiscussed(patientId, program, statusMenu.kind, changed.map(i => i.id));
+            if (statusMenu.bulk) {
+              showToast(`${plural(statusMenu.items.length, listTab?.noun || 'item')} set to ${status}`);
+              setSelected(new Set());
+            }
           }}
           onClose={() => setStatusMenu(null)}
         />

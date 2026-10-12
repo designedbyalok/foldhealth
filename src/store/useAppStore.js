@@ -3339,6 +3339,16 @@ export const useAppStore = create((set, get) => ({
     if (discussed[`${kind}:${id}`]) return null;
     return get().toggleCarePlanReviewItem(patientId, program, kind, id);
   },
+  // Bulk bar's Mark discussed: one patch for every selected item.
+  markCarePlanReviewItemsDiscussed: (patientId, program, kind, ids) => {
+    const key = carePlanKey(patientId, program.id);
+    const discussed = { ...(get().carePlanReviews[key]?.open?.discussed || {}) };
+    const at = new Date().toISOString();
+    for (const id of ids) {
+      if (!discussed[`${kind}:${id}`]) discussed[`${kind}:${id}`] = { at, tags: [] };
+    }
+    return get().patchCarePlanReview(patientId, program, { discussed });
+  },
   // Quick tags on an item (Patient reported, Education given, ...); tagging
   // an item also marks it discussed.
   setCarePlanReviewItemTags: (patientId, program, kind, id, tags) => {
