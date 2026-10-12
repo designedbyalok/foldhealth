@@ -10,6 +10,7 @@ const DEFAULT_TABS = [
   { key: 'all',   label: 'All' },
   { key: 'since', label: 'Since Last Visit' },
 ];
+const PERIOD_OPTIONS = ['Since Last Visit', 'All time'];
 
 // Default filter set covers every action key emitted by the care-plan
 // audit slice. Callers can pass a narrower `filters` list when their
@@ -47,11 +48,20 @@ function bucketLabel(iso) {
  *                                is active. Falls back to now-30d.
  * @param {object[]} [filters]    Override the filter menu options.
  * @param {string}   [emptyLabel] Passed through to ActivityLog.
+ * @param {'all'|'since'} [defaultTab='all'] The tab it opens on.
+ * @param {boolean}  [filterRow]  No tabs: the period becomes a chip in a
+ *                                full-width filter row, shown while
+ *                                `filtersOpen`. The caller owns the
+ *                                button that toggles it.
+ * @param {boolean}  [filtersOpen]
  */
-export function CarePlanActivityBlock({ entries, lastVisit, filters = DEFAULT_FILTERS, emptyLabel }) {
-  const [tab, setTab] = useState('all');
+export function CarePlanActivityBlock({
+  entries, lastVisit, filters = DEFAULT_FILTERS, emptyLabel, defaultTab = 'all', filterRow = false, filtersOpen: filtersOpenProp,
+}) {
+  const [tab, setTab] = useState(defaultTab);
   const [filter, setFilter] = useState('all');
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filtersOpenState, setFiltersOpen] = useState(false);
+  const filtersOpen = filterRow ? !!filtersOpenProp : filtersOpenState;
   const filterBtnRef = useRef(null);
 
   const bucketed = useMemo(() => {
@@ -80,6 +90,58 @@ export function CarePlanActivityBlock({ entries, lastVisit, filters = DEFAULT_FI
     return out;
   }, [entries, tab, filter, lastVisit]);
 
+  const activityChip = (() => {
+    // Single-select FilterChip (radio popover); picking a value
+    // narrows the timeline, the ✕ clears back to All activity.
+    const OPTIONS = filters.filter(f => f.key !== 'all').map(f => f.label);
+    const keyByLabel = Object.fromEntries(filters.map(f => [f.label, f.key]));
+    const activeLabel = filters.find(f => f.key === filter)?.label;
+    const selected = filter === 'all' ? [] : (activeLabel ? [activeLabel] : []);
+    return (
+      <FilterChip
+        label="Activity"
+        popoverLabel="Filter activity"
+        options={OPTIONS}
+        selected={selected}
+        singleSelect
+        size="S"
+        onChange={(next) => {
+          const pick = Array.isArray(next) ? next[0] : null;
+          setFilter(pick ? (keyByLabel[pick] || 'all') : 'all');
+        }}
+      />
+    );
+  })();
+
+  if (filterRow) {
+    return (
+      <div className={styles.rowBlock}>
+        {filtersOpen && (
+          <div className={styles.filterRow}>
+            <FilterChip
+              label="Period"
+              popoverLabel="Period"
+              options={PERIOD_OPTIONS}
+              selected={[tab === 'since' ? PERIOD_OPTIONS[0] : PERIOD_OPTIONS[1]]}
+              singleSelect
+              noClear
+              noClearNeutral={false}
+              size="S"
+              onChange={(next) => {
+                const pick = Array.isArray(next) ? next[0] : null;
+                if (pick) setTab(pick === PERIOD_OPTIONS[0] ? 'since' : 'all');
+              }}
+            />
+            {activityChip}
+          </div>
+        )}
+        <div className={styles.rowBlockLog}>
+          <ActivityLog entries={bucketed} emptyLabel={emptyLabel} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.activityBlock}>
       <TabStrip
@@ -99,30 +161,7 @@ export function CarePlanActivityBlock({ entries, lastVisit, filters = DEFAULT_FI
           />
         )}
       />
-      {filtersOpen && (() => {
-        // Single-select FilterChip (radio popover); picking a value
-        // narrows the timeline, the ✕ clears back to All activity.
-        const OPTIONS = filters.filter(f => f.key !== 'all').map(f => f.label);
-        const keyByLabel = Object.fromEntries(filters.map(f => [f.label, f.key]));
-        const activeLabel = filters.find(f => f.key === filter)?.label;
-        const selected = filter === 'all' ? [] : (activeLabel ? [activeLabel] : []);
-        return (
-          <div className={styles.activityFilterBar}>
-            <FilterChip
-              label="Activity"
-              popoverLabel="Filter activity"
-              options={OPTIONS}
-              selected={selected}
-              singleSelect
-              size="S"
-              onChange={(next) => {
-                const pick = Array.isArray(next) ? next[0] : null;
-                setFilter(pick ? (keyByLabel[pick] || 'all') : 'all');
-              }}
-            />
-          </div>
-        );
-      })()}
+      {filtersOpen && <div className={styles.activityFilterBar}>{activityChip}</div>}
       <div className={styles.activityLogPad}>
         <ActivityLog entries={bucketed} emptyLabel={emptyLabel} />
       </div>

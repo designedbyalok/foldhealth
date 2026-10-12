@@ -116,3 +116,31 @@
   background: var(--neutral-150);
   flex-shrink: 0;
 }
+
+/* Care Plan Status: coloured text with an icon. Signed / Draft open the
+   plan in the Review care plan drawer. */
+.carePlanStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-base);
+}
+.carePlanSigned { color: var(--status-success); }
+.carePlanDraft { color: var(--status-warning); }
+.carePlanNone { color: var(--neutral-300); }
+.carePlanStatusLink {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  border-radius: var(--space-1);
+  background: none;
+  cursor: pointer;
+}
+.carePlanStatusLink:hover .carePlanStatusLabel {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.carePlanStatusLink:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 2px;
+}

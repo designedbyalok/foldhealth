@@ -1,0 +1,417 @@
+.drawerBody {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+.headerDivider {
+  width: 1px;
+  height: var(--space-4);
+  background: var(--neutral-150);
+}
+.title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+/* Patient context: the patient banner edge to edge, then when the plan was
+   last reviewed. */
+.context {
+  display: flex;
+  flex-direction: column;
+}
+.reviewedStrip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 0.5px solid var(--neutral-150);
+  background: var(--neutral-50);
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.reviewedStrip strong {
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+.planCounts {
+  margin-left: auto;
+}
+/* TabStrip draws its own bar (padding and hairline). */
+.tabs {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--neutral-0);
+}
+.listPane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+.empty {
+  margin: 0;
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  font-size: var(--font-md);
+  color: var(--neutral-300);
+}
+
+/* Discussed progress */
+.progressRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.progressText {
+  font-size: var(--font-md);
+  color: var(--neutral-300);
+}
+.progressText strong {
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+.progressBar {
+  height: 3px;
+  margin-top: calc(var(--space-2) * -1);
+  border-radius: var(--space-1);
+  background: var(--neutral-100);
+  overflow: hidden;
+}
+.progressBar span {
+  display: block;
+  height: 100%;
+  background: var(--primary-300);
+  transition: width 200ms ease;
+}
+
+/* Groups */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.groupHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) 0;
+}
+.groupLabel {
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+.groupCount {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.groupList {
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  overflow: hidden;
+  background: var(--neutral-0);
+}
+
+/* Row */
+.item + .item {
+  border-top: 0.5px solid var(--neutral-150);
+}
+.itemOpen {
+  background: var(--neutral-50);
+}
+.itemRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
+}
+/* Title and target: one button that expands the row. */
+.itemMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-1) 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+.itemTitle {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+.itemMain:hover .itemTitle {
+  color: var(--primary-300);
+}
+.itemTitleDone {
+  color: var(--neutral-300);
+}
+.itemMeta {
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.dot {
+  margin: 0 var(--space-1);
+  font-size: var(--font-md);
+  line-height: 1;
+  color: var(--neutral-200);
+}
+.slotDivider {
+  flex-shrink: 0;
+  width: 1px;
+  height: var(--space-4);
+  background: var(--neutral-150);
+}
+.slotDividerHidden {
+  visibility: hidden;
+}
+.noteSlot {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  width: var(--space-8);
+}
+.statusSlot {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-start;
+  width: 104px;
+}
+.noteCount {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.noteCountNew {
+  color: var(--primary-300);
+  font-weight: 500;
+}
+.chevronBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  padding: 0;
+  border: none;
+  border-radius: var(--space-1);
+  background: none;
+  cursor: pointer;
+}
+.chevronBtn:hover {
+  background: var(--neutral-100);
+}
+.chevronBtn svg {
+  transform: rotate(-90deg);
+  transition: transform 150ms ease;
+}
+.chevronBtn .chevronOpen {
+  transform: rotate(0deg);
+}
+
+/* Expanded: a quiet panel indented under the title. */
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  /* Full width under a light divider, from the row's own left padding. */
+  padding: var(--space-3);
+  border-top: 0.5px solid var(--neutral-150);
+}
+.facts {
+  /* Equal columns in a card, divided by hairlines. */
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  margin: 0;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+}
+.facts > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+}
+.facts > div + div {
+  border-left: 0.5px solid var(--neutral-150);
+}
+.facts dt {
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+}
+.facts dd {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-md);
+  color: var(--neutral-400);
+}
+.dateLink {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: var(--primary-300);
+}
+.dateLink:hover {
+  text-decoration: underline;
+}
+.progressFact {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.meter {
+  flex: 1;
+  height: 4px;
+  border-radius: var(--space-1);
+  background: var(--neutral-150);
+  overflow: hidden;
+}
+.meter span {
+  display: block;
+  height: 100%;
+  background: var(--primary-300);
+}
+.quote {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0 0 0 var(--space-3);
+  border-left: 2px solid var(--primary-200);
+}
+.quote p {
+  margin: 0;
+  font-size: var(--font-md);
+  color: var(--neutral-400);
+  white-space: pre-wrap;
+}
+.quote cite {
+  font-style: normal;
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+}
+.composeBox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.composeBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.tags {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-3);
+  background: var(--neutral-0);
+  cursor: pointer;
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+.tag:hover {
+  border-color: var(--primary-200);
+  color: var(--primary-300);
+}
+.tagOn {
+  border-color: color-mix(in srgb, var(--primary-300) 30%, transparent);
+  background: var(--primary-50);
+  color: var(--primary-300);
+}
+.openDetails {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: var(--font-sm);
+  color: var(--primary-300);
+}
+.openDetails:hover {
+  text-decoration: underline;
+}
+
+/* Activity Log tab: the block pads its own log so its filter row can run
+   edge to edge. */
+.activityPane {
+  padding: 0;
+}
+
+/* Footer composer */
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+.composerRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.composerHint {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+/* Loading skeleton: bones laid out like the real rows. */
+.skProgressText { width: 150px; height: var(--space-3); }
+.skToggle { width: 220px; height: var(--space-6); border-radius: var(--space-2); }
+.skBar { display: block; height: 3px; margin-top: calc(var(--space-2) * -1); border-radius: var(--space-1); }
+.skIcon { width: var(--space-3); height: var(--space-3); border-radius: var(--space-1); }
+.skGroupLabel { width: 96px; height: var(--space-3); }
+.skCheck { flex-shrink: 0; width: var(--space-4); height: var(--space-4); border-radius: var(--space-1); }
+.skText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+}
+.skTitle { display: block; height: var(--space-3); }
+.skMeta { display: block; height: 10px; }
+.skStatus { width: 84px; height: 20px; border-radius: var(--space-1); }
+.skChevron { flex-shrink: 0; width: var(--space-3); height: var(--space-3); border-radius: var(--space-1); }
+.skStrip { width: 220px; height: var(--space-3); }

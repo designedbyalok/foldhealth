@@ -37,6 +37,16 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **Review care plan drawer from the SNP worklist.** Clicking a Signed or
+  Draft Care Plan Status opens the plan in a side drawer for reviewing it
+  with the patient on a call: tick goals, interventions and barriers as
+  discussed, change status in place, expand a row for key facts and a quick
+  note with tags, and open the item's own drawer from there. A rich-text
+  call note and Finish review are saved to `care_plan_call_reviews`. The
+  Activity Log tab lists every change on the plan, call notes included,
+  with a filter row preset to Since Last Visit. The worklist status column
+  now shows Signed in green with a check and Draft in warning colours.
+
 - **Care plan notes work the same on goals, interventions and barriers.**
   One shared Note section (`drawers/CarePlanItemNote`) replaces three
   copies: the latest note as a card (click to edit, hover to delete), Add /

@@ -120,6 +120,24 @@ const HCC_ONLY_ROLES = new Set(['Coder', 'Support', 'QA', 'Compliance']);
  *   showToast,
  * }
  */
+// Care Plan Status as coloured text with an icon (the column beside it
+// already uses badges): Signed green with a check, Draft in warning colours,
+// anything else (No Care Plan) grey.
+const CARE_PLAN_STATUS_LOOK = {
+  Signed: { className: styles.carePlanSigned, icon: 'solar:check-circle-linear' },
+  Draft: { className: styles.carePlanDraft, icon: 'solar:pen-2-linear' },
+};
+function CarePlanStatusBadge({ status }) {
+  if (!status) return <span className={styles.statusText}>—</span>;
+  const look = CARE_PLAN_STATUS_LOOK[status];
+  return (
+    <span className={`${styles.carePlanStatus} ${look?.className || styles.carePlanNone}`}>
+      {look && <Icon name={look.icon} size={14} color="currentColor" />}
+      <span className={styles.carePlanStatusLabel}>{status}</span>
+    </span>
+  );
+}
+
 export const SNP_MIDDLE_COLUMNS = [
   {
     key: 'programSubStatus',
@@ -163,9 +181,29 @@ export const SNP_MIDDLE_COLUMNS = [
     key: 'carePlanStatus',
     label: 'Care Plan Status',
     sortKey: 'carePlanStatus',
-    // Care Plan Status is read-only in this table (no chevron, no click) —
-    // Program Sub Status is the only editable status cell in the row.
-    renderCell: (m) => <span className={styles.statusText}>{m.carePlanStatus}</span>,
+    // Signed or Draft opens the plan in the Review care plan drawer; any other
+    // status (No Care Plan) is plain text.
+    stopRowClickPropagation: true,
+    renderCell: (m, ctx) => {
+      const badge = <CarePlanStatusBadge status={m.carePlanStatus} />;
+      if (!(m.patientId && m.programId && (m.carePlanStatus === 'Signed' || m.carePlanStatus === 'Draft'))) return badge;
+      return (
+        <button
+          type="button"
+          className={styles.carePlanStatusLink}
+          onClick={() => ctx.openCarePlanReview?.({
+            patientId: m.patientId,
+            patientName: m.name,
+            // Patient context for the drawer's banner.
+            patient: { initials: m.initials, name: m.name, gender: m.gender, age: m.age, memberId: m.memberId },
+            program: { id: m.programId, code: 'SNP', name: 'SNP Care Program' },
+          })}
+          aria-label={`Review ${m.name}'s ${m.carePlanStatus.toLowerCase()} care plan`}
+        >
+          {badge}
+        </button>
+      );
+    },
   },
   {
     key: 'nextActionDue',
@@ -251,6 +289,7 @@ export const SNP_MIDDLE_COLUMNS = [
 
 export function SnpWorklistRow({ member, columns, hiddenSet, isSelected, onSelect }) {
   const openQuickView = useAppStore(s => s.openQuickView);
+  const openCarePlanReview = useAppStore(s => s.openCarePlanReview);
   const navigateToPatient = useAppStore(s => s.navigateToPatient);
   const openCallPopover = useAppStore(s => s.openCallPopover);
   const requestAddTask = useAppStore(s => s.requestAddTask);
@@ -283,6 +322,7 @@ export function SnpWorklistRow({ member, columns, hiddenSet, isSelected, onSelec
   const statusBtnRef = useRef(null);
 
   const cellCtx = {
+    openCarePlanReview,
     showStatusMenu,
     setShowStatusMenu,
     statusBtnRef,

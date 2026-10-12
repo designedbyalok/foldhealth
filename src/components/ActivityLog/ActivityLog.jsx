@@ -15,6 +15,7 @@ import {
   TRANS_BADGE,
   historyTimelineStyles as htStyles,
 } from '../HistoryTimeline/HistoryTimeline';
+import { sanitizeRichText } from '../../lib/sanitizeHtml';
 import styles from './ActivityLog.module.css';
 
 // Render a comment body with the signed-in user's @-mentions painted in the
@@ -905,6 +906,11 @@ function CommentEntryBody({ entry, hideTitle = false }) {
             onCancel={() => setEditing(false)}
           />
         </div>
+      ) : entry.commentHtml ? (
+        <div
+          className={`${styles.commentBody} ${styles.commentRich}`}
+          dangerouslySetInnerHTML={{ __html: sanitizeRichText(entry.commentHtml) }}
+        />
       ) : entry.commentBody && (
         <div className={styles.commentBody}>
           {renderCommentBodyWithMentions(entry.commentBody, meName)}

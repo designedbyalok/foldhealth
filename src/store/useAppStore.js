@@ -237,6 +237,19 @@ const _cachedWorklistOrder = readCachedWorklistOrder();
 const _savedTab = sessionStorage.getItem('activeTab') || 'toc-worklist';
 const _savedSettingsTab = sessionStorage.getItem('settingsTab');
 
+function mapCarePlanReviewRow(row) {
+  return {
+    id: row.id,
+    planId: row.plan_id,
+    discussed: row.discussed && typeof row.discussed === 'object' ? row.discussed : {},
+    callNote: row.call_note || '',
+    createdBy: row.created_by || '',
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    finishedAt: row.finished_at || null,
+  };
+}
+
 function mapCarePlanPrintPresetRow(row) {
   return {
     id: row.id,
@@ -3249,6 +3262,122 @@ export const useAppStore = create((set, get) => ({
     else get().showToast('Templates updated');
     get().touchCarePlanModified(patientId, program.id);
     return true;
+  },
+
+  // ── Care plan call reviews (care_plan_call_reviews migration) ──
+  // The Review care plan drawer, opened from a worklist's Care Plan Status:
+  // { patientId, patientName, program: { id, code, name } } or null.
+  carePlanReviewTarget: null,
+  openCarePlanReview: (target) => set({ carePlanReviewTarget: target }),
+  closeCarePlanReview: () => set({ carePlanReviewTarget: null }),
+  // `${patientId}::${programId}` → { open: review | null, history: [finished reviews] }
+  carePlanReviews: {},
+  fetchCarePlanReviews: async (patientId, programId) => {
+    const key = carePlanKey(patientId, programId);
+    const { data, error } = await supabase.from('care_plan_call_reviews').select('*')
+      .eq('patient_id', String(patientId)).eq('program_id', String(programId))
+      .order('created_at', { ascending: false });
+    if (error) { console.warn('fetchCarePlanReviews:', error.message); return; }
+    const rows = (data || []).map(mapCarePlanReviewRow);
+    set(s => ({
+      carePlanReviews: {
+        ...s.carePlanReviews,
+        [key]: { open: rows.find(r => !r.finishedAt) || null, history: rows.filter(r => r.finishedAt) },
+      },
+    }));
+  },
+  // Writes a patch to the open review, starting one if there isn't one yet.
+  patchCarePlanReview: async (patientId, program, patch) => {
+    const key = carePlanKey(patientId, program.id);
+    const cur = get().carePlanReviews[key]?.open || null;
+    const row = { ...patch, updated_at: new Date().toISOString() };
+    let query;
+    if (cur) {
+      query = supabase.from('care_plan_call_reviews').update(row).eq('id', cur.id);
+    } else {
+      const planId = await get().ensurePatientCarePlan(patientId, program);
+      if (!planId) return null;
+      query = supabase.from('care_plan_call_reviews').insert({
+        ...row, plan_id: planId, patient_id: String(patientId), program_id: String(program.id),
+        created_by: get().currentUserProfile?.name || null,
+      });
+    }
+    const { data, error } = await query.select().single();
+    if (error) {
+      console.warn('patchCarePlanReview:', error.message);
+      get().showToast('Could not save the review');
+      return null;
+    }
+    const saved = mapCarePlanReviewRow(data);
+    set(s => {
+      const prev = s.carePlanReviews[key] || { open: null, history: [] };
+      return {
+        carePlanReviews: {
+          ...s.carePlanReviews,
+          [key]: saved.finishedAt
+            ? { open: null, history: [saved, ...prev.history.filter(r => r.id !== saved.id)] }
+            : { ...prev, open: saved },
+        },
+      };
+    });
+    return saved;
+  },
+  // Tick or untick an item as discussed on this call.
+  toggleCarePlanReviewItem: (patientId, program, kind, id) => {
+    const key = carePlanKey(patientId, program.id);
+    const discussed = { ...(get().carePlanReviews[key]?.open?.discussed || {}) };
+    const itemKey = `${kind}:${id}`;
+    if (discussed[itemKey]) delete discussed[itemKey];
+    else discussed[itemKey] = { at: new Date().toISOString(), tags: [] };
+    return get().patchCarePlanReview(patientId, program, { discussed });
+  },
+  // Mark an item discussed (no-op when it already is): changing its status
+  // or target date on the call counts as discussing it.
+  markCarePlanReviewItemDiscussed: (patientId, program, kind, id) => {
+    const key = carePlanKey(patientId, program.id);
+    const discussed = get().carePlanReviews[key]?.open?.discussed || {};
+    if (discussed[`${kind}:${id}`]) return null;
+    return get().toggleCarePlanReviewItem(patientId, program, kind, id);
+  },
+  // Quick tags on an item (Patient reported, Education given, ...); tagging
+  // an item also marks it discussed.
+  setCarePlanReviewItemTags: (patientId, program, kind, id, tags) => {
+    const key = carePlanKey(patientId, program.id);
+    const discussed = { ...(get().carePlanReviews[key]?.open?.discussed || {}) };
+    const itemKey = `${kind}:${id}`;
+    discussed[itemKey] = { ...(discussed[itemKey] || { at: new Date().toISOString() }), tags };
+    return get().patchCarePlanReview(patientId, program, { discussed });
+  },
+  // The call note and the finished review are also logged to the plan's
+  // activity (care_plan_audit), so the Activity Log shows them.
+  saveCarePlanReviewNote: async (patientId, program, note) => {
+    const saved = await get().patchCarePlanReview(patientId, program, { call_note: note });
+    if (saved && note?.trim()) {
+      get().logCarePlanAudit(patientId, program, {
+        entityType: 'plan', entityId: saved.id, action: 'call_note', summary: 'Call note', detail: note.trim(),
+      });
+    }
+    return saved;
+  },
+  finishCarePlanReview: async (patientId, program, note) => {
+    const before = get().carePlanReviews[carePlanKey(patientId, program.id)]?.open;
+    const saved = await get().patchCarePlanReview(patientId, program, {
+      ...(note != null ? { call_note: note } : {}),
+      finished_at: new Date().toISOString(),
+    });
+    if (saved) {
+      const rows = [];
+      if (note?.trim() && note.trim() !== (before?.callNote || '')) {
+        rows.push({ entityType: 'plan', entityId: saved.id, action: 'call_note', summary: 'Call note', detail: note.trim() });
+      }
+      const n = Object.keys(saved.discussed || {}).length;
+      rows.push({
+        entityType: 'plan', entityId: saved.id, action: 'review_finished', summary: 'Care plan reviewed',
+        detail: `${n} item${n === 1 ? '' : 's'} discussed`,
+      });
+      get().logCarePlanAudit(patientId, program, rows);
+    }
+    return saved;
   },
 
   // ── Care plan note reads (care_plan_note_reads migration) ──

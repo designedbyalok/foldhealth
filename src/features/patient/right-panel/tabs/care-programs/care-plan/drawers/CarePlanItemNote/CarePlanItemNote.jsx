@@ -61,7 +61,7 @@ export const CarePlanItemNote = forwardRef(function CarePlanItemNote(
       entityType, entityId: itemId, summary: `Note on ${itemTitle || noun}`,
     });
     setEditing(false);
-    showToast?.(latest ? 'Note updated' : 'Note added');
+    // addCarePlanNote shows the "Note added" toast.
   };
 
   const remove = () => {

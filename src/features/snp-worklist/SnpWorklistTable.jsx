@@ -14,6 +14,7 @@ import { SavedFiltersChip } from '../hcc/SavedFiltersChip';
 import { SnpWorklistRow, SNP_MIDDLE_COLUMNS } from './SnpWorklistRow';
 import { ColumnsHeaderButton } from '../../components/WorklistColumns/ColumnsHeaderButton';
 import { useWorklistColumns } from '../../components/WorklistColumns/useWorklistColumns';
+import { CarePlanReviewDrawer } from '../patient/right-panel/tabs/care-programs/care-plan/drawers/CarePlanReviewDrawer/CarePlanReviewDrawer';
 import styles from './SnpWorklistTable.module.css';
 
 // Sortable columns — each maps to a field on the enriched row. Tags and
@@ -139,6 +140,9 @@ function EmptySearch() {
 }
 
 export function SnpWorklistTable() {
+  // Care Plan Status opens the plan in the Review care plan drawer.
+  const reviewTarget = useAppStore(s => s.carePlanReviewTarget);
+  const closeCarePlanReview = useAppStore(s => s.closeCarePlanReview);
   const members = useAppStore(s => s.snpWorklistMembers);
   const loading = useAppStore(s => s.snpWorklistLoading);
   const fetchMembers = useAppStore(s => s.fetchSnpWorklistMembers);
@@ -404,6 +408,16 @@ export function SnpWorklistTable() {
         onPageChange={setPage}
         onPerPageChange={(n) => { setPerPage(n); setPage(1); }}
       />
+      {reviewTarget && (
+        <CarePlanReviewDrawer
+          key={`${reviewTarget.patientId}::${reviewTarget.program.id}`}
+          patientId={reviewTarget.patientId}
+          patientName={reviewTarget.patientName}
+          patient={reviewTarget.patient}
+          program={reviewTarget.program}
+          onClose={closeCarePlanReview}
+        />
+      )}
     </div>
   );
 }
