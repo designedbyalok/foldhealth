@@ -88,7 +88,7 @@ function BarrierRow({
         <td className={`${styles.actionsTd} ${styles.actionsWide}`} onClick={e => e.stopPropagation()}>
           <GbiRowActions
             linked={linked(b)}
-            hasNote={!!hasNote?.(b)}
+            note={hasNote?.(b) || null}
             onNotes={() => onOpenNotes?.(b)}
             onMenu={openRowMenu}
             menuDisabled={!canEdit}

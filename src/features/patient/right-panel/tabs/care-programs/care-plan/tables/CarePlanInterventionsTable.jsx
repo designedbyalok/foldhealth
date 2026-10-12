@@ -508,7 +508,7 @@ export function CarePlanInterventionsTable({
         <td className={`${styles.actionsTd} ${styles.actionsWide}`} onClick={e => e.stopPropagation()}>
           <GbiRowActions
             linked={linked(i)}
-            hasNote={!!hasNote?.(i)}
+            note={hasNote?.(i) || null}
             onNotes={() => onOpenNotes?.(i)}
             onMenu={(e) => openRowMenu(i, e)}
             menuDisabled={!canEdit}

@@ -16,8 +16,7 @@ import { DetailDropdown } from '../../../../../../../tasks/TasksViewDropdowns';
 import { PRIORITY_OPTIONS } from '../../../../../../../tasks/TasksView.utils';
 import { TabStrip } from '../../../../../../../../components/TabStrip/TabStrip';
 import { ActivityLog } from '../../../../../../../../components/ActivityLog/ActivityLog';
-import { CarePlanNoteChangeLog } from '../CarePlanNoteChangeLog/CarePlanNoteChangeLog';
-import { itemNoteHistory } from '../../lib/carePlanNotes';
+import { CarePlanItemNote } from '../CarePlanItemNote/CarePlanItemNote';
 import { MenuPopover } from '../../../../../../../../components/MenuPopover/MenuPopover';
 import { ConfirmDialog } from '../../../../../../../../components/ConfirmDialog/ConfirmDialog';
 import {
@@ -143,15 +142,6 @@ function fmtDate(iso) {
   return d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' });
 }
 
-function fmtStamp(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  const date = d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
-  const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-  return `${date} ${time}`;
-}
-
 const initialsOf = (name) => (name || '').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
 // Rebuild the goal's descriptive subtitle from its structured values so the
@@ -188,10 +178,10 @@ function mapAuditEntry(e) {
     by: e.actor || null,
   };
   if (e.action === 'note') {
-    return { ...base, t: 'comment', title: 'Added a Note', commentBody: `Note: ${e.detail || ''}`, comment: e.detail, verb: 'added a', field: 'Note' };
+    return { ...base, t: 'comment', title: 'Added a Note', commentBody: e.detail || '', comment: e.detail, verb: 'added a', field: 'Note' };
   }
   if (e.action === 'note_deleted') {
-    return { ...base, t: 'comment', title: 'Deleted a Note', commentBody: e.detail ? `Note: ${e.detail}` : '', comment: e.detail, verb: 'deleted a', field: 'Note' };
+    return { ...base, t: 'comment', title: 'Deleted a Note', commentBody: e.detail || '', comment: e.detail, verb: 'deleted a', field: 'Note' };
   }
   if (e.action === 'created') return { ...base, t: 'default', title: 'added a Goal', verb: 'added a', field: 'Goal' };
   if (e.action === 'deleted') return { ...base, t: 'default', title: 'removed a Goal', verb: 'removed a', field: 'Goal' };
@@ -409,8 +399,6 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
   const deletePatientCarePlanIntervention = useAppStore(s => s.deletePatientCarePlanIntervention);
   const savePatientCarePlanBarrier = useAppStore(s => s.savePatientCarePlanBarrier);
   const deletePatientCarePlanBarrier = useAppStore(s => s.deletePatientCarePlanBarrier);
-  const addCarePlanNote = useAppStore(s => s.addCarePlanNote);
-  const logCarePlanAudit = useAppStore(s => s.logCarePlanAudit);
   const showToast = useAppStore(s => s.showToast);
   const updateCarePlanNote = useAppStore(s => s.updateCarePlanNote);
   const deleteCarePlanNote = useAppStore(s => s.deleteCarePlanNote);
@@ -595,9 +583,6 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
   const intvAddRef = useRef(null);
   const intvLinkRef = useRef(null);
   const barrierLinkRef = useRef(null);
-  const [note, setNote] = useState('');
-  const [notePlain, setNotePlain] = useState('');
-  const [noteEditing, setNoteEditing] = useState(false);
   const [activityTab, setActivityTab] = useState('all');
   const [activityFilter, setActivityFilter] = useState('all');
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -628,34 +613,6 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
   useEffect(() => { setPct(Number(live?.progress) || 0); }, [live?.id, live?.progress]);
   useEffect(() => { if (patientId && program) fetchCarePlanAudit(patientId, program.id); }, [patientId, program, fetchCarePlanAudit]);
 
-  // Latest saved note on this goal — mirrors intervention / barrier
-  // drawers. A subsequent `note_deleted` entry hides the note card but
-  // the original "Added a Note" + the delete row stay in the Activity
-  // Log.
-  const latestGoalNote = useMemo(() => {
-    const forThis = audit.filter(a => String(a.entityId) === String(live?.id));
-    const notes = forThis
-      .filter(a => a.action === 'note' && (a.entityType === 'goal' || a.entityType === 'note'))
-      .sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt));
-    const latestNote = notes[0];
-    if (!latestNote) return null;
-    const latestClear = forThis
-      .filter(a => a.action === 'note_deleted')
-      .sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt))[0];
-    if (latestClear && new Date(latestClear.createdAt) >= new Date(latestNote.createdAt)) return null;
-    return latestNote;
-  }, [audit, live?.id]);
-  const goalNoteHistory = useMemo(() => itemNoteHistory(audit, [live?.id], 'goal'), [audit, live?.id]);
-
-  // Re-seed the editor whenever a new note lands (drawer opens on a
-  // different goal or a fresh note was just saved). Exit edit mode after
-  // a save so the read-only card reappears.
-  useEffect(() => {
-    const seed = latestGoalNote?.detail || '';
-    setNote(seed);
-    setNotePlain(seed);
-    setNoteEditing(false);
-  }, [latestGoalNote?.id]);
   useEffect(() => { fetchPlatformUsers?.(); }, [fetchPlatformUsers]);
 
   const activity = useMemo(() => {
@@ -791,13 +748,6 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
     if (!barrierTitle.trim()) return;
     await savePatientCarePlanBarrier(patientId, program, { title: barrierTitle.trim(), goalId: live.id, status: 'Not Started', priority: live.priority || 'medium' });
     setBarrierTitle(''); setAddingBarrier(false);
-  };
-
-  const submitNote = async () => {
-    const body = (notePlain || note).replace(/<[^>]+>/g, '').trim();
-    if (!body) return;
-    await addCarePlanNote(patientId, program, body, { entityType: 'goal', entityId: live.id, summary: `Note on ${live.title}` });
-    setNoteEditing(false);
   };
 
   const handleAssigneeChange = (intervention, user) => {
@@ -1339,102 +1289,15 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
         )}
 
         {canDocument && (
-          <div ref={noteSectionRef} className={barrierStyles.noteEditor}>
-            {latestGoalNote && !noteEditing ? (
-              <section className={barrierStyles.section}>
-                <div className={barrierStyles.sectionHead}>
-                  <span className={barrierStyles.sectionTitle}>Note</span>
-                </div>
-                <div className={styles.careNoteCardWrap}>
-                  <button
-                    type="button"
-                    className={styles.careNoteCard}
-                    onClick={() => setNoteEditing(true)}
-                    aria-label="Edit note"
-                  >
-                    <p className={styles.careNoteBody}>{latestGoalNote.detail}</p>
-                    <div className={styles.careNoteMeta}>
-                      <span className={styles.careNoteAuthor}>{latestGoalNote.actor || 'You'}</span>
-                      <span className={styles.careNoteDot} aria-hidden="true">•</span>
-                      <span className={styles.careNoteTimestamp}>{fmtStamp(latestGoalNote.createdAt)}</span>
-                    </div>
-                  </button>
-                  <span className={styles.careNoteDelete}>
-                    <ActionButton
-                      icon="solar:trash-bin-trash-linear"
-                      size="S"
-                      tooltip="Delete note"
-                      onClick={() => {
-                        // Log a new "Deleted a Note" audit entry — the
-                        // original "Added a Note" row stays in place so
-                        // both events remain visible in the Activity Log.
-                        logCarePlanAudit?.(patientId, program, {
-                          entityType: 'goal',
-                          entityId: live.id,
-                          action: 'note_deleted',
-                          summary: `Note on ${live.title || 'goal'} deleted`,
-                          detail: latestGoalNote.detail || '',
-                        });
-                        setNote('');
-                        setNotePlain('');
-                        setNoteEditing(true);
-                      }}
-                    />
-                  </span>
-                </div>
-              </section>
-            ) : (
-              <>
-                <section className={barrierStyles.section}>
-                  <div className={barrierStyles.sectionHead}>
-                    <span className={barrierStyles.sectionTitle}>Note</span>
-                  </div>
-                  <Textarea
-                    placeholder="Add a note"
-                    value={note}
-                    onChange={(html, extra) => {
-                      setNote(typeof html === 'string' ? html : '');
-                      setNotePlain(typeof extra === 'string' ? extra : (typeof html === 'string' ? html : ''));
-                    }}
-                    richText
-                    attachment
-                    rows={3}
-                  />
-                </section>
-                {(() => {
-                  const baseline = (latestGoalNote?.detail || '').trim();
-                  const current = (notePlain || note).replace(/<[^>]+>/g, '').trim();
-                  const canSave = current.length > 0 && current !== baseline;
-                  const canDiscard = current !== baseline || noteEditing;
-                  return (
-                    <div className={barrierStyles.noteActions}>
-                      <Button
-                        variant="secondary"
-                        size="M"
-                        disabled={!canDiscard}
-                        onClick={() => {
-                          setNote(baseline);
-                          setNotePlain(baseline);
-                          if (latestGoalNote) setNoteEditing(false);
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        variant="primary"
-                        size="M"
-                        disabled={!canSave}
-                        onClick={submitNote}
-                      >
-                        {latestGoalNote ? 'Update Note' : 'Add Note'}
-                      </Button>
-                    </div>
-                  );
-                })()}
-                <CarePlanNoteChangeLog notes={goalNoteHistory} />
-              </>
-            )}
-          </div>
+          <CarePlanItemNote
+            ref={noteSectionRef}
+            entityType="goal"
+            itemId={live.id}
+            itemTitle={live.title}
+            audit={audit}
+            patientId={patientId}
+            program={program}
+          />
         )}
 
         <div className={styles.activityBlock}>

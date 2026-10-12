@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useAppStore } from '../../../../../../../store/useAppStore';
 import { Icon } from '@/components/Icon/Icon';
 import { AddIconMinimalist } from '@/components/Icon/AddIconMinimalist';
 import { ActionButton } from '@/components/ActionButton/ActionButton';
@@ -20,7 +21,7 @@ import { useCarePlanViewPanelRequest } from './useCarePlanViewPanelRequest';
 import { useCarePlanOpenSections } from './useCarePlanOpenSections';
 import { useCarePlanNoteDrawer } from './useCarePlanNoteDrawer';
 import { useCarePlanViewFilters } from './useCarePlanViewFilters';
-import { linkedForGoal, linkedForChild, currentNoteLookup } from './carePlanLinkedItems';
+import { linkedForGoal, linkedForChild, noteSummaryLookup } from './carePlanLinkedItems';
 import { norm } from './carePlanViewNorm';
 import {
   CARE_PLAN_INTERVENTION_MENU,
@@ -97,9 +98,14 @@ export function CarePlanView({ patientId, program }) {
   const programBadge = program?.name ? [program.name] : (program?.code ? [program.code] : []);
   const linkedForGoalRow = (g) => linkedForGoal(g, live, programBadge);
   const linkedForChildRow = (item) => linkedForChild(item, live, programBadge);
-  // Notes action: the dot shows when the item has a current note, and the
-  // click opens that item's drawer scrolled to its Note section.
-  const noteLookup = useMemo(() => currentNoteLookup(auditAll), [auditAll]);
+  // Notes action: the item's note count, highlighted when one is new to this
+  // user; the click opens that item's drawer scrolled to its Note section.
+  const noteReads = useAppStore(s => s.carePlanNoteReads);
+  const fetchCarePlanNoteReads = useAppStore(s => s.fetchCarePlanNoteReads);
+  const markCarePlanNoteSeen = useAppStore(s => s.markCarePlanNoteSeen);
+  const myName = useAppStore(s => s.currentUserProfile?.name || '');
+  useEffect(() => { fetchCarePlanNoteReads(); }, [fetchCarePlanNoteReads]);
+  const noteLookup = useMemo(() => noteSummaryLookup(auditAll, noteReads, myName), [auditAll, noteReads, myName]);
   const [notesFocus, setNotesFocus] = useState(null); // null | { kind, id }
 
   useCarePlanViewFetchEffects({
@@ -167,6 +173,10 @@ export function CarePlanView({ patientId, program }) {
   // Barrier preview drawer: shows goals/template linked to this barrier
   // in the current plan version, with delink + add-goal affordances.
   const [previewBarrier, setPreviewBarrier] = useState(null);
+  // Opening an item's drawer shows its notes, so they're no longer new.
+  useEffect(() => { if (previewGoal?.id) markCarePlanNoteSeen('goal', previewGoal.id); }, [previewGoal?.id, markCarePlanNoteSeen]);
+  useEffect(() => { if (previewIntervention?.id) markCarePlanNoteSeen('intervention', previewIntervention.id); }, [previewIntervention?.id, markCarePlanNoteSeen]);
+  useEffect(() => { if (previewBarrier?.id) markCarePlanNoteSeen('barrier', previewBarrier.id); }, [previewBarrier?.id, markCarePlanNoteSeen]);
   const openNotesFor = (kind, item) => {
     setNotesFocus({ kind, id: item.id });
     if (kind === 'goal') setPreviewGoal(item);

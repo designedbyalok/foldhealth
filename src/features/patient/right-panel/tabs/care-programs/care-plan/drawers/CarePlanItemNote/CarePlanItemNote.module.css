@@ -1,0 +1,71 @@
+.noteEditor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.section {
+  display: flex;
+  flex-direction: column;
+}
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  height: var(--space-6);
+}
+.sectionTitle {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+.cardWrap {
+  position: relative;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--primary-50);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+.card:hover {
+  background: var(--primary-100);
+}
+/* Delete appears on hover, over the card's top-right corner. */
+.delete {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.cardWrap:hover .delete,
+.cardWrap:focus-within .delete {
+  opacity: 1;
+}
+.body {
+  margin: 0;
+  font-size: var(--font-base);
+  line-height: var(--leading-tight);
+  color: var(--neutral-400);
+  white-space: pre-wrap;
+}
+.meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+}

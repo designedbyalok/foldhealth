@@ -52,12 +52,51 @@ export function currentNoteLookup(auditAll) {
     for (const kind of ['goal', 'intervention', 'barrier']) {
       const typeMatches = a.entityType === kind || a.entityType === 'note';
       if (a.action === 'note' && typeMatches) bump(`${kind}:${id}`, 'note', at);
-      if (a.action === 'note_deleted' && (kind !== 'barrier' || typeMatches)) bump(`${kind}:${id}`, 'clear', at);
+      if (a.action === 'note_deleted' && typeMatches) bump(`${kind}:${id}`, 'clear', at);
     }
   }
   return (kind, id) => {
     const entry = latest.get(`${kind}:${String(id)}`);
     return !!entry && entry.note > 0 && !(entry.clear && entry.clear >= entry.note);
+  };
+}
+
+/**
+ * Each item's notes for the table's note button: how many notes it has since
+ * the last delete, and whether any of them is new to this user (added by
+ * someone else after they last opened the item's notes). Null when it has
+ * no notes. `reads`: `${kind}:${id}` → ms last opened; `me`: the user's name.
+ */
+export function noteSummaryLookup(auditAll, reads = {}, me = '') {
+  const byKey = new Map(); // `${kind}:${id}` → { notes: [{ at, actor }], clear }
+  const entry = (key) => {
+    if (!byKey.has(key)) byKey.set(key, { notes: [], clear: 0 });
+    return byKey.get(key);
+  };
+  for (const a of auditAll || []) {
+    if (a.action !== 'note' && a.action !== 'note_deleted') continue;
+    const t = new Date(a.createdAt).getTime();
+    if (a.action === 'note_deleted' && !Number.isFinite(t)) continue;
+    const at = Number.isFinite(t) ? t : Infinity;
+    const id = String(a.entityId);
+    for (const kind of ['goal', 'intervention', 'barrier']) {
+      const typeMatches = a.entityType === kind || a.entityType === 'note';
+      if (a.action === 'note' && typeMatches) entry(`${kind}:${id}`).notes.push({ at, actor: a.actor || '' });
+      if (a.action === 'note_deleted' && typeMatches) {
+        const e = entry(`${kind}:${id}`);
+        if (at > e.clear) e.clear = at;
+      }
+    }
+  }
+  return (kind, id) => {
+    const key = `${kind}:${String(id)}`;
+    const e = byKey.get(key);
+    if (!e) return null;
+    const current = e.notes.filter(n => n.at > e.clear);
+    if (!current.length) return null;
+    const seen = reads[key] || 0;
+    const isNew = current.some(n => n.at > seen && (!me || n.actor !== me));
+    return { count: current.length, isNew };
   };
 }
 

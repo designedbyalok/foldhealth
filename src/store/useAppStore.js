@@ -3251,6 +3251,29 @@ export const useAppStore = create((set, get) => ({
     return true;
   },
 
+  // ── Care plan note reads (care_plan_note_reads migration) ──
+  // When the signed-in user last opened each goal / intervention / barrier's
+  // notes: `${kind}:${id}` → ms. A newer note by someone else shows as new.
+  carePlanNoteReads: {},
+  carePlanNoteReadsLoaded: false,
+  fetchCarePlanNoteReads: async () => {
+    if (get().carePlanNoteReadsLoaded) return;
+    set({ carePlanNoteReadsLoaded: true });
+    const { data, error } = await supabase.from('care_plan_note_reads').select('entity_type, entity_id, seen_at');
+    if (error) { console.warn('fetchCarePlanNoteReads:', error.message); return; }
+    const reads = {};
+    for (const r of data || []) reads[`${r.entity_type}:${r.entity_id}`] = new Date(r.seen_at).getTime();
+    set(s => ({ carePlanNoteReads: { ...reads, ...s.carePlanNoteReads } }));
+  },
+  markCarePlanNoteSeen: async (kind, id) => {
+    if (!kind || id == null) return;
+    const now = new Date();
+    set(s => ({ carePlanNoteReads: { ...s.carePlanNoteReads, [`${kind}:${id}`]: now.getTime() } }));
+    const { error } = await supabase.from('care_plan_note_reads')
+      .upsert({ entity_type: kind, entity_id: String(id), seen_at: now.toISOString() }, { onConflict: 'user_id,entity_type,entity_id' });
+    if (error) console.warn('markCarePlanNoteSeen:', error.message);
+  },
+
   // ── Care plan print presets (care_plan_print_presets migration) ──
   // Saved Personalize settings for Preview & Share: the organization's plus
   // the signed-in user's private ones (RLS hides other people's).

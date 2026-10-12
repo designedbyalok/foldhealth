@@ -23,8 +23,7 @@ import { interventionOwner, toPickerValue } from '../../tables/carePlanTableMode
 import { formatGoalTarget, formatGoalFrequency } from '../../../../../../../settings/care-plan-library/lib';
 import { computeDueDate, computeOccurrenceDates, formatRecurrenceLabel } from '../../tables/CarePlanInterventionsTable';
 import { useScrollToSection } from '../../lib/useScrollToSection';
-import { itemNoteHistory } from '../../lib/carePlanNotes';
-import { CarePlanNoteChangeLog } from '../CarePlanNoteChangeLog/CarePlanNoteChangeLog';
+import { CarePlanItemNote } from '../CarePlanItemNote/CarePlanItemNote';
 import { interventionDurationFromConfig } from '../../lib/carePlanInterventionMenu';
 import { KIND_LABELS } from '../../../../../../../settings/care-plan-library/interventions/shared/interventionKinds';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
@@ -72,15 +71,6 @@ function fmtDate(iso) {
   return d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' });
 }
 
-function fmtStamp(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  const date = d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
-  const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-  return `${date} ${time}`;
-}
-
 const initialsOf = (name) => (name || '').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
 function splitArrow(detail) {
@@ -109,7 +99,7 @@ function mapAuditEntry(e) {
       ...base,
       t: 'comment',
       title: 'Added a Note',
-      commentBody: `Note: ${e.detail || ''}`,
+      commentBody: e.detail || '',
       comment: e.detail,
       verb: 'added a',
       field: 'Note',
@@ -120,7 +110,7 @@ function mapAuditEntry(e) {
       ...base,
       t: 'comment',
       title: 'Deleted a Note',
-      commentBody: e.detail ? `Note: ${e.detail}` : '',
+      commentBody: e.detail || '',
       comment: e.detail,
       verb: 'deleted a',
       field: 'Note',
@@ -203,10 +193,8 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
   const deletePatientCarePlanIntervention = useAppStore(s => s.deletePatientCarePlanIntervention);
   const saveCarePlanAutomation = useAppStore(s => s.saveCarePlanAutomation);
   const deleteCarePlanAutomation = useAppStore(s => s.deleteCarePlanAutomation);
-  const addCarePlanNote = useAppStore(s => s.addCarePlanNote);
   const updateCarePlanNote = useAppStore(s => s.updateCarePlanNote);
   const deleteCarePlanNote = useAppStore(s => s.deleteCarePlanNote);
-  const logCarePlanAudit = useAppStore(s => s.logCarePlanAudit);
   const fetchCarePlanAudit = useAppStore(s => s.fetchCarePlanAudit);
   const currentUserName = useAppStore(s => s.currentUserProfile?.name);
   const patientName = useAppStore(s => {
@@ -245,8 +233,6 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
   const [open, setOpen] = useState({ tasks: true, goals: true, automations: true });
   const [addingAutomation, setAddingAutomation] = useState(false);
   const [automationTitle, setAutomationTitle] = useState('');
-  const [note, setNote] = useState('');
-  const [noteEditing, setNoteEditing] = useState(false);
   const [moreMenu, setMoreMenu] = useState(null);
   const [linkGoalOpen, setLinkGoalOpen] = useState(false);
   // The editable title; "Rename" focuses it with the text selected.
@@ -314,37 +300,6 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
   }, [live, contentEmails, contentForms]);
   const linkedContentTitle = live?.kind === 'send-form' ? 'Linked Form' : 'Linked Education';
 
-  // Latest saved note on this intervention — seeds the note editor and
-  // drives the "Update Note" vs "Add Note" label. A subsequent
-  // `note_deleted` entry on the same intervention hides the note card
-  // (but the delete + original add still appear in the Activity Log).
-  const latestInterventionNote = useMemo(() => {
-    const forThis = audit.filter(a => String(a.entityId) === String(live?.id));
-    const notes = forThis
-      .filter(a => a.action === 'note' && (a.entityType === 'intervention' || a.entityType === 'note'))
-      .sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt));
-    const latestNote = notes[0];
-    if (!latestNote) return null;
-    const latestClear = forThis
-      .filter(a => a.action === 'note_deleted')
-      .sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt))[0];
-    if (latestClear && new Date(latestClear.createdAt) >= new Date(latestNote.createdAt)) return null;
-    return latestNote;
-  }, [audit, live?.id]);
-  const interventionNoteHistory = useMemo(
-    () => itemNoteHistory(audit, [live?.id], 'intervention'),
-    [audit, live?.id],
-  );
-
-  // Seed the note textarea from the latest saved note whenever it changes
-  // (drawer opens on a new intervention OR a new note was just saved). Exit
-  // edit mode after a fresh save so the read-only display re-appears.
-  useEffect(() => {
-    const seed = latestInterventionNote?.detail || '';
-    setNote(seed);
-    setNoteEditing(false);
-  }, [latestInterventionNote?.id]);
-
   const activity = useMemo(() => audit
     .filter(a => String(a.entityId) === String(live?.id))
     .map(mapAuditEntry), [audit, live]);
@@ -382,13 +337,6 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
     await saveCarePlanAutomation(patientId, program, live.goalId, { title: automationTitle.trim() });
     setAutomationTitle('');
     setAddingAutomation(false);
-  };
-
-  const submitNote = async () => {
-    const body = note.replace(/<[^>]+>/g, '').trim();
-    if (!body) return;
-    await addCarePlanNote(patientId, program, body, { entityType: 'intervention', entityId: live.id, summary: `Note on ${live.title}` });
-    setNoteEditing(false);
   };
 
   // One due-date rule for the table, this drawer and the schedule below:
@@ -773,99 +721,15 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
         )}
 
         {canDocument && (
-          <div ref={noteSectionRef} className={barrierStyles.noteEditor}>
-            {latestInterventionNote && !noteEditing ? (
-              <section className={barrierStyles.section}>
-                <div className={barrierStyles.sectionHead}>
-                  <span className={barrierStyles.sectionTitle}>Note</span>
-                </div>
-                <div className={styles.careNoteCardWrap}>
-                  <button
-                    type="button"
-                    className={styles.careNoteCard}
-                    onClick={() => setNoteEditing(true)}
-                    aria-label="Edit note"
-                  >
-                    <p className={styles.careNoteBody}>{latestInterventionNote.detail}</p>
-                    <div className={styles.careNoteMeta}>
-                      <span className={styles.careNoteAuthor}>{latestInterventionNote.actor || 'You'}</span>
-                      <span className={styles.careNoteDot} aria-hidden="true">•</span>
-                      <span className={styles.careNoteTimestamp}>{fmtStamp(latestInterventionNote.createdAt)}</span>
-                    </div>
-                  </button>
-                  <span className={styles.careNoteDelete}>
-                    <ActionButton
-                      icon="solar:trash-bin-trash-linear"
-                      size="S"
-                      tooltip="Delete note"
-                      onClick={() => {
-                        // Log a new "Deleted a Note" audit entry — the
-                        // original "Added a Note" row stays in place so
-                        // both events remain visible in the Activity Log.
-                        logCarePlanAudit?.(patientId, program, {
-                          entityType: 'intervention',
-                          entityId: live.id,
-                          action: 'note_deleted',
-                          summary: `Note on ${live.title || 'intervention'} deleted`,
-                          detail: latestInterventionNote.detail || '',
-                        });
-                        // Drop the seeded text so the editor reopens empty.
-                        setNote('');
-                        setNoteEditing(true);
-                      }}
-                    />
-                  </span>
-                </div>
-              </section>
-            ) : (
-              <>
-                <section className={barrierStyles.section}>
-                  <div className={barrierStyles.sectionHead}>
-                    <span className={barrierStyles.sectionTitle}>Note</span>
-                  </div>
-                  <Textarea
-                    placeholder="Add a note"
-                    value={note}
-                    onChange={(value) => {
-                      const v = typeof value === 'string' ? value : '';
-                      setNote(v);
-                    }}
-                    rows={3}
-                  />
-                </section>
-                {(() => {
-                  const baseline = (latestInterventionNote?.detail || '').trim();
-                  const current = note.trim();
-                  const canSave = current.length > 0 && current !== baseline;
-                  const canDiscard = current !== baseline || noteEditing;
-                  return (
-                    <div className={barrierStyles.noteActions}>
-                      <Button
-                        variant="secondary"
-                        size="M"
-                        disabled={!canDiscard}
-                        onClick={() => {
-                          setNote(baseline);
-                          if (latestInterventionNote) setNoteEditing(false);
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        variant="primary"
-                        size="M"
-                        disabled={!canSave}
-                        onClick={submitNote}
-                      >
-                        {latestInterventionNote ? 'Update Note' : 'Add Note'}
-                      </Button>
-                    </div>
-                  );
-                })()}
-                <CarePlanNoteChangeLog notes={interventionNoteHistory} />
-              </>
-            )}
-          </div>
+          <CarePlanItemNote
+            ref={noteSectionRef}
+            entityType="intervention"
+            itemId={live.id}
+            itemTitle={live.title}
+            audit={audit}
+            patientId={patientId}
+            program={program}
+          />
         )}
       </div>
 

@@ -25,6 +25,8 @@ import styles from './ActionButton.module.css';
  *   (it grows leftward), for buttons at a container's right edge
  * @param {boolean}  [props.notification=false]          – Show orange notification badge
  * @param {string}   [props.count]                      – Badge count text (shows grey count badge)
+ * @param {'new'}    [props.countTone]                  – 'new' fills the count badge in the primary
+ *                                                        colour, for something the user hasn't seen yet
  * @param {boolean}  [props.dot=false]                  – Show red status dot
  * @param {boolean}  [props.dotPulse=false]             – Make the red dot blink (pulsing ring)
  * @param {boolean}  [props.chevron=false]              – Show dropdown chevron
@@ -41,6 +43,7 @@ export const ActionButton = forwardRef(function ActionButton({
   tooltip,
   notification = false,
   count,
+  countTone,
   dot = false,
   dotPulse = false,
   chevron = false,
@@ -118,7 +121,7 @@ export const ActionButton = forwardRef(function ActionButton({
 
       {/* Count badge (grey with number) */}
       {!notification && count && (
-        <span className={`${styles.badge} ${styles.badgeCount}`}>
+        <span className={`${styles.badge} ${countTone === 'new' ? styles.badgeCountNew : styles.badgeCount}`}>
           {count}
         </span>
       )}

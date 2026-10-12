@@ -93,6 +93,12 @@
   color: var(--neutral-300);
 }
 
+.badgeCountNew {
+  background: var(--primary-300);
+  border: 0.5px solid var(--primary-300);
+  color: var(--neutral-0);
+}
+
 /* Badge sizing per button size */
 .sizeS .badge {
   /* Tucked onto the icon's top-right corner rather than floating off it. */

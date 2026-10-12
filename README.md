@@ -37,6 +37,14 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **Care plan notes work the same on goals, interventions and barriers.**
+  One shared Note section (`drawers/CarePlanItemNote`) replaces three
+  copies: the latest note as a card (click to edit, hover to delete), Add /
+  Update Note with a toast, and the change log, with the same rules for the
+  current note and deletes. Typing in the intervention and barrier note box
+  works again, and the Activity Log no longer prefixes notes with "Note:".
+  The table's note button shows the note count, filled in purple when a note
+  by someone else is new to you (`care_plan_note_reads`, per user).
 - **Template versions on the care plan.** When a template is reinstated, the
   current run's chip on the applied-templates strip reads V2 and each earlier
   run follows it as a done chip (check mark, V1). Selecting V1 shows that

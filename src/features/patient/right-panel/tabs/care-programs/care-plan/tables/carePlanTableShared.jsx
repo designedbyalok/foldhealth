@@ -174,8 +174,13 @@ export function GbiMetaDate({ label, noun, value, emptyLabel, status, editable, 
   return trailing ? <span className={styles.metaInline}>{withTip}{trailing}</span> : withTip;
 }
 
-/** Linked items · Notes · More — the fixed Actions cell for every GBI row. */
-export function GbiRowActions({ linked, hasNote, onNotes, onMenu, menuDisabled = false }) {
+/**
+ * Linked items · Notes · More — the fixed Actions cell for every GBI row.
+ * `note`: { count, isNew } when the item has notes. The count shows on the
+ * note button, highlighted when one is new to this user.
+ */
+export function GbiRowActions({ linked, note, onNotes, onMenu, menuDisabled = false }) {
+  const hasNote = !!note;
   return (
     <span className={styles.rowActions}>
       <GbiLinkButton data={linked} keepSlot />
@@ -183,10 +188,11 @@ export function GbiRowActions({ linked, hasNote, onNotes, onMenu, menuDisabled =
       <ActionButton
         icon="solar:notes-linear"
         size="S"
-        tooltip={hasNote ? 'View note' : 'Add note'}
+        tooltip={!hasNote ? 'Add note' : note.isNew ? 'New note' : `View note${note.count > 1 ? 's' : ''}`}
         tooltipBelow
         tooltipLeft
-        dot={hasNote}
+        count={hasNote ? String(note.count) : undefined}
+        countTone={note?.isNew ? 'new' : undefined}
         iconColor={hasNote ? 'var(--neutral-400)' : undefined}
         onClick={onNotes}
       />

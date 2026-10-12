@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useScrollToSection } from '../../lib/useScrollToSection';
-import { itemNoteHistory } from '../../lib/carePlanNotes';
-import { CarePlanNoteChangeLog } from '../CarePlanNoteChangeLog/CarePlanNoteChangeLog';
+import { CarePlanItemNote } from '../CarePlanItemNote/CarePlanItemNote';
 import { Drawer } from '../../../../../../../../components/Drawer/Drawer';
 import { EditableText } from '../../../../../../../../components/EditableText/EditableText';
 import { Button } from '../../../../../../../../components/Button/Button';
@@ -40,15 +39,6 @@ function fmtDate(iso) {
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');
   return `${mm}/${dd}/${String(d.getFullYear()).slice(-2)}`;
-}
-
-function fmtStamp(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  const date = d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
-  const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-  return `${date} ${time}`;
 }
 
 /**
@@ -94,7 +84,7 @@ function mapBarrierAuditEntry(e) {
     case 'note':
       return { ...base, t: 'comment', title: 'Added a Note', commentBody: e.detail || '' };
     case 'note_deleted':
-      return { ...base, t: 'comment', title: 'Deleted a Note', commentBody: e.detail ? `Note: ${e.detail}` : '' };
+      return { ...base, t: 'comment', title: 'Deleted a Note', commentBody: e.detail || '' };
     case 'status_changed':
       return { ...base, t: 'status_change', title: 'Status changed', from, to };
     case 'created':
@@ -136,8 +126,6 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
   const auditAll = useAppStore(s => (key ? s.patientCarePlanAudit[key] : null)) || [];
   const savePatientCarePlanBarrier = useAppStore(s => s.savePatientCarePlanBarrier);
   const deletePatientCarePlanBarrier = useAppStore(s => s.deletePatientCarePlanBarrier);
-  const addCarePlanNote = useAppStore(s => s.addCarePlanNote);
-  const logCarePlanAudit = useAppStore(s => s.logCarePlanAudit);
   const showToast = useAppStore(s => s.showToast);
   const libraryBarriers = useAppStore(s => s.carePlanBarriers) || [];
   // Powers the shared activity block's "Since Last Visit" tab, same
@@ -250,50 +238,8 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
     () => new Set(legacyClones.map(b => String(b.id))),
     [legacyClones],
   );
-  // Latest saved note on this barrier — mirrors the intervention drawer.
-  // A subsequent `note_deleted` entry hides the note card but the original
-  // "Added a Note" + the delete row stay visible in the Activity Log.
-  const latestBarrierNote = useMemo(() => {
-    const forThis = auditAll.filter(a => (a.entityType === 'barrier' || a.entityType === 'note')
-      && barrierIdSet.has(String(a.entityId)));
-    const notes = forThis
-      .filter(a => a.action === 'note')
-      .sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt));
-    const latestNote = notes[0];
-    if (!latestNote) return null;
-    const latestClear = forThis
-      .filter(a => a.action === 'note_deleted')
-      .sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt))[0];
-    if (latestClear && new Date(latestClear.createdAt) >= new Date(latestNote.createdAt)) return null;
-    return latestNote;
-  }, [auditAll, barrierIdSet]);
-  const barrierNoteHistory = useMemo(
-    () => itemNoteHistory(auditAll, barrierIdSet, 'barrier'),
-    [auditAll, barrierIdSet],
-  );
-  const [note, setNote] = useState(latestBarrierNote?.detail || '');
-  const [noteEditing, setNoteEditing] = useState(false);
   const noteSectionRef = useRef(null);
   useScrollToSection(noteSectionRef, focusSection === 'notes', barrier?.id);
-  // Whenever a new note lands (either the drawer just opened on a
-  // different barrier or the user just submitted), re-seed the textarea
-  // to the current latest so the editor keeps reading "Update Note".
-  useEffect(() => {
-    const seed = latestBarrierNote?.detail || '';
-    setNote(seed);
-    setNoteEditing(false);
-  }, [latestBarrierNote?.id]);
-  const submitNote = async () => {
-    const body = note.trim();
-    if (!body) return;
-    await addCarePlanNote?.(patientId, program, body, {
-      entityType: 'barrier',
-      entityId: barrier.id,
-      summary: `Note on ${barrier.title || 'barrier'}`,
-    });
-    setNoteEditing(false);
-    showToast?.(latestBarrierNote ? 'Note updated' : 'Note added');
-  };
 
   // Activity for this barrier — every audit row whose entityType is
   // 'barrier' and entityId matches any clone of THIS barrier (title
@@ -688,105 +634,16 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
             )}
           </section>
 
-          {/* Note surface — matches the InterventionPreviewDrawer so the
-              read-only card, hover-delete, and Cancel / Update Note flow
-              read identically across both drawers. */}
-          <div ref={noteSectionRef} className={styles.noteEditor}>
-            {latestBarrierNote && !noteEditing ? (
-              <section className={styles.section}>
-                <div className={styles.sectionHead}>
-                  <span className={styles.sectionTitle}>Note</span>
-                </div>
-                <div className={goalStyles.careNoteCardWrap}>
-                  <button
-                    type="button"
-                    className={goalStyles.careNoteCard}
-                    onClick={() => !isTerminal && setNoteEditing(true)}
-                    aria-label="Edit note"
-                    disabled={isTerminal}
-                  >
-                    <p className={goalStyles.careNoteBody}>{latestBarrierNote.detail}</p>
-                    <div className={goalStyles.careNoteMeta}>
-                      <span className={goalStyles.careNoteAuthor}>{latestBarrierNote.actor || 'You'}</span>
-                      <span className={goalStyles.careNoteDot} aria-hidden="true">•</span>
-                      <span className={goalStyles.careNoteTimestamp}>{fmtStamp(latestBarrierNote.createdAt)}</span>
-                    </div>
-                  </button>
-                  {!isTerminal && (
-                    <span className={goalStyles.careNoteDelete}>
-                      <ActionButton
-                        icon="solar:trash-bin-trash-linear"
-                        size="S"
-                        tooltip="Delete note"
-                        onClick={() => {
-                          // Log a new "Deleted a Note" audit entry — the
-                          // original "Added a Note" row stays in place so
-                          // both events remain visible in the Activity Log.
-                          logCarePlanAudit?.(patientId, program, {
-                            entityType: 'barrier',
-                            entityId: barrier.id,
-                            action: 'note_deleted',
-                            summary: `Note on ${barrier.title || 'barrier'} deleted`,
-                            detail: latestBarrierNote.detail || '',
-                          });
-                          setNote('');
-                          setNoteEditing(true);
-                        }}
-                      />
-                    </span>
-                  )}
-                </div>
-              </section>
-            ) : (
-              <>
-                <section className={styles.section}>
-                  <div className={styles.sectionHead}>
-                    <span className={styles.sectionTitle}>Note</span>
-                  </div>
-                  <Textarea
-                    placeholder={isTerminal ? 'Notes are locked on Met / Not Met barriers.' : 'Add a note'}
-                    value={note}
-                    onChange={(value) => {
-                      const v = typeof value === 'string' ? value : '';
-                      setNote(v);
-                    }}
-                    rows={3}
-                    disabled={isTerminal}
-                  />
-                </section>
-                {(() => {
-                  const baseline = (latestBarrierNote?.detail || '').trim();
-                  const current = note.trim();
-                  const canSave = !isTerminal && current.length > 0 && current !== baseline;
-                  const canDiscard = !isTerminal && (current !== baseline || noteEditing);
-                  return (
-                    <div className={styles.noteActions}>
-                      <Button
-                        variant="secondary"
-                        size="M"
-                        disabled={!canDiscard}
-                        onClick={() => {
-                          setNote(baseline);
-                          if (latestBarrierNote) setNoteEditing(false);
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        variant="primary"
-                        size="M"
-                        disabled={!canSave}
-                        onClick={submitNote}
-                      >
-                        {latestBarrierNote ? 'Update Note' : 'Add Note'}
-                      </Button>
-                    </div>
-                  );
-                })()}
-                <CarePlanNoteChangeLog notes={barrierNoteHistory} />
-              </>
-            )}
-          </div>
+          <CarePlanItemNote
+            ref={noteSectionRef}
+            entityType="barrier"
+            itemId={barrier.id}
+            ids={[...barrierIdSet]}
+            itemTitle={barrier.title}
+            audit={auditAll}
+            patientId={patientId}
+            program={program}
+          />
 
           {/* Activity Log — shared block with TabStrip (All / Since
               Last Visit) + Filter chip, matches the Goal preview
