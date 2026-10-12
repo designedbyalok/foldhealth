@@ -3359,7 +3359,9 @@ export const useAppStore = create((set, get) => ({
     }
     return saved;
   },
-  finishCarePlanReview: async (patientId, program, note) => {
+  // clock: { startedAt, stoppedAt } in ms from the drawer's review timer.
+  finishCarePlanReview: async (patientId, program, note, clock) => {
+    const durationMs = clock?.startedAt ? (clock.stoppedAt ?? Date.now()) - clock.startedAt : 0;
     const before = get().carePlanReviews[carePlanKey(patientId, program.id)]?.open;
     const saved = await get().patchCarePlanReview(patientId, program, {
       ...(note != null ? { call_note: note } : {}),
@@ -3373,7 +3375,7 @@ export const useAppStore = create((set, get) => ({
       const n = Object.keys(saved.discussed || {}).length;
       rows.push({
         entityType: 'plan', entityId: saved.id, action: 'review_finished', summary: 'Care plan reviewed',
-        detail: `${n} item${n === 1 ? '' : 's'} discussed`,
+        detail: `${n} item${n === 1 ? '' : 's'} discussed${durationMs > 0 ? ` · ${Math.max(1, Math.round(durationMs / 60000))} min` : ''}`,
       });
       get().logCarePlanAudit(patientId, program, rows);
     }

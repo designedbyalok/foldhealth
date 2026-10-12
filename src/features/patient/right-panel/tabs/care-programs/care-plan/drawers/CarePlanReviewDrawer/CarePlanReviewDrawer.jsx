@@ -23,6 +23,7 @@ import { ReviewItemRow } from './ReviewItemRow';
 import { CarePlanActivityBlock } from '../CarePlanActivityBlock/CarePlanActivityBlock';
 import { PLAN_ACTIVITY_FILTERS, planActivityEntries } from './planActivityEntries';
 import { ReviewDrawerSkeleton } from './ReviewDrawerSkeleton';
+import { ReviewTimer } from './ReviewTimer';
 import bones from '../../../../../../../../components/TableSkeleton/TableSkeleton.module.css';
 import styles from './CarePlanReviewDrawer.module.css';
 
@@ -133,6 +134,10 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
 
   const [tab, setTab] = useState('goals');
   const [activityFiltersOpen, setActivityFiltersOpen] = useState(false);
+  // The review clock: Start review sets startedAt and brings up the note
+  // composer; Stop freezes it. Finish review records the duration.
+  const [startedAt, setStartedAt] = useState(null);
+  const [stoppedAt, setStoppedAt] = useState(null);
   const [filter, setFilter] = useState('all');
   const [expanded, setExpanded] = useState(null); // `${kind}:${id}` with its note open
   const [statusMenu, setStatusMenu] = useState(null); // { kind, item, rect }
@@ -195,7 +200,7 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
 
   const finish = async () => {
     const note = callNote == null ? undefined : (plainText(callNote) ? callNote : '');
-    const saved = await finishReview(patientId, program, note);
+    const saved = await finishReview(patientId, program, note, { startedAt, stoppedAt });
     if (!saved) return;
     showToast(`Review finished · ${plural(totalDiscussed, 'item')} discussed`);
     onClose();
@@ -213,6 +218,14 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
         onClick={() => { onClose(); navigateToPatient?.(patientId); }}
       />
       <span className={styles.headerDivider} aria-hidden="true" />
+      {startedAt == null ? (
+        <Button variant="primary" size="S" leadingIcon="solar:play-linear" onClick={() => setStartedAt(Date.now())}>
+          Start review
+        </Button>
+      ) : (
+        <ReviewTimer startedAt={startedAt} stoppedAt={stoppedAt} onStop={() => setStoppedAt(Date.now())} />
+      )}
+      <span className={styles.headerDivider} aria-hidden="true" />
     </>
   );
 
@@ -228,7 +241,8 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
       headerRight={headerRight}
       noCloseDivider
       bodyClassName={styles.drawerBody}
-      footer={(
+      footerClassName={styles.footerEnter}
+      footer={startedAt != null && (
         <div className={styles.composer}>
           <Textarea
             richText

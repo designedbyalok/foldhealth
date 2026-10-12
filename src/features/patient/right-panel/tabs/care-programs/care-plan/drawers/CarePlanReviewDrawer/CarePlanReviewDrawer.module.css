@@ -376,6 +376,103 @@
   padding: 0;
 }
 
+/* Review clock in the header */
+.timer {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--space-6);
+  padding: 0 var(--space-1) 0 var(--space-2);
+  border-radius: var(--space-3);
+  font-size: var(--font-md);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  animation: timerIn 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.timerRunning {
+  background: var(--primary-50);
+  color: var(--primary-300);
+}
+.timerStopped {
+  padding-right: var(--space-2);
+  background: var(--neutral-50);
+  color: var(--neutral-400);
+}
+.timerDot {
+  position: relative;
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: 50%;
+  background: var(--primary-300);
+}
+.timerDot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--primary-300);
+  animation: timerPulse 1.6s ease-out infinite;
+}
+.timerStop {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--neutral-0);
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease;
+}
+.timerStop:hover {
+  transform: scale(1.08);
+}
+.timerStop:active {
+  transform: scale(0.94);
+}
+.timerStopGlyph {
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: 2px;
+  background: var(--primary-300);
+}
+@keyframes timerIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes timerPulse {
+  from { opacity: 0.6; transform: scale(1); }
+  to { opacity: 0; transform: scale(2.6); }
+}
+
+/* Footer composer: rises from the bottom edge when the review starts. */
+.footerEnter {
+  animation: footerIn 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.footerEnter > * {
+  animation: footerContentIn 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes footerIn {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes footerContentIn {
+  0%, 30% { opacity: 0; transform: translateY(var(--space-2)); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .timer,
+  .footerEnter,
+  .footerEnter > * {
+    animation: none;
+  }
+  .timerDot::after {
+    animation: none;
+  }
+}
+
 /* Footer composer */
 .composer {
   display: flex;
