@@ -28,22 +28,6 @@
 .activityLogPad {
   padding: 0;
 }
-/* filterRow mode: a full-width filter row above the log (Review drawer). */
-.rowBlock {
-  display: flex;
-  flex-direction: column;
-}
-.filterRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
-  border-bottom: 0.5px solid var(--neutral-150);
-  background: var(--neutral-0);
-}
-.rowBlockLog {
-  padding: var(--space-3) var(--space-4) var(--space-4);
-}
 .activityFilterBar {
   display: flex;
   align-items: center;

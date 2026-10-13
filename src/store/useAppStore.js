@@ -1071,6 +1071,7 @@ export const useAppStore = create((set, get) => ({
   // Programs tab picks this up, ensures the program is enrolled, and opens
   // its ProgramDetailView on mount. Cleared once consumed.
   pendingCareProgramCode: null,
+  pendingCareProgramCarePlan: false,
   navigateToPatient: (patientId, opts = {}) => {
     const from = get().activePage;
     track('nav.patient_opened', { patientId, from });
@@ -1089,6 +1090,8 @@ export const useAppStore = create((set, get) => ({
       updates.patientProfileTab = 'Care Management';
       updates.careManagementTab = 'Care Programs';
       updates.pendingCareProgramCode = opts.programCode;
+      // Land on the program's Care Plan step rather than its first step.
+      updates.pendingCareProgramCarePlan = !!opts.carePlan;
     }
     set(updates);
     const state = get();
@@ -1137,7 +1140,7 @@ export const useAppStore = create((set, get) => ({
     set({ carePlanSummaryOpen: !!open, selectedCareProgramKey: null, careProgramStep: null });
     updateHash?.(get());
   },
-  clearPendingCareProgramCode: () => set({ pendingCareProgramCode: null }),
+  clearPendingCareProgramCode: () => set({ pendingCareProgramCode: null, pendingCareProgramCarePlan: false }),
 
   // EditPatientDrawer — one drawer shared by every "Edit …" entry-point
   // on the Profile tab, the P360 banner overflow menu, and every worklist
@@ -3360,16 +3363,8 @@ export const useAppStore = create((set, get) => ({
   },
   // The call note and the finished review are also logged to the plan's
   // activity (care_plan_audit), so the Activity Log shows them.
-  saveCarePlanReviewNote: async (patientId, program, note) => {
-    const saved = await get().patchCarePlanReview(patientId, program, { call_note: note });
-    if (saved && note?.trim()) {
-      get().logCarePlanAudit(patientId, program, {
-        entityType: 'plan', entityId: saved.id, action: 'call_note', summary: 'Call note', detail: note.trim(),
-      });
-    }
-    return saved;
-  },
-  // clock: { startedAt, stoppedAt } in ms from the drawer's review timer.
+  // clock: { startedAt, stoppedAt } in ms from the drawer's review timer, and
+  // discussedCount (items still on the plan) so the log matches the drawer.
   finishCarePlanReview: async (patientId, program, note, clock) => {
     const durationMs = clock?.startedAt ? (clock.stoppedAt ?? Date.now()) - clock.startedAt : 0;
     const before = get().carePlanReviews[carePlanKey(patientId, program.id)]?.open;
@@ -3382,7 +3377,7 @@ export const useAppStore = create((set, get) => ({
       if (note?.trim() && note.trim() !== (before?.callNote || '')) {
         rows.push({ entityType: 'plan', entityId: saved.id, action: 'call_note', summary: 'Call note', detail: note.trim() });
       }
-      const n = Object.keys(saved.discussed || {}).length;
+      const n = clock?.discussedCount ?? Object.keys(saved.discussed || {}).length;
       rows.push({
         entityType: 'plan', entityId: saved.id, action: 'review_finished', summary: 'Care plan reviewed',
         detail: `${n} item${n === 1 ? '' : 's'} discussed${durationMs > 0 ? ` · ${Math.max(1, Math.round(durationMs / 60000))} min` : ''}`,
@@ -3989,7 +3984,8 @@ export const useAppStore = create((set, get) => ({
     const key = carePlanKey(patientId, programId);
     const prev = get().patientCarePlanAudit[key] || [];
     const { data, error } = await supabase.from('care_plan_audit')
-      .update({ detail: detail.trim() }).eq('id', id).eq('action', 'note').select().single();
+      // Call notes (Review care plan drawer) are edited the same way.
+      .update({ detail: detail.trim() }).eq('id', id).in('action', ['note', 'call_note']).select().single();
     if (error) { console.warn('updateCarePlanNote:', error.message); get().showToast('Could not update note'); return; }
     const mapped = mapCarePlanAuditRow(data);
     set(s => ({

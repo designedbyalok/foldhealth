@@ -30,6 +30,7 @@ import {
 import { NOTE_ACTIONS, netVersionRows } from '../../lib/carePlanVersions';
 import { buildCarePlanHistory, filterHistoryEntries, HISTORY_TYPES } from '../../lib/carePlanHistory';
 import { adherenceTone, goalProgressTone } from '../../lib/goalMetrics';
+import { sanitizeRichText } from '../../../../../../../../lib/sanitizeHtml';
 import styles from './CarePlanHistoryDrawer.module.css';
 
 
@@ -264,13 +265,21 @@ const CHANGE_ICON = {
 };
 
 const DATE_PRESETS = ['Today', 'Last 7 days', 'Last 30 days', 'Last 90 days', 'This month'];
+// Offered (and preselected) when History opens from the Review drawer, beside
+// a patient call.
+const SINCE_LAST_VISIT = 'Since last visit';
 
 const fmtDay = iso => parseLocalDate(iso)?.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) || '';
 
 // Whether an ISO time falls in a Date Range preset, or in `range` (two ISO
 // days, inclusive) for Custom; no preset keeps everything.
-function inDatePreset(preset, range = []) {
+function inDatePreset(preset, range = [], lastVisit = null) {
   if (!preset) return () => true;
+  if (preset === SINCE_LAST_VISIT) {
+    // No visit on record: the last 30 days.
+    const from = parseLocalDate(lastVisit)?.getTime() ?? Date.now() - 30 * 86400000;
+    return iso => !!iso && new Date(iso).getTime() >= from;
+  }
   if (preset === 'Custom') {
     const from = parseLocalDate(range[0]);
     const to = parseLocalDate(range[1]);
@@ -292,7 +301,7 @@ function inDatePreset(preset, range = []) {
 
 // Date Range picker: the presets, plus Custom, which opens the two-month range
 // calendar the worklists use.
-function DateRangeFilterPopover({ anchorRect, onClose, preset, range, onPick }) {
+function DateRangeFilterPopover({ anchorRect, onClose, preset, range, onPick, presets = DATE_PRESETS }) {
   const [custom, setCustom] = useState(false);
   if (custom) {
     return (
@@ -309,7 +318,7 @@ function DateRangeFilterPopover({ anchorRect, onClose, preset, range, onPick }) 
     <RadioListPopover
       anchorRect={anchorRect}
       label="Date Range"
-      options={[...DATE_PRESETS, 'Custom']}
+      options={[...presets, 'Custom']}
       selected={preset ? [preset] : []}
       onChange={(next) => {
         if (next[0] === 'Custom') { setCustom(true); return; }
@@ -358,6 +367,25 @@ function groupByVersion(entries) {
 // readings and plan events are entries of their own, tagged with the version
 // they happened on.
 export function CarePlanHistoryDrawer({ patientId, program, onClose }) {
+  return (
+    <CarePlanHistoryView patientId={patientId} program={program}>
+      {(filterRow, content) => (
+        <Drawer title="Care Plan History" onClose={onClose} banner={filterRow}>
+          {content}
+        </Drawer>
+      )}
+    </CarePlanHistoryView>
+  );
+}
+
+/**
+ * The Care Plan History timeline and its filter row, shared by the History
+ * drawer and the Review care plan drawer's Activity Log. `children` is
+ * (filterRow, content) => node, so each host places the filter row itself.
+ * `sinceLastVisit` adds a "Since last visit" date preset and starts on it
+ * (cut off at `lastVisit`); `compact` uses small chips for a narrower row.
+ */
+export function CarePlanHistoryView({ patientId, program, lastVisit = null, sinceLastVisit = false, compact = false, children }) {
   const key = `${patientId}::${program.id}`;
   const fetchCarePlanAudit = useAppStore(s => s.fetchCarePlanAudit);
   const fetchCarePlanVersions = useAppStore(s => s.fetchCarePlanVersions);
@@ -379,7 +407,7 @@ export function CarePlanHistoryDrawer({ patientId, program, onClose }) {
   });
   const [typeLabels, setTypeLabels] = useState([]);
   const [viewBy, setViewBy] = useState('month');
-  const [datePreset, setDatePreset] = useState(null); // preset label, 'Custom', or null
+  const [datePreset, setDatePreset] = useState(sinceLastVisit ? SINCE_LAST_VISIT : null); // preset label, 'Custom', or null
   const [dateRange, setDateRange] = useState([]);     // [startISO, endISO] for Custom
   const [actors, setActors] = useState([]);
   const filtersActive = typeLabels.length > 0 || !!datePreset || actors.length > 0;
@@ -631,9 +659,16 @@ export function CarePlanHistoryDrawer({ patientId, program, onClose }) {
                 <div className={htStyles.detailRow}>
                   <div className={htStyles.detailText}>
                     <div className={htStyles.detailHcc}>
-                      {e.title ? `${{ goal: 'Goal', intervention: 'Intervention', barrier: 'Barrier' }[e.entityType] || 'Item'}: ${e.title}` : 'Care Plan Note'}
+                      {e.title ? `${{ goal: 'Goal', intervention: 'Intervention', barrier: 'Barrier' }[e.entityType] || 'Item'}: ${e.title}` : (e.callNote ? 'Call Note' : 'Care Plan Note')}
                     </div>
-                    <div className={`${htStyles.detailIcd} ${styles.noteText}`}>{e.body || e.previous}</div>
+                    {e.bodyHtml ? (
+                      <div
+                        className={`${htStyles.detailIcd} ${styles.noteHtml}`}
+                        dangerouslySetInnerHTML={{ __html: sanitizeRichText(e.body) }}
+                      />
+                    ) : (
+                      <div className={`${htStyles.detailIcd} ${styles.noteText}`}>{e.body || e.previous}</div>
+                    )}
                     {e.body && e.previous && (
                       <div className={htStyles.detailReason}>Previous note: {e.previous}</div>
                     )}
@@ -665,7 +700,7 @@ export function CarePlanHistoryDrawer({ patientId, program, onClose }) {
 
   const logEntries = useMemo(() => {
     const now = new Date().toISOString();
-    const inDateRange = inDatePreset(datePreset, dateRange);
+    const inDateRange = inDatePreset(datePreset, dateRange, lastVisit);
     // The draft waiting to be signed is pending, not past: it leads the
     // timeline whatever its last edit's date.
     const timeline = filterHistoryEntries(history, selected)
@@ -721,50 +756,52 @@ export function CarePlanHistoryDrawer({ patientId, program, onClose }) {
 
   const loading = audit === undefined || versions === undefined;
 
-  return (
-    <Drawer
-      title="Care Plan History"
-      onClose={onClose}
-      banner={(
-        <div className={styles.filterRow}>
-          <Toggle
-            size="S"
-            items={[{ key: 'month', label: 'Month' }, { key: 'version', label: 'Versions' }]}
-            active={viewBy}
-            onChange={setViewBy}
+  const filterRow = (
+    <div className={`${styles.filterRow}${compact ? ` ${styles.filterRowCompact}` : ''}`}>
+      <Toggle
+        size="S"
+        items={[{ key: 'month', label: 'Month' }, { key: 'version', label: 'Versions' }]}
+        active={viewBy}
+        onChange={setViewBy}
+      />
+      <span className={styles.filterDivider} aria-hidden="true" />
+      <FilterChip
+        label="Activity Type"
+        size={compact ? 'S' : undefined}
+        options={HISTORY_TYPES.map(t => t.label)}
+        selected={typeLabels}
+        onChange={setTypeLabels}
+      />
+      <FilterChip
+        label="Date Range"
+        size={compact ? 'S' : undefined}
+        active={!!datePreset}
+        activeSummary={datePreset === 'Custom' ? `${fmtDay(dateRange[0])} – ${fmtDay(dateRange[1])}` : datePreset || undefined}
+        onClear={() => { setDatePreset(null); setDateRange([]); }}
+        renderPopover={({ anchorRect, onClose: closePopover }) => (
+          <DateRangeFilterPopover
+            anchorRect={anchorRect}
+            onClose={closePopover}
+            preset={datePreset}
+            range={dateRange}
+            presets={sinceLastVisit ? [SINCE_LAST_VISIT, ...DATE_PRESETS] : DATE_PRESETS}
+            onPick={(preset, range) => { setDatePreset(preset); setDateRange(range); }}
           />
-          <span className={styles.filterDivider} aria-hidden="true" />
-          <FilterChip
-            label="Activity Type"
-            options={HISTORY_TYPES.map(t => t.label)}
-            selected={typeLabels}
-            onChange={setTypeLabels}
-          />
-          <FilterChip
-            label="Date Range"
-            active={!!datePreset}
-            activeSummary={datePreset === 'Custom' ? `${fmtDay(dateRange[0])} – ${fmtDay(dateRange[1])}` : datePreset || undefined}
-            onClear={() => { setDatePreset(null); setDateRange([]); }}
-            renderPopover={({ anchorRect, onClose: closePopover }) => (
-              <DateRangeFilterPopover
-                anchorRect={anchorRect}
-                onClose={closePopover}
-                preset={datePreset}
-                range={dateRange}
-                onPick={(preset, range) => { setDatePreset(preset); setDateRange(range); }}
-              />
-            )}
-          />
-          <FilterChip
-            label="Activity by"
-            options={actorOptions}
-            selected={actors}
-            onChange={setActors}
-          />
-          <Link disabled={!filtersActive} onClick={clearFilters}>Clear All</Link>
-        </div>
-      )}
-    >
+        )}
+      />
+      <FilterChip
+        label="Activity by"
+        size={compact ? 'S' : undefined}
+        options={actorOptions}
+        selected={actors}
+        onChange={setActors}
+      />
+      <Link disabled={!filtersActive} onClick={clearFilters}>Clear All</Link>
+    </div>
+  );
+
+  return children(filterRow, (
+    <>
       <ActivityLog
         relaxed
         entries={loading ? [] : logEntries}
@@ -812,6 +849,6 @@ export function CarePlanHistoryDrawer({ patientId, program, onClose }) {
           onClose={() => setOpenVersion(null)}
         />
       )}
-    </Drawer>
-  );
+    </>
+  ));
 }

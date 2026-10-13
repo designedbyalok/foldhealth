@@ -85,7 +85,7 @@ function Facts({ kind, item, onPickDate }) {
  * a quick note with tags. "Open details" there opens the item's own drawer.
  */
 export function ReviewItemRow({
-  kind, item, discussed, selected, expanded, note, latestNote,
+  kind, item, discussed, selecting, selected, expanded, note, latestNote,
   onToggleSelected, onToggleDiscussed, onToggleExpanded, onOpen, onStatusMenu, onSaveNote, onTargetDate,
 }) {
   const [text, setText] = useState('');
@@ -100,11 +100,13 @@ export function ReviewItemRow({
   return (
     <div className={`${styles.item} ${expanded ? styles.itemOpen : ''} ${selected ? styles.itemSelected : ''}`}>
       <div className={styles.itemRow}>
-        <Checkbox
-          checked={!!selected}
-          onCheckedChange={onToggleSelected}
-          aria-label={`Select ${item.title}`}
-        />
+        {selecting && (
+          <Checkbox
+            checked={!!selected}
+            onCheckedChange={onToggleSelected}
+            aria-label={`Select ${item.title}`}
+          />
+        )}
         <PriorityIcon priority={(item.priority || 'medium').toLowerCase()} size={14} />
         <button type="button" className={styles.itemMain} onClick={onToggleExpanded} aria-expanded={expanded}>
           <span className={`${styles.itemTitle} ${discussed ? styles.itemTitleDone : ''}`}>{item.title}</span>

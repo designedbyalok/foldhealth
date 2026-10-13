@@ -50,7 +50,6 @@ function readDrawerDurationMs(node) {
  *                              hug the drawer edges instead of sitting inside
  *                              the padded body)
  *  - footer       (ReactNode)  Optional sticky footer content
- *  - footerClassName (string)  Extra class on the footer (e.g. an enter animation)
  *  - children     (ReactNode)  Scrollable body content (16px padded)
  *  - width        (number|string) Override the default 700px panel width
  *                              (e.g. 1300 for the HCC Document Review drawer).
@@ -79,7 +78,6 @@ export function Drawer({
   secondaryAction,
   banner,
   footer,
-  footerClassName,
   children,
   className,
   bodyClassName,
@@ -171,7 +169,7 @@ export function Drawer({
         <div className={`${styles.body}${bodyClassName ? ` ${bodyClassName}` : ''}`}>
           {children}
         </div>
-        {footer && <div className={`${styles.footer}${footerClassName ? ` ${footerClassName}` : ''}`}>{footer}</div>}
+        {footer && <div className={styles.footer}>{footer}</div>}
       </div>
     </>,
     document.body,

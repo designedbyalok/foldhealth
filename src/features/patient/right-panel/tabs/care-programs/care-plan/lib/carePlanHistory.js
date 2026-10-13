@@ -35,7 +35,8 @@ export const HISTORY_TYPES = [
 
 const NOUN = { goal: 'Goal', intervention: 'Intervention', barrier: 'Barrier' };
 const SCHEDULE_DETAIL = /^(Due Date|Repeat|Repeat Count|Repeats Every|Repeat Unit|Repeat Ends|Repeat Ends Unit):/;
-const PLAN_EVENT_ACTIONS = new Set(['review_requested', 'shared', 'discarded', 'restored']);
+// call_note and review_finished come from the Review care plan drawer.
+const PLAN_EVENT_ACTIONS = new Set(['review_requested', 'shared', 'discarded', 'restored', 'call_note', 'review_finished']);
 
 /** The activity type of an audit row that records live progress, else null. */
 export function liveActivityType(row) {
@@ -253,14 +254,24 @@ export function activityEntries(audit, measurements, goals) {
       });
       continue;
     }
+    if (e.action === 'call_note') {
+      // Written in a rich-text field, so the body is HTML.
+      out.push({
+        id: `a-${e.id}`, kind: 'activity', type: 'care_note', entityType: 'plan', entityId: null,
+        headline: 'Added a Call Note', headlineAction: null, headlineSubject: null, title: '',
+        body: e.detail || '', bodyHtml: true, callNote: true, previous: '', at: e.createdAt, actor: e.actor || '',
+      });
+      continue;
+    }
     if (PLAN_EVENT_ACTIONS.has(e.action)) {
       const headline = {
+        review_finished: 'Reviewed the Care Plan With the Patient',
         review_requested: e.summary ? `Care Plan Sent for Review to ${e.summary}` : 'Care Plan Sent for Review',
         shared: e.summary || 'Care Plan Shared',
         discarded: 'Discarded Unsigned Changes',
         restored: e.summary || 'Loaded an Older Version Into the Draft',
       }[e.action];
-      const detail = e.action === 'discarded' ? e.detail || '' : '';
+      const detail = e.action === 'discarded' || e.action === 'review_finished' ? e.detail || '' : '';
       out.push({ id: `a-${e.id}`, kind: 'activity', type: 'plan_event', entityType: 'plan', headline, detail, at: e.createdAt, actor: e.actor || '' });
     }
   }

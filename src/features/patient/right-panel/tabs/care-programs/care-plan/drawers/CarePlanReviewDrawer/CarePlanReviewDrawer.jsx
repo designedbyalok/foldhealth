@@ -5,7 +5,6 @@ import { Toggle } from '../../../../../../../../components/Toggle/Toggle';
 import { Badge } from '../../../../../../../../components/Badge/Badge';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
-import { Textarea } from '../../../../../../../../components/Textarea/Textarea';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { BulkBar } from '../../../../../../../../components/BulkBar/BulkBar';
 import { MenuPopover } from '../../../../../../../../components/MenuPopover/MenuPopover';
@@ -20,11 +19,14 @@ import { useAppStore } from '../../../../../../../../store/useAppStore';
 import { carePlanKey } from '../../../../../../../../store/lib/carePlanStoreLib';
 import { noteSummaryLookup } from '../../CarePlanView/carePlanLinkedItems';
 import { CARE_PLAN_INTERVENTION_MENU } from '../../lib/carePlanInterventionMenu';
+import { GOAL_CATEGORIES, goalCategoryIcon, normalizeCategory } from '../../../../../../../settings/care-plan-library/lib/goalCategories';
 import { ReviewItemRow } from './ReviewItemRow';
-import { CarePlanActivityBlock } from '../CarePlanActivityBlock/CarePlanActivityBlock';
-import { PLAN_ACTIVITY_FILTERS, planActivityEntries } from './planActivityEntries';
+import { CarePlanHistoryView } from '../CarePlanHistoryDrawer/CarePlanHistoryDrawer';
+import { BulkSelectToggle } from '../../../../../../../../components/BulkSelect/BulkSelectToggle';
+import { ReviewNoteCard } from './ReviewNoteCard';
 import { ReviewDrawerSkeleton } from './ReviewDrawerSkeleton';
 import { ReviewTimer } from './ReviewTimer';
+import { CompleteReviewPopover } from './CompleteReviewPopover';
 import bones from '../../../../../../../../components/TableSkeleton/TableSkeleton.module.css';
 import styles from './CarePlanReviewDrawer.module.css';
 
@@ -34,59 +36,40 @@ const KINDS = {
   barriers: { kind: 'barrier', noun: 'barrier', title: 'Barriers' },
 };
 
-// A group's icon from words in its condition (or category) name.
-const GROUP_ICONS = [
-  [/heart|hypertension|blood pressure|cardio/i, 'solar:heart-pulse-linear'],
-  [/diabet|kidney|glucose/i, 'solar:waterdrops-linear'],
-  [/medic|pharm/i, 'solar:pill-linear'],
-  [/nutrition|diet|food/i, 'solar:leaf-linear'],
-  [/activity|exercise|fall|mobility/i, 'solar:running-round-linear'],
-  [/copd|asthma|respir/i, 'solar:wind-linear'],
-  [/pain/i, 'solar:medical-kit-linear'],
-  [/social|housing|transport/i, 'solar:home-2-linear'],
-  [/hospital|care|coordination|transition/i, 'solar:health-linear'],
-  [/lab/i, 'solar:test-tube-linear'],
-];
-const groupIcon = label => GROUP_ICONS.find(([re]) => re.test(label))?.[1] || 'solar:flag-linear';
-// Goals group by their condition (the health area), falling back to a
-// category that says something, else Other.
-const goalGroupOf = g => g?.conditions?.[0] || (g?.category && g.category !== 'Others' ? g.category : 'Other');
 const KIND_META = Object.fromEntries(CARE_PLAN_INTERVENTION_MENU.filter(i => i.key).map(i => [i.key, i]));
+const KIND_ORDER = CARE_PLAN_INTERVENTION_MENU.filter(i => i.key).map(i => i.key);
 const DONE = new Set(['Met', 'Completed', 'Resolved']);
 const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 // The call note is rich text: an emptied editor can still hold <br> or <p></p>.
 const plainText = html => (html || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
 
-function groupsFor(tab, items, goalsById) {
+// Goals group by their goal category (Vitals, Labs, ...) and interventions by
+// their type (Patient Education, Measure Vital, ...), in the library's order.
+function groupsFor(tab, items) {
   const groups = new Map();
-  const add = (label, icon, item) => {
-    if (!groups.has(label)) groups.set(label, { label, icon, items: [] });
+  const add = (label, icon, rank, item) => {
+    if (!groups.has(label)) groups.set(label, { label, icon, rank, items: [] });
     groups.get(label).items.push(item);
   };
   for (const item of items) {
     if (tab === 'goals') {
-      const label = goalGroupOf(item);
-      add(label, groupIcon(label), item);
+      const category = normalizeCategory(item.category);
+      add(category, goalCategoryIcon(category), GOAL_CATEGORIES.indexOf(category), item);
     } else if (tab === 'interventions') {
-      // Under the health area of the goal they serve; unlinked ones by type.
-      const goal = goalsById.get(item.goalId);
-      const label = goal ? goalGroupOf(goal) : (KIND_META[item.kind]?.label || 'Other');
-      add(label, goal ? groupIcon(label) : (KIND_META[item.kind]?.icon || 'solar:checklist-minimalistic-linear'), item);
+      const meta = KIND_META[item.kind];
+      add(meta?.label || 'Other', meta?.icon || 'solar:checklist-minimalistic-linear', meta ? KIND_ORDER.indexOf(item.kind) : 99, item);
     } else {
       const resolved = DONE.has(item.status);
-      add(resolved ? 'Resolved' : 'Open', resolved ? 'solar:check-circle-linear' : 'solar:signpost-2-linear', item);
+      add(resolved ? 'Resolved' : 'Open', resolved ? 'solar:check-circle-linear' : 'solar:signpost-2-linear', resolved ? 1 : 0, item);
     }
   }
-  // Biggest groups first, Other last.
-  return [...groups.values()].sort((a, b) => (a.label === 'Other') - (b.label === 'Other') || b.items.length - a.items.length);
+  return [...groups.values()].sort((a, b) => (a.rank < 0 ? 98 : a.rank) - (b.rank < 0 ? 98 : b.rank));
 }
 
-function fmtStamp(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  return `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}, ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+function fmtDay(value) {
+  const d = value ? new Date(value) : null;
+  return d && !Number.isNaN(d.getTime()) ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
 }
 
 function CallTimer({ seconds }) {
@@ -112,6 +95,7 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
   const me = useAppStore(s => s.currentUserProfile?.name || '');
   const onCall = useAppStore(s => String(s.activeCallPatient ?? '') === String(patientId));
   const callSeconds = useAppStore(s => s.activeCallSeconds);
+  const updateNote = useAppStore(s => s.updateCarePlanNote);
   const fetchPatientCarePlan = useAppStore(s => s.fetchPatientCarePlan);
   const fetchCarePlanAudit = useAppStore(s => s.fetchCarePlanAudit);
   const fetchCarePlanReviews = useAppStore(s => s.fetchCarePlanReviews);
@@ -120,7 +104,6 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
   const markDiscussed = useAppStore(s => s.markCarePlanReviewItemDiscussed);
   const markManyDiscussed = useAppStore(s => s.markCarePlanReviewItemsDiscussed);
   const setItemTags = useAppStore(s => s.setCarePlanReviewItemTags);
-  const saveCallNote = useAppStore(s => s.saveCarePlanReviewNote);
   const finishReview = useAppStore(s => s.finishCarePlanReview);
   const saveLive = useAppStore(s => s.saveCarePlanLiveField);
   const addCarePlanNote = useAppStore(s => s.addCarePlanNote);
@@ -136,15 +119,20 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
   }, [patientId, program.id, fetchPatientCarePlan, fetchCarePlanAudit, fetchCarePlanReviews, fetchCarePlanNoteReads]);
 
   const [tab, setTab] = useState('goals');
-  const [activityFiltersOpen, setActivityFiltersOpen] = useState(false);
-  // The review clock: Start review sets startedAt and brings up the note
-  // composer; Stop freezes it. Finish review records the duration.
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyFilters, setHistoryFilters] = useState(true); // Activity Log filter row shown
+  // The review clock: Start review sets startedAt, Stop freezes it and opens
+  // the Complete review popover (call note + recorded time) from the pill.
   const [startedAt, setStartedAt] = useState(null);
   const [stoppedAt, setStoppedAt] = useState(null);
+  const [completeRect, setCompleteRect] = useState(null);
   const [filter, setFilter] = useState('all');
   const [expanded, setExpanded] = useState(null); // `${kind}:${id}` with its note open
   const [statusMenu, setStatusMenu] = useState(null); // { kind, items, rect }
+  // Bulk select: the tab row's Select button shows the row checkboxes.
+  const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState(() => new Set()); // item ids on the current tab
+  const endSelecting = () => { setSelecting(false); setSelected(new Set()); };
   const [preview, setPreview] = useState(null); // { kind, item }: the item's own drawer
   // Patient context: the worklist row's details, filled in from the record.
   const record = useMemo(() => findPatientRecord(useAppStore.getState(), patientId), [patientId]);
@@ -160,7 +148,6 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
   const discussed = open?.discussed || {};
   const [callNote, setCallNote] = useState(null); // null: not edited, shows the saved one
   const callNoteValue = callNote ?? open?.callNote ?? '';
-  const callNoteFilled = !!plainText(callNoteValue);
 
   const lists = {
     goals: slice?.goals || [],
@@ -168,6 +155,22 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
     barriers: slice?.barriers || [],
   };
   const noteFor = useMemo(() => noteSummaryLookup(audit || [], noteReads, me), [audit, noteReads, me]);
+  // Notes tab: the care plan's own notes, meaning its current care plan note
+  // and every call note, newest first.
+  const notes = useMemo(() => {
+    const rows = audit || [];
+    const out = [];
+    const onPlan = a => a.entityType === 'plan' || (a.entityType === 'note' && !a.entityId);
+    const newest = action => rows.filter(a => a.action === action && onPlan(a))
+      .sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt))[0];
+    const planNote = newest('note');
+    const cleared = [newest('note_cleared'), newest('note_deleted')].filter(Boolean)
+      .some(c => planNote && new Date(c.createdAt) >= new Date(planNote.createdAt));
+    if (planNote && !cleared) out.push({ ...planNote, kind: 'plan' });
+    for (const c of rows.filter(a => a.action === 'call_note')) out.push({ ...c, kind: 'call' });
+    return out.sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt));
+  }, [audit]);
+  const isMine = actor => !!actor && !!me && actor.toLowerCase() === me.toLowerCase();
   const isDiscussed = (kind, id) => !!discussed[`${kind}:${id}`];
   const discussedCount = (t) => lists[t].filter(i => isDiscussed(KINDS[t].kind, i.id)).length;
   const totalDiscussed = Object.keys(KINDS).reduce((n, t) => n + discussedCount(t), 0);
@@ -185,16 +188,19 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
     const p = (s.patients || []).find(x => x.id === patientId) || (s.allPatients || []).find(x => x.id === patientId);
     return p?.lastVisit || p?.last_visit || null;
   });
-  // The whole plan's activity, each row naming its goal / intervention / barrier.
-  const activity = useMemo(() => {
-    const titles = new Map();
-    for (const list of [slice?.goals, slice?.interventions, slice?.barriers,
-      slice?.retired?.goals, slice?.retired?.interventions, slice?.retired?.barriers]) {
-      for (const it of list || []) titles.set(String(it.id), it.title);
-    }
-    return planActivityEntries(audit || [], titles);
-  }, [audit, slice]);
-  const lastReview = review?.history?.[0] || null;
+  // The latest review, finished or not: an open review counts once anything
+  // on it was saved (an item discussed or a call note).
+  const lastReview = useMemo(() => {
+    const done = review?.history?.[0];
+    const open = review?.open;
+    const openUsed = open && (Object.keys(open.discussed || {}).length || plainText(open.callNote));
+    const candidates = [
+      done && { at: done.finishedAt, by: done.createdBy, discussed: done.discussed, inProgress: false },
+      // Not attributed: created_by is whoever opened it, not who worked on it last.
+      openUsed && { at: open.updatedAt, by: null, discussed: open.discussed, inProgress: true },
+    ].filter(Boolean);
+    return candidates.sort((a, b) => new Date(b.at) - new Date(a.at))[0] || null;
+  }, [review]);
   const openItem = (kind, item) => { setPreview({ kind, item }); markNoteSeen(kind, item.id); };
   const toggleExpanded = (kind, id) => {
     const k = `${kind}:${id}`;
@@ -202,12 +208,21 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
     markNoteSeen(kind, id);
   };
 
-  const finish = async () => {
+  const completeReview = async () => {
     const note = callNote == null ? undefined : (plainText(callNote) ? callNote : '');
-    const saved = await finishReview(patientId, program, note, { startedAt, stoppedAt });
+    const saved = await finishReview(patientId, program, note, { startedAt, stoppedAt, discussedCount: totalDiscussed });
     if (!saved) return;
-    showToast(`Review finished · ${plural(totalDiscussed, 'item')} discussed`);
-    onClose();
+    showToast(`Review completed · ${plural(totalDiscussed, 'item')} discussed`);
+    setCompleteRect(null);
+    setStartedAt(null);
+    setStoppedAt(null);
+    setCallNote(null);
+  };
+  // Resume picks the clock up where it stopped, leaving the pause out.
+  const resumeReview = () => {
+    setStartedAt(prev => prev + (Date.now() - stoppedAt));
+    setStoppedAt(null);
+    setCompleteRect(null);
   };
 
   const headerRight = (
@@ -219,7 +234,7 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
         tooltip="Open care plan"
         tooltipBelow
         tooltipLeft
-        onClick={() => { onClose(); navigateToPatient?.(patientId); }}
+        onClick={() => { onClose(); navigateToPatient?.(patientId, { programCode: program.code, carePlan: true }); }}
       />
       <span className={styles.headerDivider} aria-hidden="true" />
       {startedAt == null ? (
@@ -227,7 +242,12 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
           Start review
         </Button>
       ) : (
-        <ReviewTimer startedAt={startedAt} stoppedAt={stoppedAt} onStop={() => setStoppedAt(Date.now())} />
+        <ReviewTimer
+          startedAt={startedAt}
+          stoppedAt={stoppedAt}
+          onStop={(rect) => { setStoppedAt(Date.now()); setCompleteRect(rect); }}
+          onOpenComplete={setCompleteRect}
+        />
       )}
       <span className={styles.headerDivider} aria-hidden="true" />
     </>
@@ -245,37 +265,6 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
       headerRight={headerRight}
       noCloseDivider
       bodyClassName={styles.drawerBody}
-      footerClassName={styles.footerEnter}
-      footer={startedAt != null && (
-        <div className={styles.composer}>
-          <Textarea
-            richText
-            placeholder="General note for this call"
-            value={callNoteValue}
-            onChange={(v) => setCallNote(typeof v === 'string' ? v : (v?.target?.value ?? ''))}
-            rows={2}
-          />
-          <div className={styles.composerRow}>
-            <span className={styles.composerHint}>
-              {totalDiscussed ? `${plural(totalDiscussed, 'item')} discussed will be attached` : 'Tick items as you discuss them'}
-            </span>
-            <Button variant="secondary" size="M" onClick={finish} disabled={!totalDiscussed && !callNoteFilled}>
-              Finish review
-            </Button>
-            <Button
-              variant="primary"
-              size="M"
-              disabled={!callNoteFilled || callNoteValue === (open?.callNote || '')}
-              onClick={async () => {
-                const saved = await saveCallNote(patientId, program, callNoteValue);
-                if (saved) { setCallNote(null); showToast('Call note saved'); }
-              }}
-            >
-              Save call note
-            </Button>
-          </div>
-        </div>
-      )}
     >
       <div className={styles.context}>
         {/* Full width, like the patient header elsewhere in the app. */}
@@ -295,45 +284,77 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
             <span className={`${bones.bone} ${styles.skStrip}`} />
           ) : lastReview ? (
             <span>
-              Last reviewed on <strong>{fmtStamp(lastReview.finishedAt)}</strong>
-              {lastReview.createdBy ? ` by ${lastReview.createdBy}` : ''}
-              {` · ${plural(Object.keys(lastReview.discussed).length, 'item')} discussed`}
+              Last reviewed on <strong>{fmtDay(lastReview.at)}</strong>
+              {lastReview.by ? ` by ${lastReview.by}` : ''}
+              {/* The open review counts only items still on the plan, like its progress. */}
+              {` · ${plural(lastReview.inProgress ? totalDiscussed : Object.keys(lastReview.discussed || {}).length, 'item')} discussed`}
+              {lastReview.inProgress ? ' · In progress' : ''}
             </span>
           ) : (
             <span>Not reviewed with the patient yet</span>
           )}
-          <span className={styles.planCounts}>
-            {loaded && [plural(lists.goals.length, 'goal'), plural(lists.interventions.length, 'intervention'),
-              plural(lists.barriers.length, 'barrier')].join(' · ')}
-          </span>
         </div>
       </div>
 
-      <div className={styles.tabs}>
-        <TabStrip
-          fullWidth={false}
-          activeKey={tab}
-          onChange={(k) => { setTab(k); setFilter('all'); setExpanded(null); setSelected(new Set()); }}
-          items={[
-            { key: 'goals', label: 'Goals', count: loaded ? lists.goals.length : undefined },
-            { key: 'interventions', label: 'Interventions', count: loaded ? lists.interventions.length : undefined },
-            { key: 'barriers', label: 'Barriers', count: loaded ? lists.barriers.length : undefined },
-            { key: 'activity', label: 'Activity Log' },
-          ]}
-          trailing={tab === 'activity' ? (
-            <ActionButton
-              icon="custom:filter"
-              size="S"
-              tooltip="Filter activity"
-              tooltipLeft
-              active={activityFiltersOpen}
-              onClick={() => setActivityFiltersOpen(v => !v)}
-            />
-          ) : null}
-        />
-      </div>
+      {!historyOpen && (
+        <div className={styles.tabs}>
+          <TabStrip
+            fullWidth={false}
+            activeKey={tab}
+            onChange={(k) => { setTab(k); setFilter('all'); setExpanded(null); endSelecting(); }}
+            items={[
+              { key: 'goals', label: 'Goals', count: loaded ? lists.goals.length : undefined },
+              { key: 'interventions', label: 'Interventions', count: loaded ? lists.interventions.length : undefined },
+              { key: 'barriers', label: 'Barriers', count: loaded ? lists.barriers.length : undefined },
+              { key: 'notes', label: 'Notes', count: loaded ? notes.length : undefined },
+            ]}
+            trailing={(
+              <span className={styles.tabActions}>
+                {listTab && loaded && (
+                  <>
+                    <BulkSelectToggle active={selecting} onToggle={() => (selecting ? endSelecting() : setSelecting(true))} />
+                    <span className={styles.headerDivider} aria-hidden="true" />
+                  </>
+                )}
+                <ActionButton
+                  icon="custom:history"
+                  size="L"
+                  tooltip="Activity Log"
+                  tooltipLeft
+                  onClick={() => { endSelecting(); setHistoryOpen(true); }}
+                />
+              </span>
+            )}
+          />
+        </div>
+      )}
 
-      {!loaded ? (
+      {historyOpen ? (
+        // Activity Log in place of the tabs: Care Plan History's filters and
+        // timeline, from the last visit, with a way back.
+        <CarePlanHistoryView patientId={patientId} program={program} lastVisit={lastVisit} sinceLastVisit compact>
+          {(filterRow, content) => (
+            <>
+              <div className={styles.backRow}>
+                <ActionButton icon="solar:arrow-left-linear" size="S" tooltip="Back to the care plan" onClick={() => setHistoryOpen(false)} />
+                <span className={styles.backTitle}>Activity Log</span>
+                <span className={styles.backAction}>
+                  <ActionButton
+                    icon="custom:filter"
+                    size="S"
+                    tooltip={historyFilters ? 'Hide filters' : 'Show filters'}
+                    tooltipLeft
+                    active={historyFilters}
+                    onClick={() => setHistoryFilters(v => !v)}
+                  />
+                </span>
+              </div>
+              {historyFilters && filterRow}
+              <div className={styles.activityLog}>{content}</div>
+            </>
+          )}
+        </CarePlanHistoryView>
+      ) : !loaded ? (
         <ReviewDrawerSkeleton />
       ) : listTab ? (
         <div className={styles.listPane}>
@@ -360,7 +381,7 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
             <p className={styles.empty}>
               {items.length === 0 ? `No ${listTab.noun}s on this care plan.` : `No ${listTab.noun}s match this filter.`}
             </p>
-          ) : groupsFor(tab, visible, new Map(lists.goals.map(g => [g.id, g]))).map(group => (
+          ) : groupsFor(tab, visible).map(group => (
             <section key={group.label} className={styles.group}>
               <div className={styles.groupHead}>
                 <Icon name={group.icon} size={14} color="var(--neutral-300)" />
@@ -374,6 +395,7 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
                     kind={listTab.kind}
                     item={item}
                     discussed={discussed[`${listTab.kind}:${item.id}`]}
+                    selecting={selecting}
                     selected={selected.has(item.id)}
                     onToggleSelected={() => setSelected(prev => {
                       const next = new Set(prev);
@@ -409,7 +431,7 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
             className={styles.bulkBar}
             selectedIds={[...selected]}
             noun={selected.size === 1 ? capitalize(listTab.noun) : `${capitalize(listTab.noun)}s`}
-            onClear={() => setSelected(new Set())}
+            onClear={endSelecting}
             actions={[
               {
                 label: 'Change status',
@@ -428,24 +450,39 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
                 onClick: async (ids) => {
                   await markManyDiscussed(patientId, program, listTab.kind, ids);
                   showToast(`${plural(ids.length, listTab.noun)} marked discussed`);
-                  setSelected(new Set());
+                  endSelecting();
                 },
               },
             ]}
           />
         </div>
       ) : (
-        <div className={styles.activityPane}>
-          <CarePlanActivityBlock
-            entries={activity}
-            lastVisit={lastVisit}
-            filters={PLAN_ACTIVITY_FILTERS}
-            defaultTab="since"
-            filterRow
-            filtersOpen={activityFiltersOpen}
-            emptyLabel="No activity on this care plan yet."
-          />
+        <div className={styles.noteList}>
+          {notes.length === 0 ? (
+            <p className={styles.empty}>No notes on this care plan yet.</p>
+          ) : notes.map(n => (
+            <ReviewNoteCard
+              key={`${n.id}:${n.detail}`}
+              note={n}
+              canEdit={isMine(n.actor)}
+              onSave={text => updateNote(patientId, program.id, n.id, text)}
+            />
+          ))}
         </div>
+      )}
+
+
+      {completeRect && startedAt != null && stoppedAt != null && (
+        <CompleteReviewPopover
+          anchorRect={completeRect}
+          elapsedMs={stoppedAt - startedAt}
+          discussedCount={totalDiscussed}
+          note={callNoteValue}
+          onNoteChange={setCallNote}
+          onResume={resumeReview}
+          onComplete={completeReview}
+          onClose={() => setCompleteRect(null)}
+        />
       )}
 
       {statusMenu && (
@@ -461,7 +498,7 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
             if (changed.length) await markManyDiscussed(patientId, program, statusMenu.kind, changed.map(i => i.id));
             if (statusMenu.bulk) {
               showToast(`${plural(statusMenu.items.length, listTab?.noun || 'item')} set to ${status}`);
-              setSelected(new Set());
+              endSelecting();
             }
           }}
           onClose={() => setStatusMenu(null)}

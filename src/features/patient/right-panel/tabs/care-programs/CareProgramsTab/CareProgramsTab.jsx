@@ -103,9 +103,10 @@ export function CareProgramsTab({ header }) {
   const programsLoaded = Boolean(patientId && careProgramsLoadedFor[patientId]);
   useEffect(() => {
     if (!pendingCareProgramCode || !patientId || !programsLoaded) return;
+    const carePlan = useAppStore.getState().pendingCareProgramCarePlan;
     const existing = programs.find(p => p.code === pendingCareProgramCode);
     if (existing) {
-      setPendingProgram({ program: existing, firstStep: false });
+      setPendingProgram({ program: existing, firstStep: false, carePlan });
     } else {
       const entry = CARE_PROGRAM_CATALOG.find(e => e.code === pendingCareProgramCode);
       if (entry) {
@@ -193,10 +194,16 @@ export function CareProgramsTab({ header }) {
     const t = setTimeout(() => {
       setStartAtFirstStep(pendingProgram.firstStep);
       openCareProgram(programUrlKey(pendingProgram.program));
+      // Asked to land on the Care Plan step (e.g. the Review drawer's Open
+      // care plan); openCareProgram resets the step, so set it after.
+      if (pendingProgram.carePlan) {
+        const carePlanStep = flatSteps(stepsFor(pendingProgram.program.code)).find(s => s.name.toLowerCase().includes('care plan'));
+        if (carePlanStep) setCareProgramStep(carePlanStep.id);
+      }
       setPendingProgram(null);
     }, 700);
     return () => clearTimeout(t);
-  }, [pendingProgram, openCareProgram]);
+  }, [pendingProgram, openCareProgram, setCareProgramStep]);
 
   const visible = useMemo(() => {
     let list = programs;

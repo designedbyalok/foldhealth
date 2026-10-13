@@ -353,15 +353,6 @@
   line-height: 1.5;
   margin-top: var(--space-1);
 }
-/* Notes written in a rich-text field (`commentHtml`). */
-.commentRich p {
-  margin: 0;
-}
-.commentRich ul,
-.commentRich ol {
-  margin: 0;
-  padding-left: var(--space-5);
-}
 
 /* ── Empty state ────────────────────────────────────────────────────── */
 .empty {

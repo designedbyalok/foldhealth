@@ -16,6 +16,12 @@
   border-bottom: 0.5px solid var(--neutral-150);
 }
 
+/* Inside the Review drawer: a tighter row under its Activity Log bar. */
+.filterRowCompact {
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
+}
+
 .filterDivider {
   width: 1px;
   height: 16px;
@@ -157,4 +163,21 @@
 
 .currentPill .signedPillText {
   font-size: var(--font-sm);
+}
+
+/* A call note from the Review drawer, written as rich text. */
+.noteHtml p {
+  margin: 0;
+}
+.noteHtml ul,
+.noteHtml ol {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+/* The app's CSS reset drops list markers. */
+.noteHtml ul {
+  list-style: disc;
+}
+.noteHtml ol {
+  list-style: decimal;
 }

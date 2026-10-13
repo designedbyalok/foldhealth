@@ -33,9 +33,6 @@
   font-weight: 500;
   color: var(--neutral-400);
 }
-.planCounts {
-  margin-left: auto;
-}
 /* TabStrip draws its own bar (padding and hairline). */
 .tabs {
   position: sticky;
@@ -395,10 +392,115 @@
   text-decoration: underline;
 }
 
-/* Activity Log tab: the block pads its own log so its filter row can run
-   edge to edge. */
-.activityPane {
-  padding: 0;
+/* Activity Log, opened in place of the tabs */
+.backRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-4);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+/* Pull the back arrow and the filter button out by their own padding so
+   the glyphs sit on the drawer's content edges. */
+.backRow > :first-child {
+  margin-left: calc(var(--space-1) * -1);
+}
+.backAction {
+  margin-left: auto;
+  margin-right: calc(var(--space-1) * -1);
+}
+.backTitle {
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+.activityLog {
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+
+/* Tab row actions: bulk select, then the Activity Log. */
+.tabActions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Notes tab */
+.noteList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+.noteCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+}
+/* Kind, then author and time, then the author's edit button. */
+.noteHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--space-6);
+  min-width: 0;
+}
+.noteKind {
+  flex-shrink: 0;
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+.noteMeta {
+  min-width: 0;
+  margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+}
+.noteEdit {
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.noteCard:hover .noteEdit,
+.noteCard:focus-within .noteEdit {
+  opacity: 1;
+}
+.noteBody {
+  margin: 0;
+  font-size: var(--font-md);
+  line-height: 1.5;
+  color: var(--neutral-400);
+  white-space: pre-wrap;
+}
+.noteRich {
+  white-space: normal;
+}
+.noteRich p {
+  margin: 0;
+}
+.noteRich ul,
+.noteRich ol {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+.noteRich ul {
+  list-style: disc;
+}
+.noteRich ol {
+  list-style: decimal;
+}
+.noteEditor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 /* Review clock in the header */
@@ -420,8 +522,14 @@
 }
 .timerStopped {
   padding-right: var(--space-2);
+  border: 0.5px solid var(--neutral-150);
   background: var(--neutral-50);
   color: var(--neutral-400);
+  cursor: pointer;
+}
+.timerStopped:hover {
+  border-color: var(--primary-200);
+  color: var(--primary-300);
 }
 .timerDot {
   position: relative;
@@ -472,25 +580,8 @@
   to { opacity: 0; transform: scale(2.6); }
 }
 
-/* Footer composer: rises from the bottom edge when the review starts. */
-.footerEnter {
-  animation: footerIn 420ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-.footerEnter > * {
-  animation: footerContentIn 520ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-@keyframes footerIn {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-@keyframes footerContentIn {
-  0%, 30% { opacity: 0; transform: translateY(var(--space-2)); }
-  100% { opacity: 1; transform: translateY(0); }
-}
 @media (prefers-reduced-motion: reduce) {
-  .timer,
-  .footerEnter,
-  .footerEnter > * {
+  .timer {
     animation: none;
   }
   .timerDot::after {
@@ -498,23 +589,48 @@
   }
 }
 
-/* Footer composer */
-.composer {
+/* Complete review popover */
+.complete {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  width: 100%;
+  gap: var(--space-3);
 }
-.composerRow {
+.completeStats {
   display: flex;
-  align-items: center;
-  gap: var(--space-2);
+  align-items: stretch;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-50);
 }
-.composerHint {
+.completeStat {
   flex: 1;
-  min-width: 0;
-  font-size: var(--font-sm);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+}
+.completeStat > :first-child {
+  grid-row: span 2;
+}
+.completeValue {
+  font-size: var(--font-lg);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--neutral-400);
+}
+.completeLabel {
+  font-size: var(--font-xs);
   color: var(--neutral-300);
+}
+.completeDivider {
+  width: 0.5px;
+  background: var(--neutral-150);
+}
+.completeActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
 }
 
 /* Loading skeleton: bones laid out like the real rows. */
