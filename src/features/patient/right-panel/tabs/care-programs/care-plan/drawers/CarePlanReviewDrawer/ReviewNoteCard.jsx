@@ -17,6 +17,13 @@ function fmtStamp(iso) {
   return `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}, ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
 }
 
+// "4m 12s" for a call's length.
+function fmtDuration(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return m ? `${m}m ${String(s).padStart(2, '0')}s` : `${s}s`;
+}
+
 /**
  * One care plan note in the Review drawer's Notes tab: kind, author and time
  * on one line, the note below. Its author can edit it in place. Call notes
@@ -39,6 +46,12 @@ export function ReviewNoteCard({ note, canEdit, onSave }) {
           {note.actor || 'Care team'}
           <span aria-hidden="true"> • </span>
           {fmtStamp(note.createdAt)}
+          {note.durationSeconds > 0 && (
+            <span className={styles.noteDuration}>
+              <Icon name="solar:stopwatch-linear" size={12} color="currentColor" />
+              {fmtDuration(note.durationSeconds)}
+            </span>
+          )}
         </span>
         {canEdit && !editing && (
           <span className={styles.noteEdit}>

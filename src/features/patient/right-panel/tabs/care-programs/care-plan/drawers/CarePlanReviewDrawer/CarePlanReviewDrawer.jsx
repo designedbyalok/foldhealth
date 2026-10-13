@@ -5,6 +5,7 @@ import { Toggle } from '../../../../../../../../components/Toggle/Toggle';
 import { Badge } from '../../../../../../../../components/Badge/Badge';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
+import { Textarea } from '../../../../../../../../components/Textarea/Textarea';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { BulkBar } from '../../../../../../../../components/BulkBar/BulkBar';
 import { MenuPopover } from '../../../../../../../../components/MenuPopover/MenuPopover';
@@ -104,6 +105,7 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
   const markDiscussed = useAppStore(s => s.markCarePlanReviewItemDiscussed);
   const markManyDiscussed = useAppStore(s => s.markCarePlanReviewItemsDiscussed);
   const setItemTags = useAppStore(s => s.setCarePlanReviewItemTags);
+  const saveCallNote = useAppStore(s => s.saveCarePlanReviewNote);
   const finishReview = useAppStore(s => s.finishCarePlanReview);
   const saveLive = useAppStore(s => s.saveCarePlanLiveField);
   const addCarePlanNote = useAppStore(s => s.addCarePlanNote);
@@ -121,11 +123,13 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
   const [tab, setTab] = useState('goals');
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyFilters, setHistoryFilters] = useState(true); // Activity Log filter row shown
-  // The review clock: Start review sets startedAt, Stop freezes it and opens
-  // the Complete review popover (call note + recorded time) from the pill.
+  // The review clock: Start review sets startedAt and brings up the call
+  // note composer; Stop (or Finish review) freezes it and opens the Complete
+  // review popover with the note and what was covered.
   const [startedAt, setStartedAt] = useState(null);
   const [stoppedAt, setStoppedAt] = useState(null);
-  const [completeRect, setCompleteRect] = useState(null);
+  const [completeOpen, setCompleteOpen] = useState(false);
+  const [baseSeconds, setBaseSeconds] = useState(0); // time the open review had already run
   const [filter, setFilter] = useState('all');
   const [expanded, setExpanded] = useState(null); // `${kind}:${id}` with its note open
   const [statusMenu, setStatusMenu] = useState(null); // { kind, items, rect }
@@ -148,6 +152,7 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
   const discussed = open?.discussed || {};
   const [callNote, setCallNote] = useState(null); // null: not edited, shows the saved one
   const callNoteValue = callNote ?? open?.callNote ?? '';
+  const callNoteFilled = !!plainText(callNoteValue);
 
   const lists = {
     goals: slice?.goals || [],
@@ -167,13 +172,22 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
     const cleared = [newest('note_cleared'), newest('note_deleted')].filter(Boolean)
       .some(c => planNote && new Date(c.createdAt) >= new Date(planNote.createdAt));
     if (planNote && !cleared) out.push({ ...planNote, kind: 'plan' });
-    for (const c of rows.filter(a => a.action === 'call_note')) out.push({ ...c, kind: 'call' });
+    // A call note's audit row points at its review, which holds the call length.
+    const reviews = [review?.open, ...(review?.history || [])].filter(Boolean);
+    for (const c of rows.filter(a => a.action === 'call_note')) {
+      const r = reviews.find(x => String(x.id) === String(c.entityId));
+      out.push({ ...c, kind: 'call', durationSeconds: r?.durationSeconds ?? null });
+    }
     return out.sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt));
-  }, [audit]);
+  }, [audit, review]);
   const isMine = actor => !!actor && !!me && actor.toLowerCase() === me.toLowerCase();
   const isDiscussed = (kind, id) => !!discussed[`${kind}:${id}`];
   const discussedCount = (t) => lists[t].filter(i => isDiscussed(KINDS[t].kind, i.id)).length;
   const totalDiscussed = Object.keys(KINDS).reduce((n, t) => n + discussedCount(t), 0);
+  // What this review covered, for the Complete review popover.
+  const discussedItems = Object.entries(KINDS).flatMap(([t, k]) => lists[t]
+    .filter(i => isDiscussed(k.kind, i.id))
+    .map(i => ({ id: `${k.kind}:${i.id}`, kind: k.kind, title: i.title, status: i.status || 'Not Started' })));
 
   const listTab = KINDS[tab];
   const items = listTab ? lists[tab] : [];
@@ -210,10 +224,10 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
 
   const completeReview = async () => {
     const note = callNote == null ? undefined : (plainText(callNote) ? callNote : '');
-    const saved = await finishReview(patientId, program, note, { startedAt, stoppedAt, discussedCount: totalDiscussed });
+    const saved = await finishReview(patientId, program, note, { startedAt, stoppedAt, baseSeconds, discussedCount: totalDiscussed });
     if (!saved) return;
     showToast(`Review completed · ${plural(totalDiscussed, 'item')} discussed`);
-    setCompleteRect(null);
+    setCompleteOpen(false);
     setStartedAt(null);
     setStoppedAt(null);
     setCallNote(null);
@@ -222,7 +236,11 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
   const resumeReview = () => {
     setStartedAt(prev => prev + (Date.now() - stoppedAt));
     setStoppedAt(null);
-    setCompleteRect(null);
+    setCompleteOpen(false);
+  };
+  const openComplete = () => {
+    if (stoppedAt == null) setStoppedAt(Date.now());
+    setCompleteOpen(true);
   };
 
   const headerRight = (
@@ -238,15 +256,15 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
       />
       <span className={styles.headerDivider} aria-hidden="true" />
       {startedAt == null ? (
-        <Button variant="primary" size="S" leadingIcon="solar:play-linear" onClick={() => setStartedAt(Date.now())}>
+        <Button variant="primary" size="S" leadingIcon="solar:play-linear" onClick={() => { setBaseSeconds(open?.durationSeconds || 0); setStartedAt(Date.now()); }}>
           Start review
         </Button>
       ) : (
         <ReviewTimer
           startedAt={startedAt}
           stoppedAt={stoppedAt}
-          onStop={(rect) => { setStoppedAt(Date.now()); setCompleteRect(rect); }}
-          onOpenComplete={setCompleteRect}
+          onStop={openComplete}
+          onOpenComplete={openComplete}
         />
       )}
       <span className={styles.headerDivider} aria-hidden="true" />
@@ -265,6 +283,37 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
       headerRight={headerRight}
       noCloseDivider
       bodyClassName={styles.drawerBody}
+      footerClassName={styles.footerEnter}
+      footer={startedAt != null && (
+        <div className={styles.composer}>
+          <Textarea
+            richText
+            placeholder="General note for this call"
+            value={callNoteValue}
+            onChange={(v) => setCallNote(typeof v === 'string' ? v : (v?.target?.value ?? ''))}
+            rows={2}
+          />
+          <div className={styles.composerRow}>
+            <span className={styles.composerHint}>
+              {totalDiscussed ? `${plural(totalDiscussed, 'item')} discussed will be attached` : 'Change statuses or mark items discussed as you go'}
+            </span>
+            <Button variant="secondary" size="M" onClick={openComplete}>
+              Finish review
+            </Button>
+            <Button
+              variant="primary"
+              size="M"
+              disabled={!callNoteFilled || callNoteValue === (open?.callNote || '')}
+              onClick={async () => {
+                const saved = await saveCallNote(patientId, program, callNoteValue, { startedAt, stoppedAt, baseSeconds });
+                if (saved) { setCallNote(null); showToast('Call note saved'); }
+              }}
+            >
+              Save call note
+            </Button>
+          </div>
+        </div>
+      )}
     >
       <div className={styles.context}>
         {/* Full width, like the patient header elsewhere in the app. */}
@@ -472,16 +521,15 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
       )}
 
 
-      {completeRect && startedAt != null && stoppedAt != null && (
+      {completeOpen && startedAt != null && stoppedAt != null && (
         <CompleteReviewPopover
-          anchorRect={completeRect}
-          elapsedMs={stoppedAt - startedAt}
-          discussedCount={totalDiscussed}
+          elapsedMs={baseSeconds * 1000 + (stoppedAt - startedAt)}
+          discussed={discussedItems}
           note={callNoteValue}
           onNoteChange={setCallNote}
           onResume={resumeReview}
           onComplete={completeReview}
-          onClose={() => setCompleteRect(null)}
+          onClose={() => setCompleteOpen(false)}
         />
       )}
 

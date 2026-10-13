@@ -6,15 +6,30 @@ import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { formatElapsed } from './reviewTime';
 import styles from './CarePlanReviewDrawer.module.css';
 
+const KIND_ICON = {
+  goal: 'solar:target-linear',
+  intervention: 'solar:checklist-minimalistic-linear',
+  barrier: 'solar:danger-triangle-linear',
+};
+
 /**
- * Opens from the review timer when it stops: the recorded time, the call
- * note, and Complete Review, which finishes the review (the plan's new last
- * reviewed date, logged to the Activity Log). Resume restarts the clock.
+ * Opens in the middle of the screen when the review timer stops: the
+ * recorded time, what was discussed, and the call note filled in on the
+ * call (still editable). Complete Review finishes the review, the plan's new
+ * last reviewed date, logged to the Activity Log. Resume restarts the clock.
  */
-export function CompleteReviewPopover({ anchorRect, elapsedMs, discussedCount, note, onNoteChange, onResume, onComplete, onClose }) {
+export function CompleteReviewPopover({ elapsedMs, discussed, note, onNoteChange, onResume, onComplete, onClose }) {
   const [saving, setSaving] = useState(false);
   return (
-    <AnchoredPopover anchorRect={anchorRect} title="Complete review" width={440} maxHeight={520} onClose={onClose}>
+    <AnchoredPopover
+      centered
+      backdrop
+      title="Complete review"
+      description="Check the call note and what was covered, then complete the review."
+      width={520}
+      maxHeight={640}
+      onClose={onClose}
+    >
       <div className={styles.complete}>
         <div className={styles.completeStats}>
           <div className={styles.completeStat}>
@@ -25,13 +40,25 @@ export function CompleteReviewPopover({ anchorRect, elapsedMs, discussedCount, n
           <span className={styles.completeDivider} aria-hidden="true" />
           <div className={styles.completeStat}>
             <Icon name="solar:check-read-linear" size={16} color="var(--status-success)" />
-            <span className={styles.completeValue}>{discussedCount}</span>
-            <span className={styles.completeLabel}>{discussedCount === 1 ? 'Item discussed' : 'Items discussed'}</span>
+            <span className={styles.completeValue}>{discussed.length}</span>
+            <span className={styles.completeLabel}>{discussed.length === 1 ? 'Item discussed' : 'Items discussed'}</span>
           </div>
         </div>
+        {discussed.length > 0 && (
+          <ul className={styles.completeList}>
+            {discussed.map(item => (
+              <li key={item.id}>
+                <Icon name={KIND_ICON[item.kind]} size={14} color="var(--neutral-300)" />
+                <span className={styles.completeItem}>{item.title}</span>
+                <span className={styles.completeItemStatus}>{item.status}</span>
+              </li>
+            ))}
+          </ul>
+        )}
         <Textarea
           richText
-          placeholder="Call note: what was discussed, what's next"
+          title="Call note"
+          placeholder="What was discussed, what's next"
           value={note}
           onChange={(v) => onNoteChange(typeof v === 'string' ? v : (v?.target?.value ?? ''))}
           rows={3}

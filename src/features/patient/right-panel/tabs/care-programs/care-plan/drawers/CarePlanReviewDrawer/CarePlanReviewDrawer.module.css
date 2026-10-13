@@ -464,6 +464,13 @@
   font-size: var(--font-xs);
   color: var(--neutral-300);
 }
+.noteDuration {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: var(--space-2);
+  vertical-align: bottom;
+}
 .noteEdit {
   flex-shrink: 0;
   opacity: 0;
@@ -580,13 +587,49 @@
   to { opacity: 0; transform: scale(2.6); }
 }
 
+/* Footer composer: rises from the bottom edge when the review starts. */
+.footerEnter {
+  animation: footerIn 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.footerEnter > * {
+  animation: footerContentIn 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes footerIn {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes footerContentIn {
+  0%, 30% { opacity: 0; transform: translateY(var(--space-2)); }
+  100% { opacity: 1; transform: translateY(0); }
+}
 @media (prefers-reduced-motion: reduce) {
-  .timer {
+  .timer,
+  .footerEnter,
+  .footerEnter > * {
     animation: none;
   }
   .timerDot::after {
     animation: none;
   }
+}
+
+/* Footer composer */
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+.composerRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.composerHint {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
 }
 
 /* Complete review popover */
@@ -626,6 +669,40 @@
 .completeDivider {
   width: 0.5px;
   background: var(--neutral-150);
+}
+.completeList {
+  display: flex;
+  flex-direction: column;
+  max-height: 180px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+}
+.completeList li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+}
+.completeList li + li {
+  border-top: 0.5px solid var(--neutral-150);
+}
+.completeItem {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-md);
+  color: var(--neutral-400);
+}
+.completeItemStatus {
+  flex-shrink: 0;
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
 }
 .completeActions {
   display: flex;

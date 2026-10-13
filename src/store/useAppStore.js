@@ -237,12 +237,20 @@ const _cachedWorklistOrder = readCachedWorklistOrder();
 const _savedTab = sessionStorage.getItem('activeTab') || 'toc-worklist';
 const _savedSettingsTab = sessionStorage.getItem('settingsTab');
 
+// The review call's total length in seconds from the drawer's clock, or null
+// when the timer was never started.
+function reviewSeconds(clock) {
+  if (!clock?.startedAt) return null;
+  return (clock.baseSeconds || 0) + Math.max(0, Math.round(((clock.stoppedAt ?? Date.now()) - clock.startedAt) / 1000));
+}
+
 function mapCarePlanReviewRow(row) {
   return {
     id: row.id,
     planId: row.plan_id,
     discussed: row.discussed && typeof row.discussed === 'object' ? row.discussed : {},
     callNote: row.call_note || '',
+    durationSeconds: row.duration_seconds ?? null,
     createdBy: row.created_by || '',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -3363,13 +3371,29 @@ export const useAppStore = create((set, get) => ({
   },
   // The call note and the finished review are also logged to the plan's
   // activity (care_plan_audit), so the Activity Log shows them.
-  // clock: { startedAt, stoppedAt } in ms from the drawer's review timer, and
-  // discussedCount (items still on the plan) so the log matches the drawer.
+  saveCarePlanReviewNote: async (patientId, program, note, clock) => {
+    const seconds = reviewSeconds(clock);
+    const saved = await get().patchCarePlanReview(patientId, program, {
+      call_note: note,
+      ...(seconds != null ? { duration_seconds: seconds } : {}),
+    });
+    if (saved && note?.trim()) {
+      get().logCarePlanAudit(patientId, program, {
+        entityType: 'plan', entityId: saved.id, action: 'call_note', summary: 'Call note', detail: note.trim(),
+      });
+    }
+    return saved;
+  },
+  // clock: { startedAt, stoppedAt, baseSeconds } from the drawer's review
+  // timer (baseSeconds: what the review had already run before this sitting),
+  // and discussedCount (items still on the plan) so the log matches the drawer.
   finishCarePlanReview: async (patientId, program, note, clock) => {
     const durationMs = clock?.startedAt ? (clock.stoppedAt ?? Date.now()) - clock.startedAt : 0;
+    const seconds = reviewSeconds(clock);
     const before = get().carePlanReviews[carePlanKey(patientId, program.id)]?.open;
     const saved = await get().patchCarePlanReview(patientId, program, {
       ...(note != null ? { call_note: note } : {}),
+      ...(seconds != null ? { duration_seconds: seconds } : {}),
       finished_at: new Date().toISOString(),
     });
     if (saved) {

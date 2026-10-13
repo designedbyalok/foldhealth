@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { Tooltip } from '../../../../../../../../components/Tooltip/Tooltip';
 import { formatElapsed } from './reviewTime';
@@ -11,7 +11,6 @@ import styles from './CarePlanReviewDrawer.module.css';
  */
 export function ReviewTimer({ startedAt, stoppedAt, onStop, onOpenComplete }) {
   const running = stoppedAt == null;
-  const ref = useRef(null);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (!running) return undefined;
@@ -19,12 +18,11 @@ export function ReviewTimer({ startedAt, stoppedAt, onStop, onOpenComplete }) {
     return () => clearInterval(id);
   }, [running]);
   const elapsed = (running ? now : stoppedAt) - startedAt;
-  const rect = () => ref.current?.getBoundingClientRect();
 
   if (!running) {
     return (
       <Tooltip label="Complete review" placement="bottom">
-        <button type="button" ref={ref} className={`${styles.timer} ${styles.timerStopped}`} onClick={() => onOpenComplete(rect())}>
+        <button type="button" className={`${styles.timer} ${styles.timerStopped}`} onClick={onOpenComplete}>
           <Icon name="solar:pause-circle-linear" size={14} color="currentColor" />
           <span className={styles.timerText}>{formatElapsed(elapsed)}</span>
         </button>
@@ -32,11 +30,11 @@ export function ReviewTimer({ startedAt, stoppedAt, onStop, onOpenComplete }) {
     );
   }
   return (
-    <span ref={ref} className={`${styles.timer} ${styles.timerRunning}`} role="timer" aria-live="off">
+    <span className={`${styles.timer} ${styles.timerRunning}`} role="timer" aria-live="off">
       <span className={styles.timerDot} aria-hidden="true" />
       <span className={styles.timerText}>{formatElapsed(elapsed)}</span>
       <Tooltip label="Stop timer" placement="bottom">
-        <button type="button" className={styles.timerStop} onClick={() => onStop(rect())} aria-label="Stop timer">
+        <button type="button" className={styles.timerStop} onClick={onStop} aria-label="Stop timer">
           <span className={styles.timerStopGlyph} aria-hidden="true" />
         </button>
       </Tooltip>
