@@ -1093,6 +1093,11 @@ export const useAppStore = create((set, get) => ({
         updates.patientProfileTab = opts.profileTab;
       }
     }
+    if (opts.careManagementTab) {
+      // A Care Management sub-tab directly, e.g. the Comprehensive Care Plan.
+      updates.patientProfileTab = 'Care Management';
+      updates.careManagementTab = opts.careManagementTab;
+    }
     if (opts.programCode) {
       // Opening a specific program always lands on Care Management → Care Programs.
       updates.patientProfileTab = 'Care Management';

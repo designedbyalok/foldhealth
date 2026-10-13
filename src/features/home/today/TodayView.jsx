@@ -290,7 +290,7 @@ export function TodayView() {
   );
 
   const openPatient = (item) => {
-    if (item.patientId) navigateToPatient(item.patientId, { profileTab: 'Monitoring' });
+    if (item.patientId) navigateToPatient(item.patientId, { careManagementTab: 'Comprehensive Care Plan' });
     else toast('Patient profile is still loading.');
   };
   const onSnooze = (item) => setDismissed((prev) => new Set(prev).add(item.id));

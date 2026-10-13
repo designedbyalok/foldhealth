@@ -80,8 +80,10 @@ export const PROGRAM_ACTIVITY_BY_MONTH = [
 // the right panel; it wraps the Demographics/Insurance Toggle inside the
 // ProfileTab component. Tasks is also owned by the right panel now — the
 // left panel dropped both to avoid duplicate nav on the P360 screen.
+// Monitoring is hidden (its view is still in PatientDetailView); Today opens
+// the Comprehensive Care Plan instead.
 export const PROFILE_TABS = [
-  'Overview', 'Monitoring', 'Timeline', 'Notes', 'Assessments', 'Care Management',
+  'Overview', 'Timeline', 'Notes', 'Assessments', 'Care Management',
   'Tasks', 'Documents', 'Orders & Referrals', 'Profile',
 ];
 
