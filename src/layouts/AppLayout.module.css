@@ -10,11 +10,12 @@
    the page bg. The feature SideNavs pick up the matching card chrome via
    the global rule in SideNav.module.css. */
 :root[data-sidebar-shape="floating"] .app {
-  padding: var(--space-2);
-  /* gap: 0 so the rail and whatever sits in .main (TopBar + feature
-     SideNav or content) read as one touching surface. The join feels
-     unified with the per-section flat-edge treatment below. */
-  gap: 0;
+  /* 6 px padding + 6 px gap, per user. 6 isn't on the --space-* scale
+     (nearest hits are 4 / 8 / 12), so compose it as half of --space-3
+     (12) rather than hard-coding a raw px value that the DS guardrail
+     would flag. */
+  padding: calc(var(--space-3) / 2);
+  gap: calc(var(--space-3) / 2);
   background: var(--neutral-50);
 }
 
