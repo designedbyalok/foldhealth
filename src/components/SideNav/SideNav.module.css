@@ -15,30 +15,13 @@
   padding-bottom: 16px;
 }
 
-/* Floating-sidebar shape — every standalone SideNav lifts off the page as
-   a card so Population / Settings / Analytics / Calls / Comms all share
-   the same chrome as the floating rail. Scoped reset below neutralises
-   this treatment for SideNavs nested inside the FloatingSidebar frame
-   (which already paints the border + shadow). */
+/* Floating-sidebar shape — the Body panel (`.main`) now carries the card
+   chrome instead of each individual SideNav, so feature SideNavs render
+   as plain columns inside the Body card. The hairline right border from
+   the default `.nav` style is enough separation between the SideNav and
+   the content area; no border radius, no box-shadow, no margin. */
 :root[data-sidebar-shape="floating"] .nav {
-  /* Fully rounded card again now that the .app gap sits a visible 6 px
-     between NavBar and Body — the flat-edge join from the previous
-     iteration no longer makes sense. */
-  margin: 0 var(--space-2) 0 0;
   padding-top: var(--space-2);
-  padding-bottom: var(--space-2);
-  border: 0.5px solid var(--neutral-150);
-  border-radius: 8px;
-  box-shadow: var(--shadow-card);
-}
-:root[data-sidebar-shape="floating"] [data-float-shell] .nav {
-  margin: 0;
-  padding-top: 0;
-  padding-bottom: var(--space-4);
-  border: none;
-  border-right: none;
-  border-radius: 0;
-  box-shadow: none;
 }
 
 .nav::-webkit-scrollbar { width: 4px; }
