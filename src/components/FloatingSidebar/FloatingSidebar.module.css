@@ -31,6 +31,16 @@
   border-right: none;
 }
 
+/* Push the floating card below the TopBar so the breadcrumb strip
+   (top-left area of .main) is NOT visually inside the navbar area.
+   Matches TopBar's own 56 px height via tokens (space-12 + space-2),
+   and shrinks the frame by that same amount so the bottom still clears
+   .app's inner box (which clips overflow). */
+:root[data-sidebar-shape="floating"] .frame {
+  margin-top: calc(var(--space-12) + var(--space-2));
+  height: calc(100% - var(--space-12) - var(--space-2));
+}
+
 /* Icon-only mode drops the sub-nav. The frame hugs the rail width so an
    explicit `width` prop still works when the caller wants a fixed slot. */
 .frame.railOnly {

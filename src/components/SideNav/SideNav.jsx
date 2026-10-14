@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -14,7 +14,30 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Icon } from '../Icon/Icon';
+import { Input } from '../Input/Input';
 import styles from './SideNav.module.css';
+
+/* Track the global `data-sidebar-shape` attribute from applySidebarShape
+   (lib/theme.js). When the user has opted for the floating shape, every
+   SideNav auto-renders a search header + filters items — the floating
+   card then has the search strip the user asked for, without touching
+   every caller. */
+function useFloatingSidebarShape() {
+  const [floating, setFloating] = useState(() =>
+    typeof document !== 'undefined' &&
+    document.documentElement.getAttribute('data-sidebar-shape') === 'floating',
+  );
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const check = () => setFloating(
+      document.documentElement.getAttribute('data-sidebar-shape') === 'floating',
+    );
+    const observer = new MutationObserver(check);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-sidebar-shape'] });
+    return () => observer.disconnect();
+  }, []);
+  return floating;
+}
 
 const EMPTY_SECTIONS = [];
 
@@ -86,6 +109,31 @@ export function SideNav({
   className,
 }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+
+  // Floating-shape auto-search header. Only kicks in when the user has
+  // opted into the floating sidebar AND the caller hasn't passed its own
+  // header, so Comms/Analytics' custom "Create New" headers still win.
+  const isFloating = useFloatingSidebarShape();
+  const [search, setSearch] = useState('');
+  const searchActive = isFloating && !header && !collapsed;
+  const q = searchActive ? search.trim().toLowerCase() : '';
+  const effectiveSections = useMemo(() => {
+    if (!q) return sections;
+    return sections
+      .map(sec => ({
+        ...sec,
+        items: (sec.items || []).filter(it => (it.label || '').toLowerCase().includes(q)),
+      }))
+      .filter(sec => sec.items.length > 0 || (sec.label || '').toLowerCase().includes(q));
+  }, [sections, q]);
+  const effectiveHeader = searchActive ? (
+    <Input
+      type="search"
+      placeholder="Search"
+      value={search}
+      onChange={e => setSearch(e.target.value)}
+    />
+  ) : header;
 
   // Sliding active indicator — measured against the active row after layout,
   // before paint. `animated` switches transitions on one frame after the
@@ -205,8 +253,8 @@ export function SideNav({
           opacity: indicator.ready ? 1 : 0,
         }}
       />
-      {header && <div className={styles.header}>{header}</div>}
-      {sections.map(renderSection)}
+      {effectiveHeader && <div className={styles.header}>{effectiveHeader}</div>}
+      {effectiveSections.map(renderSection)}
     </aside>
   );
 }
