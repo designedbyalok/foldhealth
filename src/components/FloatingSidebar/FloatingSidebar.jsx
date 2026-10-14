@@ -96,6 +96,10 @@ export function FloatingSidebar({
       className={[styles.frame, showSubNav ? '' : styles.railOnly, className || ''].filter(Boolean).join(' ')}
       style={frameStyle}
       data-float-shell
+      /* Flat right edge when the shell has NO internal sub-panel, so an
+         adjacent feature SideNav (Settings / Analytics / Calls / Comms)
+         visually joins the rail as one card. */
+      data-rail-only={showSubNav ? undefined : 'true'}
     >
       <div className={styles.rail}>
         <div className={styles.logo}>{logo || <OmniLogo />}</div>

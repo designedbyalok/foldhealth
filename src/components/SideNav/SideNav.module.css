@@ -21,12 +21,19 @@
    this treatment for SideNavs nested inside the FloatingSidebar frame
    (which already paints the border + shadow). */
 :root[data-sidebar-shape="floating"] .nav {
-  margin: 0 var(--space-2) 0 var(--space-2);
+  /* Flat left edge so the feature SideNav joins the rail's flat right
+     edge (see FloatingSidebar.module.css `[data-rail-only]`). Right side
+     stays rounded because that's the card's visible terminus. */
+  margin: 0 var(--space-2) 0 0;
   padding-top: var(--space-2);
   padding-bottom: var(--space-2);
   border: 0.5px solid var(--neutral-150);
+  border-left: none;
   border-right: 0.5px solid var(--neutral-150);
-  border-radius: 8px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
   box-shadow: var(--shadow-card);
 }
 :root[data-sidebar-shape="floating"] [data-float-shell] .nav {
