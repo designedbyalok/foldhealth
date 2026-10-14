@@ -20,6 +20,16 @@
   transform: translate(-50%, 0);
 }
 
+/* Side placements — bubble is centred vertically on the trigger and sits
+   outside it horizontally. Used by rail-style sidebars where top/bottom
+   placements would land between adjacent icons. */
+.bubbleLeft {
+  transform: translate(-100%, -50%);
+}
+.bubbleRight {
+  transform: translate(0, -50%);
+}
+
 /* Edge-anchored variants: `left` here is the trigger's own edge, so the
    bubble grows inward instead of overflowing the panel. */
 .bubbleAlignRight {

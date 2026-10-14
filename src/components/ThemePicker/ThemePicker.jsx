@@ -36,6 +36,8 @@ export function ThemePicker() {
   const setTheme = useAppStore(s => s.setTheme);
   const navStyle = useAppStore(s => s.navStyle);
   const setNavStyle = useAppStore(s => s.setNavStyle);
+  const sidebarShape = useAppStore(s => s.sidebarShape);
+  const setSidebarShape = useAppStore(s => s.setSidebarShape);
   const contrast = useAppStore(s => s.contrast);
   const setContrast = useAppStore(s => s.setContrast);
   const fontScale = useAppStore(s => s.fontScale);
@@ -116,6 +118,17 @@ export function ThemePicker() {
             checked={navStyle === 'light'}
             onChange={(next) => setNavStyle(next ? 'light' : 'default')}
             ariaLabel="Toggle light navigation"
+          />
+        </div>
+        <div className={styles.toggleRow}>
+          <span className={styles.toggleCopy}>
+            <span className={styles.toggleTitle}>Floating sidebar</span>
+            <span className={styles.toggleHint}>Compact icon rail paired with an inline sub-nav as one floating card.</span>
+          </span>
+          <Switch
+            checked={sidebarShape === 'floating'}
+            onChange={(next) => setSidebarShape(next ? 'floating' : 'standard')}
+            ariaLabel="Toggle floating sidebar"
           />
         </div>
       </div>

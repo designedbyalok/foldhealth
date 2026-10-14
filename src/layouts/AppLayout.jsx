@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { Sidebar } from '../components/Sidebar/Sidebar';
+import { AppSidebar } from '../components/Sidebar/AppSidebar';
 import { SubNav } from '../components/SubNav/SubNav';
 import { TopBar } from '../components/TopBar/TopBar';
 import { TabBar } from './TabBar';
@@ -107,6 +107,10 @@ function PopulationView() {
   const activeTab = useAppStore(s => s.activeTab);
   const showFilterBar = useAppStore(s => s.showFilterBar);
   const activeSubnavList = useAppStore(s => s.activeSubnavList);
+  // Floating sidebar absorbs the SubNav into its own card, so the standalone
+  // page-column instance would duplicate it (and the collapse control). Hide
+  // it here when that shape is active.
+  const sidebarShape = useAppStore(s => s.sidebarShape);
 
   const selectedPatientId = useAppStore(s => s.selectedPatientId);
   const pgRuleBuilder = useAppStore(s => s.pgRuleBuilder);
@@ -164,7 +168,7 @@ function PopulationView() {
       <TopBar />
       <DegradedBanner />
       <div className={styles.bodyRow}>
-        <SubNav collapsed={subnavCollapsed} />
+        {sidebarShape !== 'floating' && <SubNav collapsed={subnavCollapsed} />}
         <div className={styles.content}>
           {/* CCM is otherwise chromeless, but we want the same TabBar header
               TOC uses (title tab + right-side action icons) so the two
@@ -472,7 +476,7 @@ export function AppLayout() {
   if (editingCampaignId || editingComponent) {
     return (
       <div className={styles.app}>
-        <Sidebar />
+        <AppSidebar />
         <Suspense fallback={<LazyFallback />}>
           <EmailBuilder />
         </Suspense>
@@ -486,7 +490,7 @@ export function AppLayout() {
   if (campaignBuilderId) {
     return (
       <div className={styles.app}>
-        <Sidebar />
+        <AppSidebar />
         <Suspense fallback={<LazyFallback />}>
           <CampaignBuilder />
         </Suspense>
@@ -529,7 +533,7 @@ export function AppLayout() {
   if (activePage === 'builder') {
     return (
       <div className={styles.app}>
-        <Sidebar />
+        <AppSidebar />
         <Suspense fallback={<LazyFallback />}>
           <AgentCanvas />
         </Suspense>
@@ -553,7 +557,7 @@ export function AppLayout() {
 
   return (
     <div className={styles.app}>
-      <Sidebar />
+      <AppSidebar />
       <Suspense fallback={<LazyFallback />}>
         {activeView}
       </Suspense>

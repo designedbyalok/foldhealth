@@ -15,6 +15,26 @@
   padding-bottom: 16px;
 }
 
+/* Floating-sidebar shape — every standalone SideNav lifts off the page as
+   a card so Population / Settings / Analytics / Calls / Comms all share
+   the same chrome as the floating rail. Scoped reset below neutralises
+   this treatment for SideNavs nested inside the FloatingSidebar frame
+   (which already paints the border + shadow). */
+:root[data-sidebar-shape="floating"] .nav {
+  margin: 0 var(--space-2) 0 var(--space-2);
+  border: 0.5px solid var(--neutral-100);
+  border-right: 0.5px solid var(--neutral-100);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+}
+:root[data-sidebar-shape="floating"] [data-float-shell] .nav {
+  margin: 0;
+  border: none;
+  border-right: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .nav::-webkit-scrollbar { width: 4px; }
 .nav::-webkit-scrollbar-thumb { background: var(--neutral-150); border-radius: 4px; }
 

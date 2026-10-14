@@ -12,7 +12,10 @@ import styles from './Tooltip.module.css';
  * Props:
  *  - label   (string | ReactNode)  Tooltip content. Empty → renders nothing.
  *  - children (ReactNode)  The trigger element.
- *  - placement ('top' | 'bottom')  Vertical placement. Defaults to 'top'.
+ *  - placement ('top' | 'bottom' | 'left' | 'right')  Where the bubble sits
+ *             relative to the trigger. Defaults to 'top'. Left / right are
+ *             the sidebar-style side placements, with the bubble centred
+ *             vertically on the trigger.
  *  - className (string)  Optional class on the inline wrapper span.
  *  - maxWidth (number)  Wrap long content at this pixel width (default is a
  *             single nowrap line — pass this for sentence-length tooltips).
@@ -66,7 +69,11 @@ export function Tooltip({ label, children, placement = 'top', className, maxWidt
   const style = rect
     ? placement === 'bottom'
       ? { top: rect.bottom + 6, left: anchorX }
-      : { top: rect.top - 6,     left: anchorX }
+      : placement === 'left'
+        ? { top: rect.top + rect.height / 2, left: rect.left - 6 }
+        : placement === 'right'
+          ? { top: rect.top + rect.height / 2, left: rect.right + 6 }
+          : { top: rect.top - 6,     left: anchorX }
     : null;
   // Edge-aligned bubbles: the arrow points at the trigger's centre, not the
   // bubble's (the CSS keeps it inside the bubble).
@@ -96,7 +103,10 @@ export function Tooltip({ label, children, placement = 'top', className, maxWidt
           className={[
             styles.bubble,
             variant === 'light' ? styles.bubbleLight : '',
-            placement === 'bottom' ? styles.bubbleBottom : styles.bubbleTop,
+            placement === 'bottom' ? styles.bubbleBottom
+              : placement === 'left' ? styles.bubbleLeft
+                : placement === 'right' ? styles.bubbleRight
+                  : styles.bubbleTop,
             side === 'right' ? styles.bubbleAlignRight : '',
             side === 'left' ? styles.bubbleAlignLeft : '',
           ].filter(Boolean).join(' ')}

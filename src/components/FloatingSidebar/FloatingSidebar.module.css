@@ -1,0 +1,232 @@
+/* ── Fold Health FloatingSidebar ──
+ * Figma Fold-Pixel node 1255:42011. One floating rounded card that pairs
+ * the compact dark rail with a white sub-nav. The frame owns the border +
+ * radius + overflow clip so neither child panel needs to repeat the chrome.
+ */
+
+.frame {
+  display: inline-flex;
+  align-items: stretch;
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-100);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* Marker so the shared SideNav knows it is already inside the floating
+   shell and skips the global `[data-sidebar-shape="floating"] .nav` card
+   chrome (which would double up the border + shadow). */
+.frame[data-float-shell] {}
+
+/* Icon-only mode drops the sub-nav. The frame hugs the rail width so an
+   explicit `width` prop still works when the caller wants a fixed slot. */
+.frame.railOnly {
+  width: auto;
+}
+
+/* ── Dark rail (left) ────────────────────────────────────────────────── */
+.rail {
+  flex-shrink: 0;
+  width: 52px;
+  background: var(--primary-500);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-1);
+  gap: var(--space-1);
+  color: var(--sidebar-fg);
+}
+
+/* Icons here read as the brand's primary chrome — Fold's global 1px
+   stroke normalization gets overridden locally so Solar linear icons
+   render at their native 1.5px weight. Scoped to the rail so the
+   sub-panel icons (inside <Input> etc.) keep the global 1px look. */
+.rail :global(svg.iconify) [stroke]:not([stroke="none"]),
+.rail :global(svg.iconify) [stroke-width] {
+  stroke-width: 1.5 !important;
+}
+
+.logo {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.railItems {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+.railItems::-webkit-scrollbar { width: 0; }
+
+.railBottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  width: 100%;
+  padding-top: var(--space-1);
+}
+
+/* ── Rail tile — single-layer 44×44 painted card ─────────────────────── */
+/* Figma: 44×44 tile with 8px padding and 12px radius, holding a 24×24
+   icon. Hover / active repaint the whole card (no nested padding to
+   nibble at the paint). White icons throughout, per Figma spec. */
+.tile {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: var(--neutral-0);
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.tile:hover:not(.tileActive) {
+  background: var(--sidebar-hover-bg);
+}
+
+.tileActive {
+  background: var(--primary-400);
+  border-color: var(--primary-300);
+}
+
+.tile:focus-visible { outline: none; }
+.tile:focus-visible {
+  box-shadow: 0 0 0 2px var(--primary-200);
+}
+
+/* Count badge on a rail tile — same corner anchor as the primary Sidebar
+   so the two components surface counts the same way. */
+.tileBadge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 var(--space-1);
+  background: var(--secondary-300);
+  color: var(--neutral-0);
+  font-size: var(--font-2xs);
+  font-weight: 500;
+  line-height: 1;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* ── Hover tooltip body ──────────────────────────────────────────────── */
+/* The portaled Tooltip gets a styled label here: item name on the left,
+   keyboard shortcut on the right in a pill. */
+.tipLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.tipShortcut {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  padding: 0 var(--space-1);
+  background: var(--sidebar-hover-bg);
+  color: var(--neutral-0);
+  border-radius: 4px;
+  font-size: var(--font-2xs);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* ── Omni-style default logo (Figma 1256:45238) ──────────────────────── */
+/* Three nested rounded containers framing the Fold mark. Hairlines use
+   the existing sidebar-fg / sidebar-fg-muted tokens so the chip reads
+   as glass against the dark rail without introducing new alpha tokens. */
+.omni {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  border: 0.5px solid var(--sidebar-fg-muted);
+  background: var(--primary-400);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-popover);
+  box-sizing: border-box;
+}
+
+.omniRing {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  border: 0.5px solid var(--sidebar-fg-muted);
+  background: var(--primary-500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.omniPedestal {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--sidebar-hover-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Right sub-panel (white) ─────────────────────────────────────────── */
+.subPanel {
+  flex: 1 1 auto;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  background: var(--neutral-0);
+  min-height: 0;
+}
+
+.searchWrap {
+  padding: var(--space-2) var(--space-2) var(--space-1);
+  flex-shrink: 0;
+}
+
+.subNavWrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
+/* Shared SideNav sits in a floating frame now, not a page column, so drop
+   the right hairline it carries by default and the explicit rail width:
+   the sub-panel's flex sizing is the source of truth here. */
+.subNav {
+  border-right: none;
+  width: 100%;
+  flex: 1 1 auto;
+}
