@@ -10,10 +10,10 @@ const SECTIONS = [{
   })),
 }];
 
-export function SettingsSubNav({ activeItem = 'agents', onItemClick }) {
+export function SettingsSubNav({ activeItem = 'agents', onItemClick, width = 180 }) {
   return (
     <SideNav
-      width={180}
+      width={width}
       sections={SECTIONS}
       activeKey={activeItem}
       onSelect={(key) => onItemClick?.(key)}

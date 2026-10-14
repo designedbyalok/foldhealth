@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { TopBar } from '../../components/TopBar/TopBar';
 import { MissedCallIcon } from '../../components/Icon/MissedCallIcon';
 import { Button } from '../../components/Button/Button';
 import { SideNav } from '../../components/SideNav/SideNav';
+import { useFloatingSubNavSlot } from '../../components/FloatingSidebar/floatingSubNavSlot';
 import { DetailDrawer } from '../../components/DetailDrawer/DetailDrawer';
 import { useAppStore } from '../../store/useAppStore';
 import { computeGoalStatus, computeOOH, formatCallDate } from './CallsViewHelpers.utils';
@@ -90,47 +92,55 @@ export function CallsView() {
     }
   };
 
+  const sidebarShape = useAppStore(st => st.sidebarShape);
+  const floatingSlot = useFloatingSubNavSlot();
+  const floating = sidebarShape === 'floating' && floatingSlot;
+
+  const sideNavEl = (
+    <SideNav
+      width={floating ? '100%' : 200}
+      loading={callsConfigLoading}
+      header={
+        <Button
+          variant="primary"
+          size="L"
+          leadingIcon="solar:add-circle-bold"
+          fullWidth
+          onClick={() => showToast('New call – coming soon')}
+        >
+          New Call
+        </Button>
+      }
+      sections={[
+        {
+          key: 'inbox',
+          label: 'Inbox',
+          items: inboxItems.map(item => ({
+            key: item.id,
+            label: item.label,
+            icon: item.isCustomIcon ? undefined : item.icon,
+            iconElement: item.isCustomIcon
+              ? <MissedCallIcon size={16} color={activeInbox === item.id ? 'var(--primary-300)' : 'var(--neutral-300)'} />
+              : undefined,
+          })),
+        },
+        {
+          key: 'channels',
+          label: 'Channels',
+          items: channelItems.map(item => ({ key: item.id, label: item.label, icon: item.icon })),
+        },
+      ]}
+      activeKey={activeInbox}
+      onSelect={setActiveInbox}
+    />
+  );
+
   return (
     <div className={styles.page}>
       <TopBar />
 
       <div className={styles.panels}>
-        <SideNav
-          width={200}
-          loading={callsConfigLoading}
-          header={
-            <Button
-              variant="primary"
-              size="L"
-              leadingIcon="solar:add-circle-bold"
-              fullWidth
-              onClick={() => showToast('New call – coming soon')}
-            >
-              New Call
-            </Button>
-          }
-          sections={[
-            {
-              key: 'inbox',
-              label: 'Inbox',
-              items: inboxItems.map(item => ({
-                key: item.id,
-                label: item.label,
-                icon: item.isCustomIcon ? undefined : item.icon,
-                iconElement: item.isCustomIcon
-                  ? <MissedCallIcon size={16} color={activeInbox === item.id ? 'var(--primary-300)' : 'var(--neutral-300)'} />
-                  : undefined,
-              })),
-            },
-            {
-              key: 'channels',
-              label: 'Channels',
-              items: channelItems.map(item => ({ key: item.id, label: item.label, icon: item.icon })),
-            },
-          ]}
-          activeKey={activeInbox}
-          onSelect={setActiveInbox}
-        />
+        {floating ? createPortal(sideNavEl, floatingSlot) : sideNavEl}
 
         <CallsConvPanel
           activeLabel={activeLabel}

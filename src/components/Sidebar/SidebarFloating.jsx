@@ -1,6 +1,7 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { FloatingSidebar } from '../FloatingSidebar/FloatingSidebar';
 import { SubNav } from '../SubNav/SubNav';
+import { setFloatingSubNavSlot } from '../FloatingSidebar/floatingSubNavSlot';
 import { HelpPopover } from '../HelpPopover/HelpPopover';
 import { WhatsNewDrawer } from '../WhatsNewDrawer/WhatsNewDrawer';
 import { useAppStore } from '../../store/useAppStore';
@@ -122,14 +123,33 @@ export function SidebarFloating() {
     setCurrentPage(1);
   };
 
-  // The sub-panel is the live SubNav, so section data (worklists, patients
-  // groups, leads) remains in one place regardless of which rail is mounted.
-  // Only renders when the active page actually has sub-nav content.
-  const showSubNav = activePage === 'population';
-  // 100% so the SubNav fills the floating card's sub-panel instead of
-  // overflowing (fixed 200px was being clipped by the frame overflow:hidden,
-  // which pushed the count badges within ~3px of the visible right edge).
-  const subPanel = showSubNav ? <SubNav collapsed={false} width="100%" /> : null;
+  // Pages whose SideNav/SubNav belongs INSIDE the floating card. Population
+  // owns a dedicated SubNav the layout renders directly; the other feature
+  // sections each keep their own `<SideNav>` state in their own layouts
+  // (AnalyticsLayout, SettingsLayout, CallsView, MessagesView) and portal
+  // their SideNav into the slot div below via `floatingSubNavSlot.js`.
+  // Everything else renders a rail-only shell.
+  const PORTAL_PAGES = new Set(['analytics', 'settings', 'calls', 'messages']);
+  const showSubNav = activePage === 'population' || PORTAL_PAGES.has(activePage);
+  // 100% so the Population SubNav fills the floating card's sub-panel
+  // instead of overflowing (fixed 200px was being clipped by the frame
+  // overflow:hidden, which pushed count badges within ~3px of the right
+  // edge).
+  // Keep a stable ref to the slot div so useLayoutEffect fires the registry
+  // ONCE after mount, instead of once per render. The inline ref callback
+  // was firing with null → div on every re-render, momentarily resetting
+  // currentSlot and clearing portaled content.
+  const slotRef = useRef(null);
+  useLayoutEffect(() => {
+    setFloatingSubNavSlot(slotRef.current);
+    return () => setFloatingSubNavSlot(null);
+  }, [showSubNav, activePage]);
+
+  const subPanel = activePage === 'population'
+    ? <SubNav collapsed={false} width="100%" />
+    : showSubNav
+      ? <div ref={slotRef} data-floating-subnav-slot style={{ display: 'flex', flex: '1 1 auto', minWidth: 0, minHeight: 0 }} />
+      : null;
 
   return (
     <>

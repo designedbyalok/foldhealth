@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Icon } from '../../components/Icon/Icon';
 import { Select } from '../../components/Select/Select';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
 import { Button } from '../../components/Button/Button';
 import { SideNav } from '../../components/SideNav/SideNav';
+import { useFloatingSubNavSlot } from '../../components/FloatingSidebar/floatingSubNavSlot';
 import { useAppStore } from '../../store/useAppStore';
 import { PAGES, VIEW_TITLES, PERSONA_ACCESS, PERSONA_LABELS, PERSONA_DETAILS, ORGANIZATIONS, QUARTERS } from './analyticsData';
 import { ExecutiveView } from './views/ExecutiveView';
@@ -134,28 +136,42 @@ export function AnalyticsLayout() {
     setAnalyticsPersona(keys[(idx + 1) % keys.length]);
   }, [analyticsPersona, setAnalyticsPersona]);
 
+  // When the user has opted into the floating sidebar shape, portal the
+  // Analytics SideNav into the floating card's slot so the rail and the
+  // Analytics nav read as one combined card (same shape Population uses).
+  // Everything else — state, callbacks, canvas scroll ref — stays in this
+  // layout; only the DOM moves.
+  const sidebarShape = useAppStore(st => st.sidebarShape);
+  const floatingSlot = useFloatingSubNavSlot();
+  const floating = sidebarShape === 'floating' && floatingSlot;
+
+  const sideNavEl = (
+    <SideNav
+      width={floating ? '100%' : 210}
+      sections={PAGES.map(sec => ({
+        key: sec.section,
+        label: sec.section,
+        items: sec.items.map(p => ({
+          key: p.id,
+          label: p.label,
+          icon: p.icon,
+          locked: isViewLocked(p.id),
+        })),
+      }))}
+      activeKey={view}
+      onSelect={(id, item) => item.locked
+        ? showToast(`${item.label} is restricted for ${PERSONA_LABELS[analyticsPersona] || analyticsPersona} persona`)
+        : switchView(id)}
+    />
+  );
+
   return (
     <div className={s.wrap}>
       {/* ── Body (nav + canvas) ── */}
       <div className={s.body}>
-        {/* ── Page Navigator — shared SideNav ── */}
-        <SideNav
-          width={210}
-          sections={PAGES.map(sec => ({
-            key: sec.section,
-            label: sec.section,
-            items: sec.items.map(p => ({
-              key: p.id,
-              label: p.label,
-              icon: p.icon,
-              locked: isViewLocked(p.id),
-            })),
-          }))}
-          activeKey={view}
-          onSelect={(id, item) => item.locked
-            ? showToast(`${item.label} is restricted for ${PERSONA_LABELS[analyticsPersona] || analyticsPersona} persona`)
-            : switchView(id)}
-        />
+        {/* Page Navigator — portaled into the floating NavBar when the user
+            is on the floating shape, otherwise rendered inline here. */}
+        {floating ? createPortal(sideNavEl, floatingSlot) : sideNavEl}
 
         {/* ── Canvas ── */}
         <div className={[s.canvas, FLUSH_CANVAS_VIEWS.has(view) ? s.canvasFlush : ''].filter(Boolean).join(' ')} ref={canvasRef}>

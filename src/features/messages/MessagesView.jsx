@@ -2,7 +2,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Icon } from '../../components/Icon/Icon';
 import { MissedCallIcon } from '../../components/Icon/MissedCallIcon';
+import { createPortal } from 'react-dom';
 import { TopBar } from '../../components/TopBar/TopBar';
+import { useFloatingSubNavSlot } from '../../components/FloatingSidebar/floatingSubNavSlot';
 import { Button } from '../../components/Button/Button';
 import { SideNav } from '../../components/SideNav/SideNav';
 import { useAppStore } from '../../store/useAppStore';
@@ -52,6 +54,9 @@ const CHANNEL_ITEMS = [
 ];
 
 export function MessagesView() {
+  const msgSidebarShape = useAppStore(s => s.sidebarShape);
+  const msgFloatingSlot = useFloatingSubNavSlot();
+  const msgFloating = msgSidebarShape === 'floating' && msgFloatingSlot;
   const setMessagesUnreadCount = useAppStore(s => s.setMessagesUnreadCount);
   const pendingChatUserEmail = useAppStore(s => s.pendingChatUserEmail);
   const setPendingChatUserEmail = useAppStore(s => s.setPendingChatUserEmail);
@@ -278,54 +283,59 @@ export function MessagesView() {
       <TopBar />
 
       <div className={styles.panels}>
-        <SideNav
-          width={200}
-          sectionLabelVariant="sentence"
-          collapsed={navCollapsed}
-          header={
-            <Button
-              variant="primary"
-              size="L"
-              leadingIcon="solar:add-circle-bold"
-              fullWidth
-              iconOnly={navCollapsed}
-              aria-label="Create New"
-              ref={createBtnRef}
-              onClick={() => setCreateOpen(v => !v)}
-            >
-              {navCollapsed ? null : 'Create New'}
-            </Button>
-          }
-          sections={[
-            {
-              key: 'inbox',
-              label: 'Inbox',
-              items: INBOX_ITEMS.map(item => ({
-                key: item.id,
-                label: item.label,
-                icon: item.isCustomIcon ? undefined : item.icon,
-                iconElement: item.isCustomIcon
-                  ? <MissedCallIcon size={16} color={activeChannel === item.id ? 'var(--primary-300)' : 'var(--neutral-300)'} />
-                  : undefined,
-                count: commsCounts[item.id] || undefined,
-              })),
-            },
-            {
-              key: 'channels',
-              label: 'Channels',
-              items: CHANNEL_ITEMS.map(item => ({
-                key: item.id,
-                label: item.label,
-                icon: item.icon,
-                count: item.id === 'internal'
-                  ? (totalUnread || undefined)
-                  : (commsCounts[item.id] || undefined),
-              })),
-            },
-          ]}
-          activeKey={activeChannel}
-          onSelect={setActiveChannel}
-        />
+        {(() => {
+          const sideNavEl = (
+            <SideNav
+              width={msgFloating ? '100%' : 200}
+              sectionLabelVariant="sentence"
+              collapsed={navCollapsed}
+              header={
+                <Button
+                  variant="primary"
+                  size="L"
+                  leadingIcon="solar:add-circle-bold"
+                  fullWidth
+                  iconOnly={navCollapsed}
+                  aria-label="Create New"
+                  ref={createBtnRef}
+                  onClick={() => setCreateOpen(v => !v)}
+                >
+                  {navCollapsed ? null : 'Create New'}
+                </Button>
+              }
+              sections={[
+                {
+                  key: 'inbox',
+                  label: 'Inbox',
+                  items: INBOX_ITEMS.map(item => ({
+                    key: item.id,
+                    label: item.label,
+                    icon: item.isCustomIcon ? undefined : item.icon,
+                    iconElement: item.isCustomIcon
+                      ? <MissedCallIcon size={16} color={activeChannel === item.id ? 'var(--primary-300)' : 'var(--neutral-300)'} />
+                      : undefined,
+                    count: commsCounts[item.id] || undefined,
+                  })),
+                },
+                {
+                  key: 'channels',
+                  label: 'Channels',
+                  items: CHANNEL_ITEMS.map(item => ({
+                    key: item.id,
+                    label: item.label,
+                    icon: item.icon,
+                    count: item.id === 'internal'
+                      ? (totalUnread || undefined)
+                      : (commsCounts[item.id] || undefined),
+                  })),
+                },
+              ]}
+              activeKey={activeChannel}
+              onSelect={setActiveChannel}
+            />
+          );
+          return msgFloating ? createPortal(sideNavEl, msgFloatingSlot) : sideNavEl;
+        })()}
 
         {activeChannel === 'email' ? (
           <EmailWorkspace
