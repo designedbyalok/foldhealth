@@ -20,7 +20,7 @@ const WORKLISTS = [
 const WORKLIST_LABELS = WORKLISTS.map(w => w.label);
 const WORKLIST_BY_LABEL = Object.fromEntries(WORKLISTS.map(w => [w.label, w]));
 
-export function SubNav({ collapsed }) {
+export function SubNav({ collapsed, width = 200 }) {
   const activeSubnavList = useAppStore(s => s.activeSubnavList);
   const setActiveSubnavList = useAppStore(s => s.setActiveSubnavList);
   const setActiveFilters = useAppStore(s => s.setActiveFilters);
@@ -186,7 +186,7 @@ export function SubNav({ collapsed }) {
       sections={sections}
       activeKey={activeSubnavList}
       onSelect={handleSelect}
-      width={collapsed ? 0 : 200}
+      width={collapsed ? 0 : width}
       sectionLabelVariant="title"
       sortableSection="worklists"
       onReorder={saveWorklistOrder}

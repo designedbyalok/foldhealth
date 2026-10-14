@@ -6,6 +6,7 @@ import {
   applyNavStyle,
   applyContrast,
   applyFontScale,
+  applySidebarShape,
 } from '../../lib/theme';
 import {
   initialThemeSetting,
@@ -13,6 +14,7 @@ import {
   initialNavStyle,
   initialContrast,
   initialFontScale,
+  initialSidebarShape,
   readChangelogSeenAt,
 } from '../shellInitial';
 
@@ -59,6 +61,14 @@ export function createShellSlice(set, get) {
       track('fontScale.changed', { from, to: next });
       const applied = applyFontScale(next);
       set({ fontScale: applied });
+    },
+
+    sidebarShape: initialSidebarShape,
+    setSidebarShape: (next) => {
+      const from = get().sidebarShape;
+      track('sidebarShape.changed', { from, to: next });
+      const applied = applySidebarShape(next);
+      set({ sidebarShape: applied });
     },
 
     featurebaseJwt: null,

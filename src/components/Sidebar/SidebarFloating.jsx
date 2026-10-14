@@ -126,7 +126,10 @@ export function SidebarFloating() {
   // groups, leads) remains in one place regardless of which rail is mounted.
   // Only renders when the active page actually has sub-nav content.
   const showSubNav = activePage === 'population';
-  const subPanel = showSubNav ? <SubNav collapsed={false} /> : null;
+  // 100% so the SubNav fills the floating card's sub-panel instead of
+  // overflowing (fixed 200px was being clipped by the frame overflow:hidden,
+  // which pushed the count badges within ~3px of the visible right edge).
+  const subPanel = showSubNav ? <SubNav collapsed={false} width="100%" /> : null;
 
   return (
     <>

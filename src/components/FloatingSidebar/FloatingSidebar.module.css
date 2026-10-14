@@ -8,7 +8,7 @@
   display: inline-flex;
   align-items: stretch;
   background: var(--neutral-0);
-  border: 0.5px solid var(--neutral-100);
+  border: 0.5px solid var(--neutral-150);
   border-radius: 8px;
   overflow: hidden;
   box-shadow: var(--shadow-card);
