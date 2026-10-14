@@ -24,6 +24,16 @@
   padding-top: var(--space-2);
 }
 
+/* …but once the SideNav lives INSIDE the floating NavBar card (either
+   because Population's SubNav is passed to the frame directly, or
+   because a feature's SideNav is portaled into the frame's sub-panel
+   slot), the frame already paints the visible outline. The default
+   `.nav`'s own right-hairline sits one pixel inside that outline and
+   reads as a doubled, darker edge. Drop it. */
+:root[data-sidebar-shape="floating"] [data-float-shell] .nav {
+  border-right: none;
+}
+
 .nav::-webkit-scrollbar { width: 4px; }
 .nav::-webkit-scrollbar-thumb { background: var(--neutral-150); border-radius: 4px; }
 
