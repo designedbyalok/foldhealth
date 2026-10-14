@@ -3,7 +3,7 @@ import { Icon } from '../Icon/Icon';
 import { Input } from '../Input/Input';
 import { SideNav } from '../SideNav/SideNav';
 import { Tooltip } from '../Tooltip/Tooltip';
-import { FoldHealthLogo } from '../FoldhealthLogo/FoldhealthLogo';
+import { FoldHealthLogo } from '../FoldHealthLogo/FoldHealthLogo';
 import styles from './FloatingSidebar.module.css';
 
 /**
