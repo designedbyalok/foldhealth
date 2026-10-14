@@ -130,6 +130,13 @@ export function SideNav({
     <Input
       type="search"
       placeholder="Search"
+      /* The leading icon forces Input onto its shell render path from the
+         first keystroke. Without a leading slot, `type="search"` flips
+         between the bare-input path (empty value) and the shell-wrapper
+         path (non-empty value triggers Input's own search-clear glyph).
+         React unmounts across that boundary and focus dies after one
+         character. */
+      leadingIcon="solar:magnifer-linear"
       value={search}
       onChange={e => setSearch(e.target.value)}
     />
