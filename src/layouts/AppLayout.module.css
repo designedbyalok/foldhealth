@@ -27,14 +27,19 @@
 }
 
 /* Body panel reads as a second floating card beside the NavBar, with
-   matching outline and radius — per user request. The feature SideNav
-   nested below drops its own card chrome (see SideNav.module.css) so the
-   two don't nest and double up. */
-:root[data-sidebar-shape="floating"] .main {
+   matching outline and radius — per user request. Targets every direct
+   child of .app that is NOT the floating-sidebar frame (identified by
+   `data-float-shell`) so each view's own root wrapper (`.main`, HomeView's
+   `.page`, CallsView's `.panels`, TasksView's `.wrapper`, Messages,
+   Campaign, ...) picks up the Body panel chrome without each view having
+   to opt in. Feature SideNavs inside the card drop their own chrome in
+   SideNav.module.css so cards don't nest. */
+:root[data-sidebar-shape="floating"] .app > *:not([data-float-shell]) {
   border: 0.5px solid var(--neutral-150);
   border-radius: 8px;
   background: var(--neutral-0);
   box-shadow: var(--shadow-card);
+  overflow: hidden;
 }
 
 .bodyRow {
