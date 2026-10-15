@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { PanelStack } from './PanelStack';
-import { CloseButton } from '../CloseButton/CloseButton';
 
 export default {
   title: 'Layout/PanelStack',
@@ -10,7 +9,7 @@ export default {
     docs: {
       description: {
         component:
-          'A horizontal row of panel cards that scrolls and snaps one panel at a time. With more than one panel, each card leaves `peek` px of its neighbour showing; clicking that edge brings it into view. Drag a panel header handle to reorder. Used for the care program "Open in right panel" layout, where right-panel tabs open as panels beside the program.',
+          'Panels side by side that scroll and snap one at a time, with browser-style tabs on top once there is more than one. With more than one panel, each card leaves `peek` px of its neighbour showing; clicking that edge brings it into view. Click a tab to bring its panel into focus; drag a tab to reorder. Used for the care program "Open in right panel" layout, where right-panel tabs open as panels beside the program.',
       },
     },
   },
@@ -48,7 +47,7 @@ export const Default = {
           panels={order.map(id => ({
             id,
             title: id,
-            actions: order.length > 1 ? <CloseButton size={16} label={`Close ${id}`} onClick={() => close(id)} /> : null,
+            onClose: id === 'Care Program' ? undefined : () => close(id),
             content: <Body label={id} />,
           }))}
           activeId={active}
@@ -63,7 +62,7 @@ export const Default = {
 export const SinglePanel = {
   render: () => (
     <div style={{ height: 320, display: 'flex', padding: 'var(--space-1)', background: 'var(--neutral-100)' }}>
-      <PanelStack panels={[{ id: 'only', title: 'Care Program', content: <Body label="A lone panel has no header" /> }]} activeId="only" />
+      <PanelStack panels={[{ id: 'only', title: 'Care Program', content: <Body label="A lone panel has no tab bar" /> }]} activeId="only" />
     </div>
   ),
 };

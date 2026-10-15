@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { Icon } from '../../components/Icon/Icon';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
-import { CloseButton } from '../../components/CloseButton/CloseButton';
 import { PanelStack } from '../../components/PanelStack/PanelStack';
 import { PatientP360Banner } from './shell/PatientP360Banner/PatientP360Banner';
 import { PatientProfileTabs } from './left-panel/PatientProfileTabs/PatientProfileTabs';
@@ -19,7 +18,8 @@ import { CcmTimerWidget } from './shell/CcmTimerWidget/CcmTimerWidget';
 import { CcmTimerDockProvider } from './shell/CcmTimerWidget/CcmTimerDockContext';
 import { PatientBreadcrumb } from './shell/PatientBreadcrumb/PatientBreadcrumb';
 import { ProgramPanel } from './right-panel/tabs/care-programs/program-detail/ProgramPanel/ProgramPanel';
-import { useProgramPanelSplitActive } from './hooks/useProgramPanelSplitActive';
+import { useProgramPanelSplitTarget } from './hooks/useProgramPanelSplitActive';
+import { PatientCarePlanPane } from './right-panel/tabs/care-management/PatientCarePlanPane/PatientCarePlanPane';
 import { programUrlKey } from './right-panel/tabs/care-programs/CareProgramsTab/CareProgramsTab.utils';
 import { CARE_GAP_TABS } from './data/careGapsMock';
 import { PROFILE_TABS } from './data/programActivityMock';
@@ -117,17 +117,23 @@ export function PatientDetailView() {
   const activeTab = useAppStore(s => s.patientProfileTab);
   const setActiveTab = useAppStore(s => s.setPatientProfileTab);
   const currentUserId = useAppStore(s => s.currentUserProfile?.id);
-  const programSplit = useProgramPanelSplitActive();
-  // Split layout's panel stack, right of the patient card: the program plus
-  // any right-panel tabs opened as panels, in display order, and the panel in
-  // view. Keyed to the program it was built over, so opening another program
-  // (or re-entering the split) starts from the program alone.
+  // 'program' | 'patient-plan' | null: what the split's main panel shows.
+  const splitTarget = useProgramPanelSplitTarget();
+  const programSplit = splitTarget !== null;
+  // Split layout's panel stack, right of the patient card: the main panel
+  // (program or patient-level plan) plus any right-panel tabs opened as
+  // panels, in display order, and the panel in view. Keyed to the main panel
+  // it was built over, so opening another program (or re-entering the split)
+  // starts from that panel alone.
   const programKey = useAppStore(s => s.selectedCareProgramKey);
+  // The main panel the stack was built over: the open program, or the
+  // patient-level care plan.
+  const primaryKey = splitTarget === 'patient-plan' ? 'patient-plan' : programKey;
   const careProgramsByPatient = useAppStore(s => s.careProgramsByPatient);
   const [stackState, setStackState] = useState(null); // { programKey, ids, activeId }
-  const stack = stackState && stackState.programKey === programKey
+  const stack = stackState && stackState.programKey === primaryKey
     ? stackState
-    : { programKey, ids: ['program'], activeId: 'program' };
+    : { programKey: primaryKey, ids: ['program'], activeId: 'program' };
   const [leftWidth, setLeftWidth] = useState(496);
   // Seed from the device's most recent choice so the first paint matches;
   // the per-user value is reconciled once the profile id resolves (below).
@@ -321,7 +327,7 @@ export function PatientDetailView() {
     // Functional so back-to-back updates (reorder, then focus the moved
     // panel) build on each other instead of on this render's snapshot.
     const setStack = (patch) => setStackState((prev) => {
-      const base = prev && prev.programKey === programKey ? prev : stack;
+      const base = prev && prev.programKey === primaryKey ? prev : stack;
       return { ...base, ...(typeof patch === 'function' ? patch(base) : patch) };
     });
     const openInPanel = (tab) => {
@@ -366,23 +372,24 @@ export function PatientDetailView() {
     const programName = (careProgramsByPatient[selectedPatientId] || [])
       .find(p => programUrlKey(p) === programKey)?.name || 'Care Program';
     const panels = stack.ids.map((id) => {
-      if (id === 'program') return { id, title: programName, content: <ProgramPanel /> };
+      if (id === 'program') {
+        return splitTarget === 'patient-plan'
+          ? { id, title: 'Care Plan', content: <PatientCarePlanPane patientId={selectedPatientId} /> }
+          : { id, title: programName, content: <ProgramPanel /> };
+      }
       const tab = id.slice(TAB_PREFIX.length);
       return {
         id,
         title: tab,
         actions: (
-          <>
-            <ActionButton
-              icon="solar:sidebar-minimalistic-linear"
-              size="S"
-              tooltip="Move to patient panel"
-              onClick={() => moveToLeftPanel(id)}
-            />
-            <span className={styles.panelActionDivider} aria-hidden="true" />
-            <CloseButton size={16} label={`Close ${tab}`} onClick={() => removePanel(id)} />
-          </>
+          <ActionButton
+            icon="solar:sidebar-minimalistic-linear"
+            size="S"
+            tooltip="Move to patient panel"
+            onClick={() => moveToLeftPanel(id)}
+          />
         ),
+        onClose: () => removePanel(id),
         content: <div className={styles.hostedTabBody}>{renderRightTab(tab)}</div>,
       };
     });

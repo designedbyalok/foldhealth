@@ -17,9 +17,12 @@ export function PatientCarePlanPane({ header, patientId }) {
   const program = useMemo(() => (patientId ? patientLevelProgram(patientId) : null), [patientId]);
   return (
     <div className={styles.pane}>
-      <div className={toolbarStyles.subTabBar}>
-        <div className={toolbarStyles.subTabs}>{header}</div>
-      </div>
+      {/* No sub-tabs when the plan is a panel of its own (split layout). */}
+      {header && (
+        <div className={toolbarStyles.subTabBar}>
+          <div className={toolbarStyles.subTabs}>{header}</div>
+        </div>
+      )}
       {program && (
         <div className={styles.card}>
           <div className={`${pdStyles.contentHeader} ${pdStyles.contentHeaderCarePlan}`}>

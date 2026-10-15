@@ -38,13 +38,15 @@ build requires esbuild ≥ 0.28 on Node 26.
 ## Recent Changes
 
 - **Care program in a right panel (floating sidebar).** A care program's ⋯
-  menu offers "Open in Right Panel" when the floating sidebar is on: the
-  patient view becomes a patient card (breadcrumb, compact banner, care-gap
-  tabs) beside the program at full height. The right panel's other tabs join
-  the patient card's tabs and open there, or as panels from their row in the
-  More dropdown. Panels scroll and snap one at a time with the next one
-  peeking at the edge (title only until active), and reorder by dragging
-  their header (`src/components/PanelStack`). The compact patient banner now
+  menu, and the Care Plan's ⋯ menu, offer "Open in Right Panel" when the
+  floating sidebar is on: the patient view becomes a patient card
+  (breadcrumb, compact banner, care-gap tabs) beside the program at full
+  height (or, for patient-level orgs, the patient's Care Plan). The right
+  panel's other tabs join the patient card's tabs and open there, or as
+  panels from their row in the More dropdown. Open panels get browser-style
+  tabs (the active tab merges into its card): click a tab to bring its panel
+  into focus, drag tabs to reorder. Panels scroll and snap one at a time with
+  the next one peeking at the edge (`src/components/PanelStack`). The compact patient banner now
   adapts to its width: quick actions overflow into ⋯ and the Acuity/RAF
   metrics wrap into a grid. "Open Inline" or closing the program restores
   the standard layout.

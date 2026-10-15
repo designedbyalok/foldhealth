@@ -135,8 +135,7 @@
   text-overflow: ellipsis;
 }
 .hostedTabBody { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: auto; }
-/* Between a stacked panel's actions and its close button. */
-.panelActionDivider { width: 1px; height: 16px; background: var(--neutral-150); flex-shrink: 0; }
+
 
 /* Left-panel content flowed into the (now full-width) right panel on collapse.
    Cap the width and center it so a narrow form/table stays comfortable to read

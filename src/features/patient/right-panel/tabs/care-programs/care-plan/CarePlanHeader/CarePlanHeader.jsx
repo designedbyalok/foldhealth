@@ -15,6 +15,7 @@ import { parseLocalDate } from '../../../../../../../lib/localDate';
 import { carePlanSignShareEnabled } from '../lib/carePlanSignState';
 import { useCarePlanDraftState } from '../lib/useCarePlanDraftState';
 import { ConfirmDialog } from '../../../../../../../components/ConfirmDialog/ConfirmDialog';
+import { useRightPanelMenuOption } from '../../../../../hooks/useProgramPanelSplitActive';
 import styles from '../../program-detail/ProgramDetailView/ProgramDetailView.module.css';
 
 function fmtCarePlanDate(isoOrDisplay) {
@@ -122,17 +123,23 @@ export function CarePlanHeader({ patientId, program }) {
     [liveCarePlan, carePlanMeta.usingMock, carePlanDraft],
   );
 
+  // "Open in Right Panel" / "Open Inline" (floating sidebar only), the same
+  // entry the care program's ⋯ menu offers.
+  const rightPanel = useRightPanelMenuOption();
+  const rightPanelItems = rightPanel.items;
   const carePlanMoreItems = useMemo(() => {
     const items = [
+      ...rightPanelItems,
       { key: 'template', icon: 'solar:bookmark-linear', label: 'Save as Template' },
       { key: 'note', icon: 'solar:notes-linear', label: 'Add Note' },
       { key: 'history', iconElement: <Icon name="custom:history" size={16} color="var(--neutral-400)" />, label: 'History' },
     ];
     return items;
-  }, []);
+  }, [rightPanelItems]);
 
   const handleCarePlanMoreSelect = (key) => {
     setCarePlanMoreMenu(null);
+    if (rightPanel.select(key)) return;
     if (key === 'bulk') toggleCarePlanBulkMode();
     else if (key === 'preview') requestCarePlanShare('preview');
     else requestCarePlanPanel(key);

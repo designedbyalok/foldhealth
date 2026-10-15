@@ -1,4 +1,182 @@
-/* Horizontal panel row: scrolls and snaps one panel at a time. */
+/* Panels are cards on the shell's ground. With more than one, browser-style
+   tabs sit on that same ground above them, and the active tab is the top of
+   its panel's card: same surface, no line between them. */
+.root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* ── Tabs ─────────────────────────────────────────────────────────── */
+/* 40px, the app's panel-title height. Tabs fill it top to bottom, so their
+   tops line up with the patient card's top edge beside them. It overlaps the
+   strip by the card border's width, so the active tab covers its panel's top
+   edge. */
+.tabBar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: stretch;
+  gap: calc(var(--space-1) / 2);
+  height: 40px;
+  /* The first tab sits flush with the card's left edge (see .firstActive);
+     the right inset keeps the last tab's foot off the card's corner. */
+  padding: 0 var(--space-5) 0 0;
+  margin-bottom: calc(var(--space-1) / -8); /* -0.5px: cover the card's top border */
+  box-sizing: border-box;
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.tabBar::-webkit-scrollbar { display: none; }
+
+.tab {
+  --tab-radius: 10px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--space-1) / 2);
+  flex: 0 1 220px;
+  min-width: 96px;
+  padding: 0 var(--space-1) 0 var(--space-2);
+  box-sizing: border-box;
+  border: 0.5px solid transparent;
+  border-bottom: none;
+  border-radius: var(--tab-radius) var(--tab-radius) 0 0;
+  color: var(--neutral-300);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+/* Inactive tabs read as quiet labels on the ground; hover lifts them a
+   little toward the card surface. */
+.tab:not(.tabActive):hover {
+  background: color-mix(in srgb, var(--neutral-0) 55%, transparent);
+  color: var(--neutral-400);
+}
+
+/* The active tab is the top of its panel's card: same surface and hairline,
+   open at the bottom, with inverse-radius "feet" curving into the card's top
+   edge so the two read as one shape. */
+.tabActive {
+  background: var(--neutral-0);
+  border-color: var(--neutral-150);
+  color: var(--neutral-500);
+}
+.tabActive::before,
+.tabActive::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: var(--tab-radius);
+  height: var(--tab-radius);
+  pointer-events: none;
+}
+.tabActive::before {
+  left: calc(-1 * var(--tab-radius));
+  background: radial-gradient(
+    circle at 0 0,
+    transparent calc(var(--tab-radius) - 0.5px),
+    var(--neutral-150) calc(var(--tab-radius) - 0.5px),
+    var(--neutral-150) var(--tab-radius),
+    var(--neutral-0) calc(var(--tab-radius) + 0.5px)
+  );
+}
+.tabActive::after {
+  right: calc(-1 * var(--tab-radius));
+  background: radial-gradient(
+    circle at 100% 0,
+    transparent calc(var(--tab-radius) - 0.5px),
+    var(--neutral-150) calc(var(--tab-radius) - 0.5px),
+    var(--neutral-150) var(--tab-radius),
+    var(--neutral-0) calc(var(--tab-radius) + 0.5px)
+  );
+}
+/* Flush first tab: no left foot; its left side runs straight down into the
+   card's left border, and the card's corner goes square (.firstActive). */
+.tab:first-child.tabActive::before { display: none; }
+.tabDragging { opacity: 0.5; }
+
+.tabMain {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tabMain:active { cursor: grabbing; }
+.tabMain:focus-visible { outline: 2px solid var(--primary-200); outline-offset: -2px; border-radius: 6px; }
+
+/* Drag cue: appears on hover (or keyboard focus), so resting tabs stay
+   clean. Its slot is kept so titles don't shift. */
+.grip {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-left: calc(-1 * var(--space-1));
+  color: var(--neutral-300);
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.tab:hover .grip,
+.tab:focus-within .grip { opacity: 1; }
+
+.tabTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-base);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabActions,
+.tabClose { flex-shrink: 0; }
+.tabActions { display: inline-flex; align-items: center; }
+/* Secondary actions on hover only; the close × also stays on the active tab. */
+.tab:not(:hover):not(:focus-within) .tabActions { display: none; }
+.tab:not(.tabActive):not(:hover):not(:focus-within) .tabClose { visibility: hidden; }
+/* The shared CloseButton owns its look; the tab only adds a focus ring. */
+.tabClose:focus-visible { outline: 2px solid var(--primary-200); outline-offset: 1px; }
+
+/* Drop position while dragging a tab: a primary bar on the landing side. */
+.dropBefore::before,
+.dropAfter::before {
+  content: '';
+  position: absolute;
+  top: var(--space-2);
+  bottom: var(--space-2);
+  width: 2px;
+  border-radius: 1px;
+  background: var(--primary-300);
+}
+.dropBefore::before { left: -2px; }
+.dropAfter::before { right: -2px; }
+/* An active tab's feet use ::before/::after, so its drop bar takes over the
+   matching foot while dragging. */
+.tabActive.dropBefore::before,
+.tabActive.dropAfter::after {
+  width: 2px;
+  height: auto;
+  background: var(--primary-300);
+  top: var(--space-2);
+  bottom: var(--space-2);
+}
+.tabActive.dropBefore::before { left: -2px; }
+.tab:first-child.tabActive.dropBefore::before { display: block; }
+.tabActive.dropAfter::after { right: -2px; }
+
+/* ── Panels ───────────────────────────────────────────────────────── */
 .strip {
   position: relative; /* offsetParent for panel positions */
   display: flex;
@@ -27,100 +205,27 @@
   border-radius: 8px;
   box-shadow: var(--shadow-card);
 }
-/* With a stack, each panel leaves `--panel-peek` of its neighbour showing.
-   The last panel can't reach the start, so it snaps to the end instead. */
+/* In a stack each card leaves `--panel-peek` of the next one showing. The
+   last card can't reach the start, so it snaps to the end instead. */
 .multi .panel { flex-basis: calc(100% - var(--panel-peek)); }
 .multi .panel:last-child { scroll-snap-align: end; }
-
-.panelDragging { opacity: 0.5; }
-
-/* Drop position while dragging: a primary bar on the side the dragged panel
-   will land. */
-.dropBefore::before,
-.dropAfter::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--primary-300);
-  z-index: 2;
-}
-.dropBefore::before { left: 0; }
-.dropAfter::before { right: 0; }
-
-/* 40px, the app's panel-title height (program header, patient breadcrumb),
-   so stacked panels line up with the cards beside them. */
-.header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  min-height: 40px;
-  box-sizing: border-box;
-  padding: 0 var(--space-2) 0 var(--space-1);
-  border-bottom: 0.5px solid var(--neutral-150);
-  background: var(--neutral-25);
-  flex-shrink: 0;
-}
-.grip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-  border: none;
-  border-radius: 4px;
-  background: none;
-  color: var(--neutral-300);
-  cursor: grab;
-}
-.grip:hover { background: var(--neutral-50); color: var(--neutral-400); }
-.grip:active { cursor: grabbing; }
-.grip:focus-visible { outline: 2px solid var(--primary-200); outline-offset: 1px; }
-.title {
-  flex: 1;
-  min-width: 0;
-  font-size: var(--font-base);
-  font-weight: 500;
-  color: var(--neutral-400);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.actions {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  flex-shrink: 0;
-}
-
-.body {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
+/* The first tab is active and flush left: the tab's rounded corner is the
+   card's corner, so the card's own top-left corner goes square under it. */
+.firstActive .panel:first-child { border-top-left-radius: 0; }
 
 .content {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  transition: opacity 0.2s ease, filter 0.2s ease;
+  transition: opacity 0.12s ease-out;
 }
-/* Inactive panel: content fully hidden (opacity on the wrapper reaches
-   sticky and layered children a cover can't), leaving only the title. */
-.contentHidden {
-  opacity: 0;
-  filter: blur(4px);
-}
+/* Out of view: content fully hidden (opacity on the wrapper reaches sticky
+   and layered children), leaving a plain card edge. */
+.contentHidden { opacity: 0; }
 
-/* Click target over an inactive panel: a muted surface under the title; one
-   click (or Enter) brings the panel in. Fades out as the panel becomes
-   active. */
+/* Click target over a card that's out of view; one click (or Enter) brings
+   it in. Fades away as the card scrolls in. */
 .peekCover {
   position: absolute;
   inset: 0;
@@ -130,7 +235,7 @@
   background: var(--neutral-25);
   cursor: pointer;
   opacity: 1;
-  transition: opacity 0.2s ease, background 0.15s ease;
+  transition: opacity 0.12s ease-out, background 0.15s ease;
 }
 .peekCover:hover { background: var(--primary-25); }
 .peekCover:focus-visible { outline: 2px solid var(--primary-200); outline-offset: -2px; }
@@ -140,6 +245,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .peekCover,
-  .content { transition: none; }
+  .tab,
+  .grip,
+  .content,
+  .peekCover { transition: none; }
 }
