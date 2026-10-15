@@ -71,7 +71,7 @@ export function FloatingSidebar({
   // controls icon size on the React side.
   density = 'comfortable',
 }) {
-  const iconSize = density === 'compact' ? 18 : 24;
+  const iconSize = density === 'compact' ? 20 : 24;
   // Uncontrolled search fallback so Storybook / demo callers can skip wiring
   // state through. When the parent supplies `searchValue`, we respect it.
   const [internalSearch, setInternalSearch] = useState('');

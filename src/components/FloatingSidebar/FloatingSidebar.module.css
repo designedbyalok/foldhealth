@@ -124,11 +124,17 @@
   border-color: var(--primary-300);
 }
 
-/* Compact variant (Figma 1256:42013): tighter 8px tile radius to match
-   the smaller 18px icon. The 44x44 tile size stays, so the hit area
-   doesn't change — just the corner rounding reads less chunky. */
+/* Compact variant (Figma 1256:42013): smaller 36x36 tile with 8px
+   radius to pair with the 20px icon. The tile both tightens the active
+   container visually and pulls neighbouring items closer, since rows
+   are driven by tile size rather than an added gap. Padding drops to
+   --space-1 so the content box (36 - 2 border - 2*4 padding = 26px)
+   doesn't shrink the 20px icon in the centering flex. */
 :root[data-floating-density="compact"] .tile {
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
+  padding: var(--space-1);
 }
 
 .tile:focus-visible { outline: none; }
