@@ -231,15 +231,21 @@ input[type="radio"]:disabled {
 
 html { scroll-behavior: smooth; }
 
-/* Slim Modern Scrollbars */
+/* Gutterless scrollbars by default: scrolling still works through the
+   wheel, trackpad, keyboard, and touch, but no scrollbar track reserves
+   layout space along the edge of a scroll container. Components that
+   want a visible scrollbar opt in locally with `scrollbar-width: thin`
+   plus their own `::-webkit-scrollbar { width, height }` rule, which
+   wins by selector specificity (e.g. the Form builder deviceArea and
+   Analytics scrollArea already do this). */
 * {
-  scrollbar-width: thin;
+  scrollbar-width: none;
   scrollbar-color: var(--neutral-150) transparent;
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 0;
+  height: 0;
 }
 
 ::-webkit-scrollbar-track {
