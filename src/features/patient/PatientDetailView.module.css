@@ -107,7 +107,9 @@
   cursor: col-resize;
   position: relative;
 }
-.splitHandle:hover .dragHandleLine { opacity: 1; background: var(--primary-300); }
+.splitHandle:hover .dragHandleLine,
+.splitHandle:focus-visible .dragHandleLine { opacity: 1; background: var(--primary-300); }
+.splitHandle:focus-visible { outline: none; }
 
 /* A right-panel tab hosted in the split, in the patient card or swapped into
    the side panel: a slim title bar with the move action, then the tab's own

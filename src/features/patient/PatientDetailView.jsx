@@ -404,7 +404,25 @@ export function PatientDetailView() {
             />
           </div>
         </section>
-        <div className={styles.splitHandle} onMouseDown={handleMouseDown}>
+        {/* A resize separator: pointer drag, or arrow keys step the width
+            within the same 300–700px range the drag clamps to. */}
+        <div
+          className={styles.splitHandle}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize patient panel"
+          aria-valuenow={leftWidth}
+          aria-valuemin={300}
+          aria-valuemax={700}
+          tabIndex={0}
+          onMouseDown={handleMouseDown}
+          onKeyDown={(e) => {
+            if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+            e.preventDefault();
+            const step = e.key === 'ArrowLeft' ? -16 : 16;
+            setLeftWidth(w => Math.max(300, Math.min(700, w + step)));
+          }}
+        >
           <div className={styles.dragHandleLine} />
         </div>
         <PanelStack
