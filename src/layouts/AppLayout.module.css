@@ -3,12 +3,16 @@
   height: 100vh;
   overflow: hidden;
   width: 100%;
+  /* Neutral-50 surface sits behind the nav and body in every shape, so
+     the panes always read as cards on a tinted ground even where the
+     body's own bg would otherwise show through. */
+  background: var(--neutral-50);
 }
 
 /* Floating-sidebar shape: inset the whole shell so every top-level pane
-   (the rail, any feature SideNav, and the main column) reads as a card on
-   the page bg. The feature SideNavs pick up the matching card chrome via
-   the global rule in SideNav.module.css. */
+   (the rail, any feature SideNav, and the main column) reads as a card
+   on that neutral-50 ground. The feature SideNavs pick up the matching
+   card chrome via the global rule in SideNav.module.css. */
 :root[data-sidebar-shape="floating"] .app {
   /* 6 px padding + 6 px gap, per user. 6 isn't on the --space-* scale
      (nearest hits are 4 / 8 / 12), so compose it as half of --space-3
@@ -16,7 +20,6 @@
      would flag. */
   padding: calc(var(--space-3) / 2);
   gap: calc(var(--space-3) / 2);
-  background: var(--neutral-50);
 }
 
 .main {
