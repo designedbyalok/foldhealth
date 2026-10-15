@@ -107,6 +107,44 @@ export function applySidebarShape(value) {
 }
 
 /**
+ * Floating-sidebar density, Figma node 1256:42013. Variant of the
+ * floating rail that drops icon size (24px to 18px) and stroke weight
+ * (1.5 to the global 1px) for a quieter, denser chrome. No effect when
+ * `sidebarShape` is 'standard'. Attribute lands on <html> so SideNav's
+ * stroke override can key off it alongside the shape attribute.
+ */
+export const FLOATING_DENSITY_STORAGE_KEY = 'floatingDensity';
+export const FLOATING_DENSITY_VALUES = ['comfortable', 'compact'];
+
+export function getStoredFloatingDensity() {
+  try {
+    const v = localStorage.getItem(FLOATING_DENSITY_STORAGE_KEY);
+    return FLOATING_DENSITY_VALUES.includes(v) ? v : 'comfortable';
+  } catch {
+    return 'comfortable';
+  }
+}
+
+export function persistFloatingDensity(value) {
+  try {
+    localStorage.setItem(FLOATING_DENSITY_STORAGE_KEY, value);
+  } catch {
+    /* localStorage unavailable */
+  }
+}
+
+export function applyFloatingDensity(value) {
+  const safe = FLOATING_DENSITY_VALUES.includes(value) ? value : 'comfortable';
+  if (typeof document !== 'undefined') {
+    const root = document.documentElement;
+    if (safe === 'comfortable') root.removeAttribute('data-floating-density');
+    else root.setAttribute('data-floating-density', safe);
+  }
+  persistFloatingDensity(safe);
+  return safe;
+}
+
+/**
  * Contrast setting — independent of color theme.
  * 'default' keeps the standard neutral scale.
  * 'high'    boosts text and border tokens for easier reading (older users,

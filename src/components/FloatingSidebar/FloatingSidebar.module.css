@@ -49,9 +49,11 @@
 /* Icons here read as the brand's primary chrome — Fold's global 1px
    stroke normalization gets overridden locally so Solar linear icons
    render at their native 1.5px weight. Scoped to the rail so the
-   sub-panel icons (inside <Input> etc.) keep the global 1px look. */
-.rail :global(svg.iconify) [stroke]:not([stroke="none"]),
-.rail :global(svg.iconify) [stroke-width] {
+   sub-panel icons (inside <Input> etc.) keep the global 1px look.
+   The compact density variant (Figma 1256:42013) opts out, letting the
+   global 1px stroke apply for a quieter chrome. */
+:root:not([data-floating-density="compact"]) .rail :global(svg.iconify) [stroke]:not([stroke="none"]),
+:root:not([data-floating-density="compact"]) .rail :global(svg.iconify) [stroke-width] {
   stroke-width: 1.5 !important;
 }
 
@@ -120,6 +122,13 @@
 .tileActive {
   background: var(--primary-400);
   border-color: var(--primary-300);
+}
+
+/* Compact variant (Figma 1256:42013): tighter 8px tile radius to match
+   the smaller 18px icon. The 44x44 tile size stays, so the hit area
+   doesn't change — just the corner rounding reads less chunky. */
+:root[data-floating-density="compact"] .tile {
+  border-radius: 8px;
 }
 
 .tile:focus-visible { outline: none; }

@@ -64,7 +64,14 @@ export function FloatingSidebar({
   subPanel,
   width = 240,
   className,
+  // Figma variant 1256:42013. 'comfortable' = 24px icons, 1.5 stroke,
+  // 12px tile radius (the default). 'compact' = 18px icons, 1px stroke,
+  // 8px tile radius. The CSS half of this reads `data-floating-density`
+  // off <html> (same attr the ThemePicker toggle sets); the prop just
+  // controls icon size on the React side.
+  density = 'comfortable',
 }) {
+  const iconSize = density === 'compact' ? 18 : 24;
   // Uncontrolled search fallback so Storybook / demo callers can skip wiring
   // state through. When the parent supplies `searchValue`, we respect it.
   const [internalSearch, setInternalSearch] = useState('');
@@ -108,6 +115,7 @@ export function FloatingSidebar({
               key={item.key}
               item={item}
               active={item.key === activeKey}
+              iconSize={iconSize}
               onClick={() => onNavigate?.(item.key, item)}
             />
           ))}
@@ -119,6 +127,7 @@ export function FloatingSidebar({
                 key={item.key}
                 item={item}
                 active={item.key === activeKey}
+                iconSize={iconSize}
                 onClick={() => onNavigate?.(item.key, item)}
               />
             ))}
@@ -161,7 +170,7 @@ export function FloatingSidebar({
  * One tile = one Solar icon in a 44×44 painted card. Hover / focus pops a
  * portaled tooltip with the item's label and keyboard shortcut (if any),
  * so the icon-only rail still reads for new users and keyboard reachers. */
-function RailTile({ item, active, onClick }) {
+function RailTile({ item, active, onClick, iconSize = 24 }) {
   const iconName = active && item.filledIcon ? item.filledIcon : item.icon;
   const tooltipLabel = (
     <span className={styles.tipLabel}>
@@ -179,7 +188,7 @@ function RailTile({ item, active, onClick }) {
         aria-current={active ? 'page' : undefined}
         onClick={onClick}
       >
-        <Icon name={iconName} size={24} color="currentColor" />
+        <Icon name={iconName} size={iconSize} color="currentColor" />
         {item.badge > 0 && (
           <span className={styles.tileBadge} aria-hidden>{item.badge > 99 ? '99+' : item.badge}</span>
         )}

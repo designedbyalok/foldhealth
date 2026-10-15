@@ -58,6 +58,9 @@ export function SidebarFloating() {
   const setMemberLeadsTab = useAppStore(s => s.setMemberLeadsTab);
   const navigateBackToWorklist = useAppStore(s => s.navigateBackToWorklist);
   const showToast = useAppStore(s => s.showToast);
+  // Figma variant 1256:42013. Toggled from ThemePicker, stays null when
+  // the comfortable default is active.
+  const floatingDensity = useAppStore(s => s.floatingDensity);
 
   // Unread counts for the two badged items — same selectors Sidebar uses, so
   // the number on the floating variant stays in sync with the standard one.
@@ -160,6 +163,7 @@ export function SidebarFloating() {
         onNavigate={handleNavigate}
         showSubNav={showSubNav}
         subPanel={subPanel}
+        density={floatingDensity}
       />
       {helpOpen && (
         <HelpPopover

@@ -7,6 +7,7 @@ import {
   applyContrast,
   applyFontScale,
   applySidebarShape,
+  applyFloatingDensity,
 } from '../../lib/theme';
 import {
   initialThemeSetting,
@@ -15,6 +16,7 @@ import {
   initialContrast,
   initialFontScale,
   initialSidebarShape,
+  initialFloatingDensity,
   readChangelogSeenAt,
 } from '../shellInitial';
 
@@ -69,6 +71,14 @@ export function createShellSlice(set, get) {
       track('sidebarShape.changed', { from, to: next });
       const applied = applySidebarShape(next);
       set({ sidebarShape: applied });
+    },
+
+    floatingDensity: initialFloatingDensity,
+    setFloatingDensity: (next) => {
+      const from = get().floatingDensity;
+      track('floatingDensity.changed', { from, to: next });
+      const applied = applyFloatingDensity(next);
+      set({ floatingDensity: applied });
     },
 
     featurebaseJwt: null,

@@ -38,6 +38,8 @@ export function ThemePicker() {
   const setNavStyle = useAppStore(s => s.setNavStyle);
   const sidebarShape = useAppStore(s => s.sidebarShape);
   const setSidebarShape = useAppStore(s => s.setSidebarShape);
+  const floatingDensity = useAppStore(s => s.floatingDensity);
+  const setFloatingDensity = useAppStore(s => s.setFloatingDensity);
   const contrast = useAppStore(s => s.contrast);
   const setContrast = useAppStore(s => s.setContrast);
   const fontScale = useAppStore(s => s.fontScale);
@@ -131,6 +133,19 @@ export function ThemePicker() {
             ariaLabel="Toggle floating sidebar"
           />
         </div>
+        {sidebarShape === 'floating' && (
+          <div className={styles.toggleRow}>
+            <span className={styles.toggleCopy}>
+              <span className={styles.toggleTitle}>Compact rail</span>
+              <span className={styles.toggleHint}>Smaller icons and tighter tile corners for a quieter chrome.</span>
+            </span>
+            <Switch
+              checked={floatingDensity === 'compact'}
+              onChange={(next) => setFloatingDensity(next ? 'compact' : 'comfortable')}
+              ariaLabel="Toggle compact rail"
+            />
+          </div>
+        )}
       </div>
       <div className={styles.section}>
         <div className={styles.label}>Accessibility</div>
