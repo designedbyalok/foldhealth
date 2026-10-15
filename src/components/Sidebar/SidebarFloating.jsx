@@ -61,6 +61,15 @@ export function SidebarFloating() {
   // Figma variant 1256:42013. Toggled from ThemePicker, stays null when
   // the comfortable default is active.
   const floatingDensity = useAppStore(s => s.floatingDensity);
+  // Lets the Population worklists' SubnavToggle button collapse the floating
+  // sub-panel to a 52px rail. Only applied to Population (the pages whose
+  // SideNav lives inline instead of the floating slot keep their rail).
+  const subnavCollapsed = useAppStore(s => s.subnavCollapsed);
+  // Patient profile owns the whole Body card and doesn't share state with
+  // the Population worklist list, so the floating sub-panel collapses
+  // automatically whenever a patient is open, independent of the user's
+  // manual toggle.
+  const patientDetailOpen = useAppStore(s => Boolean(s.selectedPatientId));
 
   // Unread counts for the two badged items — same selectors Sidebar uses, so
   // the number on the floating variant stays in sync with the standard one.
@@ -133,7 +142,8 @@ export function SidebarFloating() {
   // their SideNav into the slot div below via `floatingSubNavSlot.js`.
   // Everything else renders a rail-only shell.
   const PORTAL_PAGES = new Set(['analytics', 'settings', 'calls', 'messages']);
-  const showSubNav = activePage === 'population' || PORTAL_PAGES.has(activePage);
+  const showSubNav = (activePage === 'population' && !subnavCollapsed && !patientDetailOpen)
+    || PORTAL_PAGES.has(activePage);
   // 100% so the Population SubNav fills the floating card's sub-panel
   // instead of overflowing (fixed 200px was being clipped by the frame
   // overflow:hidden, which pushed count badges within ~3px of the right

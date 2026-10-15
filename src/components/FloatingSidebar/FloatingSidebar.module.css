@@ -14,6 +14,11 @@
   box-shadow: var(--shadow-card);
   height: 100%;
   box-sizing: border-box;
+  /* Smooth collapse / expand between the rail-only 52 px shell and
+     the full 240 px sub-nav shell. Matches Fold's standard pane
+     transition (280 ms, same curve the SideNav itself uses so the two
+     stay in lock-step when a feature portals its SideNav in). */
+  transition: width 280ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 /* Marker so the shared SideNav knows it is already inside the floating
@@ -30,7 +35,11 @@
 /* Icon-only mode drops the sub-nav. The frame hugs the rail width so an
    explicit `width` prop still works when the caller wants a fixed slot. */
 .frame.railOnly {
-  width: auto;
+  width: 52px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frame { transition: none; }
 }
 
 /* ── Dark rail (left) ────────────────────────────────────────────────── */
@@ -205,6 +214,18 @@
   flex-direction: column;
   background: var(--neutral-0);
   min-height: 0;
+  /* Opacity + pointer-events toggle in step with the frame's width
+     transition so the sub-nav content fades out just before it clips
+     away. Keeping the panel mounted (rather than unmounting it on
+     collapse) is what lets the width animation read as smooth. */
+  opacity: 1;
+  transition: opacity 180ms ease;
+}
+
+.frame[data-sub-nav-open="false"] .subPanel {
+  opacity: 0;
+  pointer-events: none;
+  min-width: 0;
 }
 
 .searchWrap {

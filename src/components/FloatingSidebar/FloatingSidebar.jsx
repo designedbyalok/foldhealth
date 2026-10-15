@@ -95,13 +95,19 @@ export function FloatingSidebar({
       .filter(sec => sec.items.length > 0 || (sec.label || '').toLowerCase().includes(q));
   })();
 
-  const frameStyle = showSubNav ? { width } : undefined;
+  // Keep the sub-panel mounted at every width so the collapse / expand
+  // transition reads as a smooth width change (300 ms, Fold's standard
+  // ease) instead of an instant node swap. The width prop is the open
+  // width; the CSS pulls us down to the rail's 52 px when `data-sub-nav
+  // -open` goes false, taking the sub-panel's opacity down with it.
+  const frameStyle = { width: showSubNav ? width : undefined };
 
   return (
     <div
       className={[styles.frame, showSubNav ? '' : styles.railOnly, className || ''].filter(Boolean).join(' ')}
       style={frameStyle}
       data-float-shell
+      data-sub-nav-open={showSubNav ? 'true' : 'false'}
       /* Flat right edge when the shell has NO internal sub-panel, so an
          adjacent feature SideNav (Settings / Analytics / Calls / Comms)
          visually joins the rail as one card. */
@@ -134,34 +140,37 @@ export function FloatingSidebar({
           </div>
         )}
       </div>
-      {showSubNav && (
-        subPanel
-          ? <div className={styles.subPanel}>{subPanel}</div>
-          : (
-            <div className={styles.subPanel}>
-              {searchable && (
-                <div className={styles.searchWrap}>
-                  <Input
-                    type="search"
-                    placeholder={searchPlaceholder}
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                  />
-                </div>
-              )}
-              <div className={styles.subNavWrap}>
-                <SideNav
-                  className={styles.subNav}
-                  sections={filteredSections || []}
-                  activeKey={activeSubKey}
-                  onSelect={onSubSelect}
-                  sectionLabelVariant="title"
-                  width="100%"
+      {/* Sub-panel stays mounted so the collapse animation reads as a
+         smooth width change. CSS fades + clips the panel when
+         `data-sub-nav-open="false"` on the frame, and pulls pointer
+         events off so the hidden content isn't clickable. */}
+      {subPanel
+        ? <div className={styles.subPanel}>{subPanel}</div>
+        : (
+          <div className={styles.subPanel}>
+            {searchable && (
+              <div className={styles.searchWrap}>
+                <Input
+                  type="search"
+                  placeholder={searchPlaceholder}
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
                 />
               </div>
+            )}
+            <div className={styles.subNavWrap}>
+              <SideNav
+                className={styles.subNav}
+                sections={filteredSections || []}
+                activeKey={activeSubKey}
+                onSelect={onSubSelect}
+                sectionLabelVariant="title"
+                width="100%"
+              />
             </div>
-          )
-      )}
+          </div>
+        )
+      }
     </div>
   );
 }
