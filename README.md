@@ -37,6 +37,18 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **Care program in a right panel (floating sidebar).** A care program's ⋯
+  menu offers "Open in Right Panel" when the floating sidebar is on: the
+  patient view becomes a patient card (breadcrumb, compact banner, care-gap
+  tabs) beside the program at full height. The right panel's other tabs join
+  the patient card's tabs and open there, or as panels from their row in the
+  More dropdown. Panels scroll and snap one at a time with the next one
+  peeking at the edge (title only until active), and reorder by dragging
+  their header (`src/components/PanelStack`). The compact patient banner now
+  adapts to its width: quick actions overflow into ⋯ and the Acuity/RAF
+  metrics wrap into a grid. "Open Inline" or closing the program restores
+  the standard layout.
+
 - **Comms → E-fax: received faxes matched to a patient.** Each fax shows
   the file (View File / Download) and an "Add Patient Context" row, with the
   AI's picks attached under the message as "Suggested Members" (confidence
