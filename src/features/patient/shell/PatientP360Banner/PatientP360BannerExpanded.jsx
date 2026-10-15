@@ -129,36 +129,34 @@ export function ExpandedFamily({ p, className }) {
 export function QuickViewExpanded({ p, programCodes }) {
   return (
     <div className={styles.drawerExpandedPanel}>
+      {/* A grid, not a flex row: one row when wide, two (3 + 2) when narrow,
+          three when very narrow. Hairlines come from the grid gap. */}
       <div className={styles.drawerMetricsStrip}>
-        <div className={styles.drawerMetricItem}>
+        <div className={`${styles.drawerMetricItem} ${styles.drawerMetricTop}`}>
           <span className={styles.drawerMetricLabel}>Acuity</span>
           <span className={`${styles.badge} ${styles.badgeError}`}>{p.acuity}</span>
         </div>
-        <span className={styles.drawerMetricDivider} />
-        <div className={styles.drawerMetricItem}>
+        <div className={`${styles.drawerMetricItem} ${styles.drawerMetricTop}`}>
           <span className={styles.drawerMetricLabel}>RAF</span>
-          <div className={styles.metricValueRow}>
+          <div className={`${styles.metricValueRow} ${styles.drawerMetricValues}`}>
             <span className={styles.rafValue}>{p.raf_score}</span>
             {p.raf_change > 0 && <span className={styles.rafChangeBadge}>+{p.raf_change} <Icon name="solar:arrow-up-linear" size={12} color="var(--status-error)" /></span>}
           </div>
         </div>
-        <span className={styles.drawerMetricDivider} />
-        <div className={styles.drawerMetricItem}>
+        <div className={`${styles.drawerMetricItem} ${styles.drawerMetricTop}`}>
           <span className={styles.drawerMetricLabel}>Next Appt.</span>
           <span className={styles.nextApptValue}>{p.next_appointment_date || '—'}</span>
         </div>
-        <span className={styles.drawerMetricDivider} />
-        <div className={styles.drawerMetricItem}>
+        <div className={`${styles.drawerMetricItem} ${styles.drawerMetricBottom}`}>
           <span className={styles.drawerMetricLabel}>Last Contact</span>
           <div className={styles.lastContactBtn}>
             <Icon name="solar:phone-calling-linear" size={16} color="var(--status-error)" />
             <span className={styles.lastContactText}>{p.last_contact_type}({p.last_contact_days}d)</span>
           </div>
         </div>
-        <span className={styles.drawerMetricDivider} />
-        <div className={styles.drawerMetricItem}>
+        <div className={`${styles.drawerMetricItem} ${styles.drawerMetricBottom}`}>
           <span className={styles.drawerMetricLabel}>Programs</span>
-          <div className={styles.programBadges}>
+          <div className={`${styles.programBadges} ${styles.drawerMetricValues}`}>
             <ProgramBadgeList
               codes={programCodes}
               badgeClass={`${styles.badge} ${styles.badgeInfo}`}
@@ -172,7 +170,7 @@ export function QuickViewExpanded({ p, programCodes }) {
           <ExpandedDemographics p={p} className={styles.drawerExpandedSection} />
           <ExpandedFamily p={p} className={styles.drawerExpandedSection} />
         </div>
-        <span className={styles.drawerExpandedColDivider} />
+        <span className={styles.drawerExpandedColDivider} aria-hidden="true" />
         <div className={styles.drawerExpandedCol}>
           <ExpandedHealthStatus p={p} className={styles.drawerExpandedSection} />
           <ExpandedAppointments p={p} className={styles.drawerExpandedSection} />

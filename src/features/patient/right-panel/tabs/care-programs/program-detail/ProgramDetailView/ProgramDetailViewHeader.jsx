@@ -9,6 +9,7 @@ import { ProgressRing } from '../../../../../../hcc/DiagPanel/ReviewProgressPopo
 import { ProgramStatusRing } from '../shared/ProgramStatusRing/ProgramStatusRing.jsx';
 import { ProgramBadges } from '../shared/ProgramBadges/ProgramBadges.jsx';
 import { statusColorFor } from '../../../../../data/programStatus';
+import { useAppStore } from '../../../../../../../store/useAppStore';
 import { ProgramDetailExpandPanel } from './ProgramDetailViewParts';
 import styles from './ProgramDetailView.module.css';
 
@@ -35,7 +36,18 @@ export function ProgramDetailViewHeader({
 }) {
   const [moreRect, setMoreRect] = useState(null);
   const moreRef = useRef(null);
+  // The right-panel layout is a floating-shell layout, so the option only
+  // exists while the floating sidebar is on.
+  const floating = useAppStore(s => s.sidebarShape === 'floating');
+  const panelSplit = useAppStore(s => s.programPanelSplit);
+  const setProgramPanelSplit = useAppStore(s => s.setProgramPanelSplit);
   const moreItems = [
+    ...(floating ? [
+      panelSplit
+        ? { key: 'panel', icon: 'solar:minimize-square-minimalistic-linear', label: 'Open Inline' }
+        : { key: 'panel', icon: 'solar:sidebar-minimalistic-linear', label: 'Open in Right Panel' },
+      { divider: true },
+    ] : []),
     { key: 'history', icon: 'solar:history-linear', label: 'History' },
     { key: 'report', icon: 'solar:download-minimalistic-linear', label: 'Download Report' },
     { divider: true },
@@ -106,7 +118,11 @@ export function ProgramDetailViewHeader({
               anchorRef={moreRef}
               ariaLabel="Program actions"
               items={moreItems}
-              onSelect={key => { setMoreRect(null); onMoreAction?.(key); }}
+              onSelect={key => {
+                setMoreRect(null);
+                if (key === 'panel') setProgramPanelSplit(!panelSplit);
+                else onMoreAction?.(key);
+              }}
               onClose={() => setMoreRect(null)}
             />
           )}

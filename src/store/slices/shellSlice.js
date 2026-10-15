@@ -18,6 +18,7 @@ import {
   initialSidebarShape,
   initialFloatingDensity,
   readChangelogSeenAt,
+  readProgramPanelSplit,
 } from '../shellInitial';
 
 /** Theme, chrome preferences, Featurebase JWT, and changelog — shell concerns only. */
@@ -79,6 +80,15 @@ export function createShellSlice(set, get) {
       track('floatingDensity.changed', { from, to: next });
       const applied = applyFloatingDensity(next);
       set({ floatingDensity: applied });
+    },
+
+    // An open care program as its own card beside the patient card. Only
+    // honored with the floating sidebar; see useProgramPanelSplitActive.
+    programPanelSplit: readProgramPanelSplit(),
+    setProgramPanelSplit: (next) => {
+      track('programPanelSplit.changed', { to: next });
+      try { localStorage.setItem('programPanelSplit', String(next)); } catch { /* private mode */ }
+      set({ programPanelSplit: next });
     },
 
     featurebaseJwt: null,

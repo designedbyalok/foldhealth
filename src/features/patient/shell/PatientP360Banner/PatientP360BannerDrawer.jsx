@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { Icon } from '../../../../components/Icon/Icon';
 import { DownChevronIcon } from '../../../../components/Icon/DownChevronIcon';
 import { PatientAppActiveIndicator } from '../../../../components/PatientAppActiveIndicator/PatientAppActiveIndicator';
@@ -14,6 +14,29 @@ import { QuickViewExpanded } from './PatientP360BannerExpanded';
 import { DRAWER_ACTIONS, MORE_MENU_LABELS } from './PatientP360Banner.utils';
 import styles from './PatientP360Banner.module.css';
 
+// Every quick action, SMS last. The row shows as many as fit; the rest move
+// to the top of the More menu (see useFitCount).
+const QUICK_ACTIONS = [...DRAWER_ACTIONS, { icon: 'solar:chat-line-linear', label: 'SMS', sms: true }];
+// One action cell ("Schedule" is the widest label) plus its divider.
+const ACTION_SLOT_PX = 64;
+
+// How many actions fit the row's current width. The ResizeObserver fires on
+// observe, so the first count lands before paint without a synchronous
+// setState in the effect body.
+function useFitCount(ref, total) {
+  const [fit, setFit] = useState(total);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+    const ro = new ResizeObserver(() => {
+      setFit(Math.max(1, Math.min(total, Math.floor(el.clientWidth / ACTION_SLOT_PX))));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref, total]);
+  return fit;
+}
+
 export function PatientP360BannerDrawer({ patient, p, programCodes }) {
   const [drawerExpanded, setDrawerExpanded] = useState(false);
   const [consentPos, setConsentPos] = useState(null);
@@ -22,6 +45,11 @@ export function PatientP360BannerDrawer({ patient, p, programCodes }) {
   const profileCardRef = useRef(null);
   const [showScheduleDrawer, setShowScheduleDrawer] = useState(false);
   const callBtnRef = useRef(null);
+  const moreBtnRef = useRef(null);
+  const actionsListRef = useRef(null);
+  const fitCount = useFitCount(actionsListRef, QUICK_ACTIONS.length);
+  const visibleActions = QUICK_ACTIONS.slice(0, fitCount);
+  const overflowActions = QUICK_ACTIONS.slice(fitCount);
   const [moreMenuRect, setMoreMenuRect] = useState(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState('central');
@@ -34,6 +62,17 @@ export function PatientP360BannerDrawer({ patient, p, programCodes }) {
   const display = usePatientDisplay(patient);
 
   const noop = (label) => () => showToast(`${label} — coming soon`);
+  // Shared by the row buttons and their overflow menu entries. An overflowed
+  // Call anchors its popover to the More button, since its own button is gone.
+  const runAction = (label) => {
+    if (label === 'Schedule') { setShowScheduleDrawer(true); return; }
+    if (label === 'Call') {
+      const inRow = visibleActions.some(a => a.label === 'Call');
+      openCallPopover(patient.id, inRow ? callBtnRef : moreBtnRef);
+      return;
+    }
+    noop(label)();
+  };
   const activeProfileName = (p.insurance_profiles || FALLBACK_P360.insurance_profiles).find(pr => pr.id === selectedProfileId)?.name || p.profile_type;
 
   const handleConsentClick = () => {
@@ -69,6 +108,9 @@ export function PatientP360BannerDrawer({ patient, p, programCodes }) {
 
   return (
     <>
+      {/* Size container for the banner's container queries: it lives in the
+          700px Quick View drawer and the resizable split patient card. */}
+      <div className={styles.drawerRoot}>
       <div className={styles.drawerPatientBanner}>
         <div className={styles.drawerBannerLeft}>
           <div className={styles.drawerAvatar}>{patient.initials}</div>
@@ -125,41 +167,36 @@ export function PatientP360BannerDrawer({ patient, p, programCodes }) {
       {drawerExpanded && <QuickViewExpanded p={p} programCodes={programCodes} />}
 
       <div className={styles.drawerActionsRow}>
-        <div className={styles.drawerActionsList}>
-          {DRAWER_ACTIONS.flatMap(({ icon, label }, i) => {
-            const handleAction = () => {
-              if (label === 'Schedule') { setShowScheduleDrawer(true); return; }
-              if (label === 'Call') { openCallPopover(patient.id, callBtnRef); return; }
-              noop(label)();
-            };
+        <div ref={actionsListRef} className={styles.drawerActionsList}>
+          {visibleActions.flatMap(({ icon, label, sms }, i) => {
             const cell = (
               <div key={label} className={styles.drawerActionCell}>
-                <button ref={label === 'Call' ? callBtnRef : undefined} className={styles.drawerActionBtn} onClick={handleAction}>
-                  <Icon name={icon} size={16} color="var(--neutral-300)" />
+                <button type="button" ref={label === 'Call' ? callBtnRef : undefined} className={styles.drawerActionBtn} onClick={() => runAction(label)}>
+                  {sms ? (
+                    <div className={styles.drawerSmsWrap}>
+                      <Icon name={icon} size={16} color="var(--neutral-300)" />
+                      <span className={styles.drawerSmsBadge}><Icon name="solar:verified-check-bold" size={10} color="var(--status-success)" /></span>
+                    </div>
+                  ) : (
+                    <Icon name={icon} size={16} color="var(--neutral-300)" />
+                  )}
                   <span className={styles.drawerActionLabel}>{label}</span>
                 </button>
               </div>
             );
             return i === 0 ? [cell] : [<span key={`d${i}`} className={styles.drawerActionDivider} />, cell];
           })}
-          <span className={styles.drawerActionDivider} />
-          <div className={styles.drawerActionCell}>
-            <button className={styles.drawerActionBtn} onClick={noop('SMS')}>
-              <div className={styles.drawerSmsWrap}>
-                <Icon name="solar:chat-line-linear" size={16} color="var(--neutral-300)" />
-                <span className={styles.drawerSmsBadge}><Icon name="solar:verified-check-bold" size={10} color="var(--status-success)" /></span>
-              </div>
-              <span className={styles.drawerActionLabel}>SMS</span>
-            </button>
-          </div>
         </div>
         <span className={styles.drawerActionDivider} />
-        <ActionButton icon="solar:menu-dots-linear" size="L" tooltip="More" onClick={(e) => setMoreMenuRect(e.currentTarget.getBoundingClientRect())} />
+        <ActionButton ref={moreBtnRef} icon="solar:menu-dots-linear" size="L" tooltip="More" onClick={(e) => setMoreMenuRect(e.currentTarget.getBoundingClientRect())} />
+      </div>
       </div>
 
       {moreMenuRect && (
         <MenuPopover anchorRect={moreMenuRect} width={220} align="right"
           items={[
+            ...overflowActions.map(a => ({ key: `action:${a.label}`, icon: a.icon, label: a.label })),
+            ...(overflowActions.length ? [{ divider: true }] : []),
             { key: 'assessment', icon: 'solar:clipboard-check-linear', label: 'Assessment' },
             { key: 'education', icon: 'solar:book-linear', label: 'Education' },
             { key: 'add-task', icon: 'solar:checklist-linear', label: 'Add Task' },
@@ -176,6 +213,7 @@ export function PatientP360BannerDrawer({ patient, p, programCodes }) {
           onClose={() => setMoreMenuRect(null)}
           onSelect={(key) => {
             setMoreMenuRect(null);
+            if (key.startsWith('action:')) { runAction(key.slice('action:'.length)); return; }
             if (key === 'print') { showToast('Printing clinical profile…'); window.print(); return; }
             if (key === 'edit') { openPatientEdit('basic', patient); return; }
             if (key === 'inactive') {

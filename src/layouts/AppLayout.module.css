@@ -40,8 +40,10 @@
      fires, and sat as a 1px strip beside the body carrying our chrome.
    - `[data-floating-overlay]`: opt-out for position: fixed / absolute
      children (BrowserCallCard, drawer hosts, etc.) that already carry
-     their own chrome and shouldn't double up. */
-:root[data-sidebar-shape="floating"] .app > *:not([data-float-shell]):not([data-react-aria-top-layer]):not([data-floating-overlay]) {
+     their own chrome and shouldn't double up.
+   - `[data-floating-split]`: the patient view with a program "in right
+     panel" draws its own two cards, so the wrapper stays bare. */
+:root[data-sidebar-shape="floating"] .app > *:not([data-float-shell]):not([data-react-aria-top-layer]):not([data-floating-overlay]):not([data-floating-split]) {
   border: 0.5px solid var(--neutral-150);
   border-radius: 8px;
   background: var(--neutral-0);

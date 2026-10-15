@@ -11,8 +11,13 @@ const MORE_RESERVE_PX = 72;
  * TabStrip with responsive overflow — tabs that don't fit collapse into a
  * "More ▾" dropdown. Active tab is always kept visible by swapping it into
  * the last visible slot when needed. Same behavior as SectionTitleBar tabs.
+ *
+ * `itemAction` (optional) adds a trailing icon button to dropdown rows:
+ * `{ icon, label: (tab) => string, onSelect: (key) => void, appliesTo?: (key) => boolean }`.
+ * It sits beside the row's own button (never nested in it) so both stay
+ * keyboard reachable.
  */
-export function OverflowTabStrip({ items, activeKey, onChange }) {
+export function OverflowTabStrip({ items, activeKey, onChange, itemAction }) {
   const rowRef = useRef(null);
   const measurerRef = useRef(null);
   const moreBtnRef = useRef(null);
@@ -159,17 +164,35 @@ export function OverflowTabStrip({ items, activeKey, onChange }) {
                 visibility: menuPos ? 'visible' : 'hidden',
               }}
             >
-              {overflow.map(tab => (
-                <button
-                  key={tab.key}
-                  type="button"
-                  role="menuitem"
-                  className={[styles.moreItem, activeKey === tab.key ? styles.moreItemActive : ''].filter(Boolean).join(' ')}
-                  onClick={() => { onChange?.(tab.key); setMoreOpen(false); }}
-                >
-                  {tab.label}
-                </button>
-              ))}
+              {overflow.map(tab => {
+                const item = (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    role="menuitem"
+                    className={[styles.moreItem, activeKey === tab.key ? styles.moreItemActive : ''].filter(Boolean).join(' ')}
+                    onClick={() => { onChange?.(tab.key); setMoreOpen(false); }}
+                  >
+                    {tab.label}
+                  </button>
+                );
+                if (!itemAction || (itemAction.appliesTo && !itemAction.appliesTo(tab.key))) return item;
+                return (
+                  <div key={tab.key} role="none" className={styles.moreRow}>
+                    {item}
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles.moreItemAction}
+                      aria-label={itemAction.label(tab)}
+                      title={itemAction.label(tab)}
+                      onClick={() => { itemAction.onSelect(tab.key); setMoreOpen(false); }}
+                    >
+                      <Icon name={itemAction.icon} size={16} color="currentColor" />
+                    </button>
+                  </div>
+                );
+              })}
             </div>,
             document.body,
           )}

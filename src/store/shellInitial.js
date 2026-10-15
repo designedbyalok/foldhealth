@@ -29,6 +29,14 @@ applyFontScale(initialFontScale);
 applySidebarShape(initialSidebarShape);
 applyFloatingDensity(initialFloatingDensity);
 
+export function readProgramPanelSplit() {
+  try {
+    return localStorage.getItem('programPanelSplit') === 'true';
+  } catch {
+    return false;
+  }
+}
+
 export function readChangelogSeenAt() {
   try {
     return localStorage.getItem('changelogSeenAt');

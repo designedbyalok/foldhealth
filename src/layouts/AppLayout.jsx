@@ -31,6 +31,7 @@ import { CallPopoverHost } from '../components/CallPopover/CallPopoverHost';
 import { BrowserCallCard } from '../features/messages/comms/call/BrowserCallCard';
 import { CommsDrawerHost } from '../features/messages/comms/CommsDrawerHost';
 import { ReassignmentSummaryHost } from '../features/ooo/ReassignmentSummaryHost';
+import { useProgramPanelSplitActive } from '../features/patient/hooks/useProgramPanelSplitActive';
 import { supabase } from '../lib/supabase';
 import styles from './AppLayout.module.css';
 
@@ -115,6 +116,7 @@ function PopulationView() {
   const selectedPatientId = useAppStore(s => s.selectedPatientId);
   const pgRuleBuilder = useAppStore(s => s.pgRuleBuilder);
   const setHccFilter = useAppStore(s => s.setHccFilter);
+  const programSplit = useProgramPanelSplitActive();
 
   const isAwv = activeSubnavList === 'Annual Visit';
   const isJsa = activeSubnavList === 'JSA';
@@ -133,11 +135,14 @@ function PopulationView() {
     );
   }
 
-  // Patient detail view — full-page, no subnav
+  // Patient detail view — full-page, no subnav. With a program open "in
+  // right panel" the page is two cards (see PatientDetailView), so this
+  // wrapper drops its own card chrome and the TopBar gives way to the
+  // patient card's breadcrumb header.
   if (selectedPatientId) {
     return (
-      <div className={styles.main}>
-        <TopBar />
+      <div className={styles.main} data-floating-split={programSplit || undefined}>
+        {!programSplit && <TopBar />}
         <div className={styles.content}>
           <Suspense fallback={<LazyFallback />}>
             <PatientDetailView />

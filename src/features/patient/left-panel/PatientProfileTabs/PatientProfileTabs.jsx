@@ -35,9 +35,20 @@ export function PatientProfileTabs({
   // Hide the panel's own tab strip when the tabs are hosted elsewhere (the
   // right-panel tab bar) — the sticky note + content still render.
   showTabBar = true,
+  // Tabs hosted elsewhere that join this strip (the right panel's tabs while
+  // a care program owns the right card). The parent renders their content
+  // via `renderExtraTab(key)`; pass a stable array.
+  extraTabs,
+  renderExtraTab,
+  // Trailing action on hosted tabs in the More dropdown (OverflowTabStrip
+  // `itemAction` shape, minus `appliesTo`, which is scoped to extraTabs here).
+  extraTabAction,
 }) {
   const tabs = variant === 'drawer' ? CARE_GAP_TABS_DRAWER : CARE_GAP_TABS;
-  const tabItems = useMemo(() => tabs.map(tab => ({ key: tab, label: tab })), [tabs]);
+  const tabItems = useMemo(
+    () => [...tabs, ...(extraTabs || [])].map(tab => ({ key: tab, label: tab })),
+    [tabs, extraTabs],
+  );
   const [internalTab, setInternalTab] = useState(tabs[0]);
   const activeTab = controlledActiveTab ?? internalTab;
   const setActiveTab = onTabChange ?? setInternalTab;
@@ -96,6 +107,13 @@ export function PatientProfileTabs({
   }));
 
   const activeIdx = useMemo(() => tabs.indexOf(activeTab), [tabs, activeTab]);
+  const extraActive = !!(extraTabs && renderExtraTab && extraTabs.includes(activeTab));
+  const itemAction = useMemo(
+    () => (extraTabAction && extraTabs
+      ? { ...extraTabAction, appliesTo: key => extraTabs.includes(key) }
+      : undefined),
+    [extraTabAction, extraTabs],
+  );
 
   return (
     <div className={styles.panel}>
@@ -122,19 +140,24 @@ export function PatientProfileTabs({
               items={tabItems}
               activeKey={activeTab}
               onChange={setActiveTab}
+              itemAction={itemAction}
             />
           </div>
-          <ActionButton
-            icon="solar:magnifer-linear"
-            size="S"
-            tooltip="Search gaps"
-            className={styles.searchBtn}
-            onClick={() => setSearching(true)}
-          />
+          {!extraActive && (
+            <ActionButton
+              icon="solar:magnifer-linear"
+              size="S"
+              tooltip="Search gaps"
+              className={styles.searchBtn}
+              onClick={() => setSearching(true)}
+            />
+          )}
         </div>
       ))}
 
-      {/* Scrollable content */}
+      {extraActive ? (
+        <div className={styles.extraContent}>{renderExtraTab(activeTab)}</div>
+      ) : (
       <div className={`${styles.scrollContent} ${styles.flushContent}`}>
         {/* Sticky Note */}
         <div className={styles.stickyNoteWrap}>
@@ -289,6 +312,7 @@ export function PatientProfileTabs({
           <ProfileTab patient={patient || { id: patientId }} />
         )}
       </div>
+      )}
 
       {careGapDrawer && (
         <CareGapDetailDrawer

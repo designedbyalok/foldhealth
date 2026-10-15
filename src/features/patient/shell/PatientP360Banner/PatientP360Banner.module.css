@@ -1,4 +1,6 @@
 /* ── Drawer variant ── */
+/* Size container for the drawer banner's rows (see the queries below). */
+.drawerRoot { container: p360drawer / inline-size; }
 .drawerPatientBanner {
   display: flex;
   align-items: center;
@@ -18,8 +20,8 @@
 .drawerPatientInfo { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .drawerNameRow { display: flex; align-items: center; gap: 4px; }
 .drawerPatientName { font-size: var(--font-lg); font-weight: 600; color: var(--neutral-400); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.drawerMetaRow { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-.drawerMetaText { font-size: var(--font-base); color: var(--neutral-300); white-space: nowrap; }
+.drawerMetaRow { display: flex; align-items: center; gap: var(--space-1); flex-wrap: wrap; min-width: 0; }
+.drawerMetaText { font-size: var(--font-base); color: var(--neutral-300); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .drawerMetaDot { font-size: var(--font-base); color: var(--neutral-300); }
 .drawerConsentBadge {
   display: inline-flex; align-items: center; gap: 4px;
@@ -47,6 +49,19 @@
 .drawerPlusBadge {
   background: var(--neutral-0); border: 0.5px solid var(--neutral-100);
   border-radius: 4px; padding: 1px 4px; font-size: var(--font-sm); color: var(--neutral-300);
+}
+/* Narrow: the insurance-profile card drops to its own full-width line so the
+   name and DOB keep the first row, and its two lines sit side by side. */
+@container p360drawer (max-width: 520px) {
+  .drawerPatientBanner { flex-wrap: wrap; row-gap: var(--space-2); }
+  .drawerBannerDivider { display: none; }
+  .drawerProfileCard {
+    flex: 1 1 100%;
+    flex-direction: row; flex-wrap: wrap; align-items: center;
+    column-gap: var(--space-2); row-gap: calc(var(--space-1) / 2);
+  }
+  .drawerProfileIdRow { min-width: 0; overflow: hidden; }
+  .drawerProfileOrg { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 }
 /* Drawer tags row */
 .drawerTagsRow {
@@ -85,26 +100,60 @@
 }
 .drawerExpandIconRotated { transform: rotate(180deg); }
 
-/* Drawer expanded panel */
-.drawerExpandedPanel { border-bottom: 0.5px solid var(--neutral-150); overflow-y: auto; }
+/* Drawer expanded panel. A size container so the metrics grid and the two
+   detail columns respond to the panel's own width (700px Quick View drawer,
+   the resizable split patient card, the full banner's narrow expansion). */
+.drawerExpandedPanel {
+  container: p360expanded / inline-size;
+  border-bottom: 0.5px solid var(--neutral-150);
+  overflow-y: auto;
+}
 
+/* Metrics as a 6-track grid: Acuity · RAF · Next Appt span 2 each, Last
+   Contact · Programs span 3 each, so narrow widths get two full rows with
+   no empty cell. The 0.5px gap over a neutral-150 ground draws the hairlines
+   between cells in both directions. */
 .drawerMetricsStrip {
-  display: flex; align-items: stretch;
-  background: rgba(246, 247, 248, 0.5);
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: calc(var(--space-1) / 8); /* 0.5px hairline */
+  background: var(--neutral-150);
   border-bottom: 0.5px solid var(--neutral-150);
 }
 .drawerMetricItem {
-  flex: 1; display: flex; flex-direction: column; align-items: center;
-  gap: 4px; padding: 8px 12px; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--space-1); padding: var(--space-2); min-width: 0; text-align: center;
+  background: var(--neutral-25);
 }
+.drawerMetricTop { grid-column: span 2; }
+.drawerMetricBottom { grid-column: span 3; }
 .drawerMetricLabel {
-  font-size: var(--font-base); font-weight: 500; color: var(--neutral-400);
+  font-size: var(--font-base); font-weight: 500; color: var(--neutral-400); white-space: nowrap;
 }
-.drawerMetricDivider { width: 0.5px; align-self: stretch; background: var(--neutral-150); flex-shrink: 0; }
+/* Value rows wrap inside their cell rather than spilling into the next. */
+.drawerMetricValues { flex-wrap: wrap; justify-content: center; row-gap: var(--space-1); }
+
+/* Wide enough for one row; Programs gets the extra room its badges need. */
+@container p360expanded (min-width: 640px) {
+  .drawerMetricsStrip { grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.4fr); }
+  .drawerMetricTop,
+  .drawerMetricBottom { grid-column: auto; }
+}
+/* Very narrow: pairs, with Programs on its own row. */
+@container p360expanded (max-width: 380px) {
+  .drawerMetricTop,
+  .drawerMetricBottom { grid-column: span 3; }
+  .drawerMetricItem:last-child { grid-column: 1 / -1; }
+}
 
 .drawerExpandedCols { display: flex; align-items: flex-start; padding: 16px; gap: 0; }
 .drawerExpandedCol { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .drawerExpandedColDivider { width: 0.5px; align-self: stretch; background: var(--neutral-150); flex-shrink: 0; margin: 0 16px; }
+/* Narrow: the two detail columns stack, the divider turns horizontal. */
+@container p360expanded (max-width: 480px) {
+  .drawerExpandedCols { flex-direction: column; align-items: stretch; }
+  .drawerExpandedColDivider { width: auto; height: 0.5px; margin: var(--space-4) 0; }
+}
 .drawerExpandedSection {
   padding: 0 0 16px 0; border-bottom: 0.5px solid var(--neutral-100);
   display: flex; flex-direction: column; gap: 8px;

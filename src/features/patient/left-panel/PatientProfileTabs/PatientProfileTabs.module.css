@@ -22,6 +22,16 @@
   overflow-x: hidden;
 }
 
+/* A right-panel tab hosted in this strip (split layout). The hosted view
+   brings its own header and scroll, so this only hands it the space. */
+.extraContent {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 /* The sticky-note strip pins to the top of the scroll area so it stays in view
    as the tab content scrolls beneath it. */
 .stickyNoteWrap {

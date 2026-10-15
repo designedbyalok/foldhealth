@@ -42,6 +42,32 @@
 .moreItem:hover { background: var(--neutral-50); }
 .moreItemActive { color: var(--primary-400); font-weight: 500; }
 
+/* Row with a trailing action (itemAction): the row hovers as one, the
+   action button gets its own hover target. */
+.moreRow {
+  display: flex;
+  align-items: center;
+  padding-right: var(--space-1);
+}
+.moreRow:hover { background: var(--neutral-50); }
+.moreRow .moreItem { flex: 1; min-width: 0; }
+.moreRow .moreItem:hover { background: none; }
+.moreItemAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: var(--neutral-300);
+  cursor: pointer;
+}
+.moreItemAction:hover { background: var(--neutral-100); color: var(--primary-300); }
+.moreItemAction:focus-visible { outline: 2px solid var(--primary-200); outline-offset: 1px; }
+
 .row {
   display: flex;
   gap: 12px;

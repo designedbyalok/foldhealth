@@ -80,6 +80,62 @@
 }
 .tabContent { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
+/* "Open in right panel" (floating shell only): two cards on the shell's
+   tinted ground, separated by the same 4px gap the shell uses between the
+   nav and the body. The handle lives in that gap. */
+.split {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+.splitPatientCard {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+}
+.splitPatientCard { flex-shrink: 0; }
+.splitPatientTabs { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.splitHandle {
+  flex: 0 0 var(--space-1);
+  align-self: stretch;
+  cursor: col-resize;
+  position: relative;
+}
+.splitHandle:hover .dragHandleLine { opacity: 1; background: var(--primary-300); }
+
+/* A right-panel tab hosted in the split, in the patient card or swapped into
+   the side panel: a slim title bar with the move action, then the tab's own
+   view filling the rest. */
+.hostedTab { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.hostedTabHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  padding: 0 var(--space-2) 0 var(--space-3);
+  border-bottom: 0.5px solid var(--neutral-150);
+  flex-shrink: 0;
+}
+.hostedTabTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-400);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hostedTabBody { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: auto; }
+/* Between a stacked panel's actions and its close button. */
+.panelActionDivider { width: 1px; height: 16px; background: var(--neutral-150); flex-shrink: 0; }
+
 /* Left-panel content flowed into the (now full-width) right panel on collapse.
    Cap the width and center it so a narrow form/table stays comfortable to read
    instead of stretching edge to edge; on narrower viewports it fills as usual. */
