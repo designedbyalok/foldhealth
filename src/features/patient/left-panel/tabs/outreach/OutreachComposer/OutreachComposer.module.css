@@ -136,55 +136,41 @@
   white-space: nowrap;
 }
 
-/* ── Idle row ─────────────────────────────────────────────────────── */
-/* The composer's quiet default: one row with the scoped chip, a muted
-   placeholder for the note, and the Save hint. Clicking anywhere in
-   the composer expands into the full meta row + note + tray. */
-.idleRow {
+/* ── Idle state ───────────────────────────────────────────────────── */
+/* The composer's quiet default mirrors the existing Patient Profile
+   Outreach-tab empty state: a dashed-border pane with just a single
+   "Log New Outreach" CTA. Clicking opens the full composer. The dashed
+   look is drawn with an SVG data-URI (same technique as the shared
+   .emptyCard in OutreachTab.module.css) so the dashes stay crisp at
+   every DPR and don't fight the inner Button's shape. */
+.idleCard {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-  cursor: text;
-}
-
-.idleHint {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  flex: 1 1 auto;
-  min-width: 0;
-  color: var(--neutral-200);
-  font-size: var(--font-sm);
-}
-.idleHint > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.kbdHintStandalone {
-  display: inline-flex;
-  align-items: center;
   justify-content: center;
-  padding: calc(var(--space-1) / 2) calc(var(--space-1) + var(--space-1) / 2);
-  background: var(--neutral-50);
-  border: 0.5px solid var(--neutral-150);
-  border-radius: 4px;
-  font-size: var(--font-2xs);
-  font-weight: 500;
-  color: var(--neutral-300);
-  flex-shrink: 0;
+  padding: var(--space-3) 0;
+  background: var(--primary-50);
+  border-radius: 8px;
+  background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='%23FCFAFF' rx='8' ry='8' stroke='%23D0D6E1' stroke-width='1' stroke-dasharray='6%2c10' stroke-linecap='square'/%3e%3c/svg%3e");
+  cursor: pointer;
+  outline: none;
+  transition: filter 150ms ease;
 }
+.idleCard:hover { filter: brightness(0.98); }
+.idleCard:focus-visible { box-shadow: 0 0 0 2px var(--primary-200); }
 
-/* Collapsed state: softer shadow + no focus-within highlight (the
-   outer click toggles us open; no inner input to focus). */
+/* Collapsed composer sheds its own card chrome so the idleCard above
+   reads as the one visual block. Expanded composer brings its border
+   + bg back (set on .composer above). */
 .composerIdle {
-  padding: var(--space-2) var(--space-3);
+  padding: 0;
   gap: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
-.composerIdle:hover {
-  border-color: var(--primary-200);
+.composerIdle:focus-within {
+  border: none;
+  box-shadow: none;
 }
 
 /* ── Backdate picker (slides in when the user clicks the timestamp) ── */

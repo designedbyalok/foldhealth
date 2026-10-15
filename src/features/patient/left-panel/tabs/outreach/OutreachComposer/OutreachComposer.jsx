@@ -5,6 +5,7 @@ import { Switch } from '../../../../../../components/Switch/Switch';
 import { ActionButton } from '../../../../../../components/ActionButton/ActionButton';
 import { Tooltip } from '../../../../../../components/Tooltip/Tooltip';
 import { Icon } from '../../../../../../components/Icon/Icon';
+import { OutreachIcon } from '../../../../../../components/Icon/OutreachIcon';
 import { DateTimePicker } from '../../../../../../components/DateTimePicker/DateTimePicker';
 import { TypeDropdown, FieldDropdown } from '../OutreachTab/OutreachTabDropdowns';
 import { OutreachProgramChip } from './OutreachProgramChip';
@@ -249,15 +250,22 @@ export function OutreachComposer({
         </div>
       )}
 
-      {/* ── Idle row (collapsed): just chips + placeholder-ish input + Save hint ── */}
+      {/* ── Idle state (collapsed): the same clean CTA card the Patient
+         Profile's Outreach tab has always used. One quiet dashed-border
+         pane with a single "Log New Outreach" button so the view stays
+         empty until the user acts. Clicking opens the full composer. */}
       {!expanded && (
-        <div className={styles.idleRow}>
-          <div className={styles.chips}>{chipList}</div>
-          <span className={styles.idleHint}>
-            <Icon name="solar:pen-linear" size={14} color="currentColor" />
-            <span>{type === 'Call' ? 'What did you talk about?' : 'What happened on this outreach?'}</span>
-          </span>
-          <span className={styles.kbdHintStandalone} aria-hidden>⌘⏎</span>
+        <div className={styles.idleCard} role="button" tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpanded(true); } }}
+        >
+          <Button
+            variant="alt"
+            size="L"
+            leadingIconElement={<OutreachIcon size={16} color="var(--primary-300)" />}
+            onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
+          >
+            Log New Outreach
+          </Button>
         </div>
       )}
 
