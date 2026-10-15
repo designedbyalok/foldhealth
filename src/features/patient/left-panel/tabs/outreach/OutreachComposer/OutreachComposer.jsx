@@ -82,18 +82,25 @@ export function OutreachComposer({
   onSchedule,
   hideFooter = false,
 }) {
-  const [expanded, setExpanded] = useState(true);
+  // The composer starts in a quiet one-row idle state: scoped chip,
+  // placeholder note, Save hint. Any click or focus inside expands it
+  // into the full meta row + tray. Once there's a note or an outcome
+  // on a chip, the expand sticks — collapsing on blur would hide the
+  // work the user just did.
+  const hasContent = (sharedPanel.note || '').trim().length > 0
+    || selectedProgs.some(p => (getPanel(p)?.outcomes || []).length > 0);
+  const [expanded, setExpanded] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [savedBeat, setSavedBeat] = useState(false);
   const [showDatetime, setShowDatetime] = useState(false);
   const noteRef = useRef(null);
   const moreMenuRef = useRef(null);
 
-  // Open the composer the moment the host asks for it; a non-empty
-  // datetime is the hook's hint ("Log New Outreach" was clicked).
+  // Once the user has typed or picked an outcome, keep the composer
+  // open so a stray blur doesn't swallow the tray mid-flow.
   useEffect(() => {
-    if (datetime) setExpanded(true);
-  }, [datetime]);
+    if (hasContent) setExpanded(true);
+  }, [hasContent]);
 
   // Dismiss the "… More" sheet on outside click.
   useEffect(() => {
@@ -177,13 +184,14 @@ export function OutreachComposer({
     );
   });
 
+  const canSplit = selectedProgs.length >= 2;
+
   return (
     <div
-      className={[styles.composer, expanded ? styles.composerOpen : ''].join(' ')}
-      onFocus={handleFocus}
+      className={[styles.composer, expanded ? styles.composerOpen : styles.composerIdle].join(' ')}
       onClick={handleFocus}
     >
-      {/* ── Log For (hidden by default, surfaced in More menu or when the host asks) ── */}
+      {/* ── Log For (surfaced only when the host asks for it) ── */}
       {!hideLogForRow && !scopedProgram && expanded && (
         <div className={styles.logForRow}>
           <span className={styles.logForLabel}>Log outreach for</span>
@@ -198,37 +206,60 @@ export function OutreachComposer({
         </div>
       )}
 
-      {/* ── Meta row: Type · logged-at · program chips · separate notes ── */}
-      <div className={styles.metaRow}>
-        <TypeDropdown value={type} onChange={setType} disabled={isHccGaps} />
+      {/* ── Meta row (expanded only): Type · logged-at · chips · Separate notes ── */}
+      {expanded && (
+        <div className={styles.metaRow}>
+          <TypeDropdown value={type} onChange={setType} disabled={isHccGaps} />
 
-        <button
-          type="button"
-          className={styles.timestampBtn}
-          onClick={(e) => { e.stopPropagation(); setShowDatetime(v => !v); }}
-          aria-label="Backdate outreach"
-        >
-          <Icon name="solar:clock-circle-linear" size={14} color="currentColor" />
-          <span>logged {relLabel}</span>
-        </button>
+          <button
+            type="button"
+            className={styles.timestampBtn}
+            onClick={(e) => { e.stopPropagation(); setShowDatetime(v => !v); }}
+            aria-label="Backdate outreach"
+          >
+            <Icon name="solar:clock-circle-linear" size={14} color="currentColor" />
+            <span>logged {relLabel}</span>
+          </button>
 
-        <span className={styles.metaSep} aria-hidden />
+          <span className={styles.metaSep} aria-hidden />
 
-        <div className={styles.chips}>
-          {chipList}
-        </div>
+          <div className={styles.chips}>{chipList}</div>
 
-        {selectedProgs.length >= 2 && (
+          {/* Separate notes toggle lives upfront in the meta row so the
+             user doesn't have to hunt for it inside … More. Stays
+             disabled under 2 programs, with a tooltip explaining why. */}
           <div className={styles.separateNotesInline}>
-            <Switch
-              checked={separateNotes}
-              onChange={setSeparateNotes}
-              label="Separate notes"
-              ariaLabel="Separate notes per program"
-            />
+            <Tooltip
+              label={canSplit
+                ? 'Give each selected program its own note'
+                : 'Pick 2+ programs to split the note'}
+              placement="top"
+            >
+              <span className={styles.separateNotesLabelled} data-disabled={canSplit ? undefined : 'true'}>
+                <span className={styles.separateNotesCaption}>Separate notes</span>
+                <Switch
+                  checked={separateNotes && canSplit}
+                  onChange={canSplit ? setSeparateNotes : () => {}}
+                  disabled={!canSplit}
+                  ariaLabel="Separate notes per program"
+                />
+              </span>
+            </Tooltip>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* ── Idle row (collapsed): just chips + placeholder-ish input + Save hint ── */}
+      {!expanded && (
+        <div className={styles.idleRow}>
+          <div className={styles.chips}>{chipList}</div>
+          <span className={styles.idleHint}>
+            <Icon name="solar:pen-linear" size={14} color="currentColor" />
+            <span>{type === 'Call' ? 'What did you talk about?' : 'What happened on this outreach?'}</span>
+          </span>
+          <span className={styles.kbdHintStandalone} aria-hidden>⌘⏎</span>
+        </div>
+      )}
 
       {/* ── Backdate picker (slides in on demand) ── */}
       {showDatetime && expanded && (
@@ -239,7 +270,7 @@ export function OutreachComposer({
       )}
 
       {/* ── Call Details (inline, auto-shown when Type=Call) ── */}
-      {showCallDetails && (
+      {expanded && showCallDetails && (
         <div className={styles.callRow}>
           {callBannerVisible && (
             <div className={styles.callBanner}>
@@ -342,8 +373,8 @@ export function OutreachComposer({
         </div>
       )}
 
-      {/* ── Note body ── */}
-      {useSeparate ? (
+      {/* ── Note body (only in expanded) ── */}
+      {expanded && (useSeparate ? (
         <div className={styles.panels}>
           {selectedProgs.map(prog => {
             const ps = getPanel(prog);
@@ -369,17 +400,17 @@ export function OutreachComposer({
           placeholder={type === 'Call' ? 'What did you talk about?' : 'What happened on this outreach?'}
           rows={3}
           onKeyDown={onNoteKeyDown}
-          autoFocus={expanded && !sharedPanel.note}
+          autoFocus={!sharedPanel.note}
         />
-      )}
+      ))}
 
-      {/* ── Action tray + Save / Discard ──
+      {/* ── Action tray + Save / Discard (expanded only) ──
          * One row at every reasonable composer width. Grouped action
          * clusters are set apart by the shared Fold divider rule (1 px
          * tall, --neutral-150) — per the house convention noted in
          * CLAUDE.md: "always place a divider between distinct groups
          * of action buttons." */}
-      {!hideFooter && (
+      {!hideFooter && expanded && (
         <div className={styles.tray}>
           <div className={styles.trayLeft}>
             <ActionButton
@@ -440,15 +471,15 @@ export function OutreachComposer({
                     </div>
                   )}
                   <div className={styles.moreMenuSection}>
-                    <span className={styles.moreMenuLabel}>Note mode</span>
-                    <label className={styles.moreMenuToggleRow}>
-                      <span>Separate notes per program</span>
-                      <Switch
-                        checked={separateNotes}
-                        onChange={setSeparateNotes}
-                        ariaLabel="Separate notes per program"
-                      />
-                    </label>
+                    <span className={styles.moreMenuLabel}>Backdate</span>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles.moreMenuItem}
+                      onClick={() => { setShowDatetime(true); setMoreOpen(false); }}
+                    >
+                      Pick a different time
+                    </button>
                   </div>
                 </div>
               )}

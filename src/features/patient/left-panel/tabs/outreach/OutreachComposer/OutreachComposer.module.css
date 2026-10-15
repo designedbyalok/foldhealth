@@ -110,6 +110,83 @@
   flex-shrink: 0;
 }
 
+/* Pairs a muted caption with the Switch so the toggle reads as a
+   proper setting instead of a stray affordance. The caption dims when
+   the toggle is disabled (<2 programs picked), and the whole block
+   stays cursor-help so the tooltip explains why. */
+.separateNotesLabelled {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: calc(var(--space-1) / 2) var(--space-2);
+  border-radius: 6px;
+  cursor: default;
+  transition: background-color 150ms ease;
+}
+.separateNotesLabelled:hover { background: var(--neutral-50); }
+.separateNotesLabelled[data-disabled="true"] { cursor: help; }
+.separateNotesLabelled[data-disabled="true"] .separateNotesCaption {
+  color: var(--neutral-200);
+}
+
+.separateNotesCaption {
+  font-size: var(--font-xs);
+  font-weight: 500;
+  color: var(--neutral-300);
+  white-space: nowrap;
+}
+
+/* ── Idle row ─────────────────────────────────────────────────────── */
+/* The composer's quiet default: one row with the scoped chip, a muted
+   placeholder for the note, and the Save hint. Clicking anywhere in
+   the composer expands into the full meta row + note + tray. */
+.idleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  cursor: text;
+}
+
+.idleHint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--neutral-200);
+  font-size: var(--font-sm);
+}
+.idleHint > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kbdHintStandalone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--space-1) / 2) calc(var(--space-1) + var(--space-1) / 2);
+  background: var(--neutral-50);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 4px;
+  font-size: var(--font-2xs);
+  font-weight: 500;
+  color: var(--neutral-300);
+  flex-shrink: 0;
+}
+
+/* Collapsed state: softer shadow + no focus-within highlight (the
+   outer click toggles us open; no inner input to focus). */
+.composerIdle {
+  padding: var(--space-2) var(--space-3);
+  gap: 0;
+}
+.composerIdle:hover {
+  border-color: var(--primary-200);
+}
+
 /* ── Backdate picker (slides in when the user clicks the timestamp) ── */
 .datetimeRow {
   display: flex;
