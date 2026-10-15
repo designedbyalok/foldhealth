@@ -3,22 +3,19 @@
   height: 100vh;
   overflow: hidden;
   width: 100%;
-  /* Neutral-50 surface sits behind the nav and body in every shape, so
-     the panes always read as cards on a tinted ground even where the
-     body's own bg would otherwise show through. */
-  background: var(--neutral-50);
+  /* Neutral-100 surface sits behind the nav and body in every shape, so
+     the panes always read as cards on a tinted ground that's a touch
+     deeper than the body's own neutral-50 bg. */
+  background: var(--neutral-100);
 }
 
 /* Floating-sidebar shape: inset the whole shell so every top-level pane
    (the rail, any feature SideNav, and the main column) reads as a card
-   on that neutral-50 ground. The feature SideNavs pick up the matching
+   on the neutral-100 ground. The feature SideNavs pick up the matching
    card chrome via the global rule in SideNav.module.css. */
 :root[data-sidebar-shape="floating"] .app {
-  /* 4 px padding, 6 px gap between the NavBar and Body cards. The gap
-     stays composed as half of --space-3 (12) since 6 isn't on the
-     --space-* scale (nearest hits are 4 / 8 / 12). */
   padding: var(--space-1);
-  gap: calc(var(--space-3) / 2);
+  gap: var(--space-1);
 }
 
 .main {
