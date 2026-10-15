@@ -3,7 +3,7 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  padding: 14px 24px;
+  padding: var(--space-2) var(--space-3);
   background: var(--neutral-0);
   border-top: 0.5px solid var(--neutral-150);
   flex-shrink: 0;
