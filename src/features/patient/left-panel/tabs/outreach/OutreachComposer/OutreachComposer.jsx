@@ -113,8 +113,6 @@ export function OutreachComposer({
     return () => document.removeEventListener('mousedown', onDown);
   }, [moreOpen]);
 
-  const handleFocus = useCallback(() => setExpanded(true), []);
-
   // Cycle a program chip's outcome. The hook keeps per-program panel
   // state in `panels[prog].outcomes`, but its `addOutcome` helper routes
   // through `sharedPanel.outcomes` when `useSeparate` is off. The chip
@@ -190,7 +188,6 @@ export function OutreachComposer({
   return (
     <div
       className={[styles.composer, expanded ? styles.composerOpen : styles.composerIdle].join(' ')}
-      onClick={handleFocus}
     >
       {/* ── Log For (surfaced only when the host asks for it) ── */}
       {!hideLogForRow && !scopedProgram && expanded && (
@@ -253,16 +250,17 @@ export function OutreachComposer({
       {/* ── Idle state (collapsed): the same clean CTA card the Patient
          Profile's Outreach tab has always used. One quiet dashed-border
          pane with a single "Log New Outreach" button so the view stays
-         empty until the user acts. Clicking opens the full composer. */}
+         empty until the user acts. The pane itself is a plain visual
+         wrapper (no role, no handlers), so the actual button is the
+         inner <Button> that already carries native focus + Enter/Space
+         semantics. */}
       {!expanded && (
-        <div className={styles.idleCard} role="button" tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpanded(true); } }}
-        >
+        <div className={styles.idleCard}>
           <Button
             variant="alt"
             size="L"
             leadingIconElement={<OutreachIcon size={16} color="var(--primary-300)" />}
-            onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
+            onClick={() => setExpanded(true)}
           >
             Log New Outreach
           </Button>
