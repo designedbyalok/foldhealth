@@ -7,7 +7,10 @@
      vertical scroll — no nested scroller inside the tab. */
   overflow-x: hidden;
   box-sizing: border-box;
-  background: var(--neutral-0);
+  /* The OutreachComposer owns its own card chrome. The host wrapper only
+     carries the gutter + stack layout, so the composer's bg + border reads
+     cleanly against whatever surface the host provides. */
+  background: transparent;
 }
 .wrapperFlush {
   padding: 0;

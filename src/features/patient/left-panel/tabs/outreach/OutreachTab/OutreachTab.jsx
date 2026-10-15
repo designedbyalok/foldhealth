@@ -3,7 +3,7 @@ import { OutreachIcon } from '../../../../../../components/Icon/OutreachIcon';
 import { ScheduleDrawer } from '../../../../../../components/ScheduleDrawer/ScheduleDrawer';
 import { AddTaskDrawer } from '../../../../../tasks/AddTaskDrawer';
 import { useOutreachTab } from './useOutreachTab';
-import { OutreachTabForm } from './OutreachTabForm';
+import { OutreachComposer } from '../OutreachComposer/OutreachComposer';
 import { OutreachTabActivity } from './OutreachTabActivity';
 import styles from './OutreachTab.module.css';
 
@@ -78,7 +78,7 @@ export function OutreachTabView({
           </Button>
         </div>
       ) : (
-        <OutreachTabForm
+        <OutreachComposer
           hideLogForRow={hideLogForRow}
           scopedProgram={tab.scopedProgram}
           logFor={tab.logFor}

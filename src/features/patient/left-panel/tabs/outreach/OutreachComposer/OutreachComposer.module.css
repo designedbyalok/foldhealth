@@ -1,0 +1,476 @@
+/* ── Fold Outreach composer ──
+ * Replaces the modal-ish OutreachTabForm with a composer that reads
+ * like one quiet message input, expands on focus, and nests the rare
+ * controls behind … More. Styled with Fold tokens throughout.
+ *
+ * Container queries (@container inline-size) let the composer collapse
+ * into a vertical stack when the host column goes narrow (TOC outreach
+ * drawer at ~460 px, HCC gap drawer at ~520 px), so the chip row never
+ * overflows and the action tray never clips.
+ */
+
+.composer {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 12px;
+  transition: box-shadow 180ms ease, border-color 180ms ease;
+  /* Keeps the composer from being squeezed into a thin stripe when it
+     sits inside a flex column that shrinks (drawer at ~460 px, HCC gap
+     pane, narrow Care Programs content column). Below this width the
+     parent gains a horizontal scroll instead of the composer itself
+     collapsing to nothing. */
+  min-width: 280px;
+}
+
+.composer:focus-within {
+  border-color: var(--primary-200);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-200) 30%, transparent);
+}
+
+/* The composer stays mostly collapsed when the user hasn't engaged yet;
+   .composerOpen gates the "below the fold" visuals. We always render the
+   meta row + chip row on top so the collapsed state still shows the user
+   where they are. */
+.composerOpen { }
+
+/* ── Log For row (only when the host asked for it) ─────────────────── */
+.logForRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding-bottom: var(--space-2);
+  border-bottom: 0.5px dashed var(--neutral-150);
+}
+
+.logForLabel {
+  font-size: var(--font-xs);
+  font-weight: 500;
+  color: var(--neutral-300);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+/* ── Meta row ─────────────────────────────────────────────────────── */
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.timestampBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  border: 0.5px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+.timestampBtn:hover {
+  background: var(--neutral-50);
+  color: var(--neutral-400);
+  border-color: var(--neutral-150);
+}
+.timestampBtn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary-200);
+}
+
+.metaSep {
+  width: 1px;
+  height: 16px;
+  background: var(--neutral-150);
+  flex-shrink: 0;
+}
+
+.chips {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.separateNotesInline {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ── Backdate picker (slides in when the user clicks the timestamp) ── */
+.datetimeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--neutral-50);
+  border-radius: 8px;
+  animation: slideDownFadeIn 220ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ── Call Details row ─────────────────────────────────────────────── */
+.callRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--neutral-50);
+  border-radius: 8px;
+  animation: slideDownFadeIn 240ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.callBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: calc(var(--space-1) + var(--space-1) / 2) calc(var(--space-2) + var(--space-1) / 2);
+  background: var(--primary-50);
+  border: 0.5px solid var(--primary-200);
+  border-radius: 6px;
+}
+
+.callBannerText {
+  font-size: var(--font-xs);
+  color: var(--primary-400);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.callBannerLink {
+  padding: calc(var(--space-1) / 2) var(--space-2);
+  font-size: var(--font-xs);
+  font-weight: 500;
+  color: var(--primary-300);
+  background: var(--neutral-0);
+  border: 0.5px solid var(--primary-200);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+  flex-shrink: 0;
+}
+.callBannerLink:hover { background: var(--primary-50); }
+
+.callBannerDismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--space-1) / 2);
+  background: transparent;
+  border: none;
+  color: var(--neutral-300);
+  cursor: pointer;
+  transition: color 150ms ease;
+  flex-shrink: 0;
+}
+.callBannerDismiss:hover { color: var(--neutral-400); }
+
+.callDetailsLine {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.callDirection {
+  display: inline-flex;
+  gap: var(--space-3);
+}
+
+.callField {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.callFieldLabel {
+  font-size: var(--font-2xs);
+  font-weight: 500;
+  color: var(--neutral-300);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.callDuration {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.callDurationInput {
+  width: 36px;
+  padding: var(--space-1) calc(var(--space-1) + var(--space-1) / 2);
+  text-align: center;
+  font: inherit;
+  font-size: var(--font-xs);
+  color: var(--neutral-400);
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 4px;
+}
+.callDurationInput:focus {
+  outline: none;
+  border-color: var(--primary-200);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-200) 25%, transparent);
+}
+.callDurationUnit {
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+}
+
+/* ── Note panels ──────────────────────────────────────────────────── */
+.panels {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  background: var(--neutral-50);
+  border-radius: 8px;
+}
+
+.panelTitle {
+  font-size: var(--font-xs);
+  font-weight: 600;
+  color: var(--neutral-400);
+}
+
+/* ── Action tray + Save/Discard ───────────────────────────────────── */
+.tray {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 0.5px solid var(--neutral-150);
+  flex-wrap: wrap;
+  row-gap: var(--space-2);
+}
+
+.trayLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.trayRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+/* Divider between adjacent ActionButton icons inside a cluster. 1 x 16,
+   --neutral-150 — the same spec the drawer-header divider rule uses so
+   action-button separation reads identically across the app. */
+.trayDivider {
+  display: inline-block;
+  width: 1px;
+  height: 16px;
+  background: var(--neutral-150);
+  flex-shrink: 0;
+  margin: 0 calc(var(--space-1) / 2);
+}
+
+/* Divider between distinct action groups (icon cluster | More | Save).
+   Visually a touch taller so cluster-to-cluster reads differently from
+   icon-to-icon inside a cluster. */
+.trayGroupDivider {
+  display: inline-block;
+  width: 1px;
+  height: 20px;
+  background: var(--neutral-150);
+  flex-shrink: 0;
+  margin: 0 calc(var(--space-1) / 2);
+}
+
+.moreWrap {
+  position: relative;
+  margin-left: var(--space-1);
+}
+
+.moreBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) calc(var(--space-2) + var(--space-1) / 2);
+  background: transparent;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 6px;
+  font-size: var(--font-xs);
+  font-weight: 500;
+  color: var(--neutral-400);
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+.moreBtn:hover { background: var(--neutral-50); border-color: var(--neutral-200); }
+.moreBtn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--primary-200); }
+
+.moreMenu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  min-width: 240px;
+  padding: var(--space-2);
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 8px;
+  box-shadow: var(--shadow-popover);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  animation: popIn 160ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.moreMenuSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.moreMenuLabel {
+  font-size: var(--font-2xs);
+  font-weight: 600;
+  color: var(--neutral-300);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.moreMenuItem {
+  display: flex;
+  align-items: center;
+  padding: calc(var(--space-1) + var(--space-1) / 2) var(--space-2);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font: inherit;
+  font-size: var(--font-sm);
+  text-align: left;
+  color: var(--neutral-400);
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.moreMenuItem:hover { background: var(--neutral-50); }
+.moreMenuItemActive { color: var(--primary-300); background: var(--primary-50); }
+
+.moreMenuToggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-sm);
+  color: var(--neutral-400);
+}
+
+/* ── Saved indicator ─────────────────────────────────────────────── */
+/* The "Saved" indicator peeks in only after a successful save and
+   stays out of the layout the rest of the time, so Save + Discard
+   never shift position under the user's cursor. */
+.savedChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: calc(var(--space-1) * 3 / 4) var(--space-2);
+  background: var(--status-success-light);
+  color: var(--status-success);
+  border: 0.5px solid var(--status-success);
+  border-radius: 999px;
+  font-size: var(--font-2xs);
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(4px) scale(0.96);
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms ease, width 220ms ease, margin 220ms ease, padding 220ms ease, border-color 180ms ease;
+  width: 0;
+  margin: 0;
+  padding-inline: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.savedChipShown {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  width: auto;
+  margin-right: var(--space-1);
+  padding: calc(var(--space-1) * 3 / 4) var(--space-2);
+}
+
+/* ── Keyboard hint ───────────────────────────────────────────────── */
+.kbdHint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--space-1) / 4) calc(var(--space-1) + var(--space-1) / 2);
+  background: color-mix(in srgb, var(--neutral-0) 25%, transparent);
+  border-radius: 3px;
+  font-size: var(--font-2xs);
+  font-weight: 500;
+  color: inherit;
+  opacity: 0.9;
+}
+
+/* ── Animations ──────────────────────────────────────────────────── */
+@keyframes slideDownFadeIn {
+  from { opacity: 0; transform: translateY(-6px); max-height: 0; }
+  to   { opacity: 1; transform: translateY(0);     max-height: 420px; }
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.96) translateY(4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer, .timestampBtn, .moreBtn, .callRow, .datetimeRow, .moreMenu, .savedChip {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* ── Narrow container collapse ───────────────────────────────────── */
+/* Below ~640 px of composer width, the meta row stacks into a column
+   so the chip rail never clips, and the separate-notes switch slides
+   under the chips rather than pushing them off the right edge. The
+   tray stays one row — flex-wrap on it handles minor overflow by
+   dropping the save cluster onto a second line naturally. */
+@container (max-width: 640px) {
+  .metaSep { display: none; }
+  .separateNotesInline { margin-left: 0; width: 100%; justify-content: flex-end; }
+  .callDetailsLine { gap: var(--space-2); }
+}
+
+/* Only at genuinely cramped widths (narrow drawers, mobile preview)
+   do the call-detail fields need to column-stack. The tray above never
+   needs an explicit column mode: flex-wrap on `.tray` + `margin-left:
+   auto` on `.trayRight` already keeps the save cluster right-anchored
+   when it has room and lets it wrap onto its own row when it does not. */
+@container (max-width: 420px) {
+  .callDetailsLine { flex-direction: column; align-items: flex-start; }
+  .callField, .callDuration { width: 100%; }
+}

@@ -1,0 +1,49 @@
+/* Button chrome around Fold's shared <Badge>. Keeps the badge's color
+   palette + size curve, adds the interactive affordances (focus ring,
+   press scale, outcome-dot pop) that a static badge can't carry. */
+.chipBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: transform 120ms cubic-bezier(0.32, 0.72, 0, 1);
+  outline: none;
+}
+
+.chipBtn:focus-visible {
+  box-shadow: 0 0 0 2px var(--primary-200);
+}
+
+.chipBtn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.chipBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* When the chip gains or loses an outcome, the shared Badge's icon
+   pops in. The animation runs on the <span> Badge renders, so the
+   icon reads as a quick visual beat rather than a flat swap. */
+.chipHasOutcome :global(svg) {
+  animation: outcomeDotIn 180ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes outcomeDotIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  60% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chipBtn, .chipHasOutcome :global(svg) {
+    transition: none;
+    animation: none;
+  }
+}
