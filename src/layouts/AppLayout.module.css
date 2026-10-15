@@ -14,11 +14,10 @@
    on that neutral-50 ground. The feature SideNavs pick up the matching
    card chrome via the global rule in SideNav.module.css. */
 :root[data-sidebar-shape="floating"] .app {
-  /* 6 px padding + 6 px gap, per user. 6 isn't on the --space-* scale
-     (nearest hits are 4 / 8 / 12), so compose it as half of --space-3
-     (12) rather than hard-coding a raw px value that the DS guardrail
-     would flag. */
-  padding: calc(var(--space-3) / 2);
+  /* 4 px padding, 6 px gap between the NavBar and Body cards. The gap
+     stays composed as half of --space-3 (12) since 6 isn't on the
+     --space-* scale (nearest hits are 4 / 8 / 12). */
+  padding: var(--space-1);
   gap: calc(var(--space-3) / 2);
 }
 
