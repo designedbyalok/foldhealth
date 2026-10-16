@@ -26,6 +26,7 @@ function App() {
   const [session, setSession] = useState(undefined); // undefined = loading, null = unauthenticated
   // Message handed from ResetPasswordPage to LoginPage (e.g. "awaiting approval").
   const [loginNotice, setLoginNotice] = useState('');
+  const [signOutRequest, setSignOutRequest] = useState(0);
   const [bypassed, setBypassed] = useState(() => sessionStorage.getItem('__auth_bypass') === 'true');
   // Set when Supabase fires PASSWORD_RECOVERY OR when the URL hash carries
   // the recovery tokens directly (e.g. before supabase-js has processed
@@ -94,14 +95,14 @@ function App() {
 
     // A Pending account finishing an OAuth sign-up gets a token it can't use
     // (see pendingApproval.js). Drop it and say why. ResetPasswordPage handles
-    // its own email-confirmation case. signOut is deferred because awaiting
-    // supabase calls inside onAuthStateChange can deadlock supabase-js.
+    // its own email-confirmation case. signOut runs from an effect because
+    // awaiting supabase calls inside onAuthStateChange can deadlock supabase-js.
     const rejectPending = (s) => {
       if (!isPendingApprovalSession(s) || recoveryModeRef.current) return false;
       track('auth.signup_pending_approval');
       setLoginNotice(PENDING_APPROVAL_NOTICE);
       setSession(null);
-      setTimeout(() => { void supabase.auth.signOut({ scope: 'local' }); }, 0);
+      setSignOutRequest(n => n + 1);
       return true;
     };
 
@@ -148,6 +149,10 @@ function App() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (signOutRequest) void supabase.auth.signOut({ scope: 'local' });
+  }, [signOutRequest]);
 
   // Initialize hash router (once)
   useEffect(() => {
