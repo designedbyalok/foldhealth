@@ -59,6 +59,9 @@ verify_enabled = true
 [auth.email]
 enable_confirmations = true
 max_frequency = "1m0s"
+# Confirmation / reset links stay valid for 24h (CLI default is 1h, too short
+# for people who do not check email right away).
+otp_expiry = 86400
 otp_length = 8
 
 [auth.email.template.recovery]

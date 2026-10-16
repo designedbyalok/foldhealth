@@ -107,7 +107,11 @@ export function ResetPasswordPage({ onDone }) {
           const { data: { session } } = await supabase.auth.getSession();
           if (!session) {
             track('auth.password_reset_failed', { reason: otpError.message || 'unknown', stage: 'verify' });
-            setError('This link has expired or was already used. Ask your admin to resend the invite or request a new reset link from the login page.');
+            // Each resend replaces the previous token, so an older email's
+            // link fails exactly like an expired one.
+            setError(setupFlow
+              ? 'This link has expired or a newer email replaced it. Open the most recent email, or go back to sign in and choose Resend verification to get a new link.'
+              : 'This link has expired or was already used. Request a new reset link from the login page.');
             return;
           }
         }
