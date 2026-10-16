@@ -7,6 +7,7 @@ import { Icon } from '../../components/Icon/Icon';
 import { FoldHealthLogo } from '../../components/FoldHealthLogo/FoldHealthLogo';
 import loginHero from '../../assets/login-hero.png';
 import styles from './LoginPage.module.css';
+import { isPendingApprovalSession, EMAIL_CONFIRMED_PENDING_NOTICE } from './pendingApproval';
 
 /**
  * ResetPasswordPage — shown when the user arrives via a Supabase
@@ -111,6 +112,16 @@ export function ResetPasswordPage({ onDone }) {
           }
         }
         if (otpData?.user?.user_metadata?.invited === 'true') invited = true;
+        // Self sign-up awaiting approval: the email is now confirmed. Keep
+        // the password they just typed, then leave; their session is unusable.
+        if (isPendingApprovalSession(otpData?.session)) {
+          await supabase.auth.updateUser({ password });
+          track('auth.signup_email_confirmed', { pending: true });
+          redirecting = true;
+          await supabase.auth.signOut({ scope: 'local' });
+          onDone?.({ notice: EMAIL_CONFIRMED_PENDING_NOTICE });
+          return;
+        }
       }
 
       // Update the password and, for invited users, flip the metadata flag

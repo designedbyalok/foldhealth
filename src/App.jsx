@@ -5,6 +5,7 @@ import { AppLayout } from './layouts/AppLayout';
 import { Toaster } from './components/Toast/Toast';
 import { UpdateAvailableBanner } from './components/UpdateAvailableBanner/UpdateAvailableBanner';
 import { LoginPage } from './features/auth/LoginPage';
+import { isPendingApprovalSession, PENDING_APPROVAL_NOTICE } from './features/auth/pendingApproval';
 import { ResetPasswordPage } from './features/auth/ResetPasswordPage';
 import { useAppStore } from './store/useAppStore';
 import { supabase } from './lib/supabase';
@@ -23,6 +24,8 @@ const PatientCommsPage = lazy(() => import('./features/patient-portal/PatientCom
 function App() {
   const routerInit = useRef(false);
   const [session, setSession] = useState(undefined); // undefined = loading, null = unauthenticated
+  // Message handed from ResetPasswordPage to LoginPage (e.g. "awaiting approval").
+  const [loginNotice, setLoginNotice] = useState('');
   const [bypassed, setBypassed] = useState(() => sessionStorage.getItem('__auth_bypass') === 'true');
   // Set when Supabase fires PASSWORD_RECOVERY OR when the URL hash carries
   // the recovery tokens directly (e.g. before supabase-js has processed
@@ -37,6 +40,8 @@ function App() {
     return /type=recovery/.test(h) || /type=signup/.test(h)
       || /token_hash=/.test(h) || h.startsWith('#/reset-password');
   });
+  const recoveryModeRef = useRef(recoveryMode);
+  useEffect(() => { recoveryModeRef.current = recoveryMode; }, [recoveryMode]);
   // Featurebase identity-verification JWT — minted server-side by the
   // featurebase-jwt Edge Function (the signing secret never reaches the
   // client). The Help popover's "Give Feedback" builds the portal SSO link
@@ -87,7 +92,21 @@ function App() {
       maybeApplyOrgDefaults(u, { setTheme: store.setTheme, setNavStyle: store.setNavStyle });
     };
 
+    // A Pending account finishing an OAuth sign-up gets a token it can't use
+    // (see pendingApproval.js). Drop it and say why. ResetPasswordPage handles
+    // its own email-confirmation case. signOut is deferred because awaiting
+    // supabase calls inside onAuthStateChange can deadlock supabase-js.
+    const rejectPending = (s) => {
+      if (!isPendingApprovalSession(s) || recoveryModeRef.current) return false;
+      track('auth.signup_pending_approval');
+      setLoginNotice(PENDING_APPROVAL_NOTICE);
+      setSession(null);
+      setTimeout(() => { void supabase.auth.signOut({ scope: 'local' }); }, 0);
+      return true;
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
+      if (rejectPending(s)) return;
       // Sentry/Vercel events for major auth transitions. Supabase emits
       // SIGNED_IN once after a successful login (covers password, OAuth
       // callback, and magic-link), and SIGNED_OUT on logout. PASSWORD_RECOVERY
@@ -116,6 +135,7 @@ function App() {
     });
 
     supabase.auth.getSession().then(({ data: { session: s } }) => {
+      if (rejectPending(s)) return;
       if (s?.user?.user_metadata?.invited === 'true') {
         setRecoveryMode(true);
       }
@@ -151,6 +171,7 @@ function App() {
       <ResetPasswordPage
         onDone={(opts) => {
           setRecoveryMode(false);
+          if (opts?.notice) setLoginNotice(opts.notice);
           if (opts?.enterApp) {
             // Invited user just set their first password — session is
             // valid, drop them straight into the app.
@@ -243,7 +264,7 @@ function App() {
       }
       legacyBypass();
     };
-    return <LoginPage onBypass={handleBypass} />;
+    return <LoginPage key={loginNotice} onBypass={handleBypass} notice={loginNotice} />;
   }
 
   // Authenticated — clear login hash if present

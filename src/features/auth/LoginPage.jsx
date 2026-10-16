@@ -13,10 +13,15 @@ const RESEND_COOLDOWN_SECONDS = 30;
 // Pending account), and App rewrites the hash to #/login before this page mounts.
 const REDIRECT_AUTH_ERROR = (() => {
   const params = new URLSearchParams(window.location.hash.replace(/^#\/?/, '') || window.location.search);
-  return params.get('error_description') || '';
+  // GoTrue double-encodes hook errors ("403%3A Your account…"): decode the
+  // leftover escapes and drop the status-code prefix.
+  const raw = params.get('error_description') || '';
+  let text = raw;
+  try { text = decodeURIComponent(raw); } catch { /* keep raw */ }
+  return text.replace(/^\d{3}:\s*/, '');
 })();
 
-export function LoginPage({ onBypass }) {
+export function LoginPage({ onBypass, notice = '' }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [forgotMode, setForgotMode] = useState(false);
   const [firstName, setFirstName] = useState('');
@@ -27,7 +32,7 @@ export function LoginPage({ onBypass }) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(REDIRECT_AUTH_ERROR);
-  const [success, setSuccess] = useState('');
+  const [success, setSuccess] = useState(notice);
   const [unverifiedEmail, setUnverifiedEmail] = useState('');
   const [cooldown, setCooldown] = useState(0);
 
