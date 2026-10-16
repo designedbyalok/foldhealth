@@ -11,6 +11,7 @@ import { Avatar } from '../../../components/Avatar/Avatar';
 import { Drawer } from '../../../components/Drawer/Drawer';
 import { TabStrip } from '../../../components/TabStrip/TabStrip';
 import { UserProfileBanner } from './users/UserProfileBanner';
+import { AccountLockPanel } from './users/AccountLockPanel';
 import { Input } from '../../../components/Input/Input';
 import { Textarea } from '../../../components/Textarea/Textarea';
 import { DatePicker } from '../../../components/DatePicker/DatePicker';
@@ -333,7 +334,7 @@ function UserDetailsView({ user, raw }) {
   );
 }
 
-export function ViewUserDrawer({ user, onClose, onEdit, canEdit = true }) {
+export function ViewUserDrawer({ user, onClose, onEdit, canEdit = true, lock, canUnlock = false, onUnlock }) {
   const raw = user._raw || {};
   const [viewTab, setViewTab] = useState('User Details');
   const setActivePage = useAppStore(s => s.setActivePage);
@@ -350,6 +351,7 @@ export function ViewUserDrawer({ user, onClose, onEdit, canEdit = true }) {
   return (
     <Drawer title="User Profile" onClose={onClose} bodyClassName={styles.editDrawerBody} headerStyle={{ padding: '12px' }} titleStyle={{ fontSize: 'var(--font-base)' }}>
       <UserProfileBanner user={user} onChat={openChat} />
+      <AccountLockPanel lock={lock} canUnlock={canUnlock} onUnlock={onUnlock} />
       <TabStrip
         items={VIEW_TABS.map(t => ({ key: t, label: t }))}
         activeKey={viewTab}

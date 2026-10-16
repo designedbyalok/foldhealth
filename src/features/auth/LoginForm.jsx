@@ -7,7 +7,6 @@ import styles from './LoginPage.module.css';
 
 export function LoginForm({
   isSignUp,
-  forgotMode,
   firstName,
   setFirstName,
   lastName,
@@ -27,7 +26,6 @@ export function LoginForm({
   cooldown,
   onSubmit,
   onEnterForgotMode,
-  onExitForgotMode,
   onResendVerification,
   onToggleSignUp,
 }) {
@@ -41,12 +39,7 @@ export function LoginForm({
 
       <div className={styles.welcome}>
         <h1 className={styles.welcomeTitle}>
-          {forgotMode ? (
-            <>
-              <span className={styles.welcomePurple}>Reset </span>
-              <span className={styles.welcomeDark}>Password</span>
-            </>
-          ) : isSignUp ? (
+          {isSignUp ? (
             <>
               <span className={styles.welcomePurple}>Create </span>
               <span className={styles.welcomeDark}>Account</span>
@@ -59,11 +52,9 @@ export function LoginForm({
           )}
         </h1>
         <p className={styles.welcomeSub}>
-          {forgotMode
-            ? "Enter your email and we'll send you a reset link."
-            : isSignUp
-              ? 'Sign up to get started with Fold Portal'
-              : 'Sign in to access your Fold Portal'}
+          {isSignUp
+            ? 'Sign up to get started with Fold Portal'
+            : 'Sign in to access your Fold Portal'}
         </p>
       </div>
 
@@ -106,39 +97,37 @@ export function LoginForm({
           />
         </div>
 
-        {!forgotMode && (
-          <div className={styles.field}>
-            <div className={styles.labelRow}>
-              <label className={styles.label} htmlFor={`${uid}-password`}>Password</label>
-              {!isSignUp && (
-                <button type="button" className={styles.forgotLink} onClick={onEnterForgotMode}>
-                  Forgot Password?
-                </button>
-              )}
-            </div>
-            <div className={styles.passwordWrap}>
-              <Input
-                id={`${uid}-password`}
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder={isSignUp ? 'Min 6 characters' : 'Enter your password'}
-                autoComplete={isSignUp ? 'new-password' : 'current-password'}
-              />
-              <button
-                type="button"
-                className={styles.eyeBtn}
-                onClick={() => setShowPassword(v => !v)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                aria-pressed={showPassword}
-              >
-                <Icon name={showPassword ? 'solar:eye-linear' : 'solar:eye-closed-linear'} size={16} color="#8A94A8" />
+        <div className={styles.field}>
+          <div className={styles.labelRow}>
+            <label className={styles.label} htmlFor={`${uid}-password`}>Password</label>
+            {!isSignUp && (
+              <button type="button" className={styles.forgotLink} onClick={onEnterForgotMode}>
+                Forgot Password?
               </button>
-            </div>
+            )}
           </div>
-        )}
+          <div className={styles.passwordWrap}>
+            <Input
+              id={`${uid}-password`}
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder={isSignUp ? 'Min 6 characters' : 'Enter your password'}
+              autoComplete={isSignUp ? 'new-password' : 'current-password'}
+            />
+            <button
+              type="button"
+              className={styles.eyeBtn}
+              onClick={() => setShowPassword(v => !v)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-pressed={showPassword}
+            >
+              <Icon name={showPassword ? 'solar:eye-linear' : 'solar:eye-closed-linear'} size={16} color="#8A94A8" />
+            </button>
+          </div>
+        </div>
 
-        {!forgotMode && isSignUp && (
+        {isSignUp && (
           <div className={styles.field}>
             <label className={styles.label} htmlFor={`${uid}-confirm-password`}>Confirm Password</label>
             <Input
@@ -152,7 +141,7 @@ export function LoginForm({
           </div>
         )}
 
-        {unverifiedEmail && !forgotMode && (
+        {unverifiedEmail && (
           <div className={styles.unverifiedNotice}>
             <Icon name="solar:letter-linear" size={14} color="var(--status-warning)" />
             <div className={styles.unverifiedBody}>
@@ -188,44 +177,27 @@ export function LoginForm({
           variant="primary"
           size="L"
           fullWidth
-          disabled={loading || (forgotMode && cooldown > 0)}
+          disabled={loading}
           type="submit"
         >
-          {forgotMode
-            ? (loading
-                ? 'Sending reset link...'
-                : cooldown > 0 ? `Resend in ${cooldown}s` : success ? 'Resend Reset Link' : 'Send Reset Link')
-            : loading
-              ? (isSignUp ? 'Creating account...' : 'Signing in...')
-              : (isSignUp ? 'Create Account' : 'Login')}
+          {loading
+            ? (isSignUp ? 'Creating account...' : 'Signing in...')
+            : (isSignUp ? 'Create Account' : 'Login')}
         </Button>
       </form>
 
-      {forgotMode ? (
-        <div className={styles.toggleAuth}>
-          <button
-            type="button"
-            className={styles.toggleLink}
-            onClick={onExitForgotMode}
-          >
-            <Icon name="solar:alt-arrow-left-linear" size={14} color="currentColor" />
-            Back to login
-          </button>
-        </div>
-      ) : (
-        <div className={styles.toggleAuth}>
-          <span className={styles.toggleText}>
-            {isSignUp ? 'Already have an account?' : "Don't have an account?"}
-          </span>
-          <button
-            type="button"
-            className={styles.toggleLink}
-            onClick={onToggleSignUp}
-          >
-            {isSignUp ? 'Sign in' : 'Sign up'}
-          </button>
-        </div>
-      )}
+      <div className={styles.toggleAuth}>
+        <span className={styles.toggleText}>
+          {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+        </span>
+        <button
+          type="button"
+          className={styles.toggleLink}
+          onClick={onToggleSignUp}
+        >
+          {isSignUp ? 'Sign in' : 'Sign up'}
+        </button>
+      </div>
     </>
   );
 }

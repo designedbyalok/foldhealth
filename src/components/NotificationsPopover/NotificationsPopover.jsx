@@ -114,6 +114,8 @@ export function NotificationsPopover({ onClose, anchorRef }) {
       openPreferencesFromNotification?.();
     } else if (n.action === 'openPendingUsers') {
       openPendingUsersFromNotification?.();
+    } else if (n.action === 'openLockedUsers') {
+      openPendingUsersFromNotification?.(['Locked']);
     } else if (n.action === 'openReassignmentSummary' && n.reassignmentJobId) {
       openReassignmentSummary?.(n.reassignmentJobId);
     }
@@ -235,6 +237,7 @@ function iconForType(type) {
   if (type === 'hcc.comment_mention') return 'solar:mention-square-linear';
   if (type === 'profile.name_incomplete') return 'solar:user-id-linear';
   if (type === 'user.signup_requested') return 'solar:user-check-linear';
+  if (type === 'user.locked') return 'solar:lock-keyhole-minimalistic-linear';
   return 'solar:bell-linear';
 }
 

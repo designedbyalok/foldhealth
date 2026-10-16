@@ -87,3 +87,12 @@
   flex-wrap: nowrap;
   white-space: nowrap;
 }
+
+/* "Account locked since 10:42 AM, 5 failed attempts" under the email. */
+.userLockLine {
+  font-size: var(--font-sm);
+  color: var(--status-error);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

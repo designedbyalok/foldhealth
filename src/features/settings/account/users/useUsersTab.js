@@ -4,6 +4,9 @@ import { useAppStore } from '../../../../store/useAppStore';
 import { FALLBACK_USERS } from '../../fallbackUsers';
 import { getInitials } from '../AccountPanel.constants';
 import { ROLE_FIELDS } from './UsersTab.utils';
+import { apiFetch } from '../../../../lib/apiFetch';
+import { flushSecurityEmails } from '../../../auth/accountSecurity';
+import { isLocked } from './accountLock';
 
 // Map a raw `profiles` row to the user shape the table renders. Shared by the
 // list fetch and the single-row save so a save can update just its own row
@@ -119,6 +122,43 @@ export function useUsersTab() {
     fetchedRef.current = true;
     fetchUsers();
   }, [fetchUsers]);
+
+  // Account lockout state (admins only; RLS returns nothing to others, and
+  // nothing at all before account_lockout_migration.sql runs).
+  const [lockouts, setLockouts] = useState({});
+  useEffect(() => {
+    let live = true;
+    supabase.from('account_lockouts').select('*').then(({ data, error }) => {
+      if (live && !error) setLockouts(Object.fromEntries((data || []).map(r => [r.user_id, r])));
+    });
+    return () => { live = false; };
+  }, []);
+  const usersWithLock = useMemo(
+    () => users.map(u => (lockouts[u.id] ? { ...u, lock: lockouts[u.id] } : u)),
+    [users, lockouts],
+  );
+
+  const unlockAccount = async (user, { reason, note, identityConfirmed, requireReset }) => {
+    if (!isCurrentUserAdmin) {
+      showToast('Only practice admins can unlock accounts');
+      return false;
+    }
+    const { data, error } = await supabase.rpc('admin_unlock_account', {
+      target: user.id,
+      reason,
+      note: note || null,
+      identity_confirmed: !!identityConfirmed,
+      require_reset: !!requireReset,
+    });
+    if (error) {
+      showToast(error.message || 'Could not unlock the account');
+      return false;
+    }
+    if (data) setLockouts(prev => ({ ...prev, [user.id]: data }));
+    flushSecurityEmails();
+    showToast(`${user.name} unlocked`);
+    return true;
+  };
 
   const toggleUserStatus = async (user) => {
     if (!isCurrentUserAdmin) {
@@ -236,14 +276,19 @@ export function useUsersTab() {
       return;
     }
     if (!user.email) { showToast('No email address for this user'); return; }
+    // A 6-digit code to the email on file (api/password-reset.js). Admins
+    // never see or set the password.
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-        redirectTo: window.location.origin,
+      const res = await apiFetch('/api/password-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'request', userId: user.id }),
       });
-      if (error) showToast(`Error: ${error.message}`);
-      else showToast(`Password reset email sent to ${user.email}`);
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) showToast(json?.error?.message || 'Failed to send the reset code');
+      else showToast(`Reset code sent to ${user.email}`);
     } catch {
-      showToast('Failed to send password reset email');
+      showToast('Failed to send the reset code');
     }
   };
 
@@ -280,10 +325,10 @@ export function useUsersTab() {
   };
 
   const filteredUsers = useMemo(() => {
-    let list = users;
+    let list = usersWithLock;
     if (userFilters.status.length) {
       const statusSet = new Set(userFilters.status);
-      list = list.filter(u => statusSet.has(u.status));
+      list = list.filter(u => statusSet.has(u.status) || (statusSet.has('Locked') && isLocked(u.lock)));
     }
     if (userFilters.roles.length) {
       const rolesSet = new Set(userFilters.roles);
@@ -300,7 +345,7 @@ export function useUsersTab() {
       u.email.toLowerCase().includes(q) ||
       u.role.toLowerCase().includes(q) ||
       u.location.toLowerCase().includes(q));
-  }, [users, searchVal, userFilters]);
+  }, [usersWithLock, searchVal, userFilters]);
 
   const filterOptions = useMemo(() => {
     const roles = new Set();
@@ -310,7 +355,7 @@ export function useUsersTab() {
       if (u.location) locations.add(u.location);
     }
     return {
-      status: ['Active', 'Pending', 'Invited', 'Inactive', 'Suspended', 'Rejected'],
+      status: ['Active', 'Pending', 'Invited', 'Inactive', 'Suspended', 'Rejected', 'Locked'],
       roles: [...roles].sort(),
       location: [...locations].sort(),
     };
@@ -342,6 +387,8 @@ export function useUsersTab() {
     deleteUser,
     deleteUsersBulk,
     resetPassword,
+    unlockAccount,
+    lockouts,
     saveUserProfile,
     filteredUsers,
     filterOptions,

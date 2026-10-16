@@ -10,6 +10,7 @@ import { USERS_FILTER_DEFS, USERS_COLUMNS } from './UsersTab.utils';
 import { useUsersTab } from './useUsersTab';
 import { UsersTabRow } from './UsersTabRow';
 import { OooUserRecordsDrawer } from '../../../ooo/OooRecordsDrawers';
+import { UnlockAccountDialog } from './UnlockAccountDialog';
 import panelStyles from '../AccountPanel.module.css';
 import rowStyles from './UserRow.module.css';
 
@@ -19,6 +20,7 @@ export function UsersTab({ tabsForBar, activeTab, setActiveTab }) {
   const [userPage, setUserPage] = useState(1);
   const [userPerPage, setUserPerPage] = useState(10);
   const [oooUser, setOooUser] = useState(null);
+  const [unlockUser, setUnlockUser] = useState(null);
 
   useEffect(() => { setUserPage(1); }, [tab.searchVal, tab.userFilters, sortKey, sortDir]);
 
@@ -118,6 +120,9 @@ export function UsersTab({ tabsForBar, activeTab, setActiveTab }) {
       {tab.viewingUser && (
         <ViewUserDrawer
           user={tab.viewingUser}
+          lock={tab.lockouts[tab.viewingUser.id]}
+          canUnlock={tab.isCurrentUserAdmin}
+          onUnlock={() => setUnlockUser(tab.viewingUser)}
           onClose={() => tab.setViewingUser(null)}
           canEdit={tab.isCurrentUserAdmin}
           onEdit={() => { tab.setEditingUser(tab.viewingUser); tab.setViewingUser(null); }}
@@ -128,6 +133,13 @@ export function UsersTab({ tabsForBar, activeTab, setActiveTab }) {
           user={tab.editingUser}
           onClose={() => tab.setEditingUser(null)}
           onSave={(updates) => tab.saveUserProfile(tab.editingUser.id, updates)}
+        />
+      )}
+      {unlockUser && (
+        <UnlockAccountDialog
+          user={unlockUser}
+          onCancel={() => setUnlockUser(null)}
+          onConfirm={async (choice) => { if (await tab.unlockAccount(unlockUser, choice)) setUnlockUser(null); }}
         />
       )}
       {oooUser && (

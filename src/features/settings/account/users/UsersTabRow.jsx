@@ -5,6 +5,7 @@ import { ROLE_COLORS } from '../AccountPanel.constants';
 import { statusBadge, formatDate, formatRelative } from './UsersTab.utils';
 import { UserActions } from './UserActions';
 import { OverflowBadge } from './OverflowBadge';
+import { lockLine } from './accountLock';
 import styles from './UserRow.module.css';
 
 export function UsersTabRow({
@@ -42,6 +43,7 @@ export function UsersTabRow({
           <div className={styles.userInfo}>
             <span className={styles.userName}>{user.name}</span>
             <span className={styles.userEmail}>{user.email}</span>
+            {lockLine(user.lock) && <span className={styles.userLockLine}>{lockLine(user.lock)}</span>}
           </div>
         </button>
       </td>

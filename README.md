@@ -47,6 +47,16 @@ build requires esbuild ≥ 0.28 on Node 26.
   to Panel and Show Here. Also: care plan priority icons line up under the
   "P" header, and the document preview hides the PDF viewer's scrollbar.
 
+- **Account lockout (HITRUST).** Five failed password attempts in a row lock
+  a staff account until a person acts (no timer). Sign-in pauses on the 5th
+  try with Reset password and Contact your administrator. Forgot password now
+  uses a 6-digit emailed code (15 minutes, 5 tries, 3 per hour, no reuse of
+  recent passwords). Admins see a red "Account locked since…" line and a
+  Locked filter in Settings → Users, and unlock from the profile with a
+  recorded reason. Security emails go out through Resend. Needs
+  `supabase/account_lockout_migration.sql` and the Supabase Password
+  Verification Hook.
+
 - **Care program in a right panel (floating sidebar).** A care program's ⋯
   menu, and the Care Plan's ⋯ menu, offer "Open in Right Panel" when the
   floating sidebar is on: the patient view becomes a patient card

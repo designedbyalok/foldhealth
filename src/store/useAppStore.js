@@ -404,8 +404,8 @@ export const useAppStore = create((set, get) => ({
   clearPendingOpenPreferences: () => set({ pendingOpenPreferences: false }),
   // Settings → Users status filter to apply on next mount (from a notification).
   pendingUsersStatusFilter: null,
-  openPendingUsersFromNotification: () => {
-    set({ pendingUsersStatusFilter: ['Pending'] });
+  openPendingUsersFromNotification: (status = ['Pending']) => {
+    set({ pendingUsersStatusFilter: status });
     get().setActivePage('settings');
     get().setSettingsNavItem('account');
     get().setAccountTab('users');

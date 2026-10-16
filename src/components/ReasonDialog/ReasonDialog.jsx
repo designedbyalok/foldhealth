@@ -28,6 +28,7 @@ import styles from './ReasonDialog.module.css';
  * @param {boolean}  props.notes            – Set false where a canonical reason
  *   is the whole record and free text has nothing to add; the standard reason
  *   then becomes mandatory, since it is the only input left
+ * @param {string}   [props.notesPlaceholder] – Placeholder for the notes box
  * @param {node}     props.children         – Extra fields, above the reason
  * @param {function} props.onCancel
  * @param {function} props.onSubmit        – Called with ({ code, freeText })
@@ -41,6 +42,7 @@ export function ReasonDialog({
   confirmVariant,
   confirmDisabled = false,
   notes = true,
+  notesPlaceholder,
   children,
   onCancel,
   onSubmit,
@@ -92,9 +94,9 @@ export function ReasonDialog({
                 id={`${uid}-reason-notes`}
                 value={freeText}
                 onChange={(e) => setFreeText(e.target.value)}
-                placeholder={code
+                placeholder={notesPlaceholder || (code
                   ? 'Add any context the next reviewer should see…'
-                  : 'Explain why you\'re overriding this check…'}
+                  : 'Explain why you\'re overriding this check…')}
                 rows={3}
               />
             </div>

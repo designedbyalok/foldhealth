@@ -1,0 +1,61 @@
+/* Lock context on the user profile drawer, under the banner. */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0 var(--space-3) var(--space-3);
+  padding: var(--space-3);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: 8px;
+  background: var(--neutral-25);
+}
+.locked {
+  border-color: color-mix(in srgb, var(--status-error) 30%, transparent);
+  background: var(--status-error-light);
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.title {
+  flex: 1;
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-400);
+}
+.locked .title { color: var(--status-error); }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2) var(--space-4);
+}
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  min-width: 0;
+}
+.label {
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+}
+.value {
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+  overflow-wrap: anywhere;
+}
+.note {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+/* Unlock dialog checkboxes. */
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+  cursor: pointer;
+}
