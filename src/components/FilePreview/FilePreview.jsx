@@ -21,7 +21,7 @@ import styles from './FilePreview.module.css';
  * Storage URLs (which embed the original filename) type correctly even
  * when the doc record predates the `ext` field.
  */
-export function FilePreview({ src, file, name, ext, className }) {
+export function FilePreview({ src, file, name, ext, className, hideScrollbar = false }) {
   const [blobUrl, setBlobUrl] = useState(null);
   const kind = resolveFileKind({ src: src || blobUrl, name, ext });
   const [docxHtml, setDocxHtml] = useState(null);
@@ -87,6 +87,16 @@ export function FilePreview({ src, file, name, ext, className }) {
   }
 
   if (kind === 'pdf') {
+    // The browser's PDF viewer draws its own scrollbar, which CSS can't
+    // style, so `hideScrollbar` clips it off the right edge instead.
+    // Scrolling by wheel or trackpad still works.
+    if (hideScrollbar) {
+      return (
+        <div className={`${wrapClass} ${styles.pdfClip}`}>
+          <iframe src={resolvedSrc} title={name || 'Document'} className={styles.pdfClipFrame} />
+        </div>
+      );
+    }
     return <iframe src={resolvedSrc} title={name || 'Document'} className={wrapClass} />;
   }
 

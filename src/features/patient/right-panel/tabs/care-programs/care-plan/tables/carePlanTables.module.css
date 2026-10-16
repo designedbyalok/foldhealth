@@ -62,11 +62,17 @@
 .priorityTd {
   composes: td from '../../../../../../../components/WorklistShell/WorklistRow.module.css';
   width: 28px;
-  padding: calc(var(--space-1) + var(--space-1) / 2) var(--space-1);
   border-right: none;
   border-left: none;
   text-align: center;
   vertical-align: middle;
+}
+/* Scoped under .row so it outranks the composed WorklistRow .td padding,
+   whose stylesheet can be injected after this one. 2px sides fit the 24px
+   button in the 28px column, centred under the "P" header and clear of
+   the title cell's type icon. */
+.row .priorityTd {
+  padding: calc(var(--space-1) + var(--space-1) / 2) calc(var(--space-1) / 2);
 }
 .titleTd {
   composes: membersTd from '../../../../../../../components/WorklistShell/WorklistRow.module.css';

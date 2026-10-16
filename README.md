@@ -37,6 +37,16 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **HCC Diagnosis Gaps and the Care Plan in the side panel (floating
+  sidebar).** The Diagnosis Gaps Details drawer has "Open in Side Panel"
+  beside its close button: the drawer morphs into the patient split (a view
+  transition) with the patient card on the left, laid out 30 / 35 / 35
+  (patient, document preview, ICDs). "Open as Drawer" goes back to the
+  worklist with the drawer. A program's care plan can also open as its own
+  panel ("Open in Separate Panel"); its Care Plan step then says so, with Go
+  to Panel and Show Here. Also: care plan priority icons line up under the
+  "P" header, and the document preview hides the PDF viewer's scrollbar.
+
 - **Care program in a right panel (floating sidebar).** A care program's ⋯
   menu, and the Care Plan's ⋯ menu, offer "Open in Right Panel" when the
   floating sidebar is on: the patient view becomes a patient card

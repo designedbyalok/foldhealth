@@ -48,6 +48,7 @@ export function DocEvidenceViewer({ member, icdScope, openDoc = null }) {
         name={openDoc.name || 'Source document'}
         ext={docExt}
         className={styles.frame}
+        hideScrollbar
       />
     );
   }

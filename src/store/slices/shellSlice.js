@@ -91,6 +91,18 @@ export function createShellSlice(set, get) {
       set({ programPanelSplit: next });
     },
 
+    // The split layout's panel stack, right of the patient card:
+    // { programKey, ids, activeId } | null. `programKey` is the main panel it
+    // was built over (an open program's key, or 'patient-plan'); ids are panel
+    // ids in display order ('program' is the main panel, 'careplan' a program's
+    // care plan opened on its own, 'tab:<name>' a right-panel tab). In the
+    // store so a care plan header can open its plan as a panel. See
+    // PatientDetailView and hooks/useProgramPanelSplitActive.
+    programPanelStack: null,
+    setProgramPanelStack: (next) => set(s => ({
+      programPanelStack: typeof next === 'function' ? next(s.programPanelStack) : next,
+    })),
+
     featurebaseJwt: null,
     _featurebaseJwtPending: false,
     setFeaturebaseJwt: (jwt) => set({ featurebaseJwt: jwt }),

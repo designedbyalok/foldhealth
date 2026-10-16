@@ -11409,6 +11409,11 @@ export const useAppStore = create((set, get) => ({
   // HCC DiagPanel drawer (Phase 2: read-only)
   diagPanelOpen: false,
   diagPanelMemberId: null,
+  // Floating shell only: the open Diagnosis Gaps Details shows as the main
+  // panel of the patient split (patient card on the left) instead of as a
+  // drawer. See hooks/useProgramPanelSplitActive and DiagPanel/diagPanelSplit.
+  diagPanelSplit: false,
+  setDiagPanelSplit: (next) => set({ diagPanelSplit: next }),
   diagActiveTab: 'Codes',
   diagDosFilter: null,      // null = first DOS (member.dos_list[0]); 'ALL' = sweep; else a date string
   diagViewMode: 'ICD',      // 'ICD' (flat sections, default) | 'HCC' (grouped)
@@ -13047,6 +13052,7 @@ export const useAppStore = create((set, get) => ({
   openDiagPanel: (id, opts = {}) => set({
     diagPanelOpen: true,
     diagPanelMemberId: id,
+    diagPanelSplit: false,
     diagActiveTab: 'Codes',
     // `initialDos` and `highlightCode` come from row popovers (Visits → open a
     // specific DOS, OpenICDs hover → scroll/highlight a specific code).
@@ -13072,7 +13078,7 @@ export const useAppStore = create((set, get) => ({
     if ((get().hccMembers?.length || 0) === 0) await get().fetchHccMembers?.();
     get().openDiagPanel(memberId, { leftPanel: 'comments' });
   },
-  closeDiagPanel: () => set({ diagPanelOpen: false, diagPanelMemberId: null, diagLeftPanel: null, diagActivityIcd: null, diagClaimDos: null, diagOpenDocId: null }),
+  closeDiagPanel: () => set({ diagPanelOpen: false, diagPanelMemberId: null, diagPanelSplit: false, diagLeftPanel: null, diagActivityIcd: null, diagClaimDos: null, diagOpenDocId: null }),
   setDiagActiveTab: (tab) => set({ diagActiveTab: tab }),
   setDiagDosFilter: (dos) => set({ diagDosFilter: dos }),
   setDiagViewMode: (mode) => set({ diagViewMode: mode }),

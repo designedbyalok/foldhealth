@@ -9,10 +9,13 @@ import { RecordsRequestDialog } from './RecordsRequestDialog';
 import { DiagPanelViewHeader } from './DiagPanelViewHeader';
 import { DiagPanelViewToolbar } from './DiagPanelViewToolbar';
 import { DiagPanelViewCards } from './DiagPanelViewCards';
+import { useAppStore } from '../../../store/useAppStore';
+import { openDiagInSidePanel, returnDiagToDrawer } from './diagPanelSplit';
 import styles from './DiagPanel.module.css';
 
 export function DiagPanelView(props) {
   const {
+    embedded = false,
     member,
     closeDiagPanel,
     diagLeftPanel,
@@ -50,20 +53,42 @@ export function DiagPanelView(props) {
     return () => clearTimeout(t);
   }, [diagLeftPanel]);
   const initialWidth = rhsWidth != null ? rhsWidth + 1 : 641;
+  // "Open in Side Panel" moves this into the patient split, which only the
+  // floating shell has.
+  const floating = useAppStore(s => s.sidebarShape === 'floating');
 
   if (!member) return null;
 
-  return (
-    <Drawer
-      title={<span className={styles.drawerTitle}>Diagnosis Gaps Details</span>}
-      onClose={closeDiagPanel}
-      width={diagLeftPanel ? initialWidth : undefined}
-      className={[styles.panel, expanded ? styles.panelExpanded : ''].join(' ')}
-      bodyClassName={[styles.body, expanded ? styles.bodyExpanded : ''].join(' ')}
-      headerStyle={{ display: 'none' }}
-    >
+  // In the side panel the documents and ICD panes split it 50/50 (35% of
+  // the screen each beside the 30% patient card) until the divider is dragged.
+  const rhsFlex = !diagLeftPanel ? undefined
+    : rhsWidth != null || !embedded ? `0 0 ${rhsWidth ?? 640}px`
+      : '0 0 50%';
+  const body = (
+    <>
       <div className={styles.titleRow}>
         <span className={styles.titleText}>Diagnosis Gaps Details</span>
+        {embedded ? (
+          <>
+            <ActionButton
+              icon="solar:minimize-square-minimalistic-linear"
+              size="L"
+              tooltip="Open as Drawer"
+              onClick={returnDiagToDrawer}
+            />
+            <span className={styles.titleDivider} />
+          </>
+        ) : floating && (
+          <>
+            <ActionButton
+              icon="solar:sidebar-minimalistic-linear"
+              size="L"
+              tooltip="Open in Side Panel"
+              onClick={openDiagInSidePanel}
+            />
+            <span className={styles.titleDivider} />
+          </>
+        )}
         <ActionButton size="L" tooltip="Close" onClick={closeDiagPanel}>
           <CloseIcon size={20} color="var(--neutral-300)" />
         </ActionButton>
@@ -90,7 +115,7 @@ export function DiagPanelView(props) {
         )}
         <div
           className={diagLeftPanel ? styles.rightPane : styles.rightPaneFull}
-          style={diagLeftPanel ? { flex: `0 0 ${rhsWidth ?? 640}px` } : undefined}
+          style={rhsFlex ? { flex: rhsFlex } : undefined}
         >
           <DiagPanelViewHeader {...props} />
           <DiagPanelViewToolbar {...props} />
@@ -137,6 +162,21 @@ export function DiagPanelView(props) {
           onConfirm={confirmRecordsRequest}
         />
       )}
+    </>
+  );
+
+  if (embedded) return <div className={styles.embedded} data-diag-split>{body}</div>;
+
+  return (
+    <Drawer
+      title={<span className={styles.drawerTitle}>Diagnosis Gaps Details</span>}
+      onClose={closeDiagPanel}
+      width={diagLeftPanel ? initialWidth : undefined}
+      className={[styles.panel, expanded ? styles.panelExpanded : ''].join(' ')}
+      bodyClassName={[styles.body, expanded ? styles.bodyExpanded : ''].join(' ')}
+      headerStyle={{ display: 'none' }}
+    >
+      {body}
     </Drawer>
   );
 }

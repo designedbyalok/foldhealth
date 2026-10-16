@@ -6,6 +6,18 @@
   background: var(--neutral-50);
 }
 
+/* hideScrollbar: the PDF viewer's 15px scrollbar sits past the clip. */
+.pdfClip {
+  overflow: hidden;
+  display: flex;
+}
+.pdfClipFrame {
+  flex: 0 0 auto;
+  width: calc(100% + var(--space-4) - var(--space-1) / 4);
+  height: 100%;
+  border: 0;
+}
+
 .center {
   display: flex;
   align-items: center;

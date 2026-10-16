@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo, lazy, Suspense } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { Icon } from '../../components/Icon/Icon';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
@@ -18,7 +18,11 @@ import { CcmTimerWidget } from './shell/CcmTimerWidget/CcmTimerWidget';
 import { CcmTimerDockProvider } from './shell/CcmTimerWidget/CcmTimerDockContext';
 import { PatientBreadcrumb } from './shell/PatientBreadcrumb/PatientBreadcrumb';
 import { ProgramPanel } from './right-panel/tabs/care-programs/program-detail/ProgramPanel/ProgramPanel';
-import { useProgramPanelSplitTarget } from './hooks/useProgramPanelSplitActive';
+import { useProgramPanelSplitTarget, CARE_PLAN_PANEL_ID } from './hooks/useProgramPanelSplitActive';
+
+// Diagnosis Gaps Details as the split's main panel ("Open in Side Panel" on
+// the HCC drawer). Lazy, like the drawer, so the HCC panel stays its own chunk.
+const DiagPanel = lazy(() => import('../hcc/DiagPanel/DiagPanel').then(m => ({ default: m.DiagPanel })));
 import { PatientCarePlanPane } from './right-panel/tabs/care-management/PatientCarePlanPane/PatientCarePlanPane';
 import { programUrlKey } from './right-panel/tabs/care-programs/CareProgramsTab/CareProgramsTab.utils';
 import { CARE_GAP_TABS } from './data/careGapsMock';
@@ -117,7 +121,7 @@ export function PatientDetailView() {
   const activeTab = useAppStore(s => s.patientProfileTab);
   const setActiveTab = useAppStore(s => s.setPatientProfileTab);
   const currentUserId = useAppStore(s => s.currentUserProfile?.id);
-  // 'program' | 'patient-plan' | null: what the split's main panel shows.
+  // 'diag' | 'program' | 'patient-plan' | null: what the split's main panel shows.
   const splitTarget = useProgramPanelSplitTarget();
   const programSplit = splitTarget !== null;
   // Split layout's panel stack, right of the patient card: the main panel
@@ -128,13 +132,20 @@ export function PatientDetailView() {
   const programKey = useAppStore(s => s.selectedCareProgramKey);
   // The main panel the stack was built over: the open program, or the
   // patient-level care plan.
-  const primaryKey = splitTarget === 'patient-plan' ? 'patient-plan' : programKey;
+  const primaryKey = splitTarget === 'diag' ? 'diag'
+    : splitTarget === 'patient-plan' ? 'patient-plan' : programKey;
   const careProgramsByPatient = useAppStore(s => s.careProgramsByPatient);
-  const [stackState, setStackState] = useState(null); // { programKey, ids, activeId }
+  // In the store so the care plan header can open its plan as a panel.
+  const stackState = useAppStore(s => s.programPanelStack); // { programKey, ids, activeId } | null
+  const setStackState = useAppStore(s => s.setProgramPanelStack);
   const stack = stackState && stackState.programKey === primaryKey
     ? stackState
     : { programKey: primaryKey, ids: ['program'], activeId: 'program' };
   const [leftWidth, setLeftWidth] = useState(496);
+  // The HCC side panel opens at 30 / 35 / 35 (patient card / documents /
+  // ICDs); null holds the card at 30% until it's dragged.
+  const [diagLeftWidth, setDiagLeftWidth] = useState(null);
+  const splitCardRef = useRef(null);
   // Seed from the device's most recent choice so the first paint matches;
   // the per-user value is reconciled once the profile id resolves (below).
   const [leftCollapsed, setLeftCollapsed] = useState(() => readCollapse('last') === 'true');
@@ -194,7 +205,7 @@ export function PatientDetailView() {
     return () => clearTimeout(t);
   }, [leftCollapsed]);
 
-  const handleMouseDown = useCallback((e) => {
+  const handleMouseDown = useCallback((e, setWidth = setLeftWidth) => {
     e.preventDefault();
     dragging.current = true;
     document.body.style.cursor = 'col-resize';
@@ -204,7 +215,7 @@ export function PatientDetailView() {
       if (!dragging.current || !bodyRef.current) return;
       const rect = bodyRef.current.getBoundingClientRect();
       const newWidth = Math.max(300, Math.min(700, e.clientX - rect.left));
-      setLeftWidth(newWidth);
+      setWidth(newWidth);
     };
 
     const handleMouseUp = () => {
@@ -369,13 +380,33 @@ export function PatientDetailView() {
         <div className={styles.hostedTabBody}>{renderRightTab(tab)}</div>
       </div>
     );
-    const programName = (careProgramsByPatient[selectedPatientId] || [])
-      .find(p => programUrlKey(p) === programKey)?.name || 'Care Program';
+    const openProgram = (careProgramsByPatient[selectedPatientId] || [])
+      .find(p => programUrlKey(p) === programKey) || null;
+    const programName = openProgram?.name || 'Care Program';
     const panels = stack.ids.map((id) => {
       if (id === 'program') {
+        if (splitTarget === 'diag') {
+          return {
+            id,
+            title: 'Diagnosis Gaps',
+            content: <Suspense fallback={null}><DiagPanel embedded /></Suspense>,
+          };
+        }
         return splitTarget === 'patient-plan'
           ? { id, title: 'Care Plan', content: <PatientCarePlanPane patientId={selectedPatientId} /> }
           : { id, title: programName, content: <ProgramPanel /> };
+      }
+      // The program's care plan on its own; closing it returns the plan to
+      // the program's Care Plan step.
+      if (id === CARE_PLAN_PANEL_ID) {
+        return {
+          id,
+          title: 'Care Plan',
+          onClose: () => removePanel(id),
+          content: openProgram
+            ? <PatientCarePlanPane patientId={selectedPatientId} program={openProgram} inPanel />
+            : null,
+        };
       }
       const tab = id.slice(TAB_PREFIX.length);
       return {
@@ -393,10 +424,18 @@ export function PatientDetailView() {
         content: <div className={styles.hostedTabBody}>{renderRightTab(tab)}</div>,
       };
     });
+    const isDiag = splitTarget === 'diag';
+    const setCardWidth = isDiag ? setDiagLeftWidth : setLeftWidth;
+    const cardWidth = isDiag ? diagLeftWidth : leftWidth;
     return (
       <CcmTimerDockProvider>
       <div className={styles.split} ref={bodyRef}>
-        <section className={styles.splitPatientCard} style={{ width: leftWidth }} aria-label="Patient">
+        <section
+          ref={splitCardRef}
+          className={styles.splitPatientCard}
+          style={{ width: cardWidth ?? '30%' }}
+          aria-label="Patient"
+        >
           <PatientBreadcrumb patientName={patientWithAppStatus.name} />
           <PatientP360Banner patient={patientWithAppStatus} variant="drawer" />
           <div className={styles.splitPatientTabs}>
@@ -418,21 +457,24 @@ export function PatientDetailView() {
           role="separator"
           aria-orientation="vertical"
           aria-label="Resize patient panel"
-          aria-valuenow={leftWidth}
+          aria-valuenow={cardWidth ?? undefined}
+          aria-valuetext={cardWidth == null ? '30%' : undefined}
           aria-valuemin={300}
           aria-valuemax={700}
           tabIndex={0}
-          onMouseDown={handleMouseDown}
+          onMouseDown={(e) => handleMouseDown(e, setCardWidth)}
           onKeyDown={(e) => {
             if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
             e.preventDefault();
             const step = e.key === 'ArrowLeft' ? -16 : 16;
-            setLeftWidth(w => Math.max(300, Math.min(700, w + step)));
+            const from = cardWidth ?? splitCardRef.current?.offsetWidth ?? 496;
+            setCardWidth(Math.max(300, Math.min(700, from + step)));
           }}
         >
           <div className={styles.dragHandleLine} />
         </div>
         <PanelStack
+          className={styles.splitStack}
           panels={panels}
           activeId={stack.activeId}
           onActiveChange={(activeId) => setStack({ activeId })}

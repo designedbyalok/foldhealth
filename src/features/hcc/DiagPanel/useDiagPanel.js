@@ -24,6 +24,7 @@ import { POS_BY_VT, PROVIDER_POOL_BY_VT, VISIT_TYPES } from '../reference/visitT
 import { DOC_TYPES } from '../data/chartDocs';
 import { isAISuggested, CLOSED_ICD_STATUSES, ROLE_KEY_BY_USER } from './DiagPanel.utils';
 import { currentAuthor } from './commentAuthor';
+import { isDiagHandoff } from './diagPanelSplit';
 
 export function useDiagPanel() {
   const memberId = useAppStore(s => s.diagPanelMemberId);
@@ -198,9 +199,10 @@ export function useDiagPanel() {
     if (focusIdx >= 0 && !diagLeftPanel) setDiagLeftPanel('documents');
   }, [focusIdx, diagLeftPanel, setDiagLeftPanel]);
 
-  // Fetch diagnosis gaps from Supabase when member changes
+  // Fetch diagnosis gaps from Supabase when member changes (not when the
+  // panel only moved between the drawer and the side panel).
   useEffect(() => {
-    if (member?.name) fetchHccDiagnosisGaps(member.id, member.name);
+    if (member?.name && !isDiagHandoff(member.id)) fetchHccDiagnosisGaps(member.id, member.name);
   }, [member?.id, member?.name, fetchHccDiagnosisGaps]);
 
   // Phase 2f — fall back to the local ICD mock when Supabase has no rows for
@@ -1217,7 +1219,7 @@ export function useDiagPanel() {
 
 
 
-  const rafImpact = (Number(member.ri) || 0).toFixed(3);
+  const rafImpact = (Number(member?.ri) || 0).toFixed(3);
   const noop = (label) => () => showToast(`${label} — coming soon`);
 
 

@@ -28,6 +28,7 @@ const SIGN_MENU_ITEMS = [
 
 export function ProgramDetailViewContentHeader({
   program,
+  carePlanInPanel,
   onSignMedRecon,
   stepFlags,
   assessmentCfg,
@@ -177,7 +178,7 @@ export function ProgramDetailViewContentHeader({
               <span className={styles.assessmentMeta}>Reviewed by Jonathan Bush (NP) on 05/01/25</span>
             </div>
           </div>
-        ) : isCarePlanStep ? (
+        ) : isCarePlanStep && !carePlanInPanel ? (
           <CarePlanHeader patientId={selectedPatientId} program={program} />
         ) : (
           <span className={styles.contentTitle}>
@@ -188,6 +189,7 @@ export function ProgramDetailViewContentHeader({
               : isProgramTasksStep ? 'Program Related Tasks'
               : isProgramFilesStep ? 'Document Library'
               : isLettersStep ? 'Program Related Letters'
+              : isCarePlanStep ? 'Care Plan'
               : stepName}
           </span>
         )}

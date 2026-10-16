@@ -810,6 +810,10 @@
   gap: 8px;
   padding: 64px 24px;
 }
+.carePlanNoticeActions {
+  display: flex;
+  gap: var(--space-2);
+}
 .stepPlaceholderTitle {
   font-size: var(--font-lg);
   font-weight: 500;

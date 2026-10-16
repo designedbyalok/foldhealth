@@ -41,6 +41,37 @@
   font-weight: 500;
   color: var(--neutral-500);
 }
+/* Between "Open in Side Panel" and close, per the drawer header rule. */
+.titleDivider {
+  width: calc(var(--space-1) / 4);
+  height: var(--space-4);
+  background: var(--neutral-150);
+  flex-shrink: 0;
+}
+
+/* The same content as the main panel of the patient split (floating shell),
+   with no drawer around it. */
+.embedded {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--neutral-0);
+}
+/* Level with the patient card's 40px breadcrumb header beside it. */
+.embedded .titleRow {
+  height: var(--space-10);
+}
+
+/* "Open in Side Panel" morph (diagPanelSplit.js): the drawer and the split's
+   panel stack share this name for the length of the view transition, so one
+   becomes the other. Drawer motion is off meanwhile so its own slide-in
+   doesn't play inside the morph on the way back. */
+:root[data-diag-morph] .panel {
+  view-transition-name: diag-surface;
+  transition: none !important;
+}
 
 /* ── Patient banner — matches prototype's 57px row (line 1911) ───────── */
 .patientBanner {

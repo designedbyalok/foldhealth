@@ -1,6 +1,24 @@
 import { Icon } from '../../../../../../../components/Icon/Icon';
 import { DownChevronIcon } from '../../../../../../../components/Icon/DownChevronIcon';
+import { RingEmptyState } from '../../../../../../../components/RingEmptyState/RingEmptyState';
+import { Button } from '../../../../../../../components/Button/Button';
+import { focusCarePlanPanel, closeCarePlanPanel } from '../../../../../hooks/useProgramPanelSplitActive';
 import styles from './ProgramDetailView.module.css';
+
+// The Care Plan step while its plan is open as its own panel in the split,
+// so the plan isn't edited in two places at once.
+export function CarePlanInPanelNotice() {
+  return (
+    <div className={styles.stepPlaceholder}>
+      <RingEmptyState icon="solar:sidebar-minimalistic-linear" label="Care plan is open in a separate panel">
+        <div className={styles.carePlanNoticeActions}>
+          <Button variant="secondary" size="S" onClick={closeCarePlanPanel}>Show Here</Button>
+          <Button size="S" onClick={focusCarePlanPanel}>Go to Panel</Button>
+        </div>
+      </RingEmptyState>
+    </div>
+  );
+}
 
 export function StepPlaceholder({ name }) {
   return (

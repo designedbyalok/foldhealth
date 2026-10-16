@@ -15,7 +15,7 @@ import { parseLocalDate } from '../../../../../../../lib/localDate';
 import { carePlanSignShareEnabled } from '../lib/carePlanSignState';
 import { useCarePlanDraftState } from '../lib/useCarePlanDraftState';
 import { ConfirmDialog } from '../../../../../../../components/ConfirmDialog/ConfirmDialog';
-import { useRightPanelMenuOption } from '../../../../../hooks/useProgramPanelSplitActive';
+import { useCarePlanPanelMenu } from '../../../../../hooks/useProgramPanelSplitActive';
 import styles from '../../program-detail/ProgramDetailView/ProgramDetailView.module.css';
 
 function fmtCarePlanDate(isoOrDisplay) {
@@ -41,7 +41,7 @@ const CARE_PLAN_SIGN_MENU_ITEMS = [
  * Sign / Send for Review, More). Rendered by the program Care Plan step and by
  * the patient-level Care Plan tab, so both read and act identically.
  */
-export function CarePlanHeader({ patientId, program }) {
+export function CarePlanHeader({ patientId, program, inPanel = false }) {
   const [carePlanReviewOpen, setCarePlanReviewOpen] = useState(false);
   const [carePlanMoreMenu, setCarePlanMoreMenu] = useState(null);
   const requestCarePlanShare = useAppStore(s => s.requestCarePlanShare);
@@ -123,9 +123,10 @@ export function CarePlanHeader({ patientId, program }) {
     [liveCarePlan, carePlanMeta.usingMock, carePlanDraft],
   );
 
-  // "Open in Right Panel" / "Open Inline" (floating sidebar only), the same
-  // entry the care program's ⋯ menu offers.
-  const rightPanel = useRightPanelMenuOption();
+  // Floating sidebar only: open this plan in its own panel (or switch to
+  // the right-panel layout with it there), or, inside that panel, put it
+  // back in the program. Patient-level plans get the layout toggle.
+  const rightPanel = useCarePlanPanelMenu({ program, inPanel });
   const rightPanelItems = rightPanel.items;
   const carePlanMoreItems = useMemo(() => {
     const items = [

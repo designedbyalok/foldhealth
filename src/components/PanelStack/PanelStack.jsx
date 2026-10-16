@@ -33,6 +33,7 @@ const OBSERVER_THRESHOLDS = [0, 0.1, REVEAL_RATIO, 0.25, 0.5, 0.75, 1];
  * @param {(ids: string[]) => void} [props.onReorder]    Fires with the new id order after a tab drag.
  * @param {number}   [props.peek=56]         Pixels of the next panel left visible.
  * @param {string}   [props.ariaLabel]
+ * @param {string}   [props.className]       Extra class on the root.
  */
 export function PanelStack({
   panels,
@@ -41,6 +42,7 @@ export function PanelStack({
   onReorder,
   peek = DEFAULT_PEEK_PX,
   ariaLabel = 'Panels',
+  className,
 }) {
   const stripRef = useRef(null);
   // The id the strip last reported (or was last sent to), so an activeId
@@ -178,7 +180,7 @@ export function PanelStack({
   };
 
   return (
-    <div className={[styles.root, multi ? styles.multi : '', multi && activeIndex === 0 ? styles.firstActive : ''].filter(Boolean).join(' ')}>
+    <div className={[styles.root, multi ? styles.multi : '', multi && activeIndex === 0 ? styles.firstActive : '', className].filter(Boolean).join(' ')}>
       {multi && (
         <div className={styles.tabBar} role="tablist" aria-label={ariaLabel}>
           {panels.map((panel, i) => {

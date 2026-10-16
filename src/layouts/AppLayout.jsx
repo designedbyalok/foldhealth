@@ -31,7 +31,7 @@ import { CallPopoverHost } from '../components/CallPopover/CallPopoverHost';
 import { BrowserCallCard } from '../features/messages/comms/call/BrowserCallCard';
 import { CommsDrawerHost } from '../features/messages/comms/CommsDrawerHost';
 import { ReassignmentSummaryHost } from '../features/ooo/ReassignmentSummaryHost';
-import { useProgramPanelSplitActive } from '../features/patient/hooks/useProgramPanelSplitActive';
+import { useProgramPanelSplitActive, useDiagPanelInSplit } from '../features/patient/hooks/useProgramPanelSplitActive';
 import { supabase } from '../lib/supabase';
 import styles from './AppLayout.module.css';
 
@@ -445,6 +445,8 @@ export function AppLayout() {
   const businessHoursOpen = useAppStore(s => s.businessHoursOpen);
   const componentWizardOpen = useAppStore(s => s.componentWizardOpen);
   const diagPanelOpen = useAppStore(s => s.diagPanelOpen);
+  // Opened in the side panel, it renders inside the patient split instead.
+  const diagInSplit = useDiagPanelInSplit();
   const invitePatientOpen = useAppStore(s => s.invitePatientOpen);
   const closeInvitePatient = useAppStore(s => s.closeInvitePatient);
   const patientEditSection = useAppStore(s => s.patientEditSection);
@@ -582,7 +584,7 @@ export function AppLayout() {
         {chatGroupDetailId && <GroupDetailDrawer />}
         {agentRulesGroupId && <AgentRulesDrawer />}
         {businessHoursOpen && <BusinessHoursDrawer />}
-        {diagPanelOpen && <DiagPanel />}
+        {diagPanelOpen && !diagInSplit && <DiagPanel />}
         <UploadChartDrawer />{/* mounts itself only when hccUploadMember is set */}
         <UploadDocumentDrawer />{/* mounts itself only when hccUploadSession is set */}
         <HccUploadProcessingHost />{/* floats bottom-right while the upload is minimized */}

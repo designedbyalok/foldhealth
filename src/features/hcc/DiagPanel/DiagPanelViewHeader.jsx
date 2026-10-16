@@ -10,12 +10,13 @@ export function DiagPanelViewHeader(p) {
     member, rafImpact, noop, slaVerdict, pillRef, onPillEnter, onPillLeave, onPillClick,
     pillLabel, reviewProgress, pillRect, reviewStages, cancelClose, requestClose,
     setPillPinned, setPillRect, dosState, currentDos, isDosRejected, isDosBilled, actingStatus,
-    handleStatusChange, actingRole, stageLocked, recordsRequestLockReason,
+    handleStatusChange, actingRole, stageLocked, recordsRequestLockReason, embedded,
   } = p;
   return (
     <>
-      {/* ── Row 2: Patient Banner (shared component) ── */}
-      <PatientBanner
+      {/* ── Row 2: Patient Banner (shared component). In the patient split the
+          patient card beside it already carries this context. ── */}
+      {!embedded && <PatientBanner
         initials={member.in}
         name={member.name}
         gender={member.g === 'M' ? 'Male' : member.g === 'F' ? 'Female' : member.g}
@@ -26,7 +27,7 @@ export function DiagPanelViewHeader(p) {
         rafChange={rafImpact}
         rafUp={member.ru !== false}
         patientId={member.id}
-      />
+      />}
 
       {/* ── Meta row: Created date + overdue + stage pill | assignee + status ── */}
       <div className={styles.dosRow}>

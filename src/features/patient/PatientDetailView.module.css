@@ -100,6 +100,42 @@
   box-shadow: var(--shadow-card);
 }
 .splitPatientCard { flex-shrink: 0; }
+
+/* HCC "Open in Side Panel" morph (hcc/DiagPanel/diagPanelSplit.js): while
+   <html> carries data-diag-morph, the drawer and this stack share a
+   view-transition-name so the drawer becomes the panel (and back), and the
+   patient card slides in from the left (or out). */
+:root[data-diag-morph] .splitStack { view-transition-name: diag-surface; }
+:root[data-diag-morph] .splitPatientCard { view-transition-name: diag-patient-card; }
+::view-transition-group(diag-surface),
+::view-transition-group(diag-patient-card) {
+  animation-duration: var(--duration-slow);
+  animation-timing-function: var(--ease-drawer);
+}
+/* Clip rather than stretch: the frame resizes while its content stays crisp,
+   pinned top-left, with the two states crossfading. */
+::view-transition-image-pair(diag-surface) { overflow: clip; }
+::view-transition-old(diag-surface),
+::view-transition-new(diag-surface) {
+  width: 100%;
+  height: 100%;
+  object-fit: none;
+  object-position: left top;
+  animation-duration: var(--duration-slow);
+  animation-timing-function: var(--ease-out);
+}
+::view-transition-new(diag-patient-card) {
+  animation: diagCardIn var(--duration-slow) var(--ease-drawer) both;
+}
+::view-transition-old(diag-patient-card) {
+  animation: diagCardOut var(--duration-medium) var(--ease-out) both;
+}
+@keyframes diagCardIn {
+  from { opacity: 0; transform: translateX(calc(var(--space-6) * -1)); }
+}
+@keyframes diagCardOut {
+  to { opacity: 0; transform: translateX(calc(var(--space-6) * -1)); }
+}
 .splitPatientTabs { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
 .splitHandle {
   flex: 0 0 var(--space-1);
