@@ -11,6 +11,30 @@
   ],
   "rewrites": [
     {
+      "source": "/api/icd-search",
+      "destination": "/api/lookup?route=icd-search"
+    },
+    {
+      "source": "/api/reference/immunizations",
+      "destination": "/api/lookup?route=immunizations"
+    },
+    {
+      "source": "/api/reference/allergies/substances",
+      "destination": "/api/lookup?route=allergy-substances"
+    },
+    {
+      "source": "/api/send-test-email",
+      "destination": "/api/email?route=send-test-email"
+    },
+    {
+      "source": "/api/send-report-email",
+      "destination": "/api/email?route=send-report-email"
+    },
+    {
+      "source": "/api/referral-email",
+      "destination": "/api/email?route=referral-email"
+    },
+    {
       "source": "/s/:section",
       "destination": "/api/share?s=:section"
     },

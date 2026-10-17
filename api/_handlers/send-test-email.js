@@ -1,5 +1,5 @@
 import { Resend } from 'resend';
-import { requireUser } from './_lib/requireUser.js';
+import { requireUser } from '../_lib/requireUser.js';
 
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)

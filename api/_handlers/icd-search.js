@@ -1,4 +1,4 @@
-import { searchIcd } from './_lib/icd.js';
+import { searchIcd } from '../_lib/icd.js';
 
 /**
  * GET /api/icd-search?q=<term>&limit=<n>

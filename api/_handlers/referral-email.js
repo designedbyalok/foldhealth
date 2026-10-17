@@ -14,7 +14,7 @@
  * Body: { mode: 'patient', patientName?, subject?, notes?, senderName? }
  */
 
-import { requireUser } from './_lib/requireUser.js';
+import { requireUser } from '../_lib/requireUser.js';
 
 const MODEL = process.env.GOOGLE_AI_MODEL || 'gemini-3.8-flash';
 const ENDPOINT = (key) =>

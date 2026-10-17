@@ -1,4 +1,4 @@
-import { searchSubstances } from '../../_lib/allergySubstances.js';
+import { searchSubstances } from '../_lib/allergySubstances.js';
 
 /**
  * GET /api/reference/allergies/substances?q=<term>&limit=<n>
