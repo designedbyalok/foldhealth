@@ -273,8 +273,11 @@ export function AppLayout() {
 
   // Keep profiles in sync with auth.users. Self-signups and OAuth logins don't
   // go through the Invite flow, so profiles would otherwise stay empty for them.
-  // First login inserts with safe defaults; later logins only refresh identity
-  // fields so admin-set role/status aren't clobbered.
+  // First login inserts with safe defaults; later logins only refresh the
+  // email, and fill in a name only when the profile has none. The profile owns
+  // the name: an admin's correction ("CHINMAY GUMGAONKAR" to "Chinmay
+  // Gumgaonkar") used to be overwritten from the sign-up metadata on the
+  // user's next login.
   useEffect(() => {
     // getSession(), not getUser(): getUser() is a network round trip that
     // re-validates the token against the auth server, and this effect used to
@@ -305,14 +308,8 @@ export function AppLayout() {
       const firstName = meta.first_name || derived.first || null;
       const lastName  = meta.last_name  || derived.last  || null;
 
-      const identity = {
-        id: user.id,
-        first_name: firstName,
-        last_name: lastName,
-        full_name: fullName,
-        email: user.email,
-        updated_at: new Date().toISOString(),
-      };
+      const names = { first_name: firstName, last_name: lastName, full_name: fullName };
+      const identity = { id: user.id, email: user.email, updated_at: new Date().toISOString() };
 
       // Write first, ask questions only if it missed. This was a
       // `select id` → then `update` or `insert`, i.e. two serialized round
@@ -330,8 +327,11 @@ export function AppLayout() {
         .from('profiles')
         .update(identity)
         .eq('id', user.id)
-        .select('id');
+        .select('id, full_name');
 
+      if (updated?.length && !updated[0].full_name?.trim() && fullName) {
+        await supabase.from('profiles').update(names).eq('id', user.id);
+      }
       if (!updated || updated.length === 0) {
         // Identity fields only. `role` / `admin_role` / `clinical_roles` are
         // authorization fields and must be owned by the database (the
@@ -339,6 +339,7 @@ export function AppLayout() {
         // client — otherwise a forged request could self-assign privileges.
         await supabase.from('profiles').insert({
           ...identity,
+          ...names,
           status: 'Active',
         });
       }
