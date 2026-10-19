@@ -22,7 +22,7 @@ import {
 } from './patientSendTemplates';
 import styles from './PatientSendDrawers.module.css';
 
-const FROM_ADDRESS = 'noreply@designedbyalok.com';
+const FROM_ADDRESS = 'noreply@foldhealth.org';
 const SMS_LIMIT = 480;
 const DEFAULT_TEMPLATE = 'default';
 

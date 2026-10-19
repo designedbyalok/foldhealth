@@ -7,7 +7,7 @@ import { Resend } from 'resend';
  * one-time "set a new password" link an administrator's unlock sends.
  */
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-const FROM = process.env.RESEND_FROM || 'Fold Health <noreply@designedbyalok.com>';
+const FROM = process.env.RESEND_FROM || 'Fold Health <noreply@foldhealth.org>';
 const TZ = process.env.SECURITY_EMAIL_TZ || 'America/Los_Angeles';
 
 export const emailConfigured = !!resend;
@@ -114,13 +114,14 @@ export async function sendSecurityEmail(to, kind, payload) {
   if (error) throw new Error(error.message || 'Email failed');
 }
 
-/** Send queued security emails (oldest first). Returns { sent, failed }. */
+/**
+ * Send queued security emails (oldest first). Returns { sent, failed }.
+ * Several flushes can run at once (database kick, sign-in page, reset API);
+ * claim_security_emails hands each row to only one of them, so nobody gets
+ * the same email twice.
+ */
 export async function flushSecurityOutbox(admin, limit = 50) {
-  const { data: rows, error } = await admin.from('security_email_outbox')
-    .select('id, kind, to_email, payload, attempts')
-    .eq('status', 'pending')
-    .order('created_at', { ascending: true })
-    .limit(limit);
+  const { data: rows, error } = await admin.rpc('claim_security_emails', { max_rows: limit });
   if (error) throw error;
   let sent = 0;
   let failed = 0;
@@ -132,7 +133,7 @@ export async function flushSecurityOutbox(admin, limit = 50) {
     } catch (err) {
       const attempts = row.attempts + 1;
       await admin.from('security_email_outbox')
-        .update({ attempts, last_error: String(err?.message || err).slice(0, 500), status: attempts >= 5 ? 'failed' : 'pending' })
+        .update({ attempts, sent_at: null, last_error: String(err?.message || err).slice(0, 500), status: attempts >= 5 ? 'failed' : 'pending' })
         .eq('id', row.id);
       failed += 1;
     }

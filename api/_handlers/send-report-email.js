@@ -44,7 +44,7 @@ export default async function handler(req, res) {
     return res.status(413).json({ error: { message: 'The report is too large to email (over 4 MB). Try fewer sections, or no cover image.' } });
   }
 
-  const defaultFrom = process.env.RESEND_FROM || 'Fold Health <noreply@designedbyalok.com>';
+  const defaultFrom = process.env.RESEND_FROM || 'Fold Health <noreply@foldhealth.org>';
   const address = defaultFrom.match(/<(.+)>/)?.[1] || defaultFrom;
   const from = b.fromName ? `${String(b.fromName).replace(/[<>"]/g, '')} <${address}>` : defaultFrom;
   const html = `<div style="font-family:Inter,Arial,sans-serif;font-size:14px;line-height:1.5;color:#3A485F">${escapeHtml(b.text || '').replace(/\n/g, '<br>')}</div>`;

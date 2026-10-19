@@ -32,7 +32,7 @@ import { DEFAULT_TEMPLATE_ID, DEFAULT_SUBJECT, defaultBodyText, textToHtml } fro
 import styles from './ComposeEmail.module.css';
 
 const PHI_NOTICE = 'Do not send PHI via email or text without verifying and obtaining consent.';
-const FROM_ADDRESS = 'noreply@designedbyalok.com';
+const FROM_ADDRESS = 'noreply@foldhealth.org';
 
 const htmlToText = (html) => {
   const d = new DOMParser().parseFromString(html || '', 'text/html');

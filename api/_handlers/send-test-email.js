@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: { message: 'Missing required fields: to, html' } });
   }
 
-  const defaultFrom = process.env.RESEND_FROM || 'Fold Health <noreply@designedbyalok.com>';
+  const defaultFrom = process.env.RESEND_FROM || 'Fold Health <noreply@foldhealth.org>';
   const from = fromName ? `${fromName} <${defaultFrom.match(/<(.+)>/)?.[1] || defaultFrom}>` : defaultFrom;
 
   // One-click list unsubscribe (RFC 8058) — improves deliverability and is a
