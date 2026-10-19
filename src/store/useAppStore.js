@@ -5158,9 +5158,17 @@ export const useAppStore = create((set, get) => ({
   },
 
   // Flipped to true when the update-checker poller sees a newer build
-  // hash than the one this tab loaded with. Drives UpdateAvailableBanner.
+  // hash than the one this tab loaded with. Drives UpdateCard, which also
+  // shows the new build's version and highlights (null/[] after a chunk
+  // error, where no /version.json was read).
   hasNewBuild: false,
-  setHasNewBuild: (v) => set({ hasNewBuild: !!v }),
+  newBuildVersion: null,
+  newBuildHighlights: [],
+  setHasNewBuild: (v, remote) => set({
+    hasNewBuild: !!v,
+    newBuildVersion: remote?.version || null,
+    newBuildHighlights: remote?.highlights || [],
+  }),
 
   // HCC role — the logged-in user's role for the HCC coding workflow (Support
   // / Coder / QA / Compliance). Drives which status vocab and per-role actions

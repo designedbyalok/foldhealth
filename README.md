@@ -37,6 +37,11 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **Update card replaces the new-version strip.** When a newer deploy is
+  live, a card appears in the bottom-right corner above everything, listing
+  the top three bold lead-ins from this section (baked into
+  `/version.json` at build time). Refresh reloads; Dismiss hides it until a
+  later deploy. Keep these lead-ins short: they are the card's highlights.
 - **Login Activity in a user's Audit Log.** Two cards sit above the
   timeline: "Last successful sign-in" and "Failed attempts · 30 days". Each
   sign-in and lockout entry shows date • time • method • user, then the

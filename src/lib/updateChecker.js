@@ -1,7 +1,7 @@
 // Update checker — detects when a fresh deploy has landed while the user's
 // tab is still running the previous build. Without this, clicking a route
 // that lazy-imports a chunk with the old filename 404s and the app blanks
-// to white. The banner (see UpdateAvailableBanner) prompts a reload before
+// to white. The card (see UpdateCard) prompts a reload before
 // that happens.
 //
 // How it works:
@@ -13,7 +13,9 @@
 //     more so users who left the tab open overnight see the banner as
 //     soon as they look back.
 //   • When the fetched version doesn't match the running one, flip the
-//     `hasNewBuild` store flag and stop polling (the banner takes over).
+//     `hasNewBuild` store flag with that version and its highlights (the
+//     update card takes over). Keep polling, so a card dismissed for one
+//     deploy comes back when a later deploy lands.
 //
 // Also catches chunk-load errors as a backstop. If the poller hasn't noticed
 // yet and the user opens a lazy route whose chunk 404s, that navigation is
@@ -34,31 +36,33 @@ async function fetchDeployedVersion() {
     const r = await fetch(`/version.json?ts=${Date.now()}`, { cache: 'no-store' });
     if (!r.ok) return null;
     const body = await r.json();
-    return body?.version || null;
+    if (!body?.version) return null;
+    return { version: body.version, highlights: Array.isArray(body.highlights) ? body.highlights : [] };
   } catch {
     return null;
   }
 }
 
 let started = false;
-let flagged = false;
+let flaggedVersion = null;
 
-function markNewBuild() {
-  if (flagged) return;
-  flagged = true;
-  useAppStore.getState().setHasNewBuild(true);
+function markNewBuild(remote) {
+  const version = remote?.version || null;
+  if (flaggedVersion && (!version || version === flaggedVersion)) return;
+  flaggedVersion = version || 'unknown';
+  useAppStore.getState().setHasNewBuild(true, remote);
 }
 
 const RELOAD_KEY = 'fold:chunk-reload-version';
 
 // A failed chunk import has already broken this navigation: React's lazy()
 // throws, and with no error boundary above AppLayout the whole tree unmounts,
-// taking UpdateAvailableBanner down with it. So the banner cannot be the
+// taking UpdateCard down with it. So the card cannot be the
 // recovery here, and reloading onto the fresh bundle is the only way back.
 //
 // Once per build. The key holds the version that failed, so a genuinely
 // broken deploy (an asset that 404s for everyone, not just stale tabs)
-// reloads a single time and then leaves the banner to it instead of looping.
+// reloads a single time and then leaves the card to it instead of looping.
 // Storage can throw when site data is blocked; treat that as "don't reload"
 // rather than risking a loop we can't remember having started.
 function reloadForStaleChunk() {
@@ -80,7 +84,7 @@ export function startUpdateChecker() {
 
   // Chunk-load failures indicate the running bundle is trying to reach
   // filenames that no longer exist on the server — always a stale-deploy
-  // symptom. Flag the banner so users see it before the app blanks out.
+  // symptom. Flag the card so users see it before the app blanks out.
   const onChunkError = (e) => {
     const msg = String(e?.reason?.message || e?.message || '');
     if (/Loading chunk|(Failed to fetch|[Ee]rror loading) dynamically imported module|Unable to preload CSS|ChunkLoadError/i.test(msg)) {
@@ -100,15 +104,11 @@ export function startUpdateChecker() {
   if (!localVersion) return;
 
   const check = async () => {
-    if (flagged) return;
     const remote = await fetchDeployedVersion();
-    if (remote && remote !== localVersion) markNewBuild();
+    if (remote && remote.version !== localVersion) markNewBuild(remote);
   };
   check();
-  const interval = setInterval(() => {
-    if (flagged) { clearInterval(interval); return; }
-    check();
-  }, POLL_MS);
+  setInterval(check, POLL_MS);
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) check();
   });

@@ -3,7 +3,7 @@ const Analytics = lazy(() => import('@vercel/analytics/react').then(m => ({ defa
 const SpeedInsights = lazy(() => import('@vercel/speed-insights/react').then(m => ({ default: m.SpeedInsights })).catch(() => ({ default: () => null })));
 import { AppLayout } from './layouts/AppLayout';
 import { Toaster } from './components/Toast/Toast';
-import { UpdateAvailableBanner } from './components/UpdateAvailableBanner/UpdateAvailableBanner';
+import { UpdateAvailableCard } from './components/UpdateCard/UpdateCard';
 import { LoginPage } from './features/auth/LoginPage';
 import { isPendingApprovalSession, PENDING_APPROVAL_NOTICE } from './features/auth/pendingApproval';
 import { ResetPasswordPage } from './features/auth/ResetPasswordPage';
@@ -301,7 +301,7 @@ function App() {
   // Authenticated — show app
   return (
     <Suspense fallback={null}>
-      <UpdateAvailableBanner />
+      <UpdateAvailableCard />
       <AppLayout />
       <Analytics />
       <SpeedInsights />

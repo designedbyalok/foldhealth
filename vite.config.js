@@ -1,6 +1,7 @@
 import { createLogger, defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import fs from 'fs';
 import path from 'path';
 import { devApiPlugin } from './vite-plugin-dev-api.js';
 
@@ -26,9 +27,24 @@ const APP_VERSION = process.env.VERCEL_GIT_COMMIT_SHA
   || process.env.GITHUB_SHA
   || String(Date.now());
 
+// The update card lists what changed. The newest bold lead-ins under
+// README "Recent Changes" are the release notes we already keep, so the
+// card reads them instead of a second, hand-maintained list.
+function readReleaseHighlights(limit = 3) {
+  try {
+    const readme = fs.readFileSync(path.join(dirname, 'README.md'), 'utf8');
+    const section = readme.split(/^## Recent Changes\s*$/m)[1]?.split(/^## /m)[0] || '';
+    return [...section.matchAll(/^- \*\*([\s\S]+?)\*\*/gm)]
+      .map(m => m[1].replace(/\s+/g, ' ').trim().replace(/\.$/, ''))
+      .slice(0, limit);
+  } catch {
+    return [];
+  }
+}
+
 // Writes /version.json into the built output. Served fresh (no immutable
 // cache) so the update-checker poller sees the new SHA seconds after a
-// deploy completes.
+// deploy completes. The old tab reads the new build's highlights from it.
 function emitVersionJsonPlugin() {
   return {
     name: 'emit-version-json',
@@ -37,7 +53,7 @@ function emitVersionJsonPlugin() {
       this.emitFile({
         type: 'asset',
         fileName: 'version.json',
-        source: JSON.stringify({ version: APP_VERSION }),
+        source: JSON.stringify({ version: APP_VERSION, highlights: readReleaseHighlights() }),
       });
     },
   };
