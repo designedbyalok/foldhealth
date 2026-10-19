@@ -100,8 +100,18 @@ async function handleUnlock(req, res, admin) {
   }
   if (error) return fail(res, 400, error.message || 'Could not unlock the account.');
 
-  await sendLink(req, admin, target, me.full_name || me.email, me.id);
-  return res.status(200).json({ lock });
+  // The account is already unlocked here, so a failed email must not read as
+  // a failed unlock: the admin would click Unlock again instead of Resend Link.
+  try {
+    await sendLink(req, admin, target, me.full_name || me.email, me.id);
+  } catch (err) {
+    console.error('[account-unlock] link email failed', err?.message || err);
+    return res.status(200).json({
+      lock, emailSent: false,
+      message: `Account unlocked, but the email to ${target.email} could not be sent. Try Resend Link in a moment.`,
+    });
+  }
+  return res.status(200).json({ lock, emailSent: true });
 }
 
 async function handleResend(req, res, admin) {
@@ -111,7 +121,12 @@ async function handleResend(req, res, admin) {
   if (!target?.email) return fail(res, 404, 'This user has no email address on file.');
   const { data: lock } = await admin.from('account_lockouts').select('locked_at, require_reset').eq('user_id', target.id).maybeSingle();
   if (!lock?.require_reset) return fail(res, 400, 'This account isn\'t waiting for a new password.');
-  await sendLink(req, admin, target, me.full_name || me.email, me.id);
+  try {
+    await sendLink(req, admin, target, me.full_name || me.email, me.id);
+  } catch (err) {
+    console.error('[account-unlock] link email failed', err?.message || err);
+    return fail(res, 502, `The email to ${target.email} could not be sent. Try again in a moment.`);
+  }
   return res.status(200).json({ ok: true });
 }
 

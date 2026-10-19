@@ -160,7 +160,7 @@ export function useUsersTab() {
       return false;
     }
     if (r.lock) setLockouts(prev => ({ ...prev, [user.id]: r.lock }));
-    showToast(`${user.name} unlocked. We emailed them a link to set a new password.`);
+    showToast(r.emailSent === false ? r.message : `${user.name} unlocked. We emailed them a link to set a new password.`);
     return true;
   };
 
