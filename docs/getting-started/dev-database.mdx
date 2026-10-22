@@ -46,6 +46,22 @@ brew install libpq
 scripts/dev-db-sync.sh --with-data
 ```
 
+## Signing in as an admin on dev
+
+`dev-db-sync.sh` copies `public.profiles` but leaves `auth.*` empty, so after
+a fresh sync no admin profile has a matching `auth.users` row and nobody but
+the dev-login demo user can sign in. Run this once per sync:
+
+```bash
+node scripts/seed-dev-admins.mjs
+```
+
+It inserts an `auth.users` and `auth.identities` row for every admin profile
+missing one, sets `email_confirmed_at = now()`, and sets the password to
+`VITE_DEV_LOGIN_PASSWORD` from `.env`, the same value `demo@fold.health`
+already uses. Idempotent, so a re-run after any admin was added just picks
+them up. Hard-refuses to run against anything other than Foldhealth Dev.
+
 ## Migrations
 
 New `supabase/*_migration.sql` files run against the dev project first:
