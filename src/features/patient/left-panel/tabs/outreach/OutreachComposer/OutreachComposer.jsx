@@ -11,6 +11,7 @@ import { TypeDropdown, FieldDropdown } from '../OutreachTab/OutreachTabDropdowns
 import { OutreachProgramChip } from './OutreachProgramChip';
 import { LOG_FOR_OPTIONS } from '../OutreachTab/OutreachTab.utils';
 import { RadioButton } from '../../../../../../components/RadioButton/RadioButton';
+import { InfoBar } from '../../../../../../components/InfoBar/InfoBar';
 import styles from './OutreachComposer.module.css';
 
 const RELATIVE_TIME_LABEL = (iso) => {
@@ -50,6 +51,7 @@ export function OutreachComposer({
   logFor,
   isHccGaps,
   type, setType,
+  contactWarning,
   datetime, setDatetime,
   showCallDetails,
   callBannerVisible, setCallBannerVisible,
@@ -202,6 +204,12 @@ export function OutreachComposer({
             />
           ))}
         </div>
+      )}
+
+      {expanded && contactWarning && (
+        <InfoBar tone="warning" icon="solar:danger-triangle-linear" variant="inline">
+          {contactWarning}. Log this only if the patient reached out.
+        </InfoBar>
       )}
 
       {/* ── Meta row (expanded only): Type · logged-at · chips · Separate notes ── */}

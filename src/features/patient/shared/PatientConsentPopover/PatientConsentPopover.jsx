@@ -13,8 +13,13 @@ export function PatientConsentPopover({ patientId, pos, onClose }) {
     ...section,
     items: section.items.map(item => ({
       ...item,
-      actionLabel: item.state === 'given' ? 'Update' : 'Capture',
-      onAction: () => { onClose(); openConsentCapture(patientId, { scopeType: item.scopeType, scope: item.scope }); },
+      checked: item.state === 'given',
+      // A switch can't change consent on its own: it opens Capture Consent
+      // preset to the decision it was flipped towards.
+      onToggle: (next) => {
+        onClose();
+        openConsentCapture(patientId, { scopeType: item.scopeType, scope: item.scope, status: next ? 'given' : 'withdrawn' });
+      },
     })),
   })), [consents, programs, onClose, openConsentCapture, patientId]);
 
@@ -25,7 +30,6 @@ export function PatientConsentPopover({ patientId, pos, onClose }) {
       loading={!loaded}
       sections={sections}
       history={consentHistory(consents)}
-      onCapture={() => { onClose(); openConsentCapture(patientId); }}
     />
   );
 }

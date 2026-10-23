@@ -9,6 +9,7 @@ import { Textarea } from '../../../../../../../../components/Textarea/Textarea';
 import { DownChevronIcon } from '../../../../../../../../components/Icon/DownChevronIcon';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import { CCM_ACTIVITY_TYPES, secondsToTime, timeToSeconds } from '../../../../../../data/ccmBillingMock';
+import { toast } from '../../../../../../../../components/Toast/sonnerToast';
 import styles from './CcmBillingLogTable.module.css';
 import { useProgramActivityLog } from '../../shared/useProgramActivityLog';
 
@@ -253,7 +254,7 @@ export function CcmBillingLogTable({ patientId, periodId, activities = EMPTY_ACT
   const saveNote = async (row) => {
     patchRow(row.id, { description: noteDraft });
     if (row.kind === 'unlogged' && row.activityType && row.included === true && periodId) {
-      await addCcmBillableActivity({
+      const result = await addCcmBillableActivity({
         id: randomId(),
         periodId,
         patientId,
@@ -265,6 +266,11 @@ export function CcmBillingLogTable({ patientId, periodId, activities = EMPTY_ACT
         occurredAt: new Date().toISOString(),
         isUnlogged: true,
       });
+      // Consent gate: leave the row unclassified so the time isn't lost.
+      if (result?.blocked) {
+        toast.error(`${result.reason}. Capture consent to log this time.`);
+        return;
+      }
       logActivity(`Billable Time Logged: ${row.activityType}`, { activityKind: 'document', statusLabel: row.durationInput || '', statusType: 'neutral' });
       setUnloggedRows(prev => prev.filter(r => r.id !== row.id));
     }

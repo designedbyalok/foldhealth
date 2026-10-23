@@ -13,6 +13,8 @@ import { formatFoldId } from '../../../../lib/foldId';
 import { CCM_ACTIVITY_TYPES, secondsToTime } from '../../data/ccmBillingMock';
 import { useCcmTimerDock } from './CcmTimerDockContext';
 import { armAlertAudio, formatIdleDuration, inactivitySecondsFor, isInactivityDemoPatient, playAlertChime, useInactivity } from './inactivity';
+import { usePatientConsent } from '../../hooks/usePatientConsent';
+import { canBill } from '../../data/consentRules';
 import styles from './CcmTimerWidget.module.css';
 
 // CCM activity timer (Figma CCM Timer 324:84077), drawn in our timer's own
@@ -114,6 +116,7 @@ function TimerNotice({ notice, onClose }) {
         color={notice.tone === 'error' ? 'var(--status-error)' : 'var(--status-info)'}
       />
       <span className={styles.noticeText}>{notice.text}</span>
+      {notice.action && <Link onClick={notice.action.onClick}>{notice.action.label}</Link>}
       {onClose && (
         <button type="button" className={styles.noticeClose} onClick={onClose} aria-label="Dismiss">
           <Icon name="solar:close-linear" size={12} color="currentColor" />
@@ -196,10 +199,22 @@ export function CcmTimerWidget({ patient }) {
   // confirmation, which don't fit in the bar.
   const showCard = expanded || isClassifying || confirmReset;
 
+  // No CCM consent: time keeps running but can't be logged until it's
+  // captured. Off while the consent table doesn't exist yet (pre-migration).
+  const { consents, loaded: consentLoaded } = usePatientConsent(patientId);
+  const consentTableMissing = useAppStore(s => s.patientConsentTableMissing);
+  const openConsentCapture = useAppStore(s => s.openConsentCapture);
+  const consentGate = consentLoaded && !consentTableMissing ? canBill(consents, 'CCM') : { allowed: true };
   // This month is already billed, so time added now can't be.
-  const notice = currentPeriod?.billStatus === 'sent' && !noticeDismissed
-    ? { tone: 'error', text: 'Accrued time not billable.' }
-    : null;
+  const notice = !consentGate.allowed
+    ? {
+      tone: 'error',
+      text: `${consentGate.reason}. Time can't be logged.`,
+      action: { label: 'Capture', onClick: () => openConsentCapture(patientId, { scopeType: 'program', scope: 'CCM' }) },
+    }
+    : currentPeriod?.billStatus === 'sent' && !noticeDismissed
+      ? { tone: 'error', text: 'Accrued time not billable.' }
+      : null;
 
   useEffect(() => {
     if (!patientId) return;
@@ -411,8 +426,9 @@ export function CcmTimerWidget({ patient }) {
       return;
     }
     setSaving(true);
+    let result;
     try {
-      await addCcmBillableActivity({
+      result = await addCcmBillableActivity({
         id: activityId(),
         periodId: currentPeriod.id,
         patientId,
@@ -427,6 +443,8 @@ export function CcmTimerWidget({ patient }) {
     } finally {
       setSaving(false);
     }
+    // Blocked by the consent gate: keep the form and the time.
+    if (result?.blocked) return;
     stopTick();
     setMode('logged');
     clearTimeout(loggedTimeoutRef.current);
@@ -650,7 +668,7 @@ export function CcmTimerWidget({ patient }) {
           />
           <div className={styles.formActions}>
             <Button variant="secondary" size="S" onClick={cancelLog} disabled={saving}>Cancel</Button>
-            <Button variant="primary" size="S" onClick={persist} disabled={saving || elapsed === 0}>
+            <Button variant="primary" size="S" onClick={persist} disabled={saving || elapsed === 0 || !consentGate.allowed}>
               {saving ? 'Saving…' : 'Save'}
             </Button>
           </div>
@@ -753,7 +771,7 @@ export function CcmTimerWidget({ patient }) {
             its spot in the tag row, hidden). */}
         {showCard && anchor && createPortal(
           <div className={`${styles.dockedCard} ${styles.dockedCardExpanded}`} style={{ top: anchor.top, right: anchor.right }}>
-            <TimerNotice notice={notice} onClose={() => setNoticeDismissed(true)} />
+            <TimerNotice notice={notice} onClose={consentGate.allowed ? () => setNoticeDismissed(true) : undefined} />
             {card}
           </div>,
           document.body,
@@ -766,7 +784,7 @@ export function CcmTimerWidget({ patient }) {
   return (
     <div className={wrapClass} style={floatingStyle}>
       {promptLayer}
-      <TimerNotice notice={notice} onClose={() => setNoticeDismissed(true)} />
+      <TimerNotice notice={notice} onClose={consentGate.allowed ? () => setNoticeDismissed(true) : undefined} />
       {showCard ? card : bar}
     </div>
   );

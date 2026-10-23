@@ -191,7 +191,8 @@ import { fetchEfaxNumberRows, persistEfaxNumberInsert, persistEfaxNumberUpdate, 
 import { fetchCaregapLabRows, persistLabOrder, persistLabResult } from './lib/caregapLabsPersist';
 import { fetchStepStatusRows, persistStepStatus } from './lib/careProgramStepStatusPersist';
 import { fetchConsentRows, fetchPreferencesRow, insertConsentRow, persistPreferences, preferencesFromRow, uploadConsentArtifact } from './lib/patientConsentPersist';
-import { CONSENT_METHODS, validateCapture } from '../features/patient/data/consentRules';
+import { CONSENT_METHODS, canBill, validateCapture } from '../features/patient/data/consentRules';
+
 import { fetchProgramTypeRows, persistProgramType, persistProgramTypeDelete } from './lib/careProgramTypesPersist';
 import { defaultProgramTypes } from '../features/settings/care-program-config/careProgramConfigModel';
 import { fetchPatientSnapshotRow } from './lib/patientSnapshotsPersist';
@@ -224,6 +225,9 @@ import { createShellSlice } from './slices/shellSlice';
 import { createAutomationsSlice } from './slices/automationsSlice';
 import { rowToCrm, sampleCrmActivities } from '../features/patient/data/crmActivity';
 import { createHccWorklistFiltersSlice } from './slices/hccWorklistFiltersSlice';
+
+// patientId → in-flight fetchPatientConsents request.
+const consentFetches = new Map();
 
 // Timer handle for the 3-second row-flash on the tasks page.
 let _flashTaskTimer = null;
@@ -8044,8 +8048,14 @@ export const useAppStore = create((set, get) => ({
     });
     if (error) console.warn('logTimerInactivityEvent:', error.message);
   },
+  // Hard consent gate (Phase 2A.3): no CCM time is recorded without a
+  // current CCM consent. Returns { ok, blocked, reason } so callers keep the
+  // time instead of dropping it. Off until patient_consents exists, so an
+  // environment without the migration keeps logging time.
   addCcmBillableActivity: async (activity) => {
     const { patientId } = activity;
+    const gate = await get().checkBillingConsent(patientId, 'CCM');
+    if (!gate.allowed) return { ok: false, blocked: true, reason: gate.reason };
     set(s => {
       const prev = s.ccmBillableActivitiesByPatient[patientId] || [];
       return {
@@ -8069,6 +8079,7 @@ export const useAppStore = create((set, get) => ({
     };
     const { error } = await supabase.from('ccm_billable_activities').insert(row);
     if (error) console.warn('addCcmBillableActivity — insert failed:', error.message);
+    return { ok: true, blocked: false, reason: null };
   },
 
   updateGapStatus: (memberId, gapCode, nextStatus) => {
@@ -8525,19 +8536,28 @@ export const useAppStore = create((set, get) => ({
   patientConsentTableMissing: false,
   // Capture Consent drawer, mounted once in AppLayout so the banner, the
   // Overview card and (2A.3) billing gates can all open it.
-  // { patientId, scopeType?, scope?, programId? } | null
+  // { patientId, scopeType?, scope?, status?, programId?, onCaptured?(record) } | null
   consentCapture: null,
   openConsentCapture: (patientId, preset = {}) => { if (patientId) set({ consentCapture: { patientId: String(patientId), ...preset } }); },
   closeConsentCapture: () => set({ consentCapture: null }),
-  fetchPatientConsents: async (patientId, { force = false } = {}) => {
-    if (!patientId || (!force && get().patientConsentsLoadedFor[patientId])) return;
+  // Concurrent callers (the banner, the card, a billing gate) share one
+  // request, so a gate never reads the history before it has arrived.
+  fetchPatientConsents: (patientId, { force = false } = {}) => {
+    if (!patientId) return Promise.resolve();
+    const inflight = consentFetches.get(patientId);
+    if (inflight && !force) return inflight;
+    if (!force && get().patientConsentsLoadedFor[patientId]) return Promise.resolve();
     set(s => ({ patientConsentsLoadedFor: { ...s.patientConsentsLoadedFor, [patientId]: true } }));
-    const [{ rows, missing }, prefs] = await Promise.all([fetchConsentRows(patientId), fetchPreferencesRow(patientId)]);
-    set(s => ({
-      patientConsentTableMissing: missing || prefs.missing || s.patientConsentTableMissing,
-      patientConsents: { ...s.patientConsents, [patientId]: rows },
-      patientPreferences: { ...s.patientPreferences, [patientId]: preferencesFromRow(prefs.row) },
-    }));
+    const request = Promise.all([fetchConsentRows(patientId), fetchPreferencesRow(patientId)]).then(([{ rows, missing }, prefs]) => {
+      set(s => ({
+        patientConsentTableMissing: missing || prefs.missing || s.patientConsentTableMissing,
+        // Keep anything captured locally while this was in flight.
+        patientConsents: { ...s.patientConsents, [patientId]: [...(s.patientConsents[patientId] || []).filter(c => !rows.some(r => r.id === c.id)), ...rows] },
+        patientPreferences: { ...s.patientPreferences, [patientId]: preferencesFromRow(prefs.row) },
+      }));
+    }).finally(() => consentFetches.delete(patientId));
+    consentFetches.set(patientId, request);
+    return request;
   },
   // `capture`: { scopeType, scope, status, method, witness, expiresOn, note,
   // programId }, plus `file` (signature PNG or signed scan) for written and
@@ -8580,6 +8600,13 @@ export const useAppStore = create((set, get) => ({
       });
     }
     return { ok: true, error: null, record };
+  },
+  // canBill against freshly loaded consent. Allowed while the consent table
+  // is missing (pre-migration), so billing isn't switched off by a rollout.
+  checkBillingConsent: async (patientId, programCode) => {
+    await get().fetchPatientConsents(patientId);
+    if (get().patientConsentTableMissing) return { allowed: true, state: 'unavailable', reason: null };
+    return canBill(get().patientConsents[patientId] || [], programCode);
   },
   savePatientPreferences: async (patientId, patch) => {
     if (!patientId) return;

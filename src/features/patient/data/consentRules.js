@@ -111,7 +111,8 @@ export function contactPoint(preferences, value) {
  */
 export function canContact(consents, preferences, channel, { value, automated = false, today = new Date() } = {}) {
   const { state } = consentState(consents, 'channel', channel, today);
-  if (state === 'declined' || state === 'withdrawn') return { allowed: false, reason: `${BLOCK_REASON[state]} for ${channel}` };
+  const channelName = CONSENT_CHANNELS.find(c => c.scope === channel)?.label.toLowerCase() || channel;
+  if (state === 'declined' || state === 'withdrawn') return { allowed: false, reason: `${BLOCK_REASON[state]} for ${channelName}` };
   const point = value ? contactPoint(preferences, value) : null;
   if (point?.status === 'invalid') return { allowed: false, reason: `${value} is marked invalid` };
   if (channel === 'sms' || automated) {
@@ -143,14 +144,16 @@ const MIN_CONDITIONS = { CCM: 2, RPM: 1 };
 /**
  * Pre-enrollment check: `eligible` with the reasons it isn't, and whether
  * consent has to be captured before enrolling. `existing` is the patient's
- * enrollments; `conditions` their chronic conditions.
+ * enrollments; `conditions` their chronic conditions, or null when unknown.
+ * `subProgram` / `triggerable` pass through to nextEnrollment (CMP, SNP).
  */
-export function enrollmentCheck(programCode, { existing = [], conditions = [], consents = [], today = new Date() } = {}) {
+export function enrollmentCheck(programCode, { existing = [], conditions = [], consents = [], subProgram = null, triggerable = false, today = new Date() } = {}) {
   const reasons = [];
-  if (!nextEnrollment(existing, programCode).allowed) reasons.push(`Already enrolled in ${programCode}`);
+  if (!nextEnrollment(existing, programCode, subProgram, { triggerable }).allowed) reasons.push(`Already enrolled in ${programCode}`);
+  // null = conditions unknown (no profile row); don't block on what we can't see.
   const min = MIN_CONDITIONS[programCode] || 0;
   const count = (conditions || []).filter(Boolean).length;
-  if (count < min) reasons.push(`${programCode} needs ${min} or more chronic conditions (has ${count})`);
+  if (conditions != null && count < min) reasons.push(`${programCode} needs ${min} or more chronic conditions (has ${count})`);
   const needsConsent = requiresConsent(programCode) && consentState(consents, 'program', programCode, today).state !== 'given';
   return { eligible: reasons.length === 0, reasons, needsConsent };
 }

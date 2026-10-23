@@ -37,7 +37,7 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
-- **Patient consent and preferences (Phase 2A.1, 2A.2).** Patient consent is now
+- **Patient consent and preferences (Phase 2A).** Patient consent is now
   a record, not a "2/4" count: `patient_consents` keeps an append-only
   history per program (CCM, APCM, RPM, BHI) and channel (call, SMS, email,
   TCPA) with status, method, who captured it, expiry, witness and the signed
@@ -54,7 +54,21 @@ build requires esbuild ≥ 0.28 on Node 26.
   uploaded form) opens from the banner's consent popover, which now shows
   each consent's live state and an audit log, and from the Overview Consent
   card. The banner count covers the patient's open billable enrollments.
-  The billing gates follow in 2A.3. Needs
+  Without current CCM consent no CCM time is recorded (2A.3): the store
+  refuses the write, the timer shows why with a Capture link and keeps the
+  time, and the billing log leaves unlogged time unclassified. Enrolling
+  checks eligibility (CCM needs two or more chronic conditions, RPM one)
+  and captures consent first, enrolling once it's given; a program whose
+  enrollments have all ended can be enrolled again. Gates stay off until
+  the consent table exists, so billing isn't switched off by a rollout.
+  The Profile tab's new Preferences view (2A.4) shows the preferred channel
+  per enrolled program, language and interpreter need, health literacy,
+  and whether each phone and email is valid, edited in a Contact
+  Preferences drawer. Outreach warns when the logged channel was declined
+  or withdrawn, the number is marked invalid, or a text has no TCPA
+  consent. Block Number now writes `p360_profiles.opted_out_comms`, which
+  the banner and Contact card read (it wrote the `patients` table).
+  Needs
   `supabase/patient_consents_migration.sql` then
   `supabase/patient_consents_seed.sql` (consent reads as missing and
   captures stay session-only until then).

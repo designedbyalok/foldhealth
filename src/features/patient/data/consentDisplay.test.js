@@ -3,8 +3,8 @@ import { consentHistory, consentSections, consentStateLabel, consentStateStyle, 
 
 describe('consent display', () => {
   it('labels states and treats unknown ones as missing', () => {
-    expect(consentStateLabel('withdrawn')).toBe('Withdrawn');
-    expect(consentStateLabel(undefined)).toBe('Not on file');
+    expect(consentStateLabel('withdrawn')).toBe('Consent Withdrawn');
+    expect(consentStateLabel(undefined)).toBe('Consent Not Given');
     expect(consentStateStyle('given').tone).toBe('success');
   });
 
@@ -27,12 +27,12 @@ describe('consentSections', () => {
   it('puts required program consents first and flags the missing ones', () => {
     const [program, channel] = consentSections(consents, programs, today);
     expect(program.items.map(i => i.scope)).toEqual(['CCM', 'APCM', 'RPM', 'BHI']);
-    expect(program.items[0]).toMatchObject({ state: 'missing', status: 'Required · Not on file' });
-    expect(program.items[1]).toMatchObject({ state: 'given', status: 'Consent given · Verbal · 02/01/2026 · Dana Lee' });
-    expect(channel.items.find(i => i.scope === 'sms')).toMatchObject({ label: 'Text messages', state: 'declined' });
+    expect(program.items[0]).toMatchObject({ state: 'missing', status: 'Consent Not Given • Required' });
+    expect(program.items[1]).toMatchObject({ state: 'given', status: 'Consent Given • 02/01/2026 10:00 AM' });
+    expect(channel.items.find(i => i.scope === 'sms')).toMatchObject({ label: 'SMS Consent', state: 'declined', status: 'Consent Declined • 03/01/2026 10:00 AM' });
   });
 
   it('lists every record newest first for the audit log', () => {
-    expect(consentHistory(consents).map(h => [h.label, h.status])).toEqual([['Text messages', 'Declined'], ['APCM Consent', 'Consent given']]);
+    expect(consentHistory(consents).map(h => [h.label, h.status])).toEqual([['SMS Consent', 'Consent Declined'], ['APCM Consent', 'Consent Given']]);
   });
 });

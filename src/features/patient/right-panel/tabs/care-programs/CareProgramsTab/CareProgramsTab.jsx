@@ -31,6 +31,8 @@ import { CreateSnpProgramDrawer } from './CreateSnpProgramDrawer';
 import { DownChevronIcon } from '../../../../../../components/Icon/DownChevronIcon';
 import { CP_FILTERS } from '../../../../data/programActivityMock';
 import styles from './CareProgramsTab.module.css';
+import { nextEnrollment } from '../../../../data/programLifecycle';
+import { useConsentedEnrollment } from './useConsentedEnrollment';
 
 // Programs move to the "Past" section once completed or closed.
 
@@ -122,6 +124,7 @@ export function CareProgramsTab({ header }) {
     : CARE_PROGRAM_CATALOG), [programTypes]);
 
   const programsLoaded = Boolean(patientId && careProgramsLoadedFor[patientId]);
+  const requestEnrollment = useConsentedEnrollment(patientId, programs);
   useEffect(() => {
     if (!pendingCareProgramCode || !patientId || !programsLoaded) return;
     const { pendingCareProgramCarePlan: carePlan, pendingCareProgramSubProgram: subProgram } = useAppStore.getState();
@@ -135,10 +138,12 @@ export function CareProgramsTab({ header }) {
     } else {
       const entry = catalog.find(e => e.code === pendingCareProgramCode);
       if (entry) {
-        addCareProgram(patientId, subProgram ? { ...entry, subProgram } : entry);
-        const created = useAppStore.getState().careProgramsByPatient[patientId]
-          ?.find(p => p.code === entry.code && (!subProgram || p.subProgram === subProgram));
-        if (created) setPendingProgram({ program: created, firstStep: false });
+        requestEnrollment(entry.code, () => {
+          addCareProgram(patientId, subProgram ? { ...entry, subProgram } : entry);
+          const created = useAppStore.getState().careProgramsByPatient[patientId]
+            ?.find(p => p.code === entry.code && (!subProgram || p.subProgram === subProgram));
+          if (created) setPendingProgram({ program: created, firstStep: false });
+        }, { subProgram });
       }
     }
     clearPendingCareProgramCode();
@@ -166,11 +171,11 @@ export function CareProgramsTab({ header }) {
   );
 
   const programOptions = useMemo(() => {
-    const added = new Set(programs.map(p => p.code));
+    // A program whose enrollments have all ended can be enrolled again.
     const disabledFor = (code) => {
       if (code === 'SNP') return false;
       if (code === 'CMP') return CMP_SUB_PROGRAMS.every(sp => cmpTaken.includes(sp));
-      return added.has(code);
+      return !nextEnrollment(programs, code).allowed;
     };
     return catalog.map(entry => ({
       value: entry.code,
@@ -212,10 +217,12 @@ export function CareProgramsTab({ header }) {
       setSnpDrawerOpen(true);
       return;
     }
-    addCareProgram(patientId, details ? { ...entry, ...details } : entry);
-    const list = useAppStore.getState().careProgramsByPatient[patientId] || [];
-    const created = [...list].reverse().find(p => p.code === code && (!details?.subProgram || p.subProgram === details.subProgram));
-    if (created) setPendingProgram({ program: created, firstStep: true });
+    requestEnrollment(code, () => {
+      addCareProgram(patientId, details ? { ...entry, ...details } : entry);
+      const list = useAppStore.getState().careProgramsByPatient[patientId] || [];
+      const created = [...list].reverse().find(p => p.code === code && (!details?.subProgram || p.subProgram === details.subProgram));
+      if (created) setPendingProgram({ program: created, firstStep: true });
+    }, { subProgram: details?.subProgram || null });
   };
 
   const openProgram = (program) => setPendingProgram({ program, firstStep: false });

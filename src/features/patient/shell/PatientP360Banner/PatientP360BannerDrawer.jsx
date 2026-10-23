@@ -58,6 +58,7 @@ export function PatientP360BannerDrawer({ patient, p, programCodes }) {
 
   const showToast = useAppStore(s => s.showToast);
   const updatePatient = useAppStore(s => s.updatePatient);
+  const updateP360Profile = useAppStore(s => s.updateP360Profile);
   const openCallPopover = useAppStore(s => s.openCallPopover);
   const openPatientEdit = useAppStore(s => s.openPatientEdit);
   const showPatientAppIndicator = useAppStore(s => s.showPatientAppIndicator);
@@ -225,8 +226,10 @@ export function PatientP360BannerDrawer({ patient, p, programCodes }) {
               const existing = Array.isArray(p.opted_out_comms) ? p.opted_out_comms : [];
               const primary = patient.phone || p.plan_numbers_primary?.[0] || '';
               if (existing.some(e => e.includes(primary))) { showToast('Number is already blocked'); return; }
-              updatePatient(patient.id, { opted_out_comms: [...existing, primary ? `${primary} (Call, SMS)` : 'Primary phone (Call, SMS)'] });
-              showToast(`Blocked ${primary || 'primary number'} for calls and SMS`);
+              // opted_out_comms lives on p360_profiles, where the banner and
+              // Contact card read it (updatePatient wrote the patients table).
+              updateP360Profile(patient.id, { opted_out_comms: [...existing, primary ? `${primary} (Call, SMS)` : 'Primary phone (Call, SMS)'] })
+                .then(ok => showToast(ok ? `Blocked ${primary || 'primary number'} for calls and SMS` : 'Could not block the number'));
               return;
             }
             noop(MORE_MENU_LABELS[key] || 'Action')();

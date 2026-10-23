@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../Icon/Icon';
 import { ActionButton } from '../ActionButton/ActionButton';
+import { Switch } from '../Switch/Switch';
 import styles from './ConsentPopover.module.css';
 
 /**
@@ -11,12 +12,13 @@ import styles from './ConsentPopover.module.css';
  * @param {{top:number,left:number}} props.pos
  * @param {function} props.onClose
  * @param {Array<{id:string,title:string,items:Array<{id:string,label:string,
- *   status:string,icon:string,color:string,onAction?:function,actionLabel?:string}>}>} props.sections
+ *   status:string,icon:string,color:string,checked:boolean,onToggle?:function}>}>} props.sections
+ *   `onToggle(nextChecked)` runs when a row's switch is flipped; the switch
+ *   follows `checked`, so the caller decides whether the change happens.
  * @param {Array<{id:string,label:string,status:string,meta:string}>} [props.history] newest first
- * @param {function} [props.onCapture] Header "Capture consent" action.
  * @param {boolean}  [props.loading]
  */
-export function ConsentPopover({ pos, onClose, sections = [], history = [], onCapture, loading = false }) {
+export function ConsentPopover({ pos, onClose, sections = [], history = [], loading = false }) {
   const ref = useRef(null);
   const [showHistory, setShowHistory] = useState(false);
 
@@ -45,7 +47,6 @@ export function ConsentPopover({ pos, onClose, sections = [], history = [], onCa
           tooltipBelow
           onClick={() => setShowHistory(v => !v)}
         />
-        {onCapture && <ActionButton icon="solar:add-circle-linear" size="S" tooltip="Capture consent" tooltipBelow tooltipLeft onClick={onCapture} />}
       </div>
 
       <div className={styles.body}>
@@ -75,9 +76,7 @@ export function ConsentPopover({ pos, onClose, sections = [], history = [], onCa
                     <span className={styles.rowLabel}>{item.label}</span>
                     <span className={styles.rowStatus}>{item.status}</span>
                   </div>
-                  {item.onAction && (
-                    <ActionButton icon="solar:pen-linear" size="S" tooltip={item.actionLabel || 'Update'} tooltipLeft onClick={item.onAction} />
-                  )}
+                  <Switch checked={!!item.checked} onChange={() => item.onToggle?.(!item.checked)} ariaLabel={item.label} />
                 </div>
               ))}
             </div>

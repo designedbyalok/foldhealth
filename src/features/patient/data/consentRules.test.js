@@ -50,7 +50,7 @@ describe('canContact', () => {
   it('allows manual calls with no channel record but blocks a withdrawn channel', () => {
     expect(canContact([], prefs, 'call', { value: '(279) 878-3272', today }).allowed).toBe(true);
     const withdrawn = [rec('channel', 'call', 'withdrawn', '2026-03-01T00:00:00Z')];
-    expect(canContact(withdrawn, prefs, 'call', { today })).toEqual({ allowed: false, reason: 'Patient withdrew consent for call' });
+    expect(canContact(withdrawn, prefs, 'call', { today })).toEqual({ allowed: false, reason: 'Patient withdrew consent for phone calls' });
   });
 
   it('blocks an invalid number regardless of punctuation', () => {
@@ -110,6 +110,15 @@ describe('enrollmentCheck', () => {
     expect(enrollmentCheck('RPM', { existing: open, conditions: ['CHF'], today }).reasons).toEqual(['Already enrolled in RPM']);
     const ended = [{ code: 'RPM', status: 'Discontinued' }];
     expect(enrollmentCheck('RPM', { existing: ended, conditions: ['CHF'], today }).eligible).toBe(true);
+  });
+
+  it('lets SNP add a trigger and CMP add another sub-program', () => {
+    expect(enrollmentCheck('SNP', { existing: [{ code: 'SNP', status: 'Engaged' }], triggerable: true, today }).eligible).toBe(true);
+    expect(enrollmentCheck('CMP', { existing: [{ code: 'CMP', subProgram: 'SPD', status: 'Active' }], subProgram: 'Maternity Program', today }).eligible).toBe(true);
+  });
+
+  it('skips the condition minimum when conditions are unknown', () => {
+    expect(enrollmentCheck('CCM', { conditions: null, today })).toEqual({ eligible: true, reasons: [], needsConsent: true });
   });
 
   it('needs no consent or conditions for programs outside the consent list', () => {

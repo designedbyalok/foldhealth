@@ -37,13 +37,14 @@ const UPLOAD_MIME = ['application/pdf', 'image/png', 'image/jpeg'];
  * Guided consent capture: what the consent is for, the patient's decision,
  * how it was given, the script to read, then the evidence (witness for
  * verbal, a drawn signature for e-sign, an uploaded form for written).
- * Saves an immutable record through capturePatientConsent.
+ * Saves an immutable record through capturePatientConsent, then hands it
+ * to `onCaptured` (e.g. enrollment continuing once consent is given).
  */
-export function CaptureConsentDrawer({ patientId, scopeType: initialType, scope: initialScope, programId, onClose }) {
+export function CaptureConsentDrawer({ patientId, scopeType: initialType, scope: initialScope, status: initialStatus, programId, onCaptured, onClose }) {
   const capturePatientConsent = useAppStore(s => s.capturePatientConsent);
   const { consents } = usePatientConsent(patientId);
   const [scopeKey, setScopeKey] = useState(initialType && initialScope ? `${initialType}:${initialScope}` : SCOPE_OPTIONS[0].value);
-  const [status, setStatus] = useState('given');
+  const [status, setStatus] = useState(initialStatus || 'given');
   const [method, setMethod] = useState('verbal');
   const [witness, setWitness] = useState('');
   const [file, setFile] = useState(null);
@@ -98,6 +99,7 @@ export function CaptureConsentDrawer({ patientId, scopeType: initialType, scope:
     setSaving(false);
     if (!result.ok) { toast.error(result.error || 'Consent could not be saved'); return; }
     toast.success(status === 'given' ? 'Consent captured' : status === 'declined' ? 'Decline recorded' : 'Withdrawal recorded');
+    onCaptured?.(result.record);
     setClosing(true);
   };
 

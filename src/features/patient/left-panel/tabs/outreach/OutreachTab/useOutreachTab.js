@@ -3,6 +3,9 @@ import { useAppStore } from '../../../../../../store/useAppStore';
 import { toast } from '../../../../../../components/Toast/sonnerToast';
 import { getOpenIcdsForMember } from '../../../../../hcc/data/icds';
 import { INITIAL_LOG_GROUPS } from '../../../../data/outreachLogMock';
+import { canContact } from '../../../../data/consentRules';
+import { OUTREACH_CHANNEL, numberFromRecipient } from '../../../../data/patientPreferences';
+import { usePatientConsent } from '../../../../hooks/usePatientConsent';
 import {
   PROGRAMS,
   TYPE_LOG_LABEL,
@@ -82,6 +85,15 @@ export function useOutreachTab({
   const [callDirection, setCallDirection] = useState('outgoing');
   const [callViaNumber, setCallViaNumber] = useState('Delores Conn (581 824-1591)');
   const [calledToNumber, setCalledToNumber] = useState(INITIAL_CALLED_TO);
+
+  // Consent and contact checks for the logged channel (Phase 2A.4). Outreach
+  // documents contact that already happened, so this warns, it doesn't block.
+  const { consents, preferences } = usePatientConsent(patientId);
+  const consentTableMissing = useAppStore(s => s.patientConsentTableMissing);
+  const outreachChannel = OUTREACH_CHANNEL[type];
+  const contactWarning = outreachChannel && !consentTableMissing
+    ? canContact(consents, preferences, outreachChannel, { value: outreachChannel === 'call' ? numberFromRecipient(calledToNumber) : undefined }).reason
+    : null;
   const [callType, setCallType] = useState('Provider');
   const [callDurationMin, setCallDurationMin] = useState('00');
   const [callDurationSec, setCallDurationSec] = useState('00');
@@ -350,6 +362,7 @@ export function useOutreachTab({
     filterMenu, setFilterMenu,
     logGroups,
     type, setType,
+    contactWarning,
     datetime, setDatetime,
     selectedProgs,
     outcome, setOutcome: changeOutcome,

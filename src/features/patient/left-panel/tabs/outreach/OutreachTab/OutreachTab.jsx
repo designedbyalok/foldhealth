@@ -85,6 +85,7 @@ export function OutreachTabView({
           isHccGaps={tab.isHccGaps}
           type={tab.type}
           setType={tab.setType}
+          contactWarning={tab.contactWarning}
           datetime={tab.datetime}
           setDatetime={tab.setDatetime}
           showCallDetails={tab.showCallDetails}
