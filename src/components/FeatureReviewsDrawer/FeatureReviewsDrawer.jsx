@@ -1,4 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+import {
+  DndContext, DragOverlay, KeyboardSensor, MeasuringStrategy, PointerSensor, pointerWithin, rectIntersection,
+  useDraggable, useDroppable, useSensor, useSensors,
+} from '@dnd-kit/core';
 import { Drawer } from '../Drawer/Drawer';
 import { Badge } from '../Badge/Badge';
 import { Button } from '../Button/Button';
@@ -12,6 +17,7 @@ import { UserPickerPopover } from '../UserPickerPopover/UserPickerPopover';
 import { TabStrip } from '../TabStrip/TabStrip';
 import { Collapse } from '../Collapse/Collapse';
 import { CardSkeleton } from '../CardSkeleton/CardSkeleton';
+import { ConfirmDialog } from '../ConfirmDialog/ConfirmDialog';
 import { EmptyState } from '../EmptyState/EmptyState';
 import { toast } from '../Toast/sonnerToast';
 import { useAppStore } from '../../store/useAppStore';
@@ -54,9 +60,12 @@ function goTo(link) {
 
 // Signed once every reviewer has signed. A parent with no reviewers of its
 // own is done when all of its sub-items are.
+// Signed once every reviewer on the item has signed and, for a feature, every
+// one of its sub-items is signed too.
 function isDone(item, subItems) {
-  if (item.reviewers.length) return item.reviewers.every(r => r.signedAt);
-  return subItems.length > 0 && subItems.every(c => isDone(c, []));
+  const own = item.reviewers.every(r => r.signedAt);
+  if (!subItems.length) return item.reviewers.length > 0 && own;
+  return own && subItems.every(c => isDone(c, []));
 }
 
 function matches(tab, item, subItems, myEmail) {
@@ -143,6 +152,34 @@ export function FeatureReviewsDrawer({ onClose }) {
   const [expanded, setExpanded] = useState(null);
   const [form, setForm] = useState(null);
 
+  // ── Drag to nest / un-nest (managers, not on the Suggested tab) ──
+  const moveFeatureReview = useAppStore(s => s.moveFeatureReview);
+  const canDrag = isManager && activeTab !== 'suggested';
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor),
+  );
+  const [dragId, setDragId] = useState(null);
+  const [overId, setOverId] = useState(null);
+  const [flashId, setFlashId] = useState(null);
+  const dragItem = dragId ? reviews.find(r => r.id === dragId) : null;
+  const drop = dropVerdict(dragItem, overId, reviews);
+
+  const endDrag = () => { setDragId(null); setOverId(null); };
+  const onDragEnd = ({ over }) => {
+    const verdict = dropVerdict(dragItem, over?.id ?? null, reviews);
+    const id = dragId;
+    endDrag();
+    if (!verdict.ok) return;
+    moveFeatureReview(id, verdict.parentId);
+    setFlashId(id);
+    // Bring the moved row into view at its new place, then let the flash fade.
+    requestAnimationFrame(() => {
+      document.querySelector(`[data-review-id="${id}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
+    setTimeout(() => setFlashId(v => (v === id ? null : v)), 1400);
+  };
+
   if (form) {
     return (
       <FeatureReviewForm
@@ -153,9 +190,12 @@ export function FeatureReviewsDrawer({ onClose }) {
     );
   }
 
-  const row = (item, subItems, { child = false, context = false } = {}) => (
+  const row = (item, subItems, { child = false, context = false, parent = null } = {}) => (
     <ReviewRow
       key={item.id}
+      canDrag={canDrag}
+      dropHint={dragId && overId === `row:${item.id}` ? (drop.ok ? 'valid' : 'blocked') : null}
+      flash={flashId === item.id}
       item={item}
       childItems={subItems}
       child={child}
@@ -165,7 +205,8 @@ export function FeatureReviewsDrawer({ onClose }) {
       expanded={expanded === item.id}
       onToggle={() => setExpanded(v => (v === item.id ? null : item.id))}
       onExpand={() => setExpanded(item.id)}
-      onOpen={() => { goTo(item.link); onClose(); }}
+      link={item.link || parent?.link || ''}
+      onOpen={() => { goTo(item.link || parent?.link); onClose(); }}
       onAddSubItem={() => setForm({ parentId: item.id })}
     />
   );
@@ -184,6 +225,15 @@ export function FeatureReviewsDrawer({ onClose }) {
         </>
       ) : undefined}
     >
+      <DndContext
+        sensors={sensors}
+        collisionDetection={collisionDetection}
+        measuring={MEASURING}
+        onDragStart={({ active }) => setDragId(active.id)}
+        onDragOver={({ over }) => setOverId(over?.id ?? null)}
+        onDragCancel={endDrag}
+        onDragEnd={onDragEnd}
+      >
       {/* Tabs and column headers stay pinned under the drawer header. */}
       <div className={styles.stickyTop}>
         <TabStrip
@@ -212,6 +262,13 @@ export function FeatureReviewsDrawer({ onClose }) {
             <span className={styles.headActions}>Actions</span>
           </div>
         )}
+        {canDrag && (
+          <TopLevelDropZone
+            open={!!dragItem?.parentId}
+            over={overId === ROOT_DROP}
+            lands={dragItem ? dayLabel(dragItem.createdAt) : ''}
+          />
+        )}
       </div>
       {loading || !fetched ? (
         <div className={styles.padded}><CardSkeleton count={4} /></div>
@@ -225,23 +282,115 @@ export function FeatureReviewsDrawer({ onClose }) {
               {day.groups.map(({ item, subItems, self }) => (
                 <div key={item.id} className={styles.group}>
                   {row(item, subItems, { context: !self })}
-                  {subItems.map(c => row(c, [], { child: true }))}
+                  {subItems.map(c => row(c, [], { child: true, parent: item }))}
+                  {drop.ok && drop.parentId === item.id && <LandingGhost item={dragItem} />}
                 </div>
               ))}
             </section>
           ))}
         </div>
       )}
+      {/* Portalled: the drawer panel's transform would otherwise make it the
+          containing block for this fixed-position card, offsetting and
+          clipping it. */}
+      {createPortal(
+        <DragOverlay dropAnimation={drop.ok ? DROP_FADE : undefined} zIndex={DRAG_LAYER}>
+          {dragItem ? <DragPreview item={dragItem} drop={drop} /> : null}
+        </DragOverlay>,
+        document.body,
+      )}
+      </DndContext>
     </Drawer>
+  );
+}
+
+const ROOT_DROP = 'root';
+// Re-measure targets during a drag: the landing ghost adds a row, which
+// shifts everything below it.
+const MEASURING = { droppable: { strategy: MeasuringStrategy.Always } };
+// Above the drawer (400/401, plus 10 per nested drawer) and its popovers.
+const DRAG_LAYER = 1100;
+
+// Rows are tall and the root zone is short, so prefer what's under the
+// pointer and fall back to overlap (keyboard drags have no pointer).
+function collisionDetection(args) {
+  const hits = pointerWithin(args);
+  return hits.length ? hits : rectIntersection(args);
+}
+
+// Accepted drops fade out where they land; a refused drop keeps dnd-kit's
+// default glide back to where it came from.
+const DROP_FADE = { duration: 160, easing: 'ease-out', keyframes: () => [{ opacity: 1 }, { opacity: 0 }] };
+
+// What dropping `dragItem` on `overId` would do. One level of nesting: only a
+// top-level feature can take sub-items, and an item that has sub-items of its
+// own can't be nested.
+function dropVerdict(dragItem, overId, reviews) {
+  if (!dragItem || !overId) return { ok: false, hint: 'Drop onto a feature to nest it' };
+  if (overId === ROOT_DROP) {
+    return dragItem.parentId
+      ? { ok: true, parentId: null, hint: 'Move to the top level' }
+      : { ok: false, hint: 'Already at the top level' };
+  }
+  const target = reviews.find(r => `row:${r.id}` === overId);
+  if (!target || target.id === dragItem.id) return { ok: false, hint: 'Drop onto another feature' };
+  if (target.parentId) return { ok: false, hint: "Sub-items can't have their own sub-items" };
+  if (target.id === dragItem.parentId) return { ok: false, hint: `Already under ${target.title}` };
+  if (reviews.some(r => r.parentId === dragItem.id)) {
+    return { ok: false, hint: 'Move its sub-items out first' };
+  }
+  return { ok: true, parentId: target.id, hint: `Nest under ${target.title}` };
+}
+
+// Floats just under the column headers instead of pushing the list down, so
+// rows don't jump the moment a drag starts.
+function TopLevelDropZone({ open, over, lands }) {
+  const { setNodeRef } = useDroppable({ id: ROOT_DROP, disabled: !open });
+  return (
+    <div className={[styles.rootZoneWrap, open ? styles.rootZoneWrapOpen : ''].filter(Boolean).join(' ')} aria-hidden={!open}>
+      <div ref={setNodeRef} className={[styles.rootZone, over ? styles.rootZoneOver : ''].filter(Boolean).join(' ')}>
+        <Icon name="solar:arrow-left-up-linear" size={16} color="currentColor" />
+        <span>
+          {over ? 'Release to move to the top level' : 'Drop here to move to the top level'}
+          {lands && <span className={styles.rootZoneWhere}>{` · lands under ${lands}`}</span>}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// Where a nest drop will land: a dashed copy of the item as the target's last
+// sub-item.
+function LandingGhost({ item }) {
+  return (
+    <div className={`${styles.grid} ${styles.row} ${styles.childRow} ${styles.ghostRow}`} aria-hidden="true">
+      <div className={`${styles.featureCell} ${styles.childCell}`}>
+        <span className={styles.ghostTitle}>
+          <Icon name="solar:arrow-right-down-linear" size={14} color="currentColor" />
+          {item.title}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function DragPreview({ item, drop }) {
+  return (
+    <div className={styles.dragPreview}>
+      <Icon name="custom:drag-handle" size={16} color="var(--neutral-300)" />
+      <span className={styles.dragPreviewText}>
+        <span className={styles.dragPreviewTitle}>{item.title}</span>
+        <span className={drop.ok ? styles.dragHintOk : styles.dragHint}>{drop.hint}</span>
+      </span>
+    </div>
   );
 }
 
 const SHORT_FMT = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
-// When the item was fully signed: the last reviewer's signature, or the last
-// sub-item's for a parent with no reviewers of its own.
+// When the item was fully signed: the last signature on it or its sub-items.
 function signedOn(item, childItems) {
-  const times = (item.reviewers.length ? [item] : childItems)
+  const times = [item, ...childItems]
     .flatMap(i => i.reviewers.map(r => r.signedAt))
     .filter(Boolean);
   return times.length ? times.sort().at(-1) : null;
@@ -258,7 +407,7 @@ function ReviewStatus({ item, childItems }) {
       </div>
     );
   }
-  if (!item.reviewers.length) {
+  if (childItems.length && item.reviewers.every(r => r.signedAt)) {
     const kidsDone = childItems.filter(c => isDone(c, [])).length;
     return <Badge tone="grey" size="S" label={`${kidsDone}/${childItems.length} sub-items`} />;
   }
@@ -271,7 +420,11 @@ function ReviewStatus({ item, childItems }) {
 
 function ReviewRow({
   item, childItems, child, context, myEmail, isManager, expanded, onToggle, onExpand, onOpen, onAddSubItem,
+  canDrag, dropHint, flash, link,
 }) {
+  const drag = useDraggable({ id: item.id, disabled: !canDrag });
+  // Only top-level features take sub-items.
+  const dropTarget = useDroppable({ id: `row:${item.id}`, disabled: !canDrag || child });
   const signOff = useAppStore(s => s.signOffFeatureReview);
   const keep = useAppStore(s => s.keepFeatureReview);
   const remove = useAppStore(s => s.removeFeatureReview);
@@ -293,36 +446,76 @@ function ReviewRow({
     if (await keep(item.id)) toast.success('Kept for review. Its reviewers can see it now.');
   };
 
-  const handleSignOff = async () => {
+  // A feature's sub-items still waiting on me. Signing the feature signs them
+  // too, so that's confirmed first.
+  const myPendingSubItems = childItems.filter(c => {
+    const r = mySignoff(c, myEmail);
+    return r && !r.signedAt;
+  });
+  const [confirmAll, setConfirmAll] = useState(false);
+
+  const signNow = async (withSubItems) => {
     setSigning(true);
     let ok;
     try {
-      ok = await signOff(mine.id);
+      ok = await signOff(mine.id, { withSubItems });
     } finally {
       setSigning(false);
     }
-    if (ok) toast.success('Signed off');
+    setConfirmAll(false);
+    if (ok) {
+      toast.success(withSubItems
+        ? `Signed off ${item.title} and ${myPendingSubItems.length} sub-item${myPendingSubItems.length === 1 ? '' : 's'}`
+        : 'Signed off');
+    }
+  };
+
+  const handleSignOff = () => {
+    if (myPendingSubItems.length) setConfirmAll(true);
+    else signNow(false);
   };
 
   const rowCls = [
     styles.grid,
     styles.row,
+    child ? styles.childRow : '',
     expanded ? styles.rowExpanded : '',
     context ? styles.contextRow : '',
+    drag.isDragging ? styles.rowDragging : '',
+    dropHint === 'valid' ? styles.dropTarget : '',
+    dropHint === 'blocked' ? styles.dropBlocked : '',
+    flash ? styles.rowFlash : '',
   ].filter(Boolean).join(' ');
 
   const showSignOff = !!mine && !mine.signedAt;
-  const showOpen = !suggestion && !!item.link;
+  const showOpen = !suggestion && !!link;
 
   return (
-    <div className={styles.item}>
-      <div className={rowCls}>
+    <div className={styles.item} data-review-id={item.id}>
+      <div
+        className={rowCls}
+        ref={(el) => { drag.setNodeRef(el); dropTarget.setNodeRef(el); }}
+      >
+        {canDrag && (
+          <button
+            type="button"
+            className={styles.dragHandle}
+            aria-label={`Move ${item.title}`}
+            {...drag.attributes}
+            {...drag.listeners}
+          >
+            <Icon name="custom:drag-handle" size={16} color="var(--neutral-300)" />
+          </button>
+        )}
         <div className={[styles.featureCell, child ? styles.childCell : ''].filter(Boolean).join(' ')}>
           <button type="button" className={styles.rowMain} aria-expanded={expanded} onClick={onToggle}>
             <DownChevronIcon size={16} className={[styles.chevron, expanded ? styles.chevronOpen : ''].filter(Boolean).join(' ')} />
             <span className={styles.rowText}>
-              <span className={styles.rowTitle} title={item.title}>{item.title}</span>
-              {(item.area || item.kind === 'fix') && (
+              <span className={styles.rowTitle} title={item.title}>
+                {item.title}
+                {child && item.kind === 'fix' && <span className={styles.inlineMeta}>Bug fix</span>}
+              </span>
+              {!child && (item.area || item.kind === 'fix') && (
                 <span className={styles.rowMeta}>
                   {item.kind === 'fix' ? 'Bug fix' : null}
                   {item.kind === 'fix' && item.area && !child ? ' · ' : null}
@@ -387,6 +580,18 @@ function ReviewRow({
           onAddSubItem={onAddSubItem}
         />
       </Collapse>
+      {confirmAll && (
+        <ConfirmDialog
+          variant="primary"
+          icon="solar:check-circle-linear"
+          title={`Sign off ${item.title} and its sub-items?`}
+          description={`This also signs off the ${myPendingSubItems.length} sub-item${myPendingSubItems.length === 1 ? '' : 's'} assigned to you: ${myPendingSubItems.map(c => c.title).join(', ')}. Each gets today's date and time, and sign-offs can't be undone.`}
+          confirmLabel={`Sign off all ${myPendingSubItems.length + 1}`}
+          loading={signing}
+          onConfirm={() => signNow(true)}
+          onCancel={() => setConfirmAll(false)}
+        />
+      )}
     </div>
   );
 }
@@ -429,6 +634,11 @@ function ReviewerPicker({ item, anchorRect, onClose }) {
   const onSelect = (emails) => {
     const next = emails.map(String);
     const nextSet = new Set(next);
+    const inherited = item.reviewers.filter(r => r.inheritedFrom && !nextSet.has(r.email.toLowerCase()));
+    if (inherited.length) {
+      toast.error(`${inherited[0].name} reviews this through its feature. Change it on the feature.`);
+      return;
+    }
     if ([...signed].some(e => !nextSet.has(e))) {
       toast.error("A reviewer who has signed off can't be removed.");
       return;
@@ -466,6 +676,7 @@ function ReviewDetail({ item, child, myEmail, isManager, commenting, onCommentDo
                   color={r.signedAt ? 'var(--status-success)' : 'var(--neutral-300)'}
                 />
                 <span className={styles.reviewerName}>{r.name}</span>
+                {r.inheritedFrom && <span className={styles.reviewerVia}>via feature</span>}
                 <span className={styles.reviewerWhen}>
                   {r.signedAt ? <>Signed <time dateTime={r.signedAt}>{fmt(r.signedAt)}</time></> : 'Awaiting signoff'}
                 </span>

@@ -69,8 +69,222 @@
 }
 
 .row {
+  position: relative;
   min-height: 52px;
-  transition: background-color 120ms ease;
+  transition: background-color 160ms ease, opacity 160ms ease;
+}
+
+/* Sub-items are one line, so they sit tighter than their feature. */
+.childRow {
+  min-height: 40px;
+}
+
+.childRow .rowMain {
+  padding: var(--space-1) 0;
+}
+
+.childRow .rowTitle {
+  font-size: var(--font-sm);
+  font-weight: 400;
+  color: var(--neutral-400);
+}
+
+.inlineMeta {
+  margin-left: var(--space-2);
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+}
+
+/* ── Drag to nest ── */
+
+/* Grip in the row's left gutter: takes no column space, shows on hover. */
+.dragHandle {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-4);
+  height: var(--space-6);
+  padding: 0;
+  border: 0;
+  border-radius: var(--space-1);
+  background: transparent;
+  cursor: grab;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity 120ms ease;
+  touch-action: none;
+}
+
+.row:hover .dragHandle,
+.dragHandle:focus-visible {
+  opacity: 1;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.dragHandle:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: -2px;
+}
+
+/* The row being dragged stays as a faint placeholder. */
+.rowDragging {
+  opacity: 0.4;
+}
+
+.rowDragging .dragHandle {
+  opacity: 1;
+}
+
+.dropTarget,
+.dropTarget:hover {
+  background: var(--primary-100);
+  outline: 1px solid var(--primary-300);
+  outline-offset: -1px;
+}
+
+.dropBlocked,
+.dropBlocked:hover {
+  background: var(--neutral-50);
+  cursor: not-allowed;
+}
+
+/* A moved row glows where it landed, then fades back. */
+.rowFlash {
+  animation: rowFlash 1.4s ease-out;
+}
+
+@keyframes rowFlash {
+  0%, 30% { background: var(--primary-100); }
+  100% { background: transparent; }
+}
+
+.rootZoneWrap {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  padding: var(--space-2) var(--space-4);
+  background: var(--neutral-0);
+  box-shadow: var(--shadow-popover);
+  opacity: 0;
+  transform: translateY(calc(-1 * var(--space-1)));
+  pointer-events: none;
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.rootZoneWrapOpen {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.rootZone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px dashed var(--primary-200);
+  border-radius: var(--space-2);
+  font-size: var(--font-sm);
+  color: var(--primary-300);
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.rootZoneWhere {
+  color: var(--neutral-300);
+}
+
+.ghostRow {
+  border-top: 0.5px solid var(--neutral-100);
+  background: var(--primary-50);
+  outline: 1px dashed var(--primary-300);
+  outline-offset: -3px;
+  animation: ghostIn 140ms ease-out;
+}
+
+.ghostTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--space-1) + var(--space-1) / 2);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-left: var(--space-6);
+  font-size: var(--font-sm);
+  color: var(--primary-300);
+}
+
+@keyframes ghostIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.rootZoneOver {
+  border-style: solid;
+  border-color: var(--primary-300);
+  background: var(--primary-100);
+}
+
+.dragPreview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: max-content;
+  max-width: 360px;
+  padding: var(--space-2) var(--space-3);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--neutral-0);
+  box-shadow: var(--shadow-popover);
+  cursor: grabbing;
+}
+
+.dragPreviewText {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  min-width: 0;
+}
+
+.dragPreviewTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+
+.dragHint,
+.dragHintOk {
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+}
+
+.dragHintOk {
+  color: var(--primary-300);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row,
+  .dragHandle,
+  .rootZone,
+  .rootZoneWrap {
+    transition: none;
+  }
+
+  .rowFlash,
+  .ghostRow {
+    animation: none;
+  }
 }
 
 .row:hover,
@@ -241,6 +455,11 @@
 .reviewerName {
   font-weight: 500;
   color: var(--neutral-500);
+}
+
+.reviewerVia {
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
 }
 
 .reviewerWhen {
