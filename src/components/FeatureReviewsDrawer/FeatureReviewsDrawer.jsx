@@ -54,19 +54,19 @@ function goTo(link) {
 
 // Signed once every reviewer has signed. A parent with no reviewers of its
 // own is done when all of its sub-items are.
-function isDone(item, children) {
+function isDone(item, subItems) {
   if (item.reviewers.length) return item.reviewers.every(r => r.signedAt);
-  return children.length > 0 && children.every(c => isDone(c, []));
+  return subItems.length > 0 && subItems.every(c => isDone(c, []));
 }
 
-function matches(tab, item, children, myEmail) {
+function matches(tab, item, subItems, myEmail) {
   if (tab === 'all' || tab === 'suggested') return true;
   if (tab === 'mine') {
     const mine = mySignoff(item, myEmail);
     return !!mine && !mine.signedAt;
   }
-  if (!item.reviewers.length && !children.length) return false;
-  return tab === 'signed' ? isDone(item, children) : !isDone(item, children);
+  if (!item.reviewers.length && !subItems.length) return false;
+  return tab === 'signed' ? isDone(item, subItems) : !isDone(item, subItems);
 }
 
 /**
@@ -107,18 +107,18 @@ export function FeatureReviewsDrawer({ onClose }) {
     for (const list of kids.values()) list.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     return approved
       .filter(r => !r.parentId || !ids.has(r.parentId))
-      .map(r => ({ item: r, children: kids.get(r.id) || [] }));
+      .map(r => ({ item: r, subItems: kids.get(r.id) || [] }));
   }, [approved]);
 
-  const filtered = useCallback((tab) => (tab === 'suggested' ? suggested.map(item => ({ item, children: [], self: true })) : tree)
-    .map(({ item, children }) => {
-      const kids = children.filter(c => matches(tab, c, [], myEmail));
-      const self = matches(tab, item, children, myEmail);
-      return self || kids.length ? { item, children: tab === 'all' ? children : kids, self } : null;
+  const filtered = useCallback((tab) => (tab === 'suggested' ? suggested.map(item => ({ item, subItems: [], self: true })) : tree)
+    .map(({ item, subItems }) => {
+      const kids = subItems.filter(c => matches(tab, c, [], myEmail));
+      const self = matches(tab, item, subItems, myEmail);
+      return self || kids.length ? { item, subItems: tab === 'all' ? subItems : kids, self } : null;
     })
     .filter(Boolean), [tree, suggested, myEmail]);
 
-  const count = (tab) => filtered(tab).reduce((n, g) => n + (g.self ? 1 : 0) + g.children.length, 0);
+  const count = (tab) => filtered(tab).reduce((n, g) => n + (g.self ? 1 : 0) + g.subItems.length, 0);
   const counts = {
     mine: count('mine'), pending: count('pending'), signed: count('signed'), all: approved.length, suggested: suggested.length,
   };
@@ -153,11 +153,11 @@ export function FeatureReviewsDrawer({ onClose }) {
     );
   }
 
-  const row = (item, children, { child = false, context = false } = {}) => (
+  const row = (item, subItems, { child = false, context = false } = {}) => (
     <ReviewRow
       key={item.id}
       item={item}
-      childItems={children}
+      childItems={subItems}
       child={child}
       context={context}
       myEmail={myEmail}
@@ -204,11 +204,12 @@ export function FeatureReviewsDrawer({ onClose }) {
           )}
         />
         {!loading && fetched && days.length > 0 && (
-          <div className={`${styles.grid} ${styles.head}`} role="row">
-            <span role="columnheader" className={styles.headFeature}>Feature</span>
-            <span role="columnheader">Reviewers</span>
-            <span role="columnheader">Status</span>
-            <span role="columnheader" className={styles.headActions}>Actions</span>
+          // Visual column labels only; each row's controls carry their own labels.
+          <div className={`${styles.grid} ${styles.head}`} aria-hidden="true">
+            <span className={styles.headFeature}>Feature</span>
+            <span>Reviewers</span>
+            <span>Status</span>
+            <span className={styles.headActions}>Actions</span>
           </div>
         )}
       </div>
@@ -217,14 +218,14 @@ export function FeatureReviewsDrawer({ onClose }) {
       ) : days.length === 0 ? (
         <EmptyState icon="solar:clipboard-check-linear" {...EMPTY[activeTab]} />
       ) : (
-        <div className={styles.table} role="table" aria-label="Design signoff">
+        <div className={styles.table}>
           {days.map(day => (
             <section key={day.key} aria-label={day.label}>
               <div className={styles.dayRow}>{day.label}</div>
-              {day.groups.map(({ item, children, self }) => (
+              {day.groups.map(({ item, subItems, self }) => (
                 <div key={item.id} className={styles.group}>
-                  {row(item, children, { context: !self })}
-                  {children.map(c => row(c, [], { child: true }))}
+                  {row(item, subItems, { context: !self })}
+                  {subItems.map(c => row(c, [], { child: true }))}
                 </div>
               ))}
             </section>
@@ -294,8 +295,12 @@ function ReviewRow({
 
   const handleSignOff = async () => {
     setSigning(true);
-    const ok = await signOff(mine.id);
-    setSigning(false);
+    let ok;
+    try {
+      ok = await signOff(mine.id);
+    } finally {
+      setSigning(false);
+    }
     if (ok) toast.success('Signed off');
   };
 
@@ -311,8 +316,8 @@ function ReviewRow({
 
   return (
     <div className={styles.item}>
-      <div className={rowCls} role="row">
-        <div className={[styles.featureCell, child ? styles.childCell : ''].filter(Boolean).join(' ')} role="cell">
+      <div className={rowCls}>
+        <div className={[styles.featureCell, child ? styles.childCell : ''].filter(Boolean).join(' ')}>
           <button type="button" className={styles.rowMain} aria-expanded={expanded} onClick={onToggle}>
             <DownChevronIcon size={16} className={[styles.chevron, expanded ? styles.chevronOpen : ''].filter(Boolean).join(' ')} />
             <span className={styles.rowText}>
@@ -327,7 +332,7 @@ function ReviewRow({
             </span>
           </button>
         </div>
-        <div role="cell" ref={setReviewersCell}>
+        <div ref={setReviewersCell}>
           <ReviewerAvatars
             item={item}
             editable={isManager}
@@ -335,16 +340,16 @@ function ReviewRow({
           />
           {pickerRect && <ReviewerPicker item={item} anchorRect={pickerRect} onClose={() => setPickerRect(null)} />}
         </div>
-        <div role="cell"><ReviewStatus item={item} childItems={childItems} /></div>
+        <div><ReviewStatus item={item} childItems={childItems} /></div>
         {suggestion && isManager ? (
-          <div className={styles.actions} role="cell">
+          <div className={styles.actions}>
             <ActionButton size="S" icon="solar:trash-bin-minimalistic-linear" tooltip="Remove from the list" tooltipLeft onClick={() => remove(item.id)} />
             <Button variant="secondary" size="S" leadingIcon="solar:check-read-linear" onClick={handleKeep}>Keep</Button>
           </div>
         ) : (
           // Fixed slots (Sign off · divider · comment · divider · open) so each control
           // sits in the same place on every row, present or not.
-          <div className={styles.actionSlots} role="cell">
+          <div className={styles.actionSlots}>
             <span className={styles.signOffSlot}>
               {showSignOff && (
                 <Button variant="tertiary" size="S" leadingIcon="solar:check-circle-linear" onClick={handleSignOff} disabled={signing}>
@@ -423,7 +428,8 @@ function ReviewerPicker({ item, anchorRect, onClose }) {
 
   const onSelect = (emails) => {
     const next = emails.map(String);
-    if ([...signed].some(e => !next.includes(e))) {
+    const nextSet = new Set(next);
+    if ([...signed].some(e => !nextSet.has(e))) {
       toast.error("A reviewer who has signed off can't be removed.");
       return;
     }
@@ -484,15 +490,21 @@ function ReviewDetail({ item, child, myEmail, isManager, commenting, onCommentDo
 
 function CommentBox({ signoff, onDone }) {
   const commentFeatureReview = useAppStore(s => s.commentFeatureReview);
-  const [draft, setDraft] = useState(signoff.comment);
+  // null until the reviewer types, so a newer saved comment shows through.
+  const [edited, setEdited] = useState(null);
+  const draft = edited ?? signoff.comment;
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
     if (saving) return;
     if (draft.trim() === signoff.comment) { onDone(); return; }
     setSaving(true);
-    const ok = await commentFeatureReview(signoff.id, draft.trim());
-    setSaving(false);
+    let ok;
+    try {
+      ok = await commentFeatureReview(signoff.id, draft.trim());
+    } finally {
+      setSaving(false);
+    }
     if (ok) onDone();
   };
 
@@ -503,7 +515,7 @@ function CommentBox({ signoff, onDone }) {
         rows={3}
         placeholder="Add a comment for this review"
         value={draft}
-        onChange={e => setDraft(e.target.value)}
+        onChange={e => setEdited(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) save(); }}
       />
       <div className={styles.commentActions}>

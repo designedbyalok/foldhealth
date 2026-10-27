@@ -34,16 +34,20 @@ export function FeatureReviewForm({ parentId: initialParentId = null, onClose, o
   const save = async () => {
     if (!title.trim() || !reviewerEmails.length || !linkValid) { setShowErrors(true); return; }
     setSaving(true);
-    const id = await addFeatureReview({
-      title: title.trim(),
-      kind,
-      area: area.trim(),
-      link: link.trim(),
-      description: description.trim(),
-      parentId: parentId || null,
-      reviewers: reviewerEmails.map(e => byEmail.get(e)).filter(Boolean),
-    });
-    setSaving(false);
+    let id;
+    try {
+      id = await addFeatureReview({
+        title: title.trim(),
+        kind,
+        area: area.trim(),
+        link: link.trim(),
+        description: description.trim(),
+        parentId: parentId || null,
+        reviewers: reviewerEmails.map(e => byEmail.get(e)).filter(Boolean),
+      });
+    } finally {
+      setSaving(false);
+    }
     if (id) onDone(id);
   };
 
