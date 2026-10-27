@@ -275,7 +275,9 @@
 .viewByBtn:hover { background: var(--neutral-50); }
 .viewByBtn.active { background: var(--primary-100); color: var(--primary-300); }
 
+/* Opacity only: animating height pushed the table down on every page load
+   for lists whose filter bar starts open. */
 @keyframes filterSlide {
-  from { opacity: 0; max-height: 0; }
-  to { opacity: 1; max-height: 200px; }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

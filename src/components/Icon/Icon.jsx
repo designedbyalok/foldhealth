@@ -129,6 +129,15 @@ export function Icon({ name, size = 18, color, style, className }) {
       color={color}
       style={style}
       className={className}
+      // Iconify fetches icon data on first use and renders a zero-size span
+      // until it arrives; reserve the box so rows and toolbars don't shift.
+      fallback={
+        <span
+          aria-hidden="true"
+          className={className}
+          style={{ display: 'inline-block', width: size, height: size, flexShrink: 0, ...style }}
+        />
+      }
     />
   );
 }
