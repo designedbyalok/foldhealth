@@ -6,12 +6,17 @@ export const sameEmail = (a, b) => !!a && !!b && a.toLowerCase() === b.toLowerCa
 /** The signed-in user's reviewer row on a feature, if they're assigned. */
 export const mySignoff = (feature, email) => feature.reviewers.find(r => sameEmail(r.email, email)) || null;
 
+/** The signed-in user's email: the auth session first, the profile as a fallback. */
+export function useReviewerEmail() {
+  return useAppStore(s => s.featureReviewsEmail || s.currentUserProfile?.email || null);
+}
+
 /**
  * Feature reviews awaiting the signed-in user's sign-off, for the nav badge.
  * Shared so the classic and floating sidebars count the same way.
  */
 export function useMyPendingReviewCount() {
-  const myEmail = useAppStore(s => s.currentUserProfile?.email);
+  const myEmail = useReviewerEmail();
   return useAppStore(s => s.featureReviews.filter(f => {
     if (f.status !== 'approved') return false;
     const mine = mySignoff(f, myEmail);

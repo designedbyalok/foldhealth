@@ -21,7 +21,7 @@ import { ConfirmDialog } from '../ConfirmDialog/ConfirmDialog';
 import { EmptyState } from '../EmptyState/EmptyState';
 import { toast } from '../Toast/sonnerToast';
 import { useAppStore } from '../../store/useAppStore';
-import { mySignoff, sameEmail, useReviewerOptions } from './featureReviewHooks';
+import { mySignoff, sameEmail, useReviewerEmail, useReviewerOptions } from './featureReviewHooks';
 import { FeatureReviewForm } from './FeatureReviewForm';
 import styles from './FeatureReviewsDrawer.module.css';
 
@@ -94,7 +94,7 @@ export function FeatureReviewsDrawer({ onClose }) {
   const loading = useAppStore(s => s.featureReviewsLoading);
   const fetched = useAppStore(s => s._featureReviewsFetched);
   const fetchFeatureReviews = useAppStore(s => s.fetchFeatureReviews);
-  const myEmail = useAppStore(s => s.currentUserProfile?.email);
+  const myEmail = useReviewerEmail();
   const isManager = managers.some(m => sameEmail(m, myEmail));
 
   useEffect(() => { fetchFeatureReviews(); }, [fetchFeatureReviews]);
@@ -119,21 +119,28 @@ export function FeatureReviewsDrawer({ onClose }) {
       .map(r => ({ item: r, subItems: kids.get(r.id) || [] }));
   }, [approved]);
 
-  const filtered = useCallback((tab) => (tab === 'suggested' ? suggested.map(item => ({ item, subItems: [], self: true })) : tree)
+  // Managers' All tab holds everything: kept items and suggestions alike.
+  const filtered = useCallback((tab) => {
+    const suggestedGroups = suggested.map(item => ({ item, subItems: [] }));
+    if (tab === 'suggested') return suggestedGroups.map(g => ({ ...g, self: true }));
+    return (tab === 'all' && isManager ? [...tree, ...suggestedGroups] : tree)
     .map(({ item, subItems }) => {
       const kids = subItems.filter(c => matches(tab, c, [], myEmail));
       const self = matches(tab, item, subItems, myEmail);
       return self || kids.length ? { item, subItems: tab === 'all' ? subItems : kids, self } : null;
     })
-    .filter(Boolean), [tree, suggested, myEmail]);
+    .filter(Boolean);
+  }, [tree, suggested, myEmail, isManager]);
 
   const count = (tab) => filtered(tab).reduce((n, g) => n + (g.self ? 1 : 0) + g.subItems.length, 0);
   const counts = {
-    mine: count('mine'), pending: count('pending'), signed: count('signed'), all: approved.length, suggested: suggested.length,
+    mine: count('mine'), pending: count('pending'), signed: count('signed'),
+    all: approved.length + (isManager ? suggested.length : 0), suggested: suggested.length,
   };
 
   const [tab, setTab] = useState(null);
-  const activeTab = tab || (counts.mine > 0 ? 'mine' : 'all');
+  // Managers land on everything; reviewers on what's waiting for them.
+  const activeTab = tab || (isManager || counts.mine === 0 ? 'all' : 'mine');
   const [newestFirst, setNewestFirst] = useState(true);
 
   const days = useMemo(() => {
@@ -422,9 +429,11 @@ function ReviewRow({
   item, childItems, child, context, myEmail, isManager, expanded, onToggle, onExpand, onOpen, onAddSubItem,
   canDrag, dropHint, flash, link,
 }) {
-  const drag = useDraggable({ id: item.id, disabled: !canDrag });
+  // Suggestions are kept or removed first; only kept items nest.
+  const movable = canDrag && item.status !== 'suggested';
+  const drag = useDraggable({ id: item.id, disabled: !movable });
   // Only top-level features take sub-items.
-  const dropTarget = useDroppable({ id: `row:${item.id}`, disabled: !canDrag || child });
+  const dropTarget = useDroppable({ id: `row:${item.id}`, disabled: !movable || child });
   const signOff = useAppStore(s => s.signOffFeatureReview);
   const keep = useAppStore(s => s.keepFeatureReview);
   const remove = useAppStore(s => s.removeFeatureReview);
@@ -496,7 +505,7 @@ function ReviewRow({
         className={rowCls}
         ref={(el) => { drag.setNodeRef(el); dropTarget.setNodeRef(el); }}
       >
-        {canDrag && (
+        {movable && (
           <button
             type="button"
             className={styles.dragHandle}

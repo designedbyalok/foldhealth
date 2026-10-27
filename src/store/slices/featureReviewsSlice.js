@@ -106,6 +106,10 @@ export function createFeatureReviewsSlice(set, get) {
   return {
     featureReviews: [],
     featureReviewManagers: [],
+    // Who's signed in, from the auth session (always there), so manager and
+    // reviewer checks don't wait on the profile, which some pages load late.
+    featureReviewsEmail: null,
+    featureReviewsActor: null,
     featureReviewsLoading: false,
     _featureReviewsFetched: false,
 
@@ -114,20 +118,26 @@ export function createFeatureReviewsSlice(set, get) {
     fetchFeatureReviews: async () => {
       if (get()._featureReviewsFetched) return;
       set({ _featureReviewsFetched: true, featureReviewsLoading: true });
-      const [reviews, managers] = await Promise.all([
+      const [reviews, managers, session] = await Promise.all([
         supabase.from('feature_reviews').select(COLUMNS).neq('status', 'dismissed').order('created_at', { ascending: false }).limit(500),
-        supabase.from('feature_review_managers').select('email'),
+        supabase.from('feature_review_managers').select('email, name'),
+        supabase.auth.getSession(),
       ]);
       if (reviews.error) console.warn('[store] feature reviews fetch failed:', reviews.error.message);
+      const user = session.data?.session?.user;
+      const email = user?.email?.toLowerCase() || null;
+      const manager = (managers.data || []).find(m => m.email.toLowerCase() === email);
       set({
         featureReviews: (reviews.data || []).map(rowToReview),
         featureReviewManagers: (managers.data || []).map(m => m.email.toLowerCase()),
+        featureReviewsEmail: email,
+        featureReviewsActor: manager?.name || user?.user_metadata?.full_name || null,
         featureReviewsLoading: false,
       });
     },
 
     addFeatureReview: async ({ title, kind, description, area, link, parentId, reviewers }) => {
-      const by = get().currentUserProfile?.name || null;
+      const by = get().currentUserProfile?.name || get().featureReviewsActor;
       const { data, error } = await supabase
         .from('feature_reviews')
         .insert({
@@ -164,7 +174,7 @@ export function createFeatureReviewsSlice(set, get) {
       const have = new Set(feature.reviewers.map(r => r.email.toLowerCase()));
       const removed = feature.reviewers.filter(r => !want.has(r.email.toLowerCase()) && !r.signedAt);
       const added = reviewers.filter(r => !have.has(r.email.toLowerCase()));
-      const by = get().currentUserProfile?.name || null;
+      const by = get().currentUserProfile?.name || get().featureReviewsActor;
 
       if (removed.length) {
         const { error } = await supabase.from('feature_review_signoffs').delete().in('id', removed.map(r => r.id));
