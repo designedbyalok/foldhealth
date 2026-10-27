@@ -97,7 +97,7 @@ export function FeatureReviewsDrawer({ onClose }) {
   const myEmail = useReviewerEmail();
   const isManager = managers.some(m => sameEmail(m, myEmail));
 
-  useEffect(() => { fetchFeatureReviews(); }, [fetchFeatureReviews]);
+  useEffect(() => { fetchFeatureReviews({ refresh: true }); }, [fetchFeatureReviews]);
 
   const approved = useMemo(() => reviews.filter(r => r.status === 'approved'), [reviews]);
   const suggested = useMemo(() => reviews.filter(r => r.status === 'suggested'), [reviews]);

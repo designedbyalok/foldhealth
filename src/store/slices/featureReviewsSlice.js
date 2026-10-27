@@ -2,7 +2,9 @@ import { supabase } from '../../lib/supabase';
 import { toast } from '../../components/Toast/sonnerToast';
 
 const SIGNOFF_COLUMNS = 'id, feature_id, reviewer_email, reviewer_name, assigned_by, assigned_at, signed_at, comment, commented_at, inherited_from';
-const COLUMNS = `id, parent_id, status, kind, decided_by, decided_at, title, description, area, link, created_by, created_at, feature_review_signoffs(${SIGNOFF_COLUMNS})`;
+// The relationship is named so the embed stays unambiguous if the signoffs
+// table ever gains another reference to feature_reviews.
+const COLUMNS = `id, parent_id, status, kind, decided_by, decided_at, title, description, area, link, created_by, created_at, feature_review_signoffs!feature_review_signoffs_feature_id_fkey(${SIGNOFF_COLUMNS})`;
 
 function rowToSignoff(s) {
   return {
@@ -115,15 +117,23 @@ export function createFeatureReviewsSlice(set, get) {
 
     // Once per session: the nav badge needs it, and nothing else changes
     // these rows often enough to justify a refetch or a realtime socket.
-    fetchFeatureReviews: async () => {
-      if (get()._featureReviewsFetched) return;
-      set({ _featureReviewsFetched: true, featureReviewsLoading: true });
+    // The nav badge loads this once per session; the drawer passes `refresh`
+    // on every open, so items added since (by other managers, the changelog
+    // trigger, or SQL) show up without a page reload. Only the first load
+    // shows the skeleton, and a failed refresh keeps the current list.
+    fetchFeatureReviews: async ({ refresh = false } = {}) => {
+      const loaded = get()._featureReviewsFetched;
+      if (loaded && !refresh) return;
+      set({ _featureReviewsFetched: true, ...(loaded ? {} : { featureReviewsLoading: true }) });
       const [reviews, managers, session] = await Promise.all([
         supabase.from('feature_reviews').select(COLUMNS).neq('status', 'dismissed').order('created_at', { ascending: false }).limit(500),
         supabase.from('feature_review_managers').select('email, name'),
         supabase.auth.getSession(),
       ]);
-      if (reviews.error) console.warn('[store] feature reviews fetch failed:', reviews.error.message);
+      if (reviews.error) {
+        console.warn('[store] feature reviews fetch failed:', reviews.error.message);
+        if (loaded) { set({ featureReviewsLoading: false }); return; }
+      }
       const user = session.data?.session?.user;
       const email = user?.email?.toLowerCase() || null;
       const manager = (managers.data || []).find(m => m.email.toLowerCase() === email);

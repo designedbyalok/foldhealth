@@ -13,8 +13,11 @@
 --
 -- Requires the earlier feature_reviews migrations. Safe to run more than once.
 
+-- No foreign key on inherited_from: a second relationship to feature_reviews
+-- makes the app's PostgREST embed ambiguous (see
+-- feature_reviews_drop_inherited_fk_migration.sql).
 ALTER TABLE public.feature_review_signoffs
-  ADD COLUMN IF NOT EXISTS inherited_from uuid REFERENCES public.feature_reviews (id) ON DELETE CASCADE;
+  ADD COLUMN IF NOT EXISTS inherited_from uuid;
 
 CREATE INDEX IF NOT EXISTS feature_review_signoffs_inherited_idx
   ON public.feature_review_signoffs (inherited_from) WHERE inherited_from IS NOT NULL;
