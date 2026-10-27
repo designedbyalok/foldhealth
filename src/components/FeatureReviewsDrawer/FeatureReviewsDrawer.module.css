@@ -1,0 +1,279 @@
+.headerDivider {
+  width: 1px;
+  height: 16px;
+  background: var(--neutral-150);
+  flex-shrink: 0;
+}
+
+/* Tabs + column headers, pinned under the drawer header. Pulls up through
+   the body's 16px padding and bleeds to its edges, like the list below. */
+.stickyTop {
+  position: sticky;
+  top: -16px;
+  z-index: 2;
+  margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) 0;
+  background: var(--neutral-0);
+}
+
+.padded {
+  padding-top: var(--space-4);
+}
+
+/* One grid for the header and every row, so reviewers, status and actions
+   sit in the same columns all the way down. */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px 104px 160px;
+  column-gap: var(--space-3);
+  align-items: center;
+  padding: 0 var(--space-4);
+}
+
+.table {
+  margin: 0 calc(-1 * var(--space-4));
+}
+
+.head {
+  height: 32px;
+  font-size: var(--font-xs);
+  font-weight: 500;
+  color: var(--neutral-300);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
+/* Line the column label up with the titles, past the chevron. */
+.headFeature {
+  padding-left: var(--space-6);
+}
+
+.headActions {
+  text-align: right;
+}
+
+.dayRow {
+  padding: calc(var(--space-1) + var(--space-1) / 2) var(--space-4) calc(var(--space-1) + var(--space-1) / 2) var(--space-10);
+  background: var(--neutral-50);
+  border-bottom: 0.5px solid var(--neutral-100);
+  font-size: var(--font-xs);
+  font-weight: 500;
+  color: var(--neutral-300);
+}
+
+.group + .group,
+.item + .item {
+  border-top: 0.5px solid var(--neutral-100);
+}
+
+.group:last-child {
+  border-bottom: 0.5px solid var(--neutral-100);
+}
+
+.row {
+  min-height: 52px;
+  transition: background-color 120ms ease;
+}
+
+.row:hover,
+.rowExpanded {
+  background: var(--neutral-50);
+}
+
+.contextRow .rowTitle {
+  color: var(--neutral-300);
+}
+
+.featureCell {
+  min-width: 0;
+}
+
+.childCell {
+  padding-left: var(--space-6);
+}
+
+.rowMain {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-2) 0;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chevron {
+  flex-shrink: 0;
+  transform: rotate(-90deg);
+  transition: transform 160ms ease;
+}
+
+.chevronOpen {
+  transform: rotate(0deg);
+}
+
+.rowText {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 4);
+  min-width: 0;
+}
+
+.rowTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-md);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+
+.rowMeta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+}
+
+.reviewersButton {
+  display: inline-flex;
+  align-items: center;
+  margin: calc(-1 * var(--space-1));
+  padding: var(--space-1);
+  border: none;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+}
+
+.reviewersButton:hover {
+  background: var(--neutral-100);
+}
+
+.statusCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(var(--space-1) / 2);
+}
+
+/* Badge centres itself (align-self) by default; keep it on the left edge
+   with the date under it. */
+.statusCell > * {
+  align-self: flex-start;
+}
+
+.signedOn {
+  font-size: var(--font-xs);
+  color: var(--neutral-300);
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: calc(var(--space-1) + var(--space-1) / 2);
+}
+
+.actionSlots {
+  display: grid;
+  grid-template-columns: 80px 1px 24px 1px 24px;
+  column-gap: calc(var(--space-1) + var(--space-1) / 2);
+  justify-content: end;
+  align-items: center;
+}
+
+.actionSlots > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Hug the divider, so the gap to it is the same on every row. */
+.actionSlots > .signOffSlot {
+  justify-content: flex-end;
+}
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: 0 var(--space-4) calc(var(--space-3) + var(--space-1) / 2) var(--space-10);
+  background: var(--neutral-50);
+}
+
+.childDetail {
+  padding-left: var(--space-16);
+}
+
+.description {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--neutral-400);
+  line-height: 1.5;
+}
+
+.reviewers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reviewer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.reviewerLine {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--space-1) + var(--space-1) / 2);
+  font-size: var(--font-sm);
+}
+
+.reviewerName {
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+
+.reviewerWhen {
+  color: var(--neutral-300);
+}
+
+.comment {
+  margin: 0 0 0 var(--space-5);
+  font-size: var(--font-sm);
+  color: var(--neutral-400);
+  line-height: 1.5;
+}
+
+.commentBox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-left: var(--space-5);
+}
+
+.commentActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.noReviewers {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}

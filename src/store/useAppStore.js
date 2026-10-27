@@ -239,6 +239,7 @@ import { rowToReferral, sampleReferralsFor } from '../features/patient/data/pati
 import { createHccWorklistFiltersSlice } from './slices/hccWorklistFiltersSlice';
 import { createPharmacyWorklistSlice } from './slices/pharmacyWorklistSlice';
 import { createPatientOrdersSlice } from './slices/patientOrdersSlice';
+import { createFeatureReviewsSlice } from './slices/featureReviewsSlice';
 
 // patientId → in-flight fetchPatientConsents request.
 const consentFetches = new Map();
@@ -377,6 +378,7 @@ export const useAppStore = create((set, get) => ({
   ...createHccWorklistFiltersSlice(set, get),
   ...createPharmacyWorklistSlice(set, get),
   ...createPatientOrdersSlice(set, get),
+  ...createFeatureReviewsSlice(set, get),
 
   // Patient Monitoring — per-patient snapshot for the P360 Monitoring tab,
   // keyed by member id. Falls back to the bundled MONITORING_SEED until

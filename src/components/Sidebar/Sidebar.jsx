@@ -2,6 +2,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { Icon } from '../Icon/Icon';
 import { HelpPopover } from '../HelpPopover/HelpPopover';
 import { WhatsNewDrawer } from '../WhatsNewDrawer/WhatsNewDrawer';
+import { FeatureReviewsDrawer } from '../FeatureReviewsDrawer/FeatureReviewsDrawer';
+import { useMyPendingReviewCount } from '../FeatureReviewsDrawer/featureReviewHooks';
 import { useAppStore } from '../../store/useAppStore';
 import { formatBadgeCount } from '../../lib/formatBadgeCount';
 import { useCan } from '../../lib/useCan';
@@ -25,6 +27,7 @@ const NAV_ITEMS = [
 ];
 
 const BOTTOM_ITEMS = [
+  { icon: 'solar:clipboard-check-linear', filledIcon: 'solar:clipboard-check-bold', label: 'Signoff', action: 'reviews' },
   { icon: 'solar:question-circle-linear', filledIcon: 'solar:question-circle-bold', label: 'Help', action: 'help' },
 ];
 
@@ -48,6 +51,10 @@ export function Sidebar() {
   const setMemberLeadsTab = useAppStore(s => s.setMemberLeadsTab);
   const [helpOpen, setHelpOpen] = useState(false);
   const [whatsNewOpen, setWhatsNewOpen] = useState(false);
+  const [reviewsOpen, setReviewsOpen] = useState(false);
+  const fetchFeatureReviews = useAppStore(s => s.fetchFeatureReviews);
+  const myPendingReviews = useMyPendingReviewCount();
+  useEffect(() => { fetchFeatureReviews(); }, [fetchFeatureReviews]);
 
   // In-house changelog (Supabase-backed). Fetched when the user reaches for
   // Help rather than on mount: `changelogUnread` is only ever read inside
@@ -235,7 +242,8 @@ export function Sidebar() {
       <div className={styles.bottomSection}>
         {BOTTOM_ITEMS.map((item) => {
           const isHelp = item.action === 'help';
-          const isActive = isHelp && helpOpen;
+          const isReviews = item.action === 'reviews';
+          const isActive = (isHelp && helpOpen) || (isReviews && reviewsOpen);
           return (
             <button
               type="button"
@@ -246,8 +254,14 @@ export function Sidebar() {
               onFocus={isHelp ? warmHelpMenu : undefined}
               onClick={() => {
                 if (isHelp) { warmHelpMenu(); setHelpOpen(v => !v); }
+                if (isReviews) setReviewsOpen(true);
               }}
             >
+              {isReviews && myPendingReviews > 0 && (
+                <span className={styles.badge} aria-label={`${myPendingReviews} awaiting your signoff`}>
+                  {formatBadgeCount(myPendingReviews)}
+                </span>
+              )}
               <div className={styles.itemInner}>
                 {/* Same crossfade pattern as the primary nav so Help
                     picks up the filled variant when its popover is open. */}
@@ -276,6 +290,7 @@ export function Sidebar() {
         />
       )}
       {whatsNewOpen && <WhatsNewDrawer onClose={() => setWhatsNewOpen(false)} />}
+      {reviewsOpen && <FeatureReviewsDrawer onClose={() => setReviewsOpen(false)} />}
     </nav>
   );
 }

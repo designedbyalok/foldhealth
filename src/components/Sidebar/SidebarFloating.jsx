@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useCan } from '../../lib/useCan';
 import { navPermissionKey } from '../../lib/accessControl';
 import { FloatingSidebar } from '../FloatingSidebar/FloatingSidebar';
@@ -6,6 +6,8 @@ import { SubNav } from '../SubNav/SubNav';
 import { setFloatingSubNavSlot } from '../FloatingSidebar/floatingSubNavSlot';
 import { HelpPopover } from '../HelpPopover/HelpPopover';
 import { WhatsNewDrawer } from '../WhatsNewDrawer/WhatsNewDrawer';
+import { FeatureReviewsDrawer } from '../FeatureReviewsDrawer/FeatureReviewsDrawer';
+import { useMyPendingReviewCount } from '../FeatureReviewsDrawer/featureReviewHooks';
 import { useAppStore } from '../../store/useAppStore';
 
 /**
@@ -38,6 +40,7 @@ const NAV_ITEMS = [
 ];
 
 const BOTTOM_ITEMS = [
+  { key: 'reviews', icon: 'solar:clipboard-check-linear', filledIcon: 'solar:clipboard-check-bold', label: 'Signoff', action: 'reviews' },
   { key: 'help', icon: 'solar:question-circle-linear', filledIcon: 'solar:question-circle-bold', label: 'Help', shortcut: '⌘/', action: 'help' },
 ];
 
@@ -86,6 +89,13 @@ export function SidebarFloating() {
   // blockers.
   const [helpOpen, setHelpOpen] = useState(false);
   const [whatsNewOpen, setWhatsNewOpen] = useState(false);
+  const [reviewsOpen, setReviewsOpen] = useState(false);
+  const fetchFeatureReviews = useAppStore(s => s.fetchFeatureReviews);
+  const myPendingReviews = useMyPendingReviewCount();
+  useEffect(() => { fetchFeatureReviews(); }, [fetchFeatureReviews]);
+  const bottomItems = BOTTOM_ITEMS.map(item => (
+    item.action === 'reviews' ? { ...item, badge: myPendingReviews } : item
+  ));
   const fetchChangelog = useAppStore(s => s.fetchChangelog);
   const ensureFeaturebaseJwt = useAppStore(s => s.ensureFeaturebaseJwt);
   const changelogEntries = useAppStore(s => s.changelogEntries);
@@ -115,6 +125,10 @@ export function SidebarFloating() {
   })();
 
   const handleNavigate = (key, item) => {
+    if (item.action === 'reviews') {
+      setReviewsOpen(true);
+      return;
+    }
     if (item.action === 'help') {
       warmHelpMenu();
       setHelpOpen(v => !v);
@@ -208,8 +222,8 @@ export function SidebarFloating() {
     <>
       <FloatingSidebar
         items={items}
-        bottomItems={BOTTOM_ITEMS}
-        activeKey={helpOpen ? 'help' : activeKey}
+        bottomItems={bottomItems}
+        activeKey={reviewsOpen ? 'reviews' : helpOpen ? 'help' : activeKey}
         onNavigate={handleNavigate}
         showSubNav={showSubNav}
         subPanel={subPanel}
@@ -224,6 +238,7 @@ export function SidebarFloating() {
         />
       )}
       {whatsNewOpen && <WhatsNewDrawer onClose={() => setWhatsNewOpen(false)} />}
+      {reviewsOpen && <FeatureReviewsDrawer onClose={() => setReviewsOpen(false)} />}
     </>
   );
 }

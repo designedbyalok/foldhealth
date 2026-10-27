@@ -37,6 +37,20 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **Design Signoff.** A "Signoff" item above Help in the nav bar opens the
+  Design Signoff drawer: an aligned table of what we're shipping (Feature,
+  Reviewers, Status, Actions), grouped by day and sorted
+  newest first (switchable to oldest first), with sub-items nested under
+  their feature. Every `feat` or `fix` commit on main arrives automatically
+  as a suggestion (a trigger on `changelog_entries`); the design team (Alok,
+  Ketan and Devanshi, in `feature_review_managers`) keeps it for review or
+  removes it, sets the section link and assigns, switches or removes
+  reviewers (straight from the row's avatars). Everyone else sees only kept
+  items assigned to them. Reviewers get Comment, Sign off (one click; the
+  database stamps the date and time and locks it, and the date shows under
+  the status) and Open (goes to the section) on each row. Needs `supabase/feature_reviews_migration.sql`,
+  `feature_reviews_seed.sql` and `feature_reviews_suggestions_migration.sql`.
+
 - **Pharmacy gap status model, filters, rules and reports.** Pharmacy gaps
   follow the status model spec: Open, In Progress, Pending Claim, Closed,
   Met for Year, Failed for Year and Excluded (First Fill and Not Eligible stay
