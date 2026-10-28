@@ -43,6 +43,12 @@ site_url = "https://foldhealth.org/"
 additional_redirect_urls = [
   "https://foldhealth.org/",
   "https://foldhealth.org/**",
+  "https://preview.foldhealth.org/",
+  "https://preview.foldhealth.org/**",
+  # Patient app (patients.foldhealth.org): Google sign-in and reset links
+  # return here, not to the Site URL.
+  "https://patients.foldhealth.org/",
+  "https://patients.foldhealth.org/**",
   "https://foldhealth-alokfold.vercel.app/",
   "https://foldhealth-alokfold.vercel.app/**",
   "https://foldhealth-*-alokfold.vercel.app",
