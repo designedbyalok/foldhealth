@@ -3,6 +3,7 @@ import { Icon } from '../../../../../components/Icon/Icon';
 import { ConfirmDialog } from '../../../../../components/ConfirmDialog/ConfirmDialog';
 import { ActionButton } from '../../../../../components/ActionButton/ActionButton';
 import { Button } from '../../../../../components/Button/Button';
+import { RingEmptyState } from '../../../../../components/RingEmptyState/RingEmptyState';
 import { FilterBar } from '../../../../../components/FilterBar/FilterBar';
 import { Input } from '../../../../../components/Input/Input';
 import { SimpleTableSkeleton } from '../../../../../components/SimpleTableSkeleton/SimpleTableSkeleton';
@@ -26,7 +27,6 @@ const EMPTY_FILTERS = { types: [], uploaders: [] };
 // Must match UploadDropField's default `accept` so the drag path accepts the
 // same files the drawer's dropzone would.
 const ACCEPTED_EXTS = new Set(['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png']);
-const ACCEPT_ATTR = '.pdf,.doc,.docx,.jpg,.jpeg,.png';
 const isAcceptedFile = (f) => {
   const ext = /\.([a-z0-9]+)$/i.exec(f?.name || '')?.[1]?.toLowerCase();
   return !!ext && ACCEPTED_EXTS.has(ext);
@@ -34,53 +34,43 @@ const isAcceptedFile = (f) => {
 const dragHasFiles = (e) => Array.from(e.dataTransfer?.types || []).includes('Files');
 
 /**
- * Empty-state block that fills the body vertically and reinforces the two
- * ways to upload: drop onto the panel, or click "Choose file". When a
- * search/filter has narrowed to nothing, swap in a muted search message
- * with a clear-filters action instead.
+ * Documents empty state. Mirrors the Comms tab's RingEmptyState pattern
+ * (dashed medallion + caption + inline action) so this tab looks like a
+ * first-class member of the patient profile instead of inventing its own
+ * blank page. Three variants, picked from the current narrow / category
+ * state. Drag-and-drop onto the panel still works beneath via the
+ * overlay in the parent.
  */
-function EmptyDocuments({ narrowed, category, categoryLabel, onPickFile, onClearFilters }) {
-  const inputRef = useRef(null);
-  const label = category === ALL_CATEGORY ? 'documents' : categoryLabel;
+function EmptyDocuments({ narrowed, category, categoryLabel, onUpload, onClearFilters }) {
   if (narrowed) {
     return (
-      <div className={styles.empty}>
-        <span className={styles.emptyIcon}>
-          <Icon name="solar:magnifer-linear" size={28} color="var(--neutral-300)" />
-        </span>
-        <div className={styles.emptyTitle}>No matching documents</div>
-        <div className={styles.emptySubtitle}>Try removing a filter or clearing your search.</div>
-        <button type="button" className={styles.emptyLink} onClick={onClearFilters}>
-          Clear search and filters
-        </button>
+      <div className={styles.emptyWrap}>
+        <RingEmptyState icon="solar:filter-linear" label="No matching documents">
+          <Button
+            variant="secondary"
+            size="L"
+            leadingIcon="solar:close-circle-linear"
+            onClick={onClearFilters}
+          >
+            Clear search and filters
+          </Button>
+        </RingEmptyState>
       </div>
     );
   }
+  const label = category === ALL_CATEGORY ? 'documents' : categoryLabel.toLowerCase();
   return (
-    <div className={styles.empty}>
-      <span className={styles.emptyIcon}>
-        <Icon name="solar:cloud-upload-linear" size={28} color="var(--primary-300)" />
-      </span>
-      <div className={styles.emptyTitle}>No {label} yet</div>
-      <div className={styles.emptySubtitle}>
-        Drag and drop a file here, or{' '}
-        <button type="button" className={styles.emptyLink} onClick={() => inputRef.current?.click()}>
-          choose a file
-        </button>
-        {' '}to upload.
-      </div>
-      <div className={styles.emptyHint}>PDF, DOC, JPG, or PNG, up to 100 MB</div>
-      <input
-        ref={inputRef}
-        type="file"
-        accept={ACCEPT_ATTR}
-        className={styles.emptyFileInput}
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) onPickFile(f);
-          if (inputRef.current) inputRef.current.value = '';
-        }}
-      />
+    <div className={styles.emptyWrap}>
+      <RingEmptyState icon="solar:folder-with-files-linear" label={`No ${label} present`}>
+        <Button
+          variant="primary"
+          size="L"
+          leadingIcon="solar:upload-minimalistic-linear"
+          onClick={onUpload}
+        >
+          Upload File
+        </Button>
+      </RingEmptyState>
     </div>
   );
 }
@@ -346,7 +336,7 @@ export function DocumentsTab({ patient }) {
               narrowed={narrowed}
               category={category}
               categoryLabel={categoryLabel}
-              onPickFile={openDrawerWithFile}
+              onUpload={() => setUploadCategory(category === ALL_CATEGORY ? '' : category)}
               onClearFilters={clearSearchAndFilters}
             />
           ) : (

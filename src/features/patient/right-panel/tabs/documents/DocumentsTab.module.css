@@ -164,65 +164,15 @@
   overflow-y: auto;
 }
 
-/* Empty state. Sits inside .body so the drag-over overlay (which absolutely
-   covers .main) still works on top of it. flex: 1 so it fills the available
-   body height instead of leaving a gaping blank area below a one-line
-   placeholder. */
-.empty {
+/* Empty-state wrapper. flex: 1 so the Ring sits in the vertical centre of the
+   body regardless of whether filters or the FilterBar push it down a bit. */
+.emptyWrap {
   display: flex;
   flex: 1;
-  flex-direction: column;
+  min-height: 0;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-6) var(--space-5);
-  text-align: center;
-  color: var(--neutral-400);
 }
-
-.emptyIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  margin-bottom: var(--space-2);
-  border-radius: 50%;
-  background: var(--primary-50);
-}
-
-.emptyTitle {
-  font-size: var(--font-base);
-  font-weight: 600;
-  line-height: var(--leading-tight);
-  color: var(--neutral-500);
-}
-
-.emptySubtitle {
-  max-width: 320px;
-  font-size: var(--font-sm);
-  line-height: var(--leading-normal, 1.5);
-  color: var(--neutral-300);
-}
-
-.emptyHint {
-  font-size: var(--font-xs);
-  color: var(--neutral-300);
-}
-
-.emptyLink {
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
-  color: var(--primary-300);
-  cursor: pointer;
-}
-
-.emptyLink:hover { text-decoration: underline; }
-.emptyLink:focus-visible { outline: 2px solid var(--primary-200); outline-offset: 2px; border-radius: 2px; }
-
-.emptyFileInput { display: none; }
 
 .row { cursor: pointer; }
 
