@@ -15,9 +15,15 @@ const stripExt = name => String(name || '').replace(/\.[a-z0-9]+$/i, '');
  * it updates that document instead: name, type and category, and a new file
  * only if one is picked.
  */
-export function UploadDocumentDrawer({ categories, doc, initialCategory, onUpload, onClose }) {
+export function UploadDocumentDrawer({ categories, doc, initialCategory, initialFile = null, onUpload, onClose }) {
   const categoryOptions = categories.filter(c => c.key !== ALL_CATEGORY).map(c => ({ value: c.key, label: c.label, icon: c.icon }));
-  const form = useDocumentUploadForm(doc ? { id: doc.id, caption: stripExt(doc.name), docType: doc.type } : null);
+  // Pre-fill the caption from the dropped file's name (minus extension) the
+  // same way useDocumentUploadForm does on first pick, so the drag path and
+  // the browse path land in the same state.
+  const seed = doc
+    ? { id: doc.id, caption: stripExt(doc.name), docType: doc.type }
+    : (initialFile ? { caption: stripExt(initialFile.name) } : null);
+  const form = useDocumentUploadForm(seed);
   const [category, setCategory] = useState(initialCategory || '');
   const canSave = form.canSave && !!category;
 
@@ -33,7 +39,7 @@ export function UploadDocumentDrawer({ categories, doc, initialCategory, onUploa
       primaryAction={<Button variant="primary" size="L" disabled={!canSave} onClick={submit}>{doc ? 'Update' : 'Upload'}</Button>}
     >
       <div className={styles.uploadForm}>
-        <DocumentUploadForm form={form} docTypes={FILE_TYPES} />
+        <DocumentUploadForm form={form} docTypes={FILE_TYPES} initialFile={initialFile} />
         <Select
           label="Category"
           required

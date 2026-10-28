@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Icon } from '../../../../../components/Icon/Icon';
 import { ConfirmDialog } from '../../../../../components/ConfirmDialog/ConfirmDialog';
 import { ActionButton } from '../../../../../components/ActionButton/ActionButton';
 import { Button } from '../../../../../components/Button/Button';
@@ -21,6 +22,15 @@ const FILTER_DEFS = [
   { key: 'uploaders', label: 'Uploaded By', primary: true },
 ];
 const EMPTY_FILTERS = { types: [], uploaders: [] };
+
+// Must match UploadDropField's default `accept` so the drag path accepts the
+// same files the drawer's dropzone would.
+const ACCEPTED_EXTS = new Set(['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png']);
+const isAcceptedFile = (f) => {
+  const ext = /\.([a-z0-9]+)$/i.exec(f?.name || '')?.[1]?.toLowerCase();
+  return !!ext && ACCEPTED_EXTS.has(ext);
+};
+const dragHasFiles = (e) => Array.from(e.dataTransfer?.types || []).includes('Files');
 
 const pad = n => String(n).padStart(2, '0');
 const today = () => { const d = new Date(); return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}/${d.getFullYear()}`; };
@@ -47,6 +57,7 @@ export function DocumentsTab({ patient }) {
   const { documents: loaded, loading } = usePatientDocuments(patient);
   const addProgramDocument = useAppStore(s => s.addProgramDocument);
   const currentActorName = useAppStore(s => s.currentActorName);
+  const showToast = useAppStore(s => s.showToast);
   const [category, setCategory] = useState(ALL_CATEGORY);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -55,8 +66,13 @@ export function DocumentsTab({ patient }) {
   const [selectedIds, setSelectedIds] = useState([]);
   const [previewDoc, setPreviewDoc] = useState(null);
   const [uploadCategory, setUploadCategory] = useState(null);
+  const [uploadInitialFile, setUploadInitialFile] = useState(null);
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  // Drag-over overlay. Counter beats a single boolean because dragleave
+  // fires on every child boundary; we only hide when every enter balances.
+  const [dragActive, setDragActive] = useState(false);
+  const dragDepthRef = useRef(0);
   // Sample documents aren't in the store, so edits and deletes also apply here.
   const [overrides, setOverrides] = useState({});
   const [removed, setRemoved] = useState(() => new Set());
@@ -160,10 +176,54 @@ export function DocumentsTab({ patient }) {
     }
   };
 
+  // Drag-and-drop onto the main panel. On drop we open the Upload drawer with
+  // the file pre-filled, so the user still picks category + document type
+  // (and can confirm or change the auto-filled caption).
+  const resetDrag = useCallback(() => { dragDepthRef.current = 0; setDragActive(false); }, []);
+  const onDragEnter = useCallback((e) => {
+    if (!dragHasFiles(e)) return;
+    e.preventDefault();
+    dragDepthRef.current += 1;
+    setDragActive(true);
+  }, []);
+  const onDragOver = useCallback((e) => {
+    if (!dragHasFiles(e)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  }, []);
+  const onDragLeave = useCallback((e) => {
+    if (!dragHasFiles(e)) return;
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+    if (dragDepthRef.current === 0) setDragActive(false);
+  }, []);
+  const onDrop = useCallback((e) => {
+    if (!dragHasFiles(e)) return;
+    e.preventDefault();
+    resetDrag();
+    const files = Array.from(e.dataTransfer.files || []);
+    if (!files.length) return;
+    const file = files.find(isAcceptedFile);
+    if (!file) {
+      showToast?.('That file type isn\'t supported. Try PDF, DOC, JPG, or PNG.');
+      return;
+    }
+    if (files.length > 1) showToast?.('Only the first file was added. Upload the rest one at a time.');
+    setUploadInitialFile(file);
+    setUploadCategory(category === ALL_CATEGORY ? '' : category);
+  }, [category, resetDrag, showToast]);
+  const closeUpload = () => { setUploadCategory(null); setUploadInitialFile(null); };
+
   return (
     <div className={styles.wrapper}>
       <DocumentCategoryRail categories={categories} active={category} counts={counts} onSelect={selectCategory} onAddCategory={() => setAddingCategory(true)} />
-      <section className={styles.main} aria-label={categoryLabel}>
+      <section
+        className={styles.main}
+        aria-label={categoryLabel}
+        onDragEnter={onDragEnter}
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+      >
         {searchOpen ? (
           <div className={styles.header}>
             <Input
@@ -239,10 +299,25 @@ export function DocumentsTab({ patient }) {
               />
             )}
         </div>
+        {dragActive && (
+          <div className={styles.dropOverlay} role="presentation">
+            <div className={styles.dropCard}>
+              <Icon name="solar:upload-minimalistic-linear" size={28} color="var(--primary-300)" />
+              <div className={styles.dropTitle}>Drop file to upload</div>
+              <div className={styles.dropHint}>PDF, DOC, JPG, or PNG, up to 100 MB</div>
+            </div>
+          </div>
+        )}
       </section>
       {previewDoc && <ProgramDocPreviewDrawer doc={previewDoc} onClose={() => setPreviewDoc(null)} />}
       {uploadCategory !== null && (
-        <UploadDocumentDrawer categories={categories} initialCategory={uploadCategory} onUpload={upload} onClose={() => setUploadCategory(null)} />
+        <UploadDocumentDrawer
+          categories={categories}
+          initialCategory={uploadCategory}
+          initialFile={uploadInitialFile}
+          onUpload={(payload) => { upload(payload); setUploadInitialFile(null); }}
+          onClose={closeUpload}
+        />
       )}
       {editing && (
         <UploadDocumentDrawer categories={categories} doc={editing} initialCategory={categoryOf(editing)} onUpload={saveEdit} onClose={() => setEditing(null)} />

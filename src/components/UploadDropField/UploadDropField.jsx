@@ -26,6 +26,7 @@ export function UploadDropField({
   accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png',
   helperText = 'Supported formats: PDF, DOC, JPG, or PNG',
   secondaryText = 'Max size: 100 MB',
+  initialFile = null,
 }) {
   const [file, setFile] = useState(null);
   const [proc, setProc] = useState(null); // null | { name, sizeLabel, progress }
@@ -34,6 +35,18 @@ export function UploadDropField({
   // Keep the latest onChange without retriggering the progress effect.
   const onChangeRef = useRef(onChange);
   useEffect(() => { onChangeRef.current = onChange; });
+
+  // Host-provided file (e.g. dropped onto the parent surface before the drawer
+  // opened). Mirror the normal pick flow so the uploading → uploaded card
+  // runs just like a drawer-local pick. Only fires on the initial file.
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (!initialFile || seededRef.current) return;
+    seededRef.current = true;
+    setFile(initialFile);
+    setDone(false);
+    setProc({ name: initialFile.name, sizeLabel: `${(initialFile.size / 1e6).toFixed(1)}MB`, progress: 0 });
+  }, [initialFile]);
 
   // Drive the fake upload progress (0→100), then flip to the uploaded state
   // and hand the file up to the parent.

@@ -92,11 +92,51 @@
 
 /* Selected folder (Figma 238:48566) */
 .main {
+  position: relative;
   display: flex;
   flex-direction: column;
   flex: 1;
   min-width: 0;
   min-height: 0;
+}
+
+/* Drag-over overlay. Covers the main panel (not the category rail) so the
+   drop target reads clearly. `pointer-events: none` keeps drag events flowing
+   to the underlying `.main` so the enter/leave depth counter stays balanced
+   even though the overlay toggles under the cursor. */
+.dropOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--primary-50) 85%, transparent);
+  border: 2px dashed var(--primary-300);
+  border-radius: 8px;
+}
+
+.dropCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-6);
+  text-align: center;
+}
+
+.dropTitle {
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--neutral-500);
+  line-height: var(--leading-tight);
+}
+
+.dropHint {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  line-height: var(--leading-tight);
 }
 
 .headerActions {
