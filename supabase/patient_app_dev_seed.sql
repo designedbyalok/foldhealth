@@ -8,6 +8,8 @@
 --   • three visit types become bookable online
 --   • Abhijit Gupta gets a weekday 9 AM – 5 PM block for the next 60 days
 --   • Andrew Evans gets a few problems, allergies, medications and immunizations
+--   • Care Tasks: Andrew Lewis gets daily medicines and a PHQ-9 to fill, and
+--     two education topics on care plans get MedlinePlus links
 
 begin;
 
@@ -66,6 +68,21 @@ on conflict (id) do nothing;
 insert into public.patient_immunizations (id, patient_id, title, date_administered, status, sort_order) values
   ('dev-seed-imm-11048-1', '11048', 'DTaP', '06/27/2020', 'Completed', 1),
   ('dev-seed-imm-11048-2', '11048', 'Influenza (seasonal)', '10/02/2026', 'Completed', 2)
+on conflict (id) do nothing;
+
+-- Care Tasks (patient_care_tasks_migration.sql)
+insert into public.patient_medications (id, patient_id, name, sig, start_date, status) values
+  ('a7a11ab1-0000-4000-8000-0000000d3e11', '11010', 'Metformin 500 mg', '1 tab • 2 times a day • After Meal', '02/01/2025', 'Active'),
+  ('a7a11ab1-0000-4000-8000-0000000d3e12', '11010', 'Lisinopril 10 mg', '1 tab • 1 time a day • Morning', '02/01/2025', 'Active'),
+  ('a7a11ab1-0000-4000-8000-0000000d3e13', '11010', 'Atorvastatin 20 mg', '1 tab • 1 time a day • Bedtime', '02/01/2025', 'Active')
+on conflict (id) do nothing;
+insert into public.patient_assessment_sends (id, patient_id, form_id, sent_by_name, sent_at, channels)
+select 'a55e0000-0000-4000-8000-0000000d3e01', '11010', f.id, 'Abhijit Gupta', now() - interval '3 days', '{portal}'
+  from public.forms f where f.name = 'PHQ-9' order by f.id limit 1
+on conflict (id) do nothing;
+insert into public.patient_education_content (id, title, category, summary, url, source) values
+  ('dev-seed-edu-copd', 'COPD action plan', 'Respiratory', 'What to do on good days, bad days and in an emergency.', 'https://medlineplus.gov/copd.html', 'MedlinePlus'),
+  ('dev-seed-edu-activity', 'Choosing low-impact activities', 'Activity', 'Ways to stay active that are easy on your joints.', 'https://medlineplus.gov/exerciseandphysicalfitness.html', 'MedlinePlus')
 on conflict (id) do nothing;
 
 commit;

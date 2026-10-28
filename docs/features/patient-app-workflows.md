@@ -184,7 +184,8 @@ flowchart TD
 
 **Data:** `patient_medications` (schedule), `patient_care_plan_interventions`, `patient_education_content`, `patient_assessment_sends` + `forms` + `form_responses`, `patient_monitoring` / `patient_vitals` for activity.
 **New:** a medication-taken log (per dose, per day); task completion written back so the care team sees adherence.
-**Open:** Missed and Journey views have no frames; source of exercise data (device sync?); can a past day be edited.
+**Built:** `supabase/patient_care_tasks_migration.sql` and `patient/tasks/` (Care Tasks is the first tab on Home). Medicines are the profile's active `patient_medications`, grouped by time of day read from the sig (morning, afternoon, evening, bedtime, anytime, as needed); ticking one or **All Done** logs it in `patient_medication_doses` with who marked it, today only (past days are read-only). Education lists the care plan's `patient-education` interventions, linked to `patient_education_content` when the titles match. Forms lists sent forms (`patient_assessment_sends`) with no completed response yet; **Fill the Form** opens the staff app's form renderer in a drawer and saves the response against the patient. Exercise is left out: there is no activity data to show.
+**Open:** Missed and Journey views have no frames; source of exercise data (device sync?); due dates for sent forms ("Overdue by 3 days" needs one); showing dose adherence in the staff app.
 
 ### W6. Health records
 

@@ -17,6 +17,14 @@ import path from 'path';
  */
 const dirname = import.meta.dirname;
 const STAFF_DIRS = ['src/features', 'src/store'].map((d) => path.resolve(dirname, d) + path.sep);
+// The form renderer, so patients can fill forms their care team sends. It
+// never imports the staff store; if it ever does, src/store above still fails
+// the build.
+const SHARED_FEATURE_DIRS = [
+  'src/features/forms/render', 'src/features/forms/builder', 'src/features/forms/scoring', 'src/features/email-builder',
+].map((d) => path.resolve(dirname, d) + path.sep);
+const isStaffCode = (id) => STAFF_DIRS.some((dir) => id.startsWith(dir))
+  && !SHARED_FEATURE_DIRS.some((dir) => id.startsWith(dir));
 
 function staffCodeGuard() {
   return {
@@ -25,7 +33,7 @@ function staffCodeGuard() {
     async resolveId(source, importer, options) {
       if (!importer) return null;
       const resolved = await this.resolve(source, importer, { ...options, skipSelf: true });
-      if (resolved && STAFF_DIRS.some((dir) => resolved.id.startsWith(dir))) {
+      if (resolved && isStaffCode(resolved.id)) {
         this.error(
           `Patient app imported staff code: ${path.relative(dirname, resolved.id)}\n`
           + `  from ${path.relative(dirname, importer)}\n`

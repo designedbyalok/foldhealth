@@ -93,7 +93,12 @@ export default defineConfig([globalIgnores([
   rules: {
     'no-restricted-imports': ['error', {
       patterns: [{
-        group: ['**/features/**', '**/store/**', '@/features/**', '@/store/**'],
+        group: ['**/store/**', '@/store/**'],
+        message: 'Patient app must not import staff features or the staff store. Move what it needs into src/lib or src/components.',
+      }, {
+        // Every staff feature except the form renderer (see SHARED_FEATURE_DIRS
+        // in vite.patient.config.js).
+        regex: '(^|/)features/(?!forms/(render|scoring|builder)/)',
         message: 'Patient app must not import staff features or the staff store. Move what it needs into src/lib or src/components.',
       }],
     }],
