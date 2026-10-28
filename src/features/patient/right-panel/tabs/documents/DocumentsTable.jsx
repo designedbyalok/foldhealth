@@ -60,7 +60,7 @@ function RowMenu({ doc, onAction }) {
 const hasFile = d => !!(d.fileUrl || d.file);
 
 /** File Name | File Type | Last Updated, with View, Download and a menu on row hover. */
-export function DocumentsTable({ rows, selectedIds, onToggle, onToggleAll, onOpen, onDownload, onAction, emptyLabel }) {
+export function DocumentsTable({ rows, selectedIds, onToggle, onToggleAll, onOpen, onDownload, onAction }) {
   const selected = new Set(selectedIds);
   return (
     <ProfileTable
@@ -68,7 +68,6 @@ export function DocumentsTable({ rows, selectedIds, onToggle, onToggleAll, onOpe
       rows={rows}
       selectedIds={selectedIds}
       onSelectAll={onToggleAll}
-      emptyState={<span className={styles.muted}>{emptyLabel}</span>}
       renderRow={d => (
         <tr key={d.id} className={`${profileRowClass} ${styles.row}`} onClick={() => onOpen(d)}>
           <td className={`${profileCellClass} ${styles.checkCell}`} onClick={e => e.stopPropagation()}>

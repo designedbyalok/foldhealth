@@ -26,11 +26,64 @@ const EMPTY_FILTERS = { types: [], uploaders: [] };
 // Must match UploadDropField's default `accept` so the drag path accepts the
 // same files the drawer's dropzone would.
 const ACCEPTED_EXTS = new Set(['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png']);
+const ACCEPT_ATTR = '.pdf,.doc,.docx,.jpg,.jpeg,.png';
 const isAcceptedFile = (f) => {
   const ext = /\.([a-z0-9]+)$/i.exec(f?.name || '')?.[1]?.toLowerCase();
   return !!ext && ACCEPTED_EXTS.has(ext);
 };
 const dragHasFiles = (e) => Array.from(e.dataTransfer?.types || []).includes('Files');
+
+/**
+ * Empty-state block that fills the body vertically and reinforces the two
+ * ways to upload: drop onto the panel, or click "Choose file". When a
+ * search/filter has narrowed to nothing, swap in a muted search message
+ * with a clear-filters action instead.
+ */
+function EmptyDocuments({ narrowed, category, categoryLabel, onPickFile, onClearFilters }) {
+  const inputRef = useRef(null);
+  const label = category === ALL_CATEGORY ? 'documents' : categoryLabel;
+  if (narrowed) {
+    return (
+      <div className={styles.empty}>
+        <span className={styles.emptyIcon}>
+          <Icon name="solar:magnifer-linear" size={28} color="var(--neutral-300)" />
+        </span>
+        <div className={styles.emptyTitle}>No matching documents</div>
+        <div className={styles.emptySubtitle}>Try removing a filter or clearing your search.</div>
+        <button type="button" className={styles.emptyLink} onClick={onClearFilters}>
+          Clear search and filters
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className={styles.empty}>
+      <span className={styles.emptyIcon}>
+        <Icon name="solar:cloud-upload-linear" size={28} color="var(--primary-300)" />
+      </span>
+      <div className={styles.emptyTitle}>No {label} yet</div>
+      <div className={styles.emptySubtitle}>
+        Drag and drop a file here, or{' '}
+        <button type="button" className={styles.emptyLink} onClick={() => inputRef.current?.click()}>
+          choose a file
+        </button>
+        {' '}to upload.
+      </div>
+      <div className={styles.emptyHint}>PDF, DOC, JPG, or PNG, up to 100 MB</div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={ACCEPT_ATTR}
+        className={styles.emptyFileInput}
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onPickFile(f);
+          if (inputRef.current) inputRef.current.value = '';
+        }}
+      />
+    </div>
+  );
+}
 
 const pad = n => String(n).padStart(2, '0');
 const today = () => { const d = new Date(); return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}/${d.getFullYear()}`; };
@@ -179,6 +232,10 @@ export function DocumentsTab({ patient }) {
   // Drag-and-drop onto the main panel. On drop we open the Upload drawer with
   // the file pre-filled, so the user still picks category + document type
   // (and can confirm or change the auto-filled caption).
+  const openDrawerWithFile = useCallback((file) => {
+    setUploadInitialFile(file);
+    setUploadCategory(category === ALL_CATEGORY ? '' : category);
+  }, [category]);
   const resetDrag = useCallback(() => { dragDepthRef.current = 0; setDragActive(false); }, []);
   const onDragEnter = useCallback((e) => {
     if (!dragHasFiles(e)) return;
@@ -208,10 +265,10 @@ export function DocumentsTab({ patient }) {
       return;
     }
     if (files.length > 1) showToast?.('Only the first file was added. Upload the rest one at a time.');
-    setUploadInitialFile(file);
-    setUploadCategory(category === ALL_CATEGORY ? '' : category);
-  }, [category, resetDrag, showToast]);
+    openDrawerWithFile(file);
+  }, [openDrawerWithFile, resetDrag, showToast]);
   const closeUpload = () => { setUploadCategory(null); setUploadInitialFile(null); };
+  const clearSearchAndFilters = () => { setQuery(''); setSearchOpen(false); setFilters(EMPTY_FILTERS); };
 
   return (
     <div className={styles.wrapper}>
@@ -282,22 +339,27 @@ export function DocumentsTab({ patient }) {
               showSaveFilter={false}
             />
           )}
-          {loading && !documents.length
-            ? <SimpleTableSkeleton rows={6} cols={3} />
-            : (
-              <DocumentsTable
-                rows={rows}
-                selectedIds={selectedIds}
-                onToggle={toggle}
-                onToggleAll={toggleAll}
-                onOpen={setPreviewDoc}
-                onDownload={downloadDocument}
-                onAction={rowAction}
-                emptyLabel={narrowed
-                  ? 'No documents match your search or filters.'
-                  : `No ${category === ALL_CATEGORY ? 'documents' : categoryLabel} uploaded yet.`}
-              />
-            )}
+          {loading && !documents.length ? (
+            <SimpleTableSkeleton rows={6} cols={3} />
+          ) : rows.length === 0 ? (
+            <EmptyDocuments
+              narrowed={narrowed}
+              category={category}
+              categoryLabel={categoryLabel}
+              onPickFile={openDrawerWithFile}
+              onClearFilters={clearSearchAndFilters}
+            />
+          ) : (
+            <DocumentsTable
+              rows={rows}
+              selectedIds={selectedIds}
+              onToggle={toggle}
+              onToggleAll={toggleAll}
+              onOpen={setPreviewDoc}
+              onDownload={downloadDocument}
+              onAction={rowAction}
+            />
+          )}
         </div>
         {dragActive && (
           <div className={styles.dropOverlay} role="presentation">
