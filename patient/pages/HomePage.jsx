@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { AvatarBase } from '@/components/Avatar/AvatarBase';
 import { Icon } from '@/components/Icon/Icon';
 import { Button } from '@/components/Button/Button';
@@ -8,6 +9,7 @@ import { initialsOf, sexAndAge } from '../lib/profileFormat';
 import { ProfileSwitcher } from '../profiles/ProfileSwitcher';
 import { useUpcomingVisits } from '../appointments/useUpcomingVisits';
 import { visitWhen } from '../appointments/slotFormat';
+import { EditProfileDrawer } from '../profiles/EditProfileDrawer';
 import { CareTeamCard } from './CareTeamCard';
 import { HomeTabs } from './HomeTabs';
 import styles from './HomePage.module.css';
@@ -39,7 +41,8 @@ function VisitCard({ visit }) {
 }
 
 export function HomePage({ refreshKey, onBook, onMessage }) {
-  const { profile } = useProfile();
+  const { profile, updateProfile } = useProfile();
+  const [editing, setEditing] = useState(false);
   const { loading, error, visits } = useUpcomingVisits(profile.member_id, refreshKey);
 
   return (
@@ -60,6 +63,10 @@ export function HomePage({ refreshKey, onBook, onMessage }) {
           {profile.phone && (
             <span className={styles.contact}><Icon name="solar:phone-linear" size={16} color="currentColor" />{profile.phone}</span>
           )}
+          <button type="button" className={styles.editProfile} onClick={() => setEditing(true)}>
+            <Icon name="solar:pen-linear" size={16} color="currentColor" />
+            Edit Profile
+          </button>
         </section>
         <CareTeamCard memberId={profile.member_id} onMessage={onMessage} />
       </aside>
@@ -94,6 +101,14 @@ export function HomePage({ refreshKey, onBook, onMessage }) {
       <section className={styles.column} aria-label="Care">
         <HomeTabs memberId={profile.member_id} />
       </section>
+      {editing && (
+        <EditProfileDrawer
+          key={profile.member_id}
+          profile={profile}
+          onClose={() => setEditing(false)}
+          onSaved={(patch) => updateProfile(profile.member_id, patch)}
+        />
+      )}
     </div>
   );
 }

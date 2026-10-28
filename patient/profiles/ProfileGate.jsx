@@ -21,6 +21,8 @@ export function ProfileGate({ user, children }) {
   const [state, setState] = useState({ loading: true, error: '', profiles: [] });
   const [chosen, setChosen] = useState(() => readChoice(user.id));
   const [attempt, setAttempt] = useState(0);
+  // Contact edits made in this session, laid over the loaded profiles.
+  const [patches, setPatches] = useState({});
 
   useEffect(() => {
     let alive = true;
@@ -40,10 +42,14 @@ export function ProfileGate({ user, children }) {
     setChosen(memberId);
   }, [user.id]);
 
-  const { profiles } = state;
+  const updateProfile = useCallback((memberId, patch) => {
+    setPatches((all) => ({ ...all, [memberId]: { ...all[memberId], ...patch } }));
+  }, []);
+
+  const profiles = useMemo(() => state.profiles.map((p) => ({ ...p, ...patches[p.member_id] })), [state.profiles, patches]);
   const only = profiles.length === 1 ? profiles[0].member_id : null;
   const profile = profiles.find((p) => p.member_id === (chosen || only)) || null;
-  const value = useMemo(() => ({ profiles, profile, select }), [profiles, profile, select]);
+  const value = useMemo(() => ({ profiles, profile, select, updateProfile }), [profiles, profile, select, updateProfile]);
 
   if (state.loading) return null;
   if (state.error || profiles.length === 0) return <NoProfilePage error={state.error} onRetry={retry} />;

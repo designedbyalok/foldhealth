@@ -157,7 +157,8 @@ flowchart TD
 3. Save Updates closes the drawer and refreshes Home.
 
 **Data:** `patients` (name, dob, email, phone, city, state), `patient_preferences` (`contact_points`, channels), `patient_consents`.
-**Open:** which fields a patient may change directly vs. request (name and DOB usually need staff review); staff app should see an audit entry.
+**Built:** `supabase/patient_edit_profile_migration.sql` and `patient/profiles/EditProfileDrawer.jsx` (Edit Profile on Home). Patients change contact details directly: email, phone, secondary email and phone, address, city, state, zip, preferred contact method, and consent to electronic communication. Name, date of birth and gender are read-only ("message your care team"). Contact details save to `p360_profiles` (what the staff Profile tab reads) and are mirrored to `all_patients` and `patients`; the preferred method to `patient_preferences.preferred_contact_method`; the consent box records e-signed email, SMS and call consents in `patient_consents` (withdrawn when unticked). Every changed field is logged in `patient_profile_changes` with who changed it.
+**Open:** showing `patient_profile_changes` and the preferred contact method in the staff app; whether name or DOB changes should be requests staff approve.
 
 ### W5. Daily care tasks
 

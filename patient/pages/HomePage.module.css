@@ -69,6 +69,28 @@
   color: var(--neutral-300);
 }
 
+.editProfile {
+  align-self: flex-start;
+  border: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: none;
+  font-size: var(--font-sm);
+  color: var(--primary-300);
+  cursor: pointer;
+}
+
+.editProfile:hover {
+  text-decoration: underline;
+}
+
+.editProfile:focus-visible {
+  outline: 2px solid var(--primary-300);
+  outline-offset: 2px;
+}
+
 .contact {
   display: flex;
   align-items: center;

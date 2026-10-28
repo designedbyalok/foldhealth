@@ -27,6 +27,7 @@ export function StaffViewAsGate({ user, children }) {
     profiles: profile ? [profile] : [],
     profile,
     select: () => {},
+    updateProfile: (memberId, patch) => { if (profile?.member_id === memberId) choose({ ...profile, ...patch }); },
     viewingAs: { switchPatient: () => choose(null) },
   }), [profile, choose]);
 
