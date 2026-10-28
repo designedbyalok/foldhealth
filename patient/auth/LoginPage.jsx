@@ -10,6 +10,16 @@ import { parseIdentifier } from '../lib/parseIdentifier';
 import { IntroCarousel } from './IntroCarousel';
 import styles from './LoginPage.module.css';
 
+// Dev builds on localhost only: real sign-ins with the Dev test accounts, like
+// the staff app's Dev Login. import.meta.env.DEV is false in production
+// builds, so this list and the credentials are dropped from the bundle.
+const DEV_LOGINS = import.meta.env.DEV && ['localhost', '127.0.0.1'].includes(window.location.hostname)
+  ? [
+    { label: 'Dev login: patient', email: import.meta.env.VITE_DEV_PATIENT_LOGIN_EMAIL, password: import.meta.env.VITE_DEV_PATIENT_LOGIN_PASSWORD, vars: 'VITE_DEV_PATIENT_LOGIN_*' },
+    { label: 'Dev login: care team', email: import.meta.env.VITE_DEV_LOGIN_EMAIL, password: import.meta.env.VITE_DEV_LOGIN_PASSWORD, vars: 'VITE_DEV_LOGIN_*' },
+  ]
+  : [];
+
 export function LoginPage({ notice }) {
   const uid = useId();
   const [identifier, setIdentifier] = useState('');
@@ -46,6 +56,19 @@ export function LoginPage({ notice }) {
       options: { redirectTo: window.location.origin },
     });
     if (oauthError) setError('We could not start that sign-in. Please try again.');
+  };
+
+  const handleDevLogin = async ({ email, password, vars }) => {
+    if (!email || !password) { setError(`Set ${vars} in .env.development.local to use this.`); return; }
+    setLoading(true);
+    setError('');
+    setInfo('');
+    try {
+      const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      if (authError) setError(`Dev login failed: ${authError.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleForgot = async () => {
@@ -125,6 +148,16 @@ export function LoginPage({ notice }) {
           </Button>
 
           <OAuthButtons onSelect={handleOAuth} disabled={loading} label="Care team? Continue with" />
+
+          {DEV_LOGINS.length > 0 && (
+            <div className={styles.devLogins}>
+              {DEV_LOGINS.map((d) => (
+                <button key={d.label} type="button" className={styles.devLogin} disabled={loading} onClick={() => handleDevLogin(d)}>
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          )}
         </form>
       </div>
     </main>
