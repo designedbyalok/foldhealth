@@ -268,7 +268,8 @@ flowchart TD
 - **My Packages:** tabs Enrolled, Available, Opt-out; cards with image, title, summary, **View Details**. Home's **Explore Package** lands here on Available.
 
 **Data:** packages map to care programs (`care_program_types`, `patient_care_programs`); communication preferences to `patient_preferences`; change password is Supabase `updateUser`.
-**Open:** only My Packages has a frame; package details, enrol and opt-out confirmation, pricing and payment (Payment History implies payments exist, and Membership shows "$99"); Help has no frame.
+**Built:** `supabase/patient_packages_migration.sql` and `patient/settings/` (Settings in the nav rail). Sections: Family Members (the profiles this sign-in manages, with Switch), My Packages (Enrolled, Available, Opt-out; View Details drawer with Ask to join or Opt out), Change Password (re-checks the current password; hidden for staff viewing as a patient), Communication Preferences (preferred method and e-consent, saved like Edit Profile), About Fold, Logout. Packages are a new catalog (`patient_packages`, four seeded) with per-profile status in `patient_package_enrollments` (requested, enrolled, opted_out), not the billing programs in `patient_care_programs`. Asking to join or opting out also posts a message from the patient to the care team's Chat; staff set `enrolled`. Home shows the dismissible **Introducing Packages** card, whose Explore Package opens Available.
+**Open:** a staff screen for the package catalog and enrollments; package images; Payment History and Membership (no payments exist yet); Help has no frame; terms and privacy links for About.
 
 ### W12. Book and join appointments
 

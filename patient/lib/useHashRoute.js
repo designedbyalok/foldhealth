@@ -16,3 +16,22 @@ export function useHashRoute(fallback) {
   }, [fallback]);
   return [route, (next) => { window.location.hash = `/${next}`; }];
 }
+
+const readSub = () => window.location.hash.replace(/^#\/?/, '').split('?')[0].split('/')[1] || '';
+
+/** The second path segment ('settings/packages' → 'packages'). */
+export function useHashSubRoute() {
+  const [sub, setSub] = useState(readSub);
+  useEffect(() => {
+    const onChange = () => setSub(readSub());
+    window.addEventListener('hashchange', onChange);
+    return () => window.removeEventListener('hashchange', onChange);
+  }, []);
+  return sub;
+}
+
+/** A query value from the hash ('settings/packages?tab=available' → 'available'). */
+export function hashParam(name) {
+  const q = window.location.hash.split('?')[1] || '';
+  return new URLSearchParams(q).get(name);
+}

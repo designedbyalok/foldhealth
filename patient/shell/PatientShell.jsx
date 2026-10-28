@@ -11,6 +11,7 @@ import { HomePage } from '../pages/HomePage';
 import { ComingSoonPage } from '../pages/ComingSoonPage';
 import { BookVisitDrawer } from '../appointments/BookVisitDrawer';
 import { MessagesPage } from '../messages/MessagesPage';
+import { SettingsPage } from '../settings/SettingsPage';
 import { NotificationsDrawer } from '../notifications/NotificationsDrawer';
 import { MessagesContext, useConversationsPoll } from '../messages/messagesContext';
 import styles from './PatientShell.module.css';
@@ -27,7 +28,7 @@ const FOOTER_NAV = [
 const PAGES = {
   home: { title: 'Home', render: (p) => <HomePage {...p} /> },
   messages: { title: 'Messages', render: () => <MessagesPage /> },
-  settings: { title: 'Settings', render: () => <ComingSoonPage icon="solar:settings-linear" title="Settings" /> },
+  settings: { title: 'Settings', render: () => <SettingsPage /> },
   help: { title: 'Help', render: () => <ComingSoonPage icon="solar:question-circle-linear" title="Help" /> },
 };
 

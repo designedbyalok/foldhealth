@@ -8,6 +8,7 @@ import { useProfile } from '../lib/profileContext';
 import { initialsOf, sexAndAge } from '../lib/profileFormat';
 import { ProfileSwitcher } from '../profiles/ProfileSwitcher';
 import { useUpcomingVisits } from '../appointments/useUpcomingVisits';
+import { goTo } from '../lib/useHashRoute';
 import { visitWhen } from '../appointments/slotFormat';
 import { EditProfileDrawer } from '../profiles/EditProfileDrawer';
 import { CareTeamCard } from './CareTeamCard';
@@ -40,9 +41,35 @@ function VisitCard({ visit }) {
   );
 }
 
+const PROMO_KEY = 'patient-packages-promo-hidden';
+const readPromoHidden = () => { try { return localStorage.getItem(PROMO_KEY) === '1'; } catch { return false; } };
+const hidePromo = () => { try { localStorage.setItem(PROMO_KEY, '1'); } catch { /* shows again next visit */ } };
+
+// "Introducing Packages" (frame 701:4555), dismissible.
+function PackagesPromo({ onDismiss }) {
+  return (
+    <div className={styles.card}>
+      <div className={styles.promoHead}>
+        <span className={styles.promoIcon}><Icon name="solar:box-linear" size={28} color="currentColor" /></span>
+        <button type="button" className={styles.promoClose} aria-label="Dismiss" onClick={onDismiss}>
+          <Icon name="solar:close-linear" size={16} color="currentColor" />
+        </button>
+      </div>
+      <span className={styles.promoTitle}>Introducing Packages</span>
+      <span className={styles.promoText}>
+        Health packages are customised care activities and routines. You can explore and enrol in one that suits you the best.
+      </span>
+      <Button variant="secondary" size="L" leadingIcon="solar:box-linear" fullWidth onClick={() => goTo('settings/packages?tab=available')}>
+        Explore Package
+      </Button>
+    </div>
+  );
+}
+
 export function HomePage({ refreshKey, onBook, onMessage }) {
   const { profile, updateProfile } = useProfile();
   const [editing, setEditing] = useState(false);
+  const [promoHidden, setPromoHidden] = useState(readPromoHidden);
   const { loading, error, visits } = useUpcomingVisits(profile.member_id, refreshKey);
 
   return (
@@ -96,6 +123,7 @@ export function HomePage({ refreshKey, onBook, onMessage }) {
             </Button>
           </>
         )}
+        {!promoHidden && <PackagesPromo onDismiss={() => { hidePromo(); setPromoHidden(true); }} />}
       </section>
 
       <section className={styles.column} aria-label="Care">
