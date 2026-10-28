@@ -4,6 +4,7 @@ import { NavRail } from '@/components/NavRail/NavRail';
 import { Button } from '@/components/Button/Button';
 import { Icon } from '@/components/Icon/Icon';
 import { AvatarBase } from '@/components/Avatar/AvatarBase';
+import { ErrorBoundary } from '@/components/ErrorBoundary/ErrorBoundary';
 import { goTo, useHashRoute } from '../lib/useHashRoute';
 import { useProfile } from '../lib/profileContext';
 import { initialsOf } from '../lib/profileFormat';
@@ -82,11 +83,13 @@ export function PatientShell() {
         </header>
         <div className={styles.content}>
           <MessagesContext.Provider value={messages}>
+            <ErrorBoundary resetKeys={[route, profile.member_id]}>
             {page.render({
               refreshKey: `${profile.member_id}:${visitsVersion}`,
               onBook: () => setBooking(true),
               onMessage: (name) => goTo(`messages?to=${encodeURIComponent(name)}`),
             })}
+            </ErrorBoundary>
           </MessagesContext.Provider>
         </div>
       </div>
