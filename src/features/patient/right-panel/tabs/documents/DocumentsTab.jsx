@@ -145,6 +145,13 @@ export function DocumentsTab({ patient }) {
 
   const rowAction = (key, doc) => {
     if (key === 'update') setEditing(doc);
+    else if (key === 'share') {
+      const patch = doc.sharedWithPatient
+        ? { sharedWithPatient: false, sharedBy: null, sharedAt: null }
+        : { sharedWithPatient: true, sharedBy: currentActorName?.() || null, sharedAt: new Date().toISOString() };
+      setOverrides(o => ({ ...o, [doc.id]: { ...o[doc.id], ...patch } }));
+      updateProgramDocument(doc.id, patch);
+    }
     else if (key === 'delete') setDeleting(doc);
     else if (key === 'email') {
       openCommsDrawer('email', {

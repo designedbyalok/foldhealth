@@ -10,6 +10,7 @@
 --   • Andrew Evans gets a few problems, allergies, medications and immunizations
 --   • Care Tasks: Andrew Lewis gets daily medicines and a PHQ-9 to fill, and
 --     two education topics on care plans get MedlinePlus links
+--   • Documents: Andrew Evans has a lab report the care team shared
 
 begin;
 
@@ -83,6 +84,14 @@ on conflict (id) do nothing;
 insert into public.patient_education_content (id, title, category, summary, url, source) values
   ('dev-seed-edu-copd', 'COPD action plan', 'Respiratory', 'What to do on good days, bad days and in an emergency.', 'https://medlineplus.gov/copd.html', 'MedlinePlus'),
   ('dev-seed-edu-activity', 'Choosing low-impact activities', 'Activity', 'Ways to stay active that are easy on your joints.', 'https://medlineplus.gov/exerciseandphysicalfitness.html', 'MedlinePlus')
+on conflict (id) do nothing;
+
+-- Documents (patient_documents_migration.sql); the file is a same-site sample.
+insert into public.program_documents (id, program_code, patient_id, name, type, status, updated_by, updated_date,
+                                      file_url, ext, category, shared_with_patient, shared_by, shared_at)
+values ('dev-seed-doc-11048-1', null, '11048', 'AndrewEvans_lab_results.pdf', 'Lab Result', 'Uploaded',
+        'Abhijit Gupta', to_char(current_date, 'MM/DD/YYYY'), '/charts/laboratory-report.pdf', 'pdf', 'lab',
+        true, 'Abhijit Gupta', now())
 on conflict (id) do nothing;
 
 commit;

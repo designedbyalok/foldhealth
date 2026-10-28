@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ActionButton } from '../../../../../components/ActionButton/ActionButton';
+import { Badge } from '../../../../../components/Badge/Badge';
 import { MenuPopover } from '../../../../../components/MenuPopover/MenuPopover';
 import { ProfileTable } from '../../../../../components/ProfileTable/ProfileTable';
 import { profileCellClass, profileRowClass } from '../../../../../components/ProfileTable/profileTableClasses';
@@ -14,8 +15,15 @@ const COLUMNS = [
   { key: 'actions', label: '', width: 116 },
 ];
 
-const MENU_ITEMS = [
+// "Share with patient" shows the document in the patient app's Documents tab.
+// A patient's own uploads are always visible to them.
+const menuItems = doc => [
   { key: 'update', label: 'Update', icon: 'solar:pen-linear' },
+  ...(doc.uploadedByPatient ? [] : [{
+    key: 'share',
+    label: doc.sharedWithPatient ? 'Stop sharing with patient' : 'Share with patient',
+    icon: doc.sharedWithPatient ? 'solar:eye-closed-linear' : 'solar:share-linear',
+  }]),
   { key: 'efax', label: 'Send eFax', icon: 'solar:printer-linear', disabled: true, hint: 'Coming soon' },
   { key: 'email', label: 'Send Email', icon: 'solar:letter-linear' },
   { divider: true },
@@ -38,9 +46,9 @@ function RowMenu({ doc, onAction }) {
         <MenuPopover
           anchorRect={rect}
           align="right"
-          width={160}
+          width={210}
           ariaLabel={`${doc.name} actions`}
-          items={MENU_ITEMS}
+          items={menuItems(doc)}
           onSelect={(key) => { setRect(null); onAction(key, doc); }}
           onClose={() => setRect(null)}
         />
@@ -66,7 +74,13 @@ export function DocumentsTable({ rows, selectedIds, onToggle, onToggleAll, onOpe
           <td className={`${profileCellClass} ${styles.checkCell}`} onClick={e => e.stopPropagation()}>
             <Checkbox checked={selected.has(d.id)} onCheckedChange={() => onToggle(d.id)} aria-label={`Select ${d.name}`} />
           </td>
-          <td className={`${profileCellClass} ${styles.fileName}`} title={d.name}>{d.name}</td>
+          <td className={`${profileCellClass} ${styles.fileName}`} title={d.name}>
+            <span className={styles.fileNameRow}>
+              <span className={styles.fileNameText}>{d.name}</span>
+              {d.uploadedByPatient && <Badge size="S" tone="info" label="From patient" />}
+              {!d.uploadedByPatient && d.sharedWithPatient && <Badge size="S" tone="success" label="Shared with patient" />}
+            </span>
+          </td>
           <td className={`${profileCellClass} ${styles.muted}`}>{d.type || '-'}</td>
           <td className={profileCellClass}>
             <span className={styles.updated}>

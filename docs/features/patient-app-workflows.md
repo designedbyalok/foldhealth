@@ -209,7 +209,8 @@ Four sections, each a list with a ⋯ menu per row:
 3. **Upload** adds a document from the patient.
 
 **Data:** `program_documents` (+ `document_categories`, storage path), `hcc_member_documents`, `patient_consents` and the `patient-consents` bucket.
-**Open:** upload flow (no frame: category picker? size limits?); whether consent forms are signed here; storage policies for patient read and upload (storage is staff-only now).
+**Built:** `supabase/patient_documents_migration.sql`, `patient/documents/` and a share switch in the staff Documents tab. Documents stay in `program_documents`. A patient sees a document only when staff choose **Share with patient** in its row menu (badge "Shared with patient") or when the patient uploaded it (badge "From patient"). The list has search, a folder filter and Upload; rows open or download through short-lived signed links from the private `program-documents` bucket. Uploads (PDF, JPG, PNG, HEIC, up to 10 MB) go to `patient-uploads/<member_id>/`, and the server checks the folder, type and size before adding the row. The storage gate is split by command: patients may read only files of documents they can see and write only into their own folder; update and delete stay staff-only.
+**Open:** whether consent forms are signed here; letting patients delete their own uploads; a ⋯ menu (the design has one, contents unknown).
 
 ### W8. Messages
 

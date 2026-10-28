@@ -3,6 +3,7 @@ import { TabStrip } from '@/components/TabStrip/TabStrip';
 import { EmptyState } from '@/components/EmptyState/EmptyState';
 import { HealthRecords } from '../records/HealthRecords';
 import { CareTasks } from '../tasks/CareTasks';
+import { Documents } from '../documents/Documents';
 import styles from './HomePage.module.css';
 
 const TABS = [
@@ -13,7 +14,6 @@ const TABS = [
 ];
 
 const SOON = {
-  documents: { icon: 'solar:document-text-linear', title: 'Documents are coming soon', description: 'Reports, handouts and forms your care team shares will show here.' },
   claims: { icon: 'solar:wallet-money-linear', title: 'Claims are coming soon', description: 'Your coverage and claims will show here.' },
 };
 
@@ -27,6 +27,7 @@ export function HomeTabs({ memberId }) {
       <div className={styles.tabBody}>
         {tab === 'tasks' && <CareTasks key={memberId} memberId={memberId} />}
         {tab === 'records' && <HealthRecords key={memberId} memberId={memberId} />}
+        {tab === 'documents' && <Documents key={memberId} memberId={memberId} />}
         {soon && (
           <div className={styles.card}>
             <EmptyState icon={soon.icon} title={soon.title} description={soon.description} />

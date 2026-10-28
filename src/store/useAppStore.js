@@ -5915,6 +5915,10 @@ export const useAppStore = create((set, get) => ({
         storagePath: r.storage_path,
         ext:         r.ext,
         category:    r.category,
+        sharedWithPatient: !!r.shared_with_patient,
+        uploadedByPatient: !!r.uploaded_by_patient,
+        sharedBy:    r.shared_by,
+        sharedAt:    r.shared_at,
       }));
       set({ programDocuments: rows, programDocumentsDidFetch: true });
     } catch (e) {
