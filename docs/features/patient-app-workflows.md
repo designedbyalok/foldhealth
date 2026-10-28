@@ -257,8 +257,8 @@ flowchart TD
 - **Claims Log:** cards with service date, provider, claim number, status badge, Member Owes; status filter and sort.
 - **Claim Details:** provider, patient, claim number, service date, status; cost breakdown (provider billed, allowed, plan paid, member copay, member responsibility, balance owed); Explanation of Benefits per procedure code.
 
-**Data:** none yet. Needs coverage and claims tables fed from the payer or clearinghouse (eligibility 270/271 for benefits, 835 remittance for claims and EOB).
-**Open:** see section 5 for the status and arithmetic issues.
+**Built:** `supabase/patient_claims_migration.sql` and `patient/claims/` (the Claims tab on Home). New tables shaped for a payer feed: `patient_coverage` (plan, `accumulators` = deductible and out-of-pocket progress per network against its limit, `cost_shares` = copay and coinsurance per kind of visit), `patient_claims` and `patient_claim_lines` (the EOB). Member responsibility is a generated column, allowed minus plan paid, and balance owed is responsibility minus what the member paid, so the numbers always add up (fixes section 5, item 11). Statuses are Pending, Submitted, In Review, Paid and Rejected (item 10: no "Processing"). The log shows the selected profile's own claims (item 12). There is no feed yet: `scripts/demo/patient_claims_demo.sql` fills coverage and four claims for the demo logins only.
+**Open:** a payer or clearinghouse feed (271 eligibility, 835 remittance) and how clearinghouse codes map to these statuses; a staff screen to enter or correct claims.
 
 ### W11. Settings and packages
 
