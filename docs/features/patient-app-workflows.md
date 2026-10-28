@@ -119,7 +119,8 @@ flowchart TD
 4. Left side: two-slide carousel ("Schedule remote visits or instant video visit", "Refill meds, manage care plan & get care on demand").
 5. Below the card: "Stay connected with your healthcare experts on the go via our mobile apps" with App Store and Google Play badges.
 
-**Built:** steps 1 to 4, reset, staff rejection (`patient/auth/`).
+**Built:** steps 1 to 4, reset (`patient/auth/`).
+**Care team sign-in (built):** provider-portal users sign in with the same email and password, or Google (Microsoft shows "Coming soon", as in the staff app). Instead of the profile picker they get "View the portal as a patient": search any patient by name or member ID, with patients who use the portal listed first. A banner shows who they are viewing as, with Switch patient. Messages they send are labeled "<name> (staff, viewing as patient)" for staff, and visits they book carry "Booked by <name> in the patient portal" in the staff instructions; patients see neither label. A Google sign-up awaiting admin approval gets the approval notice. See `supabase/staff_patient_portal_access_migration.sql` and `patient/profiles/StaffViewAsGate.jsx`.
 **Invites (built):** staff give access from the patient's Profile tab (Patient Portal section). `/api/patient-invite` creates the account with `role: patient` (or reuses an existing patient account), links it in `patient_accounts` and emails a link to `#/set-password?token_hash=…`; the patient app redeems the token only on submit.
 **Open:** terms and privacy URLs; whether mobile apps exist (badges left out until they do); phone sign-in needs Supabase phone auth.
 

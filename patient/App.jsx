@@ -1,24 +1,25 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { isPatient, usePatientSession } from './lib/usePatientSession';
+import { isPatient, isPendingApproval, usePatientSession } from './lib/usePatientSession';
 import { LoginPage } from './auth/LoginPage';
 import { SetPasswordPage } from './auth/SetPasswordPage';
 import { PatientShell } from './shell/PatientShell';
 import { ProfileGate } from './profiles/ProfileGate';
+import { StaffViewAsGate } from './profiles/StaffViewAsGate';
 import { Toaster } from '@/components/Toast/Toast';
 import { readInviteToken } from './lib/inviteToken';
 
-const NOT_A_PATIENT = 'This portal is for patients. Staff members sign in through the Fold Health staff app.';
+const PENDING_APPROVAL = 'Your request is with an administrator. You can sign in once it is approved.';
 
 export function App() {
   const { ready, session, recovering } = usePatientSession();
   const [notice, setNotice] = useState('');
   const [inviteToken, setInviteToken] = useState(readInviteToken);
-  const staffSession = session && !isPatient(session) && !inviteToken;
+  const pending = isPendingApproval(session);
 
   useEffect(() => {
-    if (staffSession) supabase.auth.signOut().then(() => setNotice(NOT_A_PATIENT));
-  }, [staffSession]);
+    if (pending) supabase.auth.signOut().then(() => setNotice(PENDING_APPROVAL));
+  }, [pending]);
 
   if (!ready) return null;
   if (inviteToken) {
@@ -30,12 +31,13 @@ export function App() {
     );
   }
   if (recovering && session) return <SetPasswordPage />;
-  if (!session || staffSession) return <LoginPage notice={staffSession ? NOT_A_PATIENT : notice} />;
+  if (!session || pending) return <LoginPage notice={pending ? PENDING_APPROVAL : notice} />;
+  const Gate = isPatient(session) ? ProfileGate : StaffViewAsGate;
   return (
     <>
-      <ProfileGate key={session.user.id} user={session.user}>
+      <Gate key={session.user.id} user={session.user}>
         <PatientShell />
-      </ProfileGate>
+      </Gate>
       <Toaster />
     </>
   );

@@ -1,10 +1,24 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
-// Only accounts the server created with app_metadata.role = 'patient' may use
-// this app. app_metadata is not user-editable, and RLS gates every table on
-// the same role (supabase/staff_patient_rls_split_migration.sql).
+// Patient accounts are created server-side with app_metadata.role =
+// 'patient' (not user-editable). Every other account is a provider-portal
+// user, who views the portal as a patient they pick
+// (supabase/staff_patient_portal_access_migration.sql).
 export const isPatient = (session) => session?.user?.app_metadata?.role === 'patient';
+
+// A provider-portal sign-up that an admin hasn't approved yet: the approval
+// hook lets the first OAuth sign-in finish but marks the token unusable.
+// Same check as src/features/auth/pendingApproval.js, which this app can't import.
+export function isPendingApproval(session) {
+  try {
+    const payload = session?.access_token?.split('.')[1];
+    if (!payload) return false;
+    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))).approval_status === 'pending';
+  } catch {
+    return false;
+  }
+}
 
 export function usePatientSession() {
   const [state, setState] = useState({ ready: false, session: null, recovering: false });

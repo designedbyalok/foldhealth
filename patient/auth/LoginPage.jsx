@@ -5,7 +5,7 @@ import { Button } from '@/components/Button/Button';
 import { Icon } from '@/components/Icon/Icon';
 import { Checkbox } from '@/components/ShadcnCheckbox/ShadcnCheckbox';
 import { FoldHealthLogo } from '@/components/FoldHealthLogo/FoldHealthLogo';
-import { isPatient } from '../lib/usePatientSession';
+import { OAuthButtons } from '@/components/OAuthButtons/OAuthButtons';
 import { parseIdentifier } from '../lib/parseIdentifier';
 import { IntroCarousel } from './IntroCarousel';
 import styles from './LoginPage.module.css';
@@ -27,18 +27,25 @@ export function LoginPage({ notice }) {
     setError('');
     setInfo('');
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({ ...id, password });
-      if (authError) {
-        setError('That email, mobile number or password is not right.');
-      } else if (!isPatient(data.session)) {
-        await supabase.auth.signOut();
-        setError('This portal is for patients. Staff members sign in through the Fold Health staff app.');
-      }
+      const { error: authError } = await supabase.auth.signInWithPassword({ ...id, password });
+      if (authError) setError('That email, mobile number or password is not right.');
     } catch {
       setError('We could not sign you in. Check your connection and try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Provider-portal users can sign in with the same Google account they use
+  // there; patient accounts are email/mobile and password only.
+  const handleOAuth = async (provider) => {
+    setError('');
+    setInfo('');
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: window.location.origin },
+    });
+    if (oauthError) setError('We could not start that sign-in. Please try again.');
   };
 
   const handleForgot = async () => {
@@ -116,6 +123,8 @@ export function LoginPage({ notice }) {
           >
             {loading ? 'Signing in…' : 'Login'}
           </Button>
+
+          <OAuthButtons onSelect={handleOAuth} disabled={loading} label="Care team? Continue with" />
         </form>
       </div>
     </main>

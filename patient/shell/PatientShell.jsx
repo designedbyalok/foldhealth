@@ -32,7 +32,7 @@ const PAGES = {
 };
 
 export function PatientShell() {
-  const { profile } = useProfile();
+  const { profile, viewingAs } = useProfile();
   const [route, navigate] = useHashRoute('home');
   const [booking, setBooking] = useState(false);
   const [visitsVersion, setVisitsVersion] = useState(0);
@@ -50,6 +50,17 @@ export function PatientShell() {
     <div className={styles.shell}>
       <NavRail items={nav} footerItems={FOOTER_NAV} activeId={PAGES[route] ? route : 'home'} onSelect={handleSelect} />
       <div className={styles.main}>
+        {viewingAs && (
+          <div className={styles.viewingAs} role="status">
+            <Icon name="solar:eye-linear" size={16} color="currentColor" />
+            <span>
+              Viewing as <strong>{profile.name || profile.member_id}</strong> ({profile.member_id}). Messages and bookings are recorded as yours.
+            </span>
+            <button type="button" className={styles.switchPatient} onClick={viewingAs.switchPatient}>
+              Switch patient
+            </button>
+          </div>
+        )}
         <header className={styles.header}>
           <h1 className={styles.title}>{page.title}</h1>
           <div className={styles.actions}>
