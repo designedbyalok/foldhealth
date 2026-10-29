@@ -161,7 +161,7 @@ export interface ReviewDockProps {
   onSubmit: (submission: ReviewSubmission) => Promise<boolean | void> | boolean | void;
   /** Show a close button. */
   onClose?: () => void;
-  /** localStorage key for the box's position, size and collapsed side. Default "review-kit:dock". */
+  /** localStorage key for the box's position and size. Default "review-kit:dock". It always opens expanded and fully on screen. */
   storageKey?: string;
   /** Per-file upload limit in MB. Default 10. */
   maxFileSizeMb?: number;

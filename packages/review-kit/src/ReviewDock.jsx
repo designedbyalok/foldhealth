@@ -33,6 +33,39 @@ const pageContext = () => (isBrowser ? {
 } : { url: '', title: '', viewport: { width: 0, height: 0 } });
 const newPoint = () => ({ id: nextId(), html: '', text: '', empty: true, attachments: [], context: pageContext() });
 const isEmpty = (p) => p.empty && !p.attachments.length;
+
+// Size and position that fit the current window: a saved box from a larger
+// screen, or one left off-screen, opens fully visible.
+const fitToWindow = (size, pos) => {
+  if (!isBrowser) return { size, pos };
+  const fit = {
+    width: clamp(size.width, 320, Math.max(320, window.innerWidth - 16)),
+    height: clamp(size.height, 320, Math.max(320, window.innerHeight - 16)),
+  };
+  return {
+    size: fit,
+    pos: {
+      x: clamp(pos.x, 0, Math.max(0, window.innerWidth - fit.width)),
+      y: clamp(pos.y, 0, Math.max(0, window.innerHeight - fit.height)),
+    },
+  };
+};
+
+// The layer is only an anchor (0x0 at the top-left). Its essentials are set
+// inline with !important, so no page stylesheet, extension or browser default
+// can give it a background, clip it or hide it: each of those has happened
+// to a review layer in the wild (Chromium 155 painted it white).
+const LAYER_GUARD = {
+  position: 'fixed', top: '0', left: '0', width: '0', height: '0',
+  overflow: 'visible', display: 'block', visibility: 'visible', opacity: '1',
+  background: 'none', transform: 'none', filter: 'none', 'clip-path': 'none',
+  contain: 'none', margin: '0', padding: '0', border: '0', 'pointer-events': 'none',
+  'z-index': 'var(--rk-z)',
+};
+const guardLayer = (el) => {
+  if (!el) return;
+  for (const [prop, value] of Object.entries(LAYER_GUARD)) el.style.setProperty(prop, value, 'important');
+};
 const defaultPosition = () => (isBrowser ? {
   x: Math.max(EDGE, window.innerWidth - DEFAULT_SIZE.width - 32),
   y: Math.max(EDGE, window.innerHeight - DEFAULT_SIZE.height - 32),
@@ -65,10 +98,15 @@ export function ReviewDock({
   const L = useMemo(() => mergeLabels(labels), [labels]);
   const themeStyle = useMemo(() => themeToStyle(theme), [theme]);
 
-  const [saved] = useState(() => readSaved(storageKey));
-  const [size, setSize] = useState(saved?.size || DEFAULT_SIZE);
-  const [pos, setPos] = useState(() => saved?.pos || defaultPosition());
-  const [collapsed, setCollapsed] = useState(saved?.collapsed || null); // null | 'left' | 'right'
+  const [initial] = useState(() => {
+    const saved = readSaved(storageKey);
+    return fitToWindow(saved?.size || DEFAULT_SIZE, saved?.pos || defaultPosition());
+  });
+  const [size, setSize] = useState(initial.size);
+  const [pos, setPos] = useState(initial.pos);
+  // Always opens expanded: a box that opens as a thin tab at the screen edge
+  // reads as "the review box didn't open".
+  const [collapsed, setCollapsed] = useState(null); // null | 'left' | 'right'
   const [edgeHint, setEdgeHint] = useState(null);
   const [points, setPoints] = useState(() => [newPoint()]);
   const [activeId, setActiveId] = useState(() => points[0].id);
@@ -79,7 +117,7 @@ export function ReviewDock({
   const active = points.find(p => p.id === activeId) || points[0];
   const activeIndex = points.indexOf(active);
 
-  useEffect(() => { save(storageKey, { size, pos, collapsed }); }, [storageKey, size, pos, collapsed]);
+  useEffect(() => { save(storageKey, { size, pos }); }, [storageKey, size, pos]);
 
   // Keep the box on screen when the window shrinks.
   useEffect(() => {
@@ -238,6 +276,7 @@ export function ReviewDock({
   };
 
   const layerProps = {
+    ref: guardLayer,
     className: cx('rk-root', 'rk-layer', className, classNames.root),
     style: themeStyle,
     [KIT_ATTR]: '',

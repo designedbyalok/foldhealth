@@ -1,6 +1,6 @@
 {
   "name": "review-dock",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Drop-in visual review widget for React apps: a floating, draggable comment box with multi-point feedback, rich text, DevTools-style element picking, element and screen screenshots, image/GIF uploads, and image annotation. Themeable to match any design system; storage-agnostic.",
   "keywords": [
     "react",

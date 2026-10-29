@@ -258,7 +258,7 @@ See `DEFAULT_LABELS` for the full list.
 | `labels` | partial `ReviewKitLabels` | Wording and translations. |
 | `classNames` | `ReviewKitClassNames` | Extra classes per slot. |
 | `className` | `string` | Extra class on the root layer. |
-| `storageKey` | `string` | Where position, size and collapsed side are remembered. Default `review-kit:dock`. |
+| `storageKey` | `string` | Where position and size are remembered. Default `review-kit:dock`. The box always opens expanded and fully on screen. |
 | `maxFileSizeMb` | `number` | Per-file upload limit. Default `10`. |
 | `children` | `ReactNode` | Extra content under the editor. |
 
