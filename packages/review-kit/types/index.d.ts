@@ -23,9 +23,13 @@ export interface ReviewKitTheme {
   accentSoft?: string;
   accentText?: string;
   danger?: string;
+  /** Also the annotator's amber marker colour. */
+  warning?: string;
   success?: string;
   shadow?: string;
   pickFill?: string;
+  /** Backdrop behind the image preview and annotator. */
+  overlay?: string;
   zIndex?: string | number;
 }
 
@@ -61,9 +65,25 @@ export interface ReviewKitLabels {
   sendFailed: (message: string) => string;
   linkPrompt: string;
   attachments: string;
-  previous: string;
-  next: string;
   remove: (name: string) => string;
+  openImage: (name: string) => string;
+  preview: (name: string) => string;
+  closePreview: string;
+  annotate: string;
+  annotateTitle: (name: string) => string;
+  annotateLoading: string;
+  done: string;
+  cancel: string;
+  zoom: string;
+  textPlaceholder: string;
+  /** Annotator toolbar names (also their tooltips). */
+  tools: {
+    select: string; rect: string; highlight: string; ellipse: string;
+    arrow: string; line: string; pen: string; text: string; step: string;
+    redact: string; crop: string; color: string; undo: string; redo: string; remove: string;
+    /** Names for the palette: danger, warning, success, accent, text, background. */
+    colorNames: string[];
+  };
   formatting: {
     bold: string;
     italic: string;
@@ -76,8 +96,9 @@ export interface ReviewKitLabels {
   };
 }
 
-export type ReviewKitLabelOverrides = Partial<Omit<ReviewKitLabels, 'formatting'>> & {
+export type ReviewKitLabelOverrides = Partial<Omit<ReviewKitLabels, 'formatting' | 'tools'>> & {
   formatting?: Partial<ReviewKitLabels['formatting']>;
+  tools?: Partial<ReviewKitLabels['tools']>;
 };
 
 /** Extra class names for styling with your own CSS or utility classes. */
@@ -86,7 +107,8 @@ export interface ReviewKitClassNames {
   panel?: string;
   header?: string;
   points?: string;
-  carousel?: string;
+  /** The row of attachment thumbnails. */
+  attachments?: string;
   editor?: string;
   footer?: string;
   toolButton?: string;
@@ -112,6 +134,8 @@ export interface ReviewAttachment {
   element?: string;
   /** Picked element's position in page coordinates. */
   rect?: { x: number; y: number; width: number; height: number };
+  /** True when the reviewer marked the image up in the annotator. */
+  annotated?: boolean;
 }
 
 export interface ReviewPoint {

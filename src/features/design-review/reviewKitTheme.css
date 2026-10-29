@@ -21,13 +21,28 @@
   --rk-accent-soft: var(--primary-100);
   --rk-accent-text: var(--neutral-0);
   --rk-danger: var(--status-error);
+  --rk-warning: var(--status-warning);
   --rk-success: var(--status-success);
 
   /* The strongest shadow token: the box floats over arbitrary screens. */
   --rk-shadow: var(--shadow-tooltip);
+  --rk-overlay: var(--surface-overlay);
+
+  /* Just under Fold's drawers (400), so Signoff and other drawers cover the
+     box instead of sitting beneath it. */
+  --rk-z: 399;
+}
+
+.fold-review-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
 }
 
 .fold-review-count {
+  flex: 1;
+  min-width: 0;
   margin: 0;
   font-size: var(--font-sm);
   color: var(--neutral-300);

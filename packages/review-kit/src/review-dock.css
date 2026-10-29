@@ -216,124 +216,357 @@
   color: var(--rk-danger);
 }
 
-/* ── Attachments carousel (top of the box) ── */
+/* ── Attachments: square thumbnails (top of the box) ── */
 
-.rk-carousel {
-  position: relative;
+.rk-strip {
   flex-shrink: 0;
   padding: var(--rk-space-2) 0;
   border-bottom: 0.5px solid var(--rk-border);
   background: var(--rk-bg-subtle);
 }
 
-.rk-carousel-track {
+.rk-strip-list {
   display: flex;
   gap: var(--rk-space-2);
   margin: 0;
   padding: 0 var(--rk-space-3);
   overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scroll-padding: 0 var(--rk-space-3);
-  scrollbar-width: none;
+  scrollbar-width: thin;
   list-style: none;
 }
 
-.rk-carousel-track::-webkit-scrollbar {
-  display: none;
-}
-
-.rk-slide {
+.rk-thumb {
   position: relative;
-  flex: 0 0 82%;
-  height: 132px;
-  overflow: hidden;
-  scroll-snap-align: start;
-  border: 0.5px solid var(--rk-border);
-  border-radius: var(--rk-radius-sm);
-  background: var(--rk-bg);
+  flex: 0 0 var(--rk-thumb);
+  height: var(--rk-thumb);
 }
 
-.rk-slide:only-child {
-  flex-basis: 100%;
-}
-
-.rk-slide img {
+.rk-thumb-open {
+  display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-}
-
-.rk-slide-label {
-  position: absolute;
-  bottom: var(--rk-space-1);
-  left: var(--rk-space-1);
-  max-width: calc(100% - var(--rk-space-4));
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding: calc(var(--rk-space-1) / 2) var(--rk-space-1);
-  border-radius: var(--rk-radius-sm);
-  background: var(--rk-bg);
-  font-size: var(--rk-font-xs);
-  color: var(--rk-text-muted);
-}
-
-.rk-slide-remove {
-  position: absolute;
-  top: var(--rk-space-1);
-  right: var(--rk-space-1);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
   padding: 0;
+  overflow: hidden;
   border: 0.5px solid var(--rk-border);
   border-radius: var(--rk-radius-sm);
   background: var(--rk-bg);
-  color: var(--rk-text);
-  cursor: pointer;
+  cursor: zoom-in;
 }
 
-.rk-carousel-arrow {
+.rk-thumb-open:hover,
+.rk-thumb-open:focus-visible {
+  border-color: var(--rk-accent);
+  outline: none;
+}
+
+.rk-thumb-open img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top left;
+}
+
+/* Marks an annotated image. */
+.rk-thumb-mark {
   position: absolute;
-  top: 50%;
+  left: var(--rk-space-1);
+  bottom: var(--rk-space-1);
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--rk-bg);
+  border-radius: 50%;
+  background: var(--rk-danger);
+}
+
+.rk-thumb-remove {
+  position: absolute;
+  top: calc(var(--rk-space-1) * -1);
+  right: calc(var(--rk-space-1) * -1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
   padding: 0;
   border: 0.5px solid var(--rk-border);
   border-radius: 50%;
   background: var(--rk-bg);
-  box-shadow: var(--rk-shadow);
   color: var(--rk-text);
   cursor: pointer;
-  transform: translateY(-50%);
-}
-
-.rk-carousel-arrow:disabled {
   opacity: 0;
-  pointer-events: none;
+  transition: opacity 120ms ease;
 }
 
-.rk-carousel-prev {
-  left: var(--rk-space-1);
+.rk-thumb:hover .rk-thumb-remove,
+.rk-thumb-remove:focus-visible {
+  opacity: 1;
 }
 
-.rk-carousel-next {
-  right: var(--rk-space-1);
+/* ── Image preview and annotator (over the page) ── */
+
+.rk-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--rk-space-4);
+  background: var(--rk-overlay);
+  pointer-events: auto;
 }
 
-.rk-carousel-count {
+.rk-preview,
+.rk-annotator {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--rk-radius);
+  background: var(--rk-bg);
+  box-shadow: var(--rk-shadow);
+}
+
+.rk-preview {
+  max-width: min(1100px, 100%);
+  max-height: 100%;
+}
+
+.rk-annotator {
+  width: 100%;
+  height: 100%;
+}
+
+.rk-preview-header {
+  display: flex;
+  align-items: center;
+  gap: var(--rk-space-2);
+  padding: var(--rk-space-2) var(--rk-space-3);
+  border-bottom: 0.5px solid var(--rk-border);
+}
+
+.rk-preview-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--rk-font-md);
+  font-weight: var(--rk-font-weight-medium);
+}
+
+.rk-preview-body {
+  min-height: 0;
+  overflow: auto;
+  padding: var(--rk-space-3);
+  background: var(--rk-bg-subtle);
+}
+
+.rk-preview-body img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100vh - 160px);
+  margin: 0 auto;
+  object-fit: contain;
+}
+
+/* The canvas: the image on a dotted surface, tools floating underneath. */
+.rk-annotator-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background-color: var(--rk-bg-subtle);
+  background-image: radial-gradient(var(--rk-border) 1px, transparent 1px);
+  background-size: var(--rk-space-4) var(--rk-space-4);
+  touch-action: none;
+}
+
+.rk-annotator-done {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rk-space-1);
+}
+
+.rk-annotator-bar {
   position: absolute;
-  top: var(--rk-space-3);
-  right: var(--rk-space-4);
+  left: 50%;
+  bottom: var(--rk-space-4);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  max-width: calc(100% - var(--rk-space-4) * 2);
+  padding: var(--rk-space-1);
+  border: 0.5px solid var(--rk-border);
+  border-radius: 999px;
+  background: var(--rk-bg);
+  box-shadow: var(--rk-shadow);
+  transform: translateX(-50%);
+}
+
+.rk-annotator-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.rk-annotator-divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: var(--rk-space-4);
+  margin: 0 var(--rk-space-1);
+  background: var(--rk-border);
+}
+
+.rk-annotator-tool {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--rk-text);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.rk-annotator-tool:hover:not([aria-disabled='true']) {
+  background: var(--rk-bg-subtle);
+}
+
+.rk-annotator-tool:focus-visible {
+  outline: 2px solid var(--rk-accent);
+  outline-offset: -2px;
+}
+
+.rk-annotator-tool-on,
+.rk-annotator-tool-on:hover:not([aria-disabled='true']) {
+  background: var(--rk-accent-soft);
+  color: var(--rk-accent);
+}
+
+/* aria-disabled rather than disabled, so the tooltip still shows. */
+.rk-annotator-tool[aria-disabled='true'] {
+  color: var(--rk-text-muted);
+  opacity: 0.5;
+  cursor: default;
+}
+
+.rk-annotator-swatch {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border: 0.5px solid var(--rk-border);
+  border-radius: 50%;
+}
+
+.rk-annotator-color-wrap {
+  position: relative;
+}
+
+/* Opens above the bar. */
+.rk-annotator-colors {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + var(--rk-space-2));
+  display: flex;
+  gap: 2px;
+  padding: var(--rk-space-1);
+  border: 0.5px solid var(--rk-border);
+  border-radius: 999px;
+  background: var(--rk-bg);
+  box-shadow: var(--rk-shadow);
+  transform: translateX(-50%);
+}
+
+.rk-annotator-color {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.rk-annotator-color-on {
+  border-color: var(--rk-accent);
+}
+
+.rk-annotator-zoom {
+  position: absolute;
+  left: var(--rk-space-4);
+  bottom: calc(var(--rk-space-4) + 9px);
+  font-size: var(--rk-font-sm);
+  font-weight: var(--rk-font-weight-medium);
+  color: var(--rk-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Toolbar tooltip: above the hovered button. */
+.rk-annotator-tip {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--rk-space-2);
+  padding: var(--rk-space-1) var(--rk-space-2);
+  border-radius: var(--rk-radius-sm);
+  background: var(--rk-text);
+  color: var(--rk-bg);
+  font-size: var(--rk-font-xs);
+  font-weight: var(--rk-font-weight-medium);
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - var(--rk-space-2)));
+  animation: rk-tip-in 120ms ease-out;
+}
+
+.rk-annotator-tip kbd {
   padding: 0 var(--rk-space-1);
+  border-radius: calc(var(--rk-radius-sm) / 2);
+  background: color-mix(in srgb, var(--rk-bg) 18%, transparent);
+  font: inherit;
+  opacity: 0.85;
+}
+
+@keyframes rk-tip-in {
+  from { opacity: 0; transform: translate(-50%, calc(-100% - var(--rk-space-1))); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rk-annotator-tip { animation: none; }
+}
+
+/* Typing a text mark: sits exactly where the text will be drawn. */
+.rk-annotator-text {
+  position: absolute;
+  min-width: 160px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: none;
+  outline: 1px dashed var(--rk-accent);
+  background: transparent;
+  font: inherit;
+  font-weight: var(--rk-font-weight-medium);
+  line-height: 1.25;
+  resize: none;
+  field-sizing: content;
+}
+
+.rk-annotator-loading {
+  margin: 0;
+  padding: var(--rk-space-2) var(--rk-space-3);
   border-radius: var(--rk-radius-sm);
   background: var(--rk-bg);
-  font-size: var(--rk-font-xs);
+  font-size: var(--rk-font-sm);
   color: var(--rk-text-muted);
 }
 

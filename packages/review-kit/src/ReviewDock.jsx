@@ -5,7 +5,8 @@ import { pickElement, describeElement, KIT_ATTR } from './picker';
 import { captureElement, captureViewport, selectorFor } from './capture';
 import { PickIcon, CameraIcon, UploadIcon, CloseIcon, CollapseIcon, ChevronIcon, GripIcon, PlusIcon } from './icons';
 import { RichTextEditor } from './RichTextEditor';
-import { AttachmentCarousel } from './AttachmentCarousel';
+import { AttachmentStrip } from './AttachmentStrip';
+import { ImagePreview } from './ImagePreview';
 import { themeToStyle, mergeLabels } from './theme';
 
 const EDGE = 24; // drop within this many px of a side wall to collapse into a tab
@@ -41,8 +42,9 @@ const defaultPosition = () => (isBrowser ? {
  * Floating, draggable review box. See README.md for the full API.
  *
  * Feedback is a series of points: each has its own screenshots (element picks,
- * screen shots, uploaded, pasted or dropped images and GIFs, shown as a
- * carousel), its own rich-text comment, and the page it was made on.
+ * screen shots, uploaded, pasted or dropped images and GIFs, shown as square
+ * thumbnails that open a preview with annotation), its own rich-text comment,
+ * and the page it was made on.
  *
  * Styling: `theme` (design tokens), CSS variables (--rk-*), and `classNames`
  * slots. Wording: `labels`. Storage: whatever `onSubmit` does with the points.
@@ -72,6 +74,7 @@ export function ReviewDock({
   const [activeId, setActiveId] = useState(() => points[0].id);
   const [busy, setBusy] = useState(null); // null | 'pick' | 'capture' | 'send'
   const [notice, setNotice] = useState(null); // { tone: 'error'|'ok', text }
+  const [previewId, setPreviewId] = useState(null);
 
   const active = points.find(p => p.id === activeId) || points[0];
   const activeIndex = points.indexOf(active);
@@ -101,6 +104,14 @@ export function ReviewDock({
   const removeAttachment = (id) => updateActive(p => ({
     ...p,
     attachments: p.attachments.filter(a => a.id !== id),
+  }));
+
+  // An annotated copy replaces the original, keeping where it came from.
+  const replaceAttachment = (id, file) => updateActive(p => ({
+    ...p,
+    attachments: p.attachments.map(a => (a.id === id
+      ? { ...a, file, type: 'image/png', name: a.name.replace(/\.[^.]+$/, '') + '.png', annotated: true }
+      : a)),
   }));
 
   const tooBig = useCallback((count) => setNotice({ tone: 'error', text: L.skipped(count, maxFileSizeMb) }), [L, maxFileSizeMb]);
@@ -192,7 +203,7 @@ export function ReviewDock({
           html: p.empty ? '' : p.html,
           attachments: p.attachments.map(a => ({
             file: a.file, name: a.name, type: a.type, kind: a.kind,
-            selector: a.selector, element: a.element, rect: a.rect,
+            selector: a.selector, element: a.element, rect: a.rect, annotated: !!a.annotated,
           })),
           context: p.context,
         })),
@@ -252,6 +263,7 @@ export function ReviewDock({
   }
 
   const labelFor = (a) => (a.kind === 'element' ? a.element : a.kind === 'screen' ? L.screenLabel : a.name);
+  const previewing = active.attachments.find(a => a.id === previewId);
   const sendLabel = busy === 'send' ? L.sending : filled.length > 1 ? L.sendPoints(filled.length) : L.send;
 
   return (
@@ -326,13 +338,14 @@ export function ReviewDock({
             )}
           </nav>
 
-          <AttachmentCarousel
+          <AttachmentStrip
             key={`shots-${active.id}`}
             items={active.attachments}
+            onOpen={setPreviewId}
             onRemove={removeAttachment}
             labelFor={labelFor}
             labels={L}
-            className={classNames.carousel}
+            className={classNames.attachments}
           />
 
           <div className="rk-body rk-no-drag">
@@ -374,6 +387,16 @@ export function ReviewDock({
           {isDragActive && <div className="rk-drop-overlay">{L.dropHint(activeIndex + 1)}</div>}
         </section>
       </Rnd>
+      {previewing && (
+        <ImagePreview
+          key={previewing.id}
+          attachment={previewing}
+          name={labelFor(previewing)}
+          labels={L}
+          onAnnotated={(file) => replaceAttachment(previewing.id, file)}
+          onClose={() => setPreviewId(null)}
+        />
+      )}
     </div>
   );
 }

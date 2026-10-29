@@ -1,7 +1,7 @@
 {
   "name": "review-dock",
-  "version": "0.1.0",
-  "description": "Drop-in visual review widget for React apps: a floating, draggable comment box with multi-point feedback, rich text, DevTools-style element picking, element and screen screenshots, and image/GIF uploads. Themeable to match any design system; storage-agnostic.",
+  "version": "0.2.0",
+  "description": "Drop-in visual review widget for React apps: a floating, draggable comment box with multi-point feedback, rich text, DevTools-style element picking, element and screen screenshots, image/GIF uploads, and image annotation. Themeable to match any design system; storage-agnostic.",
   "keywords": [
     "react",
     "feedback",
@@ -39,21 +39,22 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "dist",
-    "types",
+    "LICENSE",
     "README.md",
-    "LICENSE"
+    "dist",
+    "types"
   ],
   "sideEffects": [
     "*.css"
   ],
   "scripts": {
     "build": "vite build && node scripts/build-css.mjs",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "icons": "node scripts/build-annotator-icons.mjs"
   },
   "peerDependencies": {
-    "react": ">=18",
-    "react-dom": ">=18"
+    "react": ">=19",
+    "react-dom": ">=19"
   },
   "dependencies": {
     "@medv/finder": "^4.0.2",
@@ -62,7 +63,9 @@
     "@tiptap/react": "^3.32.1",
     "@tiptap/starter-kit": "^3.32.1",
     "@zumer/snapdom": "^3.6.0",
+    "konva": "^10.9.0",
     "react-dropzone": "^20.1.4",
+    "react-konva": "^19.0.0",
     "react-rnd": "^10.5.3"
   },
   "devDependencies": {

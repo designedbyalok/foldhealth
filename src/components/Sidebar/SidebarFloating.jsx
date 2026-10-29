@@ -89,7 +89,10 @@ export function SidebarFloating() {
   // blockers.
   const [helpOpen, setHelpOpen] = useState(false);
   const [whatsNewOpen, setWhatsNewOpen] = useState(false);
-  const [reviewsOpen, setReviewsOpen] = useState(false);
+  const reviewsDrawer = useAppStore(s => s.featureReviewsDrawer);
+  const openReviews = useAppStore(s => s.openFeatureReviewsDrawer);
+  const closeReviews = useAppStore(s => s.closeFeatureReviewsDrawer);
+  const reviewsOpen = !!reviewsDrawer;
   const fetchFeatureReviews = useAppStore(s => s.fetchFeatureReviews);
   const myPendingReviews = useMyPendingReviewCount();
   useEffect(() => { fetchFeatureReviews(); }, [fetchFeatureReviews]);
@@ -126,7 +129,7 @@ export function SidebarFloating() {
 
   const handleNavigate = (key, item) => {
     if (item.action === 'reviews') {
-      setReviewsOpen(true);
+      openReviews();
       return;
     }
     if (item.action === 'help') {
@@ -238,7 +241,7 @@ export function SidebarFloating() {
         />
       )}
       {whatsNewOpen && <WhatsNewDrawer onClose={() => setWhatsNewOpen(false)} />}
-      {reviewsOpen && <FeatureReviewsDrawer onClose={() => setReviewsOpen(false)} />}
+      {reviewsDrawer && <FeatureReviewsDrawer key={reviewsDrawer.focusId || 'all'} focusId={reviewsDrawer.focusId} onClose={closeReviews} />}
     </>
   );
 }

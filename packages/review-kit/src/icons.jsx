@@ -31,6 +31,12 @@ export const CloseIcon = (p) => (
   </svg>
 );
 
+export const PenIcon = (p) => (
+  <svg {...base} {...p}>
+    <path d="M14.5 5.5 18.5 9.5M4 20l1-4.5L15.8 4.7a1.4 1.4 0 0 1 2 0l1.5 1.5a1.4 1.4 0 0 1 0 2L8.5 19z" />
+  </svg>
+);
+
 export const CollapseIcon = (p) => (
   <svg {...base} {...p}>
     <path d="M5 12h14" />

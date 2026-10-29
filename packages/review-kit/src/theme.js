@@ -23,9 +23,11 @@ export const THEME_TOKENS = {
   accentSoft: '--rk-accent-soft',
   accentText: '--rk-accent-text',
   danger: '--rk-danger',
+  warning: '--rk-warning',
   success: '--rk-success',
   shadow: '--rk-shadow',
   pickFill: '--rk-pick-fill',
+  overlay: '--rk-overlay',
   zIndex: '--rk-z',
 };
 
@@ -51,9 +53,11 @@ export const darkTheme = {
   accentSoft: '#2e2540',
   accentText: '#ffffff',
   danger: '#f97066',
+  warning: '#fdb022',
   success: '#47cd89',
   shadow: '0 12px 40px rgba(0, 0, 0, 0.5)',
   pickFill: 'rgba(165, 123, 236, 0.16)',
+  overlay: 'rgba(0, 0, 0, 0.6)',
 };
 
 /** Every visible string, for your own wording or translations. */
@@ -88,9 +92,24 @@ export const DEFAULT_LABELS = {
   sendFailed: (msg) => `Couldn't send: ${msg}`,
   linkPrompt: 'Link address',
   attachments: 'Attachments',
-  previous: 'Previous attachment',
-  next: 'Next attachment',
   remove: (name) => `Remove ${name}`,
+  openImage: (name) => `Open ${name}`,
+  preview: (name) => `Preview: ${name}`,
+  closePreview: 'Close preview',
+  annotate: 'Annotate',
+  annotateTitle: (name) => `Annotate ${name}`,
+  annotateLoading: 'Loading the annotation tools…',
+  done: 'Done',
+  cancel: 'Cancel',
+  zoom: 'Zoom',
+  textPlaceholder: 'Type, then press Enter',
+  tools: {
+    select: 'Select and move', rect: 'Rectangle', highlight: 'Highlight', ellipse: 'Ellipse',
+    arrow: 'Arrow', line: 'Line', pen: 'Pen', text: 'Text', step: 'Numbered step',
+    redact: 'Redact (pixelate)', crop: 'Crop', color: 'Colour', undo: 'Undo', redo: 'Redo', remove: 'Delete',
+    // The palette, in order: danger, warning, success, accent, text, background.
+    colorNames: ['Red', 'Amber', 'Green', 'Accent', 'Dark', 'Light'],
+  },
   formatting: {
     bold: 'Bold', italic: 'Italic', underline: 'Underline', strike: 'Strikethrough',
     bulletList: 'Bulleted list', orderedList: 'Numbered list', link: 'Link', code: 'Code',
@@ -100,5 +119,10 @@ export const DEFAULT_LABELS = {
 /** Merge partial label overrides (including `formatting`) onto the defaults. */
 export function mergeLabels(labels) {
   if (!labels) return DEFAULT_LABELS;
-  return { ...DEFAULT_LABELS, ...labels, formatting: { ...DEFAULT_LABELS.formatting, ...labels.formatting } };
+  return {
+    ...DEFAULT_LABELS,
+    ...labels,
+    formatting: { ...DEFAULT_LABELS.formatting, ...labels.formatting },
+    tools: { ...DEFAULT_LABELS.tools, ...labels.tools },
+  };
 }

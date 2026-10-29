@@ -51,7 +51,10 @@ export function Sidebar() {
   const setMemberLeadsTab = useAppStore(s => s.setMemberLeadsTab);
   const [helpOpen, setHelpOpen] = useState(false);
   const [whatsNewOpen, setWhatsNewOpen] = useState(false);
-  const [reviewsOpen, setReviewsOpen] = useState(false);
+  const reviewsDrawer = useAppStore(s => s.featureReviewsDrawer);
+  const openReviews = useAppStore(s => s.openFeatureReviewsDrawer);
+  const closeReviews = useAppStore(s => s.closeFeatureReviewsDrawer);
+  const reviewsOpen = !!reviewsDrawer;
   const fetchFeatureReviews = useAppStore(s => s.fetchFeatureReviews);
   const myPendingReviews = useMyPendingReviewCount();
   useEffect(() => { fetchFeatureReviews(); }, [fetchFeatureReviews]);
@@ -254,7 +257,7 @@ export function Sidebar() {
               onFocus={isHelp ? warmHelpMenu : undefined}
               onClick={() => {
                 if (isHelp) { warmHelpMenu(); setHelpOpen(v => !v); }
-                if (isReviews) setReviewsOpen(true);
+                if (isReviews) openReviews();
               }}
             >
               {isReviews && myPendingReviews > 0 && (
@@ -290,7 +293,7 @@ export function Sidebar() {
         />
       )}
       {whatsNewOpen && <WhatsNewDrawer onClose={() => setWhatsNewOpen(false)} />}
-      {reviewsOpen && <FeatureReviewsDrawer onClose={() => setReviewsOpen(false)} />}
+      {reviewsDrawer && <FeatureReviewsDrawer key={reviewsDrawer.focusId || 'all'} focusId={reviewsDrawer.focusId} onClose={closeReviews} />}
     </nav>
   );
 }

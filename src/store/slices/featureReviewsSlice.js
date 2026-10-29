@@ -141,6 +141,11 @@ export function createFeatureReviewsSlice(set, get) {
     featureReviewsEmail: null,
     featureReviewsActor: null,
 
+    // The Signoff drawer; focusId opens it on one item (from the review box).
+    featureReviewsDrawer: null, // null | { focusId: string | null }
+    openFeatureReviewsDrawer: (focusId = null) => set({ featureReviewsDrawer: { focusId } }),
+    closeFeatureReviewsDrawer: () => set({ featureReviewsDrawer: null }),
+
     // ── In-place review (packages/review-kit) ──
     // The item being reviewed; survives navigation within the tab.
     activeReview: readActiveReview(),
@@ -198,6 +203,7 @@ export function createFeatureReviewsSlice(set, get) {
           ...(a.selector ? { selector: a.selector } : {}),
           ...(a.element ? { element: a.element } : {}),
           ...(a.rect ? { rect: a.rect } : {}),
+          ...(a.annotated ? { annotated: true } : {}),
         };
       };
       const uploaded = await Promise.all(points.map((point, pi) => Promise.all(point.attachments.map((a, ai) => uploadOne(a, pi, ai)))));

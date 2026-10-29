@@ -13,6 +13,11 @@ one piece of feedback with a point per screen.
 - **Screenshot**: one click captures what's on screen.
 - **Upload**: images and GIFs via button, paste, or drag and drop anywhere on
   the box (including onto the text).
+- **Preview and annotate**: attachments show as square thumbnails; click one to
+  see it full size, then **Annotate**: rectangle, highlight, ellipse, arrow,
+  line, pen, text, numbered steps, redact (pixelate, for private data) and
+  crop, with colours, undo/redo, keyboard shortcuts and hover tooltips. The
+  marked-up image replaces the original at its full resolution.
 - **Rich text**: bold, italic, underline, strike, lists, links, inline code.
   Cmd/Ctrl+Enter sends.
 - **Matches your design system**: theme tokens, CSS variables, or class names.
@@ -24,7 +29,7 @@ one piece of feedback with a point per screen.
 npm install review-dock
 ```
 
-React 18 or newer is a peer dependency. Then import the stylesheet once (in
+React 19 or newer is a peer dependency. Then import the stylesheet once (in
 your app entry or root layout):
 
 ```js
@@ -81,6 +86,7 @@ is safe to server-render. Import the stylesheet in `app/layout.js`, and render
           selector?: string, // element picks: unique CSS selector
           element?: string,  // element picks: e.g. "div.cardBody"
           rect?: { x, y, width, height }, // element picks: page coordinates
+          annotated: boolean, // marked up in the annotator (the file is then a PNG)
         },
       ],
       context: { url, title, viewport: { width, height } }, // where the point was made
@@ -146,6 +152,8 @@ There are three levels; use whichever fits your stack. They combine.
 | `danger` / `success` | `--rk-danger` / `--rk-success` | red / green |
 | `shadow` | `--rk-shadow` | soft drop shadow |
 | `pickFill` | `--rk-pick-fill` | translucent accent |
+| `warning` | `--rk-warning` | amber (also an annotation colour) |
+| `overlay` | `--rk-overlay` | backdrop behind the preview; crop shade |
 | `zIndex` | `--rk-z` | very high, above modals |
 
 ### 2. CSS variables (point them at your own tokens)
@@ -208,7 +216,7 @@ const muiTheme = useTheme();
 />
 ```
 
-Slots: `root`, `panel`, `header`, `points`, `carousel`, `editor`, `footer`,
+Slots: `root`, `panel`, `header`, `points`, `attachments`, `editor`, `footer`,
 `toolButton`, `sendButton`, `tab`. Every element also has a stable `rk-*` class
 you can target.
 
@@ -288,7 +296,7 @@ screen-share prompt), using [snapDOM](https://github.com/zumerlab/snapdom).
 
 Keyboard: Tab through all controls; in the picker, ↑ / ↓ / Enter / Esc; in the
 editor, Cmd/Ctrl+B / I / U and Cmd/Ctrl+Enter to send. Buttons have labels,
-points are tabs, the carousel announces its position, and motion respects
+points are tabs, thumbnails open a labelled preview dialog, and motion respects
 `prefers-reduced-motion`.
 
 ## Browser support
@@ -308,8 +316,12 @@ npm run build   # dist/index.js (ESM), dist/index.cjs, dist/styles.css
 - [react-rnd](https://github.com/bokuweb/react-rnd): drag and resize
 - [react-dropzone](https://github.com/react-dropzone/react-dropzone): file drop and pick
 - [Tiptap](https://github.com/ueberdosis/tiptap): the rich-text editor
+- [Konva](https://github.com/konvajs/konva) and [react-konva](https://github.com/konvajs/react-konva):
+  the annotator's canvas, loaded only when someone opens it
 
-All MIT.
+All MIT. The annotator's toolbar icons are [Solar](https://www.figma.com/community/file/1166831539721848736)
+linear icons by 480 Design (CC BY 4.0), redrawn at a 1px stroke
+(`scripts/build-annotator-icons.mjs`).
 
 ## License
 

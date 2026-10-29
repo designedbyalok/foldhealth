@@ -26,10 +26,14 @@
   --rk-accent-soft: #f3edff;
   --rk-accent-text: #ffffff;
   --rk-danger: #d92d20;
+  --rk-warning: #dc6803;
   --rk-success: #12805c;
 
   --rk-shadow: 0 12px 40px rgba(15, 23, 42, 0.16);
   --rk-pick-fill: rgba(126, 76, 217, 0.12);
+  --rk-overlay: rgba(15, 23, 42, 0.55);
+
+  --rk-thumb: 56px;
 
   --rk-z: 2147482000;
 }
