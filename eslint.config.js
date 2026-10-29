@@ -13,6 +13,8 @@ export default defineConfig([globalIgnores([
   'public/report-viewer',
   // Patient app build output (vite.patient.config.js).
   'patient/dist',
+  // Package build output (e.g. packages/review-kit: npm run build), gitignored.
+  'packages/*/dist',
   // Agent tooling installs, not app code (same reason as .claude).
   '.claude', '.agents', '.github/skills',
 ]), {

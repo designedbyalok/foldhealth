@@ -1,0 +1,75 @@
+{
+  "name": "@designedbyalok/review-kit",
+  "version": "0.1.0",
+  "description": "Drop-in visual review widget for React apps: a floating, draggable comment box with multi-point feedback, rich text, DevTools-style element picking, element and screen screenshots, and image/GIF uploads. Themeable to match any design system; storage-agnostic.",
+  "keywords": [
+    "react",
+    "feedback",
+    "review",
+    "screenshot",
+    "annotation",
+    "design-review",
+    "qa",
+    "widget",
+    "element-picker",
+    "bug-report"
+  ],
+  "license": "MIT",
+  "author": "Alok Kumar (https://github.com/designedbyalok)",
+  "homepage": "https://github.com/designedbyalok/foldhealth/tree/main/packages/review-kit#readme",
+  "bugs": {
+    "url": "https://github.com/designedbyalok/foldhealth/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/designedbyalok/foldhealth.git",
+    "directory": "packages/review-kit"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./styles.css": "./dist/styles.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "types",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "*.css"
+  ],
+  "scripts": {
+    "build": "vite build && node scripts/build-css.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "dependencies": {
+    "@medv/finder": "^4.0.2",
+    "@tiptap/extensions": "^3.32.1",
+    "@tiptap/pm": "^3.32.1",
+    "@tiptap/react": "^3.32.1",
+    "@tiptap/starter-kit": "^3.32.1",
+    "@zumer/snapdom": "^3.6.0",
+    "react-dropzone": "^20.1.4",
+    "react-rnd": "^10.5.3"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.1",
+    "vite": "^8.3.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

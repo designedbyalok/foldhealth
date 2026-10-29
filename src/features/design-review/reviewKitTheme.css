@@ -1,0 +1,34 @@
+/* Fold theme for @designedbyalok/review-kit: map the kit's variables onto Fold tokens. */
+:root {
+  --rk-font-xs: var(--font-xs);
+  --rk-font-sm: var(--font-sm);
+  --rk-font-md: var(--font-md);
+
+  --rk-space-1: var(--space-1);
+  --rk-space-2: var(--space-2);
+  --rk-space-3: var(--space-3);
+  --rk-space-4: var(--space-4);
+
+  --rk-radius-sm: var(--space-1);
+  --rk-radius: var(--space-3);
+
+  --rk-bg: var(--neutral-0);
+  --rk-bg-subtle: var(--neutral-50);
+  --rk-border: var(--neutral-150);
+  --rk-text: var(--neutral-500);
+  --rk-text-muted: var(--neutral-300);
+  --rk-accent: var(--primary-300);
+  --rk-accent-soft: var(--primary-100);
+  --rk-accent-text: var(--neutral-0);
+  --rk-danger: var(--status-error);
+  --rk-success: var(--status-success);
+
+  /* The strongest shadow token: the box floats over arbitrary screens. */
+  --rk-shadow: var(--shadow-tooltip);
+}
+
+.fold-review-count {
+  margin: 0;
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}

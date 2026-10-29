@@ -1,6 +1,34 @@
 import { supabase } from '../../lib/supabase';
 import { toast } from '../../components/Toast/sonnerToast';
 
+const ACTIVE_REVIEW_KEY = 'fold:design-review';
+const ATTACHMENT_BUCKET = 'review-attachments';
+
+function readActiveReview() {
+  try { return JSON.parse(sessionStorage.getItem(ACTIVE_REVIEW_KEY) || 'null'); } catch { return null; }
+}
+
+function rowToComment(r) {
+  const points = Array.isArray(r.points) ? r.points : [];
+  return {
+    id: r.id,
+    featureId: r.feature_id,
+    authorEmail: r.author_email,
+    authorName: r.author_name || r.author_email,
+    body: r.body || '',
+    points: points.map(p => ({
+      text: p.text || '',
+      html: p.html || '',
+      attachments: Array.isArray(p.attachments) ? p.attachments : [],
+      context: p.context || {},
+    })),
+    context: r.context || {},
+    createdAt: r.created_at,
+  };
+}
+
+const safeName = (name) => (name || 'image').replace(/[^\w.-]+/g, '-').slice(-80);
+
 const SIGNOFF_COLUMNS = 'id, feature_id, reviewer_email, reviewer_name, assigned_by, assigned_at, signed_at, comment, commented_at, inherited_from';
 // The relationship is named so the embed stays unambiguous if the signoffs
 // table ever gains another reference to feature_reviews.
@@ -112,6 +140,91 @@ export function createFeatureReviewsSlice(set, get) {
     // reviewer checks don't wait on the profile, which some pages load late.
     featureReviewsEmail: null,
     featureReviewsActor: null,
+
+    // ── In-place review (packages/review-kit) ──
+    // The item being reviewed; survives navigation within the tab.
+    activeReview: readActiveReview(),
+    featureReviewComments: {},
+
+    startFeatureReview: ({ id, title, area, link }) => {
+      const review = { featureId: id, title, area: area || '', link: link || '' };
+      try { sessionStorage.setItem(ACTIVE_REVIEW_KEY, JSON.stringify(review)); } catch { /* private mode */ }
+      set({ activeReview: review });
+    },
+
+    endFeatureReview: () => {
+      try { sessionStorage.removeItem(ACTIVE_REVIEW_KEY); } catch { /* private mode */ }
+      set({ activeReview: null });
+    },
+
+    // Comments with short-lived signed URLs for their attachments.
+    fetchFeatureReviewComments: async (featureId) => {
+      const { data, error } = await supabase
+        .from('feature_review_comments')
+        .select('id, feature_id, author_email, author_name, body, points, context, created_at')
+        .eq('feature_id', featureId)
+        .order('created_at', { ascending: false });
+      if (error) {
+        console.warn('[store] review comments fetch failed:', error.message);
+        return;
+      }
+      const comments = (data || []).map(rowToComment);
+      const paths = comments.flatMap(c => c.points.flatMap(p => p.attachments.map(a => a.path))).filter(Boolean);
+      if (paths.length) {
+        const { data: signed } = await supabase.storage.from(ATTACHMENT_BUCKET).createSignedUrls(paths, 3600);
+        const urlFor = new Map((signed || []).map(s => [s.path, s.signedUrl]));
+        comments.forEach(c => {
+          c.points = c.points.map(p => ({ ...p, attachments: p.attachments.map(a => ({ ...a, url: urlFor.get(a.path) || null })) }));
+        });
+      }
+      set({ featureReviewComments: { ...get().featureReviewComments, [featureId]: comments } });
+    },
+
+    // One piece of feedback: a series of points, each with its own comment,
+    // screenshots and page. Files upload under <featureId>/<commentId>/;
+    // one that fails is skipped with a warning.
+    submitFeatureReviewComment: async ({ featureId, points, context }) => {
+      const commentId = crypto.randomUUID();
+      const saved = [];
+      for (const [pi, point] of points.entries()) {
+        const attachments = [];
+        for (const [ai, a] of point.attachments.entries()) {
+          const path = `${featureId}/${commentId}/${pi + 1}-${ai + 1}-${safeName(a.name)}`;
+          const { error } = await supabase.storage.from(ATTACHMENT_BUCKET)
+            .upload(path, a.file, { contentType: a.type || a.file.type, upsert: false });
+          if (error) {
+            toast.error(`Couldn't upload ${a.name}: ${error.message}`);
+            continue;
+          }
+          attachments.push({
+            path, name: a.name, type: a.type || a.file.type, size: a.file.size, kind: a.kind,
+            ...(a.selector ? { selector: a.selector } : {}),
+            ...(a.element ? { element: a.element } : {}),
+            ...(a.rect ? { rect: a.rect } : {}),
+          });
+        }
+        if (point.text || attachments.length) {
+          saved.push({ text: point.text, html: point.html || '', attachments, context: point.context });
+        }
+      }
+      if (!saved.length) return false;
+      const { error } = await supabase.from('feature_review_comments').insert({
+        id: commentId,
+        feature_id: featureId,
+        // The database stamps the real author from the session.
+        author_email: get().featureReviewsEmail || '',
+        author_name: get().currentUserProfile?.name || get().featureReviewsActor,
+        body: saved.length > 1 ? saved.map((p, i) => `${i + 1}. ${p.text}`).join('\n') : saved[0].text,
+        points: saved,
+        context,
+      });
+      if (error) {
+        toast.error(`Couldn't save the feedback: ${error.message}`);
+        return false;
+      }
+      get().fetchFeatureReviewComments(featureId);
+      return true;
+    },
     featureReviewsLoading: false,
     _featureReviewsFetched: false,
 

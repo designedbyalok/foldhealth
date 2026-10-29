@@ -36,8 +36,13 @@ const CSS_EXT = new Set(['.css']);
 
 // Files that legitimately contain raw values and must never be gated:
 //   tokens.css defines the color tokens (hex is the whole point);
-//   index.css holds global resets / @font-face.
+//   index.css holds global resets / @font-face;
+//   the review-kit package's theme.css is its own token file (it must work
+//   outside Fold, so it can't use Fold's tokens).
 const CSS_IGNORE = new Set(['src/tokens/tokens.css', 'src/index.css']);
+// Standalone packages ship their own theme tokens for other apps, so Fold's
+// token rules don't apply to them.
+const CSS_IGNORE_PREFIX = 'packages/';
 
 function sh(cmd, args) {
   const r = spawnSync(cmd, args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
@@ -133,7 +138,7 @@ function main() {
   const changed = changedLines();
   const files = [...changed.keys()];
   const jsFiles = files.filter(f => JS_EXT.has(path.extname(f)));
-  const cssFiles = files.filter(f => CSS_EXT.has(path.extname(f)) && !CSS_IGNORE.has(f));
+  const cssFiles = files.filter(f => CSS_EXT.has(path.extname(f)) && !CSS_IGNORE.has(f) && !f.startsWith(CSS_IGNORE_PREFIX));
 
   const violations = [...runEslint(jsFiles), ...runStylelint(cssFiles)]
     .filter(v => changed.get(v.file)?.has(v.line));

@@ -24,6 +24,7 @@ import { CallPopoverHost } from '../components/CallPopover/CallPopoverHost';
 import { BrowserCallCard } from '../features/messages/comms/call/BrowserCallCard';
 import { CommsDrawerHost } from '../features/messages/comms/CommsDrawerHost';
 import { ReassignmentSummaryHost } from '../features/ooo/ReassignmentSummaryHost';
+import { DesignReviewHost } from '../features/design-review/DesignReviewHost';
 import { useProgramPanelSplitActive, useDiagPanelInSplit } from '../features/patient/hooks/useProgramPanelSplitActive';
 import { supabase } from '../lib/supabase';
 import styles from './AppLayout.module.css';
@@ -691,6 +692,7 @@ export function AppLayout() {
         {aiTasksDrawerPatientId && <AiTasksDrawer />}
         <PgProcessingHost />
         <ReassignmentSummaryHost />{/* opens from a reassignment's "summary is ready" notification */}
+        <DesignReviewHost />{/* the floating Design Signoff review box, while a review is active */}
       </Suspense>
       <Toaster />
     </div>

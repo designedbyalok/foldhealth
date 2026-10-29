@@ -77,7 +77,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(dirname, './src')
+      '@': path.resolve(dirname, './src'),
+      // Standalone review widget, kept as its own package (packages/review-kit).
+      '@designedbyalok/review-kit': path.resolve(dirname, './packages/review-kit/src'),
     }
   },
   build: {

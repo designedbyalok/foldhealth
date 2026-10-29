@@ -17,6 +17,8 @@ import { UserPickerPopover } from '../UserPickerPopover/UserPickerPopover';
 import { TabStrip } from '../TabStrip/TabStrip';
 import { Collapse } from '../Collapse/Collapse';
 import { CardSkeleton } from '../CardSkeleton/CardSkeleton';
+import { ImagePreviewOverlay } from '../ImagePreviewOverlay/ImagePreviewOverlay';
+import { sanitizeRichText } from '../../lib/sanitizeHtml';
 import { ConfirmDialog } from '../ConfirmDialog/ConfirmDialog';
 import { EmptyState } from '../EmptyState/EmptyState';
 import { toast } from '../Toast/sonnerToast';
@@ -158,6 +160,8 @@ export function FeatureReviewsDrawer({ onClose }) {
 
   const [expanded, setExpanded] = useState(null);
   const [form, setForm] = useState(null);
+  // Review: go to the item's section and open the floating review box there.
+  const startFeatureReview = useAppStore(s => s.startFeatureReview);
 
   // ── Drag to nest / un-nest (managers, not on the Suggested tab) ──
   const moveFeatureReview = useAppStore(s => s.moveFeatureReview);
@@ -213,7 +217,12 @@ export function FeatureReviewsDrawer({ onClose }) {
       onToggle={() => setExpanded(v => (v === item.id ? null : item.id))}
       onExpand={() => setExpanded(item.id)}
       link={item.link || parent?.link || ''}
-      onOpen={() => { goTo(item.link || parent?.link); onClose(); }}
+      onReview={() => {
+        const link = item.link || parent?.link;
+        startFeatureReview({ id: item.id, title: item.title, area: item.area || parent?.area, link });
+        goTo(link);
+        onClose();
+      }}
       onAddSubItem={() => setForm({ parentId: item.id })}
     />
   );
@@ -426,7 +435,7 @@ function ReviewStatus({ item, childItems }) {
 }
 
 function ReviewRow({
-  item, childItems, child, context, myEmail, isManager, expanded, onToggle, onExpand, onOpen, onAddSubItem,
+  item, childItems, child, context, myEmail, isManager, expanded, onToggle, onExpand, onReview, onAddSubItem,
   canDrag, dropHint, flash, link,
 }) {
   // Suggestions are kept or removed first; only kept items nest.
@@ -441,6 +450,8 @@ function ReviewRow({
   const mine = suggestion ? null : mySignoff(item, myEmail);
   const [signing, setSigning] = useState(false);
   const [commenting, setCommenting] = useState(false);
+  const fetchComments = useAppStore(s => s.fetchFeatureReviewComments);
+  useEffect(() => { if (expanded) fetchComments(item.id); }, [expanded, item.id, fetchComments]);
   const [pickerRect, setPickerRect] = useState(null);
   const [reviewersCell, setReviewersCell] = useState(null);
 
@@ -573,7 +584,7 @@ function ReviewRow({
             </span>
             <span>{mine && showOpen && <span className={styles.headerDivider} />}</span>
             <span>
-              {showOpen && <ActionButton size="S" icon="solar:arrow-right-up-linear" tooltip="Open section" tooltipLeft onClick={onOpen} />}
+              {showOpen && <ActionButton size="S" icon="solar:eye-linear" tooltip="Review: open the section with a comment box" tooltipLeft onClick={onReview} />}
             </span>
           </div>
         )}
@@ -688,6 +699,70 @@ function ReviewerPicker({ item, anchorRect, onClose }) {
   );
 }
 
+const COMMENT_TIME = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+const EMPTY_COMMENTS = [];
+
+// Where a point was made, as the app's own route (e.g. "#/population/hcc").
+const pageOf = (url) => {
+  try { const u = new URL(url); return u.hash || u.pathname; } catch { return ''; }
+};
+
+// Feedback left with the in-place review box, newest first. Each piece is a
+// series of points (one per screen or section), each with its screenshots.
+function ReviewComments({ featureId }) {
+  const comments = useAppStore(s => s.featureReviewComments[featureId] || EMPTY_COMMENTS);
+  const [preview, setPreview] = useState(null);
+  if (!comments.length) return null;
+  return (
+    <section className={styles.reviewComments} aria-label="Review feedback">
+      <div className={styles.reviewCommentsTitle}>Review feedback ({comments.length})</div>
+      <ul className={styles.reviewCommentList}>
+        {comments.map(c => (
+          <li key={c.id} className={styles.reviewComment}>
+            <div className={styles.reviewerLine}>
+              <span className={styles.reviewerName}>{c.authorName}</span>
+              <time className={styles.reviewerWhen} dateTime={c.createdAt}>{COMMENT_TIME.format(new Date(c.createdAt))}</time>
+            </div>
+            <ol className={styles.reviewPoints}>
+              {c.points.map((p, i) => (
+                <li key={i} className={styles.reviewPoint}>
+                  {(c.points.length > 1 || pageOf(p.context.url)) && (
+                    <div className={styles.reviewPointHead}>
+                      {c.points.length > 1 && <span className={styles.reviewPointNo}>Point {i + 1}</span>}
+                      {pageOf(p.context.url) && <span className={styles.reviewPointPage}>{pageOf(p.context.url)}</span>}
+                    </div>
+                  )}
+                  {p.html
+                    // Rich text from the review box, sanitized like the app's other rich text.
+                    ? <div className={styles.reviewCommentBody} dangerouslySetInnerHTML={{ __html: sanitizeRichText(p.html) }} />
+                    : p.text && <p className={styles.reviewCommentBody}>{p.text}</p>}
+                  {p.attachments.length > 0 && (
+                    <div className={styles.reviewThumbs}>
+                      {p.attachments.map(a => (
+                        <button
+                          key={a.path}
+                          type="button"
+                          className={styles.reviewThumb}
+                          onClick={() => a.url && setPreview({ name: a.name, ext: (a.name.split('.').pop() || 'png').toLowerCase(), fileUrl: a.url })}
+                          title={a.selector ? `${a.element || a.name} · ${a.selector}` : a.name}
+                          aria-label={`Open ${a.name}`}
+                        >
+                          {a.url ? <img src={a.url} alt="" /> : <Icon name="solar:gallery-linear" size={16} color="var(--neutral-300)" />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </li>
+        ))}
+      </ul>
+      {preview && <ImagePreviewOverlay doc={preview} onClose={() => setPreview(null)} />}
+    </section>
+  );
+}
+
 function ReviewDetail({ item, child, myEmail, isManager, commenting, onCommentDone, onAddSubItem }) {
   return (
     <div className={[styles.detail, child ? styles.childDetail : ''].filter(Boolean).join(' ')}>
@@ -717,6 +792,7 @@ function ReviewDetail({ item, child, myEmail, isManager, commenting, onCommentDo
         })}
         {item.reviewers.length === 0 && <li className={styles.noReviewers}>No reviewers on this item.</li>}
       </ul>
+      <ReviewComments featureId={item.id} />
       {isManager && <ManageLink item={item} />}
       {isManager && !child && item.status === 'approved' && (
         <div>

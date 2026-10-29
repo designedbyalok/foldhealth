@@ -1,0 +1,630 @@
+/* review-kit styles. Values come from theme.css variables only. */
+
+/* The kit can't rely on the host app's CSS reset: size its own boxes. */
+.rk-layer,
+.rk-layer *,
+.rk-layer *::before,
+.rk-layer *::after,
+.rk-pick-box,
+.rk-pick-label,
+.rk-pick-hint {
+  box-sizing: border-box;
+}
+
+.rk-layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--rk-z);
+  pointer-events: none;
+  font-family: var(--rk-font);
+  color: var(--rk-text);
+}
+
+.rk-dock {
+  pointer-events: auto;
+}
+
+.rk-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: 0.5px solid var(--rk-border);
+  border-radius: var(--rk-radius);
+  background: var(--rk-bg);
+  box-shadow: var(--rk-shadow);
+}
+
+.rk-header {
+  display: flex;
+  align-items: center;
+  gap: var(--rk-space-2);
+  padding: var(--rk-space-2) var(--rk-space-2) var(--rk-space-2) var(--rk-space-3);
+  border-bottom: 0.5px solid var(--rk-border);
+  cursor: grab;
+  user-select: none;
+}
+
+.rk-header:active {
+  cursor: grabbing;
+}
+
+.rk-grip {
+  flex-shrink: 0;
+  color: var(--rk-text-muted);
+}
+
+.rk-heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.rk-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--rk-font-md);
+  font-weight: var(--rk-font-weight-medium);
+}
+
+.rk-subtitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--rk-font-xs);
+  color: var(--rk-text-muted);
+}
+
+.rk-header-actions {
+  display: flex;
+  gap: var(--rk-space-1);
+}
+
+.rk-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--rk-radius-sm);
+  background: transparent;
+  color: var(--rk-text-muted);
+  cursor: pointer;
+}
+
+.rk-icon-btn:hover {
+  background: var(--rk-bg-subtle);
+  color: var(--rk-text);
+}
+
+.rk-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--rk-space-2);
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--rk-space-3);
+}
+
+/* ── Points: one per screen or section of a flow ── */
+
+.rk-points {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rk-space-2);
+  padding: var(--rk-space-2) var(--rk-space-3);
+  border-bottom: 0.5px solid var(--rk-border);
+}
+
+.rk-point-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--rk-space-1);
+  min-width: 0;
+}
+
+.rk-point-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 var(--rk-space-2);
+  border: 0.5px solid var(--rk-border);
+  border-radius: var(--rk-radius-sm);
+  background: var(--rk-bg);
+  font: inherit;
+  font-size: var(--rk-font-sm);
+  font-weight: var(--rk-font-weight-medium);
+  color: var(--rk-text);
+  cursor: pointer;
+}
+
+.rk-point-tab:hover {
+  background: var(--rk-bg-subtle);
+}
+
+.rk-point-tab-on,
+.rk-point-tab-on:hover {
+  border-color: var(--rk-accent);
+  background: var(--rk-accent-soft);
+  color: var(--rk-accent);
+}
+
+.rk-point-tab-empty {
+  border-style: dashed;
+}
+
+/* Screenshot count on a point's chip. */
+.rk-point-shots {
+  position: absolute;
+  top: calc(-1 * var(--rk-space-1));
+  right: calc(-1 * var(--rk-space-1));
+  min-width: 14px;
+  height: 14px;
+  padding: 0 calc(var(--rk-space-1) / 2);
+  border-radius: 7px;
+  background: var(--rk-accent);
+  font-size: var(--rk-font-xs);
+  line-height: 14px;
+  color: var(--rk-accent-text);
+  text-align: center;
+}
+
+.rk-point-add {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--rk-space-1) / 2);
+  height: 26px;
+  padding: 0 var(--rk-space-2);
+  border: 0;
+  border-radius: var(--rk-radius-sm);
+  background: transparent;
+  font: inherit;
+  font-size: var(--rk-font-sm);
+  color: var(--rk-accent);
+  cursor: pointer;
+}
+
+.rk-point-add:hover {
+  background: var(--rk-accent-soft);
+}
+
+.rk-point-remove {
+  flex-shrink: 0;
+  height: 26px;
+  padding: 0 var(--rk-space-2);
+  border: 0;
+  border-radius: var(--rk-radius-sm);
+  background: transparent;
+  font: inherit;
+  font-size: var(--rk-font-xs);
+  color: var(--rk-text-muted);
+  cursor: pointer;
+}
+
+.rk-point-remove:hover {
+  background: var(--rk-bg-subtle);
+  color: var(--rk-danger);
+}
+
+/* ── Attachments carousel (top of the box) ── */
+
+.rk-carousel {
+  position: relative;
+  flex-shrink: 0;
+  padding: var(--rk-space-2) 0;
+  border-bottom: 0.5px solid var(--rk-border);
+  background: var(--rk-bg-subtle);
+}
+
+.rk-carousel-track {
+  display: flex;
+  gap: var(--rk-space-2);
+  margin: 0;
+  padding: 0 var(--rk-space-3);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 var(--rk-space-3);
+  scrollbar-width: none;
+  list-style: none;
+}
+
+.rk-carousel-track::-webkit-scrollbar {
+  display: none;
+}
+
+.rk-slide {
+  position: relative;
+  flex: 0 0 82%;
+  height: 132px;
+  overflow: hidden;
+  scroll-snap-align: start;
+  border: 0.5px solid var(--rk-border);
+  border-radius: var(--rk-radius-sm);
+  background: var(--rk-bg);
+}
+
+.rk-slide:only-child {
+  flex-basis: 100%;
+}
+
+.rk-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.rk-slide-label {
+  position: absolute;
+  bottom: var(--rk-space-1);
+  left: var(--rk-space-1);
+  max-width: calc(100% - var(--rk-space-4));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: calc(var(--rk-space-1) / 2) var(--rk-space-1);
+  border-radius: var(--rk-radius-sm);
+  background: var(--rk-bg);
+  font-size: var(--rk-font-xs);
+  color: var(--rk-text-muted);
+}
+
+.rk-slide-remove {
+  position: absolute;
+  top: var(--rk-space-1);
+  right: var(--rk-space-1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0.5px solid var(--rk-border);
+  border-radius: var(--rk-radius-sm);
+  background: var(--rk-bg);
+  color: var(--rk-text);
+  cursor: pointer;
+}
+
+.rk-carousel-arrow {
+  position: absolute;
+  top: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0.5px solid var(--rk-border);
+  border-radius: 50%;
+  background: var(--rk-bg);
+  box-shadow: var(--rk-shadow);
+  color: var(--rk-text);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.rk-carousel-arrow:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.rk-carousel-prev {
+  left: var(--rk-space-1);
+}
+
+.rk-carousel-next {
+  right: var(--rk-space-1);
+}
+
+.rk-carousel-count {
+  position: absolute;
+  top: var(--rk-space-3);
+  right: var(--rk-space-4);
+  padding: 0 var(--rk-space-1);
+  border-radius: var(--rk-radius-sm);
+  background: var(--rk-bg);
+  font-size: var(--rk-font-xs);
+  color: var(--rk-text-muted);
+}
+
+/* ── Rich-text editor (bottom of the box) ── */
+
+.rk-editor {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 96px;
+  overflow: hidden;
+  border: 0.5px solid var(--rk-border);
+  border-radius: var(--rk-radius-sm);
+  background: var(--rk-bg);
+}
+
+.rk-editor:focus-within {
+  outline: 1px solid var(--rk-accent);
+  outline-offset: -1px;
+}
+
+.rk-format-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--rk-space-1) / 2);
+  padding: var(--rk-space-1);
+  border-bottom: 0.5px solid var(--rk-border);
+}
+
+.rk-format-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--rk-radius-sm);
+  background: transparent;
+  color: var(--rk-text-muted);
+  cursor: pointer;
+}
+
+.rk-format-btn:hover {
+  background: var(--rk-bg-subtle);
+  color: var(--rk-text);
+}
+
+.rk-format-btn-on {
+  background: var(--rk-accent-soft);
+  color: var(--rk-accent);
+}
+
+.rk-editor-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.rk-editor-content {
+  min-height: 100%;
+  padding: var(--rk-space-2);
+  font-size: var(--rk-font-md);
+  line-height: 1.5;
+  color: var(--rk-text);
+  outline: none;
+}
+
+.rk-editor-content p {
+  margin: 0;
+}
+
+.rk-editor-content ul,
+.rk-editor-content ol {
+  margin: 0;
+  padding-left: var(--rk-space-4);
+}
+
+.rk-editor-content a {
+  color: var(--rk-accent);
+  text-decoration: underline;
+}
+
+.rk-editor-content code {
+  padding: 0 calc(var(--rk-space-1) / 2);
+  border-radius: var(--rk-radius-sm);
+  background: var(--rk-bg-subtle);
+  font-family: var(--rk-font-mono);
+  font-size: var(--rk-font-sm);
+}
+
+/* Tiptap placeholder: shown on the empty first paragraph. */
+.rk-editor-content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: var(--rk-text-muted);
+  pointer-events: none;
+}
+
+.rk-notice {
+  margin: 0;
+  font-size: var(--rk-font-sm);
+}
+
+.rk-notice-error {
+  color: var(--rk-danger);
+}
+
+.rk-notice-ok {
+  color: var(--rk-success);
+}
+
+.rk-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rk-space-2);
+  padding: var(--rk-space-2) var(--rk-space-3);
+  border-top: 0.5px solid var(--rk-border);
+}
+
+.rk-tools {
+  display: flex;
+  gap: var(--rk-space-1);
+}
+
+.rk-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rk-space-1);
+  height: 28px;
+  padding: 0 var(--rk-space-2);
+  border: 0;
+  border-radius: var(--rk-radius-sm);
+  background: transparent;
+  font: inherit;
+  font-size: var(--rk-font-sm);
+  color: var(--rk-text);
+  cursor: pointer;
+}
+
+.rk-tool:hover:not(:disabled) {
+  background: var(--rk-bg-subtle);
+}
+
+.rk-tool:disabled,
+.rk-send:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.rk-send {
+  height: 28px;
+  padding: 0 var(--rk-space-3);
+  border: 0;
+  border-radius: var(--rk-radius-sm);
+  background: var(--rk-accent);
+  font: inherit;
+  font-size: var(--rk-font-sm);
+  font-weight: var(--rk-font-weight-medium);
+  color: var(--rk-accent-text);
+  cursor: pointer;
+}
+
+.rk-drop-overlay {
+  position: absolute;
+  inset: var(--rk-space-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--rk-accent);
+  border-radius: var(--rk-radius-sm);
+  background: var(--rk-accent-soft);
+  font-size: var(--rk-font-md);
+  color: var(--rk-accent);
+  pointer-events: none;
+}
+
+/* Collapsed: a tab on the wall it was dropped against. */
+.rk-tab {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--rk-space-1);
+  width: 28px;
+  padding: var(--rk-space-2) 0;
+  border: 0.5px solid var(--rk-border);
+  background: var(--rk-bg);
+  box-shadow: var(--rk-shadow);
+  color: var(--rk-accent);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.rk-tab-left {
+  left: 0;
+  border-left: 0;
+  border-radius: 0 var(--rk-radius-sm) var(--rk-radius-sm) 0;
+}
+
+.rk-tab-right {
+  right: 0;
+  border-right: 0;
+  border-radius: var(--rk-radius-sm) 0 0 var(--rk-radius-sm);
+}
+
+.rk-tab:hover {
+  background: var(--rk-accent-soft);
+}
+
+.rk-tab-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--rk-accent);
+}
+
+/* While dragging near a wall: shows where it will tuck in. */
+.rk-edge-hint {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--rk-accent);
+  opacity: 0.6;
+}
+
+.rk-edge-hint-left {
+  left: 0;
+}
+
+.rk-edge-hint-right {
+  right: 0;
+}
+
+/* ── Element picker overlay (attached to <body>) ── */
+
+.rk-picking,
+.rk-picking * {
+  cursor: crosshair !important;
+}
+
+.rk-pick-box {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: var(--rk-z);
+  display: none;
+  border: 1px solid var(--rk-accent);
+  border-radius: 2px;
+  background: var(--rk-pick-fill);
+  pointer-events: none;
+  transition: transform 60ms ease-out, width 60ms ease-out, height 60ms ease-out;
+}
+
+.rk-pick-label {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: var(--rk-z);
+  display: none;
+  padding: calc(var(--rk-space-1) / 2) var(--rk-space-1);
+  border-radius: var(--rk-radius-sm);
+  background: var(--rk-accent);
+  font-family: var(--rk-font);
+  font-size: var(--rk-font-xs);
+  color: var(--rk-accent-text);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.rk-pick-hint {
+  position: fixed;
+  top: var(--rk-space-3);
+  left: 50%;
+  z-index: var(--rk-z);
+  padding: var(--rk-space-2) var(--rk-space-3);
+  border-radius: var(--rk-radius-sm);
+  background: var(--rk-text);
+  box-shadow: var(--rk-shadow);
+  font-family: var(--rk-font);
+  font-size: var(--rk-font-sm);
+  color: var(--rk-bg);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rk-pick-box {
+    transition: none;
+  }
+}

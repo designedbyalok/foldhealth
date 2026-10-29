@@ -1,0 +1,5 @@
+/* @designedbyalok/review-kit stylesheet: import once, e.g.
+   import '@designedbyalok/review-kit/styles.css';
+   Restyle with the `theme` prop or by overriding the --rk-* variables. */
+@import './theme.css';
+@import './review-dock.css';

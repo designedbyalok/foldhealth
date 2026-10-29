@@ -1,0 +1,35 @@
+/* review-kit theme: the only file with raw values. Everything else reads these
+   variables, so a host app restyles the kit by overriding them on :root
+   (zero specificity here, so any plain :root rule wins). */
+:where(:root) {
+  --rk-font: inherit;
+  --rk-font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --rk-font-xs: 11px;
+  --rk-font-sm: 12px;
+  --rk-font-md: 14px;
+  --rk-font-weight-medium: 500;
+
+  --rk-space-1: 4px;
+  --rk-space-2: 8px;
+  --rk-space-3: 12px;
+  --rk-space-4: 16px;
+
+  --rk-radius-sm: 6px;
+  --rk-radius: 12px;
+
+  --rk-bg: #ffffff;
+  --rk-bg-subtle: #f6f7f9;
+  --rk-border: #e3e6ec;
+  --rk-text: #1f2937;
+  --rk-text-muted: #6b7280;
+  --rk-accent: #7e4cd9;
+  --rk-accent-soft: #f3edff;
+  --rk-accent-text: #ffffff;
+  --rk-danger: #d92d20;
+  --rk-success: #12805c;
+
+  --rk-shadow: 0 12px 40px rgba(15, 23, 42, 0.16);
+  --rk-pick-fill: rgba(126, 76, 217, 0.12);
+
+  --rk-z: 2147482000;
+}
