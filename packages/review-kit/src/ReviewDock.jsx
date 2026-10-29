@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Rnd } from 'react-rnd';
 import { useDropzone } from 'react-dropzone';
 import { pickElement, describeElement, KIT_ATTR } from './picker';
@@ -72,7 +72,6 @@ export function ReviewDock({
   const [activeId, setActiveId] = useState(() => points[0].id);
   const [busy, setBusy] = useState(null); // null | 'pick' | 'capture' | 'send'
   const [notice, setNotice] = useState(null); // { tone: 'error'|'ok', text }
-  const urls = useRef(new Set());
 
   const active = points.find(p => p.id === activeId) || points[0];
   const activeIndex = points.indexOf(active);
@@ -89,31 +88,19 @@ export function ReviewDock({
     return () => window.removeEventListener('resize', onResize);
   }, [size.width, size.height]);
 
-  useEffect(() => () => { urls.current.forEach(u => URL.revokeObjectURL(u)); }, []);
-
   const updateActive = useCallback((fn) => {
     setPoints(prev => prev.map(p => (p.id === activeId ? fn(p) : p)));
   }, [activeId]);
 
   // Attachments go to the current point, which now belongs to this page.
   const add = useCallback((items) => {
-    const added = items.map(item => {
-      const preview = URL.createObjectURL(item.file);
-      urls.current.add(preview);
-      return { id: nextId(), preview, ...item };
-    });
+    const added = items.map(item => ({ id: nextId(), ...item }));
     updateActive(p => ({ ...p, attachments: [...p.attachments, ...added], context: pageContext() }));
   }, [updateActive]);
 
-  const release = (a) => { URL.revokeObjectURL(a.preview); urls.current.delete(a.preview); };
-
   const removeAttachment = (id) => updateActive(p => ({
     ...p,
-    attachments: p.attachments.filter(a => {
-      if (a.id !== id) return true;
-      release(a);
-      return false;
-    }),
+    attachments: p.attachments.filter(a => a.id !== id),
   }));
 
   const tooBig = useCallback((count) => setNotice({ tone: 'error', text: L.skipped(count, maxFileSizeMb) }), [L, maxFileSizeMb]);
@@ -187,7 +174,6 @@ export function ReviewDock({
   const removePoint = (id) => {
     if (points.length === 1) return;
     const i = points.findIndex(p => p.id === id);
-    points[i].attachments.forEach(release);
     const rest = points.filter(p => p.id !== id);
     setPoints(rest);
     if (id === activeId) setActiveId(rest[Math.max(0, i - 1)].id);
@@ -213,7 +199,6 @@ export function ReviewDock({
         context: { ...pageContext(), userAgent: navigator.userAgent, createdAt: new Date().toISOString() },
       });
       if (result !== false) {
-        points.forEach(p => p.attachments.forEach(release));
         const fresh = newPoint();
         setPoints([fresh]);
         setActiveId(fresh.id);

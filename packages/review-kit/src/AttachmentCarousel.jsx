@@ -1,12 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronIcon, CloseIcon } from './icons';
 
-/**
- * Attachments as a horizontal carousel: each image fills most of the width
- * (the next one peeks in), arrows and a counter step through them, and a new
- * attachment slides into view as it's added. Native scroll-snap, so swipe and
- * trackpad scrolling work too.
- */
+// The file's preview URL lives only while its slide is mounted, so the
+// blob is freed when the slide goes away.
+function SlideImage({ file, alt }) {
+  const img = useRef(null);
+  useEffect(() => {
+    const url = URL.createObjectURL(file);
+    img.current.src = url;
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+  return <img ref={img} alt={alt} />;
+}
+
 export function AttachmentCarousel({ items, onRemove, labelFor, labels, className }) {
   const track = useRef(null);
   const [index, setIndex] = useState(0);
@@ -41,7 +47,7 @@ export function AttachmentCarousel({ items, onRemove, labelFor, labels, classNam
       <ul className="rk-carousel-track" ref={track} onScroll={onScroll}>
         {items.map((a, i) => (
           <li key={a.id} className="rk-slide" aria-roledescription="slide" aria-label={`${i + 1} of ${count}: ${labelFor(a)}`}>
-            <img src={a.preview} alt={labelFor(a)} />
+            <SlideImage file={a.file} alt={labelFor(a)} />
             <span className="rk-slide-label">{labelFor(a)}</span>
             <button type="button" className="rk-slide-remove" onClick={() => onRemove(a.id)} aria-label={labels.remove(labelFor(a))}>
               <CloseIcon width={12} height={12} />
