@@ -42,8 +42,9 @@ function viewportLayers() {
     path.push(shell);
   }
   const panes = shell === document.body ? [] : [...shell.children].filter(isVisible);
+  const paneSet = new Set(panes);
   const overlays = path.flatMap((node, i) => [...node.children]
-    .filter(child => child !== path[i + 1] && !panes.includes(child) && isVisible(child)));
+    .filter(child => child !== path[i + 1] && !paneSet.has(child) && isVisible(child)));
   return { shell, layers: panes.length ? [...panes, ...overlays] : [shell, ...overlays] };
 }
 
@@ -64,9 +65,12 @@ export async function captureViewport() {
   ctx.fillStyle = bg || '#ffffff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  for (const el of layers) {
+  // Capture the layers together, then draw them in stacking order.
+  const shots = await Promise.all(layers.map(async (el) => {
     const r = el.getBoundingClientRect();
-    const shot = await snapdom.toCanvas(el, { exclude: EXCLUDE, dpr });
+    return { r, canvas: await snapdom.toCanvas(el, { exclude: EXCLUDE, dpr }) };
+  }));
+  for (const { r, canvas: shot } of shots) {
     ctx.drawImage(shot, r.left * dpr, r.top * dpr, r.width * dpr, r.height * dpr);
   }
 

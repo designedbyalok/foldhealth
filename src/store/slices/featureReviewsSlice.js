@@ -185,28 +185,25 @@ export function createFeatureReviewsSlice(set, get) {
     // one that fails is skipped with a warning.
     submitFeatureReviewComment: async ({ featureId, points, context }) => {
       const commentId = crypto.randomUUID();
-      const saved = [];
-      for (const [pi, point] of points.entries()) {
-        const attachments = [];
-        for (const [ai, a] of point.attachments.entries()) {
-          const path = `${featureId}/${commentId}/${pi + 1}-${ai + 1}-${safeName(a.name)}`;
-          const { error } = await supabase.storage.from(ATTACHMENT_BUCKET)
-            .upload(path, a.file, { contentType: a.type || a.file.type, upsert: false });
-          if (error) {
-            toast.error(`Couldn't upload ${a.name}: ${error.message}`);
-            continue;
-          }
-          attachments.push({
-            path, name: a.name, type: a.type || a.file.type, size: a.file.size, kind: a.kind,
-            ...(a.selector ? { selector: a.selector } : {}),
-            ...(a.element ? { element: a.element } : {}),
-            ...(a.rect ? { rect: a.rect } : {}),
-          });
+      const uploadOne = async (a, pi, ai) => {
+        const path = `${featureId}/${commentId}/${pi + 1}-${ai + 1}-${safeName(a.name)}`;
+        const { error } = await supabase.storage.from(ATTACHMENT_BUCKET)
+          .upload(path, a.file, { contentType: a.type || a.file.type, upsert: false });
+        if (error) {
+          toast.error(`Couldn't upload ${a.name}: ${error.message}`);
+          return null;
         }
-        if (point.text || attachments.length) {
-          saved.push({ text: point.text, html: point.html || '', attachments, context: point.context });
-        }
-      }
+        return {
+          path, name: a.name, type: a.type || a.file.type, size: a.file.size, kind: a.kind,
+          ...(a.selector ? { selector: a.selector } : {}),
+          ...(a.element ? { element: a.element } : {}),
+          ...(a.rect ? { rect: a.rect } : {}),
+        };
+      };
+      const uploaded = await Promise.all(points.map((point, pi) => Promise.all(point.attachments.map((a, ai) => uploadOne(a, pi, ai)))));
+      const saved = points
+        .map((point, pi) => ({ text: point.text, html: point.html || '', attachments: uploaded[pi].filter(Boolean), context: point.context }))
+        .filter(p => p.text || p.attachments.length);
       if (!saved.length) return false;
       const { error } = await supabase.from('feature_review_comments').insert({
         id: commentId,
