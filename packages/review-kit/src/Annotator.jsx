@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Stage, Layer, Group, Image as KImage, Rect, Ellipse, Arrow, Line, Text, Circle, Transformer } from 'react-konva';
 import { ANNOTATOR_ICONS } from './annotator-icons';
+import { openModal } from './modal';
 
 // Toolbar groups, in order. Letters are keyboard shortcuts.
 const TOOL_GROUPS = [
@@ -222,6 +223,7 @@ export default function Annotator({ file, name, labels, onSave, onCancel }) {
       if (mod && e.key === 'Enter') { e.preventDefault(); save(); return; }
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId) { e.preventDefault(); removeSelected(); return; }
       if (e.key === 'Escape') {
+        e.preventDefault();
         e.stopPropagation();
         if (colorOpen) setColorOpen(false);
         else if (selectedId) setSelectedId(null);
@@ -369,166 +371,167 @@ export default function Annotator({ file, name, labels, onSave, onCancel }) {
   const cursor = tool === 'select' ? 'default' : tool === 'text' ? 'text' : 'crosshair';
 
   return (
-    <div className="rk-modal-backdrop">
-      <div className="rk-annotator" role="dialog" aria-modal="true" aria-label={L.annotateTitle(name)}>
-        <header className="rk-preview-header">
-          <span className="rk-preview-name" title={name}>{L.annotateTitle(name)}</span>
-          <button type="button" className="rk-tool" onClick={onCancel}>{L.cancel}</button>
-          <button type="button" className="rk-send rk-annotator-done" onClick={save} disabled={!view || saving}>
-            <ToolIcon name="done" size={16} />
-            <span>{L.done}</span>
-          </button>
-        </header>
+    // A native modal dialog keeps focus inside. Escape is handled below (it
+    // clears a selection first), so the browser's own close is held back;
+    // if the browser closes it anyway, treat that as Cancel.
+    <dialog ref={openModal} className="rk-annotator" aria-label={L.annotateTitle(name)} onCancel={e => e.preventDefault()} onClose={onCancel}>
+      <header className="rk-preview-header">
+        <span className="rk-preview-name" title={name}>{L.annotateTitle(name)}</span>
+        <button type="button" className="rk-tool" onClick={onCancel}>{L.cancel}</button>
+        <button type="button" className="rk-send rk-annotator-done" onClick={save} disabled={!view || saving}>
+          <ToolIcon name="done" size={16} />
+          <span>{L.done}</span>
+        </button>
+      </header>
 
-        <div className="rk-annotator-canvas" ref={box} style={{ cursor }}>
-          {view && (
-            <Stage
-              ref={stage}
-              width={size.w}
-              height={size.h}
-              onPointerDown={onDown}
-              onPointerMove={onMove}
-              onPointerUp={onUp}
-              onPointerLeave={onUp}
-            >
-              <Layer>
-                <Group x={view.x} y={view.y} scaleX={view.scale} scaleY={view.scale}>
-                  <KImage name="base" image={img} width={view.iw} height={view.ih} />
-                  {doc.shapes.map(s => renderShape(s))}
-                  {draft && draft.type !== 'crop' && renderShape(draft, true)}
-                  <Group ref={chrome} listening={false}>
-                    <Rect width={view.iw} height={view.ih} stroke={palette.colors[4]} strokeWidth={1 / view.scale} opacity={0.15} />
-                    {crop && (
-                      <>
-                        <Rect width={view.iw} height={crop.y} fill={palette.shade} />
-                        <Rect y={crop.y + crop.height} width={view.iw} height={view.ih - crop.y - crop.height} fill={palette.shade} />
-                        <Rect y={crop.y} width={crop.x} height={crop.height} fill={palette.shade} />
-                        <Rect x={crop.x + crop.width} y={crop.y} width={view.iw - crop.x - crop.width} height={crop.height} fill={palette.shade} />
-                        {renderShape({ ...crop, id: 'crop-frame', type: 'crop' })}
-                      </>
-                    )}
-                  </Group>
+      <div className="rk-annotator-canvas" ref={box} style={{ cursor }}>
+        {view && (
+          <Stage
+            ref={stage}
+            width={size.w}
+            height={size.h}
+            onPointerDown={onDown}
+            onPointerMove={onMove}
+            onPointerUp={onUp}
+            onPointerLeave={onUp}
+          >
+            <Layer>
+              <Group x={view.x} y={view.y} scaleX={view.scale} scaleY={view.scale}>
+                <KImage name="base" image={img} width={view.iw} height={view.ih} />
+                {doc.shapes.map(s => renderShape(s))}
+                {draft && draft.type !== 'crop' && renderShape(draft, true)}
+                <Group ref={chrome} listening={false}>
+                  <Rect width={view.iw} height={view.ih} stroke={palette.colors[4]} strokeWidth={1 / view.scale} opacity={0.15} />
+                  {crop && (
+                    <>
+                      <Rect width={view.iw} height={crop.y} fill={palette.shade} />
+                      <Rect y={crop.y + crop.height} width={view.iw} height={view.ih - crop.y - crop.height} fill={palette.shade} />
+                      <Rect y={crop.y} width={crop.x} height={crop.height} fill={palette.shade} />
+                      <Rect x={crop.x + crop.width} y={crop.y} width={view.iw - crop.x - crop.width} height={crop.height} fill={palette.shade} />
+                      {renderShape({ ...crop, id: 'crop-frame', type: 'crop' })}
+                    </>
+                  )}
                 </Group>
-                <Transformer
-                  ref={transformer}
-                  rotateEnabled={false}
-                  resizeEnabled={!!selected && BOX_TYPES.has(selected.type)}
-                  keepRatio={false}
-                  borderStroke={palette.colors[3]}
-                  anchorStroke={palette.colors[3]}
-                  anchorSize={8}
-                  anchorCornerRadius={4}
-                  ignoreStroke
-                />
-              </Layer>
-            </Stage>
-          )}
+              </Group>
+              <Transformer
+                ref={transformer}
+                rotateEnabled={false}
+                resizeEnabled={!!selected && BOX_TYPES.has(selected.type)}
+                keepRatio={false}
+                borderStroke={palette.colors[3]}
+                anchorStroke={palette.colors[3]}
+                anchorSize={8}
+                anchorCornerRadius={4}
+                ignoreStroke
+              />
+            </Layer>
+          </Stage>
+        )}
 
-          {editing && view && (
-            <textarea
-              className="rk-annotator-text"
-              autoFocus
-              rows={1}
-              placeholder={L.textPlaceholder}
-              value={editing.value}
-              onChange={e => setEditing({ ...editing, value: e.target.value })}
-              onBlur={commitText}
-              onKeyDown={(e) => {
-                e.stopPropagation();
-                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitText(); }
-                if (e.key === 'Escape') setEditing(null);
-              }}
-              style={{
-                left: view.x + editing.x * view.scale,
-                top: view.y + editing.y * view.scale,
-                fontSize: fontSize * view.scale,
-                color,
-              }}
-            />
-          )}
+        {editing && view && (
+          <textarea
+            className="rk-annotator-text"
+            autoFocus
+            rows={1}
+            placeholder={L.textPlaceholder}
+            value={editing.value}
+            onChange={e => setEditing({ ...editing, value: e.target.value })}
+            onBlur={commitText}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitText(); }
+              if (e.key === 'Escape') setEditing(null);
+            }}
+            style={{
+              left: view.x + editing.x * view.scale,
+              top: view.y + editing.y * view.scale,
+              fontSize: fontSize * view.scale,
+              color,
+            }}
+          />
+        )}
 
-          {tip && (
-            <div className="rk-annotator-tip" role="tooltip" style={{ left: tip.x, top: tip.y }}>
-              {tip.label}
-              {tip.keys && <kbd>{tip.keys}</kbd>}
-            </div>
-          )}
+        {tip && (
+          <div className="rk-annotator-tip" role="tooltip" style={{ left: tip.x, top: tip.y }}>
+            {tip.label}
+            {tip.keys && <kbd>{tip.keys}</kbd>}
+          </div>
+        )}
 
-          {view && <span className="rk-annotator-zoom" aria-label={L.zoom}>{Math.round(view.scale * 100)}%</span>}
+        {view && <span className="rk-annotator-zoom" aria-label={L.zoom}>{Math.round(view.scale * 100)}%</span>}
 
-          <div className="rk-annotator-bar" role="toolbar" aria-label={L.annotateTitle(name)} {...tipHandlers}>
-            {TOOL_GROUPS.map((group, gi) => (
-              <div className="rk-annotator-group" key={group[0][0]}>
-                {gi > 0 && <span className="rk-annotator-divider" aria-hidden="true" />}
-                {group.map(([t, key]) => (
-                  <button
-                    key={t}
-                    type="button"
-                    className={`rk-annotator-tool${tool === t ? ' rk-annotator-tool-on' : ''}`}
-                    aria-pressed={tool === t}
-                    aria-label={T[t]}
-                    data-tip={T[t]}
-                    data-keys={key}
-                    onClick={() => pickTool(t)}
-                  >
-                    <ToolIcon name={t} />
-                  </button>
-                ))}
-                {group[0][0] === 'redact' && (
-                  <div className="rk-annotator-color-wrap">
-                    <button
-                      type="button"
-                      className="rk-annotator-tool"
-                      aria-label={T.color}
-                      aria-expanded={colorOpen}
-                      data-tip={T.color}
-                      onClick={() => setColorOpen(v => !v)}
-                    >
-                      <span className="rk-annotator-swatch" style={{ background: color }} />
-                    </button>
-                    {colorOpen && (
-                      <div className="rk-annotator-colors" role="listbox" aria-label={T.color}>
-                        {palette.colors.map((c, i) => (
-                          <button
-                            key={c}
-                            type="button"
-                            role="option"
-                            aria-selected={c === color}
-                            aria-label={T.colorNames[i] || c}
-                            data-tip={T.colorNames[i] || c}
-                            className={`rk-annotator-color${c === color ? ' rk-annotator-color-on' : ''}`}
-                            onClick={() => {
-                              setColor(c);
-                              setColorOpen(false);
-                              if (selected && selected.type !== 'redact') updateShape(selected.id, { color: c });
-                            }}
-                          >
-                            <span className="rk-annotator-swatch" style={{ background: c }} />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-            <div className="rk-annotator-group">
-              <span className="rk-annotator-divider" aria-hidden="true" />
-              <button type="button" className="rk-annotator-tool" onClick={undo} aria-disabled={!past.length} aria-label={T.undo} data-tip={T.undo} data-keys={`${MOD}Z`}>
-                <ToolIcon name="undo" />
-              </button>
-              <button type="button" className="rk-annotator-tool" onClick={redo} aria-disabled={!future.length} aria-label={T.redo} data-tip={T.redo} data-keys={`⇧${MOD}Z`}>
-                <ToolIcon name="redo" />
-              </button>
-              {selected && (
-                <button type="button" className="rk-annotator-tool" onClick={removeSelected} aria-label={T.remove} data-tip={T.remove} data-keys="⌫">
-                  <ToolIcon name="remove" />
+        <div className="rk-annotator-bar" role="toolbar" aria-label={L.annotateTitle(name)} {...tipHandlers}>
+          {TOOL_GROUPS.map((group, gi) => (
+            <div className="rk-annotator-group" key={group[0][0]}>
+              {gi > 0 && <span className="rk-annotator-divider" aria-hidden="true" />}
+              {group.map(([t, key]) => (
+                <button
+                  key={t}
+                  type="button"
+                  className={`rk-annotator-tool${tool === t ? ' rk-annotator-tool-on' : ''}`}
+                  aria-pressed={tool === t}
+                  aria-label={T[t]}
+                  data-tip={T[t]}
+                  data-keys={key}
+                  onClick={() => pickTool(t)}
+                >
+                  <ToolIcon name={t} />
                 </button>
+              ))}
+              {group[0][0] === 'redact' && (
+                <div className="rk-annotator-color-wrap">
+                  <button
+                    type="button"
+                    className="rk-annotator-tool"
+                    aria-label={T.color}
+                    aria-expanded={colorOpen}
+                    data-tip={T.color}
+                    onClick={() => setColorOpen(v => !v)}
+                  >
+                    <span className="rk-annotator-swatch" style={{ background: color }} />
+                  </button>
+                  {colorOpen && (
+                    <div className="rk-annotator-colors" role="listbox" aria-label={T.color}>
+                      {palette.colors.map((c, i) => (
+                        <button
+                          key={c}
+                          type="button"
+                          role="option"
+                          aria-selected={c === color}
+                          aria-label={T.colorNames[i] || c}
+                          data-tip={T.colorNames[i] || c}
+                          className={`rk-annotator-color${c === color ? ' rk-annotator-color-on' : ''}`}
+                          onClick={() => {
+                            setColor(c);
+                            setColorOpen(false);
+                            if (selected && selected.type !== 'redact') updateShape(selected.id, { color: c });
+                          }}
+                        >
+                          <span className="rk-annotator-swatch" style={{ background: c }} />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
+          ))}
+          <div className="rk-annotator-group">
+            <span className="rk-annotator-divider" aria-hidden="true" />
+            <button type="button" className="rk-annotator-tool" onClick={undo} aria-disabled={!past.length} aria-label={T.undo} data-tip={T.undo} data-keys={`${MOD}Z`}>
+              <ToolIcon name="undo" />
+            </button>
+            <button type="button" className="rk-annotator-tool" onClick={redo} aria-disabled={!future.length} aria-label={T.redo} data-tip={T.redo} data-keys={`⇧${MOD}Z`}>
+              <ToolIcon name="redo" />
+            </button>
+            {selected && (
+              <button type="button" className="rk-annotator-tool" onClick={removeSelected} aria-label={T.remove} data-tip={T.remove} data-keys="⌫">
+                <ToolIcon name="remove" />
+              </button>
+            )}
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

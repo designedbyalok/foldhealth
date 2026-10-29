@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   DndContext, DragOverlay, KeyboardSensor, MeasuringStrategy, PointerSensor, pointerWithin, rectIntersection,
@@ -174,17 +174,17 @@ export function FeatureReviewsDrawer({ onClose, focusId = null }) {
   const [dragId, setDragId] = useState(null);
   const [overId, setOverId] = useState(null);
   const [flashId, setFlashId] = useState(focusId);
-  // Bring the focused item into view once it has loaded, then let the flash fade.
-  const focusedRef = useRef(false);
+  // Bring the focused item into view once it has loaded, then let the flash
+  // fade. Keyed on "loaded" (flips once), so refetches don't restart it.
+  const focusLoaded = !!focusId && reviews.some(r => r.id === focusId);
   useEffect(() => {
-    if (!focusId || focusedRef.current || !reviews.some(r => r.id === focusId)) return;
-    focusedRef.current = true;
-    requestAnimationFrame(() => {
+    if (!focusLoaded) return undefined;
+    const frame = requestAnimationFrame(() => {
       document.querySelector(`[data-review-id="${focusId}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
     });
-    // No cleanup: a later refetch must not cancel the fade.
-    setTimeout(() => setFlashId(v => (v === focusId ? null : v)), 1800);
-  }, [focusId, reviews]);
+    const fade = setTimeout(() => setFlashId(v => (v === focusId ? null : v)), 1800);
+    return () => { cancelAnimationFrame(frame); clearTimeout(fade); };
+  }, [focusId, focusLoaded]);
   const dragItem = dragId ? reviews.find(r => r.id === dragId) : null;
   const drop = dropVerdict(dragItem, overId, reviews);
 

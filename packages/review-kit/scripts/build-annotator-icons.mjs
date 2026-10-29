@@ -30,6 +30,7 @@ const CUSTOM = {
 
 const names = Object.values(SOLAR).map(n => `${n}-linear`);
 const res = await fetch(`https://api.iconify.design/solar.json?icons=${names.join(',')}`);
+if (!res.ok) throw new Error(`Iconify API: ${res.status} ${res.statusText}`);
 const data = await res.json();
 if (data.not_found?.length) throw new Error(`Solar icons not found: ${data.not_found.join(', ')}`);
 

@@ -316,24 +316,42 @@
   pointer-events: auto;
 }
 
+/* Native modal <dialog>s, in the browser's top layer. */
 .rk-preview,
 .rk-annotator {
-  display: flex;
-  flex-direction: column;
+  margin: auto;
+  padding: 0;
   overflow: hidden;
+  border: none;
   border-radius: var(--rk-radius);
   background: var(--rk-bg);
   box-shadow: var(--rk-shadow);
+  color: var(--rk-text);
+  font-family: var(--rk-font);
+  pointer-events: auto; /* the kit's layer turns them off */
+}
+
+.rk-preview[open],
+.rk-annotator[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.rk-preview::backdrop,
+.rk-annotator::backdrop {
+  background: var(--rk-overlay, rgba(15, 23, 42, 0.55));
 }
 
 .rk-preview {
-  max-width: min(1100px, 100%);
-  max-height: 100%;
+  max-width: min(1100px, calc(100vw - var(--rk-space-4) * 2));
+  max-height: calc(100vh - var(--rk-space-4) * 2);
 }
 
 .rk-annotator {
-  width: 100%;
-  height: 100%;
+  width: calc(100vw - var(--rk-space-4) * 2);
+  height: calc(100vh - var(--rk-space-4) * 2);
+  max-width: none;
+  max-height: none;
 }
 
 .rk-preview-header {
