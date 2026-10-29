@@ -1,14 +1,8 @@
 .panel {
-  position: fixed;
-  z-index: 9300;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
   padding: var(--space-4);
-  background: var(--neutral-0);
-  border: 0.5px solid var(--neutral-100);
-  border-radius: 0.5rem;
-  box-shadow: var(--shadow-popover);
 }
 
 .actions {

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useState } from 'react';
+import { Popover } from '../Popover/Popover';
 import { Icon } from '../Icon/Icon';
 import { DownChevronIcon } from '../Icon/DownChevronIcon';
 import styles from './MenuPopover.module.css';
@@ -72,131 +72,79 @@ export function MenuPopover({
   searchable = false,
   searchPlaceholder = 'Search…',
 }) {
-  const popRef = useRef(null);
   const [query, setQuery] = useState('');
   const q = query.trim().toLowerCase();
   const shownItems = searchable && q ? filterItems(items, q) : items;
 
-  // Close on Escape + click outside.
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose?.(); };
-    const onMouseDown = (e) => {
-      if (popRef.current?.contains(e.target)) return;
-      if (anchorRef?.current?.contains(e.target)) return;
-      onClose?.();
-    };
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('mousedown', onMouseDown);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.removeEventListener('mousedown', onMouseDown);
-    };
-  }, [onClose, anchorRef]);
+  const anchor = anchorRect || anchorRef;
+  if (!anchor) return null;
 
-  const rect = anchorRect || anchorRef?.current?.getBoundingClientRect();
-  if (!rect) return null;
-
-  // Cap so the menu can't overflow the viewport vertically. Sections and
-  // dividers are shorter than action rows, so estimate per item type.
-  const estHeight = items.reduce(
-    (h, it) => h + (it.divider ? 5 : it.section ? 25 : 34), 16,
-  );
-  // Anchor in the bottom half of the viewport → open upward so the menu grows
-  // toward the top instead of getting clamped/clipped at the bottom edge.
-  const openAbove = (rect.top + rect.bottom) / 2 > window.innerHeight / 2;
-  const style = { width };
-  if (openAbove) {
-    style.bottom = Math.max(8, window.innerHeight - rect.top + 4);
-    style.maxHeight = window.innerHeight - style.bottom - 8;
-  } else {
-    style.top = Math.max(8, Math.min(rect.bottom + 4, window.innerHeight - estHeight - 8));
-    style.maxHeight = window.innerHeight - style.top - 8;
-  }
-  if (align === 'right') {
-    style.right = Math.max(8, window.innerWidth - rect.right);
-  } else {
-    style.left = Math.max(8, rect.left);
-  }
-
-  return createPortal(
-    <>
-      {/* Overlay + menu both stop mousedown so a parent popover
-          (e.g. DatePickerPopover) whose outside-click detector fires
-          on mousedown doesn't dismiss itself when the user picks a
-          menu item that was portaled to document.body. Click still
-          reaches onClose for the overlay path (close-on-outside). */}
-      <div
-        className={styles.overlay}
-        onMouseDown={(e) => e.stopPropagation()}
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      <div
-        ref={popRef}
-        className={styles.menu}
-        style={style}
-        onMouseDown={(e) => e.stopPropagation()}
-        onClick={(e) => e.stopPropagation()}
-        role="menu"
-        aria-label={ariaLabel}
-      >
-        {searchable && (
-          <div className={styles.searchRow}>
-            <Icon name="solar:magnifer-linear" size={13} color="var(--neutral-300)" />
-            <input
-              autoFocus
-              type="text"
-              className={styles.searchInput}
-              placeholder={searchPlaceholder}
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              aria-label={searchPlaceholder}
-            />
-          </div>
-        )}
-        {searchable && q && !shownItems.some(it => it.key || it.label) && (
-          <div className={styles.empty}>No matches</div>
-        )}
-        {shownItems.map((item, idx) => {
-          if (item.section) {
-            return <div key={`section-${item.section}`} className={styles.section}>{item.section}</div>;
-          }
-          if (item.divider) {
-            return <div key={`divider-${idx}`} className={styles.divider} />;
-          }
-          return (
-          <button
-            key={item.key || item.label}
-            type="button"
-            role="menuitem"
-            disabled={!!item.disabled}
-            title={item.hint}
-            className={[
-              styles.row,
-              item.danger ? styles.danger : '',
-              item.disabled ? styles.disabled : '',
-              item.selected ? styles.rowSelected : '',
-              item.tall ? styles.rowTall : '',
-            ].filter(Boolean).join(' ')}
-            onClick={() => {
-              if (item.disabled) return;
-              onSelect?.(item.key || item.label, item);
-              onClose?.();
-            }}
-          >
-            {item.iconElement}
-            {!item.iconElement && item.icon && (
-              <Icon name={item.icon} size={16} color={item.danger ? 'var(--status-error)' : 'var(--neutral-400)'} />
-            )}
-            <span className={styles.label}>{item.label}</span>
-            {item.trailing && (
-              <DownChevronIcon size={12} color="var(--neutral-300)" className={styles.submenuChevron} />
-            )}
-          </button>
-          );
-        })}
-      </div>
-    </>,
-    document.body,
+  return (
+    <Popover
+      anchor={anchor}
+      onOpenChange={() => onClose?.()}
+      placement={align === 'left' ? 'bottom-start' : 'bottom-end'}
+      width={width === 'auto' ? undefined : width}
+      role="menu"
+      aria-label={ariaLabel}
+      className={styles.menu}
+      listNavigation
+    >
+      {searchable && (
+        <div className={styles.searchRow}>
+          <Icon name="solar:magnifer-linear" size={13} color="var(--neutral-300)" />
+          <input
+            autoFocus
+            type="text"
+            className={styles.searchInput}
+            placeholder={searchPlaceholder}
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            aria-label={searchPlaceholder}
+          />
+        </div>
+      )}
+      {searchable && q && !shownItems.some(it => it.key || it.label) && (
+        <div className={styles.empty}>No matches</div>
+      )}
+      {shownItems.map((item, idx) => {
+        if (item.section) {
+          return <div key={`section-${item.section}`} className={styles.section}>{item.section}</div>;
+        }
+        if (item.divider) {
+          return <div key={`divider-${idx}`} className={styles.divider} />;
+        }
+        return (
+        <button
+          key={item.key || item.label}
+          type="button"
+          role="menuitem"
+          disabled={!!item.disabled}
+          title={item.hint}
+          className={[
+            styles.row,
+            item.danger ? styles.danger : '',
+            item.disabled ? styles.disabled : '',
+            item.selected ? styles.rowSelected : '',
+            item.tall ? styles.rowTall : '',
+          ].filter(Boolean).join(' ')}
+          onClick={() => {
+            if (item.disabled) return;
+            onSelect?.(item.key || item.label, item);
+            onClose?.();
+          }}
+        >
+          {item.iconElement}
+          {!item.iconElement && item.icon && (
+            <Icon name={item.icon} size={16} color={item.danger ? 'var(--status-error)' : 'var(--neutral-400)'} />
+          )}
+          <span className={styles.label}>{item.label}</span>
+          {item.trailing && (
+            <DownChevronIcon size={12} color="var(--neutral-300)" className={styles.submenuChevron} />
+          )}
+        </button>
+        );
+      })}
+    </Popover>
   );
 }

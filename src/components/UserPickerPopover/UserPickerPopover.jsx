@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { Popover } from '../Popover/Popover';
 import { Avatar } from '../Avatar/Avatar';
 import { Icon } from '../Icon/Icon';
 import { Checkbox } from '../ShadcnCheckbox/ShadcnCheckbox';
@@ -34,18 +34,10 @@ const initialsOf = (name) => String(name || '?').trim().split(/\s+/).map(w => w[
 const NO_USERS = [];
 
 export function UserPickerPopover({ anchorRect, users = NO_USERS, selected, onSelect, onUnassign, onClose, title = 'Select User', emptyText = 'No users available.', align = 'left', multiple = false, pinned = null, restLabel = 'All Users' }) {
-  const ref = useRef(null);
   const [pinnedKeys] = useState(() => (pinned?.keys || []).map(String));
   const searchRef = useRef(null);
   const [query, setQuery] = useState('');
   useEffect(() => { searchRef.current?.focus(); }, []);
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
-    const onDown = (e) => { if (!ref.current?.contains(e.target)) onClose(); };
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('mousedown', onDown);
-    return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('mousedown', onDown); };
-  }, [onClose]);
 
   const q = query.trim().toLowerCase();
   const shown = useMemo(() => users.filter(u => !q || `${u.name} ${u.role || ''}`.toLowerCase().includes(q)), [users, q]);
@@ -69,15 +61,18 @@ export function UserPickerPopover({ anchorRect, users = NO_USERS, selected, onSe
     onSelect(next);
   };
   if (!anchorRect) return null;
-  // Opens below the trigger, or above it near the bottom of the window.
-  const width = 280;
-  const want = align === 'right' ? anchorRect.right - width : anchorRect.left;
-  const left = Math.max(8, Math.min(want, window.innerWidth - width - 8));
-  const below = anchorRect.bottom + 320 < window.innerHeight;
-  const style = below ? { top: anchorRect.bottom + 4, left } : { bottom: window.innerHeight - anchorRect.top + 4, left };
 
-  return createPortal(
-    <div ref={ref} className={styles.menu} style={style} role="menu" onClick={(e) => e.stopPropagation()}>
+  return (
+    <Popover
+      anchor={anchorRect}
+      onOpenChange={() => onClose()}
+      placement={align === 'right' ? 'bottom-end' : 'bottom-start'}
+      width={280}
+      listNavigation
+      role="menu"
+      aria-label={title}
+      className={styles.menu}
+    >
       <span className={styles.title}>{title}</span>
       <label className={styles.search}>
         <Icon name="solar:magnifer-linear" size={16} color="var(--neutral-300)" />
@@ -149,7 +144,6 @@ export function UserPickerPopover({ anchorRect, users = NO_USERS, selected, onSe
           </div>
         ))}
       </div>
-    </div>,
-    document.body,
+    </Popover>
   );
 }

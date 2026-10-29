@@ -45,6 +45,7 @@
     "NumberStepper",
     "NumberUnitInput",
     "Pagination",
+    "Popover",
     "PriorityIcon",
     "QuickActionTile",
     "RadioButton",

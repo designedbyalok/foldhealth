@@ -1,5 +1,5 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { Fragment, useMemo, useState } from 'react';
+import { Popover } from '../Popover/Popover';
 import { Checkbox } from '../ShadcnCheckbox/ShadcnCheckbox';
 import styles from './CheckboxListPopover.module.css';
 
@@ -45,14 +45,6 @@ export function CheckboxListPopover({
   sectionOf,
   searchPlaceholder = 'Search',
 }) {
-  // Close on Escape
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose?.(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
-  const pos = useMemo(() => positionPopover(anchorRect, width), [anchorRect, width]);
   const sel = useMemo(() => new Set(selected), [selected]);
   const [query, setQuery] = useState('');
 
@@ -85,97 +77,83 @@ export function CheckboxListPopover({
 
   if (!anchorRect) return null;
 
-  return createPortal(
-    <>
-      {/* Decorative click-catcher: the keyboard path to dismiss is the Escape
-          handler above, so this must not become a full-viewport tab stop. */}
-      <div className={styles.overlay} onClick={onClose} aria-hidden="true" />
-      <div
-        className={styles.popover}
-        style={{ ...pos, width }}
-        onClick={(e) => e.stopPropagation()}
-        role="group"
-        aria-label={label}
-      >
-        {label && <div className={styles.header}>{label}</div>}
+  return (
+    <Popover
+      anchor={anchorRect}
+      onOpenChange={() => onClose?.()}
+      offset={6}
+      listNavigation
+      width={width}
+      maxHeight={320}
+      role="group"
+      aria-label={label}
+      className={styles.popover}
+    >
+      {label && <div className={styles.header}>{label}</div>}
 
-        {showClear && (
-          <div className={styles.controls}>
+      {showClear && (
+        <div className={styles.controls}>
+          <div
+            role="checkbox"
+            aria-checked={allSelected ? true : someSelected ? 'mixed' : false}
+            tabIndex={0}
+            className={styles.selectAll}
+            onClick={toggleAll}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleAll(); } }}
+          >
+            <Checkbox
+              checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+              tabIndex={-1}
+              aria-hidden
+              className="pointer-events-none"
+            />
+            <span className={styles.label}>Select All</span>
+          </div>
+          <button
+            type="button"
+            className={styles.clearLink}
+            onClick={clearVisible}
+          >
+            Clear All
+          </button>
+        </div>
+      )}
+
+      {searchable && (
+        <input
+          className={styles.search}
+          type="text"
+          placeholder={searchPlaceholder}
+          aria-label={label ? `Search ${label}` : 'Search options'}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      )}
+
+      <div className={styles.list}>
+        {visible.map((opt, i) => {
+          const checked = sel.has(opt);
+          const section = sectionOf?.(opt);
+          return (
+            <Fragment key={opt}>
+            {section && section !== sectionOf(visible[i - 1] ?? null) && <div className={styles.section}>{section}</div>}
             <div
               role="checkbox"
-              aria-checked={allSelected ? true : someSelected ? 'mixed' : false}
+              aria-checked={checked}
               tabIndex={0}
-              className={styles.selectAll}
-              onClick={toggleAll}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleAll(); } }}
+              className={styles.row}
+              onClick={() => toggle(opt)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(opt); } }}
             >
-              <Checkbox
-                checked={allSelected ? true : someSelected ? 'indeterminate' : false}
-                tabIndex={-1}
-                aria-hidden
-                className="pointer-events-none"
-              />
-              <span className={styles.label}>Select All</span>
+              <Checkbox checked={checked} tabIndex={-1} aria-hidden className="pointer-events-none" />
+              {renderOptionLeading?.(opt)}
+              <span className={styles.label} title={labelOf(opt)}>{labelOf(opt)}</span>
             </div>
-            <button
-              type="button"
-              className={styles.clearLink}
-              onClick={clearVisible}
-            >
-              Clear All
-            </button>
-          </div>
-        )}
-
-        {searchable && (
-          <input
-            className={styles.search}
-            type="text"
-            placeholder={searchPlaceholder}
-            aria-label={label ? `Search ${label}` : 'Search options'}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        )}
-
-        <div className={styles.list}>
-          {visible.map((opt, i) => {
-            const checked = sel.has(opt);
-            const section = sectionOf?.(opt);
-            return (
-              <Fragment key={opt}>
-              {section && section !== sectionOf(visible[i - 1] ?? null) && <div className={styles.section}>{section}</div>}
-              <div
-                role="checkbox"
-                aria-checked={checked}
-                tabIndex={0}
-                className={styles.row}
-                onClick={() => toggle(opt)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(opt); } }}
-              >
-                <Checkbox checked={checked} tabIndex={-1} aria-hidden className="pointer-events-none" />
-                {renderOptionLeading?.(opt)}
-                <span className={styles.label} title={labelOf(opt)}>{labelOf(opt)}</span>
-              </div>
-              </Fragment>
-            );
-          })}
-          {visible.length === 0 && <div className={styles.empty}>No matches</div>}
-        </div>
+            </Fragment>
+          );
+        })}
+        {visible.length === 0 && <div className={styles.empty}>No matches</div>}
       </div>
-    </>,
-    document.body,
+    </Popover>
   );
-}
-
-// Below the anchor, or above it when the 320px max height would not fit
-// below; clamped to the viewport horizontally.
-function positionPopover(rect, width) {
-  if (!rect) return { top: 0, left: 0 };
-  const margin = 8;
-  const left = Math.max(margin, Math.min(rect.left, window.innerWidth - width - margin));
-  if (rect.bottom + 6 + 320 > window.innerHeight && rect.top - 6 - 320 >= margin) {
-    return { bottom: window.innerHeight - rect.top + 6, left };
-  }
-  return { top: Math.min(rect.bottom + 6, window.innerHeight - 320), left };
 }

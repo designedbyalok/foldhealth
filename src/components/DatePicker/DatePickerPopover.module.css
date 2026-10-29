@@ -4,21 +4,10 @@
 */
 
 .card {
-  position: fixed;
-  /* Portaled to body, so it must clear the modal layer (ShadcnDialog sits at
-     9999) or a date field inside a dialog opens its calendar underneath it.
-     Same layer the app's other portaled floating surfaces use. */
-  z-index: 10000;
-  /* A modal dialog sets pointer-events: none on body; the card is portaled
-     there, so take clicks back. */
-  pointer-events: auto;
   width: 282px;
   padding: var(--space-3) var(--space-4) var(--space-2);
-  background: var(--neutral-0);
-  border: 0.5px solid var(--neutral-100);
-  border-radius: 8px;
-  box-shadow: var(--shadow-popover);
-  box-sizing: border-box;
+  /* The month and year Selects open their menus inline; don't clip them. */
+  overflow: visible;
   user-select: none;
   display: flex;
   flex-direction: column;

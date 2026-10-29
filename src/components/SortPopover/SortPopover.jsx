@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from 'react';
-import { createPortal } from 'react-dom';
+import { useMemo } from 'react';
+import { Popover } from '../Popover/Popover';
 import styles from './SortPopover.module.css';
 
 /**
@@ -34,13 +34,7 @@ export function SortPopover({
   onClose,
   width = 208,
 }) {
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose?.(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
 
-  const pos = useMemo(() => positionPopover(anchorRect, width), [anchorRect, width]);
   const keys = useMemo(() => new Set(items.map(i => i.key)), [items]);
   const showClear = keys.has(currentKey);
 
@@ -52,49 +46,48 @@ export function SortPopover({
     onSort?.(key, dir);
   };
 
-  return createPortal(
-    <>
-      <div className={styles.overlay} onClick={onClose} aria-hidden="true" />
-      <div
-        className={styles.popover}
-        style={{ top: pos.top, left: pos.left, width }}
-        onClick={(e) => e.stopPropagation()}
-        role="group"
-        aria-label="Sort by"
-      >
-        <div className={styles.heading}>Sort by</div>
-        {items.map((item) => {
-          const isActive = currentKey === item.key;
-          return (
-            <div
-              key={item.key}
-              className={[styles.row, isActive ? styles.rowActive : ''].join(' ')}
-            >
-              <span className={[styles.label, isActive ? styles.labelActive : ''].join(' ')}>
-                {item.label}
-              </span>
-              <div className={styles.dirGroup}>
-                <DirButton dir="asc"  active={isActive && currentDir === 'asc'}  onClick={() => select(item.key, 'asc')}  />
-                <DirButton dir="desc" active={isActive && currentDir === 'desc'} onClick={() => select(item.key, 'desc')} />
-              </div>
+  return (
+    <Popover
+      anchor={anchorRect}
+      onOpenChange={() => onClose?.()}
+      placement="bottom-end"
+      listNavigation
+      width={width}
+      role="group"
+      aria-label="Sort by"
+      className={styles.popover}
+    >
+      <div className={styles.heading}>Sort by</div>
+      {items.map((item) => {
+        const isActive = currentKey === item.key;
+        return (
+          <div
+            key={item.key}
+            className={[styles.row, isActive ? styles.rowActive : ''].join(' ')}
+          >
+            <span className={[styles.label, isActive ? styles.labelActive : ''].join(' ')}>
+              {item.label}
+            </span>
+            <div className={styles.dirGroup}>
+              <DirButton dir="asc"  active={isActive && currentDir === 'asc'}  onClick={() => select(item.key, 'asc')}  />
+              <DirButton dir="desc" active={isActive && currentDir === 'desc'} onClick={() => select(item.key, 'desc')} />
             </div>
-          );
-        })}
-        {showClear && (
-          <>
-            <div className={styles.divider} />
-            <button
-              type="button"
-              className={styles.clear}
-              onClick={() => { onClear?.(); onClose?.(); }}
-            >
-              Clear Sort
-            </button>
-          </>
-        )}
-      </div>
-    </>,
-    document.body,
+          </div>
+        );
+      })}
+      {showClear && (
+        <>
+          <div className={styles.divider} />
+          <button
+            type="button"
+            className={styles.clear}
+            onClick={() => { onClear?.(); onClose?.(); }}
+          >
+            Clear Sort
+          </button>
+        </>
+      )}
+    </Popover>
   );
 }
 
@@ -128,15 +121,3 @@ function DirButton({ dir, active, onClick }) {
   );
 }
 
-// Anchor the popover to the RIGHT edge of the trigger so it lines up
-// under the sort icon inside a HeaderCell (the label sits on the left
-// and the chevron on the right). Falls back to left-alignment if the
-// popover would spill past the viewport on the right.
-function positionPopover(rect, width) {
-  if (!rect) return { top: 0, left: 0 };
-  const margin = 8;
-  const top = Math.min(rect.bottom + 4, window.innerHeight - 220);
-  const preferred = rect.right - width;
-  const clamped = Math.min(Math.max(margin, preferred), window.innerWidth - width - margin);
-  return { top, left: clamped };
-}

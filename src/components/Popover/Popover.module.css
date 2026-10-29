@@ -1,0 +1,67 @@
+/* One stacking level for every popover. Overlay and panel share it, so DOM
+ * order decides: a popover opened from inside another is mounted later and
+ * sits on top, overlay included. It clears drawers (400) and dialogs (9999)
+ * so a picker opened inside either is never hidden behind it. */
+.overlay,
+.panel {
+  z-index: 10000;
+  /* A Radix modal sets pointer-events: none on <body>; stay clickable. */
+  pointer-events: auto;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+}
+
+.backdrop {
+  background: color-mix(in srgb, var(--neutral-500) 5%, transparent);
+  backdrop-filter: blur(2px);
+  animation: popoverFade var(--duration-fast) var(--ease-out);
+}
+
+/* Base rules use :where() so a component's own class always wins, whatever
+ * order the stylesheets load in. */
+:where(.panel) {
+  box-sizing: border-box;
+  overflow-y: auto;
+  outline: none;
+}
+
+/* Centered in the viewport without a transform, so the entrance animation
+ * can own transform. */
+.centered {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  height: fit-content;
+}
+
+:where(.surface) {
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-100);
+  border-radius: 8px;
+  box-shadow: var(--shadow-popover);
+}
+
+/* Starts once positioned, so it plays where the panel lands. */
+.surface[data-positioned] {
+  animation: popoverIn var(--duration-fast) var(--ease-out);
+}
+
+.surface[data-side='top'] { --popover-from: 4px; }
+.surface[data-side='bottom'] { --popover-from: -4px; }
+
+@keyframes popoverIn {
+  from { opacity: 0; transform: translateY(var(--popover-from, 0)); }
+}
+
+@keyframes popoverFade {
+  from { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surface[data-positioned],
+  .backdrop { animation: none; }
+}

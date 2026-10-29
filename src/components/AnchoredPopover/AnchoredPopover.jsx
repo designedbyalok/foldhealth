@@ -1,5 +1,5 @@
-import { useEffect, useLayoutEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import { useLayoutEffect, useRef } from 'react';
+import { Popover } from '../Popover/Popover';
 import { CloseButton } from '../CloseButton/CloseButton';
 import styles from './AnchoredPopover.module.css';
 
@@ -35,42 +35,30 @@ export function AnchoredPopover({
     if (el) el.style.minHeight = `${el.getBoundingClientRect().height}px`;
   }, []);
 
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose?.(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
   if (!anchorRect && !centered) return null;
-  const style = centered
-    ? { width: Math.min(width, window.innerWidth - 32), maxHeight: Math.min(maxHeight, window.innerHeight - 64) }
-    : anchoredStyle(anchorRect, width, maxHeight, align);
 
-  return createPortal(
-    <>
-      <div className={`${styles.overlay} ${backdrop ? styles.backdrop : ''}`} onMouseDown={(e) => { e.stopPropagation(); onClose?.(); }} aria-hidden="true" />
-      <div ref={panelRef} role="dialog" aria-label={title} className={`${styles.panel} ${centered ? styles.centered : ''}`} style={style} onMouseDown={(e) => e.stopPropagation()}>
-        <div className={styles.head}>
-          <div className={styles.headText}>
-            <span className={styles.title}>{title}</span>
-            {description && <span className={styles.description}>{description}</span>}
-          </div>
-          <CloseButton onClick={onClose} label={`Close ${title}`} />
+  return (
+    <Popover
+      ref={panelRef}
+      anchor={anchorRect}
+      onOpenChange={() => onClose?.()}
+      placement={align === 'right' ? 'bottom-end' : 'bottom-start'}
+      offset={6}
+      width={width}
+      maxHeight={maxHeight}
+      centered={centered}
+      backdrop={backdrop}
+      aria-label={title}
+      className={styles.panel}
+    >
+      <div className={styles.head}>
+        <div className={styles.headText}>
+          <span className={styles.title}>{title}</span>
+          {description && <span className={styles.description}>{description}</span>}
         </div>
-        <div className={styles.body}>{children}</div>
+        <CloseButton onClick={onClose} label={`Close ${title}`} />
       </div>
-    </>,
-    document.body,
+      <div className={styles.body}>{children}</div>
+    </Popover>
   );
-}
-
-function anchoredStyle(anchorRect, width, maxHeight, align) {
-  const openAbove = (anchorRect.top + anchorRect.bottom) / 2 > window.innerHeight / 2;
-  const style = { width, maxHeight: Math.min(maxHeight, (openAbove ? anchorRect.top : window.innerHeight - anchorRect.bottom) - 16) };
-  if (openAbove) style.bottom = window.innerHeight - anchorRect.top + 6;
-  else style.top = anchorRect.bottom + 6;
-  if (align === 'right') style.right = Math.max(8, window.innerWidth - anchorRect.right);
-  else style.left = Math.max(8, Math.min(anchorRect.left, window.innerWidth - width - 8));
-
-  return style;
 }

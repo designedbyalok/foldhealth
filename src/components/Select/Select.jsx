@@ -139,10 +139,12 @@ export function Select({
     const keyHandler = (e) => {
       if (e.key === 'Escape') setOpen(false);
     };
-    document.addEventListener('mousedown', handler);
+    // Capture phase: inside a Popover, mouse-downs stop at the panel and
+    // would never bubble up to document.
+    document.addEventListener('mousedown', handler, true);
     document.addEventListener('keydown', keyHandler);
     return () => {
-      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('mousedown', handler, true);
       document.removeEventListener('keydown', keyHandler);
     };
   }, [open]);

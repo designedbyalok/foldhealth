@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Popover } from '../Popover/Popover';
 import { Select } from '../Select/Select';
 import { Button } from '../Button/Button';
 import { ActionButton } from '../ActionButton/ActionButton';
@@ -70,8 +70,6 @@ export function DatePickerPopover({
   const [pendingStart, setPendingStart] = useState(null);
   const [pendingEnd, setPendingEnd] = useState(null);
   const [hoverEnd, setHoverEnd] = useState(null);
-  const cardRef = useRef(null);
-  const [placement, setPlacement] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     if (!open) return;
@@ -89,35 +87,6 @@ export function DatePickerPopover({
     }
     setHoverEnd(null);
   }, [open, value, isRange]);
-
-  useLayoutEffect(() => {
-    if (!open || !anchorRect || !cardRef.current) return;
-    const card = cardRef.current.getBoundingClientRect();
-    const GAP = 6;
-    const spaceBelow = window.innerHeight - anchorRect.bottom;
-    const flipUp = spaceBelow < card.height + GAP && anchorRect.top > card.height + GAP;
-    const top = flipUp ? anchorRect.top - card.height - GAP : anchorRect.bottom + GAP;
-    let left = anchorRect.left;
-    if (left + card.width > window.innerWidth - 8) {
-      left = Math.max(8, anchorRect.right - card.width);
-    }
-    setPlacement({ top, left });
-  }, [open, anchorRect]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e) => {
-      if (cardRef.current && !cardRef.current.contains(e.target)) onClose?.();
-    };
-    const onKey = (e) => { if (e.key === 'Escape') onClose?.(); };
-    const t = setTimeout(() => document.addEventListener('mousedown', onDown), 0);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      clearTimeout(t);
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open, onClose]);
 
   const minDate = useMemo(() => (min ? parseIsoLocal(min) : null), [min]);
   const maxDate = useMemo(() => (max ? parseIsoLocal(max) : null), [max]);
@@ -302,17 +271,23 @@ export function DatePickerPopover({
     </div>
   );
 
-  return createPortal(
-    <div
-      ref={cardRef}
+  // No overlay: a click on another field closes the calendar and lands there.
+  // Focus stays in the date field so typing a date keeps working.
+  return (
+    <Popover
+      open={open && !!anchorRect}
+      anchor={anchorRect}
+      onOpenChange={() => onClose?.()}
+      offset={6}
+      overlay={false}
+      initialFocus={false}
+      role="group"
+      aria-label="Choose a date"
       className={[
         styles.card,
         isRange ? styles.cardRange : '',
         !isRange && footer ? styles.cardWithFooter : '',
       ].filter(Boolean).join(' ')}
-      style={{ top: placement.top, left: placement.left }}
-      role="group"
-      aria-label="Choose a date"
     >
       {header}
       {isRange ? (
@@ -333,8 +308,7 @@ export function DatePickerPopover({
           {footer ? <div className={styles.slot}>{footer}</div> : null}
         </>
       )}
-    </div>,
-    document.body,
+    </Popover>
   );
 }
 

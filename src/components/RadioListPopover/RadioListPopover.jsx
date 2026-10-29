@@ -1,5 +1,4 @@
-import { useEffect, useMemo } from 'react';
-import { createPortal } from 'react-dom';
+import { Popover } from '../Popover/Popover';
 import styles from './RadioListPopover.module.css';
 
 /**
@@ -31,67 +30,53 @@ export function RadioListPopover({
   showClear = true,
   disabledOptions,
 }) {
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose?.(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
-  const pos = useMemo(() => positionPopover(anchorRect, width), [anchorRect, width]);
   const current = selected[0] ?? null;
+  const disabledSet = new Set(disabledOptions);
 
   if (!anchorRect) return null;
 
-  return createPortal(
-    <>
-      <div className={styles.overlay} onClick={onClose} aria-hidden="true" />
-      <div
-        className={styles.popover}
-        style={{ top: pos.top, left: pos.left, width }}
-        onClick={(e) => e.stopPropagation()}
-        role="group"
-        aria-label={label}
-      >
-        {label && <div className={styles.header}>{label}</div>}
-        <div className={styles.list}>
-          {options.map((opt) => {
-            const active = current === opt;
-            const disabled = disabledOptions?.includes(opt);
-            return (
-              <button
-                key={opt}
-                type="button"
-                className={[styles.row, disabled ? styles.rowDisabled : ''].join(' ')}
-                disabled={disabled}
-                onClick={() => onChange?.([opt])}
-              >
-                <span className={[styles.radio, active ? styles.radioActive : ''].join(' ')}>
-                  {active && <span className={styles.dot} />}
-                </span>
-                <span className={styles.label}>{opt}</span>
-              </button>
-            );
-          })}
-        </div>
-        {showClear && (
-          <button
-            type="button"
-            className={styles.clear}
-            onClick={() => onChange?.([])}
-          >
-            Reset Selection
-          </button>
-        )}
+  return (
+    <Popover
+      anchor={anchorRect}
+      onOpenChange={() => onClose?.()}
+      offset={6}
+      listNavigation
+      width={width}
+      maxHeight={320}
+      role="group"
+      aria-label={label}
+      className={styles.popover}
+    >
+      {label && <div className={styles.header}>{label}</div>}
+      <div className={styles.list}>
+        {options.map((opt) => {
+          const active = current === opt;
+          const disabled = disabledSet.has(opt);
+          return (
+            <button
+              key={opt}
+              type="button"
+              className={[styles.row, disabled ? styles.rowDisabled : ''].join(' ')}
+              disabled={disabled}
+              onClick={() => onChange?.([opt])}
+            >
+              <span className={[styles.radio, active ? styles.radioActive : ''].join(' ')}>
+                {active && <span className={styles.dot} />}
+              </span>
+              <span className={styles.label}>{opt}</span>
+            </button>
+          );
+        })}
       </div>
-    </>,
-    document.body,
+      {showClear && (
+        <button
+          type="button"
+          className={styles.clear}
+          onClick={() => onChange?.([])}
+        >
+          Reset Selection
+        </button>
+      )}
+    </Popover>
   );
-}
-
-function positionPopover(rect, width) {
-  if (!rect) return { top: 0, left: 0 };
-  const margin = 8;
-  const top = Math.min(rect.bottom + 6, window.innerHeight - 320);
-  const left = Math.min(rect.left, window.innerWidth - width - margin);
-  return { top, left: Math.max(margin, left) };
 }

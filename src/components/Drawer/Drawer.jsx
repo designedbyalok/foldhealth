@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../Icon/Icon';
 import { CloseButton } from '../CloseButton/CloseButton';
@@ -8,6 +8,38 @@ import styles from './Drawer.module.css';
 // portal not yet mounted). The CSS custom property `--drawer-duration` on
 // `.panel` is the source of truth; do NOT hard-code the timing anywhere else.
 const FALLBACK_CLOSE_MS = 250;
+
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]), [contenteditable="true"]';
+
+// Tab and Shift+Tab wrap inside the panel, so keyboard focus can't fall
+// behind the drawer onto the page it covers.
+function trapTab(e) {
+  if (e.key !== 'Tab') return;
+  const panel = e.currentTarget;
+  const items = [...panel.querySelectorAll(FOCUSABLE)].filter(el => el.getClientRects().length);
+  if (!items.length) { e.preventDefault(); return; }
+  const first = items[0];
+  const last = items[items.length - 1];
+  const active = document.activeElement;
+  if (e.shiftKey && (active === first || active === panel)) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
+}
+
+// Open drawers in mount order; only the top one answers Escape.
+const drawerStack = [];
+
+// Did anything else respond to this Escape? An inline dropdown closing, an
+// edit being cancelled or a tooltip hiding all add, remove or toggle
+// elements; a handler may also move focus or call preventDefault. Only when
+// nothing did does the key fall through to the drawer, so the dozens of
+// existing Escape handlers inside drawers keep working without changes.
+const ESCAPE_WATCH = { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'aria-expanded', 'hidden', 'open', 'data-state'] };
+function escapeWasHandled(event, records, focusBefore) {
+  if (event.defaultPrevented || document.activeElement !== focusBefore) return true;
+  return records.some(r => (r.type === 'childList'
+    ? [...r.addedNodes, ...r.removedNodes].some(n => n.nodeType === Node.ELEMENT_NODE)
+    : r.target !== document.body && r.target !== document.documentElement));
+}
 
 function readDrawerDurationMs(node) {
   if (!node) return FALLBACK_CLOSE_MS;
@@ -25,7 +57,7 @@ function readDrawerDurationMs(node) {
  *
  * Props:
  *  - title           (ReactNode)  Header title text / element
- *  - onClose         (function)   Called when overlay or close button is clicked
+ *  - onClose         (function)   Called when the overlay, the close button or Escape closes it
  *  - primaryAction   (ReactNode)  Optional CTA rendered just before the close button
  *                                  (e.g. `<Button variant="primary" size="L">Save</Button>`).
  *                                  The shell paints the vertical divider between the
@@ -96,6 +128,8 @@ export function Drawer({
   // False makes a click on the overlay do nothing (close with ✕ or Escape),
   // for drawers holding edits a stray click outside shouldn't threaten.
   closeOnOverlayClick = true,
+  // False keeps Escape from closing it (✕ and the overlay still do).
+  closeOnEscape = true,
 }) {
   // Stacking depth for nested drawers. When a second Drawer mounts on top
   // of an already-open one (e.g. TaskDetailDrawer over CareGapDetailDrawer
@@ -141,6 +175,60 @@ export function Drawer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dismissed]);
   const shut = closing || dismissed;
+  const titleId = useId();
+
+  const requestCloseRef = useRef(requestClose);
+  useEffect(() => { requestCloseRef.current = requestClose; });
+  useEffect(() => {
+    if (!closeOnEscape) return undefined;
+    const entry = {};
+    drawerStack.push(entry);
+    // One observer per drawer, connected only while an Escape is checked.
+    // Records arrive in its callback (a microtask, before the timeout), so
+    // collect them there; takeRecords() only has what's still queued.
+    let records = [];
+    const observer = new MutationObserver(list => { records.push(...list); });
+    let timer = null;
+    const onKey = (e) => {
+      if (e.key !== 'Escape' || e.isComposing || drawerStack[drawerStack.length - 1] !== entry) return;
+      const panel = panelRef.current;
+      const focusBefore = document.activeElement;
+      // Focus in something outside the panel (a portaled menu, a dialog on
+      // top) belongs to that layer.
+      if (focusBefore && focusBefore !== document.body && !panel?.contains(focusBefore)) return;
+      clearTimeout(timer);
+      records = [];
+      observer.observe(document.body, ESCAPE_WATCH);
+      timer = setTimeout(() => {
+        records.push(...observer.takeRecords());
+        observer.disconnect();
+        if (!escapeWasHandled(e, records, focusBefore)) requestCloseRef.current();
+      }, 0);
+    };
+    // Capture phase, so the check is set up before any handler can stop the key.
+    window.addEventListener('keydown', onKey, true);
+    return () => {
+      window.removeEventListener('keydown', onKey, true);
+      clearTimeout(timer);
+      observer.disconnect();
+      drawerStack.splice(drawerStack.indexOf(entry), 1);
+    };
+  }, [closeOnEscape]);
+
+  // Focus moves into the drawer when it opens (unless something inside
+  // already took it) and goes back to where it was when it closes.
+  useEffect(() => {
+    const previous = document.activeElement;
+    const panel = panelRef.current;
+    if (panel && !panel.contains(document.activeElement)) panel.focus({ preventScroll: true });
+    return () => {
+      const active = document.activeElement;
+      const focusWasInside = !active || active === document.body || panel?.contains(active);
+      if (focusWasInside && previous instanceof HTMLElement && previous.isConnected) {
+        previous.focus({ preventScroll: true });
+      }
+    };
+  }, []);
 
   return createPortal(
     <>
@@ -149,9 +237,20 @@ export function Drawer({
           screen-reader path, so the backdrop must not appear as a second,
           unlabelled control. */}
       <div className={styles.overlay} data-closing={shut ? 'true' : 'false'} onClick={closeOnOverlayClick ? requestClose : undefined} aria-hidden="true" style={overlayStyle} />
-      <div ref={panelRef} data-drawer-panel className={`${styles.panel}${className ? ` ${className}` : ''}`} data-closing={shut ? 'true' : 'false'} style={Object.keys(panelStyle).length ? panelStyle : undefined}>
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        tabIndex={-1}
+        onKeyDown={trapTab}
+        data-drawer-panel
+        className={`${styles.panel}${className ? ` ${className}` : ''}`}
+        data-closing={shut ? 'true' : 'false'}
+        style={Object.keys(panelStyle).length ? panelStyle : undefined}
+      >
         <div className={styles.header} style={headerStyle}>
-          <h2 className={styles.headerTitle} style={titleStyle}>{title}</h2>
+          <h2 id={titleId} className={styles.headerTitle} style={titleStyle}>{title}</h2>
           <div className={styles.headerRight}>
             {headerRight}
             {primaryAction && secondaryAction}

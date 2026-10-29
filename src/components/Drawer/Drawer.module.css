@@ -49,6 +49,10 @@
 @starting-style {
   .panel { transform: translateX(100%); }
 }
+/* Focused programmatically on open so keyboard users start inside it; it
+ * isn't a control, so no ring. */
+.panel:focus { outline: none; }
+
 .panel[data-closing='true'] {
   transform: translateX(100%);
 }

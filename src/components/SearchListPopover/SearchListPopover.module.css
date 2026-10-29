@@ -1,22 +1,8 @@
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9300;
-  background: transparent;
-}
-
 .popover {
-  position: fixed;
-  z-index: 9301;
   padding: 8px;
-  background: var(--neutral-0);
-  border: 0.5px solid var(--neutral-100);
-  border-radius: 8px;
-  box-shadow: var(--shadow-popover);
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 250px;
 }
 
 .searchRow {

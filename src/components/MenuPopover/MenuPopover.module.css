@@ -3,26 +3,12 @@
  * 1:1 so all popovers (worklist actions, upload menu, future row menus) read
  * as the same component. */
 
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 8998;
-  background: transparent;
-}
-
+/* Surface, position and scrolling come from Popover. */
 .menu {
-  position: fixed;
-  z-index: 9400;
   padding: var(--space-2);
-  background: var(--neutral-0);
-  border: 0.5px solid var(--neutral-100);
-  border-radius: 8px;
-  box-shadow: var(--shadow-popover);
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  /* Long lists (taller than the viewport) scroll inside the menu. */
-  overflow-y: auto;
 }
 .menu > * { flex-shrink: 0; }
 

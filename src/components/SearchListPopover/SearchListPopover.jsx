@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useMemo, useState } from 'react';
+import { Popover } from '../Popover/Popover';
 import { Icon } from '../Icon/Icon';
 import styles from './SearchListPopover.module.css';
 
@@ -34,12 +34,6 @@ export function SearchListPopover({
 }) {
   const [query, setQuery] = useState('');
 
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose?.(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return options;
@@ -48,49 +42,46 @@ export function SearchListPopover({
 
   if (!anchorRect) return null;
 
-  // Always sit 4px below the trigger. Alignment: 'left' pins the popover's left
-  // edge to the trigger's left; 'right' pins its right edge to the trigger's right.
-  const style = { top: anchorRect.bottom + 4, width };
-  if (align === 'right') {
-    style.right = Math.max(8, window.innerWidth - anchorRect.right);
-  } else {
-    style.left = Math.max(8, Math.min(anchorRect.left, window.innerWidth - width - 8));
-  }
-
-  return createPortal(
-    <>
-      <div className={styles.overlay} onClick={onClose} aria-hidden="true" />
-      <div className={styles.popover} style={style} onClick={(e) => e.stopPropagation()} role="group" aria-label="Search">
-        <div className={styles.searchRow}>
-          <Icon name="solar:magnifer-linear" size={14} color="var(--neutral-200)" />
-          <input
-            type="text"
-            className={styles.searchInput}
-            placeholder={searchPlaceholder}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </div>
-        <div className={styles.list}>
-          {filtered.length === 0 ? (
-            <div className={styles.empty}>{emptyText}</div>
-          ) : (
-            filtered.map(o => (
-              <button
-                key={o.value}
-                type="button"
-                disabled={o.disabled}
-                aria-current={o.value === selected ? 'true' : undefined}
-                className={[styles.row, o.disabled ? styles.rowDisabled : '', o.value === selected ? styles.rowSelected : ''].filter(Boolean).join(' ')}
-                onClick={() => { if (o.disabled) return; onSelect?.(o.value); onClose?.(); }}
-              >
-                <span className={styles.label}>{o.label}</span>
-              </button>
-            ))
-          )}
-        </div>
+  return (
+    <Popover
+      anchor={anchorRect}
+      onOpenChange={() => onClose?.()}
+      placement={align === 'right' ? 'bottom-end' : 'bottom-start'}
+      width={width}
+      maxHeight={250}
+      listNavigation
+      role="group"
+      aria-label="Search"
+      className={styles.popover}
+    >
+      <div className={styles.searchRow}>
+        <Icon name="solar:magnifer-linear" size={14} color="var(--neutral-200)" />
+        <input
+          type="text"
+          className={styles.searchInput}
+          placeholder={searchPlaceholder}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
       </div>
-    </>,
-    document.body,
+      <div className={styles.list}>
+        {filtered.length === 0 ? (
+          <div className={styles.empty}>{emptyText}</div>
+        ) : (
+          filtered.map(o => (
+            <button
+              key={o.value}
+              type="button"
+              disabled={o.disabled}
+              aria-current={o.value === selected ? 'true' : undefined}
+              className={[styles.row, o.disabled ? styles.rowDisabled : '', o.value === selected ? styles.rowSelected : ''].filter(Boolean).join(' ')}
+              onClick={() => { if (o.disabled) return; onSelect?.(o.value); onClose?.(); }}
+            >
+              <span className={styles.label}>{o.label}</span>
+            </button>
+          ))
+        )}
+      </div>
+    </Popover>
   );
 }

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useMemo, useRef, useState } from 'react';
+import { Popover } from '../Popover/Popover';
 import { Icon } from '../Icon/Icon';
 import { Button } from '../Button/Button';
 import { Select } from '../Select/Select';
@@ -77,12 +77,6 @@ export function DateRangePopover({
   const [end, setEnd]     = useState(() => parseLocalDate(selected[1]));
   const [hover, setHover] = useState(null);
 
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose?.(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
   if (!anchorRect) return null;
 
   const isStart = (d) => sameDay(d, start);
@@ -157,89 +151,81 @@ export function DateRangePopover({
     onChange?.([]);
   };
 
-  // Position the popover anchored to the trigger.
-  const left = Math.min(anchorRect.left, window.innerWidth - width - 12);
-  const top = Math.min(anchorRect.bottom + 6, window.innerHeight - 420);
+  return (
+    <Popover
+      anchor={anchorRect}
+      onOpenChange={() => onClose?.()}
+      offset={6}
+      width={width}
+      role="group"
+      aria-label={`Select ${label}`}
+      className={styles.popover}
+    >
+      <div className={styles.heading}>Select {label}</div>
 
-  return createPortal(
-    <>
-      {/* Decorative click-catcher: the keyboard path to dismiss is the Escape
-          handler above, so this must not become a full-viewport tab stop. */}
-      <div className={styles.overlay} onClick={onClose} aria-hidden="true" />
-      <div
-        className={styles.popover}
-        style={{ top, left: Math.max(12, left), width }}
-        onClick={(e) => e.stopPropagation()}
-        role="group"
-        aria-label={`Select ${label}`}
-      >
-        <div className={styles.heading}>Select {label}</div>
+      {years && (
+        <SubTabs
+          className={styles.modeTabs}
+          tabs={[{ key: 'years', label: 'Years' }, { key: 'custom', label: 'Custom Dates' }]}
+          activeKey={mode}
+          onChange={setMode}
+        />
+      )}
 
-        {years && (
-          <SubTabs
-            className={styles.modeTabs}
-            tabs={[{ key: 'years', label: 'Years' }, { key: 'custom', label: 'Custom Dates' }]}
-            activeKey={mode}
-            onChange={setMode}
-          />
-        )}
-
-        {mode === 'years' ? (
-          <div className={styles.yearRow}>
-            <Select label="From" searchable placeholder="Year" options={yearOptions} value={fromYear} onChange={setFromYear} />
-            <Select label="To" searchable placeholder="Year" options={yearOptions} value={toYear} onChange={setToYear} />
-          </div>
-        ) : (
-        <div className={styles.calBody}>
-          <MonthGrid
-            header={(
-              <div className={styles.calHeader}>
-                <button type="button" className={styles.navBtn} onClick={() => stepView(-1)} aria-label="Previous month">
-                  <Icon name="solar:alt-arrow-left-linear" size={14} color="var(--neutral-300)" />
-                </button>
-                {title(viewL, setLeftYear)}
-                <span className={styles.navSpacer} />
-              </div>
-            )}
-            view={viewL}
-            isStart={isStart}
-            isEnd={isEnd}
-            inRange={inRange}
-            onDay={handleDayClick}
-            onHover={setHover}
-            hasEnd={!!end}
-          />
-          <span className={styles.calDivider} />
-          <MonthGrid
-            header={(
-              <div className={styles.calHeader}>
-                <span className={styles.navSpacer} />
-                {title(viewR, setRightYear)}
-                <button type="button" className={styles.navBtn} onClick={() => stepView(1)} aria-label="Next month">
-                  <Icon name="solar:alt-arrow-right-linear" size={14} color="var(--neutral-300)" />
-                </button>
-              </div>
-            )}
-            view={viewR}
-            isStart={isStart}
-            isEnd={isEnd}
-            inRange={inRange}
-            onDay={handleDayClick}
-            onHover={setHover}
-            hasEnd={!!end}
-          />
+      {mode === 'years' ? (
+        <div className={styles.yearRow}>
+          <Select label="From" searchable placeholder="Year" options={yearOptions} value={fromYear} onChange={setFromYear} />
+          <Select label="To" searchable placeholder="Year" options={yearOptions} value={toYear} onChange={setToYear} />
         </div>
-        )}
-
-        <div className={styles.footer}>
-          <Button variant="secondary" size="S" onClick={clear}>Clear</Button>
-          <Button variant="primary" size="S" disabled={!canApply} onClick={apply}>
-            Apply
-          </Button>
-        </div>
+      ) : (
+      <div className={styles.calBody}>
+        <MonthGrid
+          header={(
+            <div className={styles.calHeader}>
+              <button type="button" className={styles.navBtn} onClick={() => stepView(-1)} aria-label="Previous month">
+                <Icon name="solar:alt-arrow-left-linear" size={14} color="var(--neutral-300)" />
+              </button>
+              {title(viewL, setLeftYear)}
+              <span className={styles.navSpacer} />
+            </div>
+          )}
+          view={viewL}
+          isStart={isStart}
+          isEnd={isEnd}
+          inRange={inRange}
+          onDay={handleDayClick}
+          onHover={setHover}
+          hasEnd={!!end}
+        />
+        <span className={styles.calDivider} />
+        <MonthGrid
+          header={(
+            <div className={styles.calHeader}>
+              <span className={styles.navSpacer} />
+              {title(viewR, setRightYear)}
+              <button type="button" className={styles.navBtn} onClick={() => stepView(1)} aria-label="Next month">
+                <Icon name="solar:alt-arrow-right-linear" size={14} color="var(--neutral-300)" />
+              </button>
+            </div>
+          )}
+          view={viewR}
+          isStart={isStart}
+          isEnd={isEnd}
+          inRange={inRange}
+          onDay={handleDayClick}
+          onHover={setHover}
+          hasEnd={!!end}
+        />
       </div>
-    </>,
-    document.body,
+      )}
+
+      <div className={styles.footer}>
+        <Button variant="secondary" size="S" onClick={clear}>Clear</Button>
+        <Button variant="primary" size="S" disabled={!canApply} onClick={apply}>
+          Apply
+        </Button>
+      </div>
+    </Popover>
   );
 }
 

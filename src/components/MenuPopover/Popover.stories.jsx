@@ -5,7 +5,7 @@ import { RadioListPopover } from '../RadioListPopover/RadioListPopover';
 import { SearchListPopover } from '../SearchListPopover/SearchListPopover';
 
 export default {
-  title: 'Overlays/Popover',
+  title: 'Overlays/Popover Family',
   tags: ['autodocs'],
   parameters: {
     layout: 'fullscreen',
