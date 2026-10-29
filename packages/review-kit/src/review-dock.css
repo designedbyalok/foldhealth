@@ -11,10 +11,19 @@
   box-sizing: border-box;
 }
 
+/* A 0x0 anchor at the top-left corner, not a full-screen overlay: the box
+   and its tab are positioned against the viewport. A full-screen layer can
+   hide the whole page if anything gives it a background (a host stylesheet,
+   an extension, a browser default), as one did in Chrome 155. */
 .rk-layer {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  overflow: visible;
   z-index: var(--rk-z);
+  background: none;
   pointer-events: none;
   font-family: var(--rk-font);
   color: var(--rk-text);
@@ -766,7 +775,7 @@
 
 /* Collapsed: a tab on the wall it was dropped against. */
 .rk-tab {
-  position: absolute;
+  position: fixed;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -806,7 +815,7 @@
 
 /* While dragging near a wall: shows where it will tuck in. */
 .rk-edge-hint {
-  position: absolute;
+  position: fixed;
   top: 0;
   bottom: 0;
   width: 4px;

@@ -271,7 +271,7 @@ export function ReviewDock({
       {edgeHint && <div className={`rk-edge-hint rk-edge-hint-${edgeHint}`} aria-hidden="true" />}
       <Rnd
         className="rk-dock"
-        bounds="parent"
+        bounds="window"
         size={size}
         position={pos}
         minWidth={320}
