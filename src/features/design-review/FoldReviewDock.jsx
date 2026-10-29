@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
-import { ReviewDock } from '@designedbyalok/review-kit';
+import { ReviewDock } from 'review-dock';
 import { useAppStore } from '../../store/useAppStore';
-import '@designedbyalok/review-kit/styles.css';
+import 'review-dock/styles.css';
 import './reviewKitTheme.css';
 
 /**
- * Fold adapter for @designedbyalok/review-kit: the floating review box for one Design
+ * Fold adapter for review-dock: the floating review box for one Design
  * Signoff item. Comments and their files are saved to Supabase
  * (feature_review_comments + the review-attachments bucket).
  */

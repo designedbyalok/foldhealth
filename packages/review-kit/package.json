@@ -1,5 +1,5 @@
 {
-  "name": "@designedbyalok/review-kit",
+  "name": "review-dock",
   "version": "0.1.0",
   "description": "Drop-in visual review widget for React apps: a floating, draggable comment box with multi-point feedback, rich text, DevTools-style element picking, element and screen screenshots, and image/GIF uploads. Themeable to match any design system; storage-agnostic.",
   "keywords": [

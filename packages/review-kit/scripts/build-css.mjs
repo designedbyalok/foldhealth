@@ -1,5 +1,5 @@
 // Flatten src/styles.css (and its @imports) into dist/styles.css, so
-// consumers import one plain stylesheet: '@designedbyalok/review-kit/styles.css'.
+// consumers import one plain stylesheet: 'review-dock/styles.css'.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
 const src = new URL('../src/', import.meta.url);

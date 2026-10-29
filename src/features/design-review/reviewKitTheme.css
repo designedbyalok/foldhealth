@@ -1,4 +1,4 @@
-/* Fold theme for @designedbyalok/review-kit: map the kit's variables onto Fold tokens. */
+/* Fold theme for review-dock: map the kit's variables onto Fold tokens. */
 :root {
   --rk-font-xs: var(--font-xs);
   --rk-font-sm: var(--font-sm);

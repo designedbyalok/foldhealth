@@ -1,4 +1,4 @@
-# @designedbyalok/review-kit
+# review-dock
 
 A drop-in visual review widget for React apps. Reviewers open a floating comment
 box over your product and leave feedback in **points**: each point can carry
@@ -21,22 +21,22 @@ one piece of feedback with a point per screen.
 ## Install
 
 ```bash
-npm install @designedbyalok/review-kit
+npm install review-dock
 ```
 
 React 18 or newer is a peer dependency. Then import the stylesheet once (in
 your app entry or root layout):
 
 ```js
-import '@designedbyalok/review-kit/styles.css';
+import 'review-dock/styles.css';
 ```
 
 ## Quick start
 
 ```jsx
 import { useState } from 'react';
-import { ReviewDock } from '@designedbyalok/review-kit';
-import '@designedbyalok/review-kit/styles.css';
+import { ReviewDock } from 'review-dock';
+import 'review-dock/styles.css';
 
 export function Review() {
   const [open, setOpen] = useState(true);
@@ -215,7 +215,7 @@ you can target.
 ### Dark mode
 
 ```jsx
-import { ReviewDock, darkTheme } from '@designedbyalok/review-kit';
+import { ReviewDock, darkTheme } from 'review-dock';
 
 <ReviewDock theme={isDark ? { ...darkTheme, accent: '#8ab4ff' } : lightTokens} … />
 ```
@@ -257,7 +257,7 @@ See `DEFAULT_LABELS` for the full list.
 ## Lower-level helpers
 
 ```js
-import { pickElement, captureElement, captureViewport, selectorFor, themeToStyle } from '@designedbyalok/review-kit';
+import { pickElement, captureElement, captureViewport, selectorFor, themeToStyle } from 'review-dock';
 
 const el = await pickElement({ style: themeToStyle(theme) }); // null on Esc
 const png = await captureElement(el);   // Blob
