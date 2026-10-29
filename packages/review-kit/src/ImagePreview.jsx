@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { BlobImage } from './AttachmentStrip';
 import { CloseIcon, PenIcon } from './icons';
 import { openModal } from './modal';
@@ -14,6 +14,17 @@ const Annotator = lazy(() => import('./Annotator'));
  */
 export function ImagePreview({ attachment, name, labels, onAnnotated, onClose }) {
   const [annotating, setAnnotating] = useState(false);
+  const dialog = useRef(null);
+
+  // A click on the backdrop (the dialog itself, outside its content) closes
+  // the preview: a mouse shortcut alongside Escape and the close button.
+  useEffect(() => {
+    const d = dialog.current;
+    if (!d) return undefined;
+    const onClick = (e) => { if (e.target === d) onClose(); };
+    d.addEventListener('click', onClick);
+    return () => d.removeEventListener('click', onClick);
+  }, [annotating, onClose]);
 
   if (annotating) {
     return (
@@ -30,14 +41,12 @@ export function ImagePreview({ attachment, name, labels, onAnnotated, onClose })
   }
 
   return (
-    // A native modal dialog: focus stays inside, Escape closes, and a click
-    // on the backdrop (the dialog itself, outside the content) closes too.
+    // A native modal dialog: focus stays inside and Escape closes it.
     <dialog
-      ref={openModal}
+      ref={(el) => { dialog.current = el; openModal(el); }}
       className="rk-preview"
       aria-label={labels.preview(name)}
       onClose={onClose}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <header className="rk-preview-header">
         <span className="rk-preview-name" title={name}>{name}</span>
