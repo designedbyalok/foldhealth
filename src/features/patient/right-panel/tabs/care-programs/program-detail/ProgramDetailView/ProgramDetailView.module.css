@@ -273,6 +273,10 @@
   flex-shrink: 0;
   box-sizing: border-box;
 }
+.recommendedMark {
+  display: inline-flex;
+  flex-shrink: 0;
+}
 .mandatoryDot {
   width: 6px;
   height: 6px;

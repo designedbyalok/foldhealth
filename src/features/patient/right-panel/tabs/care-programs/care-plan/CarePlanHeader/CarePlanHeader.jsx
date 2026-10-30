@@ -140,7 +140,7 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
       carePlanLayout === 'linkage'
         ? { key: 'layout', icon: 'solar:list-linear', label: 'Table View' }
         : { key: 'layout', icon: 'solar:link-linear', label: 'Linkage View' },
-      { key: 'ai-plan', iconElement: <Icon name="custom:ai" size={16} />, label: 'Draft Individualized Plan' },
+      { key: 'ai-plan', iconElement: <Icon name="custom:ai" size={16} />, label: 'Recommend Care Plan' },
       ...(canPause ? [planPaused
         ? { key: 'resume', icon: 'solar:play-circle-linear', label: 'Resume Care Plan' }
         : { key: 'pause', icon: 'solar:pause-circle-linear', label: 'Pause Care Plan' }] : []),

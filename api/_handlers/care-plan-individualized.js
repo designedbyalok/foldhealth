@@ -8,7 +8,9 @@
  * normalizeIndividualizedDraft keeps only what's grounded in those inputs.
  * The AI keys stay server-side (see _lib/aiJson.js).
  *
- * Body: { facts, templates, catalog, programName }
+ * Body: { facts, templates, catalog, programName, recommended? }
+ * `recommended` lists templates the enrollment automations matched
+ * ({ templateId, rule, criteria }); the model then merges all of them.
  * Returns: { draft } or { error: { message } }
  */
 
@@ -44,9 +46,11 @@ export default async function handler(req, res) {
     barriers: asList(body.catalog?.barriers, 400),
   };
 
+  const recommended = asList(body.recommended, 20);
+
   try {
     const ai = await generateJson({
-      prompt: buildIndividualizedPrompt({ facts, templates, catalog, programName: String(body.programName || '').slice(0, 100) }),
+      prompt: buildIndividualizedPrompt({ facts, templates, catalog, programName: String(body.programName || '').slice(0, 100), recommended }),
       schema: INDIVIDUALIZED_SCHEMA,
       name: 'individualized_plan',
       temperature: 0.2,
@@ -61,7 +65,7 @@ export default async function handler(req, res) {
         : 'Could not draft the plan. Please try again.' } });
     }
     const parsed = ai.data;
-    const draft = normalizeIndividualizedDraft(parsed, { facts, templates, catalog });
+    const draft = normalizeIndividualizedDraft(parsed, { facts, templates, catalog, recommended });
     if (!draft) return res.status(422).json({ error: { message: 'Could not draft goals grounded in this patient’s record. Add conditions or recent labs and try again.' } });
     return res.status(200).json({ draft });
   } catch (err) {

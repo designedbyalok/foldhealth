@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { Badge } from '../../../../../../../components/Badge/Badge';
 import { Icon } from '../../../../../../../components/Icon/Icon';
 import { PriorityIcon } from '../../../../../../../components/PriorityIcon/PriorityIcon';
+import { UnityIcon } from '../../../../../../../components/UnityIcon/UnityIcon';
 import styles from './CarePlanView.module.css';
 
 const CHIP_GAP = 4;
@@ -94,6 +95,25 @@ function RunBadge({ template, run, isActive, onSelect, disabled = false }) {
   );
 }
 
+// A recommendation's template, applied when the recommended plan is approved.
+function RecommendedBadge({ template }) {
+  const by = template.automation ? `Matched by automation "${template.automation}". ` : '';
+  return (
+    <span className={styles.recommendedTemplate} title={`Recommended: applies when the plan is approved. ${by}${template.why || ''}`.trim()}>
+      <Badge
+        tone="primary"
+        size="S"
+        label={(
+          <>
+            <UnityIcon size={12} color="var(--primary-300)" />
+            {template.name}
+          </>
+        )}
+      />
+    </span>
+  );
+}
+
 /**
  * Applied templates in priority order (high → medium → low) on one row. When the row
  * overflows, a right-aligned "View More N" reveals the rest; expanded wraps
@@ -123,6 +143,9 @@ export function AppliedTemplateStrip({
   templateVersions = {},
   // Past-version view: chips show, nothing filters or removes.
   readOnly = false,
+  // A pending recommendation's templates ({ id, name, why, automation }),
+  // shown ahead of the applied ones until the plan is approved.
+  recommended = [],
 }) {
   const chipsRef = useRef(null);
   const measureRef = useRef(null);
@@ -206,12 +229,19 @@ export function AppliedTemplateStrip({
     };
   }, [templatesKey, expanded, entries.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const recommendedChips = recommended.length > 0 && (
+    <span className={styles.recommendedTemplates} aria-label="Recommended templates">
+      {recommended.map(t => <RecommendedBadge key={t.id} template={t} />)}
+    </span>
+  );
+
   if (entries.length === 0) {
-    if (!trailing) return null;
+    if (!trailing && !recommendedChips) return null;
     return (
       <div className={styles.templatePriorityBar}>
         <div className={styles.priorityRow}>
-          <span className={`${styles.priorityChips} ${styles.noTemplates}`}>No templates applied</span>
+          {recommendedChips || <span className={`${styles.priorityChips} ${styles.noTemplates}`}>No templates applied</span>}
+          {recommendedChips && <span className={styles.priorityChips} />}
           {trailing}
         </div>
       </div>
@@ -247,6 +277,7 @@ export function AppliedTemplateStrip({
   return (
     <div className={styles.templatePriorityBar}>
       <div className={styles.priorityRow}>
+        {recommendedChips}
         <div
           ref={chipsRef}
           className={`${styles.priorityChips} ${expanded ? '' : styles.priorityChipsCollapsed}`}

@@ -490,15 +490,17 @@ export function createAutomationsSlice(set, get) {
     // ── Care program enrollment (formerly Settings > Automation Rules) ──
     // Each active automation triggered by "A patient is enrolled in a care
     // program" is read as a rule (clinical criteria + templates + reviewer).
-    // A match attaches its templates to the program's care plan unsigned (a
-    // draft) and one review task goes to the care manager listing why. Every
-    // evaluation is recorded as a run of that automation.
-    runAutoApplyRules: async (patientId, program) => {
-      if (!patientId || !program?.id) return { matched: [], taskId: null };
+    // matchCarePlanTemplates evaluates them against the patient's record.
+
+    // Every rule's result (matched or not, with reasons), the matched ones,
+    // and `recommended`: each distinct template a matched rule names, with
+    // the rule and the criteria the patient met ({ templateId, rule, criteria }).
+    matchCarePlanTemplates: async (patientId, program) => {
+      const none = { results: [], matched: [], recommended: [] };
+      if (!patientId || !program?.id) return none;
       if (get().automationsStatus !== 'ready') await get().fetchAutomations();
-      const rules = enrollmentRulesOf(get().automations);
-      const applicable = rulesForProgram(rules, program.code);
-      if (!applicable.length) return { matched: [], taskId: null };
+      const applicable = rulesForProgram(enrollmentRulesOf(get().automations), program.code);
+      if (!applicable.length) return none;
 
       const [problems, events, responses] = await Promise.all([
         supabase.from('patient_problems').select('title, status').eq('patient_id', String(patientId)),
@@ -514,18 +516,56 @@ export function createAutomationsSlice(set, get) {
       });
       const results = applicable.map(rule => ({ rule, ...evaluateRule(rule, inputs) }));
       const matched = results.filter(r => r.matched);
+      if (matched.length && !get().carePlanTemplates.length) await get().fetchCarePlanLibrary();
+      const known = new Set(get().carePlanTemplates.map(t => String(t.id)));
+      const recommended = [];
+      for (const r of matched) {
+        for (const id of r.rule.templateIds || []) {
+          if (!known.has(String(id)) || recommended.some(x => x.templateId === String(id))) continue;
+          recommended.push({ templateId: String(id), rule: r.rule.name, criteria: r.reasons.filter(x => x.ok).map(x => x.text) });
+        }
+      }
+      return { results, matched, recommended };
+    },
+
+    // A new plan recommended for review: the automation-matched templates
+    // merged and tailored by UnityAI, every item flagged until approved. With
+    // no match, UnityAI picks the templates itself. Throws like
+    // draftIndividualizedPlan.
+    recommendCarePlan: async (patientId, program) => {
+      const { recommended } = await get().matchCarePlanTemplates(patientId, program);
+      const draft = await get().draftIndividualizedPlan(patientId, program, { recommended });
+      return { ...draft, recommended };
+    },
+
+    // On enrollment: an empty plan gets the UnityAI recommendation from the
+    // matched templates; if that can't run (or the plan already has items),
+    // the templates are attached as they are. Either way it stays unsigned
+    // (a draft) and one review task goes to the care manager listing why.
+    // Every evaluation is recorded as a run of that automation.
+    runAutoApplyRules: async (patientId, program) => {
+      if (!patientId || !program?.id) return { matched: [], taskId: null };
+      const { results, matched, recommended } = await get().matchCarePlanTemplates(patientId, program);
 
       let taskId = null;
       if (matched.length) {
-        if (!get().carePlanTemplates.length) await get().fetchCarePlanLibrary();
         const templates = get().carePlanTemplates;
         await get().fetchPatientCarePlan(patientId, program.id);
         const key = carePlanKey(patientId, program.id);
-        const prev = get().patientCarePlans[key]?.plan?.appliedTemplateIds || [];
-        const known = new Set(templates.map(t => t.id));
-        const already = new Set(prev);
-        const attached = [...new Set(matched.flatMap(r => r.rule.templateIds || []))]
-          .filter(id => known.has(id) && !already.has(id));
+        const cur = get().patientCarePlans[key];
+        const prev = cur?.plan?.appliedTemplateIds || [];
+        const planEmpty = !cur || (cur.goals.length + cur.interventions.length + (cur.barriers || []).length) === 0;
+
+        let aiDraft = null;
+        if (planEmpty && recommended.length) {
+          try {
+            aiDraft = await get().draftIndividualizedPlan(patientId, program, { recommended });
+          } catch (err) {
+            console.warn('runAutoApplyRules: recommendation fell back to attaching templates:', err?.message || err);
+          }
+        }
+        const already = new Set(prev.map(String));
+        const attached = aiDraft ? [] : recommended.map(r => r.templateId).filter(id => !already.has(id));
         if (attached.length) await get().applyPatientCarePlanTemplates(patientId, program, [...prev, ...attached]);
 
         const memberName = get().patients.find(p => String(p.id) === String(patientId))?.name || '';
@@ -533,11 +573,13 @@ export function createAutomationsSlice(set, get) {
         const named = matched.map(r => r.rule.reviewer).find(rv => rv?.name)
           || (program.assignee && program.assignee !== 'Unassigned' ? users.find(u => u.name === program.assignee) : null);
         const reviewer = named ? { id: named.id || null, name: named.name } : null;
-        const templateNames = attached.map(id => templates.find(t => t.id === id)?.name).filter(Boolean);
+        const templateNames = aiDraft
+          ? aiDraft.templates.map(t => t.name)
+          : attached.map(id => templates.find(t => String(t.id) === id)?.name).filter(Boolean);
         const lines = matched.map(r => `• ${r.rule.name}: ${r.reasons.filter(x => x.ok).map(x => x.text).join('; ')}`);
         const due = new Date(); due.setDate(due.getDate() + 2);
         const task = await get().createTask({
-          name: `Review auto-applied care plan for ${memberName || 'patient'}`,
+          name: `${aiDraft ? 'Review recommended' : 'Review auto-applied'} care plan for ${memberName || 'patient'}`,
           status: 'pending',
           priority: 'medium',
           due_date: `${String(due.getMonth() + 1).padStart(2, '0')}/${String(due.getDate()).padStart(2, '0')}/${due.getFullYear()}`,
@@ -547,7 +589,9 @@ export function createAutomationsSlice(set, get) {
           labels: ['Care Plan Review', 'Automation'],
           meta: program.name || program.code || '',
           description: [
-            `On enrollment in ${program.name || program.code}, automations matched and ${templateNames.length ? `attached ${templateNames.join(', ')} in draft` : 'found the templates already on the plan'}. Review, edit and sign the plan.`,
+            aiDraft
+              ? `On enrollment in ${program.name || program.code}, automations matched ${templateNames.join(', ')} and UnityAI merged them into one recommended plan (${aiDraft.counts}). Every item awaits review: approve or edit it, then sign the plan.`
+              : `On enrollment in ${program.name || program.code}, automations matched and ${templateNames.length ? `attached ${templateNames.join(', ')} in draft` : 'found the templates already on the plan'}. Review, edit and sign the plan.`,
             ...lines,
           ].join('\n'),
           // No named reviewer or program owner: queue it for any care manager to claim.
@@ -565,13 +609,17 @@ export function createAutomationsSlice(set, get) {
           entityType: 'plan',
           action: 'auto_applied',
           summary: matched.map(r => r.rule.name).join(', '),
-          detail: templateNames.length ? `Attached in draft: ${templateNames.join(', ')}` : 'Templates were already on the plan',
+          detail: aiDraft
+            ? `UnityAI recommended a plan from: ${templateNames.join(', ')}`
+            : templateNames.length ? `Attached in draft: ${templateNames.join(', ')}` : 'Templates were already on the plan',
         });
         if (reviewer?.id) {
           get().addNotification?.({
             type: 'care_plan.review_requested',
-            title: 'Auto-applied care plan to review',
-            body: `Automations attached ${templateNames.join(', ') || 'templates'} for ${memberName}.`,
+            title: aiDraft ? 'Recommended care plan to review' : 'Auto-applied care plan to review',
+            body: aiDraft
+              ? `UnityAI recommended a care plan for ${memberName} from ${templateNames.join(', ')}.`
+              : `Automations attached ${templateNames.join(', ') || 'templates'} for ${memberName}.`,
             action: 'openCarePlan',
             recipientId: reviewer.id,
           });

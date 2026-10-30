@@ -36,6 +36,7 @@ import { PharmacyGapClosureStep } from '../../../../../../pharmacy-worklist/prog
 import { PharmacyActivityLogStep } from '../../../../../../pharmacy-worklist/program/PharmacyActivityLog';
 import { PharmacySnapshotStep } from '../../../../../../pharmacy-worklist/program/PharmacySnapshotStep';
 import { useProgramDetailView } from './useProgramDetailView';
+import { hasPendingRecommendation } from '../../care-plan/lib/carePlanRecommendation';
 import { StepItem, SectionHeader, StepPlaceholder, CarePlanInPanelNotice } from './ProgramDetailViewParts';
 import { useCarePlanPanelOpen } from '../../../../../hooks/useProgramPanelSplitActive';
 import { ProgramDetailViewHeader } from './ProgramDetailViewHeader';
@@ -48,6 +49,9 @@ import styles from './ProgramDetailView.module.css';
 
 export function ProgramDetailView({ program, onClose, startAtFirstStep = false, onSwitchProgram }) {
   const v = useProgramDetailView({ program, onSwitchProgram });
+  // A care plan recommendation awaiting approval marks the Care Plan step.
+  const recommendationPending = useAppStore(s => hasPendingRecommendation(s.patientCarePlans[`${v.patientId}::${program.id}`]));
+  const isRecommended = (step) => recommendationPending && step.name === 'Care Plan';
   const { stepFlags } = v;
   const isPharmacy = program.code === 'PHARM';
   const carePlanInPanel = useCarePlanPanelOpen();
@@ -214,7 +218,7 @@ export function ProgramDetailView({ program, onClose, startAtFirstStep = false, 
                   <Collapse open={expanded}>
                     {step.children.map(child => (
                       <StepItem key={child.id} step={child} isActive={v.activeStep === child.id}
-                        onClick={() => v.setActiveStep(child.id)} isChild />
+                        onClick={() => v.setActiveStep(child.id)} isChild recommended={isRecommended(child)} />
                     ))}
                   </Collapse>
                 </div>
@@ -222,7 +226,7 @@ export function ProgramDetailView({ program, onClose, startAtFirstStep = false, 
             }
             return (
               <StepItem key={step.id} step={step} isActive={v.activeStep === step.id}
-                onClick={() => v.setActiveStep(step.id)} />
+                onClick={() => v.setActiveStep(step.id)} recommended={isRecommended(step)} />
             );
           })}
         </div>

@@ -1,0 +1,156 @@
+/* The AI care plan summary: Summarize trigger, loading skeleton and the
+   saved summary card. Shared by the Comprehensive Care Plan and each
+   program's plan. */
+
+.summarizeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  background: transparent;
+  color: var(--primary-300);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: var(--space-1);
+}
+.summarizeBtn:hover { background: var(--primary-50); }
+.summarizeBtn:disabled { cursor: default; }
+.summarizeBtnBusy { color: var(--primary-300); }
+/* Sparkle icon pulses while the summary is generating so the label
+   change ("AI is writing…") gets a matching motion cue. */
+.summarizeBtnBusy svg { animation: summaryPulse 1.4s ease-in-out infinite; }
+@keyframes summaryPulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.12); }
+}
+
+/* Skeleton shown while the mock AI "thinks". Three bars + a spinner
+   in the corner. Border + tint mirror the ready-state card (Figma
+   Care-Plan-Creation 12583:315933) so the transition idle → loading
+   → ready doesn't reshape the container. */
+.summarySkeleton {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 0.5px solid var(--primary-200);
+  border-radius: var(--space-3);
+  background: var(--primary-50);
+}
+.summarySkeletonLine {
+  height: var(--space-2);
+  border-radius: var(--space-1);
+  background: var(--neutral-100);
+}
+.summarySpinner {
+  position: absolute;
+  right: var(--space-3);
+  bottom: var(--space-3);
+  animation: summarySpin 1.1s linear infinite;
+}
+@keyframes summarySpin { to { transform: rotate(360deg); } }
+
+/* Ready state — mock summary card. Padding, gaps, font sizes, and
+   colors all lifted from the Figma spec (12586:317431 / 12583:315933):
+   16px inner padding, 12px gap between intro / list / actions / footer,
+   14px body font on --neutral-500 with a tight 1.35 leading. */
+.summaryCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 0.5px solid var(--primary-200);
+  border-radius: var(--space-3);
+  background: var(--primary-50);
+  color: var(--neutral-500);
+  font-size: var(--font-sm);
+  line-height: 1.35;
+}
+.summaryIntro {
+  margin: 0;
+  color: var(--neutral-500);
+  font-size: var(--font-sm);
+}
+.summaryList {
+  margin: 0;
+  padding-left: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  list-style: decimal outside;
+}
+.summaryList li { padding-left: var(--space-1); }
+.summaryList li strong {
+  color: var(--neutral-500);
+  font-weight: 500;
+}
+.summaryActionsHead {
+  margin-top: var(--space-2);
+  color: var(--neutral-500);
+  font-size: var(--font-sm);
+  font-weight: 400;
+}
+.summaryActions {
+  margin: 0;
+  padding-left: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  color: var(--neutral-500);
+  list-style: disc outside;
+}
+.summaryActions li { padding-left: var(--space-1); }
+.summaryFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+.summaryPager {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.summaryPagerBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-5);
+  height: var(--space-5);
+  border-radius: var(--space-1);
+  border: none;
+  background: transparent;
+  color: var(--neutral-400);
+  cursor: pointer;
+}
+.summaryPagerBtn:hover:not(:disabled) { background: var(--primary-100); }
+.summaryPagerBtn:disabled { cursor: default; opacity: 0.4; }
+.summaryPagerCount {
+  min-width: var(--space-6);
+  text-align: center;
+  color: var(--neutral-400);
+  font-size: var(--font-xs);
+  font-variant-numeric: tabular-nums;
+}
+.summaryToolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.summaryToolBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-5);
+  height: var(--space-5);
+  border-radius: var(--space-1);
+  border: none;
+  background: transparent;
+  color: var(--neutral-400);
+  cursor: pointer;
+}
+.summaryToolBtn:hover { background: var(--primary-100); color: var(--neutral-500); }

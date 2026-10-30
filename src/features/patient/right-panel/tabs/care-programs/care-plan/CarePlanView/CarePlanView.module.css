@@ -116,6 +116,17 @@
   height: 16px;
   background: var(--neutral-150);
 }
+/* A pending recommendation's templates, ahead of the applied ones. */
+.recommendedTemplates {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-2) 0 var(--space-3);
+  border-right: 0.5px solid var(--neutral-150);
+  margin-right: var(--space-1);
+}
+.recommendedTemplate { display: inline-flex; }
 .noTemplates {
   font-size: var(--font-sm);
   color: var(--neutral-300);
@@ -201,6 +212,8 @@
   padding-right: var(--space-1);
 }
 /* Card wrapper hosts the click target + the hover-only delete button. */
+/* AI Summary head: title left, Summarize right. */
+.aiSummaryHead { justify-content: space-between; }
 .careNoteCardWrap {
   position: relative;
 }

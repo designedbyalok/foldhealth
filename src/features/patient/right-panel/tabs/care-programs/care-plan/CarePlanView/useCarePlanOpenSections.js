@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 const STORAGE_KEY = 'carePlanOpenSections';
-const FALLBACK = { goals: true, interventions: true, barriers: true, sdoh: true, careNote: true, linkage: true };
+const FALLBACK = { aiSummary: true, goals: true, interventions: true, barriers: true, sdoh: true, careNote: true, linkage: true };
 
 export function useCarePlanOpenSections() {
   const [openSections, setOpenSections] = useState(() => {

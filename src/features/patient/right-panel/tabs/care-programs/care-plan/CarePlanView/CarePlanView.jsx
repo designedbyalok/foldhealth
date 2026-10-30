@@ -10,6 +10,7 @@ import { PauseCarePlanDialog } from '../drawers/PauseCarePlanDialog/PauseCarePla
 import { CarePlanPausedContext } from '../lib/carePlanPausedContext';
 import { fmtCarePlanDate } from '../tables/carePlanTableModel';
 import { isCarePlanPaused, pauseSummary } from '../lib/carePlanPause';
+import { pendingRecommendation } from '../lib/carePlanRecommendation';
 import { ConfirmDialog } from '@/components/ConfirmDialog/ConfirmDialog';
 import { IndividualizedPlanCard } from '../ai/IndividualizedPlanCard';
 import { AiReviewContext } from '../ai/aiReviewContext';
@@ -53,6 +54,7 @@ import { CarePlanViewOverlays } from './CarePlanViewOverlays';
 import { AppliedTemplateStrip } from './AppliedTemplateStrip';
 import { useCarePlanEpisodes } from './useCarePlanEpisodes';
 import { CarePlanLinkageSection } from './CarePlanLinkageSection';
+import { CarePlanAiSummarySection } from './CarePlanAiSummarySection';
 import { addGoalsFromPicker, addBarriersFromPicker } from './carePlanPickerHandlers';
 import { formatInstanceDate } from '../lib/templateRenewal';
 import {
@@ -752,27 +754,28 @@ export function CarePlanView({ patientId, program }) {
   const handleNewProblems = () => { setProblemText(''); setProblemOpen(true); };
   const handleTemplates = () => setTemplatesDrawerOpen(true);
 
-  // Individualized Plan AI (lib/individualizedPlan): draft a tailored GBI set
-  // from the record; each item stays flagged with its evidence until reviewed.
+  // Recommended care plan: the automation-matched templates merged by UnityAI
+  // (lib/individualizedPlan); each item stays flagged with its evidence until
+  // the plan is approved.
   const [aiDrafting, setAiDrafting] = useState(false);
   const [aiError, setAiError] = useState('');
   const [aiBusy, setAiBusy] = useState(false);
   const [aiDiscardOpen, setAiDiscardOpen] = useState(false);
-  const draftIndividualizedPlan = useAppStore(s => s.draftIndividualizedPlan);
+  const recommendCarePlan = useAppStore(s => s.recommendCarePlan);
   const reviewAiSuggestions = useAppStore(s => s.reviewAiSuggestions);
-  const aiPending = useMemo(() => (viewedVersion || !live ? [] : [
-    ...live.goals.map(item => ({ kind: 'goal', item })),
-    ...live.interventions.map(item => ({ kind: 'intervention', item })),
-    ...(live.barriers || []).map(item => ({ kind: 'barrier', item })),
-  ].filter(x => x.item.aiSuggested && !x.item.aiReviewedAt)), [live, viewedVersion]);
+  const setCarePlanRecommendedTemplates = useAppStore(s => s.setCarePlanRecommendedTemplates);
+  const aiPending = useMemo(() => (viewedVersion ? [] : pendingRecommendation(live)), [live, viewedVersion]);
   const planIsEmpty = !live || (live.goals.length + live.interventions.length + (live.barriers || []).length) === 0;
   const runIndividualizedPlan = async () => {
     if (!canEdit || viewedVersion || aiDrafting) return;
     setAiDrafting(true);
     setAiError('');
     try {
-      const r = await draftIndividualizedPlan(patientId, program);
-      showToast(`UnityAI drafted ${r.counts} for review`);
+      const r = await recommendCarePlan(patientId, program);
+      const n = r.recommended.length;
+      showToast(n
+        ? `Recommended ${r.counts} from ${n} automation-matched ${n === 1 ? 'template' : 'templates'}`
+        : `No automation matched; UnityAI recommended ${r.counts}`);
     } catch (err) {
       setAiError(err.message || 'Could not draft the plan.');
       showToast(err.message || 'Could not draft the plan.');
@@ -787,7 +790,7 @@ export function CarePlanView({ patientId, program }) {
     setAiBusy(true);
     try {
       const n = await reviewAiSuggestions(patientId, program, aiPending);
-      if (n) showToast(`Marked ${n} AI-drafted ${n === 1 ? 'item' : 'items'} reviewed`);
+      if (n) showToast(`Approved the recommended plan (${n} ${n === 1 ? 'item' : 'items'})`);
     } finally {
       setAiBusy(false);
     }
@@ -801,7 +804,8 @@ export function CarePlanView({ patientId, program }) {
           : kind === 'intervention' ? deletePatientCarePlanIntervention(patientId, program.id, item.id)
             : deletePatientCarePlanBarrier(patientId, program.id, item.id)
       )));
-      showToast('Removed the AI-drafted items awaiting review');
+      await setCarePlanRecommendedTemplates(patientId, program, []);
+      showToast('Discarded the recommended plan');
     } finally {
       setAiBusy(false);
     }
@@ -976,6 +980,7 @@ export function CarePlanView({ patientId, program }) {
           historyTemplates={viewedVersion ? [] : historyTemplates}
           templateVersions={viewedVersion ? {} : templateVersionInfo}
           readOnly={!!viewedVersion}
+          recommended={viewedVersion ? [] : (live?.plan?.recommendedTemplates || [])}
           trailing={(
             <span className={styles.stripActions}>
               <span className={styles.stripDivider} aria-hidden="true" />
@@ -1064,6 +1069,7 @@ export function CarePlanView({ patientId, program }) {
         <IndividualizedPlanCard
           state="review"
           pending={aiPending.length}
+          templates={live?.plan?.recommendedTemplates || []}
           busy={aiBusy}
           onReviewAll={reviewAllAi}
           onDiscard={() => setAiDiscardOpen(true)}
@@ -1094,6 +1100,16 @@ export function CarePlanView({ patientId, program }) {
             </span>
           )}
         </div>
+      )}
+      {!carePlanLoading && !planIsEmpty && !viewedVersion && !viewedRun && (
+        <CarePlanAiSummarySection
+          patientId={patientId}
+          program={program}
+          patientName={patientName}
+          live={live}
+          open={openSections.aiSummary}
+          onToggle={() => toggleSection('aiSummary')}
+        />
       )}
       {!carePlanLoading && latestPlanNote && (
         <section className={styles.careNoteSection}>

@@ -21,6 +21,8 @@ import { AssigneeChange } from '../../../../../../../../components/AssigneeChang
 import { useTableSort } from '../../../../../../../../components/HeaderCell/useTableSort';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import { buildCarePlanSnapshot, filterCarePlanSnapshot } from '../carePlanSnapshot';
+import { AiSummaryCard, AiSummarySkeleton, SummarizeButton } from '../CarePlanAiSummary/CarePlanAiSummary';
+import { buildSummaryPayload, useCarePlanAiSummary } from '../CarePlanAiSummary/useCarePlanAiSummary';
 import {
   GbiNameCell,
   GbiProgressCell,
@@ -43,46 +45,10 @@ import { BarrierDetailDrawer } from '../../drawers/BarrierDetailDrawer/BarrierDe
 import sharedRow from '../../tables/carePlanTables.module.css';
 import styles from './CarePlanSummaryView.module.css';
 import { localDateMs } from '../../../../../../../../lib/localDate';
-import { apiFetch } from '../../../../../../../../lib/apiFetch';
 import { useSignedCarePlans } from '../../lib/useSignedCarePlans';
 import { isProgramClosed } from '../../../../../../data/programStatus';
 
 const PRIORITIES = ['high', 'medium', 'low'];
-
-// Compact the cross-program snapshot into the small JSON the summary API
-// sends to the model — titles + status + the few fields that shape a recap,
-// nothing patient-identifying beyond the name already on screen.
-function buildSummaryPayload({ patientName, programs, conditions, goals, interventions, barriers }) {
-  const progName = (p) => p?.name || p?.code || 'Program';
-  return {
-    patientName: patientName || 'the patient',
-    programs: (programs || []).map(p => ({ name: progName(p), status: p?.status || null })),
-    conditions: (conditions || []).map(c => (typeof c === 'string' ? c : c?.label)).filter(Boolean),
-    goals: (goals || []).map(g => ({ title: g.title, status: g.status, progress: g.progress ?? null, priority: g.priority || null, program: g.programCode || null })),
-    interventions: (interventions || []).map(i => ({ title: i.title, status: i.status, assignee: i.assignee?.name || null, program: i.programCode || null })),
-    barriers: (barriers || []).map(b => ({ title: b.title, status: b.status, program: b.programCode || null })),
-  };
-}
-
-// Call the server-side Gemini proxy (keeps the API key off the client) and
-// return one { intro, points, actions } summary. Throws a user-readable
-// message the caller can toast.
-async function fetchCarePlanSummary(payload) {
-  const res = await apiFetch('/api/care-plan-summary', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    const errJson = await res.json().catch(() => ({}));
-    throw new Error(errJson?.error?.message || 'Could not generate the summary. Please try again.');
-  }
-  const json = await res.json().catch(() => ({}));
-  if (!json.summary) {
-    throw new Error(json?.error?.message || 'Could not generate the summary. Please try again.');
-  }
-  return json.summary;
-}
 
 // Person cell — shared Avatar primitive + name, so PCM / PCP renders
 // the way every other assignee cell in the app does (matches the
@@ -183,52 +149,6 @@ function ActiveProgramsTable({ rows, onView, onOpenActivity }) {
           })}
         </tbody>
       </table>
-    </div>
-  );
-}
-
-// Summarize output card — mock AI recap that sits under the Active
-// Programs table when Summarize has completed. Footer carries the
-// paginator + copy / regenerate / delete affordances so the reader
-// can cycle between candidate summaries, copy one for a chart note,
-// regenerate, or dismiss the whole card.
-function SummaryCard({ data, index, total, onPrev, onNext, onCopy, onRegenerate, onDelete }) {
-  return (
-    <div className={styles.summaryCard} role="region" aria-label="AI-generated program summary">
-      <p className={styles.summaryIntro}>{data.intro}</p>
-      <ol className={styles.summaryList}>
-        {data.points.map((p, i) => (
-          <li key={i}>
-            <strong>{p.title}:</strong> {p.body}
-          </li>
-        ))}
-      </ol>
-      <div className={styles.summaryActionsHead}>Action Items :</div>
-      <ul className={styles.summaryActions}>
-        {data.actions.map((a, i) => <li key={i}>{a}</li>)}
-      </ul>
-      <div className={styles.summaryFooter}>
-        <div className={styles.summaryPager}>
-          <button type="button" className={styles.summaryPagerBtn} onClick={onPrev} disabled={total <= 1} aria-label="Previous summary">
-            <Icon name="solar:alt-arrow-left-linear" size={14} color="var(--neutral-400)" />
-          </button>
-          <span className={styles.summaryPagerCount}>{index + 1}/{total}</span>
-          <button type="button" className={styles.summaryPagerBtn} onClick={onNext} disabled={total <= 1} aria-label="Next summary">
-            <Icon name="solar:alt-arrow-right-linear" size={14} color="var(--neutral-400)" />
-          </button>
-        </div>
-        <div className={styles.summaryToolbar}>
-          <button type="button" className={styles.summaryToolBtn} onClick={onCopy} aria-label="Copy summary">
-            <Icon name="solar:copy-linear" size={14} color="var(--neutral-400)" />
-          </button>
-          <button type="button" className={styles.summaryToolBtn} onClick={onRegenerate} aria-label="Regenerate summary">
-            <Icon name="solar:refresh-linear" size={14} color="var(--neutral-400)" />
-          </button>
-          <button type="button" className={styles.summaryToolBtn} onClick={onDelete} aria-label="Dismiss summary">
-            <Icon name="solar:trash-bin-trash-linear" size={14} color="var(--neutral-400)" />
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
@@ -858,7 +778,7 @@ export function CarePlanSummaryView({
 
   const isEmpty = loadedFor && goals.length === 0 && interventions.length === 0 && barriers.length === 0;
 
-  const [openSections, setOpenSections] = useState({ programs: true, goals: true, interventions: true, barriers: true });
+  const [openSections, setOpenSections] = useState({ aiSummary: true, programs: true, goals: true, interventions: true, barriers: true });
   const toggleSection = (k) => setOpenSections(s => ({ ...s, [k]: !s[k] }));
 
   // Active programs summary row set. Only surfaces programs whose
@@ -960,7 +880,6 @@ export function CarePlanSummaryView({
       })
       .filter(Boolean);
   }, [programs, patientCarePlans, patientCarePlanAudit, patientId, currentPatient?.pcp]);
-  const showToast = useAppStore(s => s.showToast);
 
   // Summarize — the cross-program recap (via the /api/care-plan-summary proxy,
   // which keeps the Gemini key server-side). It is persisted one row per patient
@@ -975,49 +894,13 @@ export function CarePlanSummaryView({
     if (patientId) fetchPatientCarePlanSummary(patientId);
   }, [patientId, fetchPatientCarePlanSummary]);
 
-  // `generating` is the only local bit — the in-flight state while the model
-  // writes. The rest derives from the persisted recap.
-  const [generating, setGenerating] = useState(false);
-  const savedSummary = savedSummaryEntry?.summary || null;
-  const summaryState = generating ? 'loading' : (savedSummary ? 'ready' : 'idle');
-
-  const generateSummary = async ({ regenerate = false } = {}) => {
-    if (generating) return;
-    if (goals.length + interventions.length + barriers.length === 0) {
-      showToast?.('No care plan content to summarize yet');
-      return;
-    }
-    setGenerating(true);
-    if (regenerate) showToast?.('Regenerating summary…');
-    try {
-      const summary = await fetchCarePlanSummary(buildSummaryPayload({
-        patientName: currentPatient?.name, programs, conditions, goals, interventions, barriers,
-      }));
-      await savePatientCarePlanSummary(patientId, summary);
-    } catch (err) {
-      showToast?.(err.message || (regenerate ? 'Could not regenerate the summary' : 'Could not generate the summary'));
-    } finally {
-      setGenerating(false);
-    }
-  };
-  const summarizePrograms = () => generateSummary();
-  const regenerateSummary = () => { if (savedSummary) generateSummary({ regenerate: true }); };
-  const copySummary = () => {
-    const s = savedSummary;
-    if (!s) return;
-    const bits = [
-      `${s.intro}`,
-      ...s.points.map((p, i) => `${i + 1}. ${p.title}: ${p.body}`),
-      '',
-      'Action Items :',
-      ...s.actions.map(a => `• ${a}`),
-    ];
-    navigator.clipboard?.writeText(bits.join('\n')).then(
-      () => showToast?.('Summary copied'),
-      () => showToast?.('Copy failed'),
-    );
-  };
-  const clearSummary = () => { deletePatientCarePlanSummary(patientId); };
+  const summary = useCarePlanAiSummary({
+    saved: savedSummaryEntry?.summary || null,
+    onSave: (next) => savePatientCarePlanSummary(patientId, next),
+    onDelete: () => deletePatientCarePlanSummary(patientId),
+    buildPayload: () => buildSummaryPayload({ patientName: currentPatient?.name, programs, conditions, goals, interventions, barriers }),
+    isEmpty: goals.length + interventions.length + barriers.length === 0,
+  });
 
   // "Activity Since Review" drawer target — the row the user clicked;
   // null when the drawer is closed.
@@ -1088,48 +971,60 @@ export function CarePlanSummaryView({
       ) : (
         <div className={styles.body}>
           <div className={styles.section}>
+            {/* AI Summary: the cross-program recap, saved until someone
+                regenerates or dismisses it. Its own section, separate from
+                the Active Programs table. */}
+            <div className={styles.splitHead}>
+              <button
+                type="button"
+                className={styles.sectionHead}
+                onClick={() => toggleSection('aiSummary')}
+                aria-expanded={openSections.aiSummary}
+              >
+                <DownChevronIcon
+                  size={16}
+                  color="var(--neutral-400)"
+                  className={`${styles.sectionChevron} ${openSections.aiSummary ? '' : styles.sectionChevronClosed}`}
+                />
+                <span className={styles.sectionTitle}>AI Summary</span>
+              </button>
+              {/* Opens the section too, so the result isn't generated out of sight. */}
+              <SummarizeButton
+                state={summary.state}
+                onClick={() => { setOpenSections(s => ({ ...s, aiSummary: true })); summary.generate(); }}
+                idleLabel="Summarize active programs"
+              />
+            </div>
+            {openSections.aiSummary && summary.state === 'loading' && <AiSummarySkeleton />}
+            {openSections.aiSummary && summary.state === 'ready' && (
+              <AiSummaryCard
+                data={savedSummaryEntry.summary}
+                onCopy={summary.copy}
+                onRegenerate={summary.regenerate}
+                onDelete={summary.clear}
+              />
+            )}
+          </div>
+
+          <div className={styles.section}>
             {/* Active Programs Summary — one row per enrolled program.
                 Sits above the GBI sections so the reader gets a quick
                 who-owns-what recap (PCM / PCP / last review / activity
                 since review) before diving into the goal / intervention
                 lists. Closed / completed enrollments are hidden. */}
-            <div className={styles.activeProgramsHead}>
-              <button
-                type="button"
-                className={styles.sectionHead}
-                onClick={() => toggleSection('programs')}
-                aria-expanded={openSections.programs}
-              >
-                <DownChevronIcon
-                  size={16}
-                  color="var(--neutral-400)"
-                  className={`${styles.sectionChevron} ${openSections.programs ? '' : styles.sectionChevronClosed}`}
-                />
-                <span className={styles.sectionTitle}>Active Programs Summary</span>
-              </button>
-              {/* State-aware trigger — Summarize (idle) → AI is
-                  writing… (loading) → Generated Summary (ready).
-                  Loading state disables re-triggering; ready state
-                  acts as a passive label. */}
-              <button
-                type="button"
-                className={`${styles.summarizeBtn} ${summaryState === 'loading' ? styles.summarizeBtnBusy : ''}`}
-                onClick={summarizePrograms}
-                disabled={summaryState !== 'idle'}
-                aria-label={
-                  summaryState === 'loading' ? 'Summary is generating'
-                  : summaryState === 'ready' ? 'Summary generated'
-                  : 'Summarize active programs'
-                }
-              >
-                <Icon name="custom:ai" size={14} color="var(--primary-300)" />
-                <span>
-                  {summaryState === 'loading' ? 'AI is writing…'
-                  : summaryState === 'ready' ? 'Generated Summary'
-                  : 'Summarize'}
-                </span>
-              </button>
-            </div>
+            <button
+              type="button"
+              className={styles.sectionHead}
+              onClick={() => toggleSection('programs')}
+              aria-expanded={openSections.programs}
+            >
+              <DownChevronIcon
+                size={16}
+                color="var(--neutral-400)"
+                className={`${styles.sectionChevron} ${openSections.programs ? '' : styles.sectionChevronClosed}`}
+              />
+              <span className={styles.sectionTitle}>Active Programs Summary</span>
+            </button>
             {openSections.programs && (
               activeProgramRows.length === 0 ? (
                 <div className={styles.programsEmpty}>No active programs.</div>
@@ -1140,26 +1035,6 @@ export function CarePlanSummaryView({
                   onOpenActivity={setActivityReviewOpen}
                 />
               )
-            )}
-            {openSections.programs && summaryState === 'loading' && (
-              <div className={styles.summarySkeleton} aria-live="polite">
-                <span className={styles.summarySkeletonLine} style={{ width: '70%' }} />
-                <span className={styles.summarySkeletonLine} style={{ width: '90%' }} />
-                <span className={styles.summarySkeletonLine} style={{ width: '55%' }} />
-                <Icon name="solar:refresh-linear" size={16} color="var(--primary-300)" className={styles.summarySpinner} />
-              </div>
-            )}
-            {openSections.programs && summaryState === 'ready' && savedSummary && (
-              <SummaryCard
-                data={savedSummary}
-                index={0}
-                total={1}
-                onPrev={() => {}}
-                onNext={() => {}}
-                onCopy={copySummary}
-                onRegenerate={regenerateSummary}
-                onDelete={clearSummary}
-              />
             )}
           </div>
 

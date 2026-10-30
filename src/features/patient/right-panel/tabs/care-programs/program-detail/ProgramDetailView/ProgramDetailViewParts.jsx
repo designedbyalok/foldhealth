@@ -1,5 +1,6 @@
 import { Icon } from '../../../../../../../components/Icon/Icon';
 import { DownChevronIcon } from '../../../../../../../components/Icon/DownChevronIcon';
+import { UnityIcon } from '../../../../../../../components/UnityIcon/UnityIcon';
 import { RingEmptyState } from '../../../../../../../components/RingEmptyState/RingEmptyState';
 import { Button } from '../../../../../../../components/Button/Button';
 import { focusCarePlanPanel, closeCarePlanPanel } from '../../../../../hooks/useProgramPanelSplitActive';
@@ -73,7 +74,8 @@ function StepStatusIcon({ status }) {
   return <span className={styles.statusPending} role="img" aria-label={label} title={label} />;
 }
 
-export function StepItem({ step, isActive, onClick, isChild }) {
+// `recommended`: a care plan recommendation awaits approval on this step.
+export function StepItem({ step, isActive, onClick, isChild, recommended = false }) {
   return (
     <button
       className={`${styles.stepItem} ${isActive ? styles.stepItemActive : ''} ${isChild ? styles.stepChild : ''}`}
@@ -81,6 +83,11 @@ export function StepItem({ step, isActive, onClick, isChild }) {
     >
       <StepStatusIcon status={step.status} />
       <span className={isActive ? styles.stepNameActive : styles.stepName}>{step.name}</span>
+      {recommended && (
+        <span className={styles.recommendedMark} role="img" aria-label="Care plan recommendation awaiting approval" title="Care plan recommendation awaiting approval">
+          <UnityIcon size={14} color="var(--primary-300)" />
+        </span>
+      )}
       {(step.mandatory || step.hasAlert) && <span className={styles.mandatoryDot} />}
     </button>
   );

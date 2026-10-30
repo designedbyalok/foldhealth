@@ -531,6 +531,9 @@ function mapPatientCarePlanRow(row) {
     conditions: (row.conditions || []).map(label => ({ label })),
     conditionTotal: row.condition_total ?? (row.conditions || []).length,
     appliedTemplateIds: row.applied_template_ids || [],
+    // A recommendation's templates awaiting approval (care_plan_recommended_templates
+    // migration): [{ id, name, why, automation }].
+    recommendedTemplates: Array.isArray(row.recommended_templates) ? row.recommended_templates : [],
     // { [templateId]: 'low' | 'medium' | 'high' } — categorizes the applied
     // templates on the sticky-top strip. Empty until Alok Kumar runs the
     // care_plan_applied_template_priorities migration.

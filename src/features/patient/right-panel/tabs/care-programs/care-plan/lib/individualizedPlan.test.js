@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  buildIndividualizedPrompt, buildPatientFacts, buildTemplateChoices, draftCounts, normalizeIndividualizedDraft,
+  buildIndividualizedPrompt, buildPatientFacts, buildTemplateChoices, draftCounts, draftLimits, normalizeIndividualizedDraft, recommendedForPrompt,
 } from './individualizedPlan';
 
 const today = new Date(2026, 9, 19);
@@ -92,5 +92,57 @@ describe('normalizeIndividualizedDraft', () => {
     const prompt = buildIndividualizedPrompt({ facts, templates, catalog, programName: 'Disease Management' });
     for (const f of facts) expect(prompt).toContain(f.id);
     expect(prompt).toContain('Disease Management');
+  });
+});
+
+describe('automation-recommended plans', () => {
+  const templates = buildTemplateChoices(
+    [
+      { id: 't-dm', name: 'Diabetes Management', status: 'published', scope: 'org', goals: [{ id: 'g1' }] },
+      { id: 't-htn', name: 'Hypertension', status: 'published', scope: 'org', goals: [] },
+      { id: 't-other', name: 'COPD', status: 'published', scope: 'org', goals: [] },
+    ],
+    [{ id: 'g1', title: 'Improve A1C control' }],
+  );
+  const catalog = { goals: [{ id: 'g1', title: 'Improve A1C control' }], interventions: [], barriers: [] };
+  const a1c = facts.find(f => f.kind === 'lab_trend').id;
+  const recommended = [
+    { templateId: 't-dm', rule: 'Diabetes with A1C over 9', criteria: ['HbA1c > 9'] },
+    { templateId: 't-htn', rule: 'Hypertension', criteria: ['Has Hypertension'] },
+    { templateId: 't-htn', rule: 'Duplicate', criteria: [] },
+    { templateId: 'gone', rule: 'Deleted template', criteria: [] },
+  ];
+
+  it('keeps one entry per template that was sent', () => {
+    expect(recommendedForPrompt(recommended, templates).map(r => r.templateId)).toEqual(['t-dm', 't-htn']);
+  });
+
+  it('grows the caps with the number of matched templates', () => {
+    expect(draftLimits(0)).toEqual({ templates: 2, goals: 6, interventions: 12, barriers: 8 });
+    expect(draftLimits(3)).toEqual({ templates: 3, goals: 10, interventions: 20, barriers: 12 });
+    expect(draftLimits(20).goals).toBe(12);
+  });
+
+  it('asks the model to merge every match', () => {
+    const prompt = buildIndividualizedPrompt({ facts, templates, catalog, programName: 'CCM', recommended });
+    expect(prompt).toContain('Use ALL of them');
+    expect(prompt).toContain('MATCHES (JSON)');
+    expect(prompt).toContain('Diabetes with A1C over 9');
+    expect(buildIndividualizedPrompt({ facts, templates, catalog })).not.toContain('MATCHES');
+  });
+
+  it('records every matched template, and only matched ones', () => {
+    const draft = normalizeIndividualizedDraft({
+      summary: 'Diabetes and blood pressure.',
+      templates: [{ templateId: 't-dm', why: 'A1C rising', citations: [a1c] }, { templateId: 't-other', why: 'x', citations: [a1c] }],
+      goals: [{ libraryId: 'g1', title: 'Improve A1C control', priority: 'high', rationale: 'A1C', citations: [a1c] }],
+      interventions: [],
+      barriers: [],
+    }, { facts, templates, catalog, recommended });
+    expect(draft.templates.map(t => [t.id, t.automation])).toEqual([
+      ['t-dm', 'Diabetes with A1C over 9'],
+      ['t-htn', 'Hypertension'],
+    ]);
+    expect(draft.templates[1]).toMatchObject({ why: 'Matched by automation: Hypertension', citations: [] });
   });
 });
