@@ -385,6 +385,3 @@
   background: var(--status-error);
   flex-shrink: 0;
 }
-
-/* The (i) beside Send To, with its explanation on hover. */
-.recipientInfo { flex-shrink: 0; cursor: help; }

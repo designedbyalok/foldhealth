@@ -28,7 +28,7 @@ import { useAppStore } from '../../../store/useAppStore';
 import {
   personMeta, withDecisionMakers, pickOneDecisionMaker, verifyForSendTo, DEFAULT_ID_VERIFICATION, verifyBlockers, protectSms, protectHtml, SECURE_SMS_PREFIX, SEND_TO_INFO, SEND_TO_PLACEHOLDER, sendToChipLabel,
 } from './sendTo';
-import { VerifyIdCard, VerifyIdField, VerifyIdStack, VerifyIdReveal } from './VerifyIdCard';
+import { VerifyIdCard, VerifyIdField, VerifyIdReveal } from './VerifyIdCard';
 import { PersonOption, PersonTip } from './PersonOption';
 import styles from './PatientSendDrawers.module.css';
 
@@ -200,7 +200,9 @@ function useSendTo(recipient, onVerifyChange) {
     if (on !== null) onVerifyChange?.(on);
     setPicked(next);
   };
-  return { people, picked: shown, setPicked: pick, targets, hasRoles };
+  // Protect links only matters once someone besides the member is picked.
+  const withOthers = hasRoles && shown.some(v => v !== 'patient');
+  return { people, picked: shown, setPicked: pick, targets, hasRoles, withOthers };
 }
 
 function SendToField({ people, picked, setPicked, error }) {
@@ -217,7 +219,7 @@ function SendToField({ people, picked, setPicked, error }) {
         triggerLabel: sendToChipLabel(p.name, p.type),
         searchText: `${p.name} ${p.type} ${p.email || ''} ${p.phone || ''}`,
         disabled: !p.email && !p.phone,
-        label: <PersonOption name={p.name} initials={p.initials} meta={p.missing ? 'None on record' : reach(p) || 'No email or phone on record'} tag={p.type} />,
+        label: <PersonOption name={p.name} initials={p.initials} meta={reach(p) || 'No email or phone on record'} tag={p.type} />,
         badgeTooltip: <PersonTip name={p.name} initials={p.initials} email={reach(p)} tag={p.type} />,
       }))}
       value={picked}
@@ -300,9 +302,9 @@ export function SendContentDrawer({ patient, onClose }) {
   const [verifyId, setVerifyId] = useState(DEFAULT_ID_VERIFICATION);
   const canvasRef = useRef(null);
   const sendTo = useSendTo(recipient, (on) => setVerifyId(x => ({ ...x, on })));
-  // Verify identity only applies when Send To shows (the member has other
-  // people on record); sending to the member alone isn't protected.
-  const activeVerify = sendTo.hasRoles ? verifyId : { ...verifyId, on: false };
+  // Verify identity only applies once someone besides the member is picked;
+  // sending to the member alone isn't protected.
+  const activeVerify = sendTo.withOthers ? verifyId : { ...verifyId, on: false };
   const blockers = verifyBlockers(activeVerify, sendTo.targets);
   // Verify ID's opening line takes part of the SMS limit.
   const smsLimit = activeVerify.on ? SMS_LIMIT - SECURE_SMS_PREFIX : SMS_LIMIT;
@@ -362,18 +364,8 @@ export function SendContentDrawer({ patient, onClose }) {
             <SendToField {...sendTo} error={touched && !sendTo.targets.length ? 'Choose who to send to.' : undefined} />
           </Row>
         )}
-        <Row label="Member Education" required>
-          <Select
-            searchable
-            searchPlaceholder="Search content"
-            options={content.map(c => ({ value: c.id, label: c.title }))}
-            value={contentId}
-            onChange={(v) => { setContentId(v); setSmsEdited(false); }}
-            placeholder="Search Content"
-            errorText={touched && !item ? 'Choose the content to send.' : undefined}
-          />
-        </Row>
-        {sendTo.hasRoles && (
+        {/* Protect links right under Send To, the choice that calls for it. */}
+        {sendTo.withOthers && (
           <Row className={styles.verifyRow} label="Protect links">
             <VerifyIdField
               value={verifyId}
@@ -386,6 +378,17 @@ export function SendContentDrawer({ patient, onClose }) {
             />
           </Row>
         )}
+        <Row label="Member Education" required>
+          <Select
+            searchable
+            searchPlaceholder="Search content"
+            options={content.map(c => ({ value: c.id, label: c.title }))}
+            value={contentId}
+            onChange={(v) => { setContentId(v); setSmsEdited(false); }}
+            placeholder="Search Content"
+            errorText={touched && !item ? 'Choose the content to send.' : undefined}
+          />
+        </Row>
         <Row label="Priority" required>
           <PriorityPicker value={priority} onChange={setPriority} />
         </Row>
@@ -470,9 +473,9 @@ export function SendAssessmentDrawer({ patient, initialFormIds, onClose }) {
     return ch.email ? `${t.name} by email` : ch.sms ? `${t.name} by SMS` : null;
   }).filter(Boolean);
 
-  // Verify identity only applies when Send To shows (the member has other
-  // people on record); sending to the member alone isn't protected.
-  const activeVerify = sendTo.hasRoles ? verifyId : { ...verifyId, on: false };
+  // Verify identity only applies once someone besides the member is picked;
+  // sending to the member alone isn't protected.
+  const activeVerify = sendTo.withOthers ? verifyId : { ...verifyId, on: false };
   const blockers = verifyBlockers(activeVerify, sendTo.targets);
 
   const send = async () => {
@@ -543,8 +546,12 @@ export function SendAssessmentDrawer({ patient, initialFormIds, onClose }) {
             <SendToField {...sendTo} />
           </div>
         )}
+        {/* Forms are required, so there are always links: Protect links shows
+            right under Send To once someone besides the member is picked. */}
+        <VerifyIdReveal show={sendTo.withOthers}>
+          <VerifyIdCard value={verifyId} onChange={setVerifyId} blockers={blockers} />
+        </VerifyIdReveal>
         <Select label="Template" searchable options={templates} value={templateId} onChange={setTemplateId} />
-        <VerifyIdStack>
         <Select
           label="Form List"
           required
@@ -558,11 +565,6 @@ export function SendAssessmentDrawer({ patient, initialFormIds, onClose }) {
           onChange={setFormIds}
           placeholder="Search Form"
         />
-        {/* Forms are required, so there are always links; it shows with Send To. */}
-        <VerifyIdReveal show={sendTo.hasRoles}>
-          <VerifyIdCard value={verifyId} onChange={setVerifyId} blockers={blockers} />
-        </VerifyIdReveal>
-        </VerifyIdStack>
         <div className={styles.preview}>
           <EmailCanvas html={html} editing={false} />
         </div>

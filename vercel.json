@@ -79,6 +79,10 @@
       "destination": "/api/ai?route=patient-recap-summary"
     },
     {
+      "source": "/api/template-optimization",
+      "destination": "/api/ai?route=template-optimization"
+    },
+    {
       "source": "/api/clinical-protocol-parse",
       "destination": "/api/ai?route=clinical-protocol-parse"
     },

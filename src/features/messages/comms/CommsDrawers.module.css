@@ -116,17 +116,3 @@
   color: var(--neutral-300);
 }
 
-/* New SMS: the member's contacts are opt-in, behind a link under Member. */
-.addContacts {
-  display: inline-flex;
-  margin-top: calc(var(--space-2) * -1);
-}
-.addContactsLink {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-size: var(--font-sm);
-}
-
-.removeLink { font-size: var(--font-sm); }
-

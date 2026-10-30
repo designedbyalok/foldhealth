@@ -1,0 +1,41 @@
+/* Care Plan Library > Suggestions. Row styles match Clinical Protocols. */
+
+.wrapper { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
+.content { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.filterBar {
+  display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap;
+  padding: var(--space-2) var(--space-4); border-bottom: 0.5px solid var(--neutral-150);
+}
+.filterNote { margin-left: auto; font-size: var(--font-sm); color: var(--neutral-300); }
+.notice { padding: var(--space-3) var(--space-4) 0; }
+
+.row { border-bottom: 0.5px solid var(--neutral-100); }
+.row:hover td { background: var(--neutral-50); }
+.td {
+  padding: var(--space-3); font-size: var(--font-base); color: var(--neutral-300);
+  vertical-align: middle; background: var(--neutral-0);
+}
+.tdName, .tdActions { position: sticky; z-index: 2; border-bottom: 0.5px solid var(--neutral-100); }
+.tdName { left: 0; min-width: 240px; max-width: 320px; }
+.tdActions { right: 0; padding-right: var(--space-2); }
+.nameCell { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.nameLink {
+  max-width: 100%; padding: 0; border: 0; background: none; cursor: pointer; text-align: left;
+  font-size: var(--font-base); font-weight: 500; color: var(--neutral-400);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.nameLink:hover { color: var(--primary-300); }
+.nameSub { font-size: var(--font-sm); color: var(--neutral-300); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nowrap { white-space: nowrap; }
+
+.why { display: flex; flex-direction: column; gap: var(--space-1); }
+.whyText, .aiText { font-size: var(--font-base); line-height: var(--leading-normal); color: var(--neutral-400); }
+.aiText { display: flex; align-items: flex-start; gap: var(--space-1); }
+.aiText > :first-child { flex-shrink: 0; margin-top: calc(var(--space-1) / 2); }
+.whySub { font-size: var(--font-sm); line-height: var(--leading-tight); color: var(--neutral-300); }
+
+.actionCell { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); }
+.emptyState {
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-3);
+  padding: var(--space-12) 0; color: var(--neutral-300); font-size: var(--font-base);
+}

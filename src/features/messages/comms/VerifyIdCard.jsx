@@ -132,8 +132,9 @@ function EditLink({ onClick }) {
  * @param {object}   props.value     – DEFAULT_ID_VERIFICATION's shape
  * @param {function} props.onChange  – (next) => void
  * @param {{name: string, available: string[]}[]} [props.blockers] – verifyBlockers(); blocks Send
+ * @param {string} [props.hint] – under the label while it's off
  */
-export function VerifyIdCard({ value: v, onChange, blockers = [] }) {
+export function VerifyIdCard({ value: v, onChange, blockers = [], hint }) {
   const [editing, setEditing] = useState(null); // the draft while Edit is open
   const label = 'Protect links';
 
@@ -148,7 +149,12 @@ export function VerifyIdCard({ value: v, onChange, blockers = [] }) {
     return (
       <label className={`${styles.card} ${styles.offCard}`}>
         {check}
-        <span className={styles.offLabel}>{label}</span>
+        {hint ? (
+          <span className={styles.summaryLines}>
+            <span className={styles.offLabel}>{label}</span>
+            <span className={styles.desc}>{hint}</span>
+          </span>
+        ) : <span className={styles.offLabel}>{label}</span>}
       </label>
     );
   }

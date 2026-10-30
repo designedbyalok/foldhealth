@@ -89,7 +89,7 @@ export function ApplyTemplatesDrawer({
   const allTemplates = useAppStore(s => s.carePlanTemplates);
   const authUserId = useAppStore(s => s.authUserId);
   const templates = useMemo(
-    () => (allTemplates || []).filter(t => (patientId
+    () => (allTemplates || []).filter(t => t.status !== 'archived' && (patientId
       ? availableForPatient(t, authUserId, patientId)
       : inLibrary(t, authUserId))),
     [allTemplates, authUserId, patientId],

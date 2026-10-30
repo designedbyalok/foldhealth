@@ -6,7 +6,6 @@ import { Select } from '../../../components/Select/Select';
 import { Input } from '../../../components/Input/Input';
 import { Switch } from '../../../components/Switch/Switch';
 import { Icon } from '../../../components/Icon/Icon';
-import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { Link } from '../../../components/Link/Link';
 import { isEmailAddress } from '../../../components/RecipientInput/isEmailAddress';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
@@ -23,11 +22,12 @@ import { formShareLink } from '../../forms/formLink';
 import { EDUCATION_LIBRARY } from './educationLibrary';
 import { draftPatientEmail } from './draftPatientEmail';
 import { SendToSection } from './SendToSection';
+import { SendToPicker } from './SendToPicker';
 import {
   DEFAULT_PROTECTION, DEFAULT_ID_VERIFICATION, contactFor, recipientError, personMeta, verifyBlockers, protectHtml, hasLink, withDecisionMakers, pickOneDecisionMaker, verifyForSendTo, SEND_TO_INFO, SEND_TO_PLACEHOLDER, sendToChipLabel,
 } from './sendTo';
 import { PersonOption, PersonTip } from './PersonOption';
-import { VerifyIdCard, VerifyIdStack, VerifyIdReveal } from './VerifyIdCard';
+import { VerifyIdCard, VerifyIdReveal } from './VerifyIdCard';
 import { useAppStore } from '../../../store/useAppStore';
 import { RecipientInput } from '../../../components/RecipientInput/RecipientInput';
 import { useEmailTemplates, withBody } from './useEmailTemplates';
@@ -137,18 +137,17 @@ export function ComposeEmailDrawer({ initial = {}, onClose, onSent }) {
     { value: 'patient', label: patient.name, email: patient.email, phone: patient.phone, dob: patient.dob, type: 'Patient', meta: personMeta(patient), initials: patient.initials },
     ...(contacts ? withDecisionMakers(contacts) : []).map(c => ({ value: c.id, label: c.name, email: c.email, phone: c.phone, dob: c.dob, type: c.type, missing: c.missing, meta: personMeta(c) })),
   ] : [];
-  // Send To only shows once a patient with other people on record (care
-  // giver, decision maker…) is picked; otherwise the email goes to the patient.
+  // Send To can only be opened once a patient with other people on record
+  // (care giver, decision maker…) is picked; otherwise the email goes to the patient.
   const hasRoles = !!patient && (contacts || []).length > 0;
-  // Verify identity sits above the email so it's seen before writing: under the
-  // template fields (templates carry their own links, so always), or under the
-  // Email Template switch once the body has a link.
-  // It only applies when Send To shows (someone besides the patient can
-  // receive it).
-  const protectable = !forPatient && hasRoles && (useTemplate || hasLink(body));
   const sendToPicked = hasRoles ? picked : (patient?.email ? ['patient'] : []);
+  // Protect links sits under Send To, so it's set before writing; it
+  // shows once someone besides the patient is picked, and protects the email
+  // when it has links (a template always carries its own).
+  const withOthers = !forPatient && hasRoles && sendToPicked.some(v => v !== 'patient');
+  const protectable = withOthers && (useTemplate || hasLink(body));
   const blockers = protectable ? verifyBlockers(verifyId, people.filter(o => sendToPicked.includes(o.value)).map(o => ({ ...o, name: o.label }))) : [];
-  const verifyCard = <VerifyIdCard value={verifyId} onChange={(v) => { setDirty(true); setVerifyId(v); }} blockers={blockers} />;
+  const verifyCard = <VerifyIdCard value={verifyId} onChange={(v) => { setDirty(true); setVerifyId(v); }} blockers={blockers} hint="Applies to any links in the email" />;
   const globalTo = people.filter(o => sendToPicked.includes(o.value)).map(o => o.email).filter(Boolean);
   const to = forPatient
     ? [contact?.email, ...extraContacts.map(c => c.email)].filter(Boolean)
@@ -186,6 +185,14 @@ export function ComposeEmailDrawer({ initial = {}, onClose, onSent }) {
     setPatientId(id);
     const p = patients.find(x => String(x.id) === id);
     setPicked(p?.email ? ['patient'] : []);
+  };
+  const updatePicked = (v) => {
+    setDirty(true);
+    const next = pickOneDecisionMaker(v, picked, id => people.find(o => o.value === id)?.type);
+    // Anyone but the patient turns Verify identity on; patient only, off.
+    const on = verifyForSendTo(next, picked);
+    if (on !== null) setVerifyId(x => ({ ...x, on }));
+    setPicked(next);
   };
 
   // Cc / Bcc list Fold users only.
@@ -370,44 +377,25 @@ export function ComposeEmailDrawer({ initial = {}, onClose, onSent }) {
               />
             </div>
             {hasRoles && (
-              <div className={styles.recipientField}>
-                <div className={styles.recipientLabelRow}>
-                  <span className={styles.recipientLabel}>
-                    Send To
-                    <Tooltip label={SEND_TO_INFO} maxWidth={280}>
-                      <Icon name="solar:info-circle-linear" size={12} color="var(--neutral-300)" className={styles.recipientInfo} aria-label={SEND_TO_INFO} />
-                    </Tooltip>
-                    <span className={styles.recipientRequired} aria-hidden="true" />
-                  </span>
-                  {ccLinks}
-                </div>
-                {/* The patient and their contacts (Figma 2910:39991); no email, no pick. */}
-                <Select
-                  multiple
-                  checkboxes
-                  badges
-                  searchable
-                  searchPlaceholder="Search by name"
-                  options={people.map(o => ({
-                    value: o.value,
-                    triggerLabel: sendToChipLabel(o.label, o.type),
-                    searchText: `${o.label} ${o.type} ${o.email || ''}`,
-                    disabled: !o.email,
-                    label: <PersonOption name={o.label} initials={o.initials} meta={o.missing ? 'None on record' : o.email || 'No email address on record'} tag={o.type} />,
-                    badgeTooltip: <PersonTip name={o.label} initials={o.initials} email={o.email} tag={o.type} />,
-                  }))}
-                  value={picked}
-                  onChange={(v) => {
-                    setDirty(true);
-                    const next = pickOneDecisionMaker(v, picked, id => people.find(o => o.value === id)?.type);
-                    // Anyone but the patient turns Verify identity on; patient only, off.
-                    const on = verifyForSendTo(next, picked);
-                    if (on !== null) setVerifyId(x => ({ ...x, on }));
-                    setPicked(next);
-                  }}
-                  placeholder={SEND_TO_PLACEHOLDER}
-                />
-              </div>
+              <SendToPicker
+                labelEnd={ccLinks}
+                showInfo
+                infoText={SEND_TO_INFO}
+                // The patient and their contacts (Figma 2910:39991); no email, no pick.
+                options={people.map(o => ({
+                  value: o.value,
+                  triggerLabel: sendToChipLabel(o.label, o.type),
+                  searchText: `${o.label} ${o.type} ${o.email || ''}`,
+                  disabled: !o.email,
+                  label: <PersonOption name={o.label} initials={o.initials} meta={o.email || 'No email address on record'} tag={o.type} />,
+                  badgeTooltip: <PersonTip name={o.label} initials={o.initials} email={o.email} tag={o.type} />,
+                }))}
+                value={picked}
+                onChange={updatePicked}
+                placeholder={SEND_TO_PLACEHOLDER}
+              >
+                <VerifyIdReveal show={withOthers}>{verifyCard}</VerifyIdReveal>
+              </SendToPicker>
             )}
           </>)}
           {forPatient && (<SendToSection
@@ -478,9 +466,7 @@ export function ComposeEmailDrawer({ initial = {}, onClose, onSent }) {
             errorText={subjectError || undefined}
           />
           <Switch checked={useTemplate} onChange={touch(setUseTemplate)} label="Email Template" />
-          {!useTemplate && <VerifyIdReveal show={protectable}>{verifyCard}</VerifyIdReveal>}
           {useTemplate && (
-            <VerifyIdStack>
             <div className={styles.templateRow}>
               <Select
                 label="Template Category"
@@ -507,8 +493,6 @@ export function ComposeEmailDrawer({ initial = {}, onClose, onSent }) {
                 }}
               />
             </div>
-            <VerifyIdReveal show={protectable}>{verifyCard}</VerifyIdReveal>
-            </VerifyIdStack>
           )}
           {!useTemplate && <UnityAIBar onGenerate={generate} generating={generating} />}
           {/* A template carries the email, so only the PHI notice shows; without

@@ -13,8 +13,8 @@ import {
 } from './sendTo';
 import { formatPhone, toE164 } from './commsUtils';
 import { PersonOption, PersonTip } from './PersonOption';
-import { OptInRecipients } from './OptInRecipients';
-import { VerifyIdCard, VerifyIdStack, VerifyIdReveal } from './VerifyIdCard';
+import { SendToPicker } from './SendToPicker';
+import { VerifyIdCard, VerifyIdReveal } from './VerifyIdCard';
 import styles from './CommsDrawers.module.css';
 
 const loadForms = () => supabase.from('forms').select('id, name')
@@ -61,8 +61,6 @@ function ThreadLinkDrawer({ conversation, forName, onInsert, onClose, load, item
     ...(contacts ? withDecisionMakers(contacts) : []).map(c => ({ value: String(c.id), name: c.name, phone: c.phone, email: c.email, dob: c.dob, type: c.type, missing: c.missing, meta: personMeta(c) })),
   ];
   const [picked, setPicked] = useState(() => (patient.phone ? ['patient'] : []));
-  // Recipients are opt-in ("+ Add member contacts"); until then it's the member.
-  const [contactsOpen, setContactsOpen] = useState(false);
   // Send To (and with it Verify identity) only shows on SMS when the member
   // has other people on record; otherwise it goes to the member.
   const hasRoles = sms && (contacts || []).length > 0;
@@ -123,10 +121,7 @@ function ThreadLinkDrawer({ conversation, forName, onInsert, onClose, load, item
           onChange={() => {}}
         />
         {hasRoles && (
-          <OptInRecipients
-            open={contactsOpen}
-            onOpen={() => setContactsOpen(true)}
-            onRemove={() => { pick(['patient']); setContactsOpen(false); }}
+          <SendToPicker
             showInfo
             infoText={SEND_TO_INFO}
             options={people.map(o => ({
@@ -134,30 +129,30 @@ function ThreadLinkDrawer({ conversation, forName, onInsert, onClose, load, item
               triggerLabel: sendToChipLabel(o.name, o.type),
               searchText: `${o.name} ${o.type} ${o.phone || ''}`,
               disabled: !o.phone,
-              label: <PersonOption name={o.name} initials={o.initials} meta={o.missing ? 'None on record' : o.phone ? o.meta : 'No phone number on record'} tag={o.type} />,
+              label: <PersonOption name={o.name} initials={o.initials} meta={o.phone ? formatPhone(o.phone) : 'No phone number on record'} tag={o.type} />,
               badgeTooltip: <PersonTip name={o.name} initials={o.initials} email={o.phone ? formatPhone(o.phone) : ''} tag={o.type} />,
             }))}
             value={picked}
             onChange={pick}
             placeholder={SEND_TO_PLACEHOLDER}
-          />
+          >
+            {/* The item is required, so there's always a link; Protect links
+                shows under Send To once someone besides the patient gets it. */}
+            <VerifyIdReveal show={withOthers}>
+              <VerifyIdCard value={verifyId} onChange={setVerifyId} blockers={blockers} />
+            </VerifyIdReveal>
+          </SendToPicker>
         )}
-        <VerifyIdStack>
-          <Select
-            label={itemLabel}
-            required
-            searchable
-            searchPlaceholder={`Search ${itemLabel.toLowerCase()}`}
-            options={items.map(i => ({ value: i.id, label: i.name }))}
-            value={itemId}
-            onChange={setItemId}
-            placeholder={`Search ${itemLabel}`}
-          />
-          {/* The item is required, so there's always a link; it shows once someone besides the patient gets it. */}
-          <VerifyIdReveal show={withOthers}>
-            <VerifyIdCard value={verifyId} onChange={setVerifyId} blockers={blockers} />
-          </VerifyIdReveal>
-        </VerifyIdStack>
+        <Select
+          label={itemLabel}
+          required
+          searchable
+          searchPlaceholder={`Search ${itemLabel.toLowerCase()}`}
+          options={items.map(i => ({ value: i.id, label: i.name }))}
+          value={itemId}
+          onChange={setItemId}
+          placeholder={`Search ${itemLabel}`}
+        />
       </div>
     </Drawer>
   );

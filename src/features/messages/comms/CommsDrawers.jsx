@@ -8,7 +8,7 @@ import { RadioButton } from '../../../components/RadioButton/RadioButton';
 import { InfoBar } from '../../../components/InfoBar/InfoBar';
 import { Icon } from '../../../components/Icon/Icon';
 import { Link } from '../../../components/Link/Link';
-import { OptInRecipients } from './OptInRecipients';
+import { SendToPicker } from './SendToPicker';
 import { toast } from '../../../components/Toast/sonnerToast';
 import { findOrCreateConversation, addMessage, updateConversation } from './commsRepo';
 import { sendSms } from './commsSend';
@@ -19,7 +19,7 @@ import { useAppStore } from '../../../store/useAppStore';
 import {
   personMeta, withDecisionMakers, pickOneDecisionMaker, verifyForSendTo, DEFAULT_ID_VERIFICATION, verifyBlockers, hasLink, protectSms, SECURE_SMS_PREFIX, SEND_TO_INFO, SEND_TO_PLACEHOLDER, sendToChipLabel,
 } from './sendTo';
-import { VerifyIdCard, VerifyIdStack, VerifyIdReveal } from './VerifyIdCard';
+import { VerifyIdCard, VerifyIdReveal } from './VerifyIdCard';
 import { PersonOption, PersonTip } from './PersonOption';
 import {
   membersForConversation, memberMeta, memberLabel, withForPrefix, keepPrefix, forPrefix,
@@ -207,11 +207,8 @@ export function NewSmsDrawer({ onClose, onSent, initialPatient }) {
   const [picked, setPicked] = useState(() => memberPick(to));
   const [logForId, setLogForId] = useState(null);
   const [appliedTag, setAppliedTag] = useState(null);
-  // Contacts are opt-in: "+ Add member contacts" opens Recipients, with the
-  // member already in it.
-  const [contactsOpen, setContactsOpen] = useState(false);
   const [pickedFor, setPickedFor] = useState(to);
-  if (pickedFor !== to) { setPickedFor(to); setPicked(memberPick(to)); setLogForId(null); setContactsOpen(false); setAppliedTag(null); setBody(b => withForPrefix(b, null)); }
+  if (pickedFor !== to) { setPickedFor(to); setPicked(memberPick(to)); setLogForId(null); setAppliedTag(null); setBody(b => withForPrefix(b, null)); }
   // Send To only shows when the member has other people on record (care
   // giver, decision maker…); otherwise the text goes to the member.
   const hasRoles = !!patient && (contacts || []).length > 0;
@@ -225,8 +222,6 @@ export function NewSmsDrawer({ onClose, onSent, initialPatient }) {
     if (on !== null) setVerifyId(x => ({ ...x, on }));
     setPicked(next);
   };
-  // Back to texting the member only, with the field hidden again.
-  const removeSendTo = () => { updatePicked(['patient']); setContactsOpen(false); };
 
   // Verify ID only matters once the text has a link, so it shows up then.
   // A typed number has no name or date of birth on record to check.
@@ -327,10 +322,7 @@ export function NewSmsDrawer({ onClose, onSent, initialPatient }) {
           errorText={touched && !recipient ? 'Choose who to text.' : undefined}
         />
         {hasRoles && (
-          <OptInRecipients
-            open={contactsOpen}
-            onOpen={() => setContactsOpen(true)}
-            onRemove={removeSendTo}
+          <SendToPicker
             showInfo
             infoText={SEND_TO_INFO}
             options={people.map(o => ({
@@ -338,14 +330,20 @@ export function NewSmsDrawer({ onClose, onSent, initialPatient }) {
               triggerLabel: sendToChipLabel(o.label, o.type),
               searchText: `${o.label} ${o.type} ${o.phone || ''}`,
               disabled: !o.phone,
-              label: <PersonOption name={o.label} initials={o.initials} meta={o.missing ? 'None on record' : o.phone ? o.meta : 'No phone number on record'} tag={o.type} />,
+              label: <PersonOption name={o.label} initials={o.initials} meta={o.phone ? formatPhone(o.phone) : 'No phone number on record'} tag={o.type} />,
               badgeTooltip: <PersonTip name={o.label} initials={o.initials} email={o.phone ? formatPhone(o.phone) : ''} tag={o.type} />,
             }))}
             value={picked}
             onChange={updatePicked}
             placeholder={SEND_TO_PLACEHOLDER}
             errorText={touched && !targets.length ? 'Choose who to text.' : undefined}
-          />
+          >
+            {/* Protect links sits under Send To, the choice that calls for it,
+                so it's set before writing and doesn't jump in mid-typing. */}
+            <VerifyIdReveal show={withOthers}>
+              <VerifyIdCard value={verifyId} onChange={setVerifyId} blockers={blockers} hint="Applies to any links in the message" />
+            </VerifyIdReveal>
+          </SendToPicker>
         )}
         {sharedNumber && (
           <Select
@@ -357,7 +355,6 @@ export function NewSmsDrawer({ onClose, onSent, initialPatient }) {
             onChange={setLogForId}
           />
         )}
-        <VerifyIdStack>
         <div className={styles.field}>
           <span className={styles.label}>Message <span className={styles.req} aria-hidden="true" /></span>
           <Textarea
@@ -371,10 +368,6 @@ export function NewSmsDrawer({ onClose, onSent, initialPatient }) {
             <span>{body.length + (protect ? SECURE_SMS_PREFIX : 0)}/{SMS_LIMIT}</span>
           </div>
         </div>
-        <VerifyIdReveal show={withOthers && hasLink(body)}>
-          <VerifyIdCard value={verifyId} onChange={setVerifyId} blockers={blockers} />
-        </VerifyIdReveal>
-        </VerifyIdStack>
       </div>
     </Drawer>
   );
