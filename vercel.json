@@ -2,6 +2,9 @@
   "framework": "vite",
   "installCommand": "bunx bun@1.4.2 install",
   "buildCommand": "bunx bun@1.4.2 run build",
+  "git": {
+    "deploymentEnabled": false
+  },
   "redirects": [
     {
       "source": "/docs/",

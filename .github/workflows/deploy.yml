@@ -1,0 +1,85 @@
+name: Deploy
+
+# Vercel deploys are manual. Git pushes no longer deploy on their own
+# (git.deploymentEnabled is false in vercel.json and patient/vercel.json): with
+# many pushes a day, the two Vercel projects were using up the Hobby plan's
+# 100 deployments a day. Run this from the Actions tab (Run workflow):
+#   production  ships what is on main
+#   preview     deploys any branch to a preview URL (shown in the run summary)
+#
+# Needs the repository secret VERCEL_TOKEN (a Vercel access token for the
+# alokfold team). The build still runs on Vercel, as a Git deploy would, with
+# each project's environment variables for the chosen target.
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Production (main only) or a preview of a branch
+        type: choice
+        options: [production, preview]
+        default: production
+      app:
+        description: Which app to deploy
+        type: choice
+        options: [both, app, patient]
+        default: both
+      branch:
+        description: Branch to preview (ignored for production, which always uses main)
+        required: false
+        default: main
+
+concurrency:
+  group: deploy-${{ inputs.target }}-${{ inputs.target == 'production' && 'main' || inputs.branch }}
+  cancel-in-progress: false
+
+env:
+  VERCEL_ORG_ID: team_Jy5FgPnkMqlGk8oMSTu1gqU7
+
+jobs:
+  deploy:
+    name: Deploy ${{ matrix.name }} (${{ inputs.target }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - key: app
+            name: foldhealth
+            project: prj_L4z5PIb5VsIi3O2EEMM1vrVyaBZ1
+          - key: patient
+            name: foldhealth-patient
+            project: prj_KAclMEWFYE7GrgOX1timTbcNPasn
+    steps:
+      - name: Skip unless picked
+        id: pick
+        run: echo "run=${{ inputs.app == 'both' || inputs.app == matrix.key }}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        if: steps.pick.outputs.run == 'true'
+        with:
+          ref: ${{ inputs.target == 'production' && 'main' || inputs.branch }}
+
+      - name: Setup Bun
+        if: steps.pick.outputs.run == 'true'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      # Run from the repo root: the patient project's Root Directory setting
+      # ("patient") picks its folder, and its build reaches back into the root.
+      - name: Deploy
+        if: steps.pick.outputs.run == 'true'
+        env:
+          VERCEL_PROJECT_ID: ${{ matrix.project }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          TARGET: ${{ inputs.target }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::error::Add the VERCEL_TOKEN repository secret (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+          flags="--yes --token=$VERCEL_TOKEN"
+          if [ "$TARGET" = "production" ]; then flags="--prod $flags"; fi
+          url=$(bunx vercel@59.20.0 deploy $flags)
+          echo "Deployed ${{ matrix.name }} ($TARGET, $(git rev-parse --short HEAD)): $url" >> "$GITHUB_STEP_SUMMARY"

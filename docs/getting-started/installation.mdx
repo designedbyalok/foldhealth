@@ -50,3 +50,5 @@ bun run build
 ```
 
 Output goes to `dist/`. The app deploys on Vercel: the static SPA plus the serverless functions in `api/`.
+
+Git pushes do not deploy on their own (`git.deploymentEnabled` is `false` in `vercel.json` and `patient/vercel.json`), so a busy day of pushes can't use up the Vercel Hobby plan's 100 deployments a day. Deploy from the **Deploy** workflow in the GitHub Actions tab (Run workflow): **production** ships what is on `main`, **preview** deploys any branch to a preview URL shown in the run summary, and you pick the app, the patient app, or both. It needs the `VERCEL_TOKEN` repository secret.

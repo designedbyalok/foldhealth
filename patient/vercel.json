@@ -3,5 +3,8 @@
   "framework": "vite",
   "installCommand": "cd .. && bunx bun@1.4.2 install",
   "buildCommand": "cd .. && bunx bun@1.4.2 run build:patient",
+  "git": {
+    "deploymentEnabled": false
+  },
   "outputDirectory": "dist"
 }
