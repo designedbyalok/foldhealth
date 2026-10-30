@@ -256,9 +256,10 @@
   color: var(--rk-text);
 }
 
-/* The body plus a progressive blur at each edge that has more to scroll to:
-   three stacked backdrop blurs, each masked to a band, so text softens
-   gradually instead of being cut off by a hard line. */
+/* The body fills the panel and scrolls under the header and footer, which
+   float over it; padding the size of each bar keeps content clear of them
+   at rest. Each bar carries a progressive blur that shows once content sits
+   beneath it, so nothing is cut off and the body keeps its full height. */
 .rk-scroll {
   position: relative;
   display: flex;
@@ -267,88 +268,89 @@
   min-height: 0;
 }
 
-.rk-edge {
+.rk-scroll > .rk-body {
+  padding-top: var(--rk-bar-top, 0px);
+  padding-bottom: var(--rk-bar-bottom, 0px);
+  scroll-padding-top: var(--rk-bar-top, 0px);
+  scroll-padding-bottom: var(--rk-bar-bottom, 0px);
+}
+
+/* Keep the scrollbar between the bars. */
+.rk-scroll > .rk-body::-webkit-scrollbar-track {
+  margin-top: var(--rk-bar-top, 0px);
+  margin-bottom: var(--rk-bar-bottom, 0px);
+}
+
+.rk-panel > .rk-header,
+.rk-panel > .rk-footer {
   position: absolute;
-  /* Clear of the scrollbar, so it never blurs. */
-  right: 6px;
+  right: 0;
   left: 0;
-  z-index: 3;
-  height: 36px;
+  z-index: 4;
+  isolation: isolate;
+}
+
+.rk-panel > .rk-header { top: 0; }
+.rk-panel > .rk-footer { bottom: 0; }
+
+/* Three stacked backdrop blurs, strongest at the panel edge, each masked to a
+   band, plus a light wash of the surface; it runs a little past the bar so
+   the blur eases off instead of stopping at the bar's edge. */
+.rk-bar-blur {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: -1;
+  height: calc(100% + 16px);
   opacity: 0;
   pointer-events: none;
   transition: opacity 200ms ease;
 }
 
-.rk-edge-top { top: 0; }
-.rk-edge-bottom { bottom: 0; }
+.rk-header > .rk-bar-blur { top: 0; }
+.rk-footer > .rk-bar-blur { bottom: 0; }
 
-.rk-scroll[data-more-above] .rk-edge-top,
-.rk-scroll[data-more-below] .rk-edge-bottom {
+[data-covering] > .rk-bar-blur {
   opacity: 1;
 }
 
-.rk-edge > span {
+.rk-bar-blur > span,
+.rk-bar-blur::after {
   position: absolute;
   inset: 0;
 }
 
-.rk-edge > span:nth-child(1) {
+.rk-bar-blur > span:nth-child(1) {
   -webkit-backdrop-filter: blur(1px);
   backdrop-filter: blur(1px);
 }
-.rk-edge > span:nth-child(2) {
+.rk-bar-blur > span:nth-child(2) {
   -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
 }
-.rk-edge > span:nth-child(3) {
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+.rk-bar-blur > span:nth-child(3) {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
-.rk-edge-top > span:nth-child(1) { mask-image: linear-gradient(to top, transparent, #000 50%); }
-.rk-edge-top > span:nth-child(2) { mask-image: linear-gradient(to top, transparent 33%, #000 75%); }
-.rk-edge-top > span:nth-child(3) { mask-image: linear-gradient(to top, transparent 66%, #000); }
-.rk-edge-bottom > span:nth-child(1) { mask-image: linear-gradient(to bottom, transparent, #000 50%); }
-.rk-edge-bottom > span:nth-child(2) { mask-image: linear-gradient(to bottom, transparent 33%, #000 75%); }
-.rk-edge-bottom > span:nth-child(3) { mask-image: linear-gradient(to bottom, transparent 66%, #000); }
+.rk-header > .rk-bar-blur > span:nth-child(1) { mask-image: linear-gradient(to bottom, #000 40%, transparent); }
+.rk-header > .rk-bar-blur > span:nth-child(2) { mask-image: linear-gradient(to bottom, #000 30%, transparent 75%); }
+.rk-header > .rk-bar-blur > span:nth-child(3) { mask-image: linear-gradient(to bottom, #000 20%, transparent 55%); }
+.rk-footer > .rk-bar-blur > span:nth-child(1) { mask-image: linear-gradient(to top, #000 40%, transparent); }
+.rk-footer > .rk-bar-blur > span:nth-child(2) { mask-image: linear-gradient(to top, #000 30%, transparent 75%); }
+.rk-footer > .rk-bar-blur > span:nth-child(3) { mask-image: linear-gradient(to top, #000 20%, transparent 55%); }
 
-/* A wash of the surface color on top, so the very edge reads as the panel. */
-.rk-edge::after {
+.rk-bar-blur::after {
   content: '';
-  position: absolute;
-  inset: 0;
 }
-.rk-edge-top::after { background: linear-gradient(to bottom, var(--rk-bg), transparent); opacity: 0.5; }
-.rk-edge-bottom::after { background: linear-gradient(to top, var(--rk-bg), transparent); opacity: 0.5; }
+.rk-header > .rk-bar-blur::after { background: linear-gradient(to bottom, var(--rk-bg) 30%, transparent); }
+.rk-footer > .rk-bar-blur::after { background: linear-gradient(to top, var(--rk-bg) 30%, transparent); }
 
 @media (prefers-reduced-transparency: reduce) {
-  .rk-edge > span { display: none; }
-  .rk-edge::after { opacity: 1; }
+  .rk-bar-blur > span { display: none; }
+  .rk-header > .rk-bar-blur::after { background: linear-gradient(to bottom, var(--rk-bg-solid, var(--rk-bg)) 60%, transparent); }
+  .rk-footer > .rk-bar-blur::after { background: linear-gradient(to top, var(--rk-bg-solid, var(--rk-bg)) 60%, transparent); }
 }
-
-/* The content itself also fades out toward an edge with more to scroll, so
-   nothing is clipped by a hard line; the blur above sits on that fade. */
-@property --rk-fade-top {
-  syntax: '<length>';
-  inherits: false;
-  initial-value: 0px;
-}
-@property --rk-fade-bottom {
-  syntax: '<length>';
-  inherits: false;
-  initial-value: 0px;
-}
-
-.rk-scroll > .rk-body {
-  --rk-fade-top: 0px;
-  --rk-fade-bottom: 0px;
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--rk-fade-top), #000 calc(100% - var(--rk-fade-bottom)), transparent);
-  mask-image: linear-gradient(to bottom, transparent, #000 var(--rk-fade-top), #000 calc(100% - var(--rk-fade-bottom)), transparent);
-  transition: --rk-fade-top 200ms ease, --rk-fade-bottom 200ms ease;
-}
-
-.rk-scroll[data-more-above] > .rk-body { --rk-fade-top: 36px; }
-.rk-scroll[data-more-below] > .rk-body { --rk-fade-bottom: 36px; }
 
 .rk-body {
   display: flex;
@@ -1702,6 +1704,8 @@
 .rk-drop-overlay {
   position: absolute;
   inset: var(--rk-space-2);
+  /* Above the floating header and footer. */
+  z-index: 5;
   display: flex;
   align-items: center;
   justify-content: center;

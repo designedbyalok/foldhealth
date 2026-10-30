@@ -144,8 +144,24 @@ export function ReviewDock({
   // Shown in place of the editor right after a send or finish:
   // { sent: number of points (0 if none), finished: boolean }.
   const [done, setDone] = useState(null);
-  // Which edges of the body have more to scroll to; each gets a progressive blur.
+  // The header and footer float over the body, which scrolls under them; each
+  // bar blurs what's beneath it once there is content there.
   const bodyRef = useRef(null);
+  const headerRef = useRef(null);
+  const footerRef = useRef(null);
+  const [bars, setBars] = useState({ top: 0, bottom: 0 });
+  useEffect(() => {
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const measure = () => {
+      const top = headerRef.current?.offsetHeight || 0;
+      const bottom = footerRef.current?.offsetHeight || 0;
+      setBars(prev => (prev.top === top && prev.bottom === bottom ? prev : { top, bottom }));
+    };
+    const ro = new ResizeObserver(measure);
+    [headerRef.current, footerRef.current].forEach(el => el && ro.observe(el));
+    measure();
+    return () => ro.disconnect();
+  }, [done]);
   const [scrollEdges, setScrollEdges] = useState({ above: false, below: false });
   const measureScroll = useCallback(() => {
     const el = bodyRef.current;
@@ -487,11 +503,20 @@ export function ReviewDock({
         <section
           className={cx('rk-panel', classNames.panel)}
           aria-label={`${title}`}
-          style={dockMorphing ? { viewTransitionName: 'rk-dock-surface' } : undefined}
+          style={{
+            ...(dockMorphing ? { viewTransitionName: 'rk-dock-surface' } : {}),
+            '--rk-bar-top': `${bars.top}px`,
+            '--rk-bar-bottom': `${bars.bottom}px`,
+          }}
           {...getRootProps()}
         >
           <input {...getInputProps()} />
-          <header className={cx('rk-header', 'rk-drag', classNames.header)}>
+          <header
+            ref={headerRef}
+            className={cx('rk-header', 'rk-drag', classNames.header)}
+            data-covering={scrollEdges.above || undefined}
+          >
+            <span className="rk-bar-blur" aria-hidden="true"><span /><span /><span /></span>
             <Icons.grip className="rk-grip" />
             <div className="rk-heading">
               <div className="rk-title" title={title}>{title}</div>
@@ -514,8 +539,7 @@ export function ReviewDock({
             </div>
           </header>
 
-          <div className="rk-scroll" data-more-above={scrollEdges.above || undefined} data-more-below={scrollEdges.below || undefined}>
-          <span className="rk-edge rk-edge-top" aria-hidden="true"><span /><span /><span /></span>
+          <div className="rk-scroll">
           <div className="rk-body rk-no-drag" ref={bodyRef} onScroll={measureScroll}>
             {done ? (
               <DoneCard
@@ -632,12 +656,16 @@ export function ReviewDock({
             )}
             {notice && <p className={`rk-notice rk-notice-${notice.tone}`} role="status">{notice.text}</p>}
           </div>
-          <span className="rk-edge rk-edge-bottom" aria-hidden="true"><span /><span /><span /></span>
           </div>
 
           {/* The confirmation carries its own actions; Not now brings these back. */}
           {!done && (
-            <footer className={cx('rk-footer', 'rk-no-drag', classNames.footer)}>
+            <footer
+              ref={footerRef}
+              className={cx('rk-footer', 'rk-no-drag', classNames.footer)}
+              data-covering={scrollEdges.below || undefined}
+            >
+              <span className="rk-bar-blur" aria-hidden="true"><span /><span /><span /></span>
               <div className="rk-tools">
                 <button type="button" className={cx('rk-tool', classNames.toolButton)} onClick={pick} disabled={!!busy || !!inline} title={L.selectHint} aria-label={L.select}>
                   <Icons.select />
