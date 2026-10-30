@@ -27,21 +27,3 @@
      <body>, so it also wins ties with Fold's other max-z layers. */
   --rk-z: 2147483647;
 }
-
-.fold-review-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-}
-
-.fold-review-count {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  flex: 1;
-  min-width: 0;
-  margin: 0;
-  font-size: var(--font-sm);
-  color: var(--neutral-300);
-}

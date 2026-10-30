@@ -74,6 +74,7 @@ export const DEFAULT_LABELS = {
   send: 'Send',
   sendPoints: (n) => `Send ${n} points`,
   sending: 'Sending…',
+  moreSendOptions: 'More send options',
   sent: (n) => (n > 1 ? `Feedback sent (${n} points).` : 'Feedback sent.'),
   point: 'Point',
   pointTitle: (n) => `Point ${n}`,

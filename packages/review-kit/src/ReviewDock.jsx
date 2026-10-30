@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Rnd } from 'react-rnd';
 import { useDropzone } from 'react-dropzone';
 import { pickElement, describeElement, KIT_ATTR } from './picker';
@@ -116,6 +116,7 @@ export function ReviewDock({
   className,
   icons,
   headerActions,
+  finishAction,
   children,
 }) {
   const Icons = useMemo(() => ({ ...DEFAULT_ICONS, ...(icons || {}) }), [icons]);
@@ -292,17 +293,49 @@ export function ReviewDock({
         })),
         context: { ...pageContext(), userAgent: navigator.userAgent, createdAt: new Date().toISOString() },
       });
-      if (result !== false) {
-        const fresh = newPoint();
-        setPoints([fresh]);
-        setActiveId(fresh.id);
-        setNotice({ tone: 'ok', text: L.sent(filled.length) });
-      }
+      if (result === false) return false;
+      const fresh = newPoint();
+      setPoints([fresh]);
+      setActiveId(fresh.id);
+      setNotice({ tone: 'ok', text: L.sent(filled.length) });
+      return true;
     } catch (err) {
       setNotice({ tone: 'error', text: L.sendFailed(err?.message || String(err)) });
+      return false;
     } finally {
       setBusy(null);
     }
+  };
+
+  // finishAction: the host's "done" step (e.g. sign off). It takes the Send
+  // button's place while nothing is written, and sits in the Send menu after.
+  const [sendMenuOpen, setSendMenuOpen] = useState(false);
+  const sendMenu = useRef(null);
+  useEffect(() => {
+    if (!sendMenuOpen) return undefined;
+    const onDown = (e) => { if (!sendMenu.current?.contains(e.target)) setSendMenuOpen(false); };
+    const onKey = (e) => { if (e.key === 'Escape') setSendMenuOpen(false); };
+    // Capture phase: a host may stop events from leaving the kit's layer.
+    document.addEventListener('mousedown', onDown, true);
+    document.addEventListener('keydown', onKey, true);
+    return () => {
+      document.removeEventListener('mousedown', onDown, true);
+      document.removeEventListener('keydown', onKey, true);
+    };
+  }, [sendMenuOpen]);
+
+  const finish = async () => {
+    setBusy('finish');
+    try {
+      await finishAction.onFinish();
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const sendAndFinish = async () => {
+    setSendMenuOpen(false);
+    if (await submit()) await finish();
   };
 
   // ── Collapse to a wall ──
@@ -531,9 +564,38 @@ export function ReviewDock({
                 <span>{L.upload}</span>
               </button>
             </div>
-            <button type="button" className={cx('rk-send', classNames.sendButton)} onClick={submit} disabled={!!busy || !filled.length}>
-              {sendLabel}
-            </button>
+            {finishAction && !filled.length ? (
+              <button type="button" className={cx('rk-send', classNames.sendButton)} onClick={finish} disabled={!!busy}>
+                {finishAction.label}
+              </button>
+            ) : finishAction ? (
+              <div className="rk-send-group" ref={sendMenu}>
+                <button type="button" className={cx('rk-send', 'rk-send-main', classNames.sendButton)} onClick={submit} disabled={!!busy}>
+                  {sendLabel}
+                </button>
+                <button
+                  type="button"
+                  className="rk-send rk-send-more"
+                  onClick={() => setSendMenuOpen(v => !v)}
+                  disabled={!!busy}
+                  aria-label={L.moreSendOptions}
+                  aria-expanded={sendMenuOpen}
+                >
+                  <ChevronIcon direction="down" width={14} height={14} />
+                </button>
+                {sendMenuOpen && (
+                  <div className="rk-send-menu">
+                    <button type="button" className="rk-send-menu-item" onClick={sendAndFinish}>
+                      {finishAction.submitLabel}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button type="button" className={cx('rk-send', classNames.sendButton)} onClick={submit} disabled={!!busy || !filled.length}>
+                {sendLabel}
+              </button>
+            )}
           </footer>
 
           {isDragActive && <div className="rk-drop-overlay">{L.dropHint(activeIndex + 1)}</div>}

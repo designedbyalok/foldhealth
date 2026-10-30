@@ -47,6 +47,7 @@ export interface ReviewKitLabels {
   send: string;
   sendPoints: (count: number) => string;
   sending: string;
+  moreSendOptions: string;
   sent: (count: number) => string;
   point: string;
   pointTitle: (n: number) => string;
@@ -193,8 +194,20 @@ export interface ReviewDockProps {
   icons?: ReviewKitIcons;
   /** Extra icon buttons in the header, before minimize. */
   headerActions?: ReviewDockHeaderAction[];
+  /** The host's "done" step (e.g. sign off). With nothing written it replaces
+   *  Send; once there is feedback, Send gets a chevron menu offering
+   *  `submitLabel`, which sends and then runs `onFinish`. */
+  finishAction?: ReviewDockFinishAction;
   /** Extra content under the editor. */
   children?: ReactNode;
+}
+
+export interface ReviewDockFinishAction {
+  /** Button label while nothing is written, e.g. "Sign off". */
+  label: string;
+  /** Menu item that sends, then finishes, e.g. "Send and sign off". */
+  submitLabel: string;
+  onFinish: () => Promise<unknown> | unknown;
 }
 
 export interface ReviewDockHeaderAction {

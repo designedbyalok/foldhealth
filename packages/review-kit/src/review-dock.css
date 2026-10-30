@@ -1334,6 +1334,60 @@
   filter: brightness(1.05);
 }
 
+/* Split Send: the main action plus a chevron for the host's finish action. */
+.rk-send-group {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 1px;
+}
+
+.rk-send-main {
+  border-radius: var(--rk-radius-pill) 0 0 var(--rk-radius-pill);
+  padding-right: var(--rk-space-3);
+}
+
+.rk-send-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 var(--rk-radius-pill) var(--rk-radius-pill) 0;
+  padding: 0 var(--rk-space-2) 0 6px;
+}
+
+.rk-send-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  z-index: 2;
+  min-width: 100%;
+  padding: 4px;
+  border: 1px solid var(--rk-border);
+  border-radius: var(--rk-radius-sm);
+  background: var(--rk-bg-solid, var(--rk-bg));
+  box-shadow: var(--rk-shadow);
+}
+
+.rk-send-menu-item {
+  display: block;
+  width: 100%;
+  padding: 6px var(--rk-space-2);
+  border: 0;
+  border-radius: calc(var(--rk-radius-sm) - 2px);
+  background: none;
+  font: inherit;
+  font-size: var(--rk-font-sm);
+  color: var(--rk-text);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.rk-send-menu-item:hover,
+.rk-send-menu-item:focus-visible {
+  background: var(--rk-bg-subtle);
+}
+
 @container (max-width: 380px) {
   .rk-tool {
     padding: 0 var(--rk-space-1);

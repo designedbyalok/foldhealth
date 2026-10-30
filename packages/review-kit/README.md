@@ -261,6 +261,7 @@ See `DEFAULT_LABELS` for the full list.
 | `storageKey` | `string` | Where position and size are remembered. Default `review-kit:dock`. The box always opens expanded and fully on screen. |
 | `maxFileSizeMb` | `number` | Per-file upload limit. Default `10`. |
 | `headerActions` | `{ id?, label, icon, onClick }[]` | Extra icon buttons in the header, before minimize (e.g. a link back to your review queue). |
+| `finishAction` | `{ label, submitLabel, onFinish }` | A "done" step such as sign off: replaces Send while nothing is written, and becomes a "send and finish" option in a chevron menu beside Send once there is feedback. |
 | `children` | `ReactNode` | Extra content under the editor. |
 
 ## Lower-level helpers

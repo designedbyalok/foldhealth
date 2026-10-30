@@ -61,7 +61,7 @@ export const ChevronIcon = ({ direction = 'left', ...p }) => (
     {...p}
     style={{
       ...(p.style || {}),
-      transform: direction === 'right' ? 'rotate(180deg)' : undefined,
+      transform: { right: 'rotate(180deg)', up: 'rotate(90deg)', down: 'rotate(-90deg)' }[direction],
     }}
   >
     <path d="M14.5 6.5 9 12l5.5 5.5" />
