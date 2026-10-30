@@ -191,8 +191,18 @@ export interface ReviewDockProps {
   className?: string;
   /** Swap any icon slot with your own component. */
   icons?: ReviewKitIcons;
+  /** Extra icon buttons in the header, before minimize. */
+  headerActions?: ReviewDockHeaderAction[];
   /** Extra content under the editor. */
   children?: ReactNode;
+}
+
+export interface ReviewDockHeaderAction {
+  id?: string;
+  /** Accessible name and tooltip. */
+  label: string;
+  icon: IconComponent;
+  onClick: () => void;
 }
 
 export declare function ReviewDock(props: ReviewDockProps): ReactElement | null;

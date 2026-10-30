@@ -36,6 +36,9 @@
 }
 
 .fold-review-count {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
   flex: 1;
   min-width: 0;
   margin: 0;

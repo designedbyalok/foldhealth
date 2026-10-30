@@ -115,6 +115,7 @@ export function ReviewDock({
   classNames = {},
   className,
   icons,
+  headerActions,
   children,
 }) {
   const Icons = useMemo(() => ({ ...DEFAULT_ICONS, ...(icons || {}) }), [icons]);
@@ -395,6 +396,11 @@ export function ReviewDock({
               {subtitle && <div className="rk-subtitle">{subtitle}</div>}
             </div>
             <div className="rk-header-actions rk-no-drag">
+              {headerActions?.map(({ id, label, icon: ActionIcon, onClick }) => (
+                <button key={id || label} type="button" className="rk-icon-btn" onClick={onClick} aria-label={label} title={label}>
+                  <ActionIcon width={16} height={16} />
+                </button>
+              ))}
               <button type="button" className="rk-icon-btn" onClick={() => collapseTo(nearestSide())} aria-label={L.collapse} title={L.collapse}>
                 <Icons.collapse />
               </button>
