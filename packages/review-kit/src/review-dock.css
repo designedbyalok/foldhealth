@@ -320,31 +320,34 @@
   inset: 0;
 }
 
+/* Under the bar itself the blur is at full strength behind a near-solid wash,
+   so text scrolling beneath never competes with the title or the tools; the
+   layers only ease off in the 16px tail past the bar. */
 .rk-bar-blur > span:nth-child(1) {
-  -webkit-backdrop-filter: blur(1px);
-  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
 }
 .rk-bar-blur > span:nth-child(2) {
-  -webkit-backdrop-filter: blur(3px);
-  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 .rk-bar-blur > span:nth-child(3) {
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
 }
 
-.rk-header > .rk-bar-blur > span:nth-child(1) { mask-image: linear-gradient(to bottom, #000 40%, transparent); }
-.rk-header > .rk-bar-blur > span:nth-child(2) { mask-image: linear-gradient(to bottom, #000 30%, transparent 75%); }
-.rk-header > .rk-bar-blur > span:nth-child(3) { mask-image: linear-gradient(to bottom, #000 20%, transparent 55%); }
-.rk-footer > .rk-bar-blur > span:nth-child(1) { mask-image: linear-gradient(to top, #000 40%, transparent); }
-.rk-footer > .rk-bar-blur > span:nth-child(2) { mask-image: linear-gradient(to top, #000 30%, transparent 75%); }
-.rk-footer > .rk-bar-blur > span:nth-child(3) { mask-image: linear-gradient(to top, #000 20%, transparent 55%); }
+.rk-header > .rk-bar-blur > span:nth-child(1) { mask-image: linear-gradient(to bottom, #000 calc(100% - 16px), transparent); }
+.rk-header > .rk-bar-blur > span:nth-child(2) { mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent calc(100% - 6px)); }
+.rk-header > .rk-bar-blur > span:nth-child(3) { mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent calc(100% - 12px)); }
+.rk-footer > .rk-bar-blur > span:nth-child(1) { mask-image: linear-gradient(to top, #000 calc(100% - 16px), transparent); }
+.rk-footer > .rk-bar-blur > span:nth-child(2) { mask-image: linear-gradient(to top, #000 calc(100% - 22px), transparent calc(100% - 6px)); }
+.rk-footer > .rk-bar-blur > span:nth-child(3) { mask-image: linear-gradient(to top, #000 calc(100% - 28px), transparent calc(100% - 12px)); }
 
 .rk-bar-blur::after {
   content: '';
 }
-.rk-header > .rk-bar-blur::after { background: linear-gradient(to bottom, var(--rk-bg) 30%, transparent); }
-.rk-footer > .rk-bar-blur::after { background: linear-gradient(to top, var(--rk-bg) 30%, transparent); }
+.rk-header > .rk-bar-blur::after { background: linear-gradient(to bottom, var(--rk-bg-solid, var(--rk-bg)) calc(100% - 24px), transparent); opacity: 0.85; }
+.rk-footer > .rk-bar-blur::after { background: linear-gradient(to top, var(--rk-bg-solid, var(--rk-bg)) calc(100% - 24px), transparent); opacity: 0.85; }
 
 @media (prefers-reduced-transparency: reduce) {
   .rk-bar-blur > span { display: none; }
