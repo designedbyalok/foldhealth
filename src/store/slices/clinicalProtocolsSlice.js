@@ -4,9 +4,13 @@ import { extractProtocolText } from '../../features/settings/clinical-protocols/
 import {
   isFoldProtocolJson,
   normalizeProtocol,
+  protocolGuidanceText,
   protocolToRow,
   rowToProtocol,
 } from '../../features/settings/clinical-protocols/lib/protocolSchema';
+import { isFoldProtocol } from '../../features/settings/clinical-protocols/lib/foldProtocols';
+import { buildTemplateCatalog, TEMPLATE_DESCRIPTION_MAX } from '../../features/settings/care-plan-library/lib/aiTemplateDraft';
+import { requestTemplateDraft, templateDraftToTemplate, withoutDraftMarks } from '../../features/settings/care-plan-library/lib/templateDraftToEditor';
 import { SAMPLE_PROTOCOLS } from '../../features/settings/clinical-protocols/data/sampleProtocols';
 
 const isMissingTable = error => error?.code === '42P01' || error?.code === 'PGRST205';
@@ -210,7 +214,62 @@ export const createClinicalProtocolsSlice = (set, get) => {
         if (supErr) console.warn('approveClinicalProtocol supersede:', supErr.message);
         else patchLocal(supersede.id, { status: 'superseded', updatedAt: now });
       }
+      // A client protocol gets a care plan template drafted from it, in the
+      // background, for review (Fold's own come with starter templates).
+      if (!isFoldProtocol(next)) get().draftTemplateFromProtocol(id);
       return true;
+    },
+
+    // protocolId -> true while UnityAI drafts its template.
+    protocolTemplateDrafting: {},
+
+    // UnityAI drafts a care plan template from an Active protocol: Common goals
+    // plus categories by the protocol's measurable thresholds, library items
+    // only, saved as a draft template linked to the protocol for a supervisor
+    // to review and publish. Returns the saved template, or null.
+    draftTemplateFromProtocol: async (id) => {
+      const protocol = get().clinicalProtocols.find(p => p.id === id);
+      if (!protocol || protocol.status !== 'active' || get().protocolTemplateDrafting[id]) return null;
+      const setDrafting = on => set(s => {
+        const next = { ...s.protocolTemplateDrafting };
+        if (on) next[id] = true; else delete next[id];
+        return { protocolTemplateDrafting: next };
+      });
+      setDrafting(true);
+      try {
+        if (!get().carePlanLibraryDidFetch) await get().fetchCarePlanLibrary();
+        const s = get();
+        const libraries = { libraryGoals: s.carePlanGoals || [], interventionLibrary: s.carePlanInterventionTemplates || [], barrierLibrary: s.carePlanBarriers || [] };
+        const catalog = buildTemplateCatalog({ goals: libraries.libraryGoals, interventions: libraries.interventionLibrary, barriers: libraries.barrierLibrary });
+        const forConditions = protocol.conditions.length ? ` for ${protocol.conditions.join(', ')}` : '';
+        const description = `A care plan template following ${protocol.title}${forConditions}.`.slice(0, TEMPLATE_DESCRIPTION_MAX);
+        const draft = await requestTemplateDraft(description, catalog, {
+          title: protocol.title, version: protocol.version, organization: protocol.organization,
+          guidance: protocolGuidanceText(protocol.protocol),
+        }, { categories: true, libraryOnly: true });
+        const content = templateDraftToTemplate(draft, libraries);
+        const saved = await get().saveCarePlanTemplate({
+          name: draft.name || protocol.title,
+          conditions: draft.conditions || protocol.conditions,
+          goals: withoutDraftMarks(content.goals),
+          interventions: withoutDraftMarks(content.interventions),
+          barriers: withoutDraftMarks(content.barriers),
+          categories: content.categories,
+          status: 'draft',
+          sourceProtocol: { id: protocol.id, title: protocol.title, version: protocol.version, organization: protocol.organization },
+        });
+        if (saved) {
+          const n = content.categories.length;
+          get().showToast?.(`UnityAI drafted "${saved.name}" from ${protocol.title}${n ? ` with ${n} categor${n === 1 ? 'y' : 'ies'}` : ''}. Review it in Draft Templates.`);
+        }
+        return saved;
+      } catch (err) {
+        console.warn('draftTemplateFromProtocol:', err?.message || err);
+        get().showToast?.(`Could not draft a care plan template from ${protocol.title}. ${err?.message || ''}`.trim());
+        return null;
+      } finally {
+        setDrafting(false);
+      }
     },
 
     setClinicalProtocolStatus: async (id, status) => {

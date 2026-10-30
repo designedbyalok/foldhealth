@@ -63,6 +63,7 @@
 .label { font-size: var(--font-sm); font-weight: 500; color: var(--neutral-300); }
 .chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
 .warnings { margin: 0; padding-left: var(--space-4); }
+.cardHeadRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
 .templateList { display: flex; flex-direction: column; }
 .templateRow {
   display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);

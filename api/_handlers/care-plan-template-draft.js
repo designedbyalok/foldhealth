@@ -6,7 +6,9 @@
  * library; the answer is checked against that catalog (normalizeTemplateDraft)
  * so every library reference is real. The AI keys stay server-side.
  *
- * Body: { description: string, catalog: { goals, interventions, barriers } }
+ * Body: { description: string, catalog: { goals, interventions, barriers },
+ *         protocol?: { title, version, organization, guidance },
+ *         options?: { categories?: boolean, libraryOnly?: boolean } }
  * Returns: { draft } or { error: { message } }
  */
 
@@ -48,6 +50,11 @@ export default async function handler(req, res) {
   const protocol = p && typeof p.guidance === 'string' && p.guidance.trim()
     ? { title: String(p.title || ''), version: String(p.version || ''), organization: String(p.organization || ''), guidance: p.guidance }
     : null;
+  // Drafting from an approved protocol: Common + categories, library items only.
+  const options = {
+    categories: !!protocol && body.options?.categories === true,
+    libraryOnly: body.options?.libraryOnly === true,
+  };
   const catalog = {
     goals: asList(body.catalog?.goals),
     interventions: asList(body.catalog?.interventions),
@@ -56,7 +63,7 @@ export default async function handler(req, res) {
 
   try {
     const ai = await generateJson({
-      prompt: buildTemplateDraftPrompt(description, catalog, protocol),
+      prompt: buildTemplateDraftPrompt(description, catalog, protocol, options),
       schema: TEMPLATE_DRAFT_SCHEMA,
       name: 'care_plan_template',
       temperature: 0.3,
@@ -75,7 +82,7 @@ export default async function handler(req, res) {
     }
     const parsed = ai.data;
 
-    const draft = normalizeTemplateDraft(parsed, catalog);
+    const draft = normalizeTemplateDraft(parsed, catalog, options);
     if (!draft) {
       return res.status(422).json({ error: { message: 'Could not draft goals from that description. Try adding the condition or focus.' } });
     }

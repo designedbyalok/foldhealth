@@ -12,6 +12,7 @@ import { Icon } from '../../../components/Icon/Icon';
 import { MenuPopover } from '../../../components/MenuPopover/MenuPopover';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
 import { ChronicConditionSelect } from '../care-plan-library/shared/ChronicConditionSelect';
+import { UnityIcon } from '../../../components/UnityIcon/UnityIcon';
 import { useAppStore } from '../../../store/useAppStore';
 import { protocolCounts, protocolStatus } from './lib/protocolSchema';
 import { isFoldProtocol } from './lib/foldProtocols';
@@ -158,6 +159,9 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
   const fetchCarePlanLibrary = useAppStore(s => s.fetchCarePlanLibrary);
   const setCarePlanTemplateScreen = useAppStore(s => s.setCarePlanTemplateScreen);
   useEffect(() => { if (!carePlanTemplates.length) fetchCarePlanLibrary?.(); }, [carePlanTemplates.length, fetchCarePlanLibrary]);
+  // UnityAI drafts a template from an approved client protocol (on approval, or here).
+  const draftTemplateFromProtocol = useAppStore(s => s.draftTemplateFromProtocol);
+  const draftingTemplate = useAppStore(s => !!s.protocolTemplateDrafting[protocolId]);
   const basedOn = useMemo(() => {
     if (!protocol) return [];
     const key = p => `${(p?.title || '').trim().toLowerCase()}|${(p?.organization || '').trim().toLowerCase()}`;
@@ -189,6 +193,7 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
   // Fold's own protocols are maintained by Fold: read-only here.
   const isFold = isFoldProtocol(protocol);
   const editable = !isSample && !isFold && EDITABLE.has(protocol.status);
+  const canDraftTemplate = !isSample && !isFold && protocol.status === 'active';
   const counts = protocolCounts(draft.protocol);
   const supersede = protocol.status === 'draft' ? protocolToSupersede(protocol.id) : null;
   const warnings = protocol.parseMeta?.warnings || [];
@@ -211,7 +216,7 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
     setBusy(true);
     try {
       if (await approveClinicalProtocol(protocol.id, draft, { supersede })) {
-        showToast?.(supersede ? `Approved; replaces version ${supersede.version || 'on file'}` : 'Protocol approved and active');
+        showToast?.(`${supersede ? `Approved; replaces version ${supersede.version || 'on file'}` : 'Protocol approved and active'}${isFold ? '' : '. UnityAI is drafting its care plan template'}`);
         onApproved?.(protocol.id);
         onClose();
       }
@@ -331,9 +336,28 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
           </div>
         )}
 
-        {basedOn.length > 0 && (
+        {(basedOn.length > 0 || canDraftTemplate) && (
           <div className={styles.card}>
-            <h3 className={styles.cardTitle}>Care Plan Templates from This Protocol</h3>
+            <div className={styles.cardHeadRow}>
+              <h3 className={styles.cardTitle}>Care Plan Templates from This Protocol</h3>
+              {canDraftTemplate && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  leadingIconElement={<UnityIcon size={14} color="currentColor" />}
+                  disabled={draftingTemplate}
+                  onClick={() => draftTemplateFromProtocol(protocol.id)}
+                >
+                  {draftingTemplate ? 'Drafting…' : 'Draft Care Plan Template'}
+                </Button>
+              )}
+            </div>
+            {draftingTemplate && (
+              <p className={styles.hint}>UnityAI is drafting a template from this protocol: Common goals plus categories by its thresholds, from your library. It is saved as a draft for review.</p>
+            )}
+            {!basedOn.length && !draftingTemplate && (
+              <p className={styles.hint}>No template yet. UnityAI can draft one from this protocol, with categories by its thresholds, as a draft for review.</p>
+            )}
             <div className={styles.templateList}>
               {basedOn.map(t => (
                 <div key={t.id} className={styles.templateRow}>
