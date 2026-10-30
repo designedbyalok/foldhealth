@@ -144,6 +144,27 @@ export function ReviewDock({
   // Shown in place of the editor right after a send or finish:
   // { sent: number of points (0 if none), finished: boolean }.
   const [done, setDone] = useState(null);
+  // Which edges of the body have more to scroll to; each gets a progressive blur.
+  const bodyRef = useRef(null);
+  const [scrollEdges, setScrollEdges] = useState({ above: false, below: false });
+  const measureScroll = useCallback(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    const above = el.scrollTop > 1;
+    const below = el.scrollTop + el.clientHeight < el.scrollHeight - 1;
+    setScrollEdges(prev => (prev.above === above && prev.below === below ? prev : { above, below }));
+  }, []);
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+    // The timeline grows as you type and add points or files, not only on
+    // scroll; the body's children change when the sent screen swaps in.
+    const ro = new ResizeObserver(measureScroll);
+    ro.observe(el);
+    [...el.children].forEach(child => ro.observe(child));
+    measureScroll();
+    return () => ro.disconnect();
+  }, [measureScroll, done, points.length]);
   // A picked element waiting for its inline comment: { element, name, attachment }.
   const [inline, setInline] = useState(null);
   const [previewId, setPreviewIdState] = useState(null);
@@ -493,7 +514,9 @@ export function ReviewDock({
             </div>
           </header>
 
-          <div className="rk-body rk-no-drag">
+          <div className="rk-scroll" data-more-above={scrollEdges.above || undefined} data-more-below={scrollEdges.below || undefined}>
+          <span className="rk-edge rk-edge-top" aria-hidden="true"><span /><span /><span /></span>
+          <div className="rk-body rk-no-drag" ref={bodyRef} onScroll={measureScroll}>
             {done ? (
               <DoneCard
                 key={`${done.sent}-${done.finished}`}
@@ -608,6 +631,8 @@ export function ReviewDock({
               </>
             )}
             {notice && <p className={`rk-notice rk-notice-${notice.tone}`} role="status">{notice.text}</p>}
+          </div>
+          <span className="rk-edge rk-edge-bottom" aria-hidden="true"><span /><span /><span /></span>
           </div>
 
           {/* The confirmation carries its own actions; Not now brings these back. */}

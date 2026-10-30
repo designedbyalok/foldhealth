@@ -144,14 +144,21 @@
   background: transparent;
   border-radius: 999px;
   background-clip: padding-box;
-  border: 1px solid transparent;
+  /* A 6px hit area around a 2px line; it thickens to 4px under the pointer. */
+  border: 2px solid transparent;
+  min-height: 24px;
   transition: background-color 120ms ease;
+}
+.rk-layer *::-webkit-scrollbar-thumb:hover,
+.rk-layer *::-webkit-scrollbar-thumb:active {
+  border-width: 1px;
 }
 .rk-layer *:hover::-webkit-scrollbar-thumb,
 .rk-layer *:focus-within::-webkit-scrollbar-thumb {
   background-color: var(--rk-scrollbar, color-mix(in srgb, currentColor 22%, transparent));
 }
-.rk-layer *::-webkit-scrollbar-thumb:hover {
+.rk-layer *::-webkit-scrollbar-thumb:hover,
+.rk-layer *::-webkit-scrollbar-thumb:active {
   background-color: var(--rk-scrollbar-hover, color-mix(in srgb, currentColor 38%, transparent));
 }
 .rk-layer *:hover,
@@ -247,6 +254,76 @@
 .rk-icon-btn:hover {
   background: var(--rk-bg-subtle);
   color: var(--rk-text);
+}
+
+/* The body plus a progressive blur at each edge that has more to scroll to:
+   three stacked backdrop blurs, each masked to a band, so text softens
+   gradually instead of being cut off by a hard line. */
+.rk-scroll {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.rk-edge {
+  position: absolute;
+  /* Clear of the scrollbar, so it never blurs. */
+  right: 6px;
+  left: 0;
+  z-index: 3;
+  height: 28px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+
+.rk-edge-top { top: 0; }
+.rk-edge-bottom { bottom: 0; }
+
+.rk-scroll[data-more-above] .rk-edge-top,
+.rk-scroll[data-more-below] .rk-edge-bottom {
+  opacity: 1;
+}
+
+.rk-edge > span {
+  position: absolute;
+  inset: 0;
+}
+
+.rk-edge > span:nth-child(1) {
+  -webkit-backdrop-filter: blur(1px);
+  backdrop-filter: blur(1px);
+}
+.rk-edge > span:nth-child(2) {
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+.rk-edge > span:nth-child(3) {
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.rk-edge-top > span:nth-child(1) { mask-image: linear-gradient(to top, transparent, #000 50%); }
+.rk-edge-top > span:nth-child(2) { mask-image: linear-gradient(to top, transparent 33%, #000 75%); }
+.rk-edge-top > span:nth-child(3) { mask-image: linear-gradient(to top, transparent 66%, #000); }
+.rk-edge-bottom > span:nth-child(1) { mask-image: linear-gradient(to bottom, transparent, #000 50%); }
+.rk-edge-bottom > span:nth-child(2) { mask-image: linear-gradient(to bottom, transparent 33%, #000 75%); }
+.rk-edge-bottom > span:nth-child(3) { mask-image: linear-gradient(to bottom, transparent 66%, #000); }
+
+/* A wash of the surface color on top, so the very edge reads as the panel. */
+.rk-edge::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.rk-edge-top::after { background: linear-gradient(to bottom, var(--rk-bg-solid, var(--rk-bg)), transparent); opacity: 0.7; }
+.rk-edge-bottom::after { background: linear-gradient(to top, var(--rk-bg-solid, var(--rk-bg)), transparent); opacity: 0.7; }
+
+@media (prefers-reduced-transparency: reduce) {
+  .rk-edge > span { display: none; }
+  .rk-edge::after { opacity: 1; }
 }
 
 .rk-body {
