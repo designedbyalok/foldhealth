@@ -176,8 +176,10 @@
   border: 1px solid var(--rk-border);
   border-radius: var(--rk-radius);
   background: var(--rk-bg);
-  backdrop-filter: blur(var(--rk-glass-blur, 24px)) saturate(var(--rk-glass-saturate, 180%));
+  /* Prefixed first: CSS minifiers (Lightning CSS) keep only the last of the
+     pair, and Chromium ignores the -webkit- one. */
   -webkit-backdrop-filter: blur(var(--rk-glass-blur, 24px)) saturate(var(--rk-glass-saturate, 180%));
+  backdrop-filter: blur(var(--rk-glass-blur, 24px)) saturate(var(--rk-glass-saturate, 180%));
   box-shadow:
     inset 0 1px 0 var(--rk-glass-highlight, transparent),
     var(--rk-shadow);
@@ -823,8 +825,8 @@
 .rk-preview::backdrop,
 .rk-annotator::backdrop {
   background: color-mix(in srgb, var(--rk-overlay, rgba(15, 23, 42, 0.55)) 85%, transparent);
-  backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(160%);
 }
 
 /* Preview and annotator share the exact same explicit dimensions so switching
@@ -1979,8 +1981,8 @@
   position: fixed;
   inset: 0;
   background: color-mix(in srgb, var(--rk-overlay, rgba(15, 23, 42, 0.55)) 55%, transparent);
-  backdrop-filter: blur(10px) saturate(140%);
   -webkit-backdrop-filter: blur(10px) saturate(140%);
+  backdrop-filter: blur(10px) saturate(140%);
   animation: rk-fb-scrim-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -2006,8 +2008,8 @@
   flex-direction: column;
   border-left: 1px solid var(--rk-border);
   background: var(--rk-bg);
-  backdrop-filter: blur(var(--rk-glass-blur, 24px)) saturate(var(--rk-glass-saturate, 180%));
   -webkit-backdrop-filter: blur(var(--rk-glass-blur, 24px)) saturate(var(--rk-glass-saturate, 180%));
+  backdrop-filter: blur(var(--rk-glass-blur, 24px)) saturate(var(--rk-glass-saturate, 180%));
   box-shadow: var(--rk-shadow);
   color: var(--rk-text);
   font-family: var(--rk-font);
