@@ -66,6 +66,7 @@ export function NotificationsPopover({ onClose, anchorRef }) {
   const openPreferencesFromNotification = useAppStore(s => s.openPreferencesFromNotification);
   const openPendingUsersFromNotification = useAppStore(s => s.openPendingUsersFromNotification);
   const openReassignmentSummary = useAppStore(s => s.openReassignmentSummary);
+  const openAssignedAppointments = useAppStore(s => s.openAssignedAppointments);
 
   // Refetch on open. The realtime subscription is the fast path, not the
   // source of truth: a binding created before the table was published — or
@@ -118,6 +119,8 @@ export function NotificationsPopover({ onClose, anchorRef }) {
       openPendingUsersFromNotification?.(['Locked']);
     } else if (n.action === 'openReassignmentSummary' && n.reassignmentJobId) {
       openReassignmentSummary?.(n.reassignmentJobId);
+    } else if (n.action === 'viewAssignedAppointments' && n.reassignmentJobId) {
+      openAssignedAppointments?.(n.reassignmentJobId);
     }
     onClose?.();
   };
@@ -198,7 +201,17 @@ export function NotificationsPopover({ onClose, anchorRef }) {
                 <span className={styles.entryTitle}>{n.title}</span>
                 {/* A reassignment job's result reads as a card (Figma Eventus
                     16978:129436): what it is, then the counts. */}
-                {n.body && n.type === 'reassignment.summary' ? (
+                {/* Appointments moved to me (Figma Eventus 17737:121055): who
+                    moved them from whom, then a link to them. */}
+                {n.type === 'appointment.reassigned' ? (
+                  <span className={styles.assignedBody}>
+                    {n.body && <span className={styles.assignedText}>{n.body}</span>}
+                    <span className={styles.assignedLink}>
+                      View Appointments
+                      <Icon name="solar:alt-arrow-right-linear" size={14} />
+                    </span>
+                  </span>
+                ) : n.body && n.type === 'reassignment.summary' ? (
                   <span className={styles.summaryCard}>
                     <span className={styles.summaryIcon}>
                       <Icon name="solar:calendar-linear" size={20} color="var(--neutral-400)" />
@@ -229,6 +242,7 @@ function iconForType(type) {
   if (type === 'task.mentioned') return 'solar:mention-square-linear';
   if (type === 'appointment.assigned') return 'solar:calendar-linear';
   if (type === 'reassignment.summary') return 'solar:users-group-rounded-linear';
+  if (type === 'appointment.reassigned') return 'solar:calendar-linear';
   if (type === 'message.received') return 'solar:chat-round-linear';
   if (type === 'referral.received') return 'solar:square-share-line-linear';
   if (type === 'hcc.extraction_complete') return 'solar:document-text-linear';

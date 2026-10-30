@@ -93,6 +93,6 @@
   padding-right: 6px;
 }
 .sizeS.iconOnly .btn {
-  padding-left: 5px;
-  padding-right: 5px;
+  padding-left: calc(var(--space-1) * 1.5);
+  padding-right: calc(var(--space-1) * 1.5);
 }

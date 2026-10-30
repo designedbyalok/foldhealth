@@ -3,6 +3,7 @@ import { ActionButton } from '../ActionButton/ActionButton';
 import { SearchIconButton } from '../SearchIconButton/SearchIconButton';
 import { SearchBar } from '../SearchBar/SearchBar';
 import { Checkbox } from '../ShadcnCheckbox/ShadcnCheckbox';
+import { Tooltip } from '../Tooltip/Tooltip';
 import { HeaderCell } from '../HeaderCell/HeaderCell';
 import { Pagination } from '../Pagination/Pagination';
 import { BulkBar } from '../BulkBar/BulkBar';
@@ -65,6 +66,9 @@ const EMPTY_SELECTED_IDS = [];
  *                          scroller (see prop default above).
  *  - embeddedNoScroll     With `embedded`, skip the per-table horizontal
  *                          scroller so columns align across stacked tables.
+ *  - selectAll            Optional { checked, disabled, tooltip } for the
+ *                          header checkbox, when "all" isn't every row (e.g.
+ *                          some rows can't be picked) or picking is blocked.
  */
 // Stable identities for omitted array props. An inline `= []` default allocates
 // a fresh array on every render, which breaks the referential-equality checks
@@ -108,6 +112,7 @@ export function WorklistShell({
   onSelectAll: onSelectAllProp,
   onClearSelection: onClearSelectionProp,
   bulkActions: bulkActionsProp,
+  selectAll,
   // Opt-in, self-contained bulk-select + bulk-delete. When provided, the shell
   // OWNS the whole interaction: a toggle button (exposed to `header` as
   // `bulk.bulkToggle`), the sticky select column (auto-injected — the caller's
@@ -421,11 +426,16 @@ export function WorklistShell({
                         className={`${styles.th} ${styles.thCheck}`}
                         style={{ ...stickyStyle, width: col.width || 36, textAlign: 'left' }}
                       >
-                        <Checkbox
-                          checked={someSelected ? 'indeterminate' : allSelected}
-                          onCheckedChange={(v) => onSelectAll?.(!!v)}
-                          aria-label="Select all rows"
-                        />
+                        <Tooltip label={selectAll?.tooltip || ''} maxWidth={240} align="left">
+                          <span className={selectAll?.disabled ? styles.checkBlocked : undefined}>
+                            <Checkbox
+                              checked={selectAll ? selectAll.checked : (someSelected ? 'indeterminate' : allSelected)}
+                              disabled={!!selectAll?.disabled}
+                              onCheckedChange={(v) => onSelectAll?.(!!v)}
+                              aria-label="Select all rows"
+                            />
+                          </span>
+                        </Tooltip>
                       </th>
                     );
                   }

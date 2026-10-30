@@ -126,6 +126,8 @@ export const Input = forwardRef(function Input(
     trailingButtonText = 'Button Text',
     onTrailingButtonClick,
     characterLimit,           // number
+    // type="date": (iso) => true disables that day in the calendar.
+    isDayDisabled,
     // Below the field
     helperText,
     errorText,
@@ -380,6 +382,9 @@ export const Input = forwardRef(function Input(
       onChange={handleShellChange}
       aria-invalid={isError || undefined}
       {...restProps}
+      // A date field opens its calendar from anywhere in the field, not just
+      // the icon; typing a date still works.
+      onClick={isDateType ? (e) => { restProps.onClick?.(e); openDatePopover(); } : restProps.onClick}
       onWheel={handleWheel}
     />
   );
@@ -568,6 +573,7 @@ export const Input = forwardRef(function Input(
           anchorRect={datePopoverAnchor}
           min={props.min}
           max={props.max}
+          isDayDisabled={isDayDisabled}
         />
       )}
     </div>

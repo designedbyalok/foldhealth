@@ -10,6 +10,7 @@ import { useCalendarView } from './useCalendarView';
 import { useAppStore } from '../../store/useAppStore';
 import { CalendarOooLayer } from '../ooo/CalendarOooLayer';
 import { CalendarAvailabilityLayer } from './CalendarAvailabilityLayer';
+import { AppointmentListView } from './list/AppointmentListView';
 import { OooAllRecordsDrawer } from '../ooo/OooRecordsDrawers';
 import { apptPerson, personKey, recordPerson, recordsOnDate, samePerson } from '../ooo/oooUtils';
 import { useOooRecordActions } from '../ooo/useOooRecordActions';
@@ -27,8 +28,10 @@ export function CalendarView() {
   const oooActions = useOooRecordActions({ users: calendar.users });
   useEffect(() => { editOooRef.current = oooActions.openEdit; });
   const showToast = useAppStore(s => s.showToast);
-  const isDay = calendar.currentView === 'day';
-  const isMonth = calendar.currentView === 'month-grid';
+  const isList = calendar.layout === 'list';
+  const isDay = !isList && calendar.currentView === 'day';
+  const isMonth = !isList && calendar.currentView === 'month-grid';
+  const isWeek = !isList && calendar.currentView === 'week';
   // Week and a one-user Month show that user's OOO time on the grid; Day
   // draws its own per-user columns.
   // { id, name }, kept stable while the same person is in view.
@@ -47,7 +50,42 @@ export function CalendarView() {
   useEffect(() => { fetchHolidayConfigs(); }, [fetchHolidayConfigs]);
   const [showHolidays, setShowHolidays] = useState(false);
   // "Show available slots": shade what the user in view can't be booked for.
-  const [showAvailable, setShowAvailable] = useState(false);
+  const showAvailable = calendar.layout === 'availability';
+  // List view: all provider groups open or closed.
+  const [listGroups, setListGroups] = useState('expanded');
+
+  // "View Appointments" on a reassignment notification: my appointments in
+  // the List view, on the week of the first one moved to me, with the moved
+  // ones highlighted for 3 seconds.
+  const calendarFocus = useAppStore(s => s.calendarFocus);
+  const clearCalendarFocus = useAppStore(s => s.clearCalendarFocus);
+  const me = useAppStore(s => s.currentUserProfile);
+  const [highlightIds, setHighlightIds] = useState(null);
+  const { setLayout, setFilterUser, goToDate, calendarRef } = calendar;
+  /* eslint-disable react-hooks/set-state-in-effect --
+   * `calendarFocus` is a one-shot signal from the store (the notification
+   * sets it); we consume it and clear it, as useCalendarView does with
+   * pendingOpenAppointmentId.
+   */
+  useEffect(() => {
+    if (!calendarFocus) return undefined;
+    clearCalendarFocus();
+    setLayout('list');
+    if (me?.id) setFilterUser([String(me.id)]);
+    setHighlightIds(new Set(calendarFocus.ids));
+    // schedule-x owns the date and loads a beat after the page; wait for it.
+    let tries = 0;
+    let dateTimer;
+    const moveDate = () => {
+      if (!calendarFocus.date) return;
+      if (calendarRef.current?.$app || tries++ > 30) goToDate(calendarFocus.date);
+      else dateTimer = setTimeout(moveDate, 100);
+    };
+    moveDate();
+    const fade = setTimeout(() => setHighlightIds(null), 3000);
+    return () => { clearTimeout(dateTimer); clearTimeout(fade); };
+  }, [calendarFocus]); // eslint-disable-line react-hooks/exhaustive-deps
+  /* eslint-enable react-hooks/set-state-in-effect */
   const segments = useAppStore(s => s.userAvailability);
   const fetchUserAvailability = useAppStore(s => s.fetchUserAvailability);
   useEffect(() => { if (showAvailable) fetchUserAvailability?.(); }, [showAvailable, fetchUserAvailability]);
@@ -80,14 +118,19 @@ export function CalendarView() {
   return (
     <div className={styles.wrapper}>
       <CalendarToolbar
-        calendarTitle={calendar.calendarTitle}
+        selectedDate={calendar.selectedDate}
+        onToday={calendar.handleToday}
+        onPickDate={calendar.goToDate}
         currentView={calendar.currentView}
         onViewChange={calendar.handleViewChange}
-        onToday={calendar.handleToday}
+        layout={calendar.layout}
+        onLayoutChange={calendar.setLayout}
+        listGroups={listGroups}
+        onListGroupsChange={setListGroups}
         onPrev={calendar.handlePrev}
         onNext={calendar.handleNext}
         users={calendar.users}
-        filterUser={calendar.currentView === 'week' ? calendar.viewUsers : calendar.filterUser}
+        filterUser={isWeek ? calendar.viewUsers : calendar.filterUser}
         onFilterUserChange={calendar.setFilterUser}
         filterLocation={calendar.filterLocation}
         onFilterLocationChange={calendar.setFilterLocation}
@@ -96,12 +139,9 @@ export function CalendarView() {
         onFilterTypeChange={calendar.setFilterType}
         filterStatus={calendar.filterStatus}
         onFilterStatusChange={calendar.setFilterStatus}
-        timezone={calendar.timezone}
-        onTimezoneChange={calendar.setTimezone}
         onOpenOoo={() => setOooAll({})}
         onOpenHolidays={() => setShowHolidays(true)}
-        showAvailable={showAvailable}
-        onShowAvailableChange={setShowAvailable}
+        onRefresh={() => calendar.fetchAppointments({ force: true })}
         onScheduleSelect={(key) => {
           if (key === 'appointment') {
             setDayProvider(null);
@@ -143,7 +183,22 @@ export function CalendarView() {
           onBlocked={showToast}
         />
       )}
-      {calendar.currentView === 'week' && calendar.viewUsers[0] && (
+      {isList && (
+        <AppointmentListView
+          appointments={calendar.filteredAppointments}
+          view={calendar.currentView}
+          selectedDate={calendar.selectedDate}
+          users={calendar.users}
+          groupsMode={listGroups}
+          highlightIds={highlightIds}
+          onViewDetails={(appt) => {
+            setDayProvider(null);
+            calendar.setClickedAppointment(appt);
+            calendar.setShowSchedule(true);
+          }}
+        />
+      )}
+      {isWeek && calendar.viewUsers[0] && (
         <div className={styles.weekUserRow}><span aria-hidden="true" /><span>{focusUser?.name}</span></div>
       )}
       {/* Month: daily counts, like the legacy calendar (the chip list
@@ -168,7 +223,7 @@ export function CalendarView() {
       )}
       {/* schedule-x stays mounted in Day and Month views (it owns the date
           and the toolbar's navigation), just hidden behind our own grids. */}
-      <div className={isDay || isMonth ? `${styles.calendarWrap} ${styles.calendarHidden}` : styles.calendarWrap}>
+      <div className={isWeek ? styles.calendarWrap : `${styles.calendarWrap} ${styles.calendarHidden}`}>
         <CalendarContent
           onSlotClick={calendar.handleSlotClick}
           onEventClick={calendar.handleEventClick}

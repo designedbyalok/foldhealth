@@ -44,7 +44,7 @@ export function BrowserCallCard() {
   const seconds = call.connectedAt ? Math.max(0, Math.round((now - call.connectedAt) / 1000)) : 0;
   const token = call.meta?.chat?.patient_token;
   const copyLink = () => {
-    navigator.clipboard?.writeText(patientLink(token)).then(() => toast.success('Patient link copied'));
+    navigator.clipboard?.writeText(patientLink(token)).then(() => toast.success('Patient Link Copied Successfully'));
   };
 
   let status;

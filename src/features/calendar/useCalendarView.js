@@ -59,6 +59,8 @@ export function useCalendarView({ onOooSlot } = {}) {
   const holidayConfigs = useAppStore(s => s.holidayConfigs);
   const platformUsers = useAppStore(s => (s.platformPeople?.length ? s.platformPeople : s.platformUsers));
   const [currentView, setCurrentView] = useState('week');
+  // Calendar grid or the List view (VBC-25651); the list covers the same period.
+  const [layout, setLayout] = useState('calendar');
   const [showSchedule, setShowSchedule] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const calendarRef = useRef(null);
@@ -121,7 +123,8 @@ export function useCalendarView({ onOooSlot } = {}) {
 
   // People are picked by id (`filterUser` holds personKeys): two staff can
   // share a name. Week shows one user at a time: the picked one, else the
-  // signed-in user, else the first user. Day and Month take any number.
+  // signed-in user, else the first user. Day, Month and the List view take
+  // any number.
   const me = useAppStore(s => s.currentUserProfile);
   const meName = me?.name;
   const meUser = users.find(u => samePerson(u, me || {}));
@@ -129,8 +132,8 @@ export function useCalendarView({ onOooSlot } = {}) {
     || (meUser ? personKey(meUser) : users[0] ? personKey(users[0]) : null)
     || null;
   const viewUsers = useMemo(
-    () => (currentView === 'week' ? [weekUser].filter(Boolean) : filterUser),
-    [currentView, weekUser, filterUser],
+    () => (currentView === 'week' && layout !== 'list' ? [weekUser].filter(Boolean) : filterUser),
+    [currentView, layout, weekUser, filterUser],
   );
   // A key back to { id, name, email }; an unknown key is a name (older data).
   const personFor = useCallback((key) => users.find(u => personKey(u) === key) || personOf(key), [users]);
@@ -155,17 +158,24 @@ export function useCalendarView({ onOooSlot } = {}) {
     return filtered;
   }, [appointments, reminderEvents, viewPeople, filterType, filterLocation, filterStatus]);
 
-  // Month → Day: show that date in the Day view.
-  const openDay = (isoDate) => {
+  // Show the period holding that date, in the current view.
+  const goToDate = (isoDate) => {
     const app = calendarRef.current;
     const T = globalThis.Temporal;
     if (app?.$app && T) app.$app.datePickerState.selectedDate.value = T.PlainDate.from(isoDate);
     setSelectedDate(isoDate);
+  };
+
+  // Month → Day: show that date in the Day view.
+  const openDay = (isoDate) => {
+    goToDate(isoDate);
     handleViewChange('day');
   };
 
   const handleViewChange = (view) => {
     setCurrentView(view);
+    // Month has no available-slots shading, so it falls back to the calendar.
+    if (view === 'month-grid' && layout === 'availability') setLayout('calendar');
     const app = calendarRef.current;
     if (app?.$app?.calendarState) {
       const selectedDate = app.$app.datePickerState?.selectedDate?.value || new Date().toISOString().split('T')[0];
@@ -588,6 +598,7 @@ export function useCalendarView({ onOooSlot } = {}) {
     renderTick,
     selectedDate,
     openDay,
+    goToDate,
     viewUsers,
     meName,
     setClickedAppointment,
@@ -595,6 +606,8 @@ export function useCalendarView({ onOooSlot } = {}) {
     setShowSchedule,
     calendarTitle,
     currentView,
+    layout,
+    setLayout,
     showSchedule,
     selectedSlot,
     calendarRef,

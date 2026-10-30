@@ -7,6 +7,7 @@ import { CalendarPrevIcon } from '../Icon/CalendarPrevIcon';
 import { CalendarNextIcon } from '../Icon/CalendarNextIcon';
 import { CalendarPrevYearIcon } from '../Icon/CalendarPrevYearIcon';
 import { CalendarNextYearIcon } from '../Icon/CalendarNextYearIcon';
+import { Tooltip } from '../Tooltip/Tooltip';
 import styles from './DatePickerPopover.module.css';
 
 /**
@@ -47,6 +48,10 @@ export function DatePickerPopover({
   // future occurrence at a glance. The primary selection still
   // renders in the solid primary swatch on top.
   highlightedDates = null,
+  // (iso) => true disables that day too, on top of min / max (e.g. a day
+  // the person can't be booked). Return a string instead of true and it
+  // shows as the day's tooltip, saying why.
+  isDayDisabled = null,
 }) {
   const highlightedSet = useMemo(() => {
     if (!highlightedDates || !highlightedDates.length) return null;
@@ -191,6 +196,7 @@ export function DatePickerPopover({
       onPick={pickDate}
       onHover={(d) => setHoverEnd(d)}
       highlightedSet={highlightedSet}
+      isDayDisabled={isDayDisabled}
     />
   );
 
@@ -317,7 +323,7 @@ export function DatePickerPopover({
 function MonthGrid({
   year, month, today, minDate, maxDate,
   selectedSingle, rangeStart, rangeEnd, pendingStart, previewStart, previewEnd,
-  isRange, onPick, onHover, highlightedSet,
+  isRange, onPick, onHover, highlightedSet, isDayDisabled,
 }) {
   const gridStart = useMemo(() => {
     const firstOfMonth = new Date(year, month, 1);
@@ -369,7 +375,9 @@ function MonthGrid({
           const isPendingStart = isRange && pendingStart && sameDay(d, pendingStart);
           const isSelected = isSelectedSingle || isRangeStart || isRangeEnd || isPendingStart;
           const isToday = sameDay(d, today);
-          const disabled = (minDate && d < stripTime(minDate)) || (maxDate && d > stripTime(maxDate));
+          const blocked = isDayDisabled ? isDayDisabled(isoFromLocal(d)) : false;
+          const disabled = (minDate && d < stripTime(minDate)) || (maxDate && d > stripTime(maxDate)) || !!blocked;
+          const reason = typeof blocked === 'string' ? blocked : '';
           const marker = rangeMarkers[i];
           const cellCls = [
             styles.cell,
@@ -390,15 +398,23 @@ function MonthGrid({
           ].filter(Boolean).join(' ');
           return (
             <div key={d.toDateString()} className={cellCls}>
-              <button
-                type="button"
-                className={dayCls}
-                disabled={disabled}
-                onClick={() => onPick(d)}
-                onMouseEnter={isRange && pendingStart ? () => onHover(d) : undefined}
-              >
-                {d.getDate()}
-              </button>
+              {(() => {
+                const day = (
+                  <button
+                    type="button"
+                    className={dayCls}
+                    disabled={disabled}
+                    onClick={() => onPick(d)}
+                    onMouseEnter={isRange && pendingStart ? () => onHover(d) : undefined}
+                  >
+                    {d.getDate()}
+                  </button>
+                );
+                // A disabled button gets no hover, so its wrapper carries the tooltip.
+                return reason
+                  ? <Tooltip label={reason} maxWidth={220}><span className={styles.dayBlocked}>{day}</span></Tooltip>
+                  : day;
+              })()}
             </div>
           );
         })}

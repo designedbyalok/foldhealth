@@ -39,6 +39,8 @@ const VARIANT_DEFAULTS = {
  * @param {function} props.onConfirm   – Called when user clicks the primary action.
  * @param {function} props.onCancel    – Called when user clicks cancel or overlay.
  * @param {boolean}  props.loading     – If true, disable buttons and show loading text.
+ * @param {boolean}  [props.confirmDisabled=false] – Keeps the primary action off until
+ *   the caller's own input (e.g. a required choice in `children`) is filled in.
  * @param {string}   [props.overlayClassName] – Override the scrim utility class
  *   (defaults to the shared `bg-black/40`), e.g. `bg-black/25` for a lighter
  *   backdrop.
@@ -76,6 +78,7 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
   loading = false,
+  confirmDisabled = false,
   overlayClassName,
   inline = false,
   checkbox,
@@ -129,7 +132,7 @@ export function ConfirmDialog({
           {cancelLabel}
         </Button>
       )}
-      <Button variant={preset.button.variant} tone={preset.button.tone} size={buttonSize} onClick={onConfirm} disabled={loading} className="flex-1">
+      <Button variant={preset.button.variant} tone={preset.button.tone} size={buttonSize} onClick={onConfirm} disabled={loading || confirmDisabled} className="flex-1">
         {loading ? 'Processing…' : confirmLabel}
       </Button>
     </AlertDialogFooter>

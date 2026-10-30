@@ -163,10 +163,9 @@ async function deliver({ recipient, targets, via, me, subject, html, smsBody, me
   }
   const failed = results.filter(([, m]) => m?.status === 'failed');
   const channels = [...new Set(results.map(([c]) => c))];
-  const people = emails.length + phones.length;
   if (!results.length) toast.error('Nothing sent: no one picked has an email or phone for the chosen channel.');
   else if (failed.length) toast.error(`${failed.map(([c]) => c).join(' and ')} not sent: ${failed[0][1].failure_reason}`);
-  else toast.success(`Sent by ${channels.join(' and ')}${people > 1 ? ` to ${targets.length} recipients` : ''}`);
+  else toast.success(`${channels.join(' and ')} Sent Successfully`);
   return results.length > 0;
 }
 

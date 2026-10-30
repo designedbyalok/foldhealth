@@ -197,3 +197,8 @@
   color: var(--neutral-300);
   font-size: var(--font-md);
 }
+
+/* A blocked header checkbox ignores the pointer; its wrapper still catches
+   the hover for the tooltip that says why. */
+.checkBlocked { display: inline-flex; cursor: not-allowed; }
+.checkBlocked > * { pointer-events: none; }

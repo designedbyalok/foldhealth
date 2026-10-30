@@ -15,8 +15,10 @@ import styles from './UserProfileBanner.module.css';
  * -----
  *  - user     { initials, name, email, status } — display data.
  *  - onCall / onChat / onMeet / onMore  — optional click handlers per action.
+ *  - subtitle — the line under the name (default: the email), e.g. a role.
+ *  - actions  — false leaves the action cluster out (a banner for context only).
  */
-export function UserProfileBanner({ user, onCall, onChat, onMeet, onMore }) {
+export function UserProfileBanner({ user, onCall, onChat, onMeet, onMore, subtitle, actions = true }) {
   const isActive = user.status === 'Active';
   return (
     <div className={styles.banner}>
@@ -26,9 +28,9 @@ export function UserProfileBanner({ user, onCall, onChat, onMeet, onMore }) {
           {user.name}
           {isActive && <Icon name="solar:verified-check-bold" size={16} color="#009B53" />}
         </div>
-        <span className={styles.email}>{user.email}</span>
+        <span className={styles.email}>{subtitle ?? user.email}</span>
       </div>
-      <div className={styles.actions}>
+      {actions && <div className={styles.actions}>
         <div className={styles.actionItem}>
           <ActionButton icon="solar:phone-calling-rounded-linear" tooltip="Call" onClick={onCall} />
           <span className={styles.actionLabel}>Call</span>
@@ -45,7 +47,7 @@ export function UserProfileBanner({ user, onCall, onChat, onMeet, onMore }) {
         </div>
         <span className={styles.divider} />
         <ActionButton icon="solar:menu-dots-bold" tooltip="More" onClick={onMore} />
-      </div>
+      </div>}
     </div>
   );
 }

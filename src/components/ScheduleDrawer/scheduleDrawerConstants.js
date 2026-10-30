@@ -43,12 +43,12 @@ export const TIME_SLOTS = (() => {
   return slots;
 })();
 
-export const APPOINTMENT_STATUSES = ['Booked', 'Cancelled', 'No Show', 'Checked In'];
+export const APPOINTMENT_STATUSES = ['Scheduled', 'Cancelled', 'No Show', 'Checked In', 'Checked Out'];
 
-// Stored status → the label the Appointment Details drawer shows. New
-// bookings are stored as "Scheduled" (or empty) and read as "Booked".
+// Stored status → the label shown everywhere. New bookings are stored as
+// "Scheduled" (or empty); older rows may say "Booked", which means the same.
 export function displayAppointmentStatus(raw) {
-  return !raw || raw === 'Scheduled' ? 'Booked' : raw;
+  return !raw || raw === 'Scheduled' || raw === 'Booked' ? 'Scheduled' : raw;
 }
 
 export function getInitials(name) {

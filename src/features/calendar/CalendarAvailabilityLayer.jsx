@@ -1,45 +1,12 @@
 import { useEffect } from 'react';
 import { recordsOnDate } from '../ooo/oooUtils';
-import { blockStatus, isoDay, zonedInstant } from '../settings/calendar/availability/availabilityUtils';
-import { occursOn } from '../settings/calendar/availability/newViewUtils';
+import { segmentsFor, windowsOn } from './openSlots';
 import styles from './CalendarAvailabilityLayer.module.css';
 
 // Must match CalendarContent: dayBoundaries 00:00–23:00 on a 2000px grid.
 const GRID_HEIGHT = 2000;
 const GRID_HOURS = 23;
 const DAY_MIN = GRID_HOURS * 60;
-
-/**
- * The user's bookable windows on the viewer's day `date`, merged, in minutes
- * from that day's midnight. Each slot's hours are in its own timezone, so a
- * slot on the day before or after (in its zone) can land on this day too;
- * holidays and repeat rules go by the slot's own date.
- */
-function windowsOn(segments, date, isHoliday) {
-  const [y, m, d] = date.split('-').map(Number);
-  const dayStart = new Date(y, m - 1, d).getTime();
-  const dayEnd = dayStart + DAY_MIN * 60000;
-  const raw = [];
-  [-1, 0, 1].forEach((shift) => {
-    const slotDay = new Date(y, m - 1, d + shift);
-    const iso = isoDay(slotDay);
-    segments
-      .filter(s => blockStatus(s) !== 'expired' && occursOn(s, slotDay) && !(isHoliday(iso) && s.skipHolidays))
-      .forEach(s => (s.slots || []).filter(sl => sl.start && sl.end).forEach((sl) => {
-        const a = Math.max(dayStart, zonedInstant(iso, sl.start, s.timezone));
-        const b = Math.min(dayEnd, zonedInstant(iso, sl.end, s.timezone));
-        if (b > a) raw.push([(a - dayStart) / 60000, (b - dayStart) / 60000]);
-      }));
-  });
-  raw.sort((p, q) => p[0] - q[0]);
-  const merged = [];
-  raw.forEach(([a, b]) => {
-    const last = merged[merged.length - 1];
-    if (last && a <= last[1]) last[1] = Math.max(last[1], b);
-    else merged.push([a, b]);
-  });
-  return merged;
-}
 
 /**
  * "Show available slots" on the Week view: the time the user in view isn't
@@ -60,8 +27,7 @@ const NO_HOLIDAYS = [];
 export function CalendarAvailabilityLayer({ focusUser, segments, holidays = NO_HOLIDAYS, renderTick }) {
   useEffect(() => {
     if (!focusUser) return undefined;
-    const mine = (segments || []).filter(s => (s.userId && String(s.userId) === String(focusUser.id))
-      || String(s.userName || '').toLowerCase() === String(focusUser.name || '').toLowerCase());
+    const mine = segmentsFor(segments, focusUser);
     if (!mine.length) return undefined;
     const hosts = [];
     // One abort removes every click blocker added below.

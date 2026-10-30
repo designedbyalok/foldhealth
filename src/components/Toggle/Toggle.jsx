@@ -11,7 +11,7 @@ import styles from './Toggle.module.css';
  * at the first-measured size and visibly fall behind its button.
  *
  * Props:
- *  - items      (string[] | {key, label, icon?}[])
+ *  - items      (string[] | {key, label, icon?, ariaLabel?}[])  ariaLabel names an icon-only segment
  *  - active     (string)     Currently selected key
  *  - onChange   (function)   Called with the key of the clicked segment
  *  - className  (string)     Extra class on the outer container
@@ -71,17 +71,18 @@ export function Toggle({ items = [], active, onChange, className, size = 'M', fu
       role="radiogroup"
     >
       <div className={styles.slider} style={sliderStyle} />
-      {normalized.map(({ key, label, icon }) => (
+      {normalized.map(({ key, label, icon, ariaLabel }) => (
         <button
           key={key}
           type="button"
           role="radio"
           aria-checked={active === key}
+          aria-label={ariaLabel}
           data-active={active === key}
           className={`${styles.btn} ${active === key ? styles.btnActive : ''}`}
           onClick={() => onChange(key)}
         >
-          {icon ? (typeof icon === 'string' ? <Icon name={icon} size={size === 'S' ? 14 : 16} /> : icon) : label}
+          {icon ? (typeof icon === 'string' ? <Icon name={icon} size={16} /> : icon) : label}
         </button>
       ))}
     </div>

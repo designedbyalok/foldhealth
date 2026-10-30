@@ -247,3 +247,7 @@
   cursor: not-allowed;
 }
 .dayDisabled:hover { background: transparent; color: var(--neutral-150); }
+
+/* A day disabled with a reason: the wrapper takes the hover for its tooltip. */
+.dayBlocked { display: inline-flex; cursor: not-allowed; }
+.dayBlocked > * { pointer-events: none; }

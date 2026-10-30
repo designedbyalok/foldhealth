@@ -1,0 +1,261 @@
+/* ── Calendar List view (VBC-25651, Figma 3023:575134) ── */
+
+.root {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--neutral-0);
+}
+
+/* One scroller for every group, so the stacked tables share a horizontal
+   scroll and their columns line up. */
+/* The empty state, centred in the list. */
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+}
+
+.scroller {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  /* With the cells' own 8px, content starts 16px in, like the worklists. */
+  padding: 0 var(--space-2);
+}
+
+/* ── A section per provider (Figma Tasks 866:7982), each over the
+   standard worklist table ── */
+/* The fixed columns plus room for Reason for Visit; at or above this
+   width the list doesn't scroll sideways. */
+.group { min-width: 1200px; }
+
+/* The provider's label row, over a darker rule like a Tasks status group. */
+.groupRow {
+  display: flex;
+  align-items: center;
+  padding: var(--space-4) var(--space-2) var(--space-2);
+  border-bottom: 0.5px solid var(--neutral-200);
+}
+
+.groupToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0;
+  border: 0;
+  background: none;
+  margin-left: var(--space-2);
+  font-size: var(--font-base);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--neutral-400);
+  cursor: pointer;
+}
+.groupToggle:hover { color: var(--neutral-500); }
+
+.groupCount {
+  display: inline-flex;
+  margin-left: var(--space-1);
+}
+
+.caret { transform: rotate(-90deg); transition: transform var(--duration-base) var(--ease-out); }
+.caretOpen { composes: caret; transform: rotate(0deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .caret { transition: none; }
+}
+
+.actionCell { text-align: center; }
+
+/* Room for two lines in every row, so a row with a second line (member
+   details, Provider OOO) is no taller than one without. */
+.row { height: 52px; }
+
+/* Just reassigned to me (from the notification), for 3 seconds. */
+.row td { transition: background-color var(--duration-base) var(--ease-out); }
+.rowHighlight td { background: var(--primary-50); }
+
+.rowPicked td { background: var(--primary-50); }
+
+/* Two-line cells, like the worklists' member cell: the value over a
+   quieter detail line. */
+.twoLine {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+/* The member's name with their details after it, on one line. */
+.memberLine {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.memberMeta {
+  flex-shrink: 0;
+  color: var(--neutral-200);
+  white-space: nowrap;
+}
+
+/* The provider is out of office then: in the Out of Office pink. */
+.oooNote {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-sm);
+  line-height: 1.2;
+  color: var(--accent-magenta);
+  white-space: nowrap;
+  cursor: default;
+}
+
+.cellText {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Every checkbox sits 8px in, like the table header's; in the provider row
+   it keeps 24px clear so the avatar lines up with the member avatars below
+   (8 + 16 + 24 = the 36px checkbox column + 12px cell padding). */
+.check,
+.checkDisabled { display: inline-flex; padding-right: var(--space-6); }
+.checkCell .check,
+.checkCell .checkDisabled { padding-right: 0; }
+/* Doubled to outrank the worklist cell's own padding, whichever loads last. */
+.checkCell.checkCell { padding-left: var(--space-2); padding-right: var(--space-2); }
+
+/* A disabled checkbox ignores the pointer; the wrapper still catches the
+   hover for the tooltip that says why. */
+.checkDisabled { cursor: not-allowed; }
+.checkDisabled > * { pointer-events: none; }
+
+/* The member link: user icon + name; the name gives way to "…" first. */
+.memberLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.memberLinkText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Cancel Appointments dialog ── */
+/* Doubled to win over the dialog's own max-width utility. */
+.cancelDialog.cancelDialog { max-width: 420px; width: 100%; }
+.cancelDesc { color: var(--neutral-300); }
+/* The reasons: the prompt, then 12px between it and each radio. */
+.cancelReasons { align-self: stretch; gap: var(--space-3); text-align: left; }
+.cancelReasons [role="radiogroup"] { gap: var(--space-3); }
+
+/* ── Bulk Reschedule drawer ── */
+.member {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  /* Stays inside its cell; a long detail line ends in "…" (full text on hover). */
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Figma VMG 777:24172: name over "when • what", both 14 regular. */
+.memberName {
+  font-size: var(--font-base);
+  font-weight: 400;
+  color: var(--neutral-500);
+}
+
+/* Sized to the button, not stretched to the header's height, so the
+   tooltip sits just under Save. */
+.saveTip { align-self: center; }
+
+/* Save, while rows are still empty: the wrapper takes the hover for its tooltip. */
+.saveBlocked { display: inline-flex; cursor: not-allowed; }
+.saveBlocked > * { pointer-events: none; }
+
+.headerDivider {
+  width: 1px;
+  height: 16px;
+  background: var(--neutral-150);
+  flex-shrink: 0;
+}
+
+.reschedule {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3); /* 12px from the heading to the table */
+}
+
+
+
+
+
+
+
+.memberText {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2); /* 2px between the name and its detail line */
+  min-width: 0;
+}
+
+.memberSub {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.memberDemo {
+  font-weight: 400;
+  color: var(--neutral-200);
+}
+
+.rescheduleTable {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.rescheduleDateCol { width: 160px; }
+.rescheduleTimeCol { width: 170px; }
+
+/* "Select New Date & Time" with Autofill on the right. */
+.rescheduleHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.rescheduleTitle {
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+
+.rescheduleTable th {
+  padding: var(--space-2);
+  font-size: var(--font-sm);
+  font-weight: 400;
+  color: var(--neutral-300);
+  text-align: left;
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
+.rescheduleTable td {
+  padding: var(--space-2);
+  border-bottom: 0.5px solid var(--neutral-150);
+  vertical-align: middle;
+}

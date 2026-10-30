@@ -48,6 +48,8 @@
 .tone-error     { background: var(--status-error-light);  color: var(--status-error);   border-color: color-mix(in srgb, var(--status-error) 20%, transparent); }
 .tone-info      { background: var(--status-info-light);   color: var(--status-info);    border-color: color-mix(in srgb, var(--status-info) 20%, transparent); }
 .tone-disabled  { background: var(--neutral-50);          color: var(--neutral-200);    border-color: var(--neutral-100); }
+/* Out of Office pink (Figma Eventus 17581:115194). */
+.tone-magenta   { background: var(--accent-light-magenta); color: var(--accent-magenta); border-color: color-mix(in srgb, var(--accent-magenta) 20%, transparent); }
 /* Figma "Accent Dark / AI Color": gradient text on primary-50. */
 .tone-unity     { background: var(--primary-50);          color: var(--unity-gradient-mid); border-color: var(--unity-gradient-from); }
 .unityText {

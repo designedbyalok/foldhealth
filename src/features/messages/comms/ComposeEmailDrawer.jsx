@@ -235,7 +235,7 @@ export function ComposeEmailDrawer({ initial = {}, onClose, onSent }) {
     setDirty(true);
     if (draft.subject) setSubject(draft.subject);
     setBody(textToHtml(draft.body));
-    toast.success('Email drafted with UnityAI');
+    toast.success('Email Drafted Successfully');
   };
 
   const send = async () => {
@@ -264,7 +264,7 @@ export function ComposeEmailDrawer({ initial = {}, onClose, onSent }) {
       });
       if (initial.draft) await deleteMessage(initial.draft.id);
       if (result?.status === 'failed') toast.error(`Email not sent: ${result.failure_reason}`);
-      else toast.success('Email sent');
+      else toast.success('Email Sent Successfully');
       onSent?.(conversation);
       setDismissed(true);
     } catch {
@@ -294,7 +294,7 @@ export function ComposeEmailDrawer({ initial = {}, onClose, onSent }) {
           sender_id: me?.id || null, sender_name: sender.name, from_addr: FROM_ADDRESS, ...fields,
         });
       }
-      toast.success('Saved to Drafts');
+      toast.success('Saved To Drafts Successfully');
       setConfirmDiscard(false);
       setDismissed(true);
     } catch {

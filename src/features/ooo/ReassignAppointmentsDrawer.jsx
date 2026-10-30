@@ -13,7 +13,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { OooReassignFooter, ReassignmentType, ReassignProviders } from './OooReassignStep';
 import { ReassignPlanner } from './ReassignPlanner';
 import { useReassignHistory } from './ReassignHistory';
-import { reassignWindow, scopeAppointments, tallyPlan } from './reassignUtils';
+import { apptSpan, reassignWindow, scopeAppointments, tallyPlan } from './reassignUtils';
 import { toast } from '../../components/Toast/sonnerToast';
 import { canEdit, describeRange, OOO_ICON, oooStatus, peopleOptions, personKey, personOf, recordsFor, samePerson, sortRecords, STATUS_TONE } from './oooUtils';
 import styles from './ooo.module.css';
@@ -36,9 +36,14 @@ const TABS = [
  * @param {object|string} [props.initialUser] – Preselected "Reassign From": { id, name } (a name for older data)
  * @param {string}   [props.initialRecordId] – Preselected period (else the provider's latest)
  * @param {function} props.onNewOoo        – (person) => void, "+ New Out of Office"
+ * @param {object[]} [props.bulkAppointments] – Bulk mode (calendar List view):
+ *   plan just these appointments of `initialUser`, who can't be changed; no
+ *   reassignment type to pick
+ * @param {function} [props.onDone]          – after Confirm
  * @param {function} props.onClose
  */
-export function ReassignAppointmentsDrawer({ users, initialUser, initialRecordId, onNewOoo, onClose }) {
+export function ReassignAppointmentsDrawer({ users, initialUser, initialRecordId, onNewOoo, bulkAppointments, onDone, onClose }) {
+  const bulk = !!bulkAppointments;
   const oooRecords = useAppStore(s => s.oooRecords);
   const [tab, setTab] = useState('reassign');
   const history = useReassignHistory();
@@ -56,7 +61,7 @@ export function ReassignAppointmentsDrawer({ users, initialUser, initialRecordId
     return pre ? personKey(pre) : '';
   });
   const fromPerson = people.find(u => personKey(u) === from) || null;
-  const [type, setType] = useState('ooo');
+  const [type, setType] = useState(bulk ? 'other' : 'ooo');
   // Picked by default: the provider's latest period, i.e. the ongoing one,
   // else the next upcoming (the list's own order). Still changeable.
   const latestFor = (who) => (who ? sortRecords(recordsFor(oooRecords, who).filter(r => canEdit(r)))[0]?.id || '' : '');
@@ -79,11 +84,21 @@ export function ReassignAppointmentsDrawer({ users, initialUser, initialRecordId
 
   // What the plan covers: the provider's upcoming appointments in the window.
   const record = oooRecords.find(r => r.id === recordId);
-  const timeWindow = useMemo(
-    () => (from ? reassignWindow({ type, record, startAt: range.startAt, endAt: range.endAt }) : null),
-    [from, type, record, range.startAt, range.endAt],
+  // Bulk: the window is the selected appointments' own span.
+  const bulkScope = useMemo(
+    () => (bulk ? [...bulkAppointments].sort((a, b) => apptSpan(a).start - apptSpan(b).start) : null),
+    [bulk, bulkAppointments],
   );
-  const scope = useMemo(() => scopeAppointments(appointments, fromPerson, timeWindow), [appointments, fromPerson, timeWindow]);
+  const timeWindow = useMemo(() => {
+    if (bulkScope) {
+      return bulkScope.length ? { from: apptSpan(bulkScope[0]).start, to: Math.max(...bulkScope.map(a => apptSpan(a).end)) } : null;
+    }
+    return from ? reassignWindow({ type, record, startAt: range.startAt, endAt: range.endAt }) : null;
+  }, [bulkScope, from, type, record, range.startAt, range.endAt]);
+  const scope = useMemo(
+    () => bulkScope || scopeAppointments(appointments, fromPerson, timeWindow),
+    [bulkScope, appointments, fromPerson, timeWindow],
+  );
   // A different provider, type or window is a different plan.
   const scopeKey = `${from}|${type}|${timeWindow?.from}|${timeWindow?.to}`;
   const [planKey, setPlanKey] = useState(scopeKey);
@@ -97,6 +112,7 @@ export function ReassignAppointmentsDrawer({ users, initialUser, initialRecordId
     const fromRole = (platformUsers || []).find(u => samePerson(u, fromPerson))?.clinicalRoles?.[0] || null;
     // The job runs in the background; its summary comes as a notification.
     toast.success('Reassignment Started. You\'ll Get a Notification with the Summary.');
+    onDone?.();
     onClose();
     await runJob({ fromUser: fromPerson.name, fromUserId: fromPerson.id, fromUserRole: fromRole, type, window: timeWindow, oooRecordId: type === 'ooo' ? recordId : null, plan, appointments: scope });
   };
@@ -158,9 +174,10 @@ export function ReassignAppointmentsDrawer({ users, initialUser, initialRecordId
             options={fromOptions}
             value={from || undefined}
             onChange={(key) => { setFrom(key); setRecordId(latestFor(people.find(u => personKey(u) === key))); }}
+            disabled={bulk}
           />
 
-          <ReassignmentType
+          {!bulk && <ReassignmentType
             type={type}
             onTypeChange={setType}
             range={range}
@@ -211,7 +228,7 @@ export function ReassignAppointmentsDrawer({ users, initialUser, initialRecordId
                 </span>
               </>
             )}
-          />
+          />}
 
           {/* Nothing to list until we know whose appointments, and for
               out of office, which record's dates; for one-time, which dates. */}

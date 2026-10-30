@@ -7,65 +7,79 @@
   background: var(--neutral-0);
 }
 
-/* Toolbar */
+/* Toolbar: the period, view and navigation over the filters. */
 .toolbar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 16px;
-  border-bottom: 0.5px solid var(--neutral-150);
+  flex-direction: column;
   flex-shrink: 0;
-  gap: 12px;
   overflow: visible;
   position: relative;
   z-index: 10;
 }
 
+.toolbarTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  /* 16px side gutters, like the worklists' filter bar; the list's
+     checkboxes line up with this edge. */
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
 .toolbarLeft {
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.toolbarCenter {
-  display: flex;
-  align-items: center;
   gap: var(--space-2);
+  min-width: 0;
 }
 
 .toolbarRight {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
-.monthTitle {
-  font-size: var(--font-xl);
-  font-weight: 600;
-  color: var(--neutral-400);
-  margin: 0;
-  white-space: nowrap;
+.toolGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
+
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
+/* The arrows hug the date, so the three read as one control. */
+.dateNav {
+  display: flex;
+  align-items: center;
+  margin-right: var(--space-2);
+}
+
+.dateTitle {
+  padding: var(--space-1);
+  border: 0;
+  border-radius: var(--space-1);
+  background: none;
+  font-size: var(--font-2xl);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  color: var(--neutral-500);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.dateTitle:hover { background: var(--neutral-50); }
+.dateTitle:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 1px; }
 
 /* View picker (Week / Day / Month), sized to its longest label. */
-.viewSelect { width: calc(var(--space-16) + var(--space-10)); }
-
-.todayBtn {
-  padding: 4px 12px;
-  border: 0.5px solid var(--neutral-150);
-  border-radius: 4px;
-  font-size: var(--font-md);
-  font-weight: 500;
-  color: var(--neutral-400);
-  background: var(--neutral-0);
-  cursor: pointer;
-  transition: background .1s;
-}
-
-.todayBtn:hover {
-  background: var(--neutral-50);
-}
-
+.viewSelect { width: calc(var(--space-16) + var(--space-6)); }
 
 /* Calendar container — fill remaining height */
 .calendarWrap {

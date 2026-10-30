@@ -17,6 +17,9 @@ import styles from './DatePicker.module.css';
  *   value      { start, end } — each an ISO string
  *   onSelect   (range) => void — fires only after both endpoints are set
  *   Displayed as "MM/DD/YYYY - MM/DD/YYYY"
+ *
+ * Single mode also takes `isDayDisabled`: (iso) => true greys that day out, or
+ * a string does and shows it as the day's tooltip (why it can't be picked).
  */
 export const DatePicker = forwardRef(function DatePicker({
   mode = 'single',
@@ -34,6 +37,7 @@ export const DatePicker = forwardRef(function DatePicker({
   label,
   required = false,
   helperText,
+  isDayDisabled,
 }, ref) {
   const isRange = mode === 'range';
   const autoId = useId();
@@ -60,6 +64,7 @@ export const DatePicker = forwardRef(function DatePicker({
         variant={hasError ? 'error' : undefined}
         min={min}
         max={max}
+        isDayDisabled={isDayDisabled}
         label={label}
         required={required}
         helperText={helperText}

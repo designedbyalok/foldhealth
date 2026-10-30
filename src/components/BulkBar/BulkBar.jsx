@@ -16,7 +16,8 @@ import styles from './BulkBar.module.css';
  *
  * `actions` (optional) lets a caller replace the default Change Assignee /
  * Run Automation / "More" cluster entirely. Each entry:
- *   { label, icon?, variant?: 'primary'|'secondary'|'destructive', size?: 'S'|'M'|'L' (default S), onClick(ids, event) }
+ *   { label, icon?, iconElement?, variant?: 'primary'|'secondary'|'destructive', size?: 'S'|'M'|'L' (default S), onClick(ids, event) }
+ * (`iconElement`: a custom icon node, in place of a Solar `icon` name.)
  * `noun` (optional) names what's selected: "26 Appointments Selected".
  * Reach for `actions` when the calling surface has a distinct verb-set
  * (e.g. SFTP review only needs "Add to Worklist" + "Delete"). When
@@ -100,6 +101,7 @@ export function BulkBar({ selectedIds: selectedIdsProp, onClear, onChangeAssigne
               tone={a.tone}
               size={a.size || 'sm'}
               leadingIcon={a.icon}
+              leadingIconElement={a.iconElement}
               disabled={a.disabled}
               onClick={(e) => a.onClick?.(selectedIds, e)}
             >
@@ -126,7 +128,8 @@ export function BulkBar({ selectedIds: selectedIdsProp, onClear, onChangeAssigne
                       className={[styles.moreItem, item.variant === 'destructive' ? styles.danger : ''].filter(Boolean).join(' ')}
                       onClick={() => { setShowMore(false); item.onClick?.(selectedIds); }}
                     >
-                      {item.icon && <Icon name={item.icon} size={16} color="var(--neutral-400)" />}
+                      {/* A destructive item's icon is red like its label. */}
+                      {item.iconElement || (item.icon && <Icon name={item.icon} size={16} color={item.variant === 'destructive' ? 'currentColor' : 'var(--neutral-400)'} />)}
                       {item.label}
                     </button>
                   ))}

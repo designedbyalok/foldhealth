@@ -18,7 +18,7 @@ const VIEW_OPTIONS = ['Upcoming', 'Past', 'All'];
 const EMPTY_FILTERS = { type: [], status: [], assignee: [] };
 // Appointment Details statuses (and reminder Pending / Completed) → Badge tone.
 const STATUS_TONE = {
-  Booked: 'primary',
+  Scheduled: 'primary',
   'Checked In': 'success',
   'No Show': 'warning',
   Cancelled: 'error',

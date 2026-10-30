@@ -6518,7 +6518,9 @@ export const useAppStore = create((set, get) => ({
       .limit(50);
     // referral_id comes with caregap_referrals_migration.sql; until it runs,
     // read without it rather than losing the whole feed.
-    let { data, error } = await query(`${COLS}, referral_id`);
+    // reassignment_job_id comes with reassignment_notifications_migration.sql.
+    let { data, error } = await query(`${COLS}, referral_id, reassignment_job_id`);
+    if (error && /reassignment_job_id/.test(error.message || '')) ({ data, error } = await query(`${COLS}, referral_id`));
     if (error && /referral_id/.test(error.message || '')) ({ data, error } = await query(COLS));
     if (error) {
       // Table missing (migration not run yet) or blocked — keep whatever is
@@ -15582,6 +15584,23 @@ export const useAppStore = create((set, get) => ({
   reassignmentLocal: false,
   reassignmentSummaryJobId: null,
   openReassignmentSummary: (jobId) => set({ reassignmentSummaryJobId: jobId }),
+  // "View Appointments" on a reassignment notification: the calendar's List
+  // view on the week of the first appointment moved to me, with the moved
+  // ones highlighted (calendarFocus, consumed by CalendarView).
+  calendarFocus: null,
+  openAssignedAppointments: async (jobId) => {
+    await get().fetchReassignmentJobs({ force: true });
+    const job = (get().reassignmentJobs || []).find(j => j.id === jobId);
+    const me = get().currentUserProfile;
+    const mine = (job?.results || []).filter(r => r.outcome === 'reassigned'
+      && ((r.toId && me?.id && String(r.toId) === String(me.id)) || (!r.toId && r.to === me?.name)));
+    const moved = mine.length ? mine : (job?.results || []).filter(r => r.outcome === 'reassigned');
+    const iso = (d) => { const [m, dd, y] = String(d || '').split('-'); return y ? `${y}-${m}-${dd}` : null; };
+    const date = moved.map(r => iso(r.appointment?.date)).filter(Boolean).sort()[0] || null;
+    set({ activePage: 'calendar', calendarFocus: { ids: moved.map(r => r.appointmentId), date, at: Date.now() } });
+    try { if (typeof window !== 'undefined') window.location.hash = '#/calendar'; } catch { /* */ }
+  },
+  clearCalendarFocus: () => set({ calendarFocus: null }),
   closeReassignmentSummary: () => set({ reassignmentSummaryJobId: null }),
   fetchReassignmentJobs: async ({ force = false } = {}) => {
     if (get().reassignmentJobsFetched && !force) return;
@@ -15669,6 +15688,21 @@ export const useAppStore = create((set, get) => ({
       action: 'openReassignmentSummary',
       reassignmentJobId: job.id,
     });
+    // Covering providers hear about it from the database trigger
+    // (reassignment_notifications_migration.sql). When the job couldn't be
+    // saved, and I'm one of them, show mine here instead.
+    const me = get().currentUserProfile;
+    const toMe = job.results.filter(r => r.outcome === 'reassigned'
+      && ((r.toId && me?.id && String(r.toId) === String(me.id)) || (!r.toId && r.to === me?.name))).length;
+    if (get().reassignmentLocal && toMe) {
+      get().addNotification?.({
+        type: 'appointment.reassigned',
+        title: `${toMe} new ${toMe === 1 ? 'appointment' : 'appointments'} assigned to you.`,
+        body: `${job.createdBy || 'Someone'} reassigned ${toMe} ${toMe === 1 ? 'appointment' : 'appointments'} from ${fromUser} to you.`,
+        action: 'viewAssignedAppointments',
+        reassignmentJobId: job.id,
+      });
+    }
     return job;
   },
   /**
@@ -16004,6 +16038,65 @@ export const useAppStore = create((set, get) => ({
     if (error) { console.error('Delete appointment error:', error); return false; }
     get().fetchAppointments({ force: true });
     return true;
+  },
+
+  // ── Bulk appointment actions (calendar List view, VBC-25651) ──
+  // Until appointment_cancel_reasons_migration.sql runs, the built-in list.
+  appointmentCancelReasons: [],
+  fetchAppointmentCancelReasons: (opts) => mountFetch('fetchAppointmentCancelReasons', async () => {
+    const { CANCEL_REASONS, rowToCancelReason } = await import('../features/calendar/list/cancelReasons');
+    const { data, error } = await supabase
+      .from('appointment_cancel_reasons')
+      .select('*')
+      .eq('active', true)
+      .order('sort_order');
+    set({ appointmentCancelReasons: !error && data?.length ? data.map(rowToCancelReason) : CANCEL_REASONS });
+  }, opts),
+
+  // Cancels the appointments with a reason. Before the migration adds the
+  // cancel_* columns, only the status is saved.
+  cancelAppointments: async (appts, reason) => {
+    const ids = appts.map(a => a.id);
+    const by = get().currentUserProfile?.name || null;
+    let { error } = await supabase.from('appointments')
+      .update({ status: 'Cancelled', cancel_reason: reason, cancelled_at: new Date().toISOString(), cancelled_by: by })
+      .in('id', ids);
+    if (error && /cancel/.test(error.message || '')) {
+      ({ error } = await supabase.from('appointments').update({ status: 'Cancelled' }).in('id', ids));
+    }
+    if (error) { console.error('cancelAppointments:', error.message); return false; }
+    appts.forEach(a => get().logAudit('Appointment', a.id, a.patient_name || 'Appointment', 'cancelled', `Cancelled: ${reason}`, 'Lifecycle',
+      [{ field: 'status', from: a.status || 'Scheduled', to: 'Cancelled', type: 'status' }]));
+    await get().fetchAppointments({ force: true });
+    return true;
+  },
+
+  // Sets one status on several appointments (e.g. bulk Mark as No Show).
+  setAppointmentsStatus: async (appts, status) => {
+    const { error } = await supabase.from('appointments').update({ status }).in('id', appts.map(a => a.id));
+    if (error) { console.error('setAppointmentsStatus:', error.message); return false; }
+    appts.forEach(a => get().logAudit('Appointment', a.id, a.patient_name || 'Appointment', 'updated', `Status: ${status}`, 'Lifecycle',
+      [{ field: 'status', from: a.status || 'Scheduled', to: status, type: 'status' }]));
+    await get().fetchAppointments({ force: true });
+    return true;
+  },
+
+  // Moves each appointment to its new date and time ({ appt, date:
+  // 'MM-DD-YYYY', time_start, time_end }). Returns how many failed.
+  rescheduleAppointments: async (changes) => {
+    const results = await Promise.all(changes.map(async ({ appt, date, time_start, time_end }) => {
+      // A cancelled appointment given a new time is booked again.
+      const rebook = appt.status === 'Cancelled' ? { status: 'Scheduled' } : {};
+      const { error } = await supabase.from('appointments').update({ date, time_start, time_end, ...rebook }).eq('id', appt.id);
+      if (error) { console.error('rescheduleAppointments:', error.message); return false; }
+      get().logAudit('Appointment', appt.id, appt.patient_name || 'Appointment', 'updated', 'Rescheduled', 'Lifecycle', [
+        { field: 'date', from: appt.date || '', to: date, type: 'text' },
+        { field: 'time', from: `${appt.time_start || ''} - ${appt.time_end || ''}`, to: `${time_start} - ${time_end}`, type: 'text' },
+      ]);
+      return true;
+    }));
+    await get().fetchAppointments({ force: true });
+    return results.filter(ok => !ok).length;
   },
 
   // ── Campaign ──

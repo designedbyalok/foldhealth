@@ -75,6 +75,8 @@ const LSC_PHLEBOTOMISTS = [
   'victoria.magallon@astranahealth.com',
 ];
 import { PRACTICE_LOCATIONS } from '../src/features/settings/account/locations/data/mock.js';
+import { CANCEL_REASONS, RETIRED_CANCEL_REASON_IDS, cancelReasonToRow } from '../src/features/calendar/list/cancelReasons.js';
+import { sampleListAppointments } from '../src/features/calendar/list/listSeed.js';
 
 // Care-program letters library. Metadata mirrors PROGRAM_LETTERS_MOCK; the PDF
 // bytes are read from supabase/seed-assets/letters and stored base64 in the
@@ -1251,6 +1253,44 @@ async function main() {
     const rows = sampleHolidays().map(holidayToRow);
     const { error } = await supabase.from('holiday_configurations').upsert(rows, { onConflict: 'id' });
     if (error) { console.error('  ✗', error.message); } else { console.log(`  ✓ ${rows.length} holidays`); }
+  }
+
+  // Calendar list view: the Cancel Appointments dialog's reasons.
+  console.log('Seeding appointment_cancel_reasons...');
+  {
+    const rows = CANCEL_REASONS.map(cancelReasonToRow);
+    const { error } = await supabase.from('appointment_cancel_reasons').upsert(rows, { onConflict: 'id' });
+    if (error) { console.error('  ✗', error.message); } else { console.log(`  ✓ ${rows.length} cancel reasons`); }
+    await supabase.from('appointment_cancel_reasons').update({ active: false }).in('id', RETIRED_CANCEL_REASON_IDS);
+  }
+
+  // Calendar List view: appointments for 10 providers who have none yet.
+  // Re-running skips slots a provider already has booked.
+  console.log('Seeding list view appointments...');
+  {
+    const { data: staff, error: pe } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .not('full_name', 'is', null)
+      .order('full_name');
+    const { data: booked } = await supabase.from('appointments').select('primary_user, primary_user_id, date, time_start');
+    if (pe) {
+      console.error('  ✗ profiles:', pe.message);
+    } else {
+      const busy = new Set((booked || []).flatMap(a => [a.primary_user_id, a.primary_user]).filter(Boolean));
+      const seeded = new Set((booked || []).map(a => `${a.primary_user_id || a.primary_user} ${a.date} ${a.time_start}`));
+      const providers = (staff || [])
+        .map(p => ({ id: p.id, name: p.full_name.trim() }))
+        .filter(p => p.name && !busy.has(p.id) && !busy.has(p.name))
+        .slice(0, 10);
+      const rows = sampleListAppointments(providers)
+        .filter(a => !seeded.has(`${a.primary_user_id || a.primary_user} ${a.date} ${a.time_start}`));
+      let { error } = rows.length ? await supabase.from('appointments').insert(rows) : { error: null };
+      if (error && /primary_user_id/.test(error.message || '')) {
+        ({ error } = await supabase.from('appointments').insert(rows.map(({ primary_user_id: _skip, ...a }) => a)));
+      }
+      if (error) { console.error('  ✗', error.message); } else { console.log(`  ✓ ${rows.length} appointments for ${providers.length} providers`); }
+    }
   }
 
   console.log('Seeding patient_social_history...');

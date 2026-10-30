@@ -20,8 +20,9 @@ function isDownChevron(name) {
  *
  * Canonical props (Figma "Fold Pixel 1.0" spec — Badge node 24:1678):
  *   • tone — one of white | grey | ghost | primary | secondary | success |
- *            warning | error | info | disabled | unity. Drives the color
- *            palette. unity: the coral→pink→blue gradient text (AI Color).
+ *            warning | error | info | disabled | unity | magenta. Drives the color
+ *            palette. unity: the coral→pink→blue gradient text (AI Color);
+ *            magenta: the Out of Office pink.
  *   • size — 'XS' | 'S' | 'M' | 'L' — XS is the compact 18px badge for dense rows
  *     (counts inside an activity log); S / M / L match the Figma heights.
  *   • hover — force the hover-state class (used by Storybook to demo the

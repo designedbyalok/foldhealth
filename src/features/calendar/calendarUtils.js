@@ -84,16 +84,15 @@ export function apptToEvent(appt, T, tz) {
   };
 }
 
-// A booking writes status 'Scheduled', but the drawer's status control writes
-// 'Booked' — the two mean the same thing (see useScheduleDrawer, which renders
-// 'Scheduled' as 'Booked'). The Status filter has to honour that or picking
-// "Booked" hides every appointment created through the booking form.
+// Appointments are stored as 'Scheduled', but older rows (and the drawer's
+// status control, before the rename) wrote 'Booked'; the two mean the same.
+// The Status filter's "Scheduled" has to match both.
 export const BOOKED_STATUS_ALIASES = ['Booked', 'Scheduled'];
 
 export function appointmentMatchesStatuses(appt, selectedStatuses) {
   const status = appt.status;
-  return selectedStatuses.some(s => (s === 'Booked'
-    ? BOOKED_STATUS_ALIASES.includes(status)
+  return selectedStatuses.some(s => (s === 'Scheduled'
+    ? !status || BOOKED_STATUS_ALIASES.includes(status)
     : s === status));
 }
 

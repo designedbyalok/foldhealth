@@ -212,6 +212,12 @@
   border: 1px solid var(--primary-300);
   border-radius: 0.5rem;
   background: var(--primary-50);
+  transition: background-color var(--duration-base) var(--ease-out), border-color var(--duration-base) var(--ease-out);
+}
+/* After 3 seconds the highlight fades; the box stays so nothing shifts. */
+.focusedMessageDone {
+  border-color: transparent;
+  background: transparent;
 }
 
 /* Chat header (Figma 3540:63625). */

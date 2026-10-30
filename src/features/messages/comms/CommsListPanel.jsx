@@ -212,7 +212,7 @@ export function CommsListPanel({
             const results = await Promise.allSettled(ids.map(id => deleteConversation(id)));
             const failed = results.filter(r => r.status === 'rejected').length;
             if (failed) toast.error(`${failed} of ${ids.length} could not be deleted.`);
-            else toast.success(ids.length === 1 ? 'Conversation deleted' : `${ids.length} conversations deleted`);
+            else toast.success(ids.length === 1 ? 'Conversation Deleted Successfully' : 'Conversations Deleted Successfully');
             setPicked([]);
             setDeleting(false);
             setConfirmDelete(false);
