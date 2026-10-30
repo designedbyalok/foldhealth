@@ -10,6 +10,8 @@ one piece of feedback with a point per screen.
   the screen to tuck it into a small tab.
 - **Select**: DevTools-style hover highlight. Press ↑ / ↓ to move to the parent
   or child element, then click or Enter to capture it (with a CSS selector).
+  A comment card opens right at the element; Enter adds your note and the
+  element's screenshot as a new point (Escape drops it).
 - **Screenshot**: one click captures what's on screen.
 - **Upload**: images and GIFs via button, paste, or drag and drop anywhere on
   the box (including onto the text).

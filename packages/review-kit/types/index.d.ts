@@ -54,6 +54,9 @@ export interface ReviewKitLabels {
   upNext: string;
   reviewNext: string;
   notNow: string;
+  inlinePlaceholder: string;
+  inlineHint: string;
+  addPoint: string;
   sent: (count: number) => string;
   point: string;
   pointTitle: (n: number) => string;

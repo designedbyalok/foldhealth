@@ -17,6 +17,7 @@ import { RichTextEditor } from './RichTextEditor';
 import { AttachmentStrip, BlobImage } from './AttachmentStrip';
 import { ImagePreview } from './ImagePreview';
 import { DoneCard } from './DoneCard';
+import { InlineComment } from './InlineComment';
 import { themeToStyle, mergeLabels } from './theme';
 
 const EDGE = 24; // drop within this many px of a side wall to collapse into a tab
@@ -43,6 +44,7 @@ const pageContext = () => (isBrowser ? {
 } : { url: '', title: '', viewport: { width: 0, height: 0 } });
 const newPoint = () => ({ id: nextId(), html: '', text: '', empty: true, attachments: [], context: pageContext() });
 const isEmpty = (p) => p.empty && !p.attachments.length;
+const escapeHtml = (s) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 // Size and position that fit the current window: a saved box from a larger
 // screen, or one left off-screen, opens fully visible.
@@ -142,6 +144,8 @@ export function ReviewDock({
   // Shown in place of the editor right after a send or finish:
   // { sent: number of points (0 if none), finished: boolean }.
   const [done, setDone] = useState(null);
+  // A picked element waiting for its inline comment: { element, name, attachment }.
+  const [inline, setInline] = useState(null);
   const [previewId, setPreviewIdState] = useState(null);
   // Wrap preview open/close and collapse/expand in a view transition so the
   // dock morphs smoothly into its tab (and the thumbnail grows into the modal
@@ -235,16 +239,37 @@ export function ReviewDock({
       const file = await captureElement(el);
       const name = describeElement(el);
       const r = el.getBoundingClientRect();
-      add([{
-        file, name: `${name}.png`, type: 'image/png', kind: 'element',
-        selector: selectorFor(el), element: name,
-        rect: { x: Math.round(r.left + window.scrollX), y: Math.round(r.top + window.scrollY), width: Math.round(r.width), height: Math.round(r.height) },
-      }]);
+      // Comment on it right where it is; adding makes it a point.
+      setInline({
+        element: el,
+        name,
+        attachment: {
+          file, name: `${name}.png`, type: 'image/png', kind: 'element',
+          selector: selectorFor(el), element: name,
+          rect: { x: Math.round(r.left + window.scrollX), y: Math.round(r.top + window.scrollY), width: Math.round(r.width), height: Math.round(r.height) },
+        },
+      });
     } catch (err) {
       setNotice({ tone: 'error', text: L.captureFailed(err?.message || String(err)) });
     } finally {
       setBusy(null);
     }
+  };
+
+  // The inline comment becomes a point with the element's screenshot. An
+  // untouched current point is filled instead of stacking an empty one.
+  const addInlinePoint = (text) => {
+    const point = {
+      ...newPoint(),
+      html: text ? text.split('\n').map(line => `<p>${escapeHtml(line)}</p>`).join('') : '',
+      text,
+      empty: !text,
+      attachments: [{ id: nextId(), ...inline.attachment }],
+    };
+    setPoints(prev => (isEmpty(active) ? prev.map(p => (p.id === active.id ? point : p)) : [...prev, point]));
+    setActiveId(point.id);
+    setInline(null);
+    setDone(null);
   };
 
   const screenshot = async () => {
@@ -589,7 +614,7 @@ export function ReviewDock({
           {!done && (
             <footer className={cx('rk-footer', 'rk-no-drag', classNames.footer)}>
               <div className="rk-tools">
-                <button type="button" className={cx('rk-tool', classNames.toolButton)} onClick={pick} disabled={!!busy} title={L.selectHint} aria-label={L.select}>
+                <button type="button" className={cx('rk-tool', classNames.toolButton)} onClick={pick} disabled={!!busy || !!inline} title={L.selectHint} aria-label={L.select}>
                   <Icons.select />
                   <span>{busy === 'pick' ? L.picking : L.select}</span>
                 </button>
@@ -640,6 +665,15 @@ export function ReviewDock({
           {isDragActive && <div className="rk-drop-overlay">{L.dropHint(activeIndex + 1)}</div>}
         </section>
       </Rnd>
+      {inline && (
+        <InlineComment
+          element={inline.element}
+          elementName={inline.name}
+          labels={L}
+          onAdd={addInlinePoint}
+          onCancel={() => setInline(null)}
+        />
+      )}
       {previewing && (
         <ImagePreview
           key={previewing.id}
