@@ -161,7 +161,9 @@ export function ReviewDock({
     [headerRef.current, footerRef.current].forEach(el => el && ro.observe(el));
     measure();
     return () => ro.disconnect();
-  }, [done]);
+    // Collapsing unmounts the panel; expanding mounts a new header and
+    // footer, so observe those (a detached bar measures 0).
+  }, [done, collapsed]);
   const [scrollEdges, setScrollEdges] = useState({ above: false, below: false });
   const measureScroll = useCallback(() => {
     const el = bodyRef.current;
@@ -180,7 +182,7 @@ export function ReviewDock({
     [...el.children].forEach(child => ro.observe(child));
     measureScroll();
     return () => ro.disconnect();
-  }, [measureScroll, done, points.length]);
+  }, [measureScroll, done, points.length, collapsed]);
   // A picked element waiting for its inline comment: { element, name, attachment }.
   const [inline, setInline] = useState(null);
   const [previewId, setPreviewIdState] = useState(null);
