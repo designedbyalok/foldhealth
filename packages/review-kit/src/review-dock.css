@@ -56,6 +56,33 @@
   animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* By default each snapshot keeps its aspect ratio and fills the morph's
+   width, which blew the tab (and its chevron) up to panel size for a moment.
+   Keep both at their real size instead: the tab fades out almost at once,
+   and the panel fades in, revealed as the shape grows (or the reverse). */
+::view-transition-group(rk-dock-surface) {
+  overflow: clip;
+  border-radius: var(--rk-radius, 18px);
+}
+::view-transition-old(rk-dock-surface),
+::view-transition-new(rk-dock-surface) {
+  height: 100%;
+  object-fit: none;
+  object-position: left top;
+}
+::view-transition-old(rk-dock-surface) {
+  animation: rk-dock-snap-out 100ms ease-out both;
+}
+::view-transition-new(rk-dock-surface) {
+  animation: rk-dock-snap-in 220ms 40ms ease-out both;
+}
+@keyframes rk-dock-snap-out {
+  to { opacity: 0; }
+}
+@keyframes rk-dock-snap-in {
+  from { opacity: 0; }
+}
+
 /* The preview shell and image share the same buoyant easing so the thumb
    grows into the modal, and the modal reshapes into the annotator in place. */
 ::view-transition-group(rk-preview-shell),
