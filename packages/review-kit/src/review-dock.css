@@ -273,7 +273,7 @@
   right: 6px;
   left: 0;
   z-index: 3;
-  height: 28px;
+  height: 36px;
   opacity: 0;
   pointer-events: none;
   transition: opacity 200ms ease;
@@ -318,13 +318,37 @@
   position: absolute;
   inset: 0;
 }
-.rk-edge-top::after { background: linear-gradient(to bottom, var(--rk-bg-solid, var(--rk-bg)), transparent); opacity: 0.7; }
-.rk-edge-bottom::after { background: linear-gradient(to top, var(--rk-bg-solid, var(--rk-bg)), transparent); opacity: 0.7; }
+.rk-edge-top::after { background: linear-gradient(to bottom, var(--rk-bg), transparent); opacity: 0.5; }
+.rk-edge-bottom::after { background: linear-gradient(to top, var(--rk-bg), transparent); opacity: 0.5; }
 
 @media (prefers-reduced-transparency: reduce) {
   .rk-edge > span { display: none; }
   .rk-edge::after { opacity: 1; }
 }
+
+/* The content itself also fades out toward an edge with more to scroll, so
+   nothing is clipped by a hard line; the blur above sits on that fade. */
+@property --rk-fade-top {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --rk-fade-bottom {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+.rk-scroll > .rk-body {
+  --rk-fade-top: 0px;
+  --rk-fade-bottom: 0px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--rk-fade-top), #000 calc(100% - var(--rk-fade-bottom)), transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 var(--rk-fade-top), #000 calc(100% - var(--rk-fade-bottom)), transparent);
+  transition: --rk-fade-top 200ms ease, --rk-fade-bottom 200ms ease;
+}
+
+.rk-scroll[data-more-above] > .rk-body { --rk-fade-top: 36px; }
+.rk-scroll[data-more-below] > .rk-body { --rk-fade-bottom: 36px; }
 
 .rk-body {
   display: flex;
