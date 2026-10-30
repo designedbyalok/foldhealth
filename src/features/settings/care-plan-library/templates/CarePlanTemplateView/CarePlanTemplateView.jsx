@@ -2,13 +2,12 @@ import { useMemo, useState } from 'react';
 import { InfoBar } from '../../../../../components/InfoBar/InfoBar';
 import { Input } from '../../../../../components/Input/Input';
 import { Textarea } from '../../../../../components/Textarea/Textarea';
-import { RadioButton } from '../../../../../components/RadioButton/RadioButton';
 import { Button } from '../../../../../components/Button/Button';
 import { CloseButton } from '../../../../../components/CloseButton/CloseButton';
 import { MenuPopover } from '../../../../../components/MenuPopover/MenuPopover';
 import {
-  CarePlanSections, CategoryCriteriaCard, ChronicConditionSelect, CommonSectionNote, COMMON,
-  TemplateCategoryBar, TemplateRenewalChoice, TemplateScopeChoice, useTemplateCategories,
+  CarePlanSections, CategoryCriteriaCard, ChronicConditionSelect, CommonSectionNote, COMMON, EpisodeSettings,
+  TemplateCategoryBar, TemplateRenewalChoice, TemplateScopeChoice, TemplateTypeChoice, templateTypeOf, useTemplateCategories,
 } from '../../shared';
 import { categoriesProblem } from '../../lib/templateCategories';
 import { CARE_PLAN_NAME_MAX } from '../../lib/carePlanLimits';
@@ -26,16 +25,12 @@ import {
   LIBRARY_SCOPE_CHOICES, PATIENT_SCOPE_CHOICES, templateScopeOf,
 } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/templateScope';
 import { renewalOf } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/templateRenewal';
+import { DEFAULT_EPISODE_DAYS, episodeOf } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/episodeTemplates';
 import { useAppStore } from '../../../../../store/useAppStore';
 import { useTemplateSdoh } from '../../lib/useTemplateSdoh';
 import { isSdohBarrier } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/sdohTaxonomy';
 import styles from './CarePlanTemplateView.module.css';
 
-
-const TEMPLATE_TYPES = [
-  { value: 'general', label: 'General' },
-  { value: 'chronic', label: 'For Chronic Conditions' },
-];
 
 // A goal's row icon follows its measure category, the way an intervention's
 // follows its kind — the flag is the fallback for an uncategorised goal.
@@ -74,10 +69,13 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
   const [name, setName] = useState(template.name || '');
   const [description, setDescription] = useState(template.description || '');
   const [conditions, setConditions] = useState(template.conditions || []);
-  // A template with conditions on it was authored as a chronic-conditions one.
-  const [templateType, setTemplateType] = useState(
-    (template.conditions || []).length ? 'chronic' : 'general',
-  );
+  // Episodic when marked so; otherwise a template with conditions on it was
+  // authored as a chronic-conditions one.
+  const [templateType, setTemplateType] = useState(() => templateTypeOf(template));
+  const [episode, setEpisode] = useState(() => episodeOf(template) || { days: DEFAULT_EPISODE_DAYS, pausesOngoing: true });
+  const savedEpisode = episodeOf(template);
+  const nextEpisode = templateType === 'episodic' ? episode : null;
+  const episodeChanged = JSON.stringify(nextEpisode) !== JSON.stringify(savedEpisode);
   // The three lists are edited here and written on Save, so a picked goal
   // shows in the table before the template is persisted.
   const [goals, setGoals] = useState(template.goals || []);
@@ -102,6 +100,8 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
       barriers: snap.barriers,
       categories: snap.categories,
       renewal,
+      episode: nextEpisode,
+      episodeChanged,
       ...(scope !== templateScopeOf(template) && { scope, patientId: template.patientId }),
     });
   };
@@ -276,20 +276,14 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
           </div>
 
           <div className={styles.field}>
-            <span className={styles.fieldLabel}>Template Type</span>
-            <div className={styles.radioGroup} role="radiogroup" aria-label="Template Type">
-              {TEMPLATE_TYPES.map(t => (
-                <RadioButton
-                  key={t.value}
-                  name="templateType"
-                  value={t.value}
-                  label={t.label}
-                  checked={templateType === t.value}
-                  onChange={() => setTemplateType(t.value)}
-                />
-              ))}
-            </div>
+            <TemplateTypeChoice value={templateType} onChange={setTemplateType} />
           </div>
+
+          {templateType === 'episodic' && (
+            <div className={styles.field}>
+              <EpisodeSettings value={episode} onChange={setEpisode} />
+            </div>
+          )}
 
           {scopeChoices.length > 1 && (
             <div className={styles.field}>

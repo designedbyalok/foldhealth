@@ -13,7 +13,13 @@ export const PAUSE_REASONS = [
   { value: 'patient_request', label: 'Patient request' },
   { value: 'other', label: 'Other' },
 ];
-const REASON_LABEL = Object.fromEntries(PAUSE_REASONS.map(r => [r.value, r.label]));
+// Set by the system, not offered in the Pause dialog: an episodic template
+// (lib/episodeTemplates) paused the plan for the length of its episode.
+export const EPISODE_PAUSE_REASON = 'episode';
+const REASON_LABEL = {
+  ...Object.fromEntries(PAUSE_REASONS.map(r => [r.value, r.label])),
+  [EPISODE_PAUSE_REASON]: 'Episode in progress',
+};
 export const pauseReasonLabel = (value) => REASON_LABEL[value] || 'Other';
 /** The value for a picked label (ReasonDialog hands back the label). */
 export const pauseReasonFromLabel = (label) => PAUSE_REASONS.find(r => r.label === label)?.value || 'other';
@@ -127,7 +133,7 @@ export function resumeAuditEntry(planId, { auto = false, nextTouchpoint: next = 
 export function pauseSummary(pause) {
   if (!pause) return '';
   const parts = [pauseReasonLabel(pause.reason)];
-  if (pause.reason === 'other' && pause.note) parts[0] = pause.note;
+  if ((pause.reason === 'other' || pause.reason === EPISODE_PAUSE_REASON) && pause.note) parts[0] = pause.note;
   if (pause.pausedOn) parts.push(`since ${fmt(pause.pausedOn)}`);
   if (pause.resumeOn) parts.push(`resumes ${fmt(pause.resumeOn)}${pause.autoResume ? ' automatically' : ''}`);
   else parts.push('no resume date');

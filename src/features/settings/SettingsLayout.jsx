@@ -69,6 +69,7 @@ export function SettingsLayout() {
   const carePlanTemplateScreen = useAppStore(s => s.carePlanTemplateScreen);
   const setCarePlanTemplateScreen = useAppStore(s => s.setCarePlanTemplateScreen);
   const saveCarePlanTemplate = useAppStore(s => s.saveCarePlanTemplate);
+  const saveCarePlanTemplateEpisode = useAppStore(s => s.saveCarePlanTemplateEpisode);
   const setCarePlanTab = useAppStore(s => s.setCarePlanTab);
   const showToast = useAppStore(s => s.showToast);
   const automationsView = useAppStore(s => s.automationsView);
@@ -96,8 +97,12 @@ export function SettingsLayout() {
             }
             // Categories are taken as edited, so removing the last one sticks.
             const content = { ...contentOf(template), ...contentOf({ ...template, ...values }), categories: values.categories ?? template.categories ?? [] };
-            if (canManageTemplates) { setPublishing({ template, content, scope: values.scope }); return; }
-            const saved = await saveCarePlanTemplate({ ...content, status: 'draft', replacesTemplateId: template.id });
+            // Episodic or ongoing is a setting on the template, not versioned content.
+            if (canManageTemplates) {
+              setPublishing({ template, content, scope: values.scope, episode: values.episodeChanged ? values.episode : undefined });
+              return;
+            }
+            const saved = await saveCarePlanTemplate({ ...content, status: 'draft', replacesTemplateId: template.id, episode: values.episode });
             if (!saved) return;
             showToast(`Changes saved as a draft revision of "${template.name}" for a supervisor to approve`);
             setCarePlanTab('drafts');
@@ -114,6 +119,7 @@ export function SettingsLayout() {
                 const row = useAppStore.getState().carePlanTemplates.find(t => t.id === publishing.template.id);
                 if (row) await saveCarePlanTemplate({ ...row, scope: publishing.scope, patientId: row.patientId }, row.id);
               }
+              if (publishing.episode !== undefined) await saveCarePlanTemplateEpisode(publishing.template.id, publishing.episode);
               const when = res.version.effectiveDate > todayIso() ? ` effective ${res.version.effectiveDate.slice(5, 7)}/${res.version.effectiveDate.slice(8, 10)}/${res.version.effectiveDate.slice(0, 4)}` : '';
               const moved = res.pending === 'review'
                 ? `${res.targeted} plan${res.targeted === 1 ? '' : 's'} move at their next review`

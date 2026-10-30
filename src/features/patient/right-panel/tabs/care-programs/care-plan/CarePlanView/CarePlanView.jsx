@@ -51,6 +51,7 @@ import { CarePlanDuplicatePopover } from '../DuplicateFlag/CarePlanDuplicatePopo
 import { CarePlanViewDrawers } from './CarePlanViewDrawers';
 import { CarePlanViewOverlays } from './CarePlanViewOverlays';
 import { AppliedTemplateStrip } from './AppliedTemplateStrip';
+import { useCarePlanEpisodes } from './useCarePlanEpisodes';
 import { CarePlanLinkageSection } from './CarePlanLinkageSection';
 import { addGoalsFromPicker, addBarriersFromPicker } from './carePlanPickerHandlers';
 import { formatInstanceDate } from '../lib/templateRenewal';
@@ -217,7 +218,7 @@ export function CarePlanView({ patientId, program }) {
     for (const inst of live?.templateInstances || []) {
       if (!inst.autoClosed) continue;
       const entry = (out[inst.templateId] ||= { previous: [] });
-      entry.previous.push({ id: inst.id, status: inst.status, version: entry.previous.length + 1 });
+      entry.previous.push({ id: inst.id, status: inst.status, version: entry.previous.length + 1, closeReason: inst.closeReason });
     }
     for (const entry of Object.values(out)) entry.version = entry.previous.length + 1;
     return out;
@@ -323,6 +324,12 @@ export function CarePlanView({ patientId, program }) {
 
   // An earlier run is history: shown, not edited.
   const canEdit = !!(patientId && program) && !viewedRun && !versionData;
+  // Episodic templates: Start Episode before applying, then a banner while it runs.
+  const episodes = useCarePlanEpisodes({
+    patientId, program, live, canEdit,
+    readOnly: !!(viewedRun || viewedVersion),
+    applyTemplates: (ids, priorities, categoryPicks) => applyPatientCarePlanTemplates(patientId, program, ids, priorities, categoryPicks),
+  });
   const {
     selected,
     bulkMenu,
@@ -423,6 +430,16 @@ export function CarePlanView({ patientId, program }) {
       })
       .map(item => item.template);
   }, [appliedTemplateIds, carePlanTemplates, appliedTemplatePriorities]);
+  // Templates no longer on the plan whose earlier runs (an ended episode)
+  // still show on the strip.
+  const liveAppliedIds = live?.plan?.appliedTemplateIds;
+  const historyTemplates = useMemo(() => {
+    const applied = new Set((liveAppliedIds || []).map(String));
+    return Object.keys(runsByTemplate)
+      .filter(id => !applied.has(String(id)))
+      .map(id => carePlanTemplates.find(t => String(t.id) === String(id))
+        || { id, name: (live?.templateInstances || []).find(i => String(i.templateId) === String(id))?.templateName || 'Template' });
+  }, [runsByTemplate, liveAppliedIds, carePlanTemplates, live?.templateInstances]);
   // Removing an applied template is allowed until the plan is signed. It
   // strips the template's own conditions from the plan header and drops
   // the row from `applied_template_ids` (priority key is pruned server-side
@@ -792,6 +809,7 @@ export function CarePlanView({ patientId, program }) {
   const handleApplyTemplates = async (ids, priorities, categoryPicks) => {
     setTemplatesDrawerOpen(false);
     if (!canEdit) return;
+    if (episodes.interceptApply(ids, priorities, categoryPicks)) return;
     await applyPatientCarePlanTemplates(patientId, program, ids, priorities, categoryPicks);
   };
   const handleTrends = () => setTrendsOpen(true);
@@ -955,6 +973,7 @@ export function CarePlanView({ patientId, program }) {
           onSelect={(id) => setTemplateFilterId(prev => (prev === id ? null : id))}
           onRemove={handleRemoveTemplate}
           runsByTemplate={viewedVersion ? {} : runsByTemplate}
+          historyTemplates={viewedVersion ? [] : historyTemplates}
           templateVersions={viewedVersion ? {} : templateVersionInfo}
           readOnly={!!viewedVersion}
           trailing={(
@@ -1012,7 +1031,9 @@ export function CarePlanView({ patientId, program }) {
           <Icon name="solar:check-circle-linear" size={16} color="var(--status-success)" />
           <span className={styles.runBannerText}>
             <strong>{viewedRun.run.templateName} V{viewedRun.version}</strong>
-            {` · ${viewedRun.run.status === 'completed' ? 'Completed' : 'Closed'}`}
+            {` · ${viewedRun.run.closeReason === 'ended_early' ? 'Episode ended early'
+              : viewedRun.run.closeReason === 'episode_end' ? 'Episode ended on its last day'
+                : viewedRun.run.status === 'completed' ? 'Completed' : 'Closed'}`}
             {viewedRun.run.endedAt ? ` ${formatInstanceDate(viewedRun.run.endedAt)}` : ''}
             {viewedRun.run.totalCount != null ? ` · ${viewedRun.run.doneCount} of ${viewedRun.run.totalCount} goals and interventions met` : ''}
             {' · Read only'}
@@ -1036,6 +1057,7 @@ export function CarePlanView({ patientId, program }) {
           )}
         </div>
       )}
+      {episodes.banners}
       {aiDrafting ? (
         <IndividualizedPlanCard state="drafting" />
       ) : aiPending.length > 0 && canEdit ? (
@@ -1410,6 +1432,7 @@ export function CarePlanView({ patientId, program }) {
       </div>
 
       <CarePlanViewOverlays {...overlayProps} />
+      {episodes.dialogs}
 
       <CarePlanViewDrawers {...drawerProps} />
 

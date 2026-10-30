@@ -16,7 +16,8 @@ import { WorklistShell } from '../../../../../components/WorklistShell/WorklistS
 import { Drawer } from '../../../../../components/Drawer/Drawer';
 import { ConfirmDialog } from '../../../../../components/ConfirmDialog/ConfirmDialog';
 import { FilterChip } from '../../../../../components/FilterChip/FilterChip';
-import { TemplateScopeBadge, TemplateScopeChoice } from '../../shared';
+import { EpisodeBadge, TemplateScopeBadge, TemplateScopeChoice } from '../../shared';
+import { episodeOf } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/episodeTemplates';
 import { LIBRARY_SCOPE_CHOICES, inLibrary, matchesScopeFilter, scopeFilterOptions, templateScopeOf } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/templateScope';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../../../../components/ShadcnDialog/ShadcnDialog';
 import { RingEmptyState } from '../../../../../components/RingEmptyState/RingEmptyState';
@@ -480,6 +481,8 @@ export function CarePlanLibraryPanel() {
       goals: t.goals.map(g => ({ ...g })),
       interventions: t.interventions.map(i => ({ ...i })),
       barriers: (t.barriers || []).map(b => ({ ...b })),
+      renewal: t.renewal,
+      episode: episodeOf(t),
     });
     if (saved) {
       setTemplateSort({ key: 'createdAt', dir: 'desc' });
@@ -516,6 +519,7 @@ export function CarePlanLibraryPanel() {
         <span className={styles.nameWithScope}>
           <button type="button" className={styles.nameLink} onClick={() => openEditTemplate(t)}>{t.name}</button>
           <TemplateScopeBadge template={t} />
+          <EpisodeBadge template={t} />
           {t.status === 'draft' && t.replacesTemplateId && (
             <Tooltip label={`Replaces the published "${templates.find(x => x.id === t.replacesTemplateId)?.name || 'template'}" when approved`}>
               <Badge tone="info" size="S" label="Revision" />

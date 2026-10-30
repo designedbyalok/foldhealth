@@ -49,11 +49,6 @@
   flex-direction: column;
   gap: var(--space-1);
 }
-.radioGroup {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
 .fieldLabel {
   font-size: var(--font-base);
   color: var(--neutral-200);

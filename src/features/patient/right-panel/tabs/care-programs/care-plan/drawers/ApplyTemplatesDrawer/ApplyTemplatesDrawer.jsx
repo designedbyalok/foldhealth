@@ -6,7 +6,7 @@ import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { Link } from '../../../../../../../../components/Link/Link';
 import { Select } from '../../../../../../../../components/Select/Select';
 import { FilterChip } from '../../../../../../../../components/FilterChip/FilterChip';
-import { TemplateScopeBadge } from '../../../../../../../settings/care-plan-library/shared';
+import { EpisodeBadge, TemplateScopeBadge } from '../../../../../../../settings/care-plan-library/shared';
 import { availableForPatient, inLibrary, matchesScopeFilter, scopeFilterOptions } from '../../lib/templateScope';
 import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { PriorityIcon } from '../../../../../../../../components/PriorityIcon/PriorityIcon';
@@ -309,6 +309,7 @@ export function ApplyTemplatesDrawer({
               {templateNameOf(t)}
             </button>
             <TemplateScopeBadge template={t} />
+            <EpisodeBadge template={t} />
           </span>
           {reasonText && <span className={styles.rowReason} title={reasonText}>{reasonText}</span>}
         </span>

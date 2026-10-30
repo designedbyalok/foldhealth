@@ -1,0 +1,31 @@
+.episode {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Lines the stepper up under the Custom card's label. */
+.customDays {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: calc(var(--space-2) * -1);
+  padding-left: calc(var(--space-5) + var(--space-2));
+}
+.customUnit {
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}
+
+.pauseField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+/* Under the switch label: past the 32px track and the 8px label gap. */
+.pauseHint {
+  margin: 0;
+  padding-left: calc(var(--space-8) + var(--space-2));
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+}

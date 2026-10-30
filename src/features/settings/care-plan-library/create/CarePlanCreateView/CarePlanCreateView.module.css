@@ -71,11 +71,6 @@
 }
 
 
-.radioGroup {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
 
 /* ── Right: goals ── */
 .goalsPane {

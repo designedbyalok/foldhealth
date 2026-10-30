@@ -178,6 +178,12 @@ function mapCarePlanTemplateRow(row) {
     // What adding it again does; before the renewal column, condition
     // templates extend and the rest reinstate.
     renewal: row.renewal || defaultRenewalFor(row.conditions),
+    // Episodic templates (care_plan_episodic_templates migration): one event,
+    // `episodeDays` long (null: until closed), optionally pausing the
+    // patient's other plans while it runs.
+    episodic: !!row.episodic,
+    episodeDays: row.episode_days ?? null,
+    episodePausesOngoing: row.episode_pauses_ongoing !== false,
     // Bulk import (care_plan_template_import migration): the upload it came
     // from, the published template a draft revision replaces, and who approved it.
     importBatchId: row.import_batch_id || null,
@@ -236,6 +242,10 @@ function mapTemplateInstanceRow(row) {
     // The template category this run applied (Common + that category).
     categoryId: row.category_id || null,
     categoryName: row.category_name || '',
+    // An episode: the plans it paused (resumed when it ends) and how it ended.
+    episodic: !!row.episodic,
+    pausedPlanIds: row.paused_plan_ids || [],
+    closeReason: row.close_reason || null,
   };
 }
 

@@ -85,7 +85,8 @@ import { buildPatientFacts, buildTemplateChoices, draftCounts } from '../feature
 import { buildTemplateCatalog } from '../features/settings/care-plan-library/lib/aiTemplateDraft';
 import { apiFetch } from '../lib/apiFetch';
 import { sdohSocialRisk } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/sdohReport';
-import { isDueToAutoResume, nextTouchpoint as computeNextTouchpoint, pauseAuditEntry, pauseFields, pauseReasonLabel, resumeAuditEntry } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanPause';
+import { EPISODE_PAUSE_REASON, isDueToAutoResume, isoDay as isoDayString, nextTouchpoint as computeNextTouchpoint, pauseAuditEntry, pauseFields, pauseReasonLabel, resumeAuditEntry } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanPause';
+import { dayAfter, episodeEndsOn, episodeOf, episodePauseNote, isEpisodeDue } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/episodeTemplates';
 import { INSTANCE_STATUS, formatInstanceDate, instanceOutcome, templateEndsOn } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/templateRenewal';
 import { barrierGoalIdsOf, goalCascade } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanGoalCascade';
 import { templateContentFromApplied, templateContentFromWholePlan } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanTemplateSave';
@@ -2895,6 +2896,11 @@ export const useAppStore = create((set, get) => ({
     if (plan && isDueToAutoResume(plan)) {
       await get().resumeCarePlan(patientId, { id: programId, code: plan.programCode }, { auto: true });
     }
+    // Likewise an episode closes when its plan is next opened after its last day.
+    for (const run of templateInstances.filter(i => isEpisodeDue(i))) {
+      // react-doctor-disable-next-line react-doctor/async-await-in-loop
+      await get().endCarePlanEpisode(patientId, { id: programId, code: plan.programCode }, run.id, { reason: 'episode_end' });
+    }
     // Template versions published with "migrate all / a cohort" land when the plan is next opened.
     if (plan && templateInstances.some(i => i.pendingVersionId)) {
       get().applyPendingTemplateMigrations(patientId, { id: programId, code: plan.programCode }, 'load')
@@ -4473,6 +4479,11 @@ export const useAppStore = create((set, get) => ({
     const key = carePlanKey(patientId, program.id);
     const planId = get().patientCarePlans[key]?.plan?.id;
     if (!planId) return null;
+    // An episode ends on its own last day, not the goals' longest duration.
+    const episode = episodeOf(template);
+    const suggestedEnd = () => (episode
+      ? episodeEndsOn(startedAt, episode.days)
+      : templateEndsOn(template, get().carePlanGoals || [], startedAt));
     const row = {
       plan_id: planId,
       template_id: template.id,
@@ -4483,7 +4494,9 @@ export const useAppStore = create((set, get) => ({
       started_at: startedAt ? startedAt.toISOString() : null,
       ends_on: endsOn !== undefined
         ? endsOn
-        : (startedAt ? templateEndsOn(template, get().carePlanGoals || [], startedAt) : null),
+        : (startedAt ? suggestedEnd() : null),
+      // Only sent for episodes, so ongoing templates apply before the episodic migration.
+      ...(episode ? { episodic: true } : {}),
       created_by: get().currentUserProfile?.name || null,
       // The IPA overlay it went on with, and who must sign because of it.
       ...(template.overlayId ? { overlay_id: template.overlayId, signoff_route: template.signoffRoute || null } : {}),
@@ -4518,6 +4531,69 @@ export const useAppStore = create((set, get) => ({
       .update({ status: 'closed', ended_at: endedAt }).eq('id', active.id);
     if (error) { console.warn('closeCarePlanTemplateInstance:', error.message); return; }
     get().patchCarePlanTemplateInstances(key, list => list.map(i => (i.id === active.id ? { ...i, status: 'closed', endedAt } : i)));
+    if (active.episodic) await get().resumeEpisodePausedPlans(patientId, active);
+  },
+
+  // A run's goals, interventions and barriers leave the live lists for the
+  // plan's history (tagged with the run), as when a template is reinstated or
+  // an episode ends. With `keepShared`, items another applied template also
+  // covers stay live: an episode ending must not take an ongoing template's
+  // goal with it. Returns the run's outcome ({ status, done, total }), or
+  // null when the items could not be moved.
+  retireCarePlanTemplateRun: async (patientId, program, template, run, { keepShared = false } = {}) => {
+    const key = carePlanKey(patientId, program.id);
+    const slice = get().patientCarePlans[key];
+    if (!slice) return null;
+    const libraryGoals = get().carePlanGoals || [];
+    let items = templateItems(template, slice, libraryGoals);
+    if (keepShared) {
+      const shared = new Set();
+      for (const id of slice.plan?.appliedTemplateIds || []) {
+        if (String(id) === String(template.id)) continue;
+        const other = (get().carePlanTemplates || []).find(t => String(t.id) === String(id));
+        if (!other) continue;
+        const o = templateItems(other, slice, libraryGoals);
+        [...o.goals, ...o.interventions, ...o.barriers].forEach(x => shared.add(x.id));
+      }
+      const own = list => list.filter(x => !shared.has(x.id));
+      items = { goals: own(items.goals), interventions: own(items.interventions), barriers: own(items.barriers) };
+    }
+    const outcome = instanceOutcome(items);
+    const retire = (table, list) => (list.length
+      ? supabase.from(table).update({ retired_instance_id: run.id }).in('id', list.map(x => x.id))
+      : Promise.resolve({ error: null }));
+    const results = await Promise.all([
+      retire('patient_care_plan_goals', items.goals),
+      retire('patient_care_plan_interventions', items.interventions),
+      retire('patient_care_plan_barriers', items.barriers),
+    ]);
+    const retireError = results.find(r => r.error)?.error;
+    if (retireError) { console.warn('retireCarePlanTemplateRun:', retireError.message); return null; }
+
+    const ids = new Set([...items.goals, ...items.interventions, ...items.barriers].map(x => x.id));
+    const tag = x => ({ ...x, retiredInstanceId: run.id });
+    set(s => {
+      const c = s.patientCarePlans[key];
+      if (!c) return {};
+      const r = c.retired || { goals: [], interventions: [], barriers: [] };
+      return {
+        patientCarePlans: {
+          ...s.patientCarePlans,
+          [key]: {
+            ...c,
+            goals: c.goals.filter(x => !ids.has(x.id)),
+            interventions: c.interventions.filter(x => !ids.has(x.id)),
+            barriers: (c.barriers || []).filter(x => !ids.has(x.id)),
+            retired: {
+              goals: [...r.goals, ...items.goals.map(tag)],
+              interventions: [...r.interventions, ...items.interventions.map(tag)],
+              barriers: [...r.barriers, ...items.barriers.map(tag)],
+            },
+          },
+        },
+      };
+    });
+    return outcome;
   },
 
   // Adding a template that is already on the plan. `mode` is 'extend' (same
@@ -4548,6 +4624,7 @@ export const useAppStore = create((set, get) => ({
       const { error } = await instances.update(patch).eq('id', current.id);
       if (error) { console.warn('renewPatientCarePlanTemplate:', error.message); return fail(); }
       get().patchCarePlanTemplateInstances(key, list => list.map(i => (i.id === current.id ? { ...i, endsOn: newEnd, extendedAt: patch.extended_at } : i)));
+      if (current.episodic) await get().syncEpisodePausedPlans(current.pausedPlanIds, newEnd);
       // Anything of the template's that came off the plan since goes back on.
       await applyTemplateToPlan(get, patientId, program, template, libraryGoals);
       get().logCarePlanAudit(patientId, program, {
@@ -4556,18 +4633,8 @@ export const useAppStore = create((set, get) => ({
       });
       get().showToast(`"${template.name}" extended${newEnd ? ` to ${formatInstanceDate(newEnd)}` : ''}`);
     } else {
-      const items = templateItems(template, slice, libraryGoals);
-      const outcome = instanceOutcome(items);
-      const retire = (table, list) => (list.length
-        ? supabase.from(table).update({ retired_instance_id: current.id }).in('id', list.map(x => x.id))
-        : Promise.resolve({ error: null }));
-      const results = await Promise.all([
-        retire('patient_care_plan_goals', items.goals),
-        retire('patient_care_plan_interventions', items.interventions),
-        retire('patient_care_plan_barriers', items.barriers),
-      ]);
-      const retireError = results.find(r => r.error)?.error;
-      if (retireError) { console.warn('renewPatientCarePlanTemplate:', retireError.message); return fail(); }
+      const outcome = await get().retireCarePlanTemplateRun(patientId, program, template, current);
+      if (!outcome) return fail();
       const closed = {
         status: outcome.status, auto_closed: true, ended_at: now.toISOString(),
         done_count: outcome.done, total_count: outcome.total,
@@ -4575,33 +4642,14 @@ export const useAppStore = create((set, get) => ({
       const { error } = await instances.update(closed).eq('id', current.id);
       if (error) console.warn('renewPatientCarePlanTemplate:', error.message);
 
-      // The old items leave the live lists for the plan's history.
-      const ids = new Set([...items.goals, ...items.interventions, ...items.barriers].map(x => x.id));
-      const tag = x => ({ ...x, retiredInstanceId: current.id });
-      set(s => {
-        const c = s.patientCarePlans[key];
-        if (!c) return {};
-        const r = c.retired || { goals: [], interventions: [], barriers: [] };
-        return {
-          patientCarePlans: {
-            ...s.patientCarePlans,
-            [key]: {
-              ...c,
-              goals: c.goals.filter(x => !ids.has(x.id)),
-              interventions: c.interventions.filter(x => !ids.has(x.id)),
-              barriers: (c.barriers || []).filter(x => !ids.has(x.id)),
-              retired: {
-                goals: [...r.goals, ...items.goals.map(tag)],
-                interventions: [...r.interventions, ...items.interventions.map(tag)],
-                barriers: [...r.barriers, ...items.barriers.map(tag)],
-              },
-            },
-          },
-        };
-      });
-
       const next = await get().startCarePlanTemplateInstance(patientId, program, template, now, endsOn || undefined);
       if (next) await instances.update({ replaced_by: next.id }).eq('id', current.id);
+      // A new episode takes over the plans the last one paused, until its own end.
+      if (next?.episodic && current.pausedPlanIds?.length) {
+        await instances.update({ paused_plan_ids: current.pausedPlanIds }).eq('id', next.id);
+        get().patchCarePlanTemplateInstances(key, list => list.map(i => (i.id === next.id ? { ...i, pausedPlanIds: current.pausedPlanIds } : i)));
+        await get().syncEpisodePausedPlans(current.pausedPlanIds, next.endsOn);
+      }
       get().patchCarePlanTemplateInstances(key, list => list.map(i => (i.id === current.id
         ? { ...i, status: outcome.status, autoClosed: true, endedAt: closed.ended_at, doneCount: outcome.done, totalCount: outcome.total, replacedBy: next?.id || null }
         : i)));
@@ -4616,6 +4664,222 @@ export const useAppStore = create((set, get) => ({
       get().showToast(`"${template.name}" reinstated. The previous run is now marked ${label}.`);
     }
     get().refreshCarePlanDuplicates?.(patientId, program);
+    get().touchCarePlanModified(patientId, program.id);
+    return true;
+  },
+
+  // ── Episodes (care_plan_episodic_templates migration) ──
+  // An episodic template's run is an episode: day 1 to its last day (or until
+  // closed). While it runs it can pause the patient's other care plans
+  // (pause_reason 'episode'); the run's paused_plan_ids says which, so only
+  // those resume when it ends. Each paused plan also carries resume_on = the
+  // day after the episode with auto_resume, so it comes back on its own even
+  // if nobody opens the episode's plan.
+
+  // The patient's other care plans an episode could pause: every plan but this
+  // program's, without one that is itself running an episode.
+  fetchEpisodePausablePlans: async (patientId, excludeProgramId) => {
+    const { data, error } = await supabase.from('patient_care_plans')
+      .select('id, program_id, program_code, status, pause_reason')
+      .eq('patient_id', patientId)
+      .neq('program_id', excludeProgramId);
+    if (error) { console.warn('fetchEpisodePausablePlans:', error.message); return []; }
+    const plans = data || [];
+    if (!plans.length) return [];
+    const { data: episodes, error: epError } = await supabase.from('patient_care_plan_template_instances')
+      .select('plan_id')
+      .in('plan_id', plans.map(p => p.id))
+      .eq('episodic', true)
+      .eq('status', 'active');
+    if (epError) console.warn('fetchEpisodePausablePlans:', epError.message);
+    const inEpisode = new Set((episodes || []).map(e => e.plan_id));
+    const programs = get().careProgramsByPatient?.[patientId] || [];
+    return plans.filter(p => !inEpisode.has(p.id)).map(p => {
+      const prog = programs.find(x => String(x.id) === String(p.program_id));
+      return {
+        planId: p.id,
+        programId: p.program_id,
+        programCode: p.program_code || prog?.code || '',
+        programName: prog?.name || p.program_code || 'Care plan',
+        paused: p.status === 'paused',
+        pausedForEpisode: p.status === 'paused' && p.pause_reason === EPISODE_PAUSE_REASON,
+      };
+    });
+  },
+
+  // Pauses the picked plans for an episode run and records which on the run.
+  // A plan already paused is left as it is (and not resumed by the episode).
+  pauseCarePlansForEpisode: async (patientId, program, run, plans) => {
+    const paused = [];
+    for (const p of plans) {
+      if (p.paused) continue;
+      const other = { id: p.programId, code: p.programCode };
+      // react-doctor-disable-next-line react-doctor/async-await-in-loop
+      await get().fetchPatientCarePlan(patientId, p.programId);
+      // react-doctor-disable-next-line react-doctor/async-await-in-loop
+      const ok = await get().pauseCarePlan(patientId, other, {
+        reason: EPISODE_PAUSE_REASON,
+        note: episodePauseNote(run.templateName),
+        pausedOn: isoDayString(new Date()),
+        resumeOn: dayAfter(run.endsOn),
+        autoResume: !!run.endsOn,
+      });
+      if (ok) paused.push(p.planId);
+    }
+    if (!paused.length) return [];
+    const key = carePlanKey(patientId, program.id);
+    const { error } = await supabase.from('patient_care_plan_template_instances')
+      .update({ paused_plan_ids: paused }).eq('id', run.id);
+    if (error) console.warn('pauseCarePlansForEpisode:', error.message);
+    get().patchCarePlanTemplateInstances(key, list => list.map(i => (i.id === run.id ? { ...i, pausedPlanIds: paused } : i)));
+    return paused;
+  },
+
+  // An episode's end date moved: its paused plans now resume the day after.
+  // Only plans still paused for an episode change; one someone re-paused for
+  // another reason keeps that pause.
+  syncEpisodePausedPlans: async (planIds, endsOn) => {
+    if (!planIds?.length) return;
+    const resumeOn = dayAfter(endsOn);
+    const { error } = await supabase.from('patient_care_plans')
+      .update({ resume_on: resumeOn, auto_resume: !!resumeOn, updated_at: new Date().toISOString() })
+      .in('id', planIds).eq('status', 'paused').eq('pause_reason', EPISODE_PAUSE_REASON);
+    if (error) { console.warn('syncEpisodePausedPlans:', error.message); return; }
+    const ids = new Set(planIds);
+    set(s => {
+      const next = { ...s.patientCarePlans };
+      let changed = false;
+      for (const [k, c] of Object.entries(next)) {
+        if (!c?.plan || !ids.has(c.plan.id) || c.plan.pause?.reason !== EPISODE_PAUSE_REASON) continue;
+        next[k] = { ...c, plan: { ...c.plan, pause: { ...c.plan.pause, resumeOn, autoResume: !!resumeOn } } };
+        changed = true;
+      }
+      return changed ? { patientCarePlans: next } : {};
+    });
+  },
+
+  // The episode is over: resume the plans it paused that are still paused for it.
+  resumeEpisodePausedPlans: async (patientId, run) => {
+    const ids = run?.pausedPlanIds || [];
+    if (!ids.length) return;
+    const { data, error } = await supabase.from('patient_care_plans')
+      .select('id, program_id, program_code, status, pause_reason').in('id', ids);
+    if (error) { console.warn('resumeEpisodePausedPlans:', error.message); return; }
+    const still = (data || []).filter(p => p.status === 'paused' && p.pause_reason === EPISODE_PAUSE_REASON);
+    for (const p of still) {
+      // react-doctor-disable-next-line react-doctor/async-await-in-loop
+      await get().fetchPatientCarePlan(patientId, p.program_id);
+      // react-doctor-disable-next-line react-doctor/async-await-in-loop
+      await get().resumeCarePlan(patientId, { id: p.program_id, code: p.program_code }, { auto: true });
+    }
+  },
+
+  // Applying an episodic template: the run starts now (applyPatientCarePlanTemplates
+  // already recorded it); this sets the end the user picked and pauses the plans they chose.
+  startCarePlanEpisode: async (patientId, program, templateId, { endsOn, pausePlans = [] }) => {
+    const key = carePlanKey(patientId, program.id);
+    const run = (get().patientCarePlans[key]?.templateInstances || [])
+      .find(i => String(i.templateId) === String(templateId) && i.status === 'active');
+    if (!run) return false;
+    let current = run;
+    if ((endsOn || null) !== (run.endsOn || null)) {
+      const { error } = await supabase.from('patient_care_plan_template_instances')
+        .update({ ends_on: endsOn || null }).eq('id', run.id);
+      if (error) console.warn('startCarePlanEpisode:', error.message);
+      else {
+        current = { ...run, endsOn: endsOn || null };
+        get().patchCarePlanTemplateInstances(key, list => list.map(i => (i.id === run.id ? current : i)));
+      }
+    }
+    const paused = await get().pauseCarePlansForEpisode(patientId, program, current, pausePlans);
+    get().logCarePlanAudit(patientId, program, {
+      entityType: 'template', entityId: templateId, action: 'episode_started',
+      summary: current.templateName,
+      detail: [
+        current.endsOn ? `Ends ${formatInstanceDate(current.endsOn)}` : 'Runs until closed',
+        paused.length ? `Paused ${paused.length} other care plan${paused.length === 1 ? '' : 's'}` : '',
+      ].filter(Boolean).join(' · '),
+    });
+    return true;
+  },
+
+  // A new last day for a running episode (and its paused plans' resume date).
+  extendCarePlanEpisode: async (patientId, program, runId, endsOn) => {
+    const key = carePlanKey(patientId, program.id);
+    const run = (get().patientCarePlans[key]?.templateInstances || []).find(i => i.id === runId);
+    if (!run || run.status !== 'active') return false;
+    const extendedAt = new Date().toISOString();
+    const { error } = await supabase.from('patient_care_plan_template_instances')
+      .update({ ends_on: endsOn || null, extended_at: extendedAt }).eq('id', runId);
+    if (error) {
+      console.warn('extendCarePlanEpisode:', error.message);
+      get().showToast('Could not change the episode end date');
+      return false;
+    }
+    get().patchCarePlanTemplateInstances(key, list => list.map(i => (i.id === runId ? { ...i, endsOn: endsOn || null, extendedAt } : i)));
+    await get().syncEpisodePausedPlans(run.pausedPlanIds, endsOn);
+    get().logCarePlanAudit(patientId, program, {
+      entityType: 'template', entityId: run.templateId, action: 'episode_extended',
+      summary: run.templateName,
+      detail: endsOn ? `Now ends ${formatInstanceDate(endsOn)}` : 'Now runs until closed',
+    });
+    get().showToast(endsOn
+      ? `"${run.templateName}" now ends ${formatInstanceDate(endsOn)}`
+      : `"${run.templateName}" now runs until you close it`);
+    get().touchCarePlanModified(patientId, program.id);
+    return true;
+  },
+
+  // Ends an episode: `reason` is 'episode_end' (its last day passed) or
+  // 'ended_early' (someone closed it). Its items move to the plan's history,
+  // the template comes off the plan (the ended run stays viewable on the
+  // template strip), and the plans it paused resume.
+  endCarePlanEpisode: async (patientId, program, runId, { reason = 'ended_early' } = {}) => {
+    const key = carePlanKey(patientId, program.id);
+    const slice = get().patientCarePlans[key];
+    const run = (slice?.templateInstances || []).find(i => i.id === runId);
+    if (!slice?.plan || !run || run.status !== 'active') return false;
+    const auto = reason === 'episode_end';
+    const template = (get().carePlanTemplates || []).find(t => String(t.id) === String(run.templateId))
+      || { id: run.templateId, name: run.templateName, goals: [], interventions: [], barriers: [] };
+
+    // Claim the run first: when several views open the plan at once, only one
+    // closes it.
+    const endedAt = new Date().toISOString();
+    const instances = supabase.from('patient_care_plan_template_instances');
+    const { data: claimed, error } = await instances
+      .update({ status: 'closed', auto_closed: true, ended_at: endedAt, close_reason: reason })
+      .eq('id', runId).eq('status', 'active').select('id');
+    if (error) {
+      console.warn('endCarePlanEpisode:', error.message);
+      if (!auto) get().showToast('Could not end the episode');
+      return false;
+    }
+    if (!claimed?.length) return false;
+
+    const outcome = await get().retireCarePlanTemplateRun(patientId, program, template, run, { keepShared: true });
+    if (outcome) {
+      await supabase.from('patient_care_plan_template_instances')
+        .update({ status: outcome.status, done_count: outcome.done, total_count: outcome.total }).eq('id', runId);
+    }
+    get().patchCarePlanTemplateInstances(key, list => list.map(i => (i.id === runId ? {
+      ...i, status: outcome?.status || 'closed', autoClosed: true, endedAt, closeReason: reason,
+      doneCount: outcome?.done ?? null, totalCount: outcome?.total ?? null,
+    } : i)));
+    const ids = (slice.plan.appliedTemplateIds || []).filter(id => String(id) !== String(run.templateId));
+    await get().setPatientCarePlanAppliedTemplates(patientId, program, ids);
+    await get().resumeEpisodePausedPlans(patientId, run);
+
+    get().logCarePlanAudit(patientId, program, {
+      entityType: 'template', entityId: run.templateId, action: 'episode_ended',
+      summary: run.templateName,
+      detail: [
+        auto ? `Ended on its last day (${formatInstanceDate(run.endsOn)})` : 'Ended early',
+        outcome ? `${outcome.done} of ${outcome.total} goals and interventions met` : '',
+        run.pausedPlanIds?.length ? 'Paused care plans resumed' : '',
+      ].filter(Boolean).join(' · '),
+    });
+    if (!auto) get().showToast(`"${run.templateName}" episode ended`);
     get().touchCarePlanModified(patientId, program.id);
     return true;
   },
@@ -5517,6 +5781,12 @@ export const useAppStore = create((set, get) => ({
     if (values.renewal) row.renewal = values.renewal;
     // Per-patient categories on top of the Common lists.
     if (Array.isArray(values.categories)) row.categories = values.categories;
+    // Episodic or ongoing, when the caller says: `episode` is { days, pausesOngoing } or null.
+    if (values.episode !== undefined) {
+      row.episodic = !!values.episode;
+      row.episode_days = values.episode?.days || null;
+      row.episode_pauses_ongoing = values.episode ? values.episode.pausesOngoing !== false : true;
+    }
     // A draft revision of a published template, waiting for approval.
     if (!id && values.replacesTemplateId) row.replaces_template_id = values.replacesTemplateId;
     // The clinical protocol (and version) a new template was drafted from.
@@ -5561,6 +5831,12 @@ export const useAppStore = create((set, get) => ({
       const { renewal: _r, ...rowWithoutRenewal } = row;
       ({ data, error } = await run(rowWithoutRenewal));
     }
+    // Before the episodic migration the template saves as an ongoing one.
+    if (error && /episod/i.test(error.message || '') && 'episodic' in row) {
+      const { episodic: _e, episode_days: _d, episode_pauses_ongoing: _p, ...rowWithoutEpisode } = row;
+      ({ data, error } = await run(rowWithoutEpisode));
+      if (!error && values.episode) get().showToast('Saved, but episodic templates need the episodic templates migration');
+    }
     if (error) {
       console.warn('save care plan template failed:', error.message);
       get().showToast('Could not save template');
@@ -5574,6 +5850,30 @@ export const useAppStore = create((set, get) => ({
     }));
     // A template published for the first time starts its version chain.
     if (template.status !== 'draft') await get().ensureCarePlanTemplateVersion(template, { effectiveDate: todayIsoDate() });
+    return template;
+  },
+
+  // Episodic or ongoing is a setting on the template, not part of its
+  // versioned content, so it saves straight onto the row. `episode` is
+  // { days, pausesOngoing } or null.
+  saveCarePlanTemplateEpisode: async (id, episode) => {
+    const row = {
+      episodic: !!episode,
+      episode_days: episode?.days || null,
+      episode_pauses_ongoing: episode ? episode.pausesOngoing !== false : true,
+      updated_by: get().currentUserProfile?.name || null,
+      updated_at: new Date().toISOString(),
+    };
+    const { data, error } = await supabase.from('care_plan_templates').update(row).eq('id', id).select().single();
+    if (error) {
+      console.warn('saveCarePlanTemplateEpisode:', error.message);
+      get().showToast(/episod/i.test(error.message || '')
+        ? 'Episodic templates need the episodic templates migration'
+        : 'Could not save the template type');
+      return null;
+    }
+    const template = mapCarePlanTemplateRow(data);
+    set(s => ({ carePlanTemplates: s.carePlanTemplates.map(t => (t.id === id ? template : t)) }));
     return template;
   },
 

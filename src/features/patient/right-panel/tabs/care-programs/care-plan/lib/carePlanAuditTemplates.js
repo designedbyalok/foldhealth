@@ -7,7 +7,14 @@
 // History.
 // Template rows that renew a run already on the plan rather than add or
 // remove one. Their detail is a sentence, not the template's contents.
-export const TEMPLATE_RENEWAL_ACTIVITY = { extended: 'Extended', reinstated: 'Reinstated' };
+// Episode rows (lib/episodeTemplates) are the same kind of sentence.
+export const TEMPLATE_RENEWAL_ACTIVITY = {
+  extended: 'Extended',
+  reinstated: 'Reinstated',
+  episode_started: 'Episode Started',
+  episode_extended: 'Episode End Date Changed',
+  episode_ended: 'Episode Ended',
+};
 export const isTemplateRenewal = row => !!TEMPLATE_RENEWAL_ACTIVITY[row?.action];
 
 export function templateContents(row) {

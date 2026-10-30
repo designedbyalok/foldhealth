@@ -66,6 +66,9 @@ function TemplateBadge({
  */
 function RunBadge({ template, run, isActive, onSelect, disabled = false }) {
   const outcome = run.status === 'completed' ? 'completed' : 'closed';
+  const how = run.closeReason === 'episode_end' ? 'Episode ended on its last day'
+    : run.closeReason === 'ended_early' ? 'Episode ended early'
+      : `Version ${run.version}, ${outcome} when the template was added again`;
   return (
     <button
       type="button"
@@ -74,7 +77,7 @@ function RunBadge({ template, run, isActive, onSelect, disabled = false }) {
       aria-pressed={isActive}
       onClick={() => onSelect(`run:${run.id}`)}
       aria-label={`${template.name}, version ${run.version}, done (${outcome})${isActive ? ', showing' : ''}`}
-      title={`Version ${run.version}, ${outcome === 'completed' ? 'completed' : 'closed'} when the template was added again`}
+      title={how}
     >
       <Badge
         tone={isActive ? 'primary' : 'grey'}
@@ -102,7 +105,8 @@ function RunBadge({ template, run, isActive, onSelect, disabled = false }) {
  * `runsByTemplate`: { [templateId]: { version, previous: [{ id, version, status }] } }
  * for templates added again. The current run's chip shows its version (V2);
  * each earlier run follows it as a done chip (✓ V1). A selected id of
- * `run:<id>` is an earlier run.
+ * `run:<id>` is an earlier run. `historyTemplates` are templates no longer
+ * on the plan (an episode that ended) whose earlier runs still show.
  */
 export function AppliedTemplateStrip({
   templates,
@@ -113,6 +117,7 @@ export function AppliedTemplateStrip({
   onRemove,
   trailing = null,
   runsByTemplate = {},
+  historyTemplates = [],
   // { [templateId]: { title, pending, category } }: the template version each
   // run is on, and the category it went on with.
   templateVersions = {},
@@ -125,15 +130,17 @@ export function AppliedTemplateStrip({
   const [visibleCount, setVisibleCount] = useState(templates.length);
   const [hasOverflow, setHasOverflow] = useState(false);
   const selectedRunTemplate = typeof templateFilterId === 'string' && templateFilterId.startsWith('run:')
-    ? templates.find(t => (runsByTemplate[t.id]?.previous || []).some(r => `run:${r.id}` === templateFilterId))
+    ? [...templates, ...historyTemplates].find(t => (runsByTemplate[t.id]?.previous || []).some(r => `run:${r.id}` === templateFilterId))
     : null;
   const selected = !expanded && templateFilterId
     ? selectedRunTemplate || templates.find(t => t.id === templateFilterId)
     : null;
-  const ordered = selected ? [selected, ...templates.filter(t => t !== selected)] : templates;
+  const all = [...templates, ...historyTemplates];
+  const ordered = selected ? [selected, ...all.filter(t => t !== selected)] : all;
+  const applied = new Set(templates.map(t => t.id));
   // One entry per chip: each template, then its earlier runs right after it.
   const entries = ordered.flatMap(t => [
-    { key: t.id, template: t },
+    ...(applied.has(t.id) ? [{ key: t.id, template: t }] : []),
     ...(runsByTemplate[t.id]?.previous || []).map(run => ({ key: `run:${run.id}`, template: t, run })),
   ]);
   const templatesKey = entries.map(e => e.key).join('|');
@@ -199,7 +206,7 @@ export function AppliedTemplateStrip({
     };
   }, [templatesKey, expanded, entries.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (templates.length === 0) {
+  if (entries.length === 0) {
     if (!trailing) return null;
     return (
       <div className={styles.templatePriorityBar}>

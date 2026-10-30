@@ -7,6 +7,7 @@ import { carePlanKey, templateItems } from '../../../../../../../store/lib/careP
 import {
   INSTANCE_STATUS, TEMPLATE_RENEWALS, formatInstanceDate, instanceOutcome, renewalOf, templateEndsOn,
 } from '../lib/templateRenewal';
+import { episodeEndsOn, episodeOf } from '../lib/episodeTemplates';
 
 /**
  * Adding a template that is already on the plan. Says what each choice will
@@ -21,16 +22,22 @@ export function ApplyAgainDialog({ template, patientId, program, onClose, onDone
 
   const run = (slice?.templateInstances || [])
     .find(i => String(i.templateId) === String(template.id) && i.status === 'active');
-  // Suggested from the template's longest goal duration; the user can change it.
-  const suggestedEnd = templateEndsOn(template, libraryGoals || []);
+  // An episode suggests its own length from today; anything else the
+  // template's longest goal duration. The user can change it.
+  const episode = episodeOf(template);
+  const suggestedEnd = episode
+    ? episodeEndsOn(new Date(), episode.days)
+    : templateEndsOn(template, libraryGoals || []);
   const [endsOn, setEndsOn] = useState(suggestedEnd || '');
   const outcome = instanceOutcome(templateItems(template, slice, libraryGoals || []));
   const isDefault = key => (key === renewalOf(template) ? ' (template setting)' : '');
 
-  const extendHint = `${run?.startedAt ? `Keeps the start date (${formatInstanceDate(run.startedAt)})` : 'Keeps the start date'} and moves the end date.`;
-  const reinstateHint = `Closes the current run as ${INSTANCE_STATUS[outcome.status].label} `
-    + `(${outcome.done} of ${outcome.total} goals and interventions met) and starts a new one today. `
-    + 'Its goals, interventions and barriers move to Previous runs.';
+  const extendHint = episode
+    ? `Keeps the current episode${run?.startedAt ? ` (day 1 was ${formatInstanceDate(run.startedAt)})` : ''} and moves its last day. Plans it paused stay paused until then.`
+    : `${run?.startedAt ? `Keeps the start date (${formatInstanceDate(run.startedAt)})` : 'Keeps the start date'} and moves the end date.`;
+  const reinstateHint = `Closes the current ${episode ? 'episode' : 'run'} as ${INSTANCE_STATUS[outcome.status].label} `
+    + `(${outcome.done} of ${outcome.total} goals and interventions met) and starts a new one today${episode ? ', for example after a readmission' : ''}. `
+    + `Its goals, interventions and barriers move to Previous runs.${episode ? ' Plans the episode paused stay paused for the new one.' : ''}`;
   const today = new Date();
   const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
@@ -64,17 +71,17 @@ export function ApplyAgainDialog({ template, patientId, program, onClose, onDone
         value={mode}
         onChange={setMode}
         options={[
-          { value: 'extend', label: `Extend${isDefault('extend')}`, hint: extendHint },
-          { value: 'reinstate', label: `Reinstate${isDefault('reinstate')}`, hint: reinstateHint },
+          { value: 'extend', label: `${episode ? 'Extend this episode' : 'Extend'}${isDefault('extend')}`, hint: extendHint },
+          { value: 'reinstate', label: `${episode ? 'Start a new episode' : 'Reinstate'}${isDefault('reinstate')}`, hint: reinstateHint },
         ]}
       />
       <DatePicker
-        label={mode === 'extend' ? 'New end date' : 'New run ends'}
+        label={episode ? (mode === 'extend' ? 'New last day' : 'New episode’s last day') : mode === 'extend' ? 'New end date' : 'New run ends'}
         value={endsOn}
         min={todayIso}
         onSelect={setEndsOn}
         helperText={suggestedEnd
-          ? `Suggested ${formatInstanceDate(suggestedEnd)}, from the template's longest goal duration.`
+          ? `Suggested ${formatInstanceDate(suggestedEnd)}, from the template's ${episode ? `${episode.days}-day episode length` : 'longest goal duration'}.`
           : 'Optional. The template\'s goals have no duration to suggest one from.'}
       />
     </ConfirmDialog>
