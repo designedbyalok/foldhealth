@@ -292,6 +292,18 @@
   background: var(--neutral-50);
 }
 
+/* The item the review box is open on. */
+.rowReviewing,
+.rowReviewing:hover {
+  background: var(--primary-100);
+  box-shadow: inset 2px 0 0 var(--primary-300);
+}
+
+.reviewingBadge {
+  flex-shrink: 0;
+  display: inline-flex;
+}
+
 .contextRow .rowTitle {
   color: var(--neutral-300);
 }

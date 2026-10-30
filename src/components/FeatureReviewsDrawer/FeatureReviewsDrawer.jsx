@@ -179,6 +179,8 @@ export function FeatureReviewsDrawer({ onClose, focusId = null }) {
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor),
   );
+  // The item the review box is open on stays highlighted while it's open.
+  const reviewingId = useAppStore(s => s.activeReview?.featureId || null);
   const [dragId, setDragId] = useState(null);
   const [overId, setOverId] = useState(null);
   const [flashId, setFlashId] = useState(focusId);
@@ -227,6 +229,7 @@ export function FeatureReviewsDrawer({ onClose, focusId = null }) {
       canDrag={canDrag}
       dropHint={dragId && overId === `row:${item.id}` ? (drop.ok ? 'valid' : 'blocked') : null}
       flash={flashId === item.id}
+      reviewing={reviewingId === item.id}
       item={item}
       childItems={subItems}
       child={child}
@@ -474,7 +477,7 @@ function ReviewStatus({ item, childItems }) {
 
 function ReviewRow({
   item, childItems, child, context, myEmail, isManager, expanded, onToggle, onExpand, onReview, onAddSubItem,
-  canDrag, dropHint, flash, link,
+  canDrag, dropHint, flash, reviewing, link,
 }) {
   // Suggestions are kept or removed first; only kept items nest.
   const movable = canDrag && item.status !== 'suggested';
@@ -543,6 +546,7 @@ function ReviewRow({
     dropHint === 'valid' ? styles.dropTarget : '',
     dropHint === 'blocked' ? styles.dropBlocked : '',
     flash ? styles.rowFlash : '',
+    reviewing ? styles.rowReviewing : '',
   ].filter(Boolean).join(' ');
 
   const showSignOff = !!mine && !mine.signedAt;
@@ -581,6 +585,11 @@ function ReviewRow({
                 </span>
               )}
             </span>
+            {reviewing && (
+              <span className={styles.reviewingBadge}>
+                <Badge tone="primary" size="S" icon="solar:pen-new-square-linear" label="Reviewing" />
+              </span>
+            )}
           </button>
         </div>
         <div ref={setReviewersCell}>

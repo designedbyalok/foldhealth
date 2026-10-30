@@ -65,7 +65,6 @@ export function FoldReviewDock({ review }) {
   return (
     <ReviewDock
       title={review.title}
-      subtitle={review.area ? `Design Signoff · ${review.area}` : 'Design Signoff'}
       storageKey="fold:review-dock"
       onSubmit={({ points, context }) => submit({ featureId: review.featureId, points, context })}
       onClose={endReview}
