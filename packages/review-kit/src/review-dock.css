@@ -1252,8 +1252,200 @@
 }
 
 .rk-notice {
-  margin: 0;
+  /* Sits at the bottom of the body, just above the toolbar. */
+  margin: auto 0 0;
+  padding-bottom: var(--rk-space-2);
   font-size: var(--rk-font-sm);
+}
+
+.rk-notice + .rk-extra,
+.rk-extra + .rk-notice {
+  margin-top: 0;
+}
+
+/* ── Sent: a check that draws itself, then what's next ── */
+.rk-done {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* safe: in a short box the content scrolls instead of clipping at the top. */
+  justify-content: safe center;
+  gap: var(--rk-space-1);
+  padding: var(--rk-space-4) var(--rk-space-1) var(--rk-space-3);
+  text-align: center;
+  animation: rk-done-in 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.rk-done-check {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: var(--rk-space-2);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--rk-success) 14%, transparent);
+  color: var(--rk-success);
+  animation: rk-done-pop 520ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* One soft ring that ripples out as the check lands. */
+.rk-done-check::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--rk-success);
+  opacity: 0;
+  animation: rk-done-ring 700ms 180ms ease-out;
+}
+
+.rk-done-tick {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: rk-done-draw 360ms 200ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.rk-done-title {
+  font-size: var(--rk-font-md);
+  font-weight: var(--rk-font-weight-medium);
+  color: var(--rk-text);
+}
+
+.rk-done-detail {
+  font-size: var(--rk-font-sm);
+  color: var(--rk-text-muted);
+}
+
+.rk-next {
+  width: 100%;
+  margin-top: var(--rk-space-4);
+  text-align: left;
+  animation: rk-next-in 360ms 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.rk-next-label {
+  margin-bottom: 6px;
+  font-size: var(--rk-font-xs);
+  color: var(--rk-text-muted);
+}
+
+.rk-next-card {
+  padding: var(--rk-space-3);
+  border: 1px solid var(--rk-border);
+  border-radius: calc(var(--rk-radius-sm) + 4px);
+  background: var(--rk-bg-subtle);
+}
+
+.rk-next-title {
+  overflow: hidden;
+  font-size: var(--rk-font-md);
+  font-weight: var(--rk-font-weight-medium);
+  color: var(--rk-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rk-next-meta {
+  margin-top: 2px;
+  font-size: var(--rk-font-xs);
+  color: var(--rk-text-muted);
+}
+
+.rk-next-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--rk-space-2);
+  margin-top: var(--rk-space-3);
+}
+
+.rk-next-dismiss,
+.rk-next-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 var(--rk-space-3);
+  border: 0;
+  border-radius: var(--rk-radius-pill);
+  font: inherit;
+  font-size: var(--rk-font-sm);
+  font-weight: var(--rk-font-weight-medium);
+  cursor: pointer;
+  transition: background-color 120ms ease, filter 120ms ease;
+}
+
+.rk-next-dismiss {
+  background: none;
+  color: var(--rk-text-muted);
+}
+
+.rk-next-dismiss:hover {
+  background: var(--rk-bg-subtle);
+  color: var(--rk-text);
+}
+
+.rk-next-go {
+  padding-right: var(--rk-space-2);
+  background: var(--rk-accent);
+  color: var(--rk-accent-text);
+}
+
+.rk-next-go:hover {
+  filter: brightness(1.05);
+}
+
+.rk-next-arrow {
+  display: inline-flex;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.rk-next-go:hover .rk-next-arrow {
+  transform: translateX(2px);
+}
+
+@keyframes rk-done-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes rk-done-pop {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@keyframes rk-done-ring {
+  0% { opacity: 0.45; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.7); }
+}
+
+@keyframes rk-done-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* pointer-events flips halfway through, so a double-click on the button that
+   was under the pointer (Send, Sign off) can't land on Review next. */
+@keyframes rk-next-in {
+  from { opacity: 0; transform: translateY(8px); pointer-events: none; }
+  to { opacity: 1; transform: none; pointer-events: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rk-done,
+  .rk-done-check,
+  .rk-next {
+    animation: none;
+  }
+  .rk-done-check::after {
+    display: none;
+  }
+  .rk-done-tick {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
 }
 
 .rk-notice-error {
