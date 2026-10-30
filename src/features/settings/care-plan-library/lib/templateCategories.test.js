@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildRuleInputs } from '../../../automations/lib/clinicalCriteria';
-import { categoriesProblem, describeCriteria, hasCategories, itemsFor, matchCategory, newCategory, withCategory } from './templateCategories';
+import { categoriesProblem, categorySuggestions, describeCriteria, hasCategories, itemsFor, itemsLeaving, matchCategory, newCategory, withCategory } from './templateCategories';
 
 const a1c = (value, date) => ({ event_type: 'lab', code: '4548-4', display: 'Hemoglobin A1c', numeric_value: value, unit: '%', effective_date: date });
 
@@ -103,5 +103,44 @@ describe('describeCriteria and categoriesProblem', () => {
   it('knows whether a template has categories', () => {
     expect(hasCategories(template)).toBe(true);
     expect(hasCategories({})).toBe(false);
+  });
+});
+
+describe('itemsLeaving', () => {
+  it('is what only the old category had', () => {
+    const out = itemsLeaving(template, 'high', 'above');
+    // Improve A1C control stays (the new category has it); the barrier goes.
+    expect(out.goals).toEqual([]);
+    expect(out.interventions.map(i => i.title)).toEqual(['A1C follow-up']);
+    expect(out.barriers.map(b => b.title)).toEqual(['Limited progress toward A1C target']);
+    expect(itemsLeaving(template, 'above', 'goal').goals.map(g => g.title)).toEqual(['Improve A1C control']);
+  });
+
+  it('leaves nothing from Common alone', () => {
+    expect(itemsLeaving(template, null, 'high')).toEqual({ goals: [], interventions: [], barriers: [] });
+  });
+});
+
+describe('categorySuggestions', () => {
+  const run = (over = {}) => ({ id: 'r1', templateId: 't1', status: 'active', categoryId: 'above', categoryName: 'A1C 7–8.9%', ...over });
+  const inputs = inputsFor(a1c(9.4, '2026-10-01'));
+
+  it('suggests the category the latest results match', () => {
+    const [s] = categorySuggestions([run()], [template], inputs, today);
+    expect(s).toMatchObject({ to: { id: 'high' }, fromName: 'A1C 7–8.9%' });
+    expect(s.reasons[0]).toContain('9.4');
+  });
+
+  it('suggests nothing when the run already follows it, it was dismissed, or the run is closed', () => {
+    expect(categorySuggestions([run({ categoryId: 'high' })], [template], inputs, today)).toEqual([]);
+    expect(categorySuggestions([run({ dismissedCategoryId: 'high' })], [template], inputs, today)).toEqual([]);
+    expect(categorySuggestions([run({ status: 'closed' })], [template], inputs, today)).toEqual([]);
+    expect(categorySuggestions([run({ episodic: true })], [template], inputs, today)).toEqual([]);
+    expect(categorySuggestions([run()], [template], null, today)).toEqual([]);
+  });
+
+  it('suggests a category for a run on Common alone', () => {
+    const [s] = categorySuggestions([run({ categoryId: null, categoryName: '' })], [template], inputs, today);
+    expect(s).toMatchObject({ to: { id: 'high' }, fromName: '' });
   });
 });

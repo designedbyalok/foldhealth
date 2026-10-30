@@ -65,6 +65,8 @@ import {
   saveGbiStatus,
 } from './carePlanGbiActions';
 import { useCarePlanBulkSelection } from './useCarePlanBulkSelection';
+import { CategorySuggestionBanner } from './CategorySuggestionBanner';
+import { categorySuggestions, hasCategories } from '../../../../../../settings/care-plan-library/lib/templateCategories';
 import styles from './CarePlanView.module.css';
 
 export function CarePlanView({ patientId, program }) {
@@ -220,7 +222,7 @@ export function CarePlanView({ patientId, program }) {
     for (const inst of live?.templateInstances || []) {
       if (!inst.autoClosed) continue;
       const entry = (out[inst.templateId] ||= { previous: [] });
-      entry.previous.push({ id: inst.id, status: inst.status, version: entry.previous.length + 1, closeReason: inst.closeReason });
+      entry.previous.push({ id: inst.id, status: inst.status, version: entry.previous.length + 1, closeReason: inst.closeReason, categoryName: inst.categoryName });
     }
     for (const entry of Object.values(out)) entry.version = entry.previous.length + 1;
     return out;
@@ -332,6 +334,21 @@ export function CarePlanView({ patientId, program }) {
     readOnly: !!(viewedRun || viewedVersion),
     applyTemplates: (ids, priorities, categoryPicks) => applyPatientCarePlanTemplates(patientId, program, ids, priorities, categoryPicks),
   });
+
+  // Template runs whose patient now matches a different category (switch suggestion).
+  const criteriaInputs = useAppStore(s => (patientId ? s.patientCriteriaInputs[patientId] : null));
+  const fetchPatientCriteriaInputs = useAppStore(s => s.fetchPatientCriteriaInputs);
+  const switchCarePlanTemplateCategory = useAppStore(s => s.switchCarePlanTemplateCategory);
+  const dismissCarePlanCategorySuggestion = useAppStore(s => s.dismissCarePlanCategorySuggestion);
+  const watchesCategories = useMemo(() => (live?.templateInstances || []).some(i => i.status === 'active'
+    && hasCategories(carePlanTemplates.find(t => String(t.id) === String(i.templateId)))), [live?.templateInstances, carePlanTemplates]);
+  useEffect(() => {
+    if (watchesCategories && patientId) fetchPatientCriteriaInputs(patientId);
+  }, [watchesCategories, patientId, fetchPatientCriteriaInputs]);
+  const categoryHints = useMemo(
+    () => categorySuggestions(live?.templateInstances, carePlanTemplates, criteriaInputs),
+    [live?.templateInstances, carePlanTemplates, criteriaInputs],
+  );
   const {
     selected,
     bulkMenu,
@@ -1035,7 +1052,7 @@ export function CarePlanView({ patientId, program }) {
         <div className={styles.runBanner} role="status">
           <Icon name="solar:check-circle-linear" size={16} color="var(--status-success)" />
           <span className={styles.runBannerText}>
-            <strong>{viewedRun.run.templateName} V{viewedRun.version}</strong>
+            <strong>{viewedRun.run.templateName}{viewedRun.run.categoryName ? ` · ${viewedRun.run.categoryName}` : ''} V{viewedRun.version}</strong>
             {` · ${viewedRun.run.closeReason === 'ended_early' ? 'Episode ended early'
               : viewedRun.run.closeReason === 'episode_end' ? 'Episode ended on its last day'
                 : viewedRun.run.status === 'completed' ? 'Completed' : 'Closed'}`}
@@ -1063,6 +1080,15 @@ export function CarePlanView({ patientId, program }) {
         </div>
       )}
       {episodes.banners}
+      {!viewedVersion && !viewedRun && categoryHints.map(s => (
+        <CategorySuggestionBanner
+          key={s.run.id}
+          suggestion={s}
+          canEdit={canEdit}
+          onSwitch={({ template, to, reasons }) => switchCarePlanTemplateCategory(patientId, program, template.id, to.id, reasons.join('; '))}
+          onDismiss={({ run, to }) => dismissCarePlanCategorySuggestion(patientId, program, run.id, to.id)}
+        />
+      ))}
       {aiDrafting ? (
         <IndividualizedPlanCard state="drafting" />
       ) : aiPending.length > 0 && canEdit ? (

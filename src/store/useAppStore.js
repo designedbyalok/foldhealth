@@ -248,7 +248,7 @@ import { createTemplateVersionsSlice } from './slices/templateVersionsSlice';
 import { createIpaOverlaysSlice } from './slices/ipaOverlaysSlice';
 import { applyOverlay, blockedSignoffs } from '../features/settings/care-plan-library/lib/ipaOverlays';
 import { contentOf as templateContentOf } from '../features/settings/care-plan-library/lib/templateVersions';
-import { withCategory } from '../features/settings/care-plan-library/lib/templateCategories';
+import { itemsLeaving, withCategory } from '../features/settings/care-plan-library/lib/templateCategories';
 import { buildRuleInputs } from '../features/automations/lib/clinicalCriteria';
 import { effectiveVersion as effectiveTemplateVersion, todayIso as todayIsoDate } from '../features/settings/care-plan-library/lib/templateVersions';
 import { createClinicalProtocolsSlice } from './slices/clinicalProtocolsSlice';
@@ -812,12 +812,14 @@ export const useAppStore = create((set, get) => ({
   patientProblems: {},           // { [patientId]: Problem[] }
   patientProblemsLoadedFor: {},  // { [patientId]: true }: gates the skeleton
   // What a template category's criteria read for a patient (buildRuleInputs):
-  // the problem list and dated lab results. Loaded once per patient per session.
+  // the problem list and dated lab results. Reused for 10 minutes, so new
+  // results show up without a refetch on every render.
   patientCriteriaInputs: {},
+  patientCriteriaFetchedAt: {},
   fetchPatientCriteriaInputs: async (patientId) => {
     if (!patientId) return null;
     const cached = get().patientCriteriaInputs[patientId];
-    if (cached) return cached;
+    if (cached && Date.now() - (get().patientCriteriaFetchedAt[patientId] || 0) < 10 * 60 * 1000) return cached;
     const [problems, events] = await Promise.all([
       supabase.from('patient_problems').select('title, status').eq('patient_id', String(patientId)),
       supabase.from('patient_clinical_events').select('event_type, code, display, effective_date, status, numeric_value, unit').eq('patient_id', String(patientId)),
@@ -825,7 +827,10 @@ export const useAppStore = create((set, get) => ({
     if (problems.error) console.warn('fetchPatientCriteriaInputs (problems):', problems.error.message);
     if (events.error) console.warn('fetchPatientCriteriaInputs (events):', events.error.message);
     const inputs = buildRuleInputs({ problems: problems.data || [], clinicalEvents: events.data || [] });
-    set(s => ({ patientCriteriaInputs: { ...s.patientCriteriaInputs, [patientId]: inputs } }));
+    set(s => ({
+      patientCriteriaInputs: { ...s.patientCriteriaInputs, [patientId]: inputs },
+      patientCriteriaFetchedAt: { ...s.patientCriteriaFetchedAt, [patientId]: Date.now() },
+    }));
     return inputs;
   },
 
@@ -4803,6 +4808,105 @@ export const useAppStore = create((set, get) => ({
     get().refreshCarePlanDuplicates?.(patientId, program);
     get().touchCarePlanModified(patientId, program.id);
     return true;
+  },
+
+  // Moving a run to another of its template's categories (the switch
+  // suggestion). The run closes like a reinstated one; items only the old
+  // category had move to history with it, the new category's are added, and
+  // Common stays as it is. The new run keeps the old one's end date.
+  switchCarePlanTemplateCategory: async (patientId, program, templateId, categoryId, reason = '') => {
+    const key = carePlanKey(patientId, program.id);
+    const stored = (get().carePlanTemplates || []).find(t => String(t.id) === String(templateId));
+    const slice = get().patientCarePlans[key];
+    const current = (slice?.templateInstances || [])
+      .find(i => String(i.templateId) === String(templateId) && i.status === 'active');
+    const next = stored && withCategory(stored, categoryId);
+    if (!current || !next?.category || !slice?.plan) return false;
+    const libraryGoals = get().carePlanGoals || [];
+    const now = new Date();
+    const fail = () => { get().showToast(`Could not change the category of "${stored.name}"`); return false; };
+    const listsOf = t => ({ goals: t.goals, interventions: t.interventions, barriers: t.barriers });
+
+    // Plan rows the old category alone brought, by title; anything the new
+    // lists also account for stays on the plan.
+    const staying = templateItems(listsOf(next), slice, libraryGoals);
+    const stayIds = new Set([...staying.goals, ...staying.interventions, ...staying.barriers].map(x => x.id));
+    const found = templateItems(itemsLeaving(stored, current.categoryId, categoryId), slice, libraryGoals);
+    const leaving = {
+      goals: found.goals.filter(x => !stayIds.has(x.id)),
+      interventions: found.interventions.filter(x => !stayIds.has(x.id)),
+      barriers: found.barriers.filter(x => !stayIds.has(x.id)),
+    };
+    const outcome = instanceOutcome(templateItems(listsOf(withCategory(stored, current.categoryId)), slice, libraryGoals));
+    const retire = (table, list) => (list.length
+      ? supabase.from(table).update({ retired_instance_id: current.id }).in('id', list.map(x => x.id))
+      : Promise.resolve({ error: null }));
+    const results = await Promise.all([
+      retire('patient_care_plan_goals', leaving.goals),
+      retire('patient_care_plan_interventions', leaving.interventions),
+      retire('patient_care_plan_barriers', leaving.barriers),
+    ]);
+    const retireError = results.find(r => r.error)?.error;
+    if (retireError) { console.warn('switchCarePlanTemplateCategory:', retireError.message); return fail(); }
+    const instances = supabase.from('patient_care_plan_template_instances');
+    const closed = {
+      status: outcome.status, auto_closed: true, ended_at: now.toISOString(),
+      done_count: outcome.done, total_count: outcome.total,
+    };
+    const { error } = await instances.update(closed).eq('id', current.id);
+    if (error) { console.warn('switchCarePlanTemplateCategory:', error.message); return fail(); }
+
+    const ids = new Set([...leaving.goals, ...leaving.interventions, ...leaving.barriers].map(x => x.id));
+    const tag = x => ({ ...x, retiredInstanceId: current.id });
+    set((s) => {
+      const c = s.patientCarePlans[key];
+      if (!c) return {};
+      const r = c.retired || { goals: [], interventions: [], barriers: [] };
+      return {
+        patientCarePlans: {
+          ...s.patientCarePlans,
+          [key]: {
+            ...c,
+            goals: c.goals.filter(x => !ids.has(x.id)),
+            interventions: c.interventions.filter(x => !ids.has(x.id)),
+            barriers: (c.barriers || []).filter(x => !ids.has(x.id)),
+            retired: {
+              goals: [...r.goals, ...leaving.goals.map(tag)],
+              interventions: [...r.interventions, ...leaving.interventions.map(tag)],
+              barriers: [...r.barriers, ...leaving.barriers.map(tag)],
+            },
+          },
+        },
+      };
+    });
+
+    const started = await get().startCarePlanTemplateInstance(patientId, program, next, now, current.endsOn ?? undefined);
+    if (started) await instances.update({ replaced_by: started.id }).eq('id', current.id);
+    get().patchCarePlanTemplateInstances(key, list => list.map(i => (i.id === current.id
+      ? { ...i, status: outcome.status, autoClosed: true, endedAt: closed.ended_at, doneCount: outcome.done, totalCount: outcome.total, replacedBy: started?.id || null }
+      : i)));
+    await applyTemplateToPlan(get, patientId, program, next, libraryGoals);
+
+    const moved = ids.size;
+    get().logCarePlanAudit(patientId, program, {
+      entityType: 'template', entityId: templateId, action: 'recategorized',
+      summary: stored.name,
+      detail: `${current.categoryName || 'Common only'} → ${next.category.name}${reason ? ` (${reason})` : ''}. ${moved} item${moved === 1 ? '' : 's'} moved to history.`,
+    });
+    get().showToast(`"${stored.name}" now follows ${next.category.name}`);
+    get().refreshCarePlanDuplicates?.(patientId, program);
+    get().touchCarePlanModified(patientId, program.id);
+    return true;
+  },
+
+  // Declining a category switch for a run: not offered again for that category.
+  dismissCarePlanCategorySuggestion: async (patientId, program, instanceId, categoryId) => {
+    const key = carePlanKey(patientId, program.id);
+    get().patchCarePlanTemplateInstances(key, list => list.map(i => (i.id === instanceId ? { ...i, dismissedCategoryId: categoryId } : i)));
+    const { error } = await supabase.from('patient_care_plan_template_instances')
+      .update({ dismissed_category_id: categoryId }).eq('id', instanceId);
+    // Before the migration the dismissal lasts for this session only.
+    if (error) console.warn('dismissCarePlanCategorySuggestion:', error.message);
   },
 
   // ── Episodes (care_plan_episodic_templates migration) ──

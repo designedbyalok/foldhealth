@@ -14,6 +14,7 @@ export const TEMPLATE_RENEWAL_ACTIVITY = {
   episode_started: 'Episode Started',
   episode_extended: 'Episode End Date Changed',
   episode_ended: 'Episode Ended',
+  recategorized: 'Category Changed',
 };
 export const isTemplateRenewal = row => !!TEMPLATE_RENEWAL_ACTIVITY[row?.action];
 

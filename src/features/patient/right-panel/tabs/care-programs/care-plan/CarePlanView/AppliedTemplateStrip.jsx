@@ -62,14 +62,15 @@ function TemplateBadge({
 }
 
 /**
- * An earlier run of a reinstated template: done (check mark), its version,
- * and selecting it shows that run's goals, interventions and barriers.
+ * An earlier run of a reinstated template, or of one moved to another
+ * category: done (check mark), its version and category, and selecting it
+ * shows that run's goals, interventions and barriers.
  */
 function RunBadge({ template, run, isActive, onSelect, disabled = false }) {
   const outcome = run.status === 'completed' ? 'completed' : 'closed';
   const how = run.closeReason === 'episode_end' ? 'Episode ended on its last day'
     : run.closeReason === 'ended_early' ? 'Episode ended early'
-      : `Version ${run.version}, ${outcome} when the template was added again`;
+      : `Version ${run.version}${run.categoryName ? `, ${run.categoryName}` : ''}, ${outcome} when the template was added again or changed category`;
   return (
     <button
       type="button"
@@ -77,7 +78,7 @@ function RunBadge({ template, run, isActive, onSelect, disabled = false }) {
       className={`${styles.appliedTemplateBadge} ${isActive ? styles.appliedTemplateBadgeActive : ''}`}
       aria-pressed={isActive}
       onClick={() => onSelect(`run:${run.id}`)}
-      aria-label={`${template.name}, version ${run.version}, done (${outcome})${isActive ? ', showing' : ''}`}
+      aria-label={`${template.name}${run.categoryName ? `, ${run.categoryName}` : ''}, version ${run.version}, done (${outcome})${isActive ? ', showing' : ''}`}
       title={how}
     >
       <Badge
@@ -87,6 +88,7 @@ function RunBadge({ template, run, isActive, onSelect, disabled = false }) {
           <>
             <Icon name="solar:check-circle-linear" size={12} color={isActive ? 'var(--primary-300)' : 'var(--status-success)'} />
             <span className={styles.runDoneName}>{template.name}</span>
+            {run.categoryName && <span className={styles.runVersion}>{run.categoryName}</span>}
             <span className={styles.runVersion}>V{run.version}</span>
           </>
         )}
@@ -122,7 +124,7 @@ function RecommendedBadge({ template }) {
  * `trailing` (the Templates action) sits at the row's end, so the strip also
  * renders when nothing is applied yet.
  *
- * `runsByTemplate`: { [templateId]: { version, previous: [{ id, version, status }] } }
+ * `runsByTemplate`: { [templateId]: { version, previous: [{ id, version, status, categoryName }] } }
  * for templates added again. The current run's chip shows its version (V2);
  * each earlier run follows it as a done chip (✓ V1). A selected id of
  * `run:<id>` is an earlier run. `historyTemplates` are templates no longer

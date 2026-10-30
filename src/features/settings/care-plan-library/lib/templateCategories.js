@@ -118,3 +118,37 @@ export function categoriesProblem(categories) {
   }
   return null;
 }
+
+/**
+ * What leaves a plan when a run moves from one category to another: the old
+ * category's items whose titles neither Common nor the new category has.
+ * `fromId` null (a run on Common alone) leaves nothing.
+ */
+export function itemsLeaving(template, fromId, toId) {
+  const from = fromId ? categoriesOf(template).find(c => c.id === fromId) : null;
+  const staying = withCategory(template, toId);
+  return Object.fromEntries(LISTS.map((k) => {
+    const keep = new Set(staying[k].map(x => norm(x.title)));
+    return [k, (from?.[k] || []).filter(x => !keep.has(norm(x.title)))];
+  }));
+}
+
+/**
+ * Runs whose patient now matches a different category than the one they
+ * follow, skipping a category the care team already dismissed for that run.
+ * `runs` are active template instances; returns
+ * [{ run, template, to, reasons, fromName }].
+ */
+export function categorySuggestions(runs, templates, inputs, today = new Date()) {
+  if (!inputs) return [];
+  const byId = new Map((templates || []).map(t => [String(t.id), t]));
+  return (runs || []).flatMap((run) => {
+    const template = byId.get(String(run.templateId));
+    // An episode has its own start and end (lib/episodeTemplates); it isn't switched.
+    if (run.status !== 'active' || run.episodic || !hasCategories(template)) return [];
+    const { category, reasons } = matchCategory(template, inputs, today);
+    if (!category || category.id === run.categoryId || category.id === run.dismissedCategoryId) return [];
+    const fromName = run.categoryName || categoriesOf(template).find(c => c.id === run.categoryId)?.name || '';
+    return [{ run, template, to: category, reasons, fromName }];
+  });
+}

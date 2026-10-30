@@ -246,6 +246,8 @@ function mapTemplateInstanceRow(row) {
     episodic: !!row.episodic,
     pausedPlanIds: row.paused_plan_ids || [],
     closeReason: row.close_reason || null,
+    // A category switch the care team declined for this run.
+    dismissedCategoryId: row.dismissed_category_id || null,
   };
 }
 
