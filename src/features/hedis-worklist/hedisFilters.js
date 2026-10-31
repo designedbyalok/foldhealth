@@ -28,6 +28,8 @@ export const MORE_FILTER_ITEMS = [
   { k: 'assignee', label: 'Assignee', primary: true },
   { k: 'careGaps', label: 'Gaps', primary: true },
   { k: 'gapStatus', label: 'Gap Status', primary: true },
+  { k: 'gapSource', label: 'Source', primary: true },
+  { k: 'gapInstance', label: 'Instance', primary: true },
   { k: 'careGapAddedDate', label: 'Gap Added Date', primary: true },
   { k: 'lastCareGapAssessmentDate', label: 'Last Gap Assessment Date', primary: true },
   { k: 'lastVisitDate', label: 'Last Visit Date', primary: true },
@@ -81,12 +83,22 @@ const AGE_GROUPS = [
   { label: '75+', min: 75 * 12, max: Infinity },
 ];
 
+// Per-gap Source / Instance, shared with the worklist columns so the filter
+// and the cell always agree. Gaps added in Fold are stamped `fold-native`;
+// a gap closed then re-added stays in the row stamped `supersededAt`.
+export const gapSourceLabel = (g) => (g.source === 'fold-native' ? 'Manual' : 'Claim');
+export const gapInstanceLabel = (g) => (g.supersededAt ? 'Previous' : 'Current');
+
 export const FILTER_DEFS = [
   { k: 'memberStatus',        label: 'Member Status', type: 'multi',
     opts: MEMBER_STATUS_FILTER_OPTIONS },
   { k: 'gapStatus',           label: 'Gap Status', type: 'multi',
     opts: ['Open', 'Engaged', 'Engaged Requires Follow-Up', 'Submitted', 'Completed',
            'Closed - Data', 'Closed - Do not call', 'Closed - UTR', 'Closed - Other'] },
+  { k: 'gapSource',           label: 'Source', type: 'multi',
+    opts: ['Claim', 'Manual'] },
+  { k: 'gapInstance',         label: 'Instance', type: 'multi',
+    opts: ['Current', 'Previous'] },
   { k: 'assignee',            label: 'Assignee', type: 'multi',
     dynamic: 'assignee', opts: [], searchable: true },
   { k: 'gender',              label: 'Gender', type: 'multi',
@@ -183,6 +195,8 @@ function matchOne(m, k, vals) {
       }
       return false;
     }
+    case 'gapSource':           return (m.gaps || []).some(g => vals.includes(gapSourceLabel(g)));
+    case 'gapInstance':         return (m.gaps || []).some(g => vals.includes(gapInstanceLabel(g)));
     case 'assignee': {
       // Match a member if the row-level assignee OR any per-gap assignee
       // is in the selected set: same fields the row's Assignee column

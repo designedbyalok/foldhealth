@@ -10,7 +10,6 @@ import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { Badge } from '../../components/Badge/Badge';
 import { InfoBar } from '../../components/InfoBar/InfoBar';
 import { SimpleTableSkeleton } from '../../components/SimpleTableSkeleton/SimpleTableSkeleton';
-import { Icon } from '../../components/Icon/Icon';
 import { MEASURE_YEARS } from './data/caregapWhitelistMock';
 import styles from './AddCareGapsDrawer.module.css';
 
@@ -25,33 +24,35 @@ const appliesTo = (w, { ipa, hpCode, measureYear }) =>
 
 const toOptions = (values) => values.map(v => ({ value: v, label: v, searchText: v }));
 
-function ParentGapDetails({ parent }) {
-  const rows = [
-    ['Status', parent.status],
-    ['Opened', parent.startDate || '-'],
-    ['Closed', parent.closedDate || '-'],
-    ['Assignee', parent.assignee || 'Unassigned'],
-    ['Measure Year', parent.measureYear ? `MY${parent.measureYear}` : '-'],
-  ];
+const REASONS = ['Closed incorrectly', 'Missing outreach', 'Missing evidence'];
+
+// A gap's measure year: stamped on gaps added in Fold, else its start year.
+const yearOf = (g) => (g.measureYear ? Number(g.measureYear) : Number(String(g.startDate || '').slice(-4)) || null);
+
+// Every instance of `code` the patient has in the selected measure year,
+// newest first. Read-only context for re-adding the gap.
+function GapHistory({ history }) {
   return (
-    <div className={styles.parent}>
-      <div className={styles.parentHead}>
-        <Icon name="solar:link-minimalistic-2-linear" size={14} color="var(--neutral-400)" />
-        Parent gap
-      </div>
-      <dl className={styles.parentGrid}>
-        {rows.map(([k, v]) => (
-          <div key={k} className={styles.parentItem}>
-            <dt>{k}</dt>
-            <dd>{v}</dd>
-          </div>
+    <table className={styles.history} aria-label="Previous instances">
+      <thead>
+        <tr><th>Instance</th><th>Status</th><th>Opened</th><th>Closed</th></tr>
+      </thead>
+      <tbody>
+        {history.map((g, i) => (
+          <tr key={`${g.startDate}-${i}`}>
+            <td>{history.length - i}{g.supersededAt ? ' (Previous)' : ' (Latest)'}</td>
+            <td><Badge size="S" variant={isClosed(g.status) ? 'ai-neutral' : 'status-queued'} label={g.status} /></td>
+            <td>{g.startDate || '-'}</td>
+            <td>{g.closedDate || '-'}</td>
+          </tr>
         ))}
-      </dl>
-    </div>
+      </tbody>
+    </table>
   );
 }
 
-function GapRow({ whitelist, parent, checked, onToggle }) {
+function GapRow({ whitelist, parent, history, checked, config, onToggle, onConfig }) {
+  const needsReason = history.length > 0;
   return (
     <div className={[styles.gapRow, checked ? styles.gapRowOn : ''].join(' ')}>
       <label className={styles.gapMain}>
@@ -62,7 +63,30 @@ function GapRow({ whitelist, parent, checked, onToggle }) {
           {parent && <Badge size="S" variant="status-queued" icon="solar:history-linear" label={`Previous: ${parent.status}`} />}
         </span>
       </label>
-      {checked && parent && <ParentGapDetails parent={parent} />}
+      {checked && (
+        <div className={styles.gapConfig}>
+          {needsReason ? (
+            <>
+              <span className={styles.subLabel}>Previous instances in this measure year</span>
+              <GapHistory history={history} />
+            </>
+          ) : (
+            <span className={styles.helper}>No previous instance in this measure year. A new care gap will be created.</span>
+          )}
+          <div className={styles.configRow}>
+            <div className={styles.field}>
+              <span className={styles.label}>Workflow<span className={styles.req}>•</span></span>
+              <ChipSelect options={WORKFLOWS} value={config.workflows} onChange={(v) => onConfig({ ...config, workflows: v })} ariaLabel={`${whitelist.code} workflow`} />
+            </div>
+            {needsReason && (
+              <div className={styles.field}>
+                <span className={styles.label}>Reason<span className={styles.req}>•</span></span>
+                <Select options={toOptions(REASONS)} value={config.reason} placeholder="Why add it again?" onChange={(v) => onConfig({ ...config, reason: v })} />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -77,36 +101,33 @@ export function AddCareGapsDrawer() {
   const fetchWhitelist = useAppStore(s => s.fetchCaregapWhitelist);
   const hedisMembers = useAppStore(s => s.hedisMembers);
 
-  const [ipa, setIpa] = useState('');
-  const [hpCode, setHpCode] = useState('');
   const [measureYear, setMeasureYear] = useState(MEASURE_YEARS[0]);
-  const [workflows, setWorkflows] = useState([]);
+  // Per selected gap: { [code]: { workflows, reason } }.
+  const [config, setConfig] = useState({});
   const [selected, setSelected] = useState([]);
   const [query, setQuery] = useState('');
 
   useEffect(() => {
     if (!member) return;
     fetchWhitelist();
-    setIpa(member.ipa || '');
-    setHpCode(member.hpCode || '');
     setMeasureYear(MEASURE_YEARS[0]);
-    setWorkflows([]);
+    setConfig({});
     setSelected([]);
     setQuery('');
   }, [member?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const ipaOptions = useMemo(
-    () => toOptions([...new Set(hedisMembers.map(m => m.ipa).concat(member?.ipa).filter(Boolean))].sort()),
-    [hedisMembers, member],
-  );
-  const hpOptions = useMemo(
-    () => toOptions([...new Set(hedisMembers.map(m => m.hpCode).concat(member?.hpCode).filter(Boolean))].sort()),
-    [hedisMembers, member],
-  );
   const yearOptions = MEASURE_YEARS.map(y => ({ value: String(y), label: `MY${y}` }));
 
   // Read the live row so a gap added moments ago drops out of the list.
   const liveMember = hedisMembers.find(m => m.id === member?.id) || member;
+
+  // IPA and HP Code follow the measure year: the patient's contract on that
+  // year's gaps, else the patient's current IPA / HP Code. Not editable.
+  const yearGap = (liveMember?.gaps || []).find(g => (g.measureYear
+    ? Number(g.measureYear) === measureYear
+    : String(g.startDate || '').endsWith(String(measureYear))) && (g.ipa || g.hpCode));
+  const ipa = yearGap?.ipa || member?.ipa || '';
+  const hpCode = yearGap?.hpCode || member?.hpCode || '';
   const existingByCode = useMemo(
     () => Object.fromEntries((liveMember?.gaps || []).filter(g => !g.supersededAt).map(g => [g.code, g])),
     [liveMember],
@@ -130,16 +151,29 @@ export function AddCareGapsDrawer() {
 
   if (!member) return null;
 
-  const canSave = picked.length > 0 && ipa && hpCode && workflows.length > 0;
+  const historyFor = (code) => (liveMember?.gaps || [])
+    .filter(g => g.code === code && yearOf(g) === measureYear)
+    .toSorted((a, b) => (!!a.supersededAt - !!b.supersededAt));
+  const configFor = (code) => config[code] || { workflows: [], reason: '' };
+  const canSave = picked.length > 0 && ipa && hpCode && picked.every(w => {
+    const c = configFor(w.code);
+    return c.workflows.length > 0 && (historyFor(w.code).length === 0 || !!c.reason);
+  });
 
   const toggle = (code) => setSelected(sel => sel.includes(code) ? sel.filter(c => c !== code) : [...sel, code]);
 
   const doSave = () => {
     const items = picked.map(w => {
       const existing = existingByCode[w.code];
-      return { whitelist: w, parent: existing && isClosed(existing.status) ? existing : null };
+      const c = configFor(w.code);
+      return {
+        whitelist: w,
+        parent: existing && isClosed(existing.status) ? existing : null,
+        workflows: c.workflows,
+        reason: historyFor(w.code).length ? c.reason : null,
+      };
     });
-    addCareGaps(member.id, { items, ipa, hpCode, measureYear, workflows });
+    addCareGaps(member.id, { items, ipa, hpCode, measureYear });
     showToast?.(`${items.length} care gap${items.length === 1 ? '' : 's'} added for ${member.name}`);
     close();
   };
@@ -175,24 +209,18 @@ export function AddCareGapsDrawer() {
         <section className={styles.section}>
           <div className={styles.grid}>
             <div className={styles.field}>
-              <span className={styles.label}>IPA<span className={styles.req}>•</span></span>
-              <Select options={ipaOptions} value={ipa} placeholder="Select IPA" searchable onChange={setIpa} />
-            </div>
-            <div className={styles.field}>
-              <span className={styles.label}>HP Code<span className={styles.req}>•</span></span>
-              <Select options={hpOptions} value={hpCode} placeholder="Select HP Code" searchable onChange={setHpCode} />
-            </div>
-            <div className={styles.field}>
               <span className={styles.label}>Measure Year<span className={styles.req}>•</span></span>
               <Select options={yearOptions} value={String(measureYear)} onChange={(v) => setMeasureYear(Number(v))} />
             </div>
+            <div className={styles.field}>
+              <span className={styles.label}>IPA</span>
+              <Select options={toOptions([ipa].filter(Boolean))} value={ipa} placeholder="No IPA on file" disabled />
+            </div>
+            <div className={styles.field}>
+              <span className={styles.label}>HP Code</span>
+              <Select options={toOptions([hpCode].filter(Boolean))} value={hpCode} placeholder="No HP Code on file" disabled />
+            </div>
           </div>
-        </section>
-
-        <section className={styles.section}>
-          <span className={styles.label}>Required Workflow<span className={styles.req}>•</span></span>
-          <ChipSelect options={WORKFLOWS} value={workflows} onChange={setWorkflows} ariaLabel="Required workflow" />
-          <span className={styles.helper}>Applies to every gap added below.</span>
         </section>
 
         <section className={styles.section}>
@@ -218,7 +246,10 @@ export function AddCareGapsDrawer() {
                   key={w.id}
                   whitelist={w}
                   parent={existingByCode[w.code] || null}
+                  history={historyFor(w.code)}
                   checked={selected.includes(w.code)}
+                  config={configFor(w.code)}
+                  onConfig={(c) => setConfig(prev => ({ ...prev, [w.code]: c }))}
                   onToggle={() => toggle(w.code)}
                 />
               ))}
