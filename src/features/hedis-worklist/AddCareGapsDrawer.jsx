@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { Drawer } from '../../components/Drawer/Drawer';
 import { PatientBanner } from '../../components/PatientBanner/PatientBanner';
+import { Avatar } from '../../components/Avatar/Avatar';
 import { Button } from '../../components/Button/Button';
 import { Select } from '../../components/Select/Select';
 import { ChipSelect } from '../../components/ChipSelect/ChipSelect';
@@ -9,8 +10,8 @@ import { SearchBar } from '../../components/SearchBar/SearchBar';
 import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { Badge } from '../../components/Badge/Badge';
 import { InfoBar } from '../../components/InfoBar/InfoBar';
-import { SimpleTableSkeleton } from '../../components/SimpleTableSkeleton/SimpleTableSkeleton';
 import { Icon } from '../../components/Icon/Icon';
+import { SimpleTableSkeleton } from '../../components/SimpleTableSkeleton/SimpleTableSkeleton';
 import { MEASURE_YEARS } from './data/caregapWhitelistMock';
 import styles from './AddCareGapsDrawer.module.css';
 
@@ -25,33 +26,35 @@ const appliesTo = (w, { ipa, hpCode, measureYear }) =>
 
 const toOptions = (values) => values.map(v => ({ value: v, label: v, searchText: v }));
 
-function ParentGapDetails({ parent }) {
-  const rows = [
-    ['Status', parent.status],
-    ['Opened', parent.startDate || '-'],
-    ['Closed', parent.closedDate || '-'],
-    ['Assignee', parent.assignee || 'Unassigned'],
-    ['Measure Year', parent.measureYear ? `MY${parent.measureYear}` : '-'],
-  ];
+const REASONS = ['Closed incorrectly', 'Missing outreach', 'Missing evidence'];
+
+// A gap's measure year: stamped on gaps added in Fold, else its start year.
+const yearOf = (g) => (g.measureYear ? Number(g.measureYear) : Number(String(g.startDate || '').slice(-4)) || null);
+
+// Every instance of `code` the patient has in the selected measure year,
+// newest first. Read-only context for re-adding the gap.
+function GapHistory({ history }) {
   return (
-    <div className={styles.parent}>
-      <div className={styles.parentHead}>
-        <Icon name="solar:link-minimalistic-2-linear" size={14} color="var(--neutral-400)" />
-        Parent gap
-      </div>
-      <dl className={styles.parentGrid}>
-        {rows.map(([k, v]) => (
-          <div key={k} className={styles.parentItem}>
-            <dt>{k}</dt>
-            <dd>{v}</dd>
-          </div>
+    <table className={styles.history} aria-label="Previous instances">
+      <thead>
+        <tr><th>Instance</th><th>Status</th><th>Opened</th><th>Closed</th></tr>
+      </thead>
+      <tbody>
+        {history.map((g, i) => (
+          <tr key={`${g.startDate}-${i}`}>
+            <td>{history.length - i}{g.supersededAt ? ' (Previous)' : ' (Latest)'}</td>
+            <td><Badge size="S" variant={isClosed(g.status) ? 'ai-neutral' : 'status-queued'} label={g.status} /></td>
+            <td>{g.startDate || '-'}</td>
+            <td>{g.closedDate || '-'}</td>
+          </tr>
         ))}
-      </dl>
-    </div>
+      </tbody>
+    </table>
   );
 }
 
-function GapRow({ whitelist, parent, checked, onToggle }) {
+function GapRow({ whitelist, parent, history, checked, config, onToggle, onConfig }) {
+  const needsReason = history.length > 0;
   return (
     <div className={[styles.gapRow, checked ? styles.gapRowOn : ''].join(' ')}>
       <label className={styles.gapMain}>
@@ -62,13 +65,108 @@ function GapRow({ whitelist, parent, checked, onToggle }) {
           {parent && <Badge size="S" variant="status-queued" icon="solar:history-linear" label={`Previous: ${parent.status}`} />}
         </span>
       </label>
-      {checked && parent && <ParentGapDetails parent={parent} />}
+      {checked && (
+        <div className={styles.gapConfig}>
+          {needsReason ? (
+            <>
+              <span className={styles.subLabel}>Previous instances in this measure year</span>
+              <GapHistory history={history} />
+            </>
+          ) : (
+            <span className={styles.helper}>No previous instance in this measure year. A new care gap will be created.</span>
+          )}
+          <div className={styles.configRow}>
+            <div className={styles.field}>
+              <span className={styles.label}>Workflow<span className={styles.req}>•</span></span>
+              <ChipSelect options={WORKFLOWS} value={config.workflows} onChange={(v) => onConfig({ ...config, workflows: v })} ariaLabel={`${whitelist.code} workflow`} />
+            </div>
+            {needsReason && (
+              <div className={styles.field}>
+                <span className={styles.label}>Reason<span className={styles.req}>•</span></span>
+                <Select options={toOptions(REASONS)} value={config.reason} placeholder="Why add it again?" onChange={(v) => onConfig({ ...config, reason: v })} />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Member field, as in HCC's Add Manually: the field is the search input;
+// focus shows the matches, a picked member shows avatar, name and details
+// and clicking it searches again.
+function MemberField({ members, value, onChange }) {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(!value);
+  const wrapRef = useRef(null);
+  useEffect(() => {
+    if (!open) return undefined;
+    const onDoc = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onKey); };
+  }, [open]);
+  const q = query.trim().toLowerCase();
+  const matches = (q
+    ? members.filter(m => m.name.toLowerCase().includes(q) || String(m.memberId || '').toLowerCase().includes(q))
+    : members).slice(0, 20);
+  const meta = (m) => [m.gender, m.age, m.memberId].filter(Boolean).join(' • ');
+  return (
+    <div className={styles.memberSection} ref={wrapRef}>
+      <span className={styles.label}>Member<span className={styles.req}>•</span></span>
+      <div className={styles.memberField}>
+        {value && !open ? (
+          <button type="button" className={styles.memberSelected} onClick={() => { setQuery(''); setOpen(true); }}>
+            <Avatar variant="patient" initials={value.in} />
+            <span className={styles.memberName}>{value.name}</span>
+            <span className={styles.memberMeta}>({meta(value)})</span>
+          </button>
+        ) : (
+          <input
+            type="text"
+            className={styles.memberInput}
+            placeholder="Search and Select Member"
+            value={query}
+            autoFocus
+            onFocus={() => setOpen(true)}
+            onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+            aria-label="Search and select member"
+          />
+        )}
+        <Icon name="solar:alt-arrow-down-linear" size={12} color="var(--neutral-300)" />
+      </div>
+      {open && (
+        <div className={styles.memberPop} role="listbox" aria-label="Members">
+          {matches.length === 0 ? (
+            <div className={styles.memberEmpty}>No matches</div>
+          ) : matches.map(m => (
+            <button
+              key={m.id}
+              type="button"
+              role="option"
+              aria-selected={value?.id === m.id}
+              className={styles.memberOption}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => { onChange(m); setQuery(''); setOpen(false); }}
+            >
+              <Avatar variant="patient" initials={m.in} />
+              <span>{m.name}</span>
+              <span className={styles.memberOptionMeta}>{meta(m)}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 export function AddCareGapsDrawer() {
   const member = useAppStore(s => s.addCareGapsMember);
+  // From the worklist header the user picks the member in the drawer.
+  const picker = useAppStore(s => s.addCareGapsPicker);
+  const pickMember = useAppStore(s => s.pickAddCareGapsMember);
   const close = useAppStore(s => s.closeAddCareGaps);
   const addCareGaps = useAppStore(s => s.addCareGaps);
   const showToast = useAppStore(s => s.showToast);
@@ -77,36 +175,33 @@ export function AddCareGapsDrawer() {
   const fetchWhitelist = useAppStore(s => s.fetchCaregapWhitelist);
   const hedisMembers = useAppStore(s => s.hedisMembers);
 
-  const [ipa, setIpa] = useState('');
-  const [hpCode, setHpCode] = useState('');
   const [measureYear, setMeasureYear] = useState(MEASURE_YEARS[0]);
-  const [workflows, setWorkflows] = useState([]);
+  // Per selected gap: { [code]: { workflows, reason } }.
+  const [config, setConfig] = useState({});
   const [selected, setSelected] = useState([]);
   const [query, setQuery] = useState('');
 
   useEffect(() => {
     if (!member) return;
     fetchWhitelist();
-    setIpa(member.ipa || '');
-    setHpCode(member.hpCode || '');
     setMeasureYear(MEASURE_YEARS[0]);
-    setWorkflows([]);
+    setConfig({});
     setSelected([]);
     setQuery('');
   }, [member?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const ipaOptions = useMemo(
-    () => toOptions([...new Set(hedisMembers.map(m => m.ipa).concat(member?.ipa).filter(Boolean))].sort()),
-    [hedisMembers, member],
-  );
-  const hpOptions = useMemo(
-    () => toOptions([...new Set(hedisMembers.map(m => m.hpCode).concat(member?.hpCode).filter(Boolean))].sort()),
-    [hedisMembers, member],
-  );
   const yearOptions = MEASURE_YEARS.map(y => ({ value: String(y), label: `MY${y}` }));
 
   // Read the live row so a gap added moments ago drops out of the list.
   const liveMember = hedisMembers.find(m => m.id === member?.id) || member;
+
+  // IPA and HP Code follow the measure year: the patient's contract on that
+  // year's gaps, else the patient's current IPA / HP Code. Not editable.
+  const yearGap = (liveMember?.gaps || []).find(g => (g.measureYear
+    ? Number(g.measureYear) === measureYear
+    : String(g.startDate || '').endsWith(String(measureYear))) && (g.ipa || g.hpCode));
+  const ipa = yearGap?.ipa || member?.ipa || '';
+  const hpCode = yearGap?.hpCode || member?.hpCode || '';
   const existingByCode = useMemo(
     () => Object.fromEntries((liveMember?.gaps || []).filter(g => !g.supersededAt).map(g => [g.code, g])),
     [liveMember],
@@ -128,25 +223,53 @@ export function AddCareGapsDrawer() {
   // Selection outlives a filter change only for gaps still whitelisted.
   const picked = eligible.filter(w => selected.includes(w.code));
 
-  if (!member) return null;
+  if (!member && !picker) return null;
+  if (!member) {
+    return (
+      <Drawer title="Add Care Gaps" onClose={close} bodyClassName={styles.body}>
+        <div className={styles.container}>
+          <MemberField members={hedisMembers} value={null} onChange={pickMember} />
+        </div>
+      </Drawer>
+    );
+  }
 
-  const canSave = picked.length > 0 && ipa && hpCode && workflows.length > 0;
+  const historyFor = (code) => (liveMember?.gaps || [])
+    .filter(g => g.code === code && yearOf(g) === measureYear)
+    .toSorted((a, b) => (!!a.supersededAt - !!b.supersededAt));
+  const configFor = (code) => config[code] || { workflows: [], reason: '' };
+  const canSave = picked.length > 0 && ipa && hpCode && picked.every(w => {
+    const c = configFor(w.code);
+    return c.workflows.length > 0 && (historyFor(w.code).length === 0 || !!c.reason);
+  });
 
   const toggle = (code) => setSelected(sel => sel.includes(code) ? sel.filter(c => c !== code) : [...sel, code]);
+
+  // Why Add Gap is off, shown on hover of the disabled button.
+  const disabledReason = picked.length === 0 ? 'Select a care gap'
+    : !ipa || !hpCode ? 'This patient has no IPA or HP Code for this measure year'
+    : picked.some(w => configFor(w.code).workflows.length === 0) ? 'Pick a workflow for each care gap'
+    : 'Pick a reason for each care gap added again';
 
   const doSave = () => {
     const items = picked.map(w => {
       const existing = existingByCode[w.code];
-      return { whitelist: w, parent: existing && isClosed(existing.status) ? existing : null };
+      const c = configFor(w.code);
+      return {
+        whitelist: w,
+        parent: existing && isClosed(existing.status) ? existing : null,
+        workflows: c.workflows,
+        reason: historyFor(w.code).length ? c.reason : null,
+      };
     });
-    addCareGaps(member.id, { items, ipa, hpCode, measureYear, workflows });
+    addCareGaps(member.id, { items, ipa, hpCode, measureYear });
     showToast?.(`${items.length} care gap${items.length === 1 ? '' : 's'} added for ${member.name}`);
     close();
   };
 
   const headerRight = (
     <>
-      <Button size="sm" disabled={!canSave} onClick={doSave}>
+      <Button disabled={!canSave} disabledReason={disabledReason} onClick={doSave}>
         {picked.length > 1 ? `Add ${picked.length} Gaps` : 'Add Gap'}
       </Button>
       <span className={styles.headerDivider} />
@@ -155,44 +278,43 @@ export function AddCareGapsDrawer() {
 
   return (
     <Drawer
-      title="Add Care Gaps"
+      title={picker ? `Add Care Gaps for ${member.name}` : 'Add Care Gaps'}
       onClose={close}
       headerRight={headerRight}
       noCloseDivider
       bodyClassName={styles.body}
     >
-      <PatientBanner
-        initials={member.in}
-        name={member.name}
-        gender={member.gender === 'M' ? 'Male' : member.gender === 'F' ? 'Female' : member.gender}
-        age={member.age || ''}
-        dob={member.dob}
-        memberId={member.memberId}
-        patientId={member.id}
-      />
+      {/* From the worklist header the Member field already names the
+          patient, so the banner shows only for the row-level flow. */}
+      {!picker && (
+        <PatientBanner
+          initials={member.in}
+          name={member.name}
+          gender={member.gender === 'M' ? 'Male' : member.gender === 'F' ? 'Female' : member.gender}
+          age={member.age || ''}
+          dob={member.dob}
+          memberId={member.memberId}
+          patientId={member.id}
+        />
+      )}
 
       <div className={styles.container}>
+        {picker && <MemberField key={member.id} members={hedisMembers} value={member} onChange={pickMember} />}
         <section className={styles.section}>
           <div className={styles.grid}>
-            <div className={styles.field}>
-              <span className={styles.label}>IPA<span className={styles.req}>•</span></span>
-              <Select options={ipaOptions} value={ipa} placeholder="Select IPA" searchable onChange={setIpa} />
-            </div>
-            <div className={styles.field}>
-              <span className={styles.label}>HP Code<span className={styles.req}>•</span></span>
-              <Select options={hpOptions} value={hpCode} placeholder="Select HP Code" searchable onChange={setHpCode} />
-            </div>
             <div className={styles.field}>
               <span className={styles.label}>Measure Year<span className={styles.req}>•</span></span>
               <Select options={yearOptions} value={String(measureYear)} onChange={(v) => setMeasureYear(Number(v))} />
             </div>
+            <div className={styles.field}>
+              <span className={styles.label}>IPA</span>
+              <Select options={toOptions([ipa].filter(Boolean))} value={ipa} placeholder="No IPA on file" disabled />
+            </div>
+            <div className={styles.field}>
+              <span className={styles.label}>HP Code</span>
+              <Select options={toOptions([hpCode].filter(Boolean))} value={hpCode} placeholder="No HP Code on file" disabled />
+            </div>
           </div>
-        </section>
-
-        <section className={styles.section}>
-          <span className={styles.label}>Required Workflow<span className={styles.req}>•</span></span>
-          <ChipSelect options={WORKFLOWS} value={workflows} onChange={setWorkflows} ariaLabel="Required workflow" />
-          <span className={styles.helper}>Applies to every gap added below.</span>
         </section>
 
         <section className={styles.section}>
@@ -218,7 +340,10 @@ export function AddCareGapsDrawer() {
                   key={w.id}
                   whitelist={w}
                   parent={existingByCode[w.code] || null}
+                  history={historyFor(w.code)}
                   checked={selected.includes(w.code)}
+                  config={configFor(w.code)}
+                  onConfig={(c) => setConfig(prev => ({ ...prev, [w.code]: c }))}
                   onToggle={() => toggle(w.code)}
                 />
               ))}

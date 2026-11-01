@@ -9553,9 +9553,15 @@ export const useAppStore = create((set, get) => ({
     });
   },
 
+  // Add Care Gaps opens on a row's patient, or (worklist header) with a
+  // Member picker first, like HCC's Add Manually.
   addCareGapsMember: null,
-  openAddCareGaps: (member) => set({ addCareGapsMember: member }),
-  closeAddCareGaps: () => set({ addCareGapsMember: null }),
+  addCareGapsPicker: false,
+  openAddCareGaps: (member) => set({ addCareGapsMember: member, addCareGapsPicker: false }),
+  openAddCareGapsPicker: () => set({ addCareGapsMember: null, addCareGapsPicker: true }),
+  // The member picked in the drawer's Member field (picker mode).
+  pickAddCareGapsMember: (member) => set({ addCareGapsMember: member }),
+  closeAddCareGaps: () => set({ addCareGapsMember: null, addCareGapsPicker: false }),
 
   // Adds whitelisted gaps to a member. When the member already has a closed
   // gap for the same measure, that gap becomes the new gap's parent: it stays
@@ -9563,7 +9569,8 @@ export const useAppStore = create((set, get) => ({
   // `parentGap` snapshot) is inserted just before it. Gaps are looked up by
   // code across the app, so first-match lookups land on the active gap and
   // the status / assignee mutations skip superseded ones.
-  addCareGaps: (memberId, { items, ipa, hpCode, measureYear, workflows }) => {
+  // Each item carries its own workflows and (when re-added) reason.
+  addCareGaps: (memberId, { items, ipa, hpCode, measureYear }) => {
     track('hedis.gaps_added', { memberId, count: items.length });
     const startDate = new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
     const actor = get().currentActorName();
@@ -9571,7 +9578,7 @@ export const useAppStore = create((set, get) => ({
       hedisMembers: (s.hedisMembers || []).map(m => {
         if (m.id !== memberId) return m;
         let gaps = [...(m.gaps || [])];
-        items.forEach(({ whitelist, parent }) => {
+        items.forEach(({ whitelist, parent, workflows, reason }) => {
           const next = {
             code: whitelist.code,
             status: 'Open',
@@ -9583,6 +9590,7 @@ export const useAppStore = create((set, get) => ({
             ipa,
             hpCode,
             workflows,
+            reason: reason || null,
             parentGap: parent ? { ...parent } : null,
           };
           const idx = gaps.findIndex(g => g.code === whitelist.code && !g.supersededAt);

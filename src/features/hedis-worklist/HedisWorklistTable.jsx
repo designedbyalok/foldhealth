@@ -37,6 +37,7 @@ import {
   countActiveFilters as countActiveHedisFilters,
 } from './hedisFilters';
 import { CIS_CODE } from './cis/cisRules';
+import { ActionButton } from '../../components/ActionButton/ActionButton';
 import styles from './HedisWorklistTable.module.css';
 import rowStyles from './HedisWorklistRow.module.css';
 
@@ -49,6 +50,7 @@ export function HedisWorklistTable() {
   const setPerPage = useAppStore(s => s.setPerPage);
   const showToast = useAppStore(s => s.showToast);
   const hedisMembers = useAppStore(s => s.hedisMembers);
+  const openAddCareGapsPicker = useAppStore(s => s.openAddCareGapsPicker);
 
   // HEDIS filter state now lives in the store (same shape as HCC's hccFilters,
   // `{ [k]: string[] }`) so the shared FilterChipBar + SavedFiltersChip
@@ -236,6 +238,15 @@ export function HedisWorklistTable() {
         rightExtras={
           <>
             <SavedFiltersChip list="HEDIS" />
+            <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
+            {/* Add a gap for any patient: opens Add Care Gaps with a Member
+                picker first, like HCC's Upload → Add Manually. */}
+            <ActionButton
+              icon="solar:clipboard-add-linear"
+              tooltip="Add Gap"
+              tooltipBelow
+              onClick={openAddCareGapsPicker}
+            />
             <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} />
           </>
         }

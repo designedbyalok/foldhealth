@@ -13,7 +13,9 @@ import { computeDsfbDueDateISO } from './dsf/dsfScoring';
 import { CIS_CODE, cisDueIndicator, evaluateCis } from './cis/cisRules';
 import { platformUsersForAssigneePicker } from '../../lib/worklistAssignee';
 import { MEASURE_NAMES } from './ClinicalNotePanel.utils';
+import { gapInstanceLabel, gapSourceLabel } from './hedisFilters';
 import { PatientAvatarHover } from '../../components/PatientHoverCard/PatientAvatarHover';
+import { ActionsMenuPopover } from '../hcc/RowPopovers';
 import styles from './HedisWorklistRow.module.css';
 import { OutreachStatus } from '../../components/OutreachStatus/OutreachStatus';
 import { outreachFromDots } from '../../components/OutreachStatus/outreachStatusModel';
@@ -41,6 +43,11 @@ function CisDueLabel({ member }) {
   if (!due) return null;
   return <span className={`${styles.startDateDue}${due.tone === 'error' ? ` ${styles.startDateOverdue}` : ''}`}>{due.label}</span>;
 }
+
+// Shorter display names for long statuses; the stored value is unchanged.
+const STATUS_LABEL = {
+  'Engaged Requires Follow-Up': 'Engaged: Follow-up',
+};
 
 export const STATUS_BADGE_VARIANT = {
   Open:                            'ai-care',
@@ -132,6 +139,51 @@ export const HEDIS_MIDDLE_COLUMNS = [
     ),
   },
   {
+    key: 'gapSource',
+    label: 'Source',
+    getTdClassName: (member, ctx) => (
+      (ctx?.visibleGaps?.length === 1)
+        ? `${styles.tdGap} ${styles.tdGapCenter}`
+        : styles.tdGap
+    ),
+    // Gaps added in Fold are stamped `fold-native`; the rest came with the
+    // health plan's gap report (claims).
+    renderCell: (member, ctx) => (
+      <div className={styles.gapItems}>
+        {(ctx.visibleGaps || []).map((g, i) => (
+          <div key={`${g.code}-${i}`} className={styles.gapItem}>
+            <span className={gapSourceLabel(g) === 'Manual' ? styles.gapSourceManual : styles.gapSourceClaim}>
+              {gapSourceLabel(g)}
+            </span>
+          </div>
+        ))}
+        {ctx.extraCount > 0 && <div className={styles.gapFooter} />}
+      </div>
+    ),
+  },
+  {
+    key: 'gapInstance',
+    label: 'Instance',
+    getTdClassName: (member, ctx) => (
+      (ctx?.visibleGaps?.length === 1)
+        ? `${styles.tdGap} ${styles.tdGapCenter}`
+        : styles.tdGap
+    ),
+    // A gap closed and then re-added stays in the row stamped `supersededAt`.
+    renderCell: (member, ctx) => (
+      <div className={styles.gapItems}>
+        {(ctx.visibleGaps || []).map((g, i) => (
+          <div key={`${g.code}-${i}`} className={styles.gapItem}>
+            <span className={gapInstanceLabel(g) === 'Previous' ? styles.gapPlainTextMuted : styles.gapPlainText}>
+              {gapInstanceLabel(g)}
+            </span>
+          </div>
+        ))}
+        {ctx.extraCount > 0 && <div className={styles.gapFooter} />}
+      </div>
+    ),
+  },
+  {
     key: 'gapStatus',
     label: 'Gap Status',
     getTdClassName: (member, ctx) => (
@@ -143,7 +195,7 @@ export const HEDIS_MIDDLE_COLUMNS = [
       <div className={styles.gapItems}>
         {(ctx.visibleGaps || []).map((g, i) => (
           <div key={`${g.code}-${i}`} className={styles.gapItem}>
-            <Badge size="M" variant={STATUS_BADGE_VARIANT[g.status] || 'ai-neutral'} label={g.status} />
+            <Badge size="M" variant={STATUS_BADGE_VARIANT[g.status] || 'ai-neutral'} label={STATUS_LABEL[g.status] || g.status} />
           </div>
         ))}
         {/* Empty spacer keeps this column bottom-aligned with Total Gaps' expander. */}
@@ -300,6 +352,9 @@ export function HedisWorklistRow({ member, columns, hiddenSet, isSelected, onSel
   const openCallPopover = useAppStore(s => s.openCallPopover);
   const openAddCareGaps = useAppStore(s => s.openAddCareGaps);
   const callBtnRef = useRef(null);
+  const moreBtnRef = useRef(null);
+  const [actionsRect, setActionsRect] = useState(null);
+  const openPatientEdit = useAppStore(s => s.openPatientEdit);
   // useState must sit above the early return: a row whose member loses its last
   // gap would otherwise render two hooks where it previously rendered three, and
   // React throws "rendered fewer hooks than expected".
@@ -422,7 +477,9 @@ export function HedisWorklistRow({ member, columns, hiddenSet, isSelected, onSel
           was removed because the gap pills in-row already open the Care
           Gap Details drawer, so a duplicate view button in the actions
           column added noise without a distinct outcome. */}
-      <td className={`${styles.actionsCell} ${styles.stickyRight}`}>
+      {/* The actions menu is portaled, but its clicks still bubble here through
+          React; stop them so they don't also open the row's gap drawer. */}
+      <td className={`${styles.actionsCell} ${styles.stickyRight}`} onClick={e => e.stopPropagation()}>
         <div className={styles.actionsBtns}>
           <ActionButton
             ref={callBtnRef}
@@ -441,10 +498,43 @@ export function HedisWorklistRow({ member, columns, hiddenSet, isSelected, onSel
           />
           <span className={styles.actionsDivider} />
           <ActionButton
+            ref={moreBtnRef}
             icon="solar:menu-dots-linear"
             tooltip="More"
-            onClick={e => { e.stopPropagation(); showToast('More actions: coming soon'); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              const rect = e.currentTarget.getBoundingClientRect();
+              setActionsRect(prev => (prev ? null : rect));
+            }}
           />
+          {/* Same member actions menu as the HCC worklist row. */}
+          {actionsRect && (
+            <ActionsMenuPopover
+              anchorRect={actionsRect}
+              onClose={() => setActionsRect(null)}
+              onAction={(label) => {
+                if (label === 'Make a Call') {
+                  setActionsRect(null);
+                  openCallPopover(worklistMemberCallId(member), moreBtnRef);
+                  return;
+                }
+                if (label === 'Edit Details') {
+                  openPatientEdit('basic', {
+                    id: member.id,
+                    name: member.name,
+                    initials: member.in,
+                    gender: member.gender,
+                    age: member.age,
+                    dob: formatDobDisplay(member.dob) || deriveDob(member.age, member.name),
+                    email: member.email,
+                    phone: member.phone,
+                  });
+                  return;
+                }
+                showToast(`${label}: coming soon`);
+              }}
+            />
+          )}
         </div>
       </td>
     </tr>
