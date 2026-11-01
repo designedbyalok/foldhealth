@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { Drawer } from '../../components/Drawer/Drawer';
 import { PatientBanner } from '../../components/PatientBanner/PatientBanner';
+import { Avatar } from '../../components/Avatar/Avatar';
 import { Button } from '../../components/Button/Button';
 import { Select } from '../../components/Select/Select';
 import { ChipSelect } from '../../components/ChipSelect/ChipSelect';
@@ -9,6 +10,7 @@ import { SearchBar } from '../../components/SearchBar/SearchBar';
 import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { Badge } from '../../components/Badge/Badge';
 import { InfoBar } from '../../components/InfoBar/InfoBar';
+import { Icon } from '../../components/Icon/Icon';
 import { SimpleTableSkeleton } from '../../components/SimpleTableSkeleton/SimpleTableSkeleton';
 import { MEASURE_YEARS } from './data/caregapWhitelistMock';
 import styles from './AddCareGapsDrawer.module.css';
@@ -91,8 +93,80 @@ function GapRow({ whitelist, parent, history, checked, config, onToggle, onConfi
   );
 }
 
+// Member field, as in HCC's Add Manually: the field is the search input;
+// focus shows the matches, a picked member shows avatar, name and details
+// and clicking it searches again.
+function MemberField({ members, value, onChange }) {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(!value);
+  const wrapRef = useRef(null);
+  useEffect(() => {
+    if (!open) return undefined;
+    const onDoc = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onKey); };
+  }, [open]);
+  const q = query.trim().toLowerCase();
+  const matches = (q
+    ? members.filter(m => m.name.toLowerCase().includes(q) || String(m.memberId || '').toLowerCase().includes(q))
+    : members).slice(0, 20);
+  const meta = (m) => [m.gender, m.age, m.memberId].filter(Boolean).join(' • ');
+  return (
+    <div className={styles.memberSection} ref={wrapRef}>
+      <span className={styles.label}>Member<span className={styles.req}>•</span></span>
+      <div className={styles.memberField}>
+        {value && !open ? (
+          <button type="button" className={styles.memberSelected} onClick={() => { setQuery(''); setOpen(true); }}>
+            <Avatar variant="patient" initials={value.in} />
+            <span className={styles.memberName}>{value.name}</span>
+            <span className={styles.memberMeta}>({meta(value)})</span>
+          </button>
+        ) : (
+          <input
+            type="text"
+            className={styles.memberInput}
+            placeholder="Search and Select Member"
+            value={query}
+            autoFocus
+            onFocus={() => setOpen(true)}
+            onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+            aria-label="Search and select member"
+          />
+        )}
+        <Icon name="solar:alt-arrow-down-linear" size={12} color="var(--neutral-300)" />
+      </div>
+      {open && (
+        <div className={styles.memberPop} role="listbox" aria-label="Members">
+          {matches.length === 0 ? (
+            <div className={styles.memberEmpty}>No matches</div>
+          ) : matches.map(m => (
+            <button
+              key={m.id}
+              type="button"
+              role="option"
+              aria-selected={value?.id === m.id}
+              className={styles.memberOption}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => { onChange(m); setQuery(''); setOpen(false); }}
+            >
+              <Avatar variant="patient" initials={m.in} />
+              <span>{m.name}</span>
+              <span className={styles.memberOptionMeta}>{meta(m)}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AddCareGapsDrawer() {
   const member = useAppStore(s => s.addCareGapsMember);
+  // From the worklist header the user picks the member in the drawer.
+  const picker = useAppStore(s => s.addCareGapsPicker);
+  const pickMember = useAppStore(s => s.pickAddCareGapsMember);
   const close = useAppStore(s => s.closeAddCareGaps);
   const addCareGaps = useAppStore(s => s.addCareGaps);
   const showToast = useAppStore(s => s.showToast);
@@ -149,7 +223,16 @@ export function AddCareGapsDrawer() {
   // Selection outlives a filter change only for gaps still whitelisted.
   const picked = eligible.filter(w => selected.includes(w.code));
 
-  if (!member) return null;
+  if (!member && !picker) return null;
+  if (!member) {
+    return (
+      <Drawer title="Add Care Gaps" onClose={close} bodyClassName={styles.body}>
+        <div className={styles.container}>
+          <MemberField members={hedisMembers} value={null} onChange={pickMember} />
+        </div>
+      </Drawer>
+    );
+  }
 
   const historyFor = (code) => (liveMember?.gaps || [])
     .filter(g => g.code === code && yearOf(g) === measureYear)
@@ -161,6 +244,12 @@ export function AddCareGapsDrawer() {
   });
 
   const toggle = (code) => setSelected(sel => sel.includes(code) ? sel.filter(c => c !== code) : [...sel, code]);
+
+  // Why Add Gap is off, shown on hover of the disabled button.
+  const disabledReason = picked.length === 0 ? 'Select a care gap'
+    : !ipa || !hpCode ? 'This patient has no IPA or HP Code for this measure year'
+    : picked.some(w => configFor(w.code).workflows.length === 0) ? 'Pick a workflow for each care gap'
+    : 'Pick a reason for each care gap added again';
 
   const doSave = () => {
     const items = picked.map(w => {
@@ -180,7 +269,7 @@ export function AddCareGapsDrawer() {
 
   const headerRight = (
     <>
-      <Button size="sm" disabled={!canSave} onClick={doSave}>
+      <Button disabled={!canSave} disabledReason={disabledReason} onClick={doSave}>
         {picked.length > 1 ? `Add ${picked.length} Gaps` : 'Add Gap'}
       </Button>
       <span className={styles.headerDivider} />
@@ -189,23 +278,28 @@ export function AddCareGapsDrawer() {
 
   return (
     <Drawer
-      title="Add Care Gaps"
+      title={picker ? `Add Care Gaps for ${member.name}` : 'Add Care Gaps'}
       onClose={close}
       headerRight={headerRight}
       noCloseDivider
       bodyClassName={styles.body}
     >
-      <PatientBanner
-        initials={member.in}
-        name={member.name}
-        gender={member.gender === 'M' ? 'Male' : member.gender === 'F' ? 'Female' : member.gender}
-        age={member.age || ''}
-        dob={member.dob}
-        memberId={member.memberId}
-        patientId={member.id}
-      />
+      {/* From the worklist header the Member field already names the
+          patient, so the banner shows only for the row-level flow. */}
+      {!picker && (
+        <PatientBanner
+          initials={member.in}
+          name={member.name}
+          gender={member.gender === 'M' ? 'Male' : member.gender === 'F' ? 'Female' : member.gender}
+          age={member.age || ''}
+          dob={member.dob}
+          memberId={member.memberId}
+          patientId={member.id}
+        />
+      )}
 
       <div className={styles.container}>
+        {picker && <MemberField key={member.id} members={hedisMembers} value={member} onChange={pickMember} />}
         <section className={styles.section}>
           <div className={styles.grid}>
             <div className={styles.field}>

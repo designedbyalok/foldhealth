@@ -9553,9 +9553,15 @@ export const useAppStore = create((set, get) => ({
     });
   },
 
+  // Add Care Gaps opens on a row's patient, or (worklist header) with a
+  // Member picker first, like HCC's Add Manually.
   addCareGapsMember: null,
-  openAddCareGaps: (member) => set({ addCareGapsMember: member }),
-  closeAddCareGaps: () => set({ addCareGapsMember: null }),
+  addCareGapsPicker: false,
+  openAddCareGaps: (member) => set({ addCareGapsMember: member, addCareGapsPicker: false }),
+  openAddCareGapsPicker: () => set({ addCareGapsMember: null, addCareGapsPicker: true }),
+  // The member picked in the drawer's Member field (picker mode).
+  pickAddCareGapsMember: (member) => set({ addCareGapsMember: member }),
+  closeAddCareGaps: () => set({ addCareGapsMember: null, addCareGapsPicker: false }),
 
   // Adds whitelisted gaps to a member. When the member already has a closed
   // gap for the same measure, that gap becomes the new gap's parent: it stays
