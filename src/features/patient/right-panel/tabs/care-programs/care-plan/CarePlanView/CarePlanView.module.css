@@ -906,3 +906,6 @@
 .runBannerBack:hover {
   text-decoration: underline;
 }
+
+/* Strip: the template groups menu anchors on this wrapper. */
+.stripGroups { display: inline-flex; }

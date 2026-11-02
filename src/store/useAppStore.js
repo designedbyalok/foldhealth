@@ -254,6 +254,7 @@ import { effectiveVersion as effectiveTemplateVersion, todayIso as todayIsoDate 
 import { createClinicalProtocolsSlice } from './slices/clinicalProtocolsSlice';
 import { createProtocolMigrationsSlice } from './slices/protocolMigrationsSlice';
 import { createTemplateSuggestionsSlice } from './slices/templateSuggestionsSlice';
+import { createTemplateGroupsSlice } from './slices/templateGroupsSlice';
 
 // patientId → in-flight fetchPatientConsents request.
 const consentFetches = new Map();
@@ -399,6 +400,7 @@ export const useAppStore = create((set, get) => ({
   ...createClinicalProtocolsSlice(set, get),
   ...createProtocolMigrationsSlice(set, get),
   ...createTemplateSuggestionsSlice(set, get),
+  ...createTemplateGroupsSlice(set, get),
 
   // Patient Monitoring: per-patient snapshot for the P360 Monitoring tab,
   // keyed by member id. Falls back to the bundled MONITORING_SEED until
@@ -4447,8 +4449,9 @@ export const useAppStore = create((set, get) => ({
   // applied template goes on with: Common + that category. No pick = Common.
   // `mergeContent: false` applies the templates (record, runs, conditions)
   // without merging their items: an approved recommendation already holds
-  // the items UnityAI chose from them.
-  applyPatientCarePlanTemplates: async (patientId, program, nextTemplateIds, priorityUpdates, categoryPicks = {}, { mergeContent = true } = {}) => {
+  // the items UnityAI chose from them. `quiet` leaves the toast to the
+  // caller (a template group says what it applied itself).
+  applyPatientCarePlanTemplates: async (patientId, program, nextTemplateIds, priorityUpdates, categoryPicks = {}, { mergeContent = true, quiet = false } = {}) => {
     const key = carePlanKey(patientId, program.id);
     const cur = get().patientCarePlans[key];
     const prevIds = cur?.plan?.appliedTemplateIds || [];
@@ -4509,9 +4512,11 @@ export const useAppStore = create((set, get) => ({
 
     const added = toAdd.length;
     const removed = prevIds.filter(id => !nextIds.includes(id)).length;
-    if (added) get().showToast(`Applied ${added} template${added === 1 ? '' : 's'}`);
-    else if (removed) get().showToast('Updated applied templates');
-    else get().showToast('Templates updated');
+    if (!quiet) {
+      if (added) get().showToast(`Applied ${added} template${added === 1 ? '' : 's'}`);
+      else if (removed) get().showToast('Updated applied templates');
+      else get().showToast('Templates updated');
+    }
     get().touchCarePlanModified(patientId, program.id);
     return true;
   },

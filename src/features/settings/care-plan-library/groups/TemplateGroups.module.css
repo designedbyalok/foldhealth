@@ -1,0 +1,51 @@
+/* Care Plan Library > Template Groups. Row styles match Clinical Protocols and Suggestions. */
+
+.wrapper { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
+.content { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.notice { padding: var(--space-3) var(--space-4) 0; }
+.empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); padding: var(--space-12) var(--space-4); }
+.emptyHint { margin: 0; max-width: 420px; text-align: center; font-size: var(--font-base); color: var(--neutral-300); }
+.emptyState {
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-3);
+  padding: var(--space-12) 0; color: var(--neutral-300); font-size: var(--font-base);
+}
+
+.row { border-bottom: 0.5px solid var(--neutral-100); }
+.row:hover td { background: var(--neutral-50); }
+.td {
+  padding: var(--space-3); font-size: var(--font-base); color: var(--neutral-300);
+  vertical-align: middle; background: var(--neutral-0);
+}
+.tdName, .tdActions { position: sticky; z-index: 2; border-bottom: 0.5px solid var(--neutral-100); }
+.tdName { left: 0; min-width: 240px; max-width: 320px; }
+.tdActions { right: 0; padding-right: var(--space-2); }
+.nameCell { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.nameLink {
+  max-width: 100%; padding: 0; border: 0; background: none; cursor: pointer; text-align: left;
+  font-size: var(--font-base); font-weight: 500; color: var(--neutral-400);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.nameLink:hover { color: var(--primary-300); }
+.nameSub { font-size: var(--font-sm); color: var(--neutral-300); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.members { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.nowrap { white-space: nowrap; }
+.actionCell { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); }
+
+/* ── Drawer ── */
+.headerDivider { width: 1px; height: 16px; background: var(--neutral-150); flex-shrink: 0; }
+.drawerBody { display: flex; flex-direction: column; gap: var(--space-4); }
+.field { display: flex; flex-direction: column; gap: var(--space-2); }
+.fieldLabel { font-size: var(--font-base); color: var(--neutral-400); }
+.hint { margin: 0; font-size: var(--font-sm); color: var(--neutral-300); }
+.memberList {
+  margin: 0; padding: 0; list-style: none;
+  border: 0.5px solid var(--neutral-150); border-radius: var(--space-2); overflow: hidden;
+}
+.memberRow {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-3); border-bottom: 0.5px solid var(--neutral-100);
+}
+.memberRow:last-child { border-bottom: 0; }
+.memberIndex { width: var(--space-4); font-size: var(--font-sm); color: var(--neutral-300); }
+.memberName { flex: 1; min-width: 0; font-size: var(--font-base); color: var(--neutral-400); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.memberActions { display: flex; align-items: center; gap: var(--space-1); }
