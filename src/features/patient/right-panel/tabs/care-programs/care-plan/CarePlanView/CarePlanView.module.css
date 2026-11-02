@@ -209,10 +209,25 @@
 .careNoteHead {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--space-2);
   /* Same 24px row as the GBI section heads, whose add button sets theirs. */
   min-height: var(--space-6);
   padding-right: var(--space-1);
+}
+.careNoteHint {
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+}
+.careNoteEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 0.5px dashed var(--neutral-150);
+  border-radius: var(--space-2);
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
 }
 /* Card wrapper hosts the click target + the hover-only delete button. */
 /* AI Summary head: title left, Summarize right. */

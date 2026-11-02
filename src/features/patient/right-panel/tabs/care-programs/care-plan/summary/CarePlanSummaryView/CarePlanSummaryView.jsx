@@ -21,7 +21,7 @@ import { AssigneeChange } from '../../../../../../../../components/AssigneeChang
 import { useTableSort } from '../../../../../../../../components/HeaderCell/useTableSort';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import { buildCarePlanSnapshot, filterCarePlanSnapshot } from '../carePlanSnapshot';
-import { AiSummaryCard, AiSummarySkeleton, SummarizeButton } from '../CarePlanAiSummary/CarePlanAiSummary';
+import { AiSummaryCard, AiSummarySkeleton } from '../CarePlanAiSummary/CarePlanAiSummary';
 import { buildSummaryPayload, useCarePlanAiSummary } from '../CarePlanAiSummary/useCarePlanAiSummary';
 import {
   GbiNameCell,
@@ -48,6 +48,8 @@ import { localDateMs } from '../../../../../../../../lib/localDate';
 import { useSignedCarePlans } from '../../lib/useSignedCarePlans';
 import { isProgramClosed } from '../../../../../../data/programStatus';
 import { isEmptyDash } from '../../../../../../../../lib/emptyDash';
+import { latestPlanNote } from '../../lib/carePlanNotes';
+import { Toggle } from '../../../../../../../../components/Toggle/Toggle';
 
 const PRIORITIES = ['high', 'medium', 'low'];
 
@@ -695,8 +697,7 @@ export function CarePlanSummaryView({
   embedded = false,
   // care_plan_mode = 'both': the roll-up is the patient-level Care Plan, so
   // its drawers edit in full and each section can add to a chosen program.
-  editable = false,
-}) {
+  editable = false, summarizeRequest = 0, onSummaryState }) {
   const [rollupAdd, setRollupAdd] = useState(null); // { kind, rect } | null
   // The editable roll-up (care plan level "both") is where the drafts are
   // edited, so it reads them. Read-only, a plan reads as last signed, with
@@ -779,7 +780,9 @@ export function CarePlanSummaryView({
 
   const isEmpty = loadedFor && goals.length === 0 && interventions.length === 0 && barriers.length === 0;
 
-  const [openSections, setOpenSections] = useState({ aiSummary: true, programs: true, goals: true, interventions: true, barriers: true });
+  const [openSections, setOpenSections] = useState({ aiSummary: true, programs: true, careNotes: true, goals: true, interventions: true, barriers: true });
+  // Which program's Care Note the Care Notes section shows.
+  const [noteProgramId, setNoteProgramId] = useState(null);
   const toggleSection = (k) => setOpenSections(s => ({ ...s, [k]: !s[k] }));
 
   // Active programs summary row set. Only surfaces programs whose
@@ -788,6 +791,16 @@ export function CarePlanSummaryView({
   // "only plans that have been created". Closed / completed enrollments
   // are still hidden to match CareProgramsTab's PAST_STATUSES rule.
   const patientCarePlanAudit = useAppStore(s => s.patientCarePlanAudit);
+  const fetchCarePlanAudit = useAppStore(s => s.fetchCarePlanAudit);
+  // The Care Notes and Activity Since Review read each plan's audit, which
+  // this view would otherwise only have once the program's plan was opened.
+  const openProgramIds = (programs || []).filter(p => !isProgramClosed(p.status)).map(p => p.id).join(',');
+  useEffect(() => {
+    if (!patientId || !openProgramIds) return;
+    for (const id of openProgramIds.split(',')) {
+      if (!useAppStore.getState().patientCarePlanAudit[`${patientId}::${id}`]) fetchCarePlanAudit(patientId, id);
+    }
+  }, [patientId, openProgramIds, fetchCarePlanAudit]);
   const fmtDate = (iso) => {
     if (!iso || isEmptyDash(iso)) return null;
     const d = new Date(iso);
@@ -877,6 +890,7 @@ export function CarePlanSummaryView({
           lastReviewedBy,
           activitySummary: activityBits.join(', '),
           sinceReviewEntries: sinceReview,
+          planNote: latestPlanNote(audit),
         };
       })
       .filter(Boolean);
@@ -902,6 +916,15 @@ export function CarePlanSummaryView({
     buildPayload: () => buildSummaryPayload({ patientName: currentPatient?.name, programs, conditions, goals, interventions, barriers }),
     isEmpty: goals.length + interventions.length + barriers.length === 0,
   });
+
+  // Summarize lives in the pane's toolbar: it bumps `summarizeRequest`, and
+  // the state goes back up so its button reads "AI is writing…" / "Generated".
+  useEffect(() => {
+    if (!summarizeRequest) return;
+    summary.generate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [summarizeRequest]);
+  useEffect(() => { onSummaryState?.(summary.state); }, [summary.state, onSummaryState]);
 
   // "Activity Since Review" drawer target: the row the user clicked;
   // null when the drawer is closed.
@@ -971,6 +994,8 @@ export function CarePlanSummaryView({
         <RingEmptyState icon="solar:hand-heart-linear" label="No Signed Care Plans Yet" />
       ) : (
         <div className={styles.body}>
+          {/* Shown once Summarize (in the toolbar) is generating or has run. */}
+          {summary.state !== 'idle' && (
           <div className={styles.section}>
             {/* AI Summary: the cross-program recap, saved until someone
                 regenerates or dismisses it. Its own section, separate from
@@ -989,12 +1014,6 @@ export function CarePlanSummaryView({
                 />
                 <span className={styles.sectionTitle}>AI Summary</span>
               </button>
-              {/* Opens the section too, so the result isn't generated out of sight. */}
-              <SummarizeButton
-                state={summary.state}
-                onClick={() => { setOpenSections(s => ({ ...s, aiSummary: true })); summary.generate(); }}
-                idleLabel="Summarize active programs"
-              />
             </div>
             {openSections.aiSummary && summary.state === 'loading' && <AiSummarySkeleton />}
             {openSections.aiSummary && summary.state === 'ready' && (
@@ -1006,6 +1025,7 @@ export function CarePlanSummaryView({
               />
             )}
           </div>
+          )}
 
           <div className={styles.section}>
             {/* Active Programs Summary: one row per enrolled program.
@@ -1038,6 +1058,55 @@ export function CarePlanSummaryView({
               )
             )}
           </div>
+
+          {/* Care Notes (#80): one program's note at a time, with a tab per
+              program that has one. Hidden until some program has a note;
+              the toolbar's note action adds one. */}
+          {(() => {
+            const withNotes = activeProgramRows.filter(r => r.planNote);
+            if (!withNotes.length) return null;
+            const shown = withNotes.find(r => r.id === noteProgramId) || withNotes[0];
+            return (
+              <div className={styles.section}>
+                <div className={styles.careNotesHead}>
+                  <button
+                    type="button"
+                    className={styles.sectionHead}
+                    onClick={() => toggleSection('careNotes')}
+                    aria-expanded={openSections.careNotes}
+                  >
+                    <DownChevronIcon
+                      size={16}
+                      color="var(--neutral-400)"
+                      className={`${styles.sectionChevron} ${openSections.careNotes ? '' : styles.sectionChevronClosed}`}
+                    />
+                    <span className={styles.sectionTitle}>Care Notes</span>
+                  </button>
+                  {withNotes.length > 1 ? (
+                    <Toggle
+                      size="S"
+                      items={withNotes.map(r => ({ key: r.id, label: r.code }))}
+                      active={shown.id}
+                      onChange={(id) => {
+                        setNoteProgramId(id);
+                        if (!openSections.careNotes) toggleSection('careNotes');
+                      }}
+                    />
+                  ) : (
+                    <span className={styles.careNoteProgram}>{shown.code}</span>
+                  )}
+                </div>
+                {openSections.careNotes && (
+                  <div className={styles.careNoteCard}>
+                    <p className={styles.careNoteBody}>{shown.planNote.detail}</p>
+                    <span className={styles.careNoteMeta}>
+                      {shown.planNote.actor || 'Unknown'} • {fmtDate(shown.planNote.createdAt)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           <div className={styles.section}>
             <SectionHead

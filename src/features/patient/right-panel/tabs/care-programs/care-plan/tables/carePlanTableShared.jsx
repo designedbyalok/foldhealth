@@ -87,7 +87,8 @@ export const GBI_COL_WIDTH = {
   value: 132,
   assignee: 124,
   progress: 90,
-  status: 116,
+  // Fits the widest status badge ("Not Applicable", 128px) inside the header's 6px padding.
+  status: 140,
   actions: 36,
 };
 
