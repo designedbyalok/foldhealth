@@ -6,9 +6,10 @@ import styles from './RadioOptionGroup.module.css';
  * A labelled group of radios, each with an optional hint line beneath it.
  *
  * @param {string}   props.label     Group label, also the radiogroup's name.
- * @param {Array<{value: string, label: string, hint?: React.ReactNode, disabled?: boolean,
- *   disabledReason?: string}>} props.options
- *   `hint` may be text or a node (e.g. a link); `disabledReason` shows on
+ * @param {Array<{value: string, label: string, hint?: React.ReactNode, content?: React.ReactNode,
+ *   disabled?: boolean, disabledReason?: string}>} props.options
+ *   `hint` may be text or a node (e.g. a link); `content` shows under the
+ *   option while it is picked (a follow-up field); `disabledReason` shows on
  *   hover over a disabled option.
  * @param {string}   props.value     Selected option value.
  * @param {function} props.onChange  Called with the picked value.
@@ -72,7 +73,12 @@ export function RadioOptionGroup({ label, options, value, onChange, name, classN
               )}
             </div>
           );
-          return <div key={o.value} className={styles.optionWrap}>{body}</div>;
+          return (
+            <div key={o.value} className={styles.optionWrap}>
+              {body}
+              {checked && o.content && <div className={styles.content}>{o.content}</div>}
+            </div>
+          );
         })}
       </div>
     </div>
