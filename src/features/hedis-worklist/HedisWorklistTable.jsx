@@ -35,6 +35,8 @@ import {
   PRIMARY_FILTER_KEYS as HEDIS_PRIMARY_FILTER_KEYS,
   memberMatchesFilters as hedisMemberMatchesFilters,
   countActiveFilters as countActiveHedisFilters,
+  gapInstanceLabel,
+  gapSourceLabel,
 } from './hedisFilters';
 import { CIS_CODE } from './cis/cisRules';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
@@ -71,6 +73,7 @@ export function HedisWorklistTable() {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [drawerMemberId, setDrawerMemberId] = useState(null);
   const [drawerGapCode, setDrawerGapCode] = useState(null);
+  const [drawerInstanceNo, setDrawerInstanceNo] = useState(null);
 
   // Read the live member from the store so store mutations re-render the drawer.
   const drawerMember = useMemo(
@@ -78,9 +81,11 @@ export function HedisWorklistTable() {
     [drawerMemberId, hedisMembers]
   );
 
-  const openGapDrawer = (member, gapCode) => {
+  // `instanceNo` opens a specific instance (e.g. a manual gap's parent).
+  const openGapDrawer = (member, gapCode, instanceNo = null) => {
     setDrawerMemberId(member.id);
     setDrawerGapCode(gapCode);
+    setDrawerInstanceNo(instanceNo);
   };
   const closeGapDrawer = () => { setDrawerMemberId(null); setDrawerGapCode(null); };
 
@@ -105,7 +110,19 @@ export function HedisWorklistTable() {
         m.in.toLowerCase().includes(q)
       );
     }
-    return result.filter(m => hedisMemberMatchesFilters(m, hedisFilters));
+    const matched = result.filter(m => hedisMemberMatchesFilters(m, hedisFilters));
+    // Source / Instance are per-gap: a matching member shows only the gaps
+    // that match, not all of its gaps. `allGaps` keeps the rest for context
+    // (a manual gap's parent instance).
+    const src = hedisFilters?.gapSource || [];
+    const inst = hedisFilters?.gapInstance || [];
+    if (!src.length && !inst.length) return matched;
+    return matched.map(m => ({
+      ...m,
+      allGaps: m.gaps,
+      gaps: (m.gaps || []).filter(g => (!src.length || src.includes(gapSourceLabel(g)))
+        && (!inst.length || inst.includes(gapInstanceLabel(g)))),
+    }));
   }, [searchQuery, hedisFilters, hedisMembers]);
   const isFiltered = !!searchQuery.trim() || Object.values(hedisFilters || {}).some(v => v?.length);
 
@@ -363,6 +380,7 @@ export function HedisWorklistTable() {
       <CareGapDetailDrawer
         member={drawerMember}
         gapCode={drawerGapCode}
+        instanceNo={drawerInstanceNo}
         year={year}
         onClose={closeGapDrawer}
       />

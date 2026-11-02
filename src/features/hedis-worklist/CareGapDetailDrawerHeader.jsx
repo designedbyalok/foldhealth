@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { AssigneeChange } from '../../components/AssigneeChange/AssigneeChange';
@@ -9,6 +9,8 @@ import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
 import { MEASURE_NAMES, STATUSES, daysAgo, initialsOf } from './CareGapDetailDrawer.utils';
 import { computeDsfbDueDateISO } from './dsf/dsfScoring';
 import { CIS_CODE } from './cis/cisRules';
+import { GapSourceCircle } from './GapSourceCircle';
+import { gapSourceLabel } from './hedisFilters';
 import styles from './CareGapDetailDrawer.module.css';
 
 // Status → shared Badge tone. Aligns with STATUS_STYLE's colour intent
@@ -61,8 +63,18 @@ export function CareGapDetailDrawerHeader({
   goNext,
   canPrev,
   canNext,
+  // Every instance of this gap, newest first ({ no, gap, active }); the
+  // dropdown shows only once there is a second one. A previous instance is
+  // shown read-only.
+  instances = [],
+  viewedInstanceNo = null,
+  onPickInstance,
 }) {
   const statusBtnRef = useRef(null);
+  const instanceBtnRef = useRef(null);
+  const [instanceMenuOpen, setInstanceMenuOpen] = useState(false);
+  const viewed = instances.find(i => i.no === viewedInstanceNo) || instances[0];
+  const readOnly = !!viewed && !viewed.active;
   const measureName = MEASURE_NAMES[gap.code] ?? gap.code;
   const isCis = gap.code === CIS_CODE;
 
@@ -104,6 +116,7 @@ export function CareGapDetailDrawerHeader({
               return (
                 <AssigneeChange
                   avatarOnly
+                  disabled={readOnly}
                   unassigned={!effectiveAssignee}
                   name={effectiveAssignee || undefined}
                   initials={effectiveAssignee ? initialsOf(effectiveAssignee) : undefined}
@@ -203,10 +216,60 @@ export function CareGapDetailDrawerHeader({
         <div className={styles.gapTitleWrap}>
           <div className={styles.gapTitleRow}>
             <div className={styles.gapTitleCol}>
-              <div className={styles.gapTitle}>{gap.code} - {measureName}</div>
+              <div className={`${styles.gapTitle} ${styles.gapTitleWithSource}`}>
+                {gap.code} - {measureName}
+                <GapSourceCircle gap={gap} />
+              </div>
               {gap.startDate && (
                 <div className={styles.gapSubRow}>
                   <span>{gap.startDate}{daysAgo(gap.startDate) ? ` (${daysAgo(gap.startDate)})` : ''}</span>
+                  {instances.length > 1 && viewed && (
+                    <>
+                      <span style={{ color: 'var(--neutral-300)' }}>{' • '}</span>
+                      <button
+                        ref={instanceBtnRef}
+                        type="button"
+                        className={styles.instancePickerBtn}
+                        aria-haspopup="menu"
+                        aria-expanded={instanceMenuOpen}
+                        onClick={() => setInstanceMenuOpen(v => !v)}
+                      >
+                        Instance {viewed.no} • {viewed.active ? 'Active' : 'Previous'}
+                        <Icon name="solar:alt-arrow-down-linear" size={12} color="currentColor" />
+                      </button>
+                      {instanceMenuOpen && (
+                        <MenuPopover
+                          anchorRef={instanceBtnRef}
+                          align="left"
+                          width={380}
+                          ariaLabel="Gap instances"
+                          items={instances.map(i => ({
+                            key: String(i.no),
+                            // Second line: source, the instance it is the
+                            // parent of (if any), and its dates.
+                            iconElement: <GapSourceCircle gap={i.gap} />,
+                            tall: true,
+                            label: (
+                              <span className={styles.instanceOption}>
+                                <span>{`Instance ${i.no} • ${i.active ? 'Active' : 'Previous'} • ${i.gap.status}`}</span>
+                                <span className={styles.instanceOptionMeta}>
+                                  {[
+                                    gapSourceLabel(i.gap),
+                                    !i.active && instances.find(x => x.no === i.no + 1) ? `Parent of Instance ${i.no + 1}` : null,
+                                    `Opened ${i.gap.startDate || '-'}`,
+                                    i.gap.closedDate ? `Closed ${i.gap.closedDate}` : null,
+                                  ].filter(Boolean).join(' • ')}
+                                </span>
+                              </span>
+                            ),
+                            selected: i.no === viewed.no,
+                          }))}
+                          onSelect={(key) => { setInstanceMenuOpen(false); onPickInstance?.(Number(key)); }}
+                          onClose={() => setInstanceMenuOpen(false)}
+                        />
+                      )}
+                    </>
+                  )}
                   {/* DSF-B carries a 30-day due window that the worklist
                       row already surfaces; mirror the same "Due in Xd" /
                       "Overdue by Xd" chip here so the drawer header
@@ -240,6 +303,7 @@ export function CareGapDetailDrawerHeader({
         </div>
       </div>
 
+      {!readOnly && (
       <div className={styles.suggestSection}>
         <div className={styles.suggestRow}>
           <Icon name="custom:ai" size={14} color="var(--primary-300)" /> Suggested Actions
@@ -287,6 +351,7 @@ export function CareGapDetailDrawerHeader({
           )}
         </div>
       </div>
+      )}
     </>
   );
 }

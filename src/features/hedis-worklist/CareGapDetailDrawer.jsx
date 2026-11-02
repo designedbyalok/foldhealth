@@ -111,7 +111,7 @@ const ACTIVITY_TYPE_LABEL = {
   assign_coder: 'Assignee Change', assignee_change: 'Assignee Change',
 };
 
-function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
+function CareGapDetailDrawerContent({ member, gapCode, instanceNo = null, year, onClose }) {
   const showToast = useAppStore(s => s.showToast);
   const updateGapStatus = useAppStore(s => s.updateGapStatus);
   const updateGapAssignee = useAppStore(s => s.updateGapAssignee);
@@ -438,9 +438,11 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
   // one; the drawer works on the active gap only.
   const gaps = useMemo(() => (member?.gaps ?? []).filter(g => !g.supersededAt), [member?.gaps]);
   const [currentCode, setCurrentCode] = useState(gapCode);
-  const gapKey = `${member?.id ?? ''}|${gapCode ?? ''}`;
+  // Instance shown in the header (null = the active one).
+  const [viewInstanceNo, setViewInstanceNo] = useState(instanceNo);
+  const gapKey = `${member?.id ?? ''}|${gapCode ?? ''}|${instanceNo ?? ''}`;
   const [prevGapKey, setPrevGapKey] = useState(gapKey);
-  if (prevGapKey !== gapKey) { setPrevGapKey(gapKey); setCurrentCode(gapCode); }
+  if (prevGapKey !== gapKey) { setPrevGapKey(gapKey); setCurrentCode(gapCode); setViewInstanceNo(instanceNo); }
 
   const [statusOpen, setStatusOpen] = useState(false);
   const [statusAnchorRect, setStatusAnchorRect] = useState(null);
@@ -1077,11 +1079,19 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
   if (!member || gaps.length === 0) return null;
 
   const idx = Math.max(0, gaps.findIndex(g => g.code === currentCode));
-  const gap = gaps[idx] ?? gaps[0];
+  const activeGap = gaps[idx] ?? gaps[0];
+  // Every instance of this gap, newest first: the active one, then the
+  // superseded ones (Add Care Gaps inserts the new instance before the old).
+  const instances = (member.gaps || [])
+    .filter(g => g.code === activeGap.code && (g === activeGap || g.supersededAt))
+    .map((g, i, all) => ({ no: all.length - i, gap: g, active: g === activeGap }));
+  const viewed = instances.find(i => i.no === viewInstanceNo) || instances[0];
+  const gap = viewed?.gap ?? activeGap;
+  const viewingPrevious = !!viewed && !viewed.active;
   const canPrev = idx > 0;
   const canNext = idx < gaps.length - 1;
   const status = gap?.status ?? 'Open';
-  const statusLocked = status === 'Completed';
+  const statusLocked = status === 'Completed' || viewingPrevious;
   // Saved comments (caregap_comments) join the Activity feed as comment
   // entries; the author's own get Edit / Delete.
   const commentEntries = (memberComments || []).map(c => {
@@ -1291,8 +1301,8 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
     Tasks: memberTasks.length,
   };
 
-  const goPrev = () => { if (canPrev) { setCurrentCode(gaps[idx - 1].code); setStatusOpen(false); } };
-  const goNext = () => { if (canNext) { setCurrentCode(gaps[idx + 1].code); setStatusOpen(false); } };
+  const goPrev = () => { if (canPrev) { setCurrentCode(gaps[idx - 1].code); setViewInstanceNo(null); setStatusOpen(false); } };
+  const goNext = () => { if (canNext) { setCurrentCode(gaps[idx + 1].code); setViewInstanceNo(null); setStatusOpen(false); } };
 
 
   return (
@@ -1907,6 +1917,8 @@ function CareGapDetailDrawerContent({ member, gapCode, year, onClose }) {
           )}
           <CareGapDetailDrawerHeader
             gap={gap} member={member} selectedYear={selectedYear} setSelectedYear={setSelectedYear}
+            instances={instances} viewedInstanceNo={viewed?.no ?? null}
+            onPickInstance={(no) => { setViewInstanceNo(no); setStatusOpen(false); }}
             yearOpen={yearOpen} setYearOpen={setYearOpen} yearOptions={yearOptions}
             status={status} statusLocked={statusLocked}
             statusOpen={statusOpen} setStatusOpen={setStatusOpen} statusAnchorRect={statusAnchorRect} setStatusAnchorRect={setStatusAnchorRect} updateGapStatus={updateGapStatus}

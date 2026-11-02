@@ -87,7 +87,7 @@ const AGE_GROUPS = [
 // and the cell always agree. Gaps added in Fold are stamped `fold-native`;
 // a gap closed then re-added stays in the row stamped `supersededAt`.
 export const gapSourceLabel = (g) => (g.source === 'fold-native' ? 'Manual' : 'Claim');
-export const gapInstanceLabel = (g) => (g.supersededAt ? 'Previous' : 'Current');
+export const gapInstanceLabel = (g) => (g.supersededAt ? 'Previous' : 'Active');
 
 export const FILTER_DEFS = [
   { k: 'memberStatus',        label: 'Member Status', type: 'multi',
@@ -98,7 +98,7 @@ export const FILTER_DEFS = [
   { k: 'gapSource',           label: 'Source', type: 'multi',
     opts: ['Claim', 'Manual'] },
   { k: 'gapInstance',         label: 'Instance', type: 'multi',
-    opts: ['Current', 'Previous'] },
+    opts: ['Active', 'Previous'] },
   { k: 'assignee',            label: 'Assignee', type: 'multi',
     dynamic: 'assignee', opts: [], searchable: true },
   { k: 'gender',              label: 'Gender', type: 'multi',
