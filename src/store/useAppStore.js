@@ -82,6 +82,7 @@ import { makeActivityRow as buildHccActivityRow } from '../features/hcc/activity
 import { hccRoleDefaultFilters } from '../features/hcc/filters';
 import { deriveGoalTableFields } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/goalMetrics';
 import { barrierPayloadFromTemplateEntry, goalPayloadFromTemplateEntry, interventionPayloadFromTemplateEntry, templateLinkOwners } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanTemplateApply';
+import { EVENT_LOOKBACK_DAYS, evaluateEventImpact, eventsToEvaluate, mapCarePlanEventRow, mapEventImpactRow, planForPrompt } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/eventImpact';
 import { buildPatientFacts, buildTemplateChoices, draftCounts, withDescription } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/individualizedPlan';
 import { assessmentSuggestionsFor, pendingRecommendation } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanRecommendation';
 import { buildTemplateCatalog } from '../features/settings/care-plan-library/lib/aiTemplateDraft';
@@ -4536,6 +4537,143 @@ export const useAppStore = create((set, get) => ({
       else get().showToast('Templates updated');
     }
     get().touchCarePlanModified(patientId, program.id);
+    return true;
+  },
+
+  // ── Event-based plan updates (care_plan_event_updates_migration.sql, #84) ──
+  // `${patientId}::${programId}` → { events: { [id]: event }, impacts: [impact],
+  // loading, evaluating, missing }. Events come from the care_plan_events
+  // inbox (database triggers); each one is evaluated once per plan with the
+  // rules in care-plan/lib/eventImpact.js and, when they match, drafted by
+  // /api/care-plan-event-update. The result is a care_plan_event_impacts row.
+  carePlanEventUpdates: {},
+  fetchCarePlanEventUpdates: async (patientId, program, plan) => {
+    if (!patientId || !program?.id || !plan) return;
+    const key = carePlanKey(patientId, program.id);
+    const cur = get().carePlanEventUpdates[key];
+    if (cur?.loading || cur?.evaluating) return;
+    const patch = p => set(s => ({ carePlanEventUpdates: { ...s.carePlanEventUpdates, [key]: { ...(s.carePlanEventUpdates[key] || {}), ...p } } }));
+    patch({ loading: true });
+    const since = new Date(Date.now() - EVENT_LOOKBACK_DAYS * 86400000).toISOString();
+    const [ev, im] = await Promise.all([
+      supabase.from('care_plan_events').select('*').eq('patient_id', String(patientId))
+        .gte('occurred_at', since).order('occurred_at', { ascending: false }).limit(100),
+      supabase.from('care_plan_event_impacts').select('*').eq('patient_id', String(patientId))
+        .eq('program_id', String(program.id)).order('evaluated_at', { ascending: false }).limit(200),
+    ]);
+    const err = ev.error || im.error;
+    if (err) {
+      // Before the migration has run the tables don't exist: show nothing.
+      if (!/does not exist|schema cache|42P01|PGRST205/i.test(`${err.code} ${err.message}`)) console.warn('fetchCarePlanEventUpdates:', err.message);
+      patch({ loading: false, missing: true, events: {}, impacts: [] });
+      return;
+    }
+    const events = (ev.data || []).map(mapCarePlanEventRow);
+    let impacts = (im.data || []).map(mapEventImpactRow);
+    patch({ loading: false, missing: false, events: Object.fromEntries(events.map(e => [e.id, e])), impacts });
+
+    const todo = eventsToEvaluate(events, impacts, { planCreatedAt: plan.plan?.createdDate });
+    if (!todo.length) return;
+    patch({ evaluating: true });
+    const planView = { goals: plan.goals || [], interventions: plan.interventions || [], barriers: plan.barriers || [] };
+    // Oldest first, and only a handful of AI drafts per visit; the rest wait for the next one.
+    let aiBudget = 5;
+    for (const event of todo.slice().reverse()) {
+      const result = evaluateEventImpact(event, planView);
+      const row = {
+        event_id: event.id, patient_id: String(patientId), program_id: String(program.id),
+        status: result.relevant ? 'pending' : 'no_impact', reasons: result.reasons, changes: result.changes,
+      };
+      if (result.relevant && result.askAi) {
+        if (aiBudget-- <= 0) continue;
+        try {
+          const res = await apiFetch('/api/care-plan-event-update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ event, reasons: result.reasons, ruleChanges: result.changes, plan: planForPrompt(planView), programName: program.name || program.code }),
+          });
+          const json = await res.json().catch(() => ({}));
+          if (res.ok && json.draft) {
+            row.changes = [...result.changes, ...json.draft.changes];
+            row.ai_summary = json.draft.summary || null;
+          } else row.ai_error = json.error?.message || 'Could not draft plan updates for this event.';
+        } catch (e) {
+          row.ai_error = e?.message || 'Could not reach the AI service.';
+        }
+      }
+      // Nothing to change after all: record it as reviewed so it isn't asked again.
+      if (row.status === 'pending' && !row.changes.length && !row.ai_error) row.status = 'no_impact';
+      const { data, error } = await supabase.from('care_plan_event_impacts')
+        .upsert(row, { onConflict: 'event_id,program_id', ignoreDuplicates: true }).select();
+      if (error) { console.warn('fetchCarePlanEventUpdates: save impact:', error.message); continue; }
+      if (data?.[0]) {
+        impacts = [mapEventImpactRow(data[0]), ...impacts];
+        patch({ impacts });
+      }
+    }
+    patch({ evaluating: false });
+  },
+  // Sets aside an event with nothing left to decide (e.g. the AI draft failed).
+  dismissCarePlanEventImpact: async (patientId, program, impactId) => {
+    const key = carePlanKey(patientId, program.id);
+    const actor = get().currentUserProfile?.name || null;
+    const next = { status: 'resolved', resolved_at: new Date().toISOString(), resolved_by: actor };
+    set(s => ({
+      carePlanEventUpdates: {
+        ...s.carePlanEventUpdates,
+        [key]: {
+          ...s.carePlanEventUpdates[key],
+          impacts: (s.carePlanEventUpdates[key]?.impacts || []).map(i => (i.id === impactId
+            ? { ...i, status: 'resolved', resolvedAt: next.resolved_at, resolvedBy: actor } : i)),
+        },
+      },
+    }));
+    const { error } = await supabase.from('care_plan_event_impacts').update(next).eq('id', impactId);
+    if (error) console.warn('dismissCarePlanEventImpact:', error.message);
+  },
+  // Accepts (applying it to the plan) or dismisses one proposed change.
+  decideCarePlanEventChange: async (patientId, program, impactId, changeId, decision) => {
+    const key = carePlanKey(patientId, program.id);
+    const state = get().carePlanEventUpdates[key];
+    const impact = state?.impacts.find(i => i.id === impactId);
+    const change = impact?.changes.find(c => c.id === changeId);
+    if (!impact || !change || change.decision) return false;
+    if (decision === 'accepted') {
+      const event = state.events?.[impact.eventId];
+      let ok = true;
+      if (change.kind === 'goal_value') {
+        ok = !!(await get().saveGoalMeasurement(patientId, program.id, change.targetId, {
+          value: change.value ?? change.to, unit: change.unit || '', takenAt: event?.occurredAt,
+        }));
+      } else if (change.kind === 'status') {
+        ok = !!(await get().saveCarePlanLiveField(patientId, program, change.targetType, change.targetId, { status: change.to }));
+      } else if (change.kind === 'goal_target') {
+        ok = !!(await get().saveCarePlanLiveField(patientId, program, 'goal', change.targetId, { targetValue: change.to }));
+      } else if (change.kind === 'add_goal') {
+        ok = !!(await get().savePatientCarePlanGoal(patientId, program, { title: change.item?.title || change.to, status: 'Not Started' }));
+      } else if (change.kind === 'add_intervention') {
+        ok = !!(await get().savePatientCarePlanIntervention(patientId, program, { title: change.item?.title || change.to, kind: change.item?.kind || 'internal-task', goalId: change.item?.goalId || null, status: 'Not Started' }));
+      } else if (change.kind === 'add_barrier') {
+        ok = !!(await get().savePatientCarePlanBarrier(patientId, program, { title: change.item?.title || change.to, status: 'Not Started' }));
+      }
+      if (!ok) { get().showToast?.('Couldn’t apply the change'); return false; }
+    }
+    const actor = get().currentUserProfile?.name || null;
+    const changes = impact.changes.map(c => (c.id === changeId ? { ...c, decision, decidedBy: actor, decidedAt: new Date().toISOString() } : c));
+    const done = changes.every(c => c.decision);
+    const next = { changes, status: done ? 'resolved' : 'pending', resolved_at: done ? new Date().toISOString() : null, resolved_by: done ? actor : null };
+    set(s => ({
+      carePlanEventUpdates: {
+        ...s.carePlanEventUpdates,
+        [key]: {
+          ...s.carePlanEventUpdates[key],
+          impacts: (s.carePlanEventUpdates[key]?.impacts || []).map(i => (i.id === impactId
+            ? { ...i, changes, status: next.status, resolvedAt: next.resolved_at, resolvedBy: next.resolved_by } : i)),
+        },
+      },
+    }));
+    const { error } = await supabase.from('care_plan_event_impacts').update(next).eq('id', impactId);
+    if (error) console.warn('decideCarePlanEventChange:', error.message);
     return true;
   },
 
