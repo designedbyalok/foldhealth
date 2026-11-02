@@ -72,7 +72,7 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
   // Episodic when marked so; otherwise a template with conditions on it was
   // authored as a chronic-conditions one.
   const [templateType, setTemplateType] = useState(() => templateTypeOf(template));
-  const [episode, setEpisode] = useState(() => episodeOf(template) || { days: DEFAULT_EPISODE_DAYS, pausesOngoing: true });
+  const [episode, setEpisode] = useState(() => episodeOf(template) || { days: DEFAULT_EPISODE_DAYS, pausesOngoing: true, programCode: 'TOC IP', supersedes: [] });
   const savedEpisode = episodeOf(template);
   const nextEpisode = templateType === 'episodic' ? episode : null;
   const episodeChanged = JSON.stringify(nextEpisode) !== JSON.stringify(savedEpisode);

@@ -329,6 +329,7 @@ const TOC_IP_STEPS = [
     ],
   },
   { id: 'tocip-appt', name: 'Appointment', mandatory: true },
+  { id: 'tocip-careplan', name: 'Care Plan' },
   { id: 'tocip-caregaps', name: 'Open Care Gaps' },
   { id: 'tocip-medreview', name: 'Medication Review' },
   { id: 'tocip-task', name: 'Program Related Task' },
@@ -351,6 +352,17 @@ const TOC_ED_STEPS = [
   { id: 'toced-caregaps', name: 'Open Care Gaps' },
   { id: 'toced-medreview', name: 'Medication Review' },
   { id: 'toced-task', name: 'Program Related Task' },
+];
+
+// Home health runs as an episode (an episodic care plan template) until the
+// agency discharges the patient.
+const HH_STEPS = [
+  { id: 'hh-snapshot', name: 'Snapshot', mandatory: true },
+  { id: 'hh-docs', name: 'Program Documents' },
+  { id: 'hh-outreach', name: 'Outreach', mandatory: true },
+  { id: 'hh-careplan', name: 'Care Plan' },
+  { id: 'hh-medreview', name: 'Medication Review' },
+  { id: 'hh-task', name: 'Program Related Task' },
 ];
 
 const DM_STEPS = [
@@ -466,6 +478,7 @@ export const PROGRAM_STEPS = {
   APE: APE_STEPS,
   CCM: CCM_PROGRAM_STEPS,
   PHARM: PHARM_STEPS,
+  HH: HH_STEPS,
 };
 
 // ─── Pre-visit step content, keyed by program type ─────────────────────────

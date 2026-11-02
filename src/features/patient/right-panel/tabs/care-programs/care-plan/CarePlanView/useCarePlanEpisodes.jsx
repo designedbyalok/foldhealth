@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useAppStore } from '../../../../../../../store/useAppStore';
 import { templateItems } from '../../../../../../../store/lib/carePlanStoreLib';
 import { episodeOf } from '../lib/episodeTemplates';
+import { programUrlKey } from '../../CareProgramsTab/CareProgramsTab.utils';
+import { flatSteps, stepsFor } from '../../program-detail/ProgramDetailView/ProgramDetailView.utils';
 import { instanceOutcome } from '../lib/templateRenewal';
 import { EndEpisodeDialog, EpisodeBanner, ExtendEpisodeDialog } from './EpisodeBanner';
 import { StartEpisodeDialog } from './StartEpisodeDialog';
@@ -17,6 +19,9 @@ export function useCarePlanEpisodes({ patientId, program, live, canEdit, readOnl
   const carePlanTemplates = useAppStore(s => s.carePlanTemplates);
   const libraryGoals = useAppStore(s => s.carePlanGoals);
   const startCarePlanEpisode = useAppStore(s => s.startCarePlanEpisode);
+  const startEpisodeProgram = useAppStore(s => s.startEpisodeProgram);
+  const openCareProgram = useAppStore(s => s.openCareProgram);
+  const setCareProgramStep = useAppStore(s => s.setCareProgramStep);
   const extendCarePlanEpisode = useAppStore(s => s.extendCarePlanEpisode);
   const endCarePlanEpisode = useAppStore(s => s.endCarePlanEpisode);
   const showToast = useAppStore(s => s.showToast);
@@ -46,12 +51,32 @@ export function useCarePlanEpisodes({ patientId, program, live, canEdit, readOnl
       return;
     }
     setPending(null);
-    const ok = await applyTemplates(p.ids, p.priorities, p.categoryPicks);
-    if (ok === false) return;
+    // An episode with its own program starts there rather than on this plan.
+    const ownProgram = c => { const code = episodeOf(c.template)?.programCode; return !!code && code !== program.code; };
+    const elsewhere = new Set(choices.filter(ownProgram).map(c => String(c.template.id)));
+    const here = p.ids.filter(id => !elsewhere.has(String(id)));
+    const already = (live?.plan?.appliedTemplateIds || []).map(String);
+    if (here.length !== already.length || here.some(id => !already.includes(String(id)))) {
+      const ok = await applyTemplates(here, p.priorities, p.categoryPicks);
+      if (ok === false) return;
+    }
+    let opened = null;
     for (const c of choices) {
       // One at a time: each pauses plans and writes the same patient's rows.
-      // react-doctor-disable-next-line react-doctor/async-await-in-loop
-      await startCarePlanEpisode(patientId, program, c.template.id, { endsOn: c.endsOn, pausePlans: c.pausePlans });
+      const args = { endsOn: c.endsOn, pausePlans: c.pausePlans };
+      if (ownProgram(c)) {
+        // react-doctor-disable-next-line react-doctor/async-await-in-loop
+        opened = (await startEpisodeProgram(patientId, c.template, args)) || opened;
+      } else {
+        // react-doctor-disable-next-line react-doctor/async-await-in-loop
+        await startCarePlanEpisode(patientId, program, c.template.id, args);
+      }
+    }
+    // Land on the episode's own care plan.
+    if (opened) {
+      const step = flatSteps(stepsFor(opened.code)).find(st => st.name === 'Care Plan');
+      openCareProgram(programUrlKey(opened));
+      if (step) setCareProgramStep(step.id);
     }
     const paused = choices.reduce((n, c) => n + c.pausePlans.length, 0);
     showToast(choices.length === 1

@@ -34,6 +34,7 @@ import { MONITORING_SEED, mapMonitoringRow } from '../features/patient/right-pan
 import { OVERVIEW_SEED, mapOverviewRow } from '../features/patient/data/overviewData';
 import { CLOSURE_REASONS, closureReasonLabel, statusColorFor as programStatusColor } from '../features/patient/data/programStatus';
 import { nextEnrollment, plannedEndDate } from '../features/patient/data/programLifecycle';
+import { CARE_PROGRAM_CATALOG } from '../features/patient/data/careProgramCatalog';
 import { toast } from '../components/Toast/sonnerToast';
 // Fallback datasets (~220KB raw across all of these) are imported lazily
 // inside the fetch actions that consume them, so they don't bloat the entry
@@ -87,7 +88,7 @@ import { buildTemplateCatalog } from '../features/settings/care-plan-library/lib
 import { apiFetch } from '../lib/apiFetch';
 import { sdohSocialRisk } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/sdohReport';
 import { EPISODE_PAUSE_REASON, isDueToAutoResume, isoDay as isoDayString, nextTouchpoint as computeNextTouchpoint, pauseAuditEntry, pauseFields, pauseReasonLabel, resumeAuditEntry } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanPause';
-import { dayAfter, episodeEndsOn, episodeOf, episodePauseNote, isEpisodeDue } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/episodeTemplates';
+import { EPISODE_PROGRAM_CODES, dayAfter, episodeEndsOn, episodeOf, episodePauseNote, isEpisodeDue } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/episodeTemplates';
 import { INSTANCE_STATUS, formatInstanceDate, instanceOutcome, templateEndsOn } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/templateRenewal';
 import { barrierGoalIdsOf, goalCascade } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanGoalCascade';
 import { templateContentFromApplied, templateContentFromWholePlan } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanTemplateSave';
@@ -291,6 +292,22 @@ const _savedSettingsTab = sessionStorage.getItem('settingsTab');
 
 // The review call's total length in seconds from the drawer's clock, or null
 // when the timer was never started.
+// A template's episode settings as care_plan_templates columns; `episode` is
+// episodeOf()'s shape or null (ongoing).
+const episodeRow = (episode) => ({
+  episodic: !!episode,
+  episode_days: episode?.days || null,
+  episode_pauses_ongoing: episode ? episode.pausesOngoing !== false : true,
+  episode_program_code: episode?.programCode || null,
+  episode_supersedes: episode?.supersedes || [],
+});
+const EPISODE_PROGRAM_COLUMNS_RE = /episode_program_code|episode_supersedes/;
+// YYYY-MM-DD as the MM/DD/YYYY the program rows use.
+const toProgramDate = (iso) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+  return m ? `${m[2]}/${m[3]}/${m[1]}` : null;
+};
+
 function reviewSeconds(clock) {
   if (!clock?.startedAt) return null;
   return (clock.baseSeconds || 0) + Math.max(0, Math.round(((clock.stoppedAt ?? Date.now()) - clock.startedAt) / 1000));
@@ -5060,10 +5077,11 @@ export const useAppStore = create((set, get) => ({
   // The patient's other care plans an episode could pause: every plan but this
   // program's, without one that is itself running an episode.
   fetchEpisodePausablePlans: async (patientId, excludeProgramId) => {
-    const { data, error } = await supabase.from('patient_care_plans')
+    let query = supabase.from('patient_care_plans')
       .select('id, program_id, program_code, status, pause_reason')
-      .eq('patient_id', patientId)
-      .neq('program_id', excludeProgramId);
+      .eq('patient_id', patientId);
+    if (excludeProgramId) query = query.neq('program_id', excludeProgramId);
+    const { data, error } = await query;
     if (error) { console.warn('fetchEpisodePausablePlans:', error.message); return []; }
     const plans = data || [];
     if (!plans.length) return [];
@@ -5075,7 +5093,10 @@ export const useAppStore = create((set, get) => ({
     if (epError) console.warn('fetchEpisodePausablePlans:', epError.message);
     const inEpisode = new Set((episodes || []).map(e => e.plan_id));
     const programs = get().careProgramsByPatient?.[patientId] || [];
-    return plans.filter(p => !inEpisode.has(p.id)).map(p => {
+    // Other episodes never pause, and a closed enrollment has nothing to pause.
+    const isOngoing = p => !EPISODE_PROGRAM_CODES.includes(p.program_code)
+      && !programs.some(x => String(x.id) === String(p.program_id) && (x.closedAt || ['Completed', 'Discontinued'].includes(x.status)));
+    return plans.filter(p => !inEpisode.has(p.id) && isOngoing(p)).map(p => {
       const prog = programs.find(x => String(x.id) === String(p.program_id));
       return {
         planId: p.id,
@@ -5184,6 +5205,33 @@ export const useAppStore = create((set, get) => ({
     return true;
   },
 
+  // An episodic template that runs as its own program (episodeOf().programCode):
+  // enrolls the patient in that program, or uses their open enrollment in it,
+  // applies the template to that program's plan and starts the episode there.
+  // Returns the program, or null.
+  startEpisodeProgram: async (patientId, template, { endsOn, pausePlans = [] }) => {
+    const code = episodeOf(template)?.programCode;
+    if (!code) return null;
+    await get().fetchCareProgramsForPatient(patientId);
+    const isOpen = p => p.code === code && !p.closedAt && !['Completed', 'Discontinued'].includes(p.status);
+    let program = (get().careProgramsByPatient[patientId] || []).find(isOpen);
+    if (!program) {
+      get().addCareProgram(patientId, { code, name: CARE_PROGRAM_CATALOG.find(c => c.code === code)?.name || code });
+      program = (get().careProgramsByPatient[patientId] || []).find(isOpen);
+    }
+    if (!program) { get().showToast(`Could not enroll the patient in ${code}`); return null; }
+    await get().fetchPatientCarePlan(patientId, program.id);
+    const applied = get().patientCarePlans[carePlanKey(patientId, program.id)]?.plan?.appliedTemplateIds || [];
+    if (!applied.map(String).includes(String(template.id))) {
+      const ok = await get().applyPatientCarePlanTemplates(patientId, program, [...applied, template.id], undefined, {}, { quiet: true });
+      if (ok === false) return null;
+    }
+    const started = await get().startCarePlanEpisode(patientId, program, template.id, { endsOn, pausePlans });
+    if (!started) return null;
+    if (endsOn) get().updateCareProgram(patientId, program.id, { plannedEndDate: toProgramDate(endsOn) });
+    return program;
+  },
+
   // A new last day for a running episode (and its paused plans' resume date).
   extendCarePlanEpisode: async (patientId, program, runId, endsOn) => {
     const key = carePlanKey(patientId, program.id);
@@ -5260,6 +5308,16 @@ export const useAppStore = create((set, get) => ({
         run.pausedPlanIds?.length ? 'Paused care plans resumed' : '',
       ].filter(Boolean).join(' · '),
     });
+    // An episode that ran as its own program ends that enrollment too.
+    if (EPISODE_PROGRAM_CODES.includes(program.code) && episodeOf(template)?.programCode === program.code) {
+      await get().fetchCareProgramsForPatient(patientId);
+      const enrolled = (get().careProgramsByPatient[patientId] || []).find(p => String(p.id) === String(program.id));
+      if (enrolled && !enrolled.closedAt) {
+        get().closeCareProgramInstance(patientId, program.id, {
+          reason: 'other', status: 'Completed', note: auto ? 'Episode ended on its last day' : 'Episode ended early',
+        });
+      }
+    }
     if (!auto) get().showToast(`"${run.templateName}" episode ended`);
     get().touchCarePlanModified(patientId, program.id);
     return true;
@@ -6163,11 +6221,7 @@ export const useAppStore = create((set, get) => ({
     // Per-patient categories on top of the Common lists.
     if (Array.isArray(values.categories)) row.categories = values.categories;
     // Episodic or ongoing, when the caller says: `episode` is { days, pausesOngoing } or null.
-    if (values.episode !== undefined) {
-      row.episodic = !!values.episode;
-      row.episode_days = values.episode?.days || null;
-      row.episode_pauses_ongoing = values.episode ? values.episode.pausesOngoing !== false : true;
-    }
+    if (values.episode !== undefined) Object.assign(row, episodeRow(values.episode));
     // A draft revision of a published template, waiting for approval.
     if (!id && values.replacesTemplateId) row.replaces_template_id = values.replacesTemplateId;
     // The clinical protocol (and version) a new template was drafted from.
@@ -6212,9 +6266,14 @@ export const useAppStore = create((set, get) => ({
       const { renewal: _r, ...rowWithoutRenewal } = row;
       ({ data, error } = await run(rowWithoutRenewal));
     }
+    // Before the episode programs migration it saves without the program and pause rules.
+    if (error && EPISODE_PROGRAM_COLUMNS_RE.test(error.message || '') && 'episode_program_code' in row) {
+      const { episode_program_code: _c, episode_supersedes: _s, ...rowWithoutProgram } = row;
+      ({ data, error } = await run(rowWithoutProgram));
+    }
     // Before the episodic migration the template saves as an ongoing one.
     if (error && /episod/i.test(error.message || '') && 'episodic' in row) {
-      const { episodic: _e, episode_days: _d, episode_pauses_ongoing: _p, ...rowWithoutEpisode } = row;
+      const { episodic: _e, episode_days: _d, episode_pauses_ongoing: _p, episode_program_code: _c, episode_supersedes: _s, ...rowWithoutEpisode } = row;
       ({ data, error } = await run(rowWithoutEpisode));
       if (!error && values.episode) get().showToast('Saved, but episodic templates need the episodic templates migration');
     }
@@ -6239,13 +6298,15 @@ export const useAppStore = create((set, get) => ({
   // { days, pausesOngoing } or null.
   saveCarePlanTemplateEpisode: async (id, episode) => {
     const row = {
-      episodic: !!episode,
-      episode_days: episode?.days || null,
-      episode_pauses_ongoing: episode ? episode.pausesOngoing !== false : true,
+      ...episodeRow(episode),
       updated_by: get().currentUserProfile?.name || null,
       updated_at: new Date().toISOString(),
     };
-    const { data, error } = await supabase.from('care_plan_templates').update(row).eq('id', id).select().single();
+    let { data, error } = await supabase.from('care_plan_templates').update(row).eq('id', id).select().single();
+    if (error && EPISODE_PROGRAM_COLUMNS_RE.test(error.message || '')) {
+      const { episode_program_code: _c, episode_supersedes: _s, ...rowWithoutProgram } = row;
+      ({ data, error } = await supabase.from('care_plan_templates').update(rowWithoutProgram).eq('id', id).select().single());
+    }
     if (error) {
       console.warn('saveCarePlanTemplateEpisode:', error.message);
       get().showToast(/episod/i.test(error.message || '')
@@ -6617,6 +6678,7 @@ export const useAppStore = create((set, get) => ({
         ...Object.fromEntries(Object.entries({
           closure_reason: updated.closureReason, closure_note: updated.closureNote,
           closed_at: updated.closedAt, closed_by: updated.closedBy,
+          planned_end_date: updated.plannedEndDate,
         }).filter(([, v]) => v)),
       }, { onConflict: 'id' }).then(({ error }) => {
         if (error) console.warn('updateCareProgram: update failed:', error.message);

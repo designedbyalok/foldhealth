@@ -74,7 +74,7 @@ export function CarePlanCreateView({ onClose, onSave }) {
   const [description, setDescription] = useState('');
   const [templateType, setTemplateType] = useState('general');
   // An episodic template's length and whether it pauses the patient's other plans.
-  const [episode, setEpisode] = useState({ days: DEFAULT_EPISODE_DAYS, pausesOngoing: true });
+  const [episode, setEpisode] = useState({ days: DEFAULT_EPISODE_DAYS, pausesOngoing: true, programCode: 'TOC IP', supersedes: [] });
   // Follows the template type (conditions extend, events reinstate) until
   // someone picks one.
   const [renewalPick, setRenewalPick] = useState(null);

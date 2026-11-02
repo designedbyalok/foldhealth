@@ -7,12 +7,15 @@
 
 import { parseLocalDate } from '../../../../../../../lib/localDate';
 
-/** Common episode lengths, offered as presets when a template is set up. */
+/** Common episode lengths, offered as presets when a template is set up, with the program each usually runs as. */
 export const EPISODE_PRESETS = [
-  { key: 'toc-ip', days: 30, label: '30 days', hint: 'Inpatient discharge (TOC-IP)' },
-  { key: 'toc-ed', days: 14, label: '14 days', hint: 'Emergency department visit (TOC-ED)' },
-  { key: 'until-closed', days: null, label: 'Until closed', hint: 'Home health and other episodes with no fixed end. Ends when someone closes it.' },
+  { key: 'toc-ip', days: 30, programCode: 'TOC IP', label: '30 days', hint: 'Inpatient discharge (TOC-IP)' },
+  { key: 'toc-ed', days: 14, programCode: 'TOC ED', label: '14 days', hint: 'Emergency department visit (TOC-ED)' },
+  { key: 'until-closed', days: null, programCode: 'HH', label: 'Until closed', hint: 'Home health and other episodes with no fixed end. Ends when someone closes it.' },
 ];
+
+/** Programs an episode can run as: applying the template enrolls the patient in one, with its own care plan. */
+export const EPISODE_PROGRAM_CODES = ['TOC IP', 'TOC ED', 'HH'];
 
 export const DEFAULT_EPISODE_DAYS = 30;
 export const MAX_EPISODE_DAYS = 365;
@@ -27,7 +30,21 @@ export function episodeOf(template) {
   return {
     days: Number.isInteger(days) && days > 0 ? days : null,
     pausesOngoing: template.episodePausesOngoing !== false,
+    // The program the episode runs as; null runs it on the plan it is applied to.
+    programCode: template.episodeProgramCode || null,
+    // Program codes it pauses; empty pauses every other ongoing plan.
+    supersedes: Array.isArray(template.episodeSupersedes) ? template.episodeSupersedes : [],
   };
+}
+
+/**
+ * Whether an episode pauses the patient's plan in `programCode` by default.
+ * Other episodes never pause for it, so two episodes can run side by side.
+ */
+export function episodeSupersedes(episode, programCode) {
+  if (!episode?.pausesOngoing) return false;
+  if (EPISODE_PROGRAM_CODES.includes(programCode)) return false;
+  return !episode.supersedes.length || episode.supersedes.includes(programCode);
 }
 
 /** "30-day episode" / "Episode until closed", for badges and titles. */
