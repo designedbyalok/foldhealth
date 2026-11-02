@@ -28,9 +28,12 @@ export function TemplateGroupDrawer({ group, readOnly = false, onClose }) {
   const byId = useMemo(() => new Map((templates || []).map(t => [String(t.id), t])), [templates]);
   // Published, in-use organization templates can join (a group is shared, so
   // no one's private ones); a retired one already in the group stays listed.
-  const options = useMemo(() => (templates || [])
-    .filter(t => t.status !== 'draft' && t.status !== 'archived' && (t.scope || 'org') === 'org' && !memberIds.includes(String(t.id)))
-    .map(t => ({ value: String(t.id), label: t.name })), [templates, memberIds]);
+  const options = useMemo(() => {
+    const inGroup = new Set(memberIds);
+    return (templates || [])
+      .filter(t => t.status !== 'draft' && t.status !== 'archived' && (t.scope || 'org') === 'org' && !inGroup.has(String(t.id)))
+      .map(t => ({ value: String(t.id), label: t.name }));
+  }, [templates, memberIds]);
   const changed = group && membersChanged(group.templateIds, memberIds);
   const canSave = !readOnly && !saving && name.trim() && memberIds.length > 0;
 
