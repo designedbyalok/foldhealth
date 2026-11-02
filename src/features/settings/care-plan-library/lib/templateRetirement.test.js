@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { activeTemplateFor, isRetired, replacementFor, replacementOptions } from './templateRetirement';
+import { activeTemplateFor, formatRetireDate, isRetired, replacementFor, replacementOptions, retirementToday, retiringOn, templatesReplacedBy } from './templateRetirement';
 
 const t = (id, status = 'published', replacedByTemplateId = null) => ({ id, name: id, status, replacedByTemplateId });
 
@@ -40,5 +40,24 @@ describe('replacementOptions and isRetired', () => {
     expect(replacementOptions(all[0], all).map(x => x.id)).toEqual(['v2']);
     expect(isRetired(all[3])).toBe(true);
     expect(isRetired(all[0])).toBe(false);
+  });
+});
+
+describe('scheduled retirement', () => {
+  it('is retiring only while still in use', () => {
+    expect(retiringOn({ ...t('v1'), retireOn: '2026-12-01' })).toBe('2026-12-01');
+    expect(retiringOn({ ...t('v1', 'archived'), retireOn: '2026-12-01' })).toBeNull();
+    expect(retiringOn(t('v1'))).toBeNull();
+  });
+
+  it('lists the retired and retiring templates a replacement stands in for', () => {
+    const all = [t('v1', 'archived', 'v3'), { ...t('v2', 'published', 'v3'), retireOn: '2026-12-01' }, t('v4', 'published', 'v3'), t('v3')];
+    expect(templatesReplacedBy(all[3], all).map(x => x.id)).toEqual(['v1', 'v2']);
+  });
+
+  it('takes the day in Los Angeles', () => {
+    expect(retirementToday(new Date('2026-11-03T06:00:00Z'))).toBe('2026-11-02');
+    expect(retirementToday(new Date('2026-11-03T09:00:00Z'))).toBe('2026-11-03');
+    expect(formatRetireDate('2026-12-01')).toBe('12/01/2026');
   });
 });

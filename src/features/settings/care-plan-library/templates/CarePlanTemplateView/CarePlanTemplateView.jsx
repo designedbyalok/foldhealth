@@ -7,7 +7,7 @@ import { CloseButton } from '../../../../../components/CloseButton/CloseButton';
 import { MenuPopover } from '../../../../../components/MenuPopover/MenuPopover';
 import {
   CarePlanSections, CategoryCriteriaCard, ChronicConditionSelect, CommonSectionNote, COMMON, EpisodeSettings,
-  TemplateCategoryBar, TemplateRenewalChoice, TemplateScopeChoice, TemplateTypeChoice, templateTypeOf, useTemplateCategories,
+  TemplateCategoryBar, TemplateRenewalChoice, TemplateRetirementNote, TemplateScopeChoice, TemplateTypeChoice, templateTypeOf, useTemplateCategories,
 } from '../../shared';
 import { categoriesProblem } from '../../lib/templateCategories';
 import { CARE_PLAN_NAME_MAX } from '../../lib/carePlanLimits';
@@ -59,6 +59,7 @@ const GOAL_CATEGORY_ICONS = {
  */
 export function CarePlanTemplateView({ template, onClose, onSave }) {
   const libraryGoals = useAppStore(s => s.carePlanGoals);
+  const carePlanTemplates = useAppStore(s => s.carePlanTemplates);
   const saveCarePlanGoal = useAppStore(s => s.saveCarePlanGoal);
   const interventionLibrary = useAppStore(s => s.carePlanInterventionTemplates);
   // Clicking a goal row edits the library goal the template entry points at.
@@ -263,6 +264,7 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
               ].filter(Boolean).join(' · ')}
             </InfoBar>
           )}
+          <TemplateRetirementNote template={template} templates={carePlanTemplates} />
           <div className={styles.field}>
             <span className={styles.fieldLabel}>Care Plan Name</span>
             <Input

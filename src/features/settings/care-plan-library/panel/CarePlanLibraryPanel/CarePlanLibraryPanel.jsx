@@ -16,7 +16,7 @@ import { WorklistShell } from '../../../../../components/WorklistShell/WorklistS
 import { Drawer } from '../../../../../components/Drawer/Drawer';
 import { ConfirmDialog } from '../../../../../components/ConfirmDialog/ConfirmDialog';
 import { FilterChip } from '../../../../../components/FilterChip/FilterChip';
-import { EpisodeBadge, TemplateScopeBadge, TemplateScopeChoice } from '../../shared';
+import { EpisodeBadge, RetiringBadge, TemplateScopeBadge, TemplateScopeChoice } from '../../shared';
 import { episodeOf } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/episodeTemplates';
 import { LIBRARY_SCOPE_CHOICES, TEMPLATE_SCOPES, inLibrary, matchesScopeFilter, scopeFilterOptions, templateScopeOf } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/templateScope';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../../../../components/ShadcnDialog/ShadcnDialog';
@@ -42,7 +42,7 @@ import { BulkBar } from '../../../../../components/BulkBar/BulkBar';
 import { useCanManageTemplates } from '../../lib/useCanManageTemplates';
 import { TemplateGroupsPanel } from '../../groups/TemplateGroupsPanel';
 import { RetireTemplateDialog } from './RetireTemplateDialog';
-import { isRetired } from '../../lib/templateRetirement';
+import { formatRetireDate, isRetired, retiringOn, templatesReplacedBy } from '../../lib/templateRetirement';
 import styles from './CarePlanLibraryPanel.module.css';
 
 const CARE_PLAN_TABS = [
@@ -163,7 +163,7 @@ const TEMPLATE_COLUMNS = [
 const DRAFT_COLUMNS = TEMPLATE_COLUMNS.map(c => (c.key === 'actions' ? { ...c, width: 168 } : c));
 const RETIRED_COLUMNS = [
   { key: 'name', label: 'Template Name', sticky: 'left', left: 0, width: 280 },
-  { key: 'replacement', label: 'Use Instead', width: 240 },
+  { key: 'replacement', label: 'Replaced By', width: 240 },
   { key: 'retired', label: 'Retired', width: 200 },
   { key: 'reason', label: 'Reason', width: 280 },
   { key: 'actions', label: 'Actions', sticky: 'right', width: 100 },
@@ -220,7 +220,7 @@ function simpleDraftFrom(kind, item) {
 // Kebab "More Action" menu on a template row: Figma only breaks Delete out
 // into this overflow menu; Edit/Duplicate get their own always-visible
 // ActionButtons.
-function TemplateRowMenu({ onDuplicate, onCustomize, onRetire, onDelete }) {
+function TemplateRowMenu({ onDuplicate, onCustomize, onRetire, onCancelRetirement, onDelete }) {
   const [open, setOpen] = useState(false);
   const btnRef = useRef(null);
   const [pos, setPos] = useState({ top: 0, left: 0 });
@@ -255,6 +255,12 @@ function TemplateRowMenu({ onDuplicate, onCustomize, onRetire, onDelete }) {
               <button className={styles.overflowItem} onClick={() => { setOpen(false); onRetire(); }}>
                 <Icon name="solar:archive-down-linear" size={15} color="var(--neutral-300)" />
                 Retire
+              </button>
+            )}
+            {onCancelRetirement && (
+              <button className={styles.overflowItem} onClick={() => { setOpen(false); onCancelRetirement(); }}>
+                <Icon name="solar:undo-left-linear" size={15} color="var(--neutral-300)" />
+                Cancel Retirement
               </button>
             )}
             <button
@@ -380,6 +386,7 @@ export function CarePlanLibraryPanel() {
   }, [templates, searchValue]);
   const [retireTarget, setRetireTarget] = useState(null);
   const retireCarePlanTemplate = useAppStore(s => s.retireCarePlanTemplate);
+  const cancelCarePlanTemplateRetirement = useAppStore(s => s.cancelCarePlanTemplateRetirement);
   const restoreCarePlanTemplate = useAppStore(s => s.restoreCarePlanTemplate);
   const draftTemplates = useMemo(
     () => templates.filter(t => t.status === 'draft'),
@@ -586,6 +593,22 @@ export function CarePlanLibraryPanel() {
                 </>
               );
             })()}
+            {retiringOn(t) && (
+              <>
+                <span aria-hidden="true">·</span>
+                <RetiringBadge template={t} templates={templates} />
+              </>
+            )}
+            {(() => {
+              const replaces = templatesReplacedBy(t, templates);
+              if (!replaces.length) return null;
+              return (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span>{`Replaces ${replaces.map(r => r.name).join(', ')}`}</span>
+                </>
+              );
+            })()}
           </span>
         </span>
       </td>
@@ -632,6 +655,9 @@ export function CarePlanLibraryPanel() {
             })}
             onCustomize={t.status !== 'draft' && canManageTemplates ? () => setOverlayEditor({ overlay: null, templateId: t.id }) : undefined}
             onRetire={t.status !== 'draft' && canManageTemplates ? () => setRetireTarget(t) : undefined}
+            onCancelRetirement={retiringOn(t) && canManageTemplates
+              ? async () => { if (await cancelCarePlanTemplateRetirement(t.id)) showToast(`"${t.name}" will stay in use`); }
+              : undefined}
             onDelete={() => setDeleteTarget({ kind: 'template', id: t.id, name: t.name })}
           />
         </div>
@@ -654,7 +680,7 @@ export function CarePlanLibraryPanel() {
         <td className={styles.tdMuted}>
           {replacement
             ? <button type="button" className={styles.nameLink} onClick={() => openEditTemplate(replacement)}>{replacement.name}</button>
-            : '-'}
+            : 'No replacement'}
         </td>
         <td className={styles.tdUpdated}><StampCell name={t.retiredBy || t.updatedBy}>{formatDateTime(t.retiredAt || t.updatedAt)}</StampCell></td>
         <td className={styles.tdMuted}>{t.retiredReason || '-'}</td>
@@ -1235,7 +1261,7 @@ export function CarePlanLibraryPanel() {
           onCancel={() => setRetireTarget(null)}
           onConfirm={async (values) => {
             if (await retireCarePlanTemplate(retireTarget.id, values)) {
-              showToast(`"${retireTarget.name}" retired`);
+              showToast(values.retireOn ? `"${retireTarget.name}" retires on ${formatRetireDate(values.retireOn)}` : `"${retireTarget.name}" retired`);
               setRetireTarget(null);
             }
           }}

@@ -3,6 +3,7 @@ import { Badge } from '../../../../../../../components/Badge/Badge';
 import { Icon } from '../../../../../../../components/Icon/Icon';
 import { PriorityIcon } from '../../../../../../../components/PriorityIcon/PriorityIcon';
 import { UnityIcon } from '../../../../../../../components/UnityIcon/UnityIcon';
+import { formatRetireDate, retiringOn } from '../../../../../../settings/care-plan-library/lib/templateRetirement';
 import styles from './CarePlanView.module.css';
 
 const CHIP_GAP = 4;
@@ -26,7 +27,7 @@ function TemplateBadge({
       aria-pressed={isActive}
       onClick={() => onSelect(template.id)}
       aria-label={`${templatePriority} priority, ${template.name}${templateVersion?.category ? `, ${templateVersion.category}` : ''}${version ? `, version ${version}` : ''}${isActive ? ', filter active' : ''}`}
-      title={templateVersion?.title}
+      title={[templateVersion?.title, retiringOn(template) && `Retiring on ${formatRetireDate(retiringOn(template))}`].filter(Boolean).join('. ') || undefined}
     >
       <Badge
         tone={isActive ? 'primary' : 'grey'}
@@ -36,6 +37,12 @@ function TemplateBadge({
             <PriorityIcon priority={templatePriority} size={12} />
             {template.name}
             {template.status === 'archived' && <span className={styles.runVersion}>Retired</span>}
+            {retiringOn(template) && (
+              <span className={styles.retiringTag}>
+                <Icon name="solar:calendar-mark-linear" size={12} color="currentColor" />
+                {`Retiring ${formatRetireDate(retiringOn(template))}`}
+              </span>
+            )}
             {templateVersion?.category && <span className={styles.runVersion}>{templateVersion.category}</span>}
             {version && <span className={styles.runVersion}>V{version}</span>}
             {templateVersion?.pending && <Icon name="solar:refresh-circle-linear" size={12} color="var(--primary-300)" />}
