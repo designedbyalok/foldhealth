@@ -68,6 +68,7 @@ import {
 import { useCarePlanBulkSelection } from './useCarePlanBulkSelection';
 import { CategorySuggestionBanner } from './CategorySuggestionBanner';
 import { categorySuggestions, hasCategories } from '../../../../../../settings/care-plan-library/lib/templateCategories';
+import { groupUpdates } from '../../../../../../settings/care-plan-library/lib/templateGroups';
 import styles from './CarePlanView.module.css';
 
 export function CarePlanView({ patientId, program }) {
@@ -350,6 +351,29 @@ export function CarePlanView({ patientId, program }) {
     () => categorySuggestions(live?.templateInstances, carePlanTemplates, criteriaInputs),
     [live?.templateInstances, carePlanTemplates, criteriaInputs],
   );
+
+  // Template groups: applied in one click from the strip, and offered again
+  // when a group the plan used has gained templates since.
+  const templateGroups = useAppStore(s => s.templateGroups);
+  const fetchTemplateGroups = useAppStore(s => s.fetchTemplateGroups);
+  const applyTemplateGroup = useAppStore(s => s.applyTemplateGroup);
+  const dismissTemplateGroupUpdate = useAppStore(s => s.dismissTemplateGroupUpdate);
+  useEffect(() => { if (patientId) fetchTemplateGroups(); }, [patientId, fetchTemplateGroups]);
+  const [groupsMenuOpen, setGroupsMenuOpen] = useState(false);
+  const groupsBtnRef = useRef(null);
+  const [applyingGroup, setApplyingGroup] = useState(false);
+  const groupHints = useMemo(
+    () => groupUpdates(live?.plan?.appliedTemplateGroups, templateGroups, carePlanTemplates, live?.plan?.appliedTemplateIds),
+    [live?.plan?.appliedTemplateGroups, live?.plan?.appliedTemplateIds, templateGroups, carePlanTemplates],
+  );
+  const runGroup = async (groupId, opts) => {
+    setApplyingGroup(true);
+    try {
+      await applyTemplateGroup(patientId, program, groupId, opts);
+    } finally {
+      setApplyingGroup(false);
+    }
+  };
   const {
     selected,
     bulkMenu,
@@ -1056,6 +1080,19 @@ export function CarePlanView({ patientId, program }) {
               >
                 Templates
               </Button>
+              {templateGroups.length > 0 && (
+                <span ref={groupsBtnRef} className={styles.stripGroups}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    leadingIcon="solar:folder-with-files-linear"
+                    onClick={() => setGroupsMenuOpen(v => !v)}
+                    disabled={!canEdit || applyingGroup}
+                  >
+                    {applyingGroup ? 'Applying…' : 'Groups'}
+                  </Button>
+                </span>
+              )}
             </span>
           )}
         />
@@ -1126,6 +1163,26 @@ export function CarePlanView({ patientId, program }) {
         </div>
       )}
       {episodes.banners}
+      {!viewedVersion && !viewedRun && groupHints.map(({ group, newIds }) => {
+        const names = newIds.map(id => carePlanTemplates.find(t => String(t.id) === id)?.name).filter(Boolean);
+        return (
+          <div key={group.id} className={styles.pausedBanner}>
+            <Alert
+              tone="info"
+              icon="solar:folder-with-files-linear"
+              message={<><strong>{group.name}</strong>{` was updated to version ${group.versionNumber}: ${names.join(', ')} ${names.length === 1 ? 'was' : 'were'} added.`}</>}
+            />
+            {canEdit && (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => dismissTemplateGroupUpdate(patientId, program, group.id, group.versionNumber)}>Dismiss</Button>
+                <Button variant="outline" size="sm" leadingIcon="solar:add-linear" disabled={applyingGroup} onClick={() => runGroup(group.id, { onlyIds: newIds })}>
+                  {`Add ${names.length === 1 ? names[0] : `${names.length} Templates`}`}
+                </Button>
+              </>
+            )}
+          </div>
+        );
+      })}
       {!viewedVersion && !viewedRun && categoryHints.map(s => (
         <CategorySuggestionBanner
           key={s.run.id}
@@ -1409,6 +1466,17 @@ export function CarePlanView({ patientId, program }) {
             </ActionButton>
           )}
         />
+        {groupsMenuOpen && (
+          <MenuPopover
+            anchorRef={groupsBtnRef}
+            align="right"
+            width={280}
+            ariaLabel="Apply a template group"
+            items={templateGroups.map(g => ({ key: g.id, label: `${g.name} (${g.templateIds.length})`, icon: 'solar:folder-with-files-linear' }))}
+            onSelect={(id) => { setGroupsMenuOpen(false); runGroup(id); }}
+            onClose={() => setGroupsMenuOpen(false)}
+          />
+        )}
         {intvTypeMenuOpen && (
           <MenuPopover
             anchorRef={intvAddRef}

@@ -542,6 +542,9 @@ function mapPatientCarePlanRow(row) {
     appliedTemplatePriorities: row.applied_template_priorities && typeof row.applied_template_priorities === 'object'
       ? row.applied_template_priorities
       : {},
+    // Template groups the plan used (care_plan_template_groups migration):
+    // [{ groupId, versionNumber, appliedAt, appliedBy, dismissedVersion }].
+    appliedTemplateGroups: Array.isArray(row.applied_template_groups) ? row.applied_template_groups : [],
     createdDate: row.created_at,
     updatedAt: row.updated_at || null,
     signedBy: row.signed_by || null,

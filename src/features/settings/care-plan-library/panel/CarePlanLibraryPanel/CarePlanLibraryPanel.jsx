@@ -40,10 +40,12 @@ import { overlaySummary } from '../../lib/ipaOverlays';
 import { todayIso } from '../../lib/templateVersions';
 import { BulkBar } from '../../../../../components/BulkBar/BulkBar';
 import { useCanManageTemplates } from '../../lib/useCanManageTemplates';
+import { TemplateGroupsPanel } from '../../groups/TemplateGroupsPanel';
 import styles from './CarePlanLibraryPanel.module.css';
 
 const CARE_PLAN_TABS = [
   { key: 'template', label: 'Plan Template' },
+  { key: 'groups', label: 'Template Groups' },
   { key: 'protocols', label: 'Clinical Protocols' },
   { key: 'goals', label: 'Goals Library' },
   { key: 'interventions', label: 'Interventions Library' },
@@ -62,6 +64,7 @@ const TAB_META = {
   overlays: { entityLabel: 'Overlay', emptyIcon: 'solar:layers-linear' },
   protocols: { entityLabel: 'Protocol', emptyIcon: 'solar:document-medicine-linear' },
   suggestions: { entityLabel: 'Suggestion', emptyIcon: 'solar:magic-stick-3-linear' },
+  groups: { entityLabel: 'Group', emptyIcon: 'solar:folder-with-files-linear' },
 };
 const OVERLAY_COLUMNS = [
   { key: 'template', label: 'Template', sticky: 'left', left: 0, width: 260 },
@@ -757,6 +760,9 @@ export function CarePlanLibraryPanel() {
   }
   if (activeTab === 'suggestions') {
     return <TemplateSuggestionsPanel tabs={libraryTabs} activeTab={activeTab} onTabChange={handleTabChange} />;
+  }
+  if (activeTab === 'groups') {
+    return <TemplateGroupsPanel tabs={libraryTabs} activeTab={activeTab} onTabChange={handleTabChange} />;
   }
 
   return (
