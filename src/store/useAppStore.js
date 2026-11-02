@@ -5419,7 +5419,7 @@ export const useAppStore = create((set, get) => ({
     const list = (Array.isArray(entry) ? entry : [entry]).filter(Boolean);
     if (list.length === 0) return false;
     const actor = get().currentUserProfile?.name || null;
-    return supabase.from('care_plan_audit').insert(list.map(e => ({
+    const rows = list.map(e => ({
       patient_id: patientId,
       program_id: program.id,
       program_code: program.code || null,
@@ -5429,7 +5429,14 @@ export const useAppStore = create((set, get) => ({
       summary: e.summary || '',
       detail: e.detail || '',
       actor,
-    }))).select().then(({ data, error }) => {
+      // Only sent when set, so a database without the `meta` column
+      // (care_plan_audit_meta_migration.sql) keeps saving every other row.
+      ...(e.meta ? { meta: e.meta } : {}),
+    }));
+    const insert = payload => supabase.from('care_plan_audit').insert(payload).select();
+    return insert(rows).then(res => (res.error && rows.some(r => r.meta) && /meta/.test(res.error.message || '')
+      ? insert(rows.map(r => { const { meta, ...rest } = r; void meta; return rest; }))
+      : res)).then(({ data, error }) => {
       if (error) { console.warn('logCarePlanAudit:', error.message); return false; }
       const key = carePlanKey(patientId, program.id);
       const mapped = (data || []).map(mapCarePlanAuditRow).reverse();
@@ -5694,13 +5701,26 @@ export const useAppStore = create((set, get) => ({
   // so the Figma Edit / Delete actions can persist.
   addCarePlanNote: async (patientId, program, note, meta = {}) => {
     if (!note?.trim()) return;
-    get().logCarePlanAudit(patientId, program, {
-      entityType: meta.entityType || 'plan',
-      entityId: meta.entityId,
-      action: 'note',
-      summary: meta.summary || 'Note added',
-      detail: note.trim(),
-    });
+    // `links`: goals, interventions and barriers the note references with
+    // "/". Each gets a note_linked row so the note shows in its activity.
+    const links = meta.details?.links || [];
+    get().logCarePlanAudit(patientId, program, [
+      {
+        entityType: meta.entityType || 'plan',
+        entityId: meta.entityId,
+        action: 'note',
+        summary: meta.summary || 'Note added',
+        detail: note.trim(),
+        meta: meta.details,
+      },
+      ...links.map(l => ({
+        entityType: l.kind,
+        entityId: l.id,
+        action: 'note_linked',
+        summary: l.label,
+        detail: note.trim(),
+      })),
+    ]);
     get().showToast('Note added');
   },
 

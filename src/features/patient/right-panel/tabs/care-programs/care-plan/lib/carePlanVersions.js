@@ -1,8 +1,9 @@
 // Every flavour of note event on one entity is the same running note.
 export const NOTE_ACTIONS = new Set(['note', 'note_deleted', 'note_cleared']);
 
-// Events that stand outside the signed-version scope.
-export const STANDALONE_ACTIONS = new Set([...NOTE_ACTIONS, 'restored']);
+// Events that stand outside the signed-version scope. `note_linked` marks a
+// goal, intervention or barrier a care note references with "/".
+export const STANDALONE_ACTIONS = new Set([...NOTE_ACTIONS, 'note_linked', 'restored']);
 
 // Audit rows grouped into the versions their signatures close. Signing is what
 // cuts a version, so every row written since the previous signature belongs to

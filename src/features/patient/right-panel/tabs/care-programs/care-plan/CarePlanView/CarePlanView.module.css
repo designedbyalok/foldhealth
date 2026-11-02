@@ -214,9 +214,10 @@
   min-height: var(--space-6);
   padding-right: var(--space-1);
 }
-.careNoteHint {
-  font-size: var(--font-sm);
-  color: var(--neutral-200);
+.careNoteInfo {
+  display: inline-flex;
+  align-items: center;
+  cursor: default;
 }
 .careNoteEmpty {
   display: flex;
@@ -267,6 +268,18 @@
   color: var(--neutral-400);
   line-height: 1.2;
   white-space: pre-wrap;
+}
+/* @mentions and "/" links in a saved note, styled like the note box's chips. */
+.careNoteBody [data-mention-name] {
+  color: var(--secondary-300);
+  font-weight: 500;
+}
+.careNoteBody [data-link-id] {
+  padding: 0 var(--space-1);
+  border-radius: var(--space-1);
+  background: var(--primary-100);
+  color: var(--primary-300);
+  font-weight: 500;
 }
 .careNoteMeta {
   display: inline-flex;

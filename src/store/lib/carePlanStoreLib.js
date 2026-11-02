@@ -763,6 +763,7 @@ function mapCarePlanAuditRow(row) {
     actor: row.actor || '',
     programCode: row.program_code || '',
     createdAt: row.created_at,
+    meta: row.meta || null,
   };
 }
 

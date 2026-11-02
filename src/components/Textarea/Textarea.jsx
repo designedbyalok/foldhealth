@@ -10,6 +10,9 @@ import {
   collectMentions,
   detectMention,
   caretAfter,
+  createLinkChip,
+  collectLinks,
+  hydrateChips,
 } from './mentions';
 import styles from './Textarea.module.css';
 import { sanitizeRichText } from '../../lib/sanitizeHtml';
@@ -77,6 +80,11 @@ export const Textarea = forwardRef(function Textarea({
   mentions = false,
   mentionUsers,
   onMentionsChange,
+  // Links: richText-only. "/" pops a picker of records to reference, each
+  // `{ id, kind, label, group?, icon?, meta? }`; picked ones sit in the text
+  // as chips and `onLinksChange` reports them as `{ id, kind, label }`.
+  links,
+  onLinksChange,
   // Plain mode: web links in the text show as underlined info-colored links
   // (a layer under the textarea draws them; editing and selection are
   // unchanged). MessageComposer uses the same layer (LinkHighlightTextarea).
@@ -167,6 +175,8 @@ export const Textarea = forwardRef(function Textarea({
       mentions={mentions}
       mentionUsers={mentionUsers}
       onMentionsChange={onMentionsChange}
+      links={links}
+      onLinksChange={onLinksChange}
       onChange={onChange}
       value={value}
       defaultValue={defaultValue}
@@ -269,6 +279,8 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
   mentions,
   mentionUsers,
   onMentionsChange,
+  links,
+  onLinksChange,
   onChange,
   value,
   defaultValue,
@@ -301,6 +313,7 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
     const safe = sanitizeRichText(value ?? '');
     if (editorRef.current && editorRef.current.innerHTML !== safe) {
       editorRef.current.innerHTML = safe;
+      hydrateChips(editorRef.current);
       numberListItems(editorRef.current);
     }
   }, [richText, isControlled, value]);
@@ -322,17 +335,24 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
 
   // ── Mention state (richText only) ──────────────────────────────────
   const mentionsOn = !!(richText && mentions && Array.isArray(mentionUsers));
-  const [mentionCtx, setMentionCtx] = useState(null); // { range, query } | null
+  const linksOn = !!(richText && Array.isArray(links));
+  const triggersOn = mentionsOn || linksOn;
+  const [mentionCtx, setMentionCtx] = useState(null); // { trigger, range, query } | null
   const [mentionIdx, setMentionIdx] = useState(0);
+  const detectTrigger = (el) => (mentionsOn && detectMention(el, '@')) || (linksOn && detectMention(el, '/')) || null;
   const mentionMatches = useMemo(() => {
-    if (!mentionCtx || !mentionsOn) return [];
-    const q = (mentionCtx.query || '').toLowerCase();
+    if (!mentionCtx) return [];
+    const q = (mentionCtx.query || '').trim().toLowerCase();
+    if (mentionCtx.trigger === '/') {
+      const pool = links || [];
+      return (q ? pool.filter(l => (l.label || '').toLowerCase().includes(q)) : pool).slice(0, 12);
+    }
     const pool = mentionUsers || [];
     const filtered = q
       ? pool.filter(u => (u.name || '').toLowerCase().includes(q))
       : pool;
     return filtered.slice(0, 8);
-  }, [mentionCtx, mentionsOn, mentionUsers]);
+  }, [mentionCtx, mentionUsers, links]);
   useEffect(() => { setMentionIdx(0); }, [mentionCtx?.query]);
 
   const handleRichInput = () => {
@@ -347,7 +367,7 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
     const html = el.innerHTML;
     // Use the shared serializer so mention chips report as "@Name" and
     // don't inflate the plain-text length with their inner HTML.
-    const plain = mentionsOn ? serializePlain(el) : (el.innerText || '');
+    const plain = triggersOn ? serializePlain(el) : (el.innerText || '');
     // Enforce maxLength on the serialized plain-text length so the counter
     // and the cap agree (an <b>bold</b> tag doesn't cost characters).
     if (maxLength && plain.length > maxLength) {
@@ -357,17 +377,16 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
     if (!isControlled) setText(html);
     emittedRef.current = html;
     onChange?.(html, plain);
-    if (mentionsOn) {
-      setMentionCtx(detectMention(el));
-      onMentionsChange?.(collectMentions(el));
-    }
+    if (triggersOn) setMentionCtx(detectTrigger(el));
+    if (mentionsOn) onMentionsChange?.(collectMentions(el));
+    if (linksOn) onLinksChange?.(collectLinks(el));
   };
 
   const handleRichSelect = () => {
-    if (!mentionsOn) return;
+    if (!triggersOn) return;
     const el = editorRef.current;
     if (!el) return;
-    setMentionCtx(detectMention(el));
+    setMentionCtx(detectTrigger(el));
   };
 
   const insertMentionChip = (user) => {
@@ -375,7 +394,7 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
     if (!el || !mentionCtx) return;
     el.focus();
     mentionCtx.range.deleteContents();
-    const chip = createMentionChip(user);
+    const chip = mentionCtx.trigger === '/' ? createLinkChip(user) : createMentionChip(user);
     const space = document.createTextNode(' ');
     mentionCtx.range.insertNode(space);
     mentionCtx.range.insertNode(chip);
@@ -386,7 +405,7 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
   };
 
   const handleRichKeyDown = (e) => {
-    const mentionOpen = mentionsOn && mentionCtx && mentionMatches.length > 0;
+    const mentionOpen = triggersOn && mentionCtx && mentionMatches.length > 0;
     // Enter on an empty list item steps out of the list (see richTextLists).
     if (!mentionOpen && e.key === 'Enter' && !e.shiftKey && exitEmptyListItem(editorRef.current)) {
       e.preventDefault();
@@ -698,8 +717,9 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
         </span>
       )}
 
-      {mentionsOn && mentionCtx && mentionMatches.length > 0 && editorRef.current && (
+      {triggersOn && mentionCtx && mentionMatches.length > 0 && editorRef.current && (
         <MentionMenu
+          linkMode={mentionCtx.trigger === '/'}
           anchor={editorRef.current}
           matches={mentionMatches}
           activeIdx={mentionIdx}
@@ -710,11 +730,16 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
   );
 });
 
-// Portaled @mention picker: anchored under (or above) the editor. Kept
-// inline so the enhanced textarea is a self-contained primitive with no
-// cross-package coupling.
-function MentionMenu({ anchor, matches, activeIdx, onPick }) {
+// Portaled @mention (or "/" link) picker: anchored under (or above) the
+// editor. Kept inline so the enhanced textarea is a self-contained primitive
+// with no cross-package coupling. Links show under their group's heading.
+function MentionMenu({ anchor, matches, activeIdx, onPick, linkMode = false }) {
   const [pos, setPos] = useState(null);
+  const menuRef = useRef(null);
+  // Arrow keys can walk past the visible rows of a long list.
+  useEffect(() => {
+    menuRef.current?.querySelectorAll('[role="menuitem"]')[activeIdx]?.scrollIntoView?.({ block: 'nearest' });
+  }, [activeIdx, pos]);
   useEffect(() => {
     const compute = () => {
       const r = anchor.getBoundingClientRect();
@@ -735,8 +760,24 @@ function MentionMenu({ anchor, matches, activeIdx, onPick }) {
   }, [anchor, matches.length]);
   if (!pos) return null;
   return createPortal(
-    <div className={styles.mentionMenu} style={{ top: pos.top, left: pos.left, width: pos.width }} role="menu">
-      {matches.map((u, i) => (
+    <div ref={menuRef} className={styles.mentionMenu} style={{ top: pos.top, left: pos.left, width: pos.width }} role="menu">
+      {matches.map((u, i) => (linkMode ? (
+        <div key={`${u.kind}:${u.id}`} className={styles.linkOption}>
+          {u.group && u.group !== matches[i - 1]?.group && (
+            <span className={styles.linkGroup}>{u.group}</span>
+          )}
+          <button
+            type="button"
+            role="menuitem"
+            className={[styles.mentionItem, i === activeIdx ? styles.mentionItemActive : ''].filter(Boolean).join(' ')}
+            onMouseDown={(e) => { e.preventDefault(); onPick(u); }}
+          >
+            {u.icon && <Icon name={u.icon} size={16} color="var(--neutral-300)" />}
+            <span className={styles.mentionName}>{u.label}</span>
+            {u.meta && <span className={styles.mentionRole}>{u.meta}</span>}
+          </button>
+        </div>
+      ) : (
         <button
           key={u.id || u.name}
           type="button"
@@ -750,7 +791,7 @@ function MentionMenu({ anchor, matches, activeIdx, onPick }) {
           <span className={styles.mentionName}>{u.name}</span>
           {u.role && <span className={styles.mentionRole}>{u.role}</span>}
         </button>
-      ))}
+      )))}
     </div>,
     document.body,
   );
