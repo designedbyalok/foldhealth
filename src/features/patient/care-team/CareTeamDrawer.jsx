@@ -11,13 +11,8 @@ import { toast } from '../../../components/Toast/sonnerToast';
 import { useAppStore } from '../../../store/useAppStore';
 import { PersonOption } from '../../messages/comms/PersonOption';
 import { usePatientCareTeam } from './usePatientCareTeam';
+import { CARE_TEAM_ROLES } from './careTeamRoles';
 import styles from './CareTeamDrawer.module.css';
-
-// The roles a person holds on a patient's care team (the grey tag after their name).
-const CARE_TEAM_ROLES = [
-  'Plan PCP', 'Current PCP', 'Billing Practitioner', 'Care Coordinator', 'SNP Nurse',
-  'TOC Nurse', 'CBP Nurse', 'Medical Recorder', 'Pharmacist', 'Social Worker',
-];
 
 const initialsOf = (name) => String(name || '').replace(/^Dr\.?\s+/i, '').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
 const keyOf = (m) => m.id || `${m.userId || m.name}|${m.role || ''}`;
