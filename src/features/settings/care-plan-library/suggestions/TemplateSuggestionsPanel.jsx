@@ -3,7 +3,7 @@ import { SectionTitleBar } from '../../../../components/SectionTitleBar/SectionT
 import { WorklistShell } from '../../../../components/WorklistShell/WorklistShell';
 import { FilterChip } from '../../../../components/FilterChip/FilterChip';
 import { Badge } from '../../../../components/Badge/Badge';
-import { Button } from '../../../../components/Button/Button';
+import { ActionButton } from '../../../../components/ActionButton/ActionButton';
 import { Alert } from '../../../../components/Alert/Alert';
 import { Icon } from '../../../../components/Icon/Icon';
 import { TableSkeleton } from '../../../../components/TableSkeleton/TableSkeleton';
@@ -14,11 +14,11 @@ import { useCanManageTemplates } from '../lib/useCanManageTemplates';
 import styles from './TemplateSuggestionsPanel.module.css';
 
 const KINDS = {
-  retire: { label: 'Retire', tone: 'grey', icon: 'solar:archive-down-linear', accept: 'Retire' },
-  abandon: { label: 'High abandon', tone: 'warning', icon: 'solar:undo-left-round-linear', accept: 'Revise' },
-  goal_attainment: { label: 'Low goal attainment', tone: 'error', icon: 'solar:flag-linear', accept: 'Revise' },
-  split: { label: 'Split', tone: 'info', icon: 'solar:scissors-linear', accept: 'Split' },
-  merge: { label: 'Merge', tone: 'primary', icon: 'solar:merge-linear', accept: 'Merge' },
+  retire: { label: 'Retire', tone: 'grey', accept: 'Retire' },
+  abandon: { label: 'High Abandon', tone: 'warning', accept: 'Revise' },
+  goal_attainment: { label: 'Low Goal Attainment', tone: 'error', accept: 'Revise' },
+  split: { label: 'Split', tone: 'info', accept: 'Split' },
+  merge: { label: 'Merge', tone: 'primary', accept: 'Merge' },
 };
 const KIND_BY_LABEL = Object.fromEntries(Object.entries(KINDS).map(([k, v]) => [v.label, k]));
 const STATUS_LABEL = { open: 'Open', accepted: 'Accepted', dismissed: 'Dismissed', resolved: 'Resolved' };
@@ -28,16 +28,27 @@ const STATUS_BY_LABEL = Object.fromEntries(Object.entries(STATUS_LABEL).map(([k,
 const COLUMNS = [
   { key: 'template', label: 'Template', sortKey: 'templateName', sticky: 'left', left: 0, width: 280 },
   { key: 'kind', label: 'Suggestion', sortKey: 'kind', width: 170 },
-  { key: 'why', label: 'Why', width: 460 },
-  { key: 'detected', label: 'Detected', sortKey: 'detectedAt', width: 110 },
+  { key: 'why', label: 'Why', width: 480 },
+  { key: 'detected', label: 'Detected', sortKey: 'detectedAt', width: 120 },
   { key: 'status', label: 'Status', sortKey: 'status', width: 110 },
-  { key: 'actions', label: 'Actions', sticky: 'right', width: 190 },
+  { key: 'actions', label: 'Actions', sticky: 'right', width: 96 },
 ];
 
 const fmtDay = (iso) => {
   if (!iso) return '-';
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? '-' : d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+};
+
+// "Today, 1:20 PM", "Yesterday, 7:15 AM" or "10/28/2026, 7:15 AM".
+const fmtRun = (iso) => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '-';
+  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  const days = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(d).setHours(0, 0, 0, 0)) / 86400000);
+  if (days === 0) return `Today, ${time}`;
+  if (days === 1) return `Yesterday, ${time}`;
+  return `${fmtDay(iso)}, ${time}`;
 };
 
 /**
@@ -55,6 +66,7 @@ export function TemplateSuggestionsPanel({ tabs, activeTab, onTabChange }) {
   const didFetch = useAppStore(s => s.templateSuggestionsDidFetch);
   const missing = useAppStore(s => s.templateSuggestionsMissing);
   const wording = useAppStore(s => s.templateSuggestionsWording);
+  const lastRun = useAppStore(s => s.templateAnalysisLastRun);
   const fetchTemplateSuggestions = useAppStore(s => s.fetchTemplateSuggestions);
   const runTemplateAnalysis = useAppStore(s => s.runTemplateAnalysis);
   const decideTemplateSuggestion = useAppStore(s => s.decideTemplateSuggestion);
@@ -80,6 +92,9 @@ export function TemplateSuggestionsPanel({ tabs, activeTab, onTabChange }) {
   const [kindFilter, setKindFilter] = useState([]);
   const [statusFilter, setStatusFilter] = useState(['Open']);
   const [sort, setSort] = useState({ key: 'detectedAt', dir: 'desc' });
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(15);
   const [busyId, setBusyId] = useState(null);
   const [running, setRunning] = useState(false);
 
@@ -102,6 +117,11 @@ export function TemplateSuggestionsPanel({ tabs, activeTab, onTabChange }) {
     const dir = sort.dir === 'asc' ? 1 : -1;
     return list.sort((a, b) => String(a[sort.key] || '').localeCompare(String(b[sort.key] || '')) * dir);
   }, [suggestions, templateById, search, kindFilter, statusFilter, sort]);
+
+  // Narrowing the list can leave the page past its end; a new search or filter starts from the first page.
+  const currentPage = Math.min(page, Math.max(1, Math.ceil(rows.length / perPage)));
+  const paged = rows.slice((currentPage - 1) * perPage, currentPage * perPage);
+  const fromFirstPage = setter => (value) => { setter(value); setPage(1); };
 
   const onSort = key => setSort(cur => ({ key, dir: cur.key === key && cur.dir === 'asc' ? 'desc' : 'asc' }));
 
@@ -141,21 +161,12 @@ export function TemplateSuggestionsPanel({ tabs, activeTab, onTabChange }) {
           </span>
         </td>
         <td className={styles.td}>
-          <Badge tone={kind.tone} size="S" label={kind.label} icon={kind.icon} />
+          <Badge tone={kind.tone} size="S" label={kind.label} />
         </td>
         <td className={styles.td}>
-          <span className={styles.why}>
-            {s.aiRationale ? (
-              <>
-                <span className={styles.aiText}>
-                  <Icon name="solar:magic-stick-3-linear" size={14} color="var(--primary-300)" />
-                  <span>{s.aiRationale}</span>
-                </span>
-                <span className={styles.whySub}>{s.rationale}</span>
-              </>
-            ) : (
-              <span className={styles.whyText}>{s.rationale}</span>
-            )}
+          <span className={styles.why} title={s.aiRationale ? `${s.aiRationale}\n\n${s.rationale}` : s.rationale}>
+            <span className={styles.whyText}>{s.aiRationale || s.rationale}</span>
+            {s.aiRationale && <span className={styles.whySub}>{s.rationale}</span>}
           </span>
         </td>
         <td className={`${styles.td} ${styles.nowrap}`}>{fmtDay(s.detectedAt)}</td>
@@ -167,13 +178,18 @@ export function TemplateSuggestionsPanel({ tabs, activeTab, onTabChange }) {
             <span className={styles.actionCell}>
               {isOpen ? (
                 <>
-                  <Button variant="ghost" size="sm" disabled={busy} onClick={() => decide(s, 'dismissed')}>Dismiss</Button>
-                  <Button variant="soft" size="sm" disabled={busy} onClick={() => decide(s, 'accepted')}>{kind.accept}</Button>
+                  <ActionButton icon="solar:check-circle-linear" size="sm" tooltip={kind.accept} tooltipLeft disabled={busy} onClick={() => decide(s, 'accepted')} />
+                  <ActionButton icon="solar:close-circle-linear" size="sm" tooltip="Dismiss" tooltipLeft disabled={busy} onClick={() => decide(s, 'dismissed')} />
                 </>
               ) : s.status !== 'resolved' && (
-                <Button variant="ghost" size="sm" disabled={busy} onClick={() => reopenTemplateSuggestion(s.id)}>
-                  {s.status === 'accepted' && s.kind === 'retire' ? 'Restore' : 'Reopen'}
-                </Button>
+                <ActionButton
+                  icon="solar:restart-linear"
+                  size="sm"
+                  tooltip={s.status === 'accepted' && s.kind === 'retire' ? 'Restore' : 'Reopen'}
+                  tooltipLeft
+                  disabled={busy}
+                  onClick={() => reopenTemplateSuggestion(s.id)}
+                />
               )}
             </span>
           )}
@@ -184,28 +200,39 @@ export function TemplateSuggestionsPanel({ tabs, activeTab, onTabChange }) {
 
   const showSkeleton = (loading && !didFetch) || !libraryDidFetch;
   const openCount = suggestions.filter(s => s.status === 'open').length;
+  const activeFilters = statusFilter.length + kindFilter.length;
   return (
     <div className={styles.wrapper}>
       <SectionTitleBar
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={onTabChange}
-        actions={['search']}
+        actions={['search', 'filter']}
+        onFilter={() => setFiltersOpen(v => !v)}
+        filterActive={filtersOpen}
+        filterBadgeCount={activeFilters || undefined}
         searchPlaceholder="Search suggestions…"
         searchValue={search}
-        onSearchChange={setSearch}
+        onSearchChange={fromFirstPage(setSearch)}
         primaryActionLabel={canManage && !missing ? (running ? 'Analyzing…' : 'Run Analysis') : undefined}
         primaryActionIcon="solar:refresh-linear"
         primaryActionDisabled={running}
         onPrimaryAction={runNow}
+        rightExtras={(wording || lastRun) && (
+          <span
+            className={styles.lastRun}
+            title={lastRun ? `${lastRun.source === 'manual' ? `Run by ${lastRun.runBy || 'a user'}` : 'Nightly run'}, ${lastRun.openCount} open. Analyzed nightly from template runs and goal outcomes.` : undefined}
+          >
+            {wording ? 'Writing explanations…' : `Last run: ${fmtRun(lastRun.ranAt)}`}
+          </span>
+        )}
       />
-      <div className={styles.filterBar}>
-        <FilterChip label="Status" options={Object.values(STATUS_LABEL)} selected={statusFilter} onChange={setStatusFilter} />
-        <FilterChip label="Suggestion" options={Object.values(KINDS).map(k => k.label)} selected={kindFilter} onChange={setKindFilter} />
-        <span className={styles.filterNote}>
-          {wording ? 'Writing explanations…' : 'Analyzed nightly from template runs and goal outcomes'}
-        </span>
-      </div>
+      {filtersOpen && (
+        <div className={styles.filterBar}>
+          <FilterChip label="Status" options={Object.values(STATUS_LABEL)} selected={statusFilter} onChange={fromFirstPage(setStatusFilter)} />
+          <FilterChip label="Suggestion" options={Object.values(KINDS).map(k => k.label)} selected={kindFilter} onChange={fromFirstPage(setKindFilter)} />
+        </div>
+      )}
       {missing && (
         <div className={styles.notice}>
           <Alert tone="info" message="Run supabase/care_plan_template_suggestions_migration.sql to start the nightly template analysis." />
@@ -218,18 +245,23 @@ export function TemplateSuggestionsPanel({ tabs, activeTab, onTabChange }) {
           <WorklistShell
             header={null}
             columns={COLUMNS}
-            rows={rows}
+            rows={paged}
             renderRow={renderRow}
             sortKey={sort.key}
             sortDir={sort.dir}
             onSort={onSort}
+            page={currentPage}
+            perPage={perPage}
+            totalItems={rows.length}
+            onPageChange={setPage}
+            onPageSizeChange={(n) => { setPerPage(n); setPage(1); }}
             emptyState={(
               <div className={styles.emptyState}>
                 <Icon name="solar:magic-stick-3-linear" size={32} color="var(--neutral-150)" />
                 <p>No suggestions match these filters.</p>
               </div>
             )}
-            minTableWidth={1320}
+            minTableWidth={1256}
           />
         )}
       </div>
