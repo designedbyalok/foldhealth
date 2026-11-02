@@ -405,6 +405,10 @@ const mapReminderRow = r => ({
   createdAt: r.created_at,
 });
 
+// Reasons picked in the status dialog, waiting for the save they belong to
+// (recordGbiStatusHistory reads them when the save's audit is written).
+const pendingStatusReasons = new Map();
+
 export const useAppStore = create((set, get) => ({
   ...createShellSlice(set, get),
   ...createAutomationsSlice(set, get),
@@ -5414,12 +5418,68 @@ export const useAppStore = create((set, get) => ({
   // it already carries: those writes restore what should have been there, so
   // they must not read as care decisions in History.
   carePlanAuditSuppressed: false,
+  // ── GBI status reasons (gbi_status_history_migration.sql, #62) ──
+  // A status change asks for a reason first: the caller awaits
+  // requestGbiStatusReason({ items: [{ type, id, title, from }], to, source })
+  // and gets { reason, note } or null when cancelled. GbiStatusReasonDialog
+  // renders the open request.
+  gbiStatusReasonRequest: null,
+  requestGbiStatusReason: ({ items, to, source = 'manual' }) => new Promise((resolve) => {
+    get().gbiStatusReasonRequest?.resolve(null);
+    set({ gbiStatusReasonRequest: { items, to, source, resolve } });
+  }),
+  resolveGbiStatusReason: (result) => {
+    const req = get().gbiStatusReasonRequest;
+    set({ gbiStatusReasonRequest: null });
+    if (!req) return;
+    if (result) {
+      for (const it of req.items) {
+        pendingStatusReasons.set(String(it.id), { reason: result.reason || null, note: result.note || null, source: req.source, at: Date.now() });
+      }
+    }
+    req.resolve(result);
+  },
+  // Records a reason without asking, for a status the app sets as part of
+  // another action (e.g. completing an assessment goal sets it to Met).
+  presetGbiStatusReason: (ids, { reason, note = null, source = 'manual' }) => {
+    for (const id of ids) pendingStatusReasons.set(String(id), { reason, note, source, at: Date.now() });
+  },
+  // Writes a gbi_status_history row for each status change in an audit batch.
+  recordGbiStatusHistory: (patientId, program, entries, actor) => {
+    const rows = entries
+      .filter(e => e.action === 'status_changed' && ['goal', 'intervention', 'barrier'].includes(e.entityType) && e.entityId != null)
+      .map((e) => {
+        const id = String(e.entityId);
+        const pending = pendingStatusReasons.get(id);
+        if (pending) pendingStatusReasons.delete(id);
+        const fresh = pending && Date.now() - pending.at < 120000 ? pending : null;
+        const [from, to] = e.history ? [e.history.from, e.history.to] : String(e.detail || '').split(': ').pop().split(' → ');
+        if (!to) return null;
+        return {
+          patient_id: String(patientId), program_id: String(program.id),
+          entity_type: e.entityType, entity_id: id, entity_title: e.summary || '',
+          from_status: from || null, to_status: to,
+          reason: fresh?.reason ?? e.history?.reason ?? null, note: fresh?.note ?? null,
+          source: fresh?.source || e.history?.source || 'manual',
+          changed_by: e.history?.source === 'automation' ? 'Automations' : actor,
+        };
+      })
+      .filter(Boolean);
+    if (!rows.length) return;
+    supabase.from('gbi_status_history').insert(rows).then(({ error }) => {
+      // Until the migration has run there is no table: the change itself still saves.
+      if (error && !/does not exist|schema cache|42P01|PGRST205/i.test(`${error.code} ${error.message}`)) {
+        console.warn('recordGbiStatusHistory:', error.message);
+      }
+    });
+  },
   logCarePlanAudit: async (patientId, program, entry) => {
     if (get().carePlanAuditSuppressed) return true;
     if (!patientId || !program?.id || !entry) return false;
     const list = (Array.isArray(entry) ? entry : [entry]).filter(Boolean);
     if (list.length === 0) return false;
     const actor = get().currentUserProfile?.name || null;
+    get().recordGbiStatusHistory(patientId, program, list, actor);
     const rows = list.map(e => ({
       patient_id: patientId,
       program_id: program.id,
