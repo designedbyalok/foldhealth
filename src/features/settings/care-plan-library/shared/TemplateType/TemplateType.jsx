@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Badge } from '../../../../../components/Badge/Badge';
+import { CollapsibleSection } from '../../../../../components/CollapsibleSection/CollapsibleSection';
 import { IntroCard } from '../../../../../components/IntroCard/IntroCard';
 import { NumberStepper } from '../../../../../components/NumberStepper/NumberStepper';
 import { RadioOptionGroup } from '../../../../../components/RadioOptionGroup/RadioOptionGroup';
@@ -12,15 +13,18 @@ import {
 import { TEMPLATE_TYPE_CHOICES } from './templateType';
 import styles from './TemplateType.module.css';
 
-/** "Template Type": general, chronic or episodic, each with a line saying when to use it. */
-export function TemplateTypeChoice({ value, onChange, label = 'Template Type' }) {
+/**
+ * "Template Type": general, chronic or episodic, each with a line saying when
+ * to use it. `details` ({ [type]: node }) shows under that type while it's picked.
+ */
+export function TemplateTypeChoice({ value, onChange, label = 'Template Type', details = {} }) {
   return (
     <RadioOptionGroup
       label={label}
       name="template-type"
       value={value}
       onChange={onChange}
-      options={TEMPLATE_TYPE_CHOICES}
+      options={TEMPLATE_TYPE_CHOICES.map(c => ({ ...c, content: details[c.value] }))}
     />
   );
 }
@@ -62,22 +66,24 @@ export function EpisodeSettings({ value, onChange }) {
       <IntroCard
         icon="solar:calendar-mark-linear"
         title="How episodic templates work"
-        description="Use one for care that belongs to a single event rather than a long-term condition."
+        description="For care that belongs to one event, such as a discharge, rather than a long-term condition."
+        layout="steps"
+        // In the order they happen to the patient.
         items={[
           {
             icon: 'solar:play-circle-linear',
             title: 'Starts when applied',
-            description: 'Applying it enrolls the patient in its program with a care plan of its own. Day 1 is that day, and the end date is confirmed then.',
-          },
-          {
-            icon: 'solar:calendar-linear',
-            title: 'Ends on its own',
-            description: 'After its last day the episode closes and its goals and interventions move to the plan’s history. It can be extended or ended early.',
+            description: 'The patient is enrolled in its program with a care plan of its own. Day 1 is the day it’s applied.',
           },
           {
             icon: 'solar:pause-circle-linear',
-            title: 'Can pause ongoing plans',
-            description: 'The patient’s other care plans pause during the episode, so their tasks and overdue flags don’t compete with it, and resume when it ends.',
+            title: 'Can pause other plans',
+            description: 'Their tasks and overdue flags step aside during the episode and come back when it ends.',
+          },
+          {
+            icon: 'solar:flag-linear',
+            title: 'Ends on its own',
+            description: 'After its last day it closes and moves to the plan’s history. It can be extended or ended early.',
           },
         ]}
       />
@@ -106,36 +112,41 @@ export function EpisodeSettings({ value, onChange }) {
         </div>
       )}
 
-      <Select
-        label="Runs as program"
-        options={EPISODE_PROGRAM_OPTIONS}
-        value={programCode || ''}
-        onChange={(code) => set({ programCode: code || null })}
-        placeholder="Pick a program"
-        helperText="The patient is enrolled in this program for the episode, and its care plan holds the episode. It closes when the episode ends."
-      />
+      {/* The program and what it pauses have sensible defaults, so they stay folded away. */}
+      <CollapsibleSection icon="solar:tuning-2-linear" title="More controls" defaultOpen={false}>
+        <div className={styles.moreControls}>
+          <Select
+            label="Runs as program"
+            options={EPISODE_PROGRAM_OPTIONS}
+            value={programCode || ''}
+            onChange={(code) => set({ programCode: code || null })}
+            placeholder="Pick a program"
+            helperText="The patient is enrolled in this program for the episode, and its care plan holds the episode. It closes when the episode ends."
+          />
 
-      <div className={styles.pauseField}>
-        <Switch
-          checked={pausesOngoing}
-          onChange={(on) => set({ pausesOngoing: on })}
-          label="Pause the patient’s other care plans during the episode"
-        />
-        <p className={styles.pauseHint}>
-          Suggested when it’s applied. Whoever applies it sees which plans would pause and can change it for that patient.
-        </p>
-      </div>
-      {pausesOngoing && (
-        <Select
-          label="Programs it pauses"
-          multiple
-          options={PAUSABLE_PROGRAM_OPTIONS}
-          value={supersedes}
-          onChange={(codes) => set({ supersedes: codes })}
-          placeholder="All of the patient’s other programs"
-          helperText="Leave empty to pause every other ongoing plan. Other episodes never pause."
-        />
-      )}
+          <div className={styles.pauseField}>
+            <Switch
+              checked={pausesOngoing}
+              onChange={(on) => set({ pausesOngoing: on })}
+              label="Pause the patient’s other care plans during the episode"
+            />
+            <p className={styles.pauseHint}>
+              Suggested when it’s applied. Whoever applies it sees which plans would pause and can change it for that patient.
+            </p>
+          </div>
+          {pausesOngoing && (
+            <Select
+              label="Programs it pauses"
+              multiple
+              options={PAUSABLE_PROGRAM_OPTIONS}
+              value={supersedes}
+              onChange={(codes) => set({ supersedes: codes })}
+              placeholder="All of the patient’s other programs"
+              helperText="Leave empty to pause every other ongoing plan. Other episodes never pause."
+            />
+          )}
+        </div>
+      </CollapsibleSection>
     </div>
   );
 }

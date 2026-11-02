@@ -35,6 +35,11 @@
 
 .optionWrap { display: contents; }
 
+/* A picked option's follow-up field, lined up with the option's label text. */
+.content {
+  padding-left: calc(var(--space-5) + var(--space-2));
+}
+
 /* ── Card variant ── */
 .card {
   /* Circle | label over hint, the circle centred on both lines. */

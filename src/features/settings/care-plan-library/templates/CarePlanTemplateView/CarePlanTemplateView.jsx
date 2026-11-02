@@ -276,7 +276,11 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
           </div>
 
           <div className={styles.field}>
-            <TemplateTypeChoice value={templateType} onChange={setTemplateType} />
+            <TemplateTypeChoice
+              value={templateType}
+              onChange={setTemplateType}
+              details={{ chronic: <ChronicConditionSelect label="Chronic condition" value={conditions} onChange={setConditions} /> }}
+            />
           </div>
 
           {templateType === 'episodic' && (
@@ -294,16 +298,6 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
           <div className={styles.field}>
             <TemplateRenewalChoice value={renewal} onChange={setRenewal} />
           </div>
-
-          {templateType === 'chronic' && (
-            <div className={styles.field}>
-              <ChronicConditionSelect
-                label="Chronic condition"
-                value={conditions}
-                onChange={setConditions}
-              />
-            </div>
-          )}
         </div>
       </div>
 

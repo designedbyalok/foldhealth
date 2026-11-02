@@ -47,6 +47,28 @@ export function buildTemplateCatalog({ goals = [], interventions = [], barriers 
   };
 }
 
+const REFERENCE_MAX_ITEMS = 40;
+
+/**
+ * An existing template the draft starts from, as titles only: what the model
+ * reads, and what the server accepts back (it runs this again on the body).
+ * Entries are strings or `{ title }`.
+ */
+export function buildTemplateReference(template) {
+  if (!template || typeof template !== 'object') return null;
+  const titles = (list) => (Array.isArray(list) ? list : [])
+    .map(e => clip(typeof e === 'string' ? e : e?.title, CARE_PLAN_TITLE_MAX))
+    .filter(Boolean)
+    .slice(0, REFERENCE_MAX_ITEMS);
+  const reference = {
+    name: clip(template.name, CARE_PLAN_NAME_MAX),
+    goals: titles(template.goals),
+    interventions: titles(template.interventions),
+    barriers: titles(template.barriers),
+  };
+  return reference.goals.length || reference.interventions.length || reference.barriers.length ? reference : null;
+}
+
 const libraryRef = {
   libraryId: { type: 'string', nullable: true, description: 'id from the catalog, or null for a new item' },
   title: { type: 'string' },
@@ -133,6 +155,8 @@ export const TEMPLATE_DRAFT_SCHEMA = {
  * `options.libraryOnly`: goals from the catalog only (a draft no one has
  * reviewed yet must not add goals to the library). Interventions and
  * barriers live in the template, so new ones are fine.
+ * `options.reference`: an existing template to base the draft on
+ * (buildTemplateReference).
  */
 export function buildTemplateDraftPrompt(description, catalog, protocol = null, options = {}) {
   const labs = LAB_CATALOG.map(l => `${l.key} = ${l.label} (${l.unit})`).join('; ');
@@ -157,6 +181,13 @@ export function buildTemplateDraftPrompt(description, catalog, protocol = null, 
     '- List the conditions it covers.',
     String(protocol.guidance).slice(0, 8000),
   ] : [];
+  const reference = options.reference;
+  const referenceLines = reference ? [
+    '',
+    `Reference template to base the draft on: ${reference.name || 'Untitled'}.`,
+    '- Start from its goals, interventions and barriers: keep what fits the description, change or drop what does not, and add only what the description asks for.',
+    JSON.stringify({ goals: reference.goals, interventions: reference.interventions, barriers: reference.barriers }),
+  ] : [];
   return [
     'You draft care plan templates for Fold Health care managers. A supervisor reviews and edits every draft before it is published, so propose a sensible starting point, not a final plan.',
     '',
@@ -168,6 +199,7 @@ export function buildTemplateDraftPrompt(description, catalog, protocol = null, 
     `- name: at most ${CARE_PLAN_NAME_MAX} characters. summary: one plain sentence describing the plan's focus.`,
     `- Write titles in the style of the catalog: short, specific, sentence case. No dosing, diagnoses or clinical claims beyond the description${protocol?.guidance ? ' and the protocol' : ''}.`,
     ...protocolLines,
+    ...referenceLines,
     ...categoryLines,
     '',
     'Library catalog (JSON):',

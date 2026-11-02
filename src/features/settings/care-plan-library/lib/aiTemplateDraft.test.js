@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { buildTemplateCatalog, buildTemplateDraftPrompt, normalizeTemplateDraft } from './aiTemplateDraft';
+import { buildTemplateCatalog, buildTemplateDraftPrompt, buildTemplateReference, normalizeTemplateDraft } from './aiTemplateDraft';
 import { draftProvenance, materializeNewGoals, templateDraftToEditor, templateDraftToTemplate, withoutDraftMarks } from './templateDraftToEditor';
 
 vi.mock('../../../../lib/apiFetch', () => ({ apiFetch: vi.fn() }));
@@ -191,5 +191,20 @@ describe('drafting from a protocol with categories', () => {
     const plain = buildTemplateDraftPrompt('A care plan following Harbor CPG.', cat, protocol);
     expect(plain).not.toContain('Categories:');
     expect(plain).toContain('Reuse the library.');
+  });
+
+  it('bases the draft on a reference template when given one', () => {
+    const reference = buildTemplateReference({
+      name: 'Diabetes basics',
+      goals: [{ title: 'Improve A1C control' }, undefined],
+      interventions: ['Check A1C'],
+      barriers: [],
+    });
+    expect(reference).toEqual({ name: 'Diabetes basics', goals: ['Improve A1C control'], interventions: ['Check A1C'], barriers: [] });
+    const prompt = buildTemplateDraftPrompt('A plan for newly diagnosed diabetes.', cat, null, { reference });
+    expect(prompt).toContain('Reference template to base the draft on: Diabetes basics.');
+    expect(prompt).toContain('"goals":["Improve A1C control"]');
+    expect(buildTemplateDraftPrompt('A plan for newly diagnosed diabetes.', cat)).not.toContain('Reference template');
+    expect(buildTemplateReference({ name: 'Empty', goals: [] })).toBeNull();
   });
 });
