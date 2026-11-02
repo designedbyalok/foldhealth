@@ -80,14 +80,14 @@ export const COHORT_DIMENSIONS = [
 ];
 export const NO_VALUE = '(none)';
 
-/** Counts of plans per value of each dimension, plus per version, for the impact summary. */
-export function impactSummary(rows) {
+/** Counts of plans per value of each dimension, plus per version (`versionOf`), for the impact summary. */
+export function impactSummary(rows, versionOf = r => `v${r.versionNumber ?? 1}`) {
   const count = (pick) => {
     const m = new Map();
     for (const r of rows) for (const v of pick(r)) m.set(v, (m.get(v) || 0) + 1);
     return [...m.entries()].sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]))).map(([value, n]) => ({ value, n }));
   };
-  const out = { plans: rows.length, patients: new Set(rows.map(r => r.patientId)).size, byVersion: count(r => [`v${r.versionNumber ?? 1}`]) };
+  const out = { plans: rows.length, patients: new Set(rows.map(r => r.patientId)).size, byVersion: count(r => [versionOf(r)]) };
   for (const d of COHORT_DIMENSIONS) out[d.key] = count(r => { const v = d.read(r); return v.length ? v : [NO_VALUE]; });
   return out;
 }
