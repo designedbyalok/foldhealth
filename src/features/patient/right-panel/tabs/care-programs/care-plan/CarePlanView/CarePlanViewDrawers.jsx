@@ -31,6 +31,21 @@ import { ApplyAgainDialog } from './ApplyAgainDialog';
 import { interventionActivityEntries } from './carePlanLinkedItems';
 import styles from './CarePlanView.module.css';
 
+// The note box opens ready to type at the end of the saved note. The editor's
+// value is written after mount, so the caret is placed a frame later.
+const focusAtEnd = (el) => {
+  if (!el) return;
+  requestAnimationFrame(() => {
+    el.focus();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+  });
+};
+
 /** Drawers, dialogs, and bulk modals for the care plan step (presentation only). */
 export function CarePlanViewDrawers(d) {
   const {
@@ -43,7 +58,8 @@ export function CarePlanViewDrawers(d) {
     addBarriersDrawerOpen, setAddBarriersDrawerOpen, barrierAddGoalIdRef, handleAddBarriersFromPicker,
     barrierDrawer, setBarrierDrawer, handleAddBarrier, shareOpen, clearCarePlanShareRequest, canEdit,
     historyOpen, setHistoryOpen, versionsOpen, setVersionsOpen, signOpen, setSignOpen, doSign, signNote, setSignNote,
-    noteOpen, closeNoteDrawer, doAddNote, noteText, setNoteText, noteDirty, latestPlanNote, noteTimelineEntries,
+    noteOpen, closeNoteDrawer, doAddNote, noteText, setNoteText, notePlain, setNotePlain, noteDirty, latestPlanNote, noteTimelineEntries,
+    noteMentionUsers, noteLinkItems,
     noteDiscardOpen, setNoteDiscardOpen, noteDeleteOpen, setNoteDeleteOpen, doClearCareNote,
     problemOpen, setProblemOpen, doAddProblem, problemText, setProblemText,
     trendsOpen, setTrendsOpen, measurements,
@@ -275,7 +291,7 @@ export function CarePlanViewDrawers(d) {
           primaryAction={
             <Button
               onClick={doAddNote}
-              disabled={!noteText.trim() || !noteDirty}
+              disabled={!notePlain.trim() || !noteDirty}
             >
               {latestPlanNote ? 'Update Note' : 'Add Note'}
             </Button>
@@ -283,10 +299,18 @@ export function CarePlanViewDrawers(d) {
         >
           <div className={styles.drawerBody}>
             <p className={styles.drawerHint}>Records a maintenance note on the signed plan without editing it, it appears in the plan's History.</p>
-            <div className={styles.drawerField}>
-              <span className={styles.drawerLabel}>Note <span className={styles.required}>*</span></span>
-              <Textarea autoFocus value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="e.g. Reviewed with patient; no changes needed." rows={3} />
-            </div>
+            <Textarea
+              ref={focusAtEnd}
+              title="Note"
+              mandatory
+              richText
+              mentions
+              mentionUsers={noteMentionUsers}
+              links={noteLinkItems}
+              value={noteText}
+              onChange={(html, plain) => { setNoteText(html); setNotePlain(plain || ''); }}
+              placeholder="e.g. Reviewed with patient; no changes needed. Type @ to tag someone, / to link a goal, intervention or barrier."
+            />
             {noteTimelineEntries.length > 0 && (
               <div className={styles.noteTimeline}>
                 <span className={styles.noteTimelineLabel}>Change log</span>

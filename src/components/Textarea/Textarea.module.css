@@ -365,6 +365,28 @@
 .mentionName { flex: 1; }
 .mentionRole { font-size: var(--font-sm); color: var(--neutral-300); }
 
+/* "/" link chip: a referenced record, read as its label. */
+.linkChip {
+  display: inline;
+  padding: 0 var(--space-1);
+  border-radius: var(--space-1);
+  background: var(--primary-100);
+  color: var(--primary-300);
+  font-weight: 500;
+  user-select: all;
+}
+.linkOption {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.linkGroup {
+  padding: var(--space-1) var(--space-2) 0;
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--neutral-300);
+}
+
 /* Supporting text: helper below the card. Error state re-tints it red. */
 .enhSupporting {
   font-size: var(--font-sm);

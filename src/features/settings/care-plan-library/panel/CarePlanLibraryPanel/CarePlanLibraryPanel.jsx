@@ -1172,6 +1172,7 @@ export function CarePlanLibraryPanel() {
         return (
           <Editor
             kind={draft.interventionKind}
+            taskTemplate
             title={draft.id ? 'Edit Intervention' : 'Add Intervention'}
             intervention={draft.id ? interventionDrawerValues(draft) : undefined}
             // Only a new intervention can switch type, an existing one's kind

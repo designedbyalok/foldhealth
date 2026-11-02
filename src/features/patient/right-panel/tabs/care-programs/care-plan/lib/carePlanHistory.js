@@ -57,6 +57,7 @@ export function liveActivityType(row) {
 export function isStructuralRow(row) {
   if (!row || liveActivityType(row)) return false;
   if (NOTE_ACTIONS.has(row.action) || PLAN_EVENT_ACTIONS.has(row.action)) return false;
+  if (row.action === 'note_linked') return false;
   if (row.action === 'signed' || row.action === 'value_changed') return false;
   if (row.action === 'goal_linked' || row.action === 'goal_unlinked') return false; // goal_link_changed says it
   return true;
@@ -258,6 +259,18 @@ export function activityEntries(audit, measurements, goals) {
         body: verb === 'removed' ? '' : e.detail,
         previous: verb === 'added' ? '' : previous,
         at: e.createdAt, actor: e.actor || '',
+      });
+      continue;
+    }
+    if (e.action === 'note_linked') {
+      const noun = NOUN[e.entityType] || 'Item';
+      const itemTitle = e.entityType === 'goal' ? goalTitle(e.entityId) || e.summary : e.summary;
+      out.push({
+        id: `a-${e.id}`, kind: 'activity', type: 'item_note', entityType: e.entityType, entityId: e.entityId ?? null,
+        headline: `Linked in a Care Plan Note: ${noun}: ${itemTitle}`,
+        headlineAction: 'Linked in a Care Plan Note:',
+        headlineSubject: `${noun}: ${itemTitle}`,
+        title: itemTitle, body: e.detail, previous: '', at: e.createdAt, actor: e.actor || '',
       });
       continue;
     }

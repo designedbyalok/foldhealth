@@ -8,8 +8,10 @@
 import badgeStyles from '../Badge/Badge.module.css';
 import styles from './Textarea.module.css';
 
+const BLOCK_TAGS = new Set(['DIV', 'P', 'LI']);
+
 // Emit plain text from a richText editor node: text nodes verbatim,
-// mention chips as "@Name", <br> as newline.
+// mention chips as "@Name", link chips as their label, <br> as newline.
 export function serializePlain(root) {
   if (!root) return '';
   let out = '';
@@ -20,9 +22,13 @@ export function serializePlain(root) {
       const el = /** @type {HTMLElement} */ (node);
       if (el.dataset?.mentionName) {
         out += `@${el.dataset.mentionName}`;
+      } else if (el.dataset?.linkLabel) {
+        out += el.dataset.linkLabel;
       } else if (el.tagName === 'BR') {
         out += '\n';
       } else {
+        // A new line (Enter wraps it in a div or p) starts on its own line.
+        if (BLOCK_TAGS.has(el.tagName) && out && !out.endsWith('\n')) out += '\n';
         // Recurse: bold/italic/list wrappers hold plain text underneath.
         out += serializePlain(el);
       }
@@ -66,10 +72,55 @@ export function collectMentions(root) {
   return out;
 }
 
-// Detect the "@query" fragment before the caret. Walks the current text
-// node backwards to the last "@" and returns { range, query } iff that
-// "@" is at start-of-input or preceded by whitespace, otherwise null.
-export function detectMention(editor) {
+// Build the DOM node for a "/" link chip: a reference to a record (a care
+// plan goal, say) that reads as its label and carries its id and kind.
+export function createLinkChip(item) {
+  const chip = document.createElement('span');
+  chip.contentEditable = 'false';
+  chip.className = styles.linkChip;
+  chip.dataset.linkId = String(item.id);
+  chip.dataset.linkKind = item.kind || '';
+  chip.dataset.linkLabel = item.label;
+  chip.textContent = item.label;
+  return chip;
+}
+
+// Link chips in the editor, in document order, deduped by kind and id.
+export function collectLinks(root) {
+  if (!root) return [];
+  const seen = new Set();
+  const out = [];
+  root.querySelectorAll('[data-link-id]').forEach((el) => {
+    const { linkId: id, linkKind: kind, linkLabel: label } = el.dataset;
+    const key = `${kind}:${id}`;
+    if (!id || seen.has(key)) return;
+    seen.add(key);
+    out.push({ id, kind, label });
+  });
+  return out;
+}
+
+// Saved HTML comes back through the sanitizer, which keeps the chips' data
+// attributes but drops their class and contenteditable; rebuild them so they
+// stay atomic and styled when a saved value is edited again.
+export function hydrateChips(root) {
+  if (!root) return;
+  root.querySelectorAll('[data-mention-name]').forEach((el) => {
+    const { mentionName: name, mentionId: id } = el.dataset;
+    el.replaceWith(createMentionChip({ name, id, realProfile: !!id }));
+  });
+  root.querySelectorAll('[data-link-id]').forEach((el) => {
+    const { linkId: id, linkKind: kind, linkLabel: label } = el.dataset;
+    el.replaceWith(createLinkChip({ id, kind, label: label || el.textContent }));
+  });
+}
+
+// Detect the "@query" (or "/query") fragment before the caret. Walks the
+// current text node backwards to the last trigger and returns
+// { trigger, range, query } iff it is at start-of-input or preceded by
+// whitespace, otherwise null. A "/" query may hold spaces, since the titles
+// it searches do.
+export function detectMention(editor, trigger = '@') {
   const sel = window.getSelection();
   if (!sel || !sel.rangeCount) return null;
   const range = sel.getRangeAt(0);
@@ -80,13 +131,13 @@ export function detectMention(editor) {
   const text = node.nodeValue || '';
   const caret = range.startOffset;
   const upToCaret = text.slice(0, caret);
-  const match = /(^|\s)@([^\s@]*)$/.exec(upToCaret);
+  const match = (trigger === '/' ? /(^|\s)\/([^/\n]{0,40})$/ : /(^|\s)@([^\s@]*)$/).exec(upToCaret);
   if (!match) return null;
   const atOffset = caret - match[2].length - 1;
   const atRange = document.createRange();
   atRange.setStart(node, atOffset);
   atRange.setEnd(node, caret);
-  return { range: atRange, query: match[2] };
+  return { trigger, range: atRange, query: match[2] };
 }
 
 // Place the caret immediately after `node`.
