@@ -13,6 +13,7 @@ import { Icon } from '../../../../../../components/Icon/Icon';
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { findWorklistMember, icdFromText } from './overviewItemActions';
 import { useP360Profile } from './useP360Profile';
+import { usePatientCareTeam } from '../../../../care-team/usePatientCareTeam';
 import styles from './overviewCards.module.css';
 import { isProgramClosed } from '../../../../data/programStatus';
 import { Button } from '../../../../../../components/Button/Button';
@@ -86,24 +87,29 @@ export function CareTeamCard({ patientId }) {
   const fetchCareProgramsForPatient = useAppStore(s => s.fetchCareProgramsForPatient);
   // Program owners come from care programs, which the programs card may not have loaded.
   useEffect(() => { if (patientId) fetchCareProgramsForPatient(patientId); }, [patientId, fetchCareProgramsForPatient]);
+  // The team lives in patient_care_team, so it shows with or without a profile.
+  const { team, loading } = usePatientCareTeam(patientId);
+  const [insightsOpen, setInsightsOpen] = useState(false);
+  const icon = 'solar:users-group-rounded-linear';
+  if (loading) return <DashboardCardSkeleton icon={icon} title="Care Team" rows={2} />;
+
+  const active = (programs || []).filter(pr => !isProgramClosed(pr.status));
+  const owned = {};
+  active.forEach((pr) => {
+    if (pr.assignee && pr.assignee !== 'Unassigned') (owned[pr.assignee] ||= []).push(pr.code);
+  });
+  const teamNames = new Set(team.map(m => m.name));
+  // Program owners who are not on the care team still belong here.
+  const owners = Object.keys(owned).filter(n => !teamNames.has(n)).map(name => ({
+    name, title: 'Program owner', initials: name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
+  }));
+  const unassigned = active.filter(pr => !pr.assignee || pr.assignee === 'Unassigned').length;
+  const members = [...team, ...owners];
   return (
-    <ProfileCard patientId={patientId} icon="solar:users-group-rounded-linear" title="Care Team" count={p => list(p.care_team).length || null} bodyClassName={styles.listBody}>
-      {(p) => {
-        const active = (programs || []).filter(pr => !isProgramClosed(pr.status));
-        const owned = {};
-        active.forEach((pr) => {
-          if (pr.assignee && pr.assignee !== 'Unassigned') (owned[pr.assignee] ||= []).push(pr.code);
-        });
-        const team = list(p.care_team);
-        const teamNames = new Set(team.map(m => m.name));
-        // Program owners who are not on the profile's roster still belong here.
-        const owners = Object.keys(owned).filter(n => !teamNames.has(n)).map(name => ({
-          name, title: 'Program owner', initials: name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
-        }));
-        const unassigned = active.filter(pr => !pr.assignee || pr.assignee === 'Unassigned').length;
-        const members = [...team, ...owners];
-        if (members.length === 0) return <p className={styles.empty}>No care team assigned.</p>;
-        return (
+    <DashboardCard icon={icon} title="Care Team" count={team.length || null} actions={<CardHeaderActions insightsOpen={insightsOpen} onToggleInsights={() => setInsightsOpen(v => !v)}></CardHeaderActions>}>
+      <CardInsights open={insightsOpen} />
+      <DashboardCardBody className={styles.listBody}>
+        {members.length === 0 ? <p className={styles.empty}>No care team assigned.</p> : (
           <>
             {/* What needs fixing leads: programs nobody owns. */}
             {unassigned > 0 && (
@@ -113,7 +119,7 @@ export function CareTeamCard({ patientId }) {
               items={members}
               render={m => (
                 <PanelSectionItem
-                  key={m.name}
+                  key={`${m.name}|${m.role || ''}`}
                   inset
                   leading={<Avatar variant="assignee" initials={m.initials} />}
                   title={m.name}
@@ -123,9 +129,9 @@ export function CareTeamCard({ patientId }) {
               )}
             />
           </>
-        );
-      }}
-    </ProfileCard>
+        )}
+      </DashboardCardBody>
+    </DashboardCard>
   );
 }
 

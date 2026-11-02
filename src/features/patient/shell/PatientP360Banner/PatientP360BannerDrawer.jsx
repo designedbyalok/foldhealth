@@ -14,6 +14,7 @@ import { FALLBACK_P360 } from '../../data/p360Mock';
 import { usePatientDisplay } from '../../hooks/usePatientDisplay';
 import { QuickViewExpanded } from './PatientP360BannerExpanded';
 import { DRAWER_ACTIONS, MORE_MENU_LABELS } from './PatientP360Banner.utils';
+import { PatientTagPills, AddPatientTagDrawer } from './PatientTags';
 import styles from './PatientP360Banner.module.css';
 
 // Every quick action, SMS last. The row shows as many as fit; the rest move
@@ -39,13 +40,14 @@ function useFitCount(ref, total) {
   return fit;
 }
 
-export function PatientP360BannerDrawer({ patient, p, programCodes }) {
+export function PatientP360BannerDrawer({ patient, p, programCodes, onManageFamily, onManageCareTeam }) {
   const [drawerExpanded, setDrawerExpanded] = useState(false);
   const [consentPos, setConsentPos] = useState(null);
   const consentBadgeRef = useRef(null);
   const [drawerDropdownStyle, setDrawerDropdownStyle] = useState(null);
   const profileCardRef = useRef(null);
   const [showScheduleDrawer, setShowScheduleDrawer] = useState(false);
+  const [addTagOpen, setAddTagOpen] = useState(false);
   const callBtnRef = useRef(null);
   const moreBtnRef = useRef(null);
   const actionsListRef = useRef(null);
@@ -156,7 +158,9 @@ export function PatientP360BannerDrawer({ patient, p, programCodes }) {
         <span className={styles.drawerCondBadge}>Diabetes</span>
         <span className={styles.drawerCondBadge}>Hypertension</span>
         <span className={styles.drawerMoreBadge}>+2</span>
-        <button className={styles.drawerAddTagBtn} aria-label="Add tag"><Icon name="solar:add-circle-linear" size={12} color="var(--neutral-300)" /></button>
+        <PatientTagPills patientId={patient.id} />
+        <button className={styles.drawerAddTagBtn} aria-label="Add tag" onClick={() => setAddTagOpen(true)}><Icon name="solar:add-circle-linear" size={12} color="var(--neutral-300)" /></button>
+        {addTagOpen && <AddPatientTagDrawer patient={patient} onClose={() => setAddTagOpen(false)} />}
         <button className={styles.drawerExpandIcon} onClick={() => setDrawerExpanded(v => !v)} aria-expanded={drawerExpanded} aria-label={drawerExpanded ? 'Collapse panel' : 'Expand panel'}>
           <span className={`${styles.drawerExpandIconInner} ${drawerExpanded ? styles.drawerExpandIconRotated : ''}`}>
             <Icon name="custom:expand-drawer" size={16} />
@@ -164,7 +168,7 @@ export function PatientP360BannerDrawer({ patient, p, programCodes }) {
         </button>
       </div>
 
-      {drawerExpanded && <QuickViewExpanded p={p} programCodes={programCodes} />}
+      {drawerExpanded && <QuickViewExpanded p={p} patientId={patient.id} programCodes={programCodes} onManageFamily={onManageFamily} onManageCareTeam={onManageCareTeam} />}
 
       <div className={styles.drawerActionsRow}>
         <div ref={actionsListRef} className={styles.drawerActionsList}>

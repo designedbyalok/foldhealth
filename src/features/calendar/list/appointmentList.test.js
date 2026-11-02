@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { groupByProvider, inPeriod, lockedReason, periodRange, sortAppointments, timeRangeLabel } from './appointmentList';
 import { minutesToTime, openSlots } from '../openSlots';
 

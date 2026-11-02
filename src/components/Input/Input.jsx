@@ -65,6 +65,8 @@ const TYPE_DEFAULTS = {
  *     - showPriority   Adds a leading priority flag icon.
  *     - trailingText   Static text on the right (e.g. "Days").
  *     - chevron        `true`/"down"/"up" adds a small trailing chevron.
+ *     - trailingElement Any node at the right end of the field (e.g. a
+ *                      colour swatch that opens a picker).
  *     - trailingAction Boolean or Solar icon name for a small right-aligned
  *                      icon-only action button; wire via `onTrailingAction`.
  *     - onStepUp / onStepDown  Either one adds an up/down stepper that
@@ -117,6 +119,7 @@ export const Input = forwardRef(function Input(
     // edge (divider + grey fill) instead of inline text, e.g. a unit suffix.
     trailingTextSegment = false,
     chevron = false,
+    trailingElement,
     trailingAction = false,
     trailingActionLabel = 'Voice input',
     onTrailingAction,
@@ -275,7 +278,7 @@ export const Input = forwardRef(function Input(
   // is hidden in CSS because it ignores the design system entirely.
   const showSearchClear = type === 'search' && !props.disabled && !props.readOnly
     && String(value ?? '').length > 0;
-  const hasTrailing = Boolean(trailingText) || chevronDir || trailingActionActive || showStepper
+  const hasTrailing = Boolean(trailingText) || Boolean(trailingElement) || chevronDir || trailingActionActive || showStepper
     || showTrailingButton || characterLimit != null
     || (type === 'password' && showPasswordToggle)
     || showSearchClear
@@ -477,6 +480,7 @@ export const Input = forwardRef(function Input(
           </button>
         </span>
       )}
+      {trailingElement}
       {trailingActionActive && (
         <button
           type="button"

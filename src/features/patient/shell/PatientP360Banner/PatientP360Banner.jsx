@@ -16,11 +16,15 @@ import { useCcmTimerDockOptional } from '../CcmTimerWidget/CcmTimerDockContext';
 import { PatientConsentPopover } from '../../shared/PatientConsentPopover/PatientConsentPopover';
 import { usePatientConsent } from '../../hooks/usePatientConsent';
 import { consentPopoverPos, consentSummaryLabel } from './consentBadge';
+import { PatientTagPills, AddPatientTagDrawer } from './PatientTags';
+import { AddFamilyDrawer } from '../../family/AddFamilyDrawer';
+import { CareTeamDrawer } from '../../care-team/CareTeamDrawer';
 import styles from './PatientP360Banner.module.css';
 
 export function PatientP360Banner({ patient, variant = 'full' }) {
   const [expanded, setExpanded] = useState(false);
   const [tags, setTags] = useState([]);
+  const [addTagOpen, setAddTagOpen] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
 
   // The dropdown's scrim is aria-hidden, so Escape is the keyboard dismiss path.
@@ -86,12 +90,22 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
     [carePrograms],
   );
 
-  const p = p360Profile || FALLBACK_P360;
+  // Family and care team come only from the patient's own profile; without
+  // one they're empty (sample people would read as real ones).
+  const p = p360Profile || { ...FALLBACK_P360, family_members: [], family_caregiver_count: 0, care_team: [] };
+  const [familyOpen, setFamilyOpen] = useState(false);
+  const [careTeamOpen, setCareTeamOpen] = useState(false);
+  const familyDrawer = patient && (
+    <>
+      {familyOpen && <AddFamilyDrawer patient={patient} onClose={() => setFamilyOpen(false)} />}
+      {careTeamOpen && <CareTeamDrawer patient={patient} onClose={() => setCareTeamOpen(false)} />}
+    </>
+  );
   const display = usePatientDisplay(patient);
   useEffect(() => { setTags(p.condition_tags || FALLBACK_P360.condition_tags); }, [p.condition_tags]);
 
   if (!patient) return null;
-  if (variant === 'drawer') return <PatientP360BannerDrawer patient={patient} p={p} programCodes={programCodes} />;
+  if (variant === 'drawer') return <><PatientP360BannerDrawer patient={patient} p={p} programCodes={programCodes} onManageFamily={() => setFamilyOpen(true)} onManageCareTeam={() => setCareTeamOpen(true)} />{familyDrawer}</>;
 
 
   return (
@@ -241,7 +255,10 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
             </button>
           </span>
         ))}
-        <button className={styles.addTagBtn} aria-label="Add tag"><Icon name="solar:add-circle-linear" size={12} color="var(--neutral-300)" /></button>
+        <PatientTagPills patientId={patient.id} />
+        <button className={styles.addTagBtn} aria-label="Add tag" onClick={() => setAddTagOpen(true)}><Icon name="solar:add-circle-linear" size={12} color="var(--neutral-300)" /></button>
+        {addTagOpen && <AddPatientTagDrawer patient={patient} onClose={() => setAddTagOpen(false)} />}
+        {familyDrawer}
         <span className={styles.row2Spacer} aria-hidden="true" />
         <div ref={dockRef} className={styles.timerDockSlot} data-ccm-timer-dock />
       </div>
@@ -252,10 +269,10 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
             <ExpandedDemographics p={p} />
             <ExpandedHealthStatus p={p} movedMetrics programCodes={programCodes} />
             <ExpandedAppointments p={p} />
-            <ExpandedFamily p={p} />
+            <ExpandedFamily p={p} patientId={patient.id} visible={expanded} onManage={() => setFamilyOpen(true)} onManageCareTeam={() => setCareTeamOpen(true)} />
           </div>
         ) : (
-          <QuickViewExpanded p={p} programCodes={programCodes} />
+          <QuickViewExpanded p={p} patientId={patient.id} visible={expanded} programCodes={programCodes} onManageFamily={() => setFamilyOpen(true)} onManageCareTeam={() => setCareTeamOpen(true)} />
         )}
       </Collapse>
       {consentPos && <PatientConsentPopover patientId={patient.id} pos={consentPos} onClose={closeConsent} />}

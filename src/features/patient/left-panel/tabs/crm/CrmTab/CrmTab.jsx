@@ -10,10 +10,14 @@ import { TimelineSkeleton } from '../../../../../../components/TimelineSkeleton/
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { CRM_CHANNELS, CRM_STATUS_COLOR } from '../../../../data/crmActivity';
 import { usePatientSmsLog } from '../../../../../messages/comms/useComms';
+import { findOrCreateConversation, listPatientConversations } from '../../../../../messages/comms/commsRepo';
+import { toast } from '../../../../../../components/Toast/sonnerToast';
 import { ConversationDrawer } from '../../../../../messages/comms/ConversationDrawer';
 import styles from './CrmTab.module.css';
 
 const EMPTY = [];
+// CRM is communication with the patient only: the channels its tabs list.
+const COMMS = new Set(Object.keys(CRM_CHANNELS).filter(k => CRM_CHANNELS[k].filter));
 
 // All, then a tab per communication channel, each with its colour dot.
 const FILTER_TABS = [
@@ -73,7 +77,7 @@ function SmsLogBody({ entry }) {
 }
 
 /** Activity → ActivityLog entries, newest first, with a header per month. */
-function toEntries(list) {
+function toEntries(list, onViewChat) {
   const out = [];
   let month = null;
   [...list]
@@ -105,6 +109,8 @@ function toEntries(list) {
         outcome: a.status || undefined,
         outcomeColor: CRM_STATUS_COLOR[a.status],
         note: a.note,
+        // A chat opens its thread, from the same link Timeline uses for details.
+        ...(a.channel === 'chat' ? { onViewDetails: onViewChat, viewDetailsLabel: 'View Chat' } : {}),
       });
     });
   return out;
@@ -112,9 +118,9 @@ function toEntries(list) {
 
 /**
  * CRM Activity (Figma P360 Revamp 727:261699): every communication with the
- * patient, newest first by month, on the shared ActivityLog. Tabs narrow it
- * to one channel (Chat, Call, Email, SMS, eFax); visits, assessments and
- * tasks show under All.
+ * patient, newest first by month, on the shared ActivityLog. Only Chat, Call,
+ * Email, SMS and eFax count; visits, assessments, tasks and the like belong
+ * to Timeline. Tabs narrow it to one channel.
  *
  * @param {string} props.patientId
  */
@@ -132,7 +138,7 @@ export function CrmTab({ patientId }) {
 
   // SMS logged for this patient sit alongside the recorded activity.
   const all = useMemo(() => [
-    ...activities,
+    ...activities.filter(a => COMMS.has(a.channel)),
     ...smsLog.map(({ message, conversation }) => ({
       id: `sms-${message.id}`,
       channel: 'sms',
@@ -140,9 +146,22 @@ export function CrmTab({ patientId }) {
       sms: { message, conversation, onView: () => setViewing({ conversation, messageId: message.id }) },
     })),
   ], [activities, smsLog]);
+  // View Chat opens the patient's chat thread (starting it if there isn't one).
+  const patient = useAppStore(s => (s.allPatients || []).find(x => String(x.id) === String(patientId)));
+  const openChat = useMemo(() => async () => {
+    try {
+      const convs = await listPatientConversations({ patientId, patientName: patient?.name });
+      const chat = convs.find(c => c.channel === 'chat')
+        || (patient && await findOrCreateConversation('chat', patient, { group_name: `Care for ${patient.name}` }));
+      if (chat) setViewing({ conversation: chat });
+      else toast.error('This patient has no chat yet.');
+    } catch {
+      toast.error('The chat could not be opened. Try again.');
+    }
+  }, [patientId, patient]);
   const entries = useMemo(
-    () => toEntries(channel === 'all' ? all : all.filter(a => a.channel === channel)),
-    [all, channel],
+    () => toEntries(channel === 'all' ? all : all.filter(a => a.channel === channel), openChat),
+    [all, channel, openChat],
   );
   const loading = !!patientId && !loadedFor;
   const channelLabel = CRM_CHANNELS[channel]?.label;

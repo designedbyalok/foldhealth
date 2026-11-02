@@ -5,6 +5,7 @@ import { FilterBar } from '../../../../../components/FilterBar/FilterBar';
 import { Input } from '../../../../../components/Input/Input';
 import { SubTabs } from '../../../../../components/SubTabs/SubTabs';
 import { TableSkeleton } from '../../../../../components/TableSkeleton/TableSkeleton';
+import { RingEmptyState } from '../../../../../components/RingEmptyState/RingEmptyState';
 import { useAppStore } from '../../../../../store/useAppStore';
 import { REFERRAL_STATUSES } from '../../../data/patientReferrals';
 import { AddMedicationsDrawer } from '../../../left-panel/tabs/pami-hx/AddMedicationsDrawer/AddMedicationsDrawer';
@@ -79,7 +80,8 @@ export function OrdersReferralsTab({ patient }) {
   const shown = useMemo(() => applyFilters(viewRows, { query, filters }), [viewRows, query, filters]);
   const filterCount = filters.status.length + filters.referredTo.length + filters.created.length;
   const { label, noun } = viewOf(view);
-  const emptyLabel = viewRows.length ? `No ${noun} match these filters.` : `No ${noun} for this patient yet.`;
+  const emptyLabel = viewRows.length ? `No ${noun} match these filters` : `No ${noun} for this patient yet`;
+  const EMPTY_ICON = { referral: 'solar:square-share-line-linear', lab: 'solar:test-tube-linear', imaging: 'solar:scanner-linear', medication: 'solar:pill-linear' };
 
   const switchView = (key) => { setView(key); setFilters(EMPTY_FILTERS); setSelectedIds([]); };
   const closeSearch = () => { setSearchOpen(false); setQuery(''); };
@@ -165,7 +167,9 @@ export function OrdersReferralsTab({ patient }) {
       )}
       {loading[view]
         ? <TableSkeleton rows={6} />
-        : view === 'referral'
+        : !shown.length
+          ? <div className={styles.empty}><RingEmptyState icon={EMPTY_ICON[view] || 'solar:clipboard-list-linear'} label={emptyLabel} /></div>
+          : view === 'referral'
           ? <ReferralsTable {...tableProps} onOpen={setOpenReferral} onPreview={setPreview} />
           : <OrdersTable view={view} {...tableProps} />}
       {openReferral && <ReferralDetailDrawer referral={openReferral} patient={patient} onClose={() => setOpenReferral(null)} />}

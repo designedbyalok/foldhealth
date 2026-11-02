@@ -13,6 +13,8 @@ import { useAppStore } from '../../../store/useAppStore';
 import { ConfigureTeamDrawer } from './ConfigureTeamDrawer';
 import { KIND_LABEL, KIND_BADGE_VARIANT } from './teamTypeConfig';
 import { HoverCard } from './HoverCard';
+import { TagsTable } from './tags/TagsTable';
+import { TagDrawer } from './tags/TagDrawer';
 import hoverStyles from './HoverCard.module.css';
 // Reuse the AgentsTable shell (wrapper / table primitives) so the Member/Leads
 // Care Team view keeps the same Fold chrome the rest of Settings uses.
@@ -60,6 +62,9 @@ export function MemberLeadsPanel() {
   const createBtnRef = useRef(null);
   // drawer state: null when closed; otherwise { kind, editTeam? }
   const [drawer, setDrawer] = useState(null);
+  // Tag drawer: null when closed; { tag } (null tag adds one).
+  const [tagDrawer, setTagDrawer] = useState(null);
+  const onTags = activeTab === 'tags';
 
   // Load saved teams from Supabase on first mount (falls back to seeds if
   // empty); repeat visits reuse the store copy instead of re-querying.
@@ -92,7 +97,7 @@ export function MemberLeadsPanel() {
                 would render after rightExtras, so we inline it here. */}
             {searchOpen ? (
               <SearchBar
-                placeholder="Search teams…"
+                placeholder={onTags ? 'Search tags…' : 'Search teams…'}
                 value={searchVal}
                 onChange={e => setSearchVal(e.target.value)}
                 onClose={() => { setSearchOpen(false); setSearchVal(''); }}
@@ -109,7 +114,7 @@ export function MemberLeadsPanel() {
               <Button
                 variant="outline"
                 leadingIcon="solar:add-circle-linear"
-                onClick={() => setCreateOpen(o => !o)}
+                onClick={() => (onTags ? setTagDrawer({ tag: null }) : setCreateOpen(o => !o))}
               >
                 Create New
               </Button>
@@ -134,7 +139,11 @@ export function MemberLeadsPanel() {
       />
 
       {/* Tab content */}
-      {activeTab === 'care-team' ? (
+      {onTags ? (
+        <div className={styles.tagsWrap}>
+          <TagsTable search={searchVal} onEdit={(tag) => setTagDrawer({ tag })} />
+        </div>
+      ) : activeTab === 'care-team' ? (
         <div className={agentStyles.tableWrap}>
           <CareTeamTable
             searchVal={searchVal}
@@ -148,6 +157,7 @@ export function MemberLeadsPanel() {
         </div>
       )}
 
+      {tagDrawer && <TagDrawer tag={tagDrawer.tag} onClose={() => setTagDrawer(null)} />}
       {drawer && (
         <ConfigureTeamDrawer
           kind={drawer.kind}

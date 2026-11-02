@@ -4,6 +4,7 @@ import { Button } from '../../../../../components/Button/Button';
 import { FilterBar } from '../../../../../components/FilterBar/FilterBar';
 import { Input } from '../../../../../components/Input/Input';
 import { SimpleTableSkeleton } from '../../../../../components/SimpleTableSkeleton/SimpleTableSkeleton';
+import { RingEmptyState } from '../../../../../components/RingEmptyState/RingEmptyState';
 import { SubTabs } from '../../../../../components/SubTabs/SubTabs';
 import { resolvePatientStoreId } from '../../../../../lib/resolvePatientStoreId';
 import { useAppStore } from '../../../../../store/useAppStore';
@@ -142,7 +143,14 @@ export function AssessmentsTab({ patient }) {
         )}
         {!data
           ? <SimpleTableSkeleton rows={5} cols={detail ? 2 : 5} />
-          : (
+          : !shown.length ? (
+            <div className={styles.empty}>
+              <RingEmptyState
+                icon="solar:clipboard-list-linear"
+                label={narrowed ? 'No assessments match these filters' : 'No assessments sent to this patient yet'}
+              />
+            </div>
+          ) : (
             <AssessmentsTable
               rows={shown}
               compact={!!detail}
