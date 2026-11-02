@@ -68,6 +68,7 @@ import {
 import { useCarePlanBulkSelection } from './useCarePlanBulkSelection';
 import { CategorySuggestionBanner } from './CategorySuggestionBanner';
 import { categorySuggestions, hasCategories } from '../../../../../../settings/care-plan-library/lib/templateCategories';
+import { isRetired, replacementFor } from '../../../../../../settings/care-plan-library/lib/templateRetirement';
 import styles from './CarePlanView.module.css';
 
 export function CarePlanView({ patientId, program }) {
@@ -450,6 +451,11 @@ export function CarePlanView({ patientId, program }) {
       })
       .map(item => item.template);
   }, [appliedTemplateIds, carePlanTemplates, appliedTemplatePriorities]);
+  // Retired templates still on this plan, with what to use instead.
+  const retiredOnPlan = useMemo(() => appliedTemplates.filter(isRetired).map(t => ({
+    template: t,
+    replacement: replacementFor(t, carePlanTemplates),
+  })), [appliedTemplates, carePlanTemplates]);
   // Templates no longer on the plan whose earlier runs (an ended episode)
   // still show on the strip.
   const liveAppliedIds = live?.plan?.appliedTemplateIds;
@@ -1134,6 +1140,31 @@ export function CarePlanView({ patientId, program }) {
           onSwitch={({ template, to, reasons }) => switchCarePlanTemplateCategory(patientId, program, template.id, to.id, reasons.join('; '))}
           onDismiss={({ run, to }) => dismissCarePlanCategorySuggestion(patientId, program, run.id, to.id)}
         />
+      ))}
+      {!viewedVersion && !viewedRun && retiredOnPlan.map(({ template: t, replacement }) => (
+        <div key={t.id} className={styles.pausedBanner}>
+          <Alert
+            tone="info"
+            icon="solar:archive-down-linear"
+            message={(
+              <>
+                <strong>{t.name}</strong>
+                {` is retired${t.retiredReason ? ` (${t.retiredReason})` : ''}. `}
+                {replacement ? `Use ${replacement.name} instead; this plan keeps its current items until you change them.` : 'This plan keeps it; no replacement was named.'}
+              </>
+            )}
+          />
+          {canEdit && replacement && !appliedTemplateIds.includes(replacement.id) && (
+            <Button
+              variant="outline"
+              size="sm"
+              leadingIcon="solar:add-linear"
+              onClick={() => { setCreatedTemplateIds([replacement.id]); setTemplatesDrawerOpen(true); }}
+            >
+              {`Add ${replacement.name}`}
+            </Button>
+          )}
+        </div>
       ))}
       {aiDrafting ? (
         <IndividualizedPlanCard state="drafting" fromDescription={!!description.trim()} />

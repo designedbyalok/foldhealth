@@ -17,6 +17,7 @@ import {
 } from '../../features/automations/data/automationSeed';
 import { AUTOMATION_EMAILS, automationEmailDoc } from '../../features/automations/data/automationEmails';
 import { SAMPLE_MEMBERS } from '../../features/automations/data/sampleMembers';
+import { activeTemplateFor, isRetired } from '../../features/settings/care-plan-library/lib/templateRetirement';
 
 /*
  * Settings > Automations (automations migration). Lists, templates, the
@@ -524,12 +525,17 @@ export function createAutomationsSlice(set, get) {
       }
       const matched = results.filter(r => r.matched);
       if ((matched.length || suggestions.length) && !get().carePlanTemplates.length) await get().fetchCarePlanLibrary();
-      const known = new Set(get().carePlanTemplates.map(t => String(t.id)));
+      const templates = get().carePlanTemplates;
+      // Retired templates aren't offered; an automation that names one gets its replacement.
+      const known = new Set(templates.filter(t => !isRetired(t)).map(t => String(t.id)));
       const recommended = [];
       for (const r of matched) {
         for (const id of r.rule.templateIds || []) {
-          if (!known.has(String(id)) || recommended.some(x => x.templateId === String(id))) continue;
-          recommended.push({ templateId: String(id), rule: r.rule.name, criteria: r.reasons.filter(x => x.ok).map(x => x.text) });
+          const { id: useId, replaced } = activeTemplateFor(id, templates);
+          if (!useId || recommended.some(x => x.templateId === useId)) continue;
+          const criteria = r.reasons.filter(x => x.ok).map(x => x.text);
+          if (replaced) criteria.push(`Uses ${templates.find(t => String(t.id) === useId)?.name || 'the replacement'} in place of retired ${replaced.name}`);
+          recommended.push({ templateId: useId, rule: r.rule.name, criteria });
         }
       }
       return { results, matched, recommended: withAssessmentSuggestions(recommended, suggestions, known) };

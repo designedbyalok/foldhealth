@@ -35,6 +35,7 @@ function TemplateBadge({
           <>
             <PriorityIcon priority={templatePriority} size={12} />
             {template.name}
+            {template.status === 'archived' && <span className={styles.runVersion}>Retired</span>}
             {templateVersion?.category && <span className={styles.runVersion}>{templateVersion.category}</span>}
             {version && <span className={styles.runVersion}>V{version}</span>}
             {templateVersion?.pending && <Icon name="solar:refresh-circle-linear" size={12} color="var(--primary-300)" />}
