@@ -1,5 +1,6 @@
 import { PROGRAM_STEPS } from '../../patient/data/programActivityMock.js';
 import { CARE_PROGRAM_CATALOG } from '../../patient/data/careProgramCatalog.js';
+import { defaultCadence, withCadenceDefaults } from '../../patient/right-panel/tabs/care-programs/care-plan/lib/cadence.js';
 
 /**
  * Care Program Configuration (Settings): a program type and everything about
@@ -220,6 +221,7 @@ export function defaultProgramTypes() {
       }],
       careTeam: [{ id: `${programTypeId(entry.code)}-cm`, role: 'Care Manager', teamId: null, defaultAssigneeId: null, stepIds: [] }],
       completion: DEFAULT_COMPLETION,
+      cadence: defaultCadence(entry.code),
       access: DEFAULT_ACCESS,
       sortOrder: i,
       createdBy: 'System',
@@ -242,6 +244,7 @@ export function blankProgramType({ code, name, description = '' }, sortOrder = 0
     worklists: [],
     careTeam: [],
     completion: DEFAULT_COMPLETION,
+    cadence: defaultCadence(code),
     access: DEFAULT_ACCESS,
     sortOrder,
   };
@@ -307,6 +310,7 @@ export function programTypeToRow(t) {
     worklists: t.worklists || [],
     care_team: t.careTeam || [],
     completion: t.completion || DEFAULT_COMPLETION,
+    cadence: t.cadence || defaultCadence(t.code),
     access: t.access || DEFAULT_ACCESS,
     sort_order: t.sortOrder ?? 0,
     created_by: t.createdBy || null,
@@ -325,6 +329,8 @@ export function rowToProgramType(r) {
     worklists: Array.isArray(r.worklists) ? r.worklists : [],
     careTeam: Array.isArray(r.care_team) ? r.care_team : [],
     completion: { ...DEFAULT_COMPLETION, ...(r.completion || {}) },
+    // An empty object (a row from before the cadence migration) reads as the program's default.
+    cadence: withCadenceDefaults(r.code, r.cadence && Object.keys(r.cadence).length ? r.cadence : null),
     access: { ...DEFAULT_ACCESS, ...(r.access || {}) },
     sortOrder: r.sort_order ?? 0,
     createdBy: r.created_by || '',

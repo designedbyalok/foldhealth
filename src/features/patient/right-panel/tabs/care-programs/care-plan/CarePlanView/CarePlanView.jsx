@@ -58,6 +58,7 @@ import { useCarePlanEpisodes } from './useCarePlanEpisodes';
 import { CarePlanLinkageSection } from './CarePlanLinkageSection';
 import { CarePlanAiSummarySection } from './CarePlanAiSummarySection';
 import { QuickNotePopover } from './QuickNotePopover';
+import { ReviewCadenceBadge } from './ReviewCadenceBadge';
 import { addGoalsFromPicker, addBarriersFromPicker } from './carePlanPickerHandlers';
 import { formatInstanceDate } from '../lib/templateRenewal';
 import {
@@ -1297,6 +1298,12 @@ export function CarePlanView({ patientId, program }) {
           <span className={styles.summaryMetric}><strong>{planStats.br}</strong> barriers</span>
           <span className={styles.summaryDot} aria-hidden="true" />
           <span className={styles.summaryMetric}><strong>{planStats.avgProgress}%</strong> avg progress</span>
+          {!viewedVersion && !viewedRun && !planPaused && (
+            <>
+              <span className={styles.summaryDot} aria-hidden="true" />
+              <ReviewCadenceBadge patientId={patientId} program={program} plan={live?.plan} canEdit={canEdit} />
+            </>
+          )}
           {!planPaused && live?.plan?.nextTouchpoint && (
             <>
               <span className={styles.summaryDot} aria-hidden="true" />
