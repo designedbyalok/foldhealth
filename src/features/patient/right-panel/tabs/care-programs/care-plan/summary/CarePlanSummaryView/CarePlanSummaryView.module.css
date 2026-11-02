@@ -377,3 +377,37 @@
   color: var(--neutral-300);
   font-size: var(--font-base);
 }
+
+/* Care Notes (#80): one program's note at a time; the toggle beside the
+   title switches program. */
+.careNotesHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+/* The section heads pin to the top of their row; centre this one on the toggle. */
+.careNotesHead > .sectionHead { align-self: center; }
+.careNoteCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  background: var(--primary-50);
+}
+.careNoteProgram {
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--primary-300);
+}
+.careNoteBody {
+  margin: 0;
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+  white-space: pre-wrap;
+}
+.careNoteMeta {
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+}

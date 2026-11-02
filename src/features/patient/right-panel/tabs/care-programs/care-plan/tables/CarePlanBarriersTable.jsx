@@ -109,7 +109,7 @@ function BarrierRow({
           <GbiRowActions
             linked={linked(b)}
             note={hasNote?.(b) || null}
-            onNotes={() => onOpenNotes?.(b)}
+            onNotes={e => onOpenNotes?.(b, e?.currentTarget?.getBoundingClientRect?.())}
             onMenu={openRowMenu}
             menuDisabled={!canEdit}
           />

@@ -15,14 +15,16 @@ import styles from './RadioOptionGroup.module.css';
  * @param {string}   [props.name]    Shared HTML name for the radios.
  * @param {'plain'|'card'} [props.variant='plain'] – 'card' puts each option in
  *   its own bordered card (the whole card picks it; the picked one is tinted).
+ * @param {'vertical'|'horizontal'} [props.orientation='vertical'] – 'horizontal' lays
+ *   the options out in one row (short labels, no hints).
  * @param {string}   [props.className] Extra class on the root (e.g. to space the options).
  */
-export function RadioOptionGroup({ label, options, value, onChange, name, className, variant = 'plain' }) {
+export function RadioOptionGroup({ label, options, value, onChange, name, className, variant = 'plain', orientation = 'vertical' }) {
   const card = variant === 'card';
   return (
     <div className={[styles.field, className].filter(Boolean).join(' ')}>
       {label && <span className={styles.label}>{label}</span>}
-      <div className={styles.group} role="radiogroup" aria-label={label}>
+      <div className={[styles.group, orientation === 'horizontal' ? styles.groupHorizontal : ''].filter(Boolean).join(' ')} role="radiogroup" aria-label={label}>
         {options.map(o => {
           const checked = value === o.value;
           const radio = (
