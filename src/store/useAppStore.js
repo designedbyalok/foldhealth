@@ -11758,6 +11758,18 @@ export const useAppStore = create((set, get) => ({
   // First caller kicks off the request; every subsequent caller during
   // the flight awaits the same promise.
   _platformUsersPromise: null,
+  // The roster also resolves who is signed in (currentUserProfile, roles,
+  // admin). Logout doesn't reload the page, so a new sign-in in the same tab
+  // would keep the previous user's answer without this.
+  resetSignedInUser: () => {
+    set({
+      platformUsersDidFetch: false,
+      _platformUsersPromise: null,
+      currentUserProfile: null,
+      currentUserClinicalRoles: [],
+      currentUserIsAdmin: false,
+    });
+  },
   fetchPlatformUsers: async () => {
     const s0 = get();
     if (s0.platformUsersDidFetch) return;

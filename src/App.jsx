@@ -121,8 +121,12 @@ function App() {
         track('auth.logout');
         setRecoveryMode(false);
         useAppStore.getState().resetCarePlanFavorites();
+        useAppStore.getState().resetSignedInUser();
       } else if (event === 'SIGNED_IN') {
         track('auth.session_established');
+        // Refocus and token refresh also emit SIGNED_IN: reset only for a different user.
+        const known = useAppStore.getState().currentUserProfile?.id;
+        if (known && known !== s?.user?.id) useAppStore.getState().resetSignedInUser();
         // Back from Google: log it in Login Activity. Deferred, because
         // awaiting supabase inside this callback can deadlock supabase-js.
         const provider = takeOAuthSignIn();

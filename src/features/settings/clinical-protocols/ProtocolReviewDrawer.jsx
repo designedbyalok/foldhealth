@@ -145,7 +145,12 @@ function ProtocolSection({ section, items, editable, onItemsChange }) {
 export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
   const protocol = useAppStore(s => s.clinicalProtocols.find(p => p.id === protocolId));
   const isSample = useAppStore(s => s.clinicalProtocolsSample);
+  // The admin flag comes from the profiles roster, which nothing on the
+  // Care Plan Library path loads; without this it stays false for admins.
   const isAdmin = useAppStore(s => s.currentUserIsAdmin);
+  const adminKnown = useAppStore(s => s.platformUsersDidFetch);
+  const fetchPlatformUsers = useAppStore(s => s.fetchPlatformUsers);
+  useEffect(() => { fetchPlatformUsers?.(); }, [fetchPlatformUsers]);
   const careProgramTypes = useAppStore(s => s.careProgramTypes);
   const fetchCareProgramTypes = useAppStore(s => s.fetchCareProgramTypes);
   const saveClinicalProtocol = useAppStore(s => s.saveClinicalProtocol);
@@ -274,7 +279,7 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
       <div className={styles.drawerBody}>
         {isSample && <Alert tone="info" message="Sample protocol. Run supabase/clinical_protocols_migration.sql to upload and review your own." />}
         {isFold && <Alert tone="info" message="Fold protocol, built from the published guidelines listed below and kept current by Fold. It can't be edited; to follow different rules, upload your organization's protocol." />}
-        {!isSample && !isFold && !isAdmin && <Alert tone="info" message="Only an admin can edit, approve, retire or delete protocols." />}
+        {!isSample && !isFold && adminKnown && !isAdmin && <Alert tone="info" message="Only an admin can edit, approve, retire or delete protocols." />}
         {protocol.status === 'failed' && <Alert tone="error" message={protocol.parseError || 'This file could not be parsed.'} />}
         {protocol.status === 'processing' && <Alert tone="info" message="Parsing this document. Its items appear here when it finishes." />}
         {protocol.status === 'draft' && (
