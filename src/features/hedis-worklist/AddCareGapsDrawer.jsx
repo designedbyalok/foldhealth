@@ -54,9 +54,9 @@ function GapHistory({ history }) {
   );
 }
 
-// The patient's current gap for this measure decides the row: none → Not
-// added; open (any non-closed status) → shown but locked; closed → can be
-// added again.
+// The patient's current gap for this measure decides the row: none → no
+// badge; open (any non-closed status) → its status badge, locked; closed →
+// its status badge, can be added again.
 function GapRow({ whitelist, parent, history, checked, config, onToggle, onConfig }) {
   const needsReason = history.length > 0;
   const alreadyOpen = !!parent && !isClosed(parent.status);
@@ -67,10 +67,7 @@ function GapRow({ whitelist, parent, history, checked, config, onToggle, onConfi
         <span className={styles.gapCode}>{whitelist.code}</span>
         <span className={styles.gapName}>{whitelist.name}</span>
         <span className={styles.gapMeta}>
-          {alreadyOpen && <span className={styles.gapHint}>Already open</span>}
-          {parent
-            ? <Badge size="S" variant={STATUS_BADGE_VARIANT[parent.status] || 'ai-neutral'} label={parent.status} />
-            : <span className={styles.gapHint}>Not added</span>}
+          {parent && <Badge size="S" variant={STATUS_BADGE_VARIANT[parent.status] || 'ai-neutral'} label={parent.status} />}
         </span>
       </label>
       {checked && (
@@ -307,6 +304,12 @@ export function AddCareGapsDrawer() {
         />
       )}
 
+      {/* Edge to edge under the patient banner (or the drawer header when
+          the Member field names the patient). */}
+      <InfoBar className={styles.billingBar}>
+        Only whitelisted gaps are billed. A gap is added to SSD automatically once its clinical note is signed; otherwise close it manually.
+      </InfoBar>
+
       <div className={styles.container}>
         {picker && <MemberField key={member.id} members={hedisMembers} value={member} onChange={pickMember} />}
         <section className={styles.section}>
@@ -328,7 +331,7 @@ export function AddCareGapsDrawer() {
 
         <section className={styles.section}>
           <div className={styles.listHead}>
-            <span className={styles.label}>Whitelisted Care Gaps<span className={styles.req}>•</span></span>
+            <span className={styles.label}>Care Gaps<span className={styles.req}>•</span></span>
             <span className={styles.count}>{picked.length} selected</span>
           </div>
           <SearchBar value={query} onChange={(e) => setQuery(e.target.value)} autoFocus={false} fullWidth placeholder="Search by measure code or name" />
@@ -358,9 +361,6 @@ export function AddCareGapsDrawer() {
           )}
         </section>
 
-        <InfoBar>
-          Only whitelisted gaps are billed. A gap is added to SSD automatically once its clinical note is signed; otherwise close it manually.
-        </InfoBar>
       </div>
     </Drawer>
   );
