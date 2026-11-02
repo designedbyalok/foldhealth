@@ -403,3 +403,11 @@
   text-align: center;
   color: var(--neutral-300);
 }
+
+/* Retire dialog: replacement picker and reason. */
+.retireFields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  text-align: left;
+}

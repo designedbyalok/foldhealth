@@ -34,15 +34,6 @@ export const createTemplateSuggestionsSlice = (set, get) => {
   const patchLocal = (id, patch) => set(s => ({
     templateSuggestions: s.templateSuggestions.map(x => (x.id === id ? { ...x, ...patch } : x)),
   }));
-  const setTemplateStatus = async (templateId, status) => {
-    const { error } = await supabase.from('care_plan_templates')
-      .update({ status, updated_by: get().currentActorName?.() || null, updated_at: new Date().toISOString() })
-      .eq('id', templateId);
-    if (error) { console.warn('setTemplateStatus:', error.message); return false; }
-    set(s => ({ carePlanTemplates: s.carePlanTemplates.map(t => (t.id === templateId ? { ...t, status } : t)) }));
-    return true;
-  };
-
   return {
     templateSuggestions: [],
     templateSuggestionsLoading: false,
@@ -96,14 +87,15 @@ export const createTemplateSuggestionsSlice = (set, get) => {
     decideTemplateSuggestion: async (id, decision) => {
       const suggestion = get().templateSuggestions.find(x => x.id === id);
       if (!suggestion) return false;
+      // Retiring goes through the library's retire action, so it records who and when.
       if (decision === 'accepted' && suggestion.kind === 'retire') {
-        if (!(await setTemplateStatus(suggestion.templateId, 'archived'))) return false;
+        if (!(await get().retireCarePlanTemplate(suggestion.templateId, { reason: suggestion.rationale ? `From Suggestions: ${suggestion.rationale}` : 'From Suggestions' }))) return false;
       }
       const patch = { status: decision, decided_by: get().currentActorName?.() || null, decided_at: new Date().toISOString() };
       const { error } = await supabase.from('care_plan_template_suggestions').update(patch).eq('id', id);
       if (error) {
         console.warn('decideTemplateSuggestion:', error.message);
-        if (decision === 'accepted' && suggestion.kind === 'retire') await setTemplateStatus(suggestion.templateId, 'published');
+        if (decision === 'accepted' && suggestion.kind === 'retire') await get().restoreCarePlanTemplate(suggestion.templateId);
         return false;
       }
       patchLocal(id, { status: decision, decidedBy: patch.decided_by, decidedAt: patch.decided_at });
@@ -115,7 +107,7 @@ export const createTemplateSuggestionsSlice = (set, get) => {
       const suggestion = get().templateSuggestions.find(x => x.id === id);
       if (!suggestion) return false;
       if (suggestion.status === 'accepted' && suggestion.kind === 'retire') {
-        if (!(await setTemplateStatus(suggestion.templateId, 'published'))) return false;
+        if (!(await get().restoreCarePlanTemplate(suggestion.templateId))) return false;
       }
       const { error } = await supabase.from('care_plan_template_suggestions')
         .update({ status: 'open', decided_by: null, decided_at: null }).eq('id', id);

@@ -196,6 +196,12 @@ function mapCarePlanTemplateRow(row) {
     // Common is goals / interventions / barriers; categories add more per
     // patient (care_plan_template_categories migration, lib/templateCategories.js).
     categories: Array.isArray(row.categories) ? row.categories : [],
+    // Retirement (care_plan_template_retirement migration): the template to
+    // use instead, and who retired it, when and why.
+    replacedByTemplateId: row.replaced_by_template_id || null,
+    retiredAt: row.retired_at || null,
+    retiredBy: row.retired_by || '',
+    retiredReason: row.retired_reason || '',
   };
 }
 
