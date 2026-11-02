@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  dayAfter, episodeEndsOn, episodeLengthLabel, episodeOf, episodeProgress, isEpisodeDue,
+  dayAfter, episodeEndsOn, episodeLengthLabel, episodeOf, episodeProgress, episodeSupersedes, isEpisodeDue,
 } from './episodeTemplates';
 
 const today = new Date(2026, 9, 19); // Oct 19 2026, local
@@ -12,8 +12,13 @@ describe('episodeOf', () => {
     expect(episodeOf(null)).toBeNull();
   });
   it('reads the length, treating a missing one as until closed', () => {
-    expect(episodeOf({ episodic: true, episodeDays: 30 })).toEqual({ days: 30, pausesOngoing: true });
-    expect(episodeOf({ episodic: true, episodeDays: null, episodePausesOngoing: false })).toEqual({ days: null, pausesOngoing: false });
+    expect(episodeOf({ episodic: true, episodeDays: 30 })).toEqual({ days: 30, pausesOngoing: true, programCode: null, supersedes: [] });
+    expect(episodeOf({ episodic: true, episodeDays: null, episodePausesOngoing: false }))
+      .toEqual({ days: null, pausesOngoing: false, programCode: null, supersedes: [] });
+  });
+  it('reads the program it runs as and the programs it pauses', () => {
+    expect(episodeOf({ episodic: true, episodeDays: 14, episodeProgramCode: 'TOC ED', episodeSupersedes: ['CCM'] }))
+      .toEqual({ days: 14, pausesOngoing: true, programCode: 'TOC ED', supersedes: ['CCM'] });
   });
   it('labels the length', () => {
     expect(episodeLengthLabel(14)).toBe('14-day episode');
@@ -53,5 +58,25 @@ describe('isEpisodeDue', () => {
     expect(isEpisodeDue(run({ endsOn: '2026-10-18', status: 'completed' }), today)).toBe(false);
     expect(isEpisodeDue(run({ endsOn: '2026-10-18', episodic: false }), today)).toBe(false);
     expect(isEpisodeDue(run({ endsOn: null }), today)).toBe(false);
+  });
+});
+
+describe('episodeSupersedes', () => {
+  const ep = (over) => episodeOf({ episodic: true, episodeDays: 30, ...over });
+  it('pauses every ongoing program when no rules are set', () => {
+    expect(episodeSupersedes(ep(), 'SNP')).toBe(true);
+    expect(episodeSupersedes(ep(), 'DM')).toBe(true);
+  });
+  it('pauses only the listed programs when rules are set', () => {
+    const e = ep({ episodeSupersedes: ['CCM', 'DM'] });
+    expect(episodeSupersedes(e, 'DM')).toBe(true);
+    expect(episodeSupersedes(e, 'SNP')).toBe(false);
+  });
+  it('never pauses another episode', () => {
+    expect(episodeSupersedes(ep(), 'TOC ED')).toBe(false);
+    expect(episodeSupersedes(ep(), 'HH')).toBe(false);
+  });
+  it('pauses nothing when pausing is off', () => {
+    expect(episodeSupersedes(ep({ episodePausesOngoing: false }), 'SNP')).toBe(false);
   });
 });

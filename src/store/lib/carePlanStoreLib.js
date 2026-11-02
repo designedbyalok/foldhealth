@@ -184,6 +184,10 @@ function mapCarePlanTemplateRow(row) {
     episodic: !!row.episodic,
     episodeDays: row.episode_days ?? null,
     episodePausesOngoing: row.episode_pauses_ongoing !== false,
+    // The program it runs as and the programs it pauses
+    // (care_plan_episode_programs migration).
+    episodeProgramCode: row.episode_program_code || null,
+    episodeSupersedes: row.episode_supersedes || [],
     // Bulk import (care_plan_template_import migration): the upload it came
     // from, the published template a draft revision replaces, and who approved it.
     importBatchId: row.import_batch_id || null,

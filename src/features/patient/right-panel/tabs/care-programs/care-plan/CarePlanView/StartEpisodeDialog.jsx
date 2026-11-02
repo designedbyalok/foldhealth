@@ -4,19 +4,22 @@ import { DatePicker } from '@/components/DatePicker/DatePicker';
 import { Checkbox } from '@/components/ShadcnCheckbox/ShadcnCheckbox';
 import { useAppStore } from '../../../../../../../store/useAppStore';
 import { isoDay } from '../lib/carePlanPause';
-import { dayAfter, episodeEndsOn, episodeLengthLabel, episodeOf } from '../lib/episodeTemplates';
+import { dayAfter, episodeEndsOn, episodeLengthLabel, episodeOf, episodeSupersedes } from '../lib/episodeTemplates';
 import { formatInstanceDate } from '../lib/templateRenewal';
 import styles from './EpisodeBanner.module.css';
 
 /**
  * Applying an episodic template: says what an episode is, confirms its last
  * day (prefilled from the template's length; empty runs until closed) and
- * which of the patient's other care plans pause while it runs.
+ * which of the patient's other care plans pause while it runs, pre-picked by
+ * the template's pause rules. An episode with its own program starts there,
+ * so the plan it was applied from can pause too.
  * `onConfirm({ endsOn, pausePlans })`.
  */
 export function StartEpisodeDialog({ template, patientId, program, onCancel, onConfirm, step, steps }) {
   const fetchEpisodePausablePlans = useAppStore(s => s.fetchEpisodePausablePlans);
   const episode = episodeOf(template);
+  const ownProgram = !!episode?.programCode && episode.programCode !== program.code;
   const todayIso = isoDay(new Date());
   const [endsOn, setEndsOn] = useState(() => episodeEndsOn(new Date(), episode?.days) || '');
   const [plans, setPlans] = useState(null);
@@ -24,13 +27,15 @@ export function StartEpisodeDialog({ template, patientId, program, onCancel, onC
 
   useEffect(() => {
     let live = true;
-    fetchEpisodePausablePlans(patientId, program.id).then(list => {
+    fetchEpisodePausablePlans(patientId, ownProgram ? null : program.id).then(list => {
       if (!live) return;
       setPlans(list);
-      setPicked(new Set(episode?.pausesOngoing ? list.filter(p => !p.paused).map(p => p.planId) : []));
+      setPicked(new Set(list.filter(p => !p.paused && episodeSupersedes(episode, p.programCode)).map(p => p.planId)));
     });
     return () => { live = false; };
-  }, [fetchEpisodePausablePlans, patientId, program.id, episode?.pausesOngoing]);
+    // episode is derived from template, which keys this dialog.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchEpisodePausablePlans, patientId, program.id, ownProgram]);
 
   const toggle = (planId) => setPicked(prev => {
     const next = new Set(prev);
@@ -46,7 +51,9 @@ export function StartEpisodeDialog({ template, patientId, program, onCancel, onC
       icon="solar:calendar-mark-linear"
       iconColor="var(--primary-300)"
       title={`Start ${episode?.days ? `a ${episodeLengthLabel(episode.days)}` : 'an episode'}?${steps > 1 ? ` (${step} of ${steps})` : ''}`}
-      description={`"${template.name}" is episodic: it covers one event, starts today as day 1 and closes on its own after its last day. Its goals and interventions then move to the plan's history.`}
+      description={ownProgram
+        ? `"${template.name}" is episodic: it enrolls the patient in ${episode.programCode} with a care plan of its own, starts today as day 1 and closes on its own after its last day, ending the ${episode.programCode} enrollment.`
+        : `"${template.name}" is episodic: it covers one event, starts today as day 1 and closes on its own after its last day. Its goals and interventions then move to the plan's history.`}
       confirmLabel="Start Episode"
       confirmDisabled={plans == null}
       onCancel={onCancel}

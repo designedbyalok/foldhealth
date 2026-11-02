@@ -3,9 +3,11 @@ import { Badge } from '../../../../../components/Badge/Badge';
 import { IntroCard } from '../../../../../components/IntroCard/IntroCard';
 import { NumberStepper } from '../../../../../components/NumberStepper/NumberStepper';
 import { RadioOptionGroup } from '../../../../../components/RadioOptionGroup/RadioOptionGroup';
+import { Select } from '../../../../../components/Select/Select';
 import { Switch } from '../../../../../components/Switch/Switch';
+import { CARE_PROGRAM_CATALOG } from '../../../../patient/data/careProgramCatalog';
 import {
-  DEFAULT_EPISODE_DAYS, EPISODE_PRESETS, MAX_EPISODE_DAYS, episodeOf,
+  DEFAULT_EPISODE_DAYS, EPISODE_PRESETS, EPISODE_PROGRAM_CODES, MAX_EPISODE_DAYS, episodeOf,
 } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/episodeTemplates';
 import { TEMPLATE_TYPE_CHOICES } from './templateType';
 import styles from './TemplateType.module.css';
@@ -26,23 +28,33 @@ export function TemplateTypeChoice({ value, onChange, label = 'Template Type' })
 const CUSTOM = 'custom';
 const presetKeyFor = (days) => EPISODE_PRESETS.find(p => p.days === (days || null))?.key || CUSTOM;
 
+const PROGRAMS = [...CARE_PROGRAM_CATALOG, { code: 'CCM', name: 'Chronic Care Management' }];
+const programOption = p => ({ value: p.code, label: `${p.name} (${p.code})` });
+const EPISODE_PROGRAM_OPTIONS = PROGRAMS.filter(p => EPISODE_PROGRAM_CODES.includes(p.code)).map(programOption);
+const PAUSABLE_PROGRAM_OPTIONS = PROGRAMS.filter(p => !EPISODE_PROGRAM_CODES.includes(p.code)).map(programOption);
+
 /**
  * What an episodic template does, then its length (a preset or a custom
- * number of days) and whether it pauses the patient's other plans.
- * `value` is { days, pausesOngoing }; `days` null means until closed.
+ * number of days), the program it runs as, and which of the patient's other
+ * plans it pauses. `value` is { days, pausesOngoing, programCode, supersedes };
+ * `days` null means until closed, an empty `supersedes` pauses every other plan.
  */
 export function EpisodeSettings({ value, onChange }) {
   const days = value?.days ?? null;
   const pausesOngoing = value?.pausesOngoing !== false;
+  const programCode = value?.programCode || null;
+  const supersedes = value?.supersedes || [];
   // Kept apart from `days` so picking Custom stays picked when its number
   // happens to match a preset.
   const [lengthKey, setLengthKey] = useState(() => presetKeyFor(days));
-  const set = (patch) => onChange({ days, pausesOngoing, ...patch });
+  const set = (patch) => onChange({ days, pausesOngoing, programCode, supersedes, ...patch });
 
   const pickLength = (key) => {
     setLengthKey(key);
-    if (key === CUSTOM) set({ days: days || DEFAULT_EPISODE_DAYS });
-    else set({ days: EPISODE_PRESETS.find(p => p.key === key).days });
+    if (key === CUSTOM) { set({ days: days || DEFAULT_EPISODE_DAYS }); return; }
+    const preset = EPISODE_PRESETS.find(p => p.key === key);
+    // A preset suggests its program until someone picks one.
+    set({ days: preset.days, programCode: programCode || preset.programCode });
   };
 
   return (
@@ -55,7 +67,7 @@ export function EpisodeSettings({ value, onChange }) {
           {
             icon: 'solar:play-circle-linear',
             title: 'Starts when applied',
-            description: 'Day 1 is the day it’s added to a patient’s care plan. The end date is confirmed then.',
+            description: 'Applying it enrolls the patient in its program with a care plan of its own. Day 1 is that day, and the end date is confirmed then.',
           },
           {
             icon: 'solar:calendar-linear',
@@ -94,6 +106,15 @@ export function EpisodeSettings({ value, onChange }) {
         </div>
       )}
 
+      <Select
+        label="Runs as program"
+        options={EPISODE_PROGRAM_OPTIONS}
+        value={programCode || ''}
+        onChange={(code) => set({ programCode: code || null })}
+        placeholder="Pick a program"
+        helperText="The patient is enrolled in this program for the episode, and its care plan holds the episode. It closes when the episode ends."
+      />
+
       <div className={styles.pauseField}>
         <Switch
           checked={pausesOngoing}
@@ -104,6 +125,17 @@ export function EpisodeSettings({ value, onChange }) {
           Suggested when it’s applied. Whoever applies it sees which plans would pause and can change it for that patient.
         </p>
       </div>
+      {pausesOngoing && (
+        <Select
+          label="Programs it pauses"
+          multiple
+          options={PAUSABLE_PROGRAM_OPTIONS}
+          value={supersedes}
+          onChange={(codes) => set({ supersedes: codes })}
+          placeholder="All of the patient’s other programs"
+          helperText="Leave empty to pause every other ongoing plan. Other episodes never pause."
+        />
+      )}
     </div>
   );
 }

@@ -15,4 +15,5 @@ export const CARE_PROGRAM_CATALOG = [
   { code: 'CMP', name: 'Care Management Program' },
   { code: 'APE', name: 'Annual Physical Exam' },
   { code: 'PHARM', name: 'Pharmacy Program' },
+  { code: 'HH', name: 'Home Health' },
 ];
