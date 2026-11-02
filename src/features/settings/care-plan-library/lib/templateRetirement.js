@@ -48,9 +48,10 @@ export const replacementOptions = (template, templates) => (templates || [])
    Retire can take a future America/Los_Angeles day (retireOn). Until then the
    template stays in use with a warning; a nightly job retires it that day. */
 
+const LA_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' });
+
 /** Today in Los Angeles as YYYY-MM-DD, the day the nightly job retires on. */
-export const retirementToday = (now = new Date()) =>
-  new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(now);
+export const retirementToday = (now = new Date()) => LA_DAY.format(now);
 
 /** The day a template in use is set to retire, or null. */
 export const retiringOn = (template) => (!isRetired(template) && template?.retireOn) || null;
