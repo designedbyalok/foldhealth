@@ -206,6 +206,8 @@ function mapCarePlanTemplateRow(row) {
     retiredAt: row.retired_at || null,
     retiredBy: row.retired_by || '',
     retiredReason: row.retired_reason || '',
+    // Scheduled retirement: the Los Angeles day it retires on, while still in use.
+    retireOn: row.retire_on || null,
   };
 }
 

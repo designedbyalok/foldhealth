@@ -43,3 +43,40 @@ export function activeTemplateFor(id, templates) {
 /** Templates a retired one can be replaced with: published, in use, not itself. */
 export const replacementOptions = (template, templates) => (templates || [])
   .filter(t => String(t.id) !== String(template?.id) && !isRetired(t) && t.status !== 'draft');
+
+/* Scheduled retirement (care_plan_template_scheduled_retirement migration):
+   Retire can take a future America/Los_Angeles day (retireOn). Until then the
+   template stays in use with a warning; a nightly job retires it that day. */
+
+const LA_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' });
+
+/** Today in Los Angeles as YYYY-MM-DD, the day the nightly job retires on. */
+export const retirementToday = (now = new Date()) => LA_DAY.format(now);
+
+/** The day a template in use is set to retire, or null. */
+export const retiringOn = (template) => (!isRetired(template) && template?.retireOn) || null;
+
+/** YYYY-MM-DD as MM/DD/YYYY. */
+export const formatRetireDate = (iso) => (iso ? `${iso.slice(5, 7)}/${iso.slice(8, 10)}/${iso.slice(0, 4)}` : '');
+
+/** Retired or retiring templates that name `template` as their replacement. */
+export const templatesReplacedBy = (template, templates) => (templates || [])
+  .filter(t => t.replacedByTemplateId && String(t.replacedByTemplateId) === String(template?.id) && (isRetired(t) || retiringOn(t)));
+
+const nameOf = (id, templates) => (templates || []).find(t => String(t.id) === String(id))?.name;
+
+/** What a retiring or retired template is replaced by, as a sentence. */
+export function retirementSummary(template, templates) {
+  const day = retiringOn(template);
+  if (day) {
+    const by = nameOf(template.replacedByTemplateId, templates);
+    return by
+      ? `Retiring on ${formatRetireDate(day)}. This template is being replaced by ${by}.`
+      : `Retiring on ${formatRetireDate(day)}, with no replacement.`;
+  }
+  if (isRetired(template)) {
+    const by = replacementFor(template, templates)?.name || nameOf(template.replacedByTemplateId, templates);
+    return by ? `Retired. Replaced by ${by}.` : 'Retired, with no replacement.';
+  }
+  return '';
+}

@@ -238,6 +238,7 @@ import { HCC_TRANSITION_LABEL, HCC_ROLE_LABEL, hccTransitionRole, hccRoleStatusH
 import { buildSeedHccActivityFeed } from '../features/hcc/seed/buildSeedHccActivityFeed';
 import { createShellSlice } from './slices/shellSlice';
 import { createAutomationsSlice } from './slices/automationsSlice';
+import { retirementToday } from '../features/settings/care-plan-library/lib/templateRetirement';
 import { rowToCrm, sampleCrmActivities } from '../features/patient/data/crmActivity';
 import { rowToReferral, sampleReferralsFor } from '../features/patient/data/patientReferrals';
 import { createHccWorklistFiltersSlice } from './slices/hccWorklistFiltersSlice';
@@ -6500,19 +6501,39 @@ export const useAppStore = create((set, get) => ({
   },
 
   // Retiring: no longer offered for new plans; plans using it keep it.
-  // `replacementId` is the template to use instead (optional).
-  retireCarePlanTemplate: async (id, { replacementId = null, reason = '' } = {}) => {
+  // `replacementId` is the template to use instead (optional). A future
+  // `retireOn` (Los Angeles day) schedules it: the template stays in use and
+  // the nightly retire_scheduled_care_plan_templates job retires it that day.
+  retireCarePlanTemplate: async (id, { replacementId = null, reason = '', retireOn = null } = {}) => {
     const now = new Date().toISOString();
     const actor = get().currentActorName?.() || get().currentUserProfile?.name || null;
+    if (retireOn && retireOn > retirementToday()) {
+      const { error } = await supabase.from('care_plan_templates').update({
+        retire_on: retireOn, replaced_by_template_id: replacementId || null,
+        retired_by: actor, retired_reason: reason.trim() || null,
+      }).eq('id', id);
+      if (error) {
+        console.warn('retireCarePlanTemplate:', error.message);
+        get().showToast('Could not schedule the retirement');
+        return false;
+      }
+      set(s => ({ carePlanTemplates: s.carePlanTemplates.map(t => (t.id === id ? {
+        ...t, retireOn, replacedByTemplateId: replacementId || null, retiredBy: actor || '', retiredReason: reason.trim(),
+      } : t)) }));
+      return true;
+    }
     const patch = {
       status: 'archived', replaced_by_template_id: replacementId || null,
       retired_at: now, retired_by: actor, retired_reason: reason.trim() || null,
       updated_by: actor, updated_at: now,
+      // Only a scheduled one has a date to clear; leaving the column out
+      // otherwise keeps Retire now working before the scheduling migration.
+      ...(get().carePlanTemplates.find(t => t.id === id)?.retireOn && { retire_on: null }),
     };
     const update = p => supabase.from('care_plan_templates').update(p).eq('id', id);
     let { error } = await update(patch);
     // Before the retirement migration it still retires, without the details.
-    if (error && /replaced_by_template_id|retired_/.test(error.message || '')) {
+    if (error && /replaced_by_template_id|retired_|retire_on/.test(error.message || '')) {
       ({ error } = await update({ status: 'archived', updated_by: actor, updated_at: now }));
     }
     if (error) {
@@ -6522,7 +6543,23 @@ export const useAppStore = create((set, get) => ({
     }
     set(s => ({ carePlanTemplates: s.carePlanTemplates.map(t => (t.id === id ? {
       ...t, status: 'archived', replacedByTemplateId: replacementId || null,
-      retiredAt: now, retiredBy: actor || '', retiredReason: reason.trim(), updatedBy: actor || t.updatedBy, updatedAt: now,
+      retiredAt: now, retiredBy: actor || '', retiredReason: reason.trim(), retireOn: null, updatedBy: actor || t.updatedBy, updatedAt: now,
+    } : t)) }));
+    return true;
+  },
+
+  // Calls off a scheduled retirement: the date, replacement and reason are cleared.
+  cancelCarePlanTemplateRetirement: async (id) => {
+    const { error } = await supabase.from('care_plan_templates').update({
+      retire_on: null, replaced_by_template_id: null, retired_by: null, retired_reason: null,
+    }).eq('id', id);
+    if (error) {
+      console.warn('cancelCarePlanTemplateRetirement:', error.message);
+      get().showToast('Could not cancel the retirement');
+      return false;
+    }
+    set(s => ({ carePlanTemplates: s.carePlanTemplates.map(t => (t.id === id ? {
+      ...t, retireOn: null, replacedByTemplateId: null, retiredBy: '', retiredReason: '',
     } : t)) }));
     return true;
   },
@@ -6545,7 +6582,7 @@ export const useAppStore = create((set, get) => ({
       return false;
     }
     set(s => ({ carePlanTemplates: s.carePlanTemplates.map(t => (t.id === id ? {
-      ...t, status: 'published', replacedByTemplateId: null, retiredAt: null, retiredBy: '', retiredReason: '', updatedBy: actor || t.updatedBy, updatedAt: now,
+      ...t, status: 'published', replacedByTemplateId: null, retiredAt: null, retiredBy: '', retiredReason: '', retireOn: null, updatedBy: actor || t.updatedBy, updatedAt: now,
     } : t)) }));
     return true;
   },
