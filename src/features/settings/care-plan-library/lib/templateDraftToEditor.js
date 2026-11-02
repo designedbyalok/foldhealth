@@ -98,11 +98,13 @@ export function templateDraftToEditor(draft, { libraryGoals = [], interventionLi
  * would only add barriers is left out.
  */
 export function templateDraftToTemplate(draft, libraries) {
-  const common = templateDraftToEditor(draft, libraries);
+  // `lists` on the draft or a category: its editor lists as a reviewer
+  // already edited them (a protocol's scope), taken as they are.
+  const common = draft.lists || templateDraftToEditor(draft, libraries);
   const inCommon = Object.fromEntries(['goals', 'interventions', 'barriers']
     .map(k => [k, new Set(common[k].map(x => norm(x.title)))]));
   const categories = (draft.categories || []).map((c) => {
-    const lists = templateDraftToEditor({ goals: c.goals, conditions: draft.conditions }, libraries);
+    const lists = c.lists || templateDraftToEditor({ goals: c.goals, conditions: draft.conditions }, libraries);
     const own = k => lists[k].filter(x => !inCommon[k].has(norm(x.title)));
     return {
       id: c.id, name: c.name, match: c.match || 'all', criteria: c.criteria,

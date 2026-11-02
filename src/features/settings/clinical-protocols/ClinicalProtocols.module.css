@@ -62,6 +62,7 @@
 .scopeList { margin: 0; padding-left: var(--space-4); font-size: var(--font-base); line-height: var(--leading-normal); color: var(--neutral-400); }
 .label { font-size: var(--font-sm); font-weight: 500; color: var(--neutral-300); }
 .chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.countChips { display: inline-flex; gap: var(--space-1); white-space: nowrap; }
 .warnings { margin: 0; padding-left: var(--space-4); }
 .cardHeadRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
 .templateList { display: flex; flex-direction: column; }
@@ -72,18 +73,33 @@
 .templateRow:first-child { border-top: 0; padding-top: 0; }
 
 .section { display: flex; flex-direction: column; border: 0.5px solid var(--neutral-150); border-radius: 8px; overflow: hidden; background: var(--neutral-0); }
-.sectionHead {
-  display: flex; align-items: center; gap: var(--space-2);
-  padding: var(--space-3) var(--space-4); background: var(--neutral-50); border-bottom: 0.5px solid var(--neutral-150);
+/* Section and category list heads: one compact 32px row, title left, actions right. */
+.sectionHead, .categoryListHead {
+  display: flex; align-items: center; gap: var(--space-2); height: 32px; box-sizing: border-box;
+  padding: 0 var(--space-1) 0 var(--space-4); background: var(--neutral-50); border-bottom: 0.5px solid var(--neutral-150);
 }
 .sectionTitle { flex: 1; min-width: 0; font-size: var(--font-base); font-weight: 500; color: var(--neutral-500); }
 .sectionCount { font-weight: 400; color: var(--neutral-300); margin-left: var(--space-1); }
-.sectionEmpty { padding: var(--space-3) var(--space-4); font-size: var(--font-base); color: var(--neutral-300); }
-.item { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-bottom: 0.5px solid var(--neutral-100); }
-.item:last-child { border-bottom: 0; }
+/* Extracted items sit in PanelSections (the patient panel's pattern): rows
+   share the section's inset and are split by hairlines. One weight per
+   level: section titles 500, row text 400, meta and links small. */
+.sectionEmpty { margin: 0; padding: var(--space-2) 0; font-size: var(--font-base); color: var(--neutral-300); }
+.item { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-2) 0; }
+.item + .item { border-top: 0.5px solid var(--neutral-100); }
+.rowTitle { font-size: var(--font-base); font-weight: 400; line-height: var(--leading-normal); color: var(--neutral-500); }
+/* The sections bleed by their own inset so their titles line up with the tabs. */
+.panelStack { display: flex; flex-direction: column; margin: calc(-1 * var(--space-2)) calc(-1 * var(--space-2)) 0; }
+.fileThumb {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 6px; background: var(--neutral-50); border: 0.5px solid var(--neutral-150);
+}
+.fileName {
+  padding: 0; border: 0; background: none; cursor: pointer; text-align: left;
+  font-size: var(--font-base); font-weight: 400; color: var(--neutral-500);
+}
+.fileName:hover { color: var(--primary-300); }
 .itemTop { display: flex; align-items: flex-start; gap: var(--space-3); }
 .itemText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); }
-.itemTitle { font-size: var(--font-base); font-weight: 500; line-height: var(--leading-tight); color: var(--neutral-400); }
 .itemDetail { font-size: var(--font-sm); line-height: var(--leading-tight); color: var(--neutral-300); }
 .itemActions { display: flex; align-items: center; gap: var(--space-1); flex-shrink: 0; }
 .sourceToggle {
@@ -99,3 +115,92 @@
 .editor { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
 .editorFull { grid-column: 1 / -1; }
 .editorActions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: var(--space-2); }
+
+/* ── Review drawer: the scope (right pane) and, when a category is open,
+   its goals, interventions and barriers (left pane). The HCC drawer's
+   pattern: 700px until a row is opened, then 1280px split in two, each
+   pane scrolling on its own. ── */
+.splitBody.splitBody { display: flex; padding: 0; overflow: hidden; }
+.split { flex: 1; min-height: 0; display: flex; overflow: hidden; }
+.leftPane {
+  flex: 1 1 0; min-width: 0; display: flex; flex-direction: column;
+  border-right: 0.5px solid var(--neutral-150); background: var(--neutral-25);
+  animation: paneIn 250ms var(--ease-drawer, ease-out);
+}
+@keyframes paneIn { from { opacity: 0; transform: translateX(16px); } }
+@media (prefers-reduced-motion: reduce) { .leftPane { animation: none; } }
+.rightPane { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
+.paneScroll { flex: 1; min-height: 0; overflow-y: auto; padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-4); }
+/* The pane scrolls; its sections keep their full height instead of
+   shrinking to fit (they clip their own overflow, so shrinking cuts them). */
+.paneScroll > *, .leftBody > * { flex-shrink: 0; }
+/* Parser flags: numbered rows, one full sentence each. */
+.flagList { margin: 0; padding: 0; list-style: none; }
+.flagRow {
+  display: flex; align-items: flex-start; gap: var(--space-2);
+  padding: var(--space-2) 0;
+  font-size: var(--font-base); line-height: var(--leading-normal); color: var(--neutral-500);
+}
+.flagRow + .flagRow { border-top: 0.5px solid var(--neutral-100); }
+.flagNumber {
+  flex-shrink: 0; min-width: 20px; height: 20px; margin-top: calc(var(--space-1) / 4); border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--status-warning-dark) 10%, var(--neutral-0));
+  font-size: var(--font-sm); font-weight: 500; color: var(--status-warning-dark);
+}
+/* The original file in the left pane fills it below the head. */
+.docBody { flex: 1; min-height: 0; display: flex; }
+.docPreview { flex: 1; width: 100%; height: 100%; border: 0; }
+/* Who approved, what it replaces: quiet lines at the top of Details. */
+.metaLines { display: flex; flex-direction: column; gap: var(--space-1); margin: 0; padding: 0; list-style: none; font-size: var(--font-sm); line-height: var(--leading-normal); color: var(--neutral-300); }
+
+.paneStack { display: flex; flex-direction: column; gap: var(--space-4); }
+.overview { margin: 0; font-size: var(--font-md); line-height: var(--leading-normal); color: var(--neutral-500); }
+/* Who the protocol covers and leaves out: each a small label over its text. */
+.facts { display: flex; flex-direction: column; gap: var(--space-3); margin: 0; }
+.facts dt { margin-bottom: calc(var(--space-1) / 2); font-size: var(--font-sm); font-weight: 500; color: var(--neutral-300); }
+.facts dd { margin: 0; font-size: var(--font-base); line-height: var(--leading-normal); color: var(--neutral-500); }
+.factList { margin: 0; padding-left: var(--space-4); }
+.scopeEmpty { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); }
+
+.categoryList { display: flex; flex-direction: column; border: 0.5px solid var(--neutral-150); border-radius: 8px; overflow: hidden; background: var(--neutral-0); }
+.categoryListTitle { flex: 1; font-size: var(--font-base); font-weight: 500; color: var(--neutral-500); }
+.editedNote { margin: 0; padding: var(--space-2) var(--space-4); font-size: var(--font-sm); color: var(--primary-300); background: var(--primary-50); border-bottom: 0.5px solid var(--neutral-100); }
+.scopeRow {
+  display: flex; align-items: center; gap: var(--space-3); width: 100%;
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4); border: 0; border-bottom: 0.5px solid var(--neutral-100);
+  background: var(--neutral-0); cursor: pointer; text-align: left;
+}
+.scopeRow:hover { background: var(--neutral-50); }
+.scopeRowActive, .scopeRowActive:hover { background: var(--primary-50); box-shadow: inset 2px 0 0 var(--primary-300); }
+.scopeRowText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); }
+.scopeRowTitle { font-size: var(--font-base); font-weight: 500; color: var(--neutral-500); }
+.scopeRowRange { font-size: var(--font-sm); color: var(--neutral-300); }
+.addRow {
+  display: flex; align-items: center; gap: var(--space-2); width: 100%;
+  padding: var(--space-3) var(--space-4); border: 0; background: var(--neutral-0); cursor: pointer;
+  font-size: var(--font-base); color: var(--primary-300); text-align: left;
+}
+.addRow:hover { background: var(--neutral-50); }
+
+/* 48px, the height of the tab row beside it, so the two hairlines meet. */
+.leftHead {
+  display: flex; align-items: center; gap: var(--space-2); height: 48px; box-sizing: border-box; flex-shrink: 0;
+  padding: 0 var(--space-2) 0 var(--space-4); background: var(--neutral-0); border-bottom: 0.5px solid var(--neutral-150);
+}
+.leftHeadText { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: var(--space-2); overflow: hidden; white-space: nowrap; }
+.leftHeadText > :last-child:not(:first-child) { overflow: hidden; text-overflow: ellipsis; }
+.leftTitle { flex-shrink: 0; max-width: 60%; font-size: var(--font-base); font-weight: 500; color: var(--neutral-500); overflow: hidden; text-overflow: ellipsis; }
+.leftBody { flex: 1; min-height: 0; overflow-y: auto; padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-4); }
+.scopeFields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-3); }
+.scopeGoals { grid-column: 1 / -1; display: flex; align-items: center; gap: var(--space-2); }
+.explanation { margin: 0; font-size: var(--font-base); line-height: var(--leading-normal); color: var(--neutral-400); }
+.matchLine { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--font-sm); color: var(--neutral-300); }
+
+/* The protocol status badge: "Needs Review" in the warning orange
+   (the shared warning tone's mustard reads as neutral on white). */
+.statusWarning.statusWarning {
+  background: color-mix(in srgb, var(--status-warning-dark) 10%, var(--neutral-0));
+  color: var(--status-warning-dark);
+  border-color: color-mix(in srgb, var(--status-warning-dark) 30%, transparent);
+}

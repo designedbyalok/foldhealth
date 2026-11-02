@@ -15,6 +15,8 @@ import { protocolCounts, protocolStatus } from './lib/protocolSchema';
 import { isFoldProtocol } from './lib/foldProtocols';
 import { ProtocolUploadDrawer } from './ProtocolUploadDrawer';
 import { ProtocolReviewDrawer } from './ProtocolReviewDrawer';
+import { PlanCounts } from './ProtocolScope';
+import { planOf } from './lib/protocolPlan';
 import styles from './ClinicalProtocols.module.css';
 
 // FilterChip options are the labels themselves.
@@ -32,33 +34,19 @@ const COLUMNS = [
   { key: 'review', label: 'Next Review', sortKey: 'reviewDate', width: 120 },
   { key: 'status', label: 'Status', sortKey: 'status', width: 140 },
   { key: 'items', label: 'Items', width: 80 },
+  { key: 'output', label: 'Care Plan', width: 150 },
   { key: 'updated', label: 'Updated', sortKey: 'updatedAt', width: 120 },
   { key: 'actions', label: 'Actions', sticky: 'right', width: 72 },
 ];
 
 // Per-user, in user_panel_layouts (savePanelLayout).
 const INTRO_KEY = 'clinical-protocols-intro';
+// The upload-to-template flow, in the order it happens.
 const INTRO_ITEMS = [
-  {
-    icon: 'solar:upload-minimalistic-linear',
-    title: 'Upload any format',
-    description: 'PDF, Word or Fold JSON, one file or hundreds. UnityAI extracts thresholds, decision rules, cadence, medication titration and references.',
-  },
-  {
-    icon: 'solar:shield-check-linear',
-    title: 'Review before it’s used',
-    description: 'Every item sits next to the passage it came from. Nothing is used until an admin approves it.',
-  },
-  {
-    icon: 'solar:refresh-linear',
-    title: 'Stay current',
-    description: 'Tag by condition, program and effective date. A new version replaces the old one, which is kept for reference.',
-  },
-  {
-    icon: 'solar:clipboard-list-linear',
-    title: 'Build care plans from them',
-    description: 'Start a care plan template from an Active protocol so its goals and interventions follow the client’s guidance.',
-  },
+  { title: 'Upload', description: 'PDF, Word or Fold JSON, one file or hundreds.' },
+  { title: 'Review the scope', description: 'A plain-language plan per category: its goals, interventions and barriers.' },
+  { title: 'Approve', description: 'An admin signs off. Rejecting removes the upload.' },
+  { title: 'Build care plans', description: 'Approval creates the linked care plan template.' },
 ];
 
 const fmtDay = (iso) => {
@@ -152,8 +140,9 @@ export function ClinicalProtocolsPanel({ tabs, activeTab, onTabChange }) {
         <td className={styles.td}>{p.programCodes.length ? <BadgeRow items={p.programCodes} maxLines={1} /> : '-'}</td>
         <td className={`${styles.td} ${styles.nowrap}`}>{fmtDay(p.effectiveDate)}</td>
         <td className={`${styles.td} ${styles.nowrap} ${reviewDue ? styles.overdue : ''}`}>{fmtDay(p.reviewDate)}{reviewDue ? ' · due' : ''}</td>
-        <td className={styles.td}><Badge tone={status.tone} size="S" label={status.label} /></td>
+        <td className={styles.td}><Badge tone={status.tone} size="S" label={status.label} className={status.tone === 'warning' ? styles.statusWarning : undefined} /></td>
         <td className={styles.td}>{p.status === 'processing' ? '…' : total}</td>
+        <td className={styles.td}>{planOf(p.protocol) ? <PlanCounts plan={planOf(p.protocol)} /> : '-'}</td>
         <td className={`${styles.td} ${styles.nowrap}`}>{fmtDay(p.updatedAt)}</td>
         <td className={`${styles.td} ${styles.tdActions}`}>
           <span className={styles.actionCell}>
@@ -195,9 +184,9 @@ export function ClinicalProtocolsPanel({ tabs, activeTab, onTabChange }) {
       {!introDismissed && (
         <div className={styles.intro}>
           <IntroCard
-            icon="solar:document-medicine-linear"
-            title="What are clinical protocols?"
-            description="Clinical practice guidance (BP ranges, medication titration, lab recheck cadence, check-in schedules) as structured rules your care team can find, trust and build on. Fold’s protocols for common chronic conditions are included; add your clients’ own alongside them."
+            layout="flow"
+            title="From clinical guidance to care plan"
+            description="Upload a client’s guidance and UnityAI drafts the plan; nothing is created until it’s approved. Fold’s protocols for common conditions are already here."
             items={INTRO_ITEMS}
             onDismiss={() => setIntroDismissed(true)}
           />
