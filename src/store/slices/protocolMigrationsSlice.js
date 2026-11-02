@@ -176,12 +176,12 @@ export function createProtocolMigrationsSlice(set, get) {
         const { data } = await supabase.from('clinical_protocols').select('id, version').in('id', fromIds);
         for (const p of data || []) fromVersions.set(p.id, p.version);
       }
-      const templates = get().carePlanTemplates || [];
+      const templateById = new Map((get().carePlanTemplates || []).map(t => [t.id, t]));
       let n = 0;
       for (const inst of due) {
         const to = byId.get(inst.pendingProtocolId);
         if (!to || to.status === 'retired') continue;
-        const template = templates.find(t => t.id === inst.templateId);
+        const template = templateById.get(inst.templateId);
         const fromVersion = inst.protocolId ? (inst.protocolVersion || fromVersions.get(inst.protocolId)) : template?.sourceProtocol?.version;
         // react-doctor-disable-next-line react-doctor/async-await-in-loop
         const { error: e } = await supabase.from('patient_care_plan_template_instances').update({
