@@ -18,7 +18,7 @@ import { ConfirmDialog } from '../../../../../components/ConfirmDialog/ConfirmDi
 import { FilterChip } from '../../../../../components/FilterChip/FilterChip';
 import { EpisodeBadge, TemplateScopeBadge, TemplateScopeChoice } from '../../shared';
 import { episodeOf } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/episodeTemplates';
-import { LIBRARY_SCOPE_CHOICES, inLibrary, matchesScopeFilter, scopeFilterOptions, templateScopeOf } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/templateScope';
+import { LIBRARY_SCOPE_CHOICES, TEMPLATE_SCOPES, inLibrary, matchesScopeFilter, scopeFilterOptions, templateScopeOf } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/templateScope';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../../../../components/ShadcnDialog/ShadcnDialog';
 import { RingEmptyState } from '../../../../../components/RingEmptyState/RingEmptyState';
 import { TableSkeleton } from '../../../../../components/TableSkeleton/TableSkeleton';
@@ -120,6 +120,14 @@ function StampCell({ name, children }) {
 
 // Titles across the library share one ceiling.
 
+function formatDate(iso) {
+  if (!iso) return '-';
+  return new Date(iso).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+}
+
+// Templates seeded by migrations have no author on record.
+const SYSTEM_AUTHOR = 'System';
+
 function formatDateTime(iso) {
   if (!iso) return '-';
   const d = new Date(iso);
@@ -145,10 +153,10 @@ const SELECT_COLUMN_COLLAPSED_TH = {
 const SELECT_COLUMN_TH = { transition: 'width 180ms ease, padding 180ms ease' };
 
 const TEMPLATE_COLUMNS = [
-  { key: 'name', label: 'Template Name', sortKey: 'name', sortType: 'alpha', sticky: 'left', left: 0, width: 280 },
+  { key: 'name', label: 'Template Name', sortKey: 'name', sortType: 'alpha', sticky: 'left', left: 0, width: 380 },
   { key: 'conditions', label: 'Chronic Conditions', sortKey: 'conditions', sortType: 'alpha', width: 280 },
-  { key: 'createdOn', label: 'Created On', sortKey: 'createdAt', sortType: 'date', width: 200 },
-  { key: 'updated', label: 'Last Update', sortKey: 'updatedAt', sortType: 'date', width: 200 },
+  { key: 'createdOn', label: 'Created On', sortKey: 'createdAt', sortType: 'date', width: 140 },
+  { key: 'updated', label: 'Last Update', sortKey: 'updatedAt', sortType: 'date', width: 140 },
   { key: 'actions', label: 'Actions', sticky: 'right', width: 132 },
 ];
 // Drafts add Approve to the row actions.
@@ -550,28 +558,35 @@ export function CarePlanLibraryPanel() {
         )}
       </td>
       <td className={`${nameTdClass} ${bulkMode ? styles.tdNameOffset : ''}`}>
-        <span className={styles.nameWithScope}>
-          <button type="button" className={styles.nameLink} onClick={() => openEditTemplate(t)}>{t.name}</button>
-          <TemplateScopeBadge template={t} />
-          <EpisodeBadge template={t} />
-          {t.status === 'draft' && t.replacesTemplateId && (
-            <Tooltip label={`Replaces the published "${templates.find(x => x.id === t.replacesTemplateId)?.name || 'template'}" when approved`}>
-              <Badge tone="info" size="S" label="Revision" />
-            </Tooltip>
-          )}
-          {t.status === 'draft' && t.importBatchId && !t.replacesTemplateId && <Badge tone="info" size="S" label="Imported" />}
-          {t.status !== 'draft' && (templateVersions[t.id] || []).length > 0 && (() => {
-            const chain = templateVersions[t.id];
-            const scheduled = chain.filter(v => v.effectiveDate > todayIso()).pop();
-            const d = scheduled?.effectiveDate;
-            return (
-              <Tooltip label={scheduled ? `Version ${scheduled.versionNumber} takes effect ${d.slice(5, 7)}/${d.slice(8, 10)}/${d.slice(0, 4)}. See versions` : 'See versions'}>
-                <button type="button" className={styles.versionBadge} onClick={() => setVersionsFor(t)}>
-                  <Badge tone={scheduled ? 'info' : 'grey'} size="S" label={`v${t.currentVersionNumber || 1}${scheduled ? ` → v${scheduled.versionNumber}` : ''}`} />
-                </button>
+        <span className={styles.nameStack}>
+          <span className={styles.nameWithScope}>
+            <button type="button" className={styles.nameLink} onClick={() => openEditTemplate(t)}>{t.name}</button>
+            <EpisodeBadge template={t} />
+            {t.status === 'draft' && t.replacesTemplateId && (
+              <Tooltip label={`Replaces the published "${templates.find(x => x.id === t.replacesTemplateId)?.name || 'template'}" when approved`}>
+                <Badge tone="info" size="S" label="Revision" />
               </Tooltip>
-            );
-          })()}
+            )}
+            {t.status === 'draft' && t.importBatchId && !t.replacesTemplateId && <Badge tone="info" size="S" label="Imported" />}
+          </span>
+          <span className={styles.nameMeta}>
+            <span>{TEMPLATE_SCOPES[templateScopeOf(t)].badge}</span>
+            {t.status !== 'draft' && (templateVersions[t.id] || []).length > 0 && (() => {
+              const chain = templateVersions[t.id];
+              const scheduled = chain.filter(v => v.effectiveDate > todayIso()).pop();
+              const d = scheduled?.effectiveDate;
+              return (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <Tooltip label={scheduled ? `Version ${scheduled.versionNumber} takes effect ${d.slice(5, 7)}/${d.slice(8, 10)}/${d.slice(0, 4)}. See versions` : 'See versions'}>
+                    <button type="button" className={styles.versionLink} onClick={() => setVersionsFor(t)}>
+                      {`v${t.currentVersionNumber || 1}${scheduled ? ` → v${scheduled.versionNumber}` : ''}`}
+                    </button>
+                  </Tooltip>
+                </>
+              );
+            })()}
+          </span>
         </span>
       </td>
       <td className={styles.tdConditions}>
@@ -579,8 +594,8 @@ export function CarePlanLibraryPanel() {
           ? <BadgeRow items={t.conditions} maxLines={2} />
           : '-'}
       </td>
-      <td className={styles.tdUpdated}><StampCell name={t.createdBy}>{formatDateTime(t.createdAt)}</StampCell></td>
-      <td className={styles.tdUpdated}><StampCell name={t.updatedBy}>{formatDateTime(t.updatedAt)}</StampCell></td>
+      <td className={styles.tdUpdated}><StampCell name={t.createdBy || SYSTEM_AUTHOR}>{formatDate(t.createdAt)}</StampCell></td>
+      <td className={styles.tdUpdated}><StampCell name={t.updatedBy || t.createdBy || SYSTEM_AUTHOR}>{formatDate(t.updatedAt)}</StampCell></td>
       <td className={styles.tdActions} onClick={e => e.stopPropagation()}>
         <div className={styles.actionCell}>
           <ActionButton
