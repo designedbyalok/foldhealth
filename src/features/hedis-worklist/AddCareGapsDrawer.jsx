@@ -13,6 +13,7 @@ import { InfoBar } from '../../components/InfoBar/InfoBar';
 import { Icon } from '../../components/Icon/Icon';
 import { SimpleTableSkeleton } from '../../components/SimpleTableSkeleton/SimpleTableSkeleton';
 import { MEASURE_YEARS } from './data/caregapWhitelistMock';
+import { STATUS_BADGE_VARIANT } from './HedisWorklistRow';
 import styles from './AddCareGapsDrawer.module.css';
 
 const WORKFLOWS = ['Outreach', 'Clinical Note', 'Referral', 'Task'];
@@ -53,16 +54,23 @@ function GapHistory({ history }) {
   );
 }
 
+// The patient's current gap for this measure decides the row: none → Not
+// added; open (any non-closed status) → shown but locked; closed → can be
+// added again.
 function GapRow({ whitelist, parent, history, checked, config, onToggle, onConfig }) {
   const needsReason = history.length > 0;
+  const alreadyOpen = !!parent && !isClosed(parent.status);
   return (
-    <div className={[styles.gapRow, checked ? styles.gapRowOn : ''].join(' ')}>
+    <div className={[styles.gapRow, checked ? styles.gapRowOn : '', alreadyOpen ? styles.gapRowOpen : ''].join(' ')}>
       <label className={styles.gapMain}>
-        <Checkbox checked={checked} onCheckedChange={onToggle} aria-label={`Add ${whitelist.code}`} />
+        <Checkbox checked={checked} disabled={alreadyOpen} onCheckedChange={onToggle} aria-label={`Add ${whitelist.code}`} />
         <span className={styles.gapCode}>{whitelist.code}</span>
         <span className={styles.gapName}>{whitelist.name}</span>
         <span className={styles.gapMeta}>
-          {parent && <Badge size="S" variant="status-queued" icon="solar:history-linear" label={`Previous: ${parent.status}`} />}
+          {alreadyOpen && <span className={styles.gapHint}>Already open</span>}
+          {parent
+            ? <Badge size="S" variant={STATUS_BADGE_VARIANT[parent.status] || 'ai-neutral'} label={parent.status} />
+            : <span className={styles.gapHint}>Not added</span>}
         </span>
       </label>
       {checked && (
@@ -211,15 +219,16 @@ export function AddCareGapsDrawer() {
     () => whitelist.filter(w => appliesTo(w, { ipa, hpCode, measureYear })),
     [whitelist, ipa, hpCode, measureYear],
   );
-  // A gap the patient already has open can't be added again, so it isn't listed.
+  // A gap the patient already has open can't be added again: it stays in
+  // the list with its status, but can't be selected.
   const eligible = whitelisted.filter(w => {
     const existing = existingByCode[w.code];
     return !existing || isClosed(existing.status);
   });
   const q = query.trim().toLowerCase();
   const visible = q
-    ? eligible.filter(w => w.code.toLowerCase().includes(q) || w.name.toLowerCase().includes(q))
-    : eligible;
+    ? whitelisted.filter(w => w.code.toLowerCase().includes(q) || w.name.toLowerCase().includes(q))
+    : whitelisted;
   // Selection outlives a filter change only for gaps still whitelisted.
   const picked = eligible.filter(w => selected.includes(w.code));
 
@@ -327,9 +336,7 @@ export function AddCareGapsDrawer() {
             <SimpleTableSkeleton rows={5} cols={2} />
           ) : visible.length === 0 ? (
             <div className={styles.empty}>
-              {whitelisted.length > 0 && eligible.length === 0
-                ? 'Every whitelisted care gap is already open for this patient.'
-                : eligible.length === 0
+              {whitelisted.length === 0
                 ? `No care gaps are whitelisted for ${ipa || 'this IPA'} · ${hpCode || 'this HP code'} · MY${measureYear}.`
                 : 'No whitelisted care gaps match your search.'}
             </div>

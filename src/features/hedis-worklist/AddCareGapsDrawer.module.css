@@ -70,7 +70,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.gapMeta { display: inline-flex; flex-shrink: 0; }
+.gapMeta { display: inline-flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
+.gapHint { font-size: var(--font-sm); color: var(--neutral-300); white-space: nowrap; }
+/* Already open: listed for context, not selectable. */
+.gapRowOpen .gapMain { cursor: not-allowed; }
+.gapRowOpen .gapCode,
+.gapRowOpen .gapName { color: var(--neutral-300); }
 
 .empty {
   padding: var(--space-5) var(--space-3);
