@@ -322,12 +322,12 @@ export const createClinicalProtocolsSlice = (set, get) => {
         const saveGoal = get().saveCarePlanGoal;
         const goals = await materializeNewGoals(content.goals, saveGoal);
         if (!goals) throw new Error('A goal could not be added to the library.');
-        const categories = [];
-        for (const c of content.categories) {
-          const catGoals = await materializeNewGoals(c.goals, saveGoal);
-          if (!catGoals) throw new Error('A goal could not be added to the library.');
-          categories.push({ ...c, goals: catGoals, interventions: withoutDraftMarks(c.interventions), barriers: withoutDraftMarks(c.barriers) });
-        }
+        // Each category's new goals are separate library inserts, so they run together.
+        const catGoals = await Promise.all(content.categories.map(c => materializeNewGoals(c.goals, saveGoal)));
+        if (catGoals.some(g => !g)) throw new Error('A goal could not be added to the library.');
+        const categories = content.categories.map((c, i) => ({
+          ...c, goals: catGoals[i], interventions: withoutDraftMarks(c.interventions), barriers: withoutDraftMarks(c.barriers),
+        }));
         const saved = await get().saveCarePlanTemplate({
           name: plan.name || protocol.title,
           conditions: plan.conditions?.length ? plan.conditions : protocol.conditions,
