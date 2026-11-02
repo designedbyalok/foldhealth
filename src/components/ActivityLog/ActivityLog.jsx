@@ -456,6 +456,8 @@ function OutreachEntryBody({ entry }) {
   const details = (entry.details || []).filter(d => d && d.value != null && d.value !== '');
   // `onViewDetails`: the owner shows the details itself (e.g. a side
   // panel), so View details calls it instead of expanding here.
+  // `viewDetailsLabel` renames that link (e.g. "View Chat"), with a right
+  // chevron since it opens something rather than expanding.
   const hasDetails = details.length > 0 || !!entry.onViewDetails;
   const expandable = hasNote || hasCall || hasDetails;
 
@@ -479,8 +481,10 @@ function OutreachEntryBody({ entry }) {
             onClick={entry.onViewDetails || (() => setExpanded(v => !v))}
           >
             {entry.outcome && <span className={styles.viewNoteDot} aria-hidden="true">•</span>}
-            {hasDetails ? 'View details' : 'View more'}
-            <DownChevronIcon size={11} color="currentColor" className={expanded ? styles.viewMoreChevronOpen : undefined} />
+            {entry.viewDetailsLabel || (hasDetails ? 'View details' : 'View more')}
+            {entry.viewDetailsLabel
+              ? <Icon name="solar:alt-arrow-right-linear" size={12} color="currentColor" />
+              : <DownChevronIcon size={11} color="currentColor" className={expanded ? styles.viewMoreChevronOpen : undefined} />}
           </button>
         )}
       </div>
