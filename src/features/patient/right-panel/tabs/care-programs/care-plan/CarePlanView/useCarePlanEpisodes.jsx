@@ -55,8 +55,8 @@ export function useCarePlanEpisodes({ patientId, program, live, canEdit, readOnl
     const ownProgram = c => { const code = episodeOf(c.template)?.programCode; return !!code && code !== program.code; };
     const elsewhere = new Set(choices.filter(ownProgram).map(c => String(c.template.id)));
     const here = p.ids.filter(id => !elsewhere.has(String(id)));
-    const already = (live?.plan?.appliedTemplateIds || []).map(String);
-    if (here.length !== already.length || here.some(id => !already.includes(String(id)))) {
+    const already = new Set((live?.plan?.appliedTemplateIds || []).map(String));
+    if (here.length !== already.size || here.some(id => !already.has(String(id)))) {
       const ok = await applyTemplates(here, p.priorities, p.categoryPicks);
       if (ok === false) return;
     }
