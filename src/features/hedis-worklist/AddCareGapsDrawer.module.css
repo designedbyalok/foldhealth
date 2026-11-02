@@ -71,7 +71,6 @@
   text-overflow: ellipsis;
 }
 .gapMeta { display: inline-flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
-.gapHint { font-size: var(--font-sm); color: var(--neutral-300); white-space: nowrap; }
 /* Already open: listed for context, not selectable. */
 .gapRowOpen .gapMain { cursor: not-allowed; }
 .gapRowOpen .gapCode,
@@ -207,4 +206,10 @@
   margin-left: auto;
   font-size: var(--font-xs);
   color: var(--neutral-300);
+}
+
+/* Billing note: full drawer width, no rounded corners. */
+.billingBar {
+  border-radius: 0;
+  border-bottom: 0.5px solid var(--neutral-150);
 }
