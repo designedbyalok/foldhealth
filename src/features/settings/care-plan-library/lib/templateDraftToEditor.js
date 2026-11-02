@@ -6,12 +6,13 @@ const norm = (s) => String(s ?? '').trim().toLowerCase();
  * Ask the server for a draft (see api/_handlers/care-plan-template-draft.js).
  * `protocol` (optional): { title, version, organization, guidance } the draft must follow.
  * `options`: { categories, libraryOnly } (see buildTemplateDraftPrompt).
+ * `reference` (optional): an existing template to start from (buildTemplateReference).
  */
-export async function requestTemplateDraft(description, catalog, protocol = null, options = null) {
+export async function requestTemplateDraft(description, catalog, protocol = null, options = null, reference = null) {
   const res = await apiFetch('/api/care-plan-template-draft', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ description, catalog, ...(protocol ? { protocol } : {}), ...(options ? { options } : {}) }),
+    body: JSON.stringify({ description, catalog, ...(protocol ? { protocol } : {}), ...(options ? { options } : {}), ...(reference ? { reference } : {}) }),
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok || !json?.draft) {

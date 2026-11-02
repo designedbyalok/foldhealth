@@ -258,6 +258,19 @@
   min-width: 0;
 }
 
+/* With a trailing action the label truncates rather than running under it. */
+.itemText {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* An option's trailing action (e.g. preview): pushed to the row's end. */
+.itemAction {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
 /* Non-interactive section header: pinned inside the menu to label a
    group of options that follow it. Callers pass options of shape
    `{ type: 'header', label, value }` to render this variant. */

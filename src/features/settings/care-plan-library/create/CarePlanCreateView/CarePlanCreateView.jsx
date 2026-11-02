@@ -37,7 +37,8 @@ import { TableSkeleton } from '../../../../../components/TableSkeleton/TableSkel
 import { protocolGuidanceText } from '../../../clinical-protocols/lib/protocolSchema';
 import { ProtocolUploadDrawer } from '../../../clinical-protocols/ProtocolUploadDrawer';
 import { ProtocolReviewDrawer } from '../../../clinical-protocols/ProtocolReviewDrawer';
-import { buildTemplateCatalog, TEMPLATE_DESCRIPTION_MAX } from '../../lib/aiTemplateDraft';
+import { TemplatePreviewDrawer } from '../../../../patient/right-panel/tabs/care-programs/care-plan/drawers/TemplatePreviewDrawer';
+import { buildTemplateCatalog, buildTemplateReference, TEMPLATE_DESCRIPTION_MAX } from '../../lib/aiTemplateDraft';
 import {
   requestTemplateDraft,
   templateDraftToEditor,
@@ -54,8 +55,6 @@ const BUILD_MODES = [
   { value: 'manual', label: 'Build it yourself', hint: 'Name it and add goals, interventions and barriers from the library.' },
   { value: 'ai', label: 'Draft with UnityAI', hint: 'Describe it, optionally from a clinical protocol. UnityAI drafts the name, description, goals, interventions and barriers for you to review.' },
 ];
-// The protocol picker's first option opens the upload drawer instead of picking.
-const UPLOAD_PROTOCOL = '__upload';
 
 /**
  * New Care Plan: full-pane template creation (Figma Care-Plan-Creation
@@ -113,7 +112,6 @@ export function CarePlanCreateView({ onClose, onSave }) {
   const [protocolUploadOpen, setProtocolUploadOpen] = useState(false);
   const [reviewProtocolId, setReviewProtocolId] = useState(null);
   const pickProtocol = (id) => {
-    if (id === UPLOAD_PROTOCOL) { setProtocolUploadOpen(true); return; }
     setProtocolId(id);
     // Read from the store: a protocol approved a moment ago isn't in this render's list yet.
     const picked = useAppStore.getState().clinicalProtocols.find(p => p.id === id);
@@ -122,6 +120,16 @@ export function CarePlanCreateView({ onClose, onSave }) {
       setDraftText(`A care plan following ${picked.title}${conditionsText}.`);
     }
   };
+
+  // A published library template the draft starts from.
+  const referenceTemplates = useMemo(
+    () => libraryTemplates.filter(t => t.status === 'published' && t.scope !== 'patient'),
+    [libraryTemplates],
+  );
+  const [referenceTemplateId, setReferenceTemplateId] = useState('');
+  const [previewTemplateId, setPreviewTemplateId] = useState(null);
+  const previewTemplate = referenceTemplates.find(t => t.id === previewTemplateId) || null;
+  const referenceTemplate = referenceTemplates.find(t => t.id === referenceTemplateId) || null;
 
   // UnityAI drafting: a plain-English description becomes goals,
   // interventions and barriers (library items where possible) that land in
@@ -256,7 +264,14 @@ export function CarePlanCreateView({ onClose, onSave }) {
         organization: sourceProtocol.organization,
         guidance: protocolGuidanceText(sourceProtocol.protocol),
       };
-      const draft = await requestTemplateDraft(text, catalog, protocol);
+      // Template goals may carry only the library goal's id.
+      const reference = referenceTemplate && buildTemplateReference({
+        name: referenceTemplate.name,
+        goals: referenceTemplate.goals.map(g => g.title || libraryGoals.find(l => l.id === g.id)?.title),
+        interventions: referenceTemplate.interventions,
+        barriers: referenceTemplate.barriers,
+      });
+      const draft = await requestTemplateDraft(text, catalog, protocol, null, reference);
       const lists = templateDraftToEditor(draft, { libraryGoals, interventionLibrary, barrierLibrary });
       setGoals(prev => mergeDraft(prev, lists.goals));
       setInterventions(prev => mergeDraft(prev, lists.interventions));
@@ -365,19 +380,19 @@ export function CarePlanCreateView({ onClose, onSave }) {
                 portal
                 searchable
                 placeholder="None: draft from the description only"
-                // Upload leads the list (and sits in the label row) so it stays in
-                // reach however many protocols there are.
+                // Upload sits in the label row so it stays in reach however many
+                // protocols there are.
                 labelAction={(
                   <Button variant="ghost" size="sm" leadingIcon="solar:upload-minimalistic-linear" onClick={() => setProtocolUploadOpen(true)}>
                     Upload
                   </Button>
                 )}
                 options={[
-                  { value: UPLOAD_PROTOCOL, label: 'Upload a new protocol', icon: 'solar:upload-minimalistic-linear' },
                   { value: '', label: 'None: draft from the description only' },
                   ...activeProtocols.map(p => ({
                     value: p.id,
                     label: [p.title, p.version && `v${p.version}`, p.organization].filter(Boolean).join(' · '),
+                    action: { icon: 'solar:eye-linear', label: 'Preview protocol', onClick: setReviewProtocolId },
                   })),
                 ]}
                 value={protocolId}
@@ -385,6 +400,25 @@ export function CarePlanCreateView({ onClose, onSave }) {
                 helperText={sourceProtocol
                   ? 'UnityAI follows its thresholds, cadence and titration, and the template is saved as based on it.'
                   : 'Optional. Pick an approved protocol, or upload one to review and approve.'}
+              />
+              <Select
+                label="Reference template"
+                portal
+                searchable
+                placeholder="None: draft from scratch"
+                options={[
+                  { value: '', label: 'None: draft from scratch' },
+                  ...referenceTemplates.map(t => ({
+                    value: t.id,
+                    label: t.name,
+                    action: { icon: 'solar:eye-linear', label: 'Preview template', onClick: setPreviewTemplateId },
+                  })),
+                ]}
+                value={referenceTemplateId}
+                onChange={setReferenceTemplateId}
+                helperText={referenceTemplate
+                  ? 'UnityAI starts from its goals, interventions and barriers, then adapts them to your description.'
+                  : 'Optional. Pick an existing template for UnityAI to start from.'}
               />
               <UnityPromptField
                 label="Describe this template in plain English"
@@ -434,7 +468,13 @@ export function CarePlanCreateView({ onClose, onSave }) {
           {/* Same shape as the Edit Care Plan pane: a labelled field, not a
               section heading. */}
           <div className={styles.field}>
-            <TemplateTypeChoice value={templateType} onChange={setTemplateType} />
+            {/* A chronic-conditions template needs to say which conditions,
+                same picker the goal drawer and the template editor use. */}
+            <TemplateTypeChoice
+              value={templateType}
+              onChange={setTemplateType}
+              details={{ chronic: <ChronicConditionSelect value={conditions} onChange={setConditions} /> }}
+            />
           </div>
 
           {templateType === 'episodic' && (
@@ -450,14 +490,6 @@ export function CarePlanCreateView({ onClose, onSave }) {
           <div className={styles.field}>
             <TemplateRenewalChoice value={renewal} onChange={setRenewalPick} />
           </div>
-
-          {/* A chronic-conditions template needs to say which conditions,
-              same picker the goal drawer and the template editor use. */}
-          {templateType === 'chronic' && (
-            <div className={styles.field}>
-              <ChronicConditionSelect value={conditions} onChange={setConditions} />
-            </div>
-          )}
         </div>
       </div>
 
@@ -517,9 +549,11 @@ export function CarePlanCreateView({ onClose, onSave }) {
                 >
                   Add New
                 </Button>
-                <Button variant="outline" onClick={() => setTemplatesOpen(true)}>
-                  Use Template
-                </Button>
+                {!aiMode && (
+                  <Button variant="outline" onClick={() => setTemplatesOpen(true)}>
+                    Use Template
+                  </Button>
+                )}
               </div>
             </div>
           ) : (
@@ -673,6 +707,9 @@ export function CarePlanCreateView({ onClose, onSave }) {
           onClose={() => setProtocolUploadOpen(false)}
           onReview={(id) => { setProtocolUploadOpen(false); setReviewProtocolId(id); }}
         />
+      )}
+      {previewTemplate && (
+        <TemplatePreviewDrawer template={previewTemplate} onClose={() => setPreviewTemplateId(null)} />
       )}
       {reviewProtocolId && (
         <ProtocolReviewDrawer

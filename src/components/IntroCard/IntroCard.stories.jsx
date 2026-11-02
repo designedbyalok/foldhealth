@@ -45,6 +45,20 @@ export const Dismissible = {
   args: Default.args,
 };
 
+export const Steps = {
+  args: {
+    icon: 'solar:calendar-mark-linear',
+    title: 'How episodic templates work',
+    description: 'For care that belongs to one event rather than a long-term condition.',
+    layout: 'steps',
+    items: [
+      { icon: 'solar:play-circle-linear', title: 'Starts when applied', description: 'Day 1 is the day it’s applied.' },
+      { icon: 'solar:pause-circle-linear', title: 'Pauses other plans', description: 'Their tasks step aside until it ends.' },
+      { icon: 'solar:flag-linear', title: 'Ends on its own', description: 'It closes after its last day.' },
+    ],
+  },
+};
+
 export const WithoutItems = {
   args: { icon: 'solar:info-circle-linear', title: 'About this section', description: 'A single sentence explaining what the section is for.' },
 };

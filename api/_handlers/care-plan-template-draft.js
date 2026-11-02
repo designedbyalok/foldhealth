@@ -8,6 +8,7 @@
  *
  * Body: { description: string, catalog: { goals, interventions, barriers },
  *         protocol?: { title, version, organization, guidance },
+ *         reference?: { name, goals, interventions, barriers } (titles),
  *         options?: { categories?: boolean, libraryOnly?: boolean } }
  * Returns: { draft } or { error: { message } }
  */
@@ -19,6 +20,7 @@ import {
   TEMPLATE_DESCRIPTION_MAX,
   TEMPLATE_DRAFT_SCHEMA,
   buildTemplateDraftPrompt,
+  buildTemplateReference,
   normalizeTemplateDraft,
 } from '../../src/features/settings/care-plan-library/lib/aiTemplateDraft.js';
 
@@ -54,6 +56,8 @@ export default async function handler(req, res) {
   const options = {
     categories: !!protocol && body.options?.categories === true,
     libraryOnly: body.options?.libraryOnly === true,
+    // An existing template the draft starts from.
+    reference: buildTemplateReference(body.reference),
   };
   const catalog = {
     goals: asList(body.catalog?.goals),
