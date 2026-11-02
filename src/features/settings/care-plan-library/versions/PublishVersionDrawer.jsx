@@ -10,9 +10,10 @@ import { RadioOptionGroup } from '../../../../components/RadioOptionGroup/RadioO
 import { TableSkeleton } from '../../../../components/TableSkeleton/TableSkeleton';
 import { useAppStore } from '../../../../store/useAppStore';
 import {
-  COHORT_DIMENSIONS, NO_VALUE, contentOf, effectiveVersion, impactSummary, migrationTargets,
+  COHORT_DIMENSIONS, NO_VALUE, contentOf, effectiveVersion, migrationTargets,
   nextVersionNumber, todayIso, versionDiff,
 } from '../lib/templateVersions';
+import { ImpactAnalysis } from './ImpactAnalysis';
 import styles from './Versions.module.css';
 
 const KIND_LABEL = { goal: 'Goals', intervention: 'Interventions', barrier: 'Barriers' };
@@ -29,49 +30,6 @@ function ChangeSummary({ diff }) {
         ...diff[kind].removed.map(x => <li key={`${kind}-${x.title}`}><Badge tone="grey" size="S" label="Removed" /><span>{x.title}</span><span className={styles.muted}>{label.slice(0, -1)}</span></li>),
       ])}
     </ul>
-  );
-}
-
-/** Plans using the template, broken down the ways a cohort can be cut. */
-function ImpactAnalysis({ rows, marked }) {
-  const s = useMemo(() => impactSummary(rows), [rows]);
-  if (!rows.length) return <p className={styles.muted}>No active care plan uses this template yet.</p>;
-  const group = (title, list) => (
-    <div className={styles.breakdown}>
-      <span className={styles.breakdownTitle}>{title}</span>
-      <div className={styles.breakdownChips}>
-        {list.slice(0, 8).map(x => <span key={x.value} className={styles.breakdownChip}>{x.value} <b>{x.n}</b></span>)}
-        {list.length > 8 && <span className={styles.muted}>+{list.length - 8} more</span>}
-      </div>
-    </div>
-  );
-  return (
-    <div className={styles.impact}>
-      <p className={styles.impactLead}>Used by <b>{plural(s.plans, 'active care plan')}</b> for {plural(s.patients, 'patient')}.</p>
-      {group('Version', s.byVersion)}
-      {group('Care program', s.programCode)}
-      {group('IPA', s.ipa)}
-      {group('Care manager', s.careManager)}
-      {group('Population group', s.groups)}
-      <div className={styles.tableWrap}>
-        <table className={styles.table}>
-          <thead><tr><th>Patient</th><th>Program</th><th>IPA</th><th>Care manager</th><th>On</th><th /></tr></thead>
-          <tbody>
-            {rows.slice(0, 100).map(r => (
-              <tr key={r.instanceId} className={marked && !marked.has(r.instanceId) ? styles.rowDim : ''}>
-                <td>{r.patientName}</td>
-                <td>{r.programCode}</td>
-                <td>{r.ipa || '-'}</td>
-                <td>{r.careManager || 'Unassigned'}</td>
-                <td>v{r.versionNumber}</td>
-                <td>{marked && (marked.has(r.instanceId) ? <Badge tone="info" size="S" label="Moves" /> : <span className={styles.muted}>Stays</span>)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {rows.length > 100 && <p className={styles.muted}>Showing 100 of {rows.length}.</p>}
-      </div>
-    </div>
   );
 }
 

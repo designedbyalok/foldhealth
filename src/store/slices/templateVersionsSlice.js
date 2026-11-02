@@ -50,6 +50,45 @@ async function pool(items, limit, fn) {
   return results;
 }
 
+/**
+ * Impact rows for active template runs (patient_care_plan_template_instances
+ * rows): what cohorts can filter on (program, IPA, care manager, population
+ * groups) and the version each run is on. Runs in closed programs are left out.
+ */
+export async function describeTemplateRuns(runs, get, versionNo = new Map()) {
+  if (!runs?.length) return [];
+  const plans = await selectIn('patient_care_plans', 'id, patient_id, program_id, program_code', 'id', runs.map(r => r.plan_id));
+  const planById = new Map(plans.map(p => [p.id, p]));
+  const programs = await selectIn('patient_care_programs', 'id, code, name, assignee, status', 'id', plans.map(p => p.program_id));
+  const programById = new Map(programs.map(p => [p.id, p]));
+  const patientIds = plans.map(p => String(p.patient_id));
+  const people = await selectIn('all_patients', 'member_id, name, ipa', 'member_id', patientIds);
+  const personById = new Map(people.map(p => [String(p.member_id), p]));
+  const { data: groups } = await supabase.from('population_groups').select('name, member_ids').overlaps('member_ids', [...new Set(patientIds)]);
+  const groupMembers = (groups || []).map(g => ({ name: g.name, members: new Set((g.member_ids || []).map(String)) }));
+  return runs.map((r) => {
+    const plan = planById.get(r.plan_id);
+    if (!plan) return null;
+    const program = programById.get(plan.program_id);
+    if (program && isProgramClosed(program.status)) return null;
+    const patientId = String(plan.patient_id);
+    const person = personById.get(patientId);
+    const careManager = program?.assignee && program.assignee !== 'Unassigned' ? program.assignee : '';
+    return {
+      instanceId: r.id, planId: plan.id, patientId,
+      patientName: person?.name || get().patients?.find(p => String(p.id) === patientId)?.name || patientId,
+      programId: plan.program_id, programCode: plan.program_code || program?.code || '', programName: program?.name || '',
+      careManager, ipa: person?.ipa || '',
+      groups: groupMembers.filter(g => g.members.has(patientId)).map(g => g.name),
+      templateId: r.template_id, templateName: r.template_name || '',
+      versionNumber: r.template_version_number ?? 1,
+      templateVersionId: r.template_version_id || null,
+      overlayId: r.overlay_id || null,
+      pendingVersionNumber: r.pending_version_id ? (versionNo.get(r.pending_version_id) ?? null) : null,
+    };
+  }).filter(Boolean);
+}
+
 export function createTemplateVersionsSlice(set, get) {
   const migrating = new Set();
   const versionsOf = (templateId) => get().carePlanTemplateVersions[templateId] || [];
@@ -142,37 +181,8 @@ export function createTemplateVersionsSlice(set, get) {
       const { data: runs, error } = await supabase.from('patient_care_plan_template_instances')
         .select('*').eq('template_id', templateId).eq('status', 'active');
       if (error) { console.warn('fetchCarePlanTemplateImpact:', error.message); return []; }
-      if (!runs?.length) return [];
-      const plans = await selectIn('patient_care_plans', 'id, patient_id, program_id, program_code', 'id', runs.map(r => r.plan_id));
-      const planById = new Map(plans.map(p => [p.id, p]));
-      const programs = await selectIn('patient_care_programs', 'id, code, name, assignee, status', 'id', plans.map(p => p.program_id));
-      const programById = new Map(programs.map(p => [p.id, p]));
-      const patientIds = plans.map(p => String(p.patient_id));
-      const people = await selectIn('all_patients', 'member_id, name, ipa', 'member_id', patientIds);
-      const personById = new Map(people.map(p => [String(p.member_id), p]));
-      const { data: groups } = await supabase.from('population_groups').select('name, member_ids').overlaps('member_ids', [...new Set(patientIds)]);
       const versionNo = new Map(versionsOf(templateId).map(v => [v.id, v.versionNumber]));
-      const groupMembers = (groups || []).map(g => ({ name: g.name, members: new Set((g.member_ids || []).map(String)) }));
-      return runs.map((r) => {
-        const plan = planById.get(r.plan_id);
-        if (!plan) return null;
-        const program = programById.get(plan.program_id);
-        if (program && isProgramClosed(program.status)) return null;
-        const patientId = String(plan.patient_id);
-        const person = personById.get(patientId);
-        const careManager = program?.assignee && program.assignee !== 'Unassigned' ? program.assignee : '';
-        return {
-          instanceId: r.id, planId: plan.id, patientId,
-          patientName: person?.name || get().patients?.find(p => String(p.id) === patientId)?.name || patientId,
-          programId: plan.program_id, programCode: plan.program_code || program?.code || '', programName: program?.name || '',
-          careManager, ipa: person?.ipa || '',
-          groups: groupMembers.filter(g => g.members.has(patientId)).map(g => g.name),
-          versionNumber: r.template_version_number ?? 1,
-          templateVersionId: r.template_version_id || null,
-          overlayId: r.overlay_id || null,
-          pendingVersionNumber: r.pending_version_id ? (versionNo.get(r.pending_version_id) ?? null) : null,
-        };
-      }).filter(Boolean);
+      return describeTemplateRuns(runs, get, versionNo);
     },
 
     /**

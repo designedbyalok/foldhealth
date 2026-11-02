@@ -35,7 +35,7 @@ const ENTITY_NOUN = {
 };
 const TYPE_LABEL = {
   goal: 'Goal', intervention: 'Intervention', barrier: 'Barrier',
-  share: 'Share', plan: 'Plan',
+  share: 'Share', plan: 'Plan', protocol: 'Clinical Protocol',
 };
 const ACTION_LABEL = {
   status_changed: 'Status Updated', progress_changed: 'Progress Updated',

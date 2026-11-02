@@ -248,6 +248,12 @@ function mapTemplateInstanceRow(row) {
     closeReason: row.close_reason || null,
     // A category switch the care team declined for this run.
     dismissedCategoryId: row.dismissed_category_id || null,
+    // The clinical protocol version it follows once migrated (else its
+    // template's sourceProtocol), and one it waits on until the next review.
+    protocolId: row.protocol_id || null,
+    protocolVersion: row.protocol_version || null,
+    pendingProtocolId: row.pending_protocol_id || null,
+    pendingProtocolMigrationId: row.pending_protocol_migration_id || null,
   };
 }
 
