@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Icon } from '../Icon/Icon';
 import { Checkbox } from '../ShadcnCheckbox/ShadcnCheckbox';
 import { Badge } from '../Badge/Badge';
+import { ActionButton } from '../ActionButton/ActionButton';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { DownChevronIcon } from '../Icon/DownChevronIcon';
 import { CloseIcon } from '../Icon/CloseIcon';
@@ -16,6 +17,9 @@ import styles from './Select.module.css';
  * Props:
  *  - options    [{ value: string, label: string, disabled?: boolean, icon?: string }]
  *                 (`icon`: a Solar icon shown before the option's label)
+ *                 Options may also carry `action` ({ icon, label, onClick }): an icon
+ *                 button at the row's end that does something else with the option
+ *                 (e.g. preview it) instead of picking it, and closes the menu.
  *                 Options may also carry `badgeTooltip` (node): shown on hovering the
  *                 option's chip when `multiple` + `badges`; and `triggerLabel`, the
  *                 name shown for the pick (chip text, or the open field's hint) when
@@ -537,7 +541,21 @@ export function Select({
                     <Icon name={opt.icon} size={14} color="var(--neutral-300)" />
                     {opt.label}
                   </span>
-                ) : opt.label}
+                ) : opt.action ? <span className={styles.itemText}>{opt.label}</span> : opt.label}
+                {opt.action && (
+                  <ActionButton
+                    size="sm"
+                    icon={opt.action.icon}
+                    tooltip={opt.action.label}
+                    tooltipLeft
+                    className={styles.itemAction}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpen(false);
+                      opt.action.onClick(opt.value);
+                    }}
+                  />
+                )}
               </li>
             );
           })}

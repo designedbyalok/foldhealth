@@ -13,11 +13,14 @@ import styles from './IntroCard.module.css';
  * @param {node}     [props.description]  – a sentence or two under the title
  * @param {string}   [props.icon]         – Solar icon for the header glyph
  * @param {Array<{ icon?: string, title: string, description?: node }>} [props.items]
+ * @param {'grid'|'steps'} [props.layout='grid'] – 'steps' lists the items in order on a
+ *   connected timeline, for points that happen one after another
  * @param {function} [props.onDismiss]    – adds a close (×); omitted, the card can't be dismissed
  * @param {string}   [props.dismissLabel='Dismiss']
  * @param {string}   [props.className]
  */
-export function IntroCard({ title, description, icon, items = [], onDismiss, dismissLabel = 'Dismiss', className }) {
+export function IntroCard({ title, description, icon, items = [], layout = 'grid', onDismiss, dismissLabel = 'Dismiss', className }) {
+  const steps = layout === 'steps';
   return (
     <section className={[styles.root, className || ''].filter(Boolean).join(' ')} aria-label={title}>
       <div className={styles.head}>
@@ -33,10 +36,14 @@ export function IntroCard({ title, description, icon, items = [], onDismiss, dis
         {onDismiss && <CloseButton onClick={onDismiss} label={dismissLabel} className={styles.close} />}
       </div>
       {items.length > 0 && (
-        <ul className={styles.items}>
+        <ul className={steps ? styles.steps : styles.items}>
           {items.map(item => (
-            <li key={item.title} className={styles.item}>
-              {item.icon && <Icon name={item.icon} size={16} color="var(--primary-300)" />}
+            <li key={item.title} className={steps ? styles.step : styles.item}>
+              {steps ? (
+                <span className={styles.stepMarker} aria-hidden="true">
+                  {item.icon && <Icon name={item.icon} size={14} color="currentColor" />}
+                </span>
+              ) : item.icon && <Icon name={item.icon} size={16} color="var(--primary-300)" />}
               <span className={styles.itemText}>
                 <span className={styles.itemTitle}>{item.title}</span>
                 {item.description && <span className={styles.itemDescription}>{item.description}</span>}

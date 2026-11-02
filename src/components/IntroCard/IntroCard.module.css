@@ -14,8 +14,8 @@
   background: var(--neutral-0); color: var(--primary-300);
 }
 .headText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
-.title { margin: 0; font-size: var(--font-md); font-weight: 500; line-height: var(--leading-tight); color: var(--neutral-500); }
-.description { margin: 0; font-size: var(--font-base); line-height: var(--leading-normal); color: var(--neutral-400); }
+.title { margin: 0; font-size: var(--font-base); font-weight: 500; line-height: var(--leading-tight); color: var(--neutral-500); }
+.description { margin: 0; font-size: var(--font-md); line-height: var(--leading-normal); color: var(--neutral-400); }
 .close { flex-shrink: 0; }
 .items {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-3);
@@ -25,4 +25,33 @@
 .item > :first-child { flex-shrink: 0; margin-top: calc(var(--space-1) / 2); }
 .itemText { display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); min-width: 0; }
 .itemTitle { font-size: var(--font-base); font-weight: 500; color: var(--neutral-500); }
-.itemDescription { font-size: var(--font-sm); line-height: var(--leading-tight); color: var(--neutral-400); }
+.itemDescription { font-size: var(--font-sm); line-height: var(--leading-normal); color: var(--neutral-400); }
+
+/* Steps: one column, each marker joined to the next by a line, so the
+   points read in the order they happen. Markers centre under the 32px
+   header icon and the text lines up with the header's. */
+.steps {
+  display: flex; flex-direction: column;
+  margin: 0; padding: var(--space-1) 0 0 var(--space-1); list-style: none;
+}
+.step {
+  position: relative;
+  display: flex; align-items: flex-start; gap: var(--space-4);
+  min-width: 0; padding-bottom: var(--space-3);
+}
+.step:last-child { padding-bottom: 0; }
+.step:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  top: var(--space-6); bottom: 0;
+  left: calc(var(--space-6) / 2);
+  width: 1px;
+  background: var(--primary-200);
+}
+.stepMarker {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: var(--space-6); height: var(--space-6); border-radius: 50%;
+  background: var(--neutral-0); color: var(--primary-300);
+  border: 0.5px solid var(--primary-200);
+}
+.step .itemText { padding-top: calc(var(--space-1) / 2); }
