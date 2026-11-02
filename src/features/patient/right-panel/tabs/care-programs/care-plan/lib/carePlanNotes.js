@@ -34,3 +34,17 @@ export function latestItemNote(audit, ids, entityType) {
   if (clear && new Date(clear.createdAt) >= new Date(note.createdAt)) return null;
   return note;
 }
+
+/**
+ * The plan's current Care Note: its latest plan-level note, unless a later
+ * `note_cleared` row removed it (the rule the care plan view uses).
+ */
+export function latestPlanNote(audit) {
+  const onPlan = a => a.entityType === 'plan' || !a.entityType;
+  const newest = action => (audit || []).filter(a => a.action === action && onPlan(a))
+    .sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt))[0];
+  const note = newest('note');
+  if (!note) return null;
+  const clear = newest('note_cleared');
+  return clear && new Date(clear.createdAt) > new Date(note.createdAt) ? null : note;
+}

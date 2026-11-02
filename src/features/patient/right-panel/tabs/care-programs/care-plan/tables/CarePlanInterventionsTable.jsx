@@ -512,7 +512,7 @@ export function CarePlanInterventionsTable({
           <GbiRowActions
             linked={linked(i)}
             note={hasNote?.(i) || null}
-            onNotes={() => onOpenNotes?.(i)}
+            onNotes={e => onOpenNotes?.(i, e?.currentTarget?.getBoundingClientRect?.())}
             onMenu={(e) => openRowMenu(i, e)}
             menuDisabled={!canEdit}
           />

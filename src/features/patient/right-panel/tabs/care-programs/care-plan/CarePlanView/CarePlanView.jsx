@@ -56,6 +56,7 @@ import { AppliedTemplateStrip } from './AppliedTemplateStrip';
 import { useCarePlanEpisodes } from './useCarePlanEpisodes';
 import { CarePlanLinkageSection } from './CarePlanLinkageSection';
 import { CarePlanAiSummarySection } from './CarePlanAiSummarySection';
+import { QuickNotePopover } from './QuickNotePopover';
 import { addGoalsFromPicker, addBarriersFromPicker } from './carePlanPickerHandlers';
 import { formatInstanceDate } from '../lib/templateRenewal';
 import {
@@ -199,7 +200,14 @@ export function CarePlanView({ patientId, program }) {
   useEffect(() => { if (previewGoal?.id) markCarePlanNoteSeen('goal', previewGoal.id); }, [previewGoal?.id, markCarePlanNoteSeen]);
   useEffect(() => { if (previewIntervention?.id) markCarePlanNoteSeen('intervention', previewIntervention.id); }, [previewIntervention?.id, markCarePlanNoteSeen]);
   useEffect(() => { if (previewBarrier?.id) markCarePlanNoteSeen('barrier', previewBarrier.id); }, [previewBarrier?.id, markCarePlanNoteSeen]);
-  const openNotesFor = (kind, item) => {
+  // The row's note button opens a quick note beside it (#18); the item's
+  // drawer, with every note, is one click further.
+  const [quickNote, setQuickNote] = useState(null);
+  const openNotesFor = (kind, item, rect) => {
+    if (rect && canEdit) {
+      setQuickNote({ kind, item, rect });
+      return;
+    }
     setNotesFocus({ kind, id: item.id });
     if (kind === 'goal') setPreviewGoal(item);
     else if (kind === 'intervention') setPreviewIntervention(item);
@@ -1293,7 +1301,10 @@ export function CarePlanView({ patientId, program }) {
           onToggle={() => toggleSection('aiSummary')}
         />
       )}
-      {!carePlanLoading && latestPlanNote && (
+      {/* The plan's note is always on show (#80): never collapsed, and with a
+          way to add one when there is none. Notes are live, outside the
+          signed snapshot, so adding one never makes a new version. */}
+      {!carePlanLoading && (
         <section className={styles.careNoteSection}>
           <div className={styles.careNoteHead}>
             {/* Same title treatment as the Goals / Interventions / Barriers heads. */}
@@ -1302,7 +1313,18 @@ export function CarePlanView({ patientId, program }) {
               open={openSections.careNote}
               onToggle={() => toggleSection('careNote')}
             />
+            <span className={styles.careNoteHint}>Visible to the whole care team. Doesn&apos;t change the signed version.</span>
           </div>
+          {openSections.careNote && !latestPlanNote && (
+            <div className={styles.careNoteEmpty}>
+              <span>No care note yet.</span>
+              {canEdit && (
+                <Button variant="soft" size="sm" leadingIconElement={<AddIconMinimalist size={16} />} onClick={openNoteDrawer}>
+                  Add Note
+                </Button>
+              )}
+            </div>
+          )}
           {openSections.careNote && latestPlanNote && (
             <div className={styles.careNoteCardWrap}>
               <button
@@ -1339,6 +1361,27 @@ export function CarePlanView({ patientId, program }) {
             </div>
           )}
         </section>
+      )}
+
+      {quickNote && (
+        <QuickNotePopover
+          kind={quickNote.kind}
+          item={quickNote.item}
+          rect={quickNote.rect}
+          audit={auditAll}
+          onClose={() => setQuickNote(null)}
+          onOpenFull={() => {
+            const { kind, item } = quickNote;
+            setQuickNote(null);
+            openNotesFor(kind, item);
+          }}
+          onSave={async (body) => {
+            const { kind, item } = quickNote;
+            await addCarePlanNote(patientId, program, body, { entityType: kind, entityId: item.id, summary: `Note on ${item.title}` });
+            markCarePlanNoteSeen(kind, item.id);
+            setQuickNote(null);
+          }}
+        />
       )}
 
       {selectedCount > 0 && (
@@ -1453,7 +1496,7 @@ export function CarePlanView({ patientId, program }) {
             onStatusMenu={setStatusMenu}
             onRowMenu={setStatusMenu}
             onTargetDateChange={(goal, iso) => savePatientCarePlanGoal(patientId, program, { ...goal, targetDate: iso }, goal.id)}
-            onOpenNotes={(g) => openNotesFor('goal', g)}
+            onOpenNotes={(g, rect) => openNotesFor('goal', g, rect)}
             onTitleChange={(goal, title) => savePatientCarePlanGoal(patientId, program, { ...goal, title }, goal.id)}
             hasNote={(g) => noteLookup('goal', g.id)}
             linked={linkedForGoalRow}
@@ -1551,7 +1594,7 @@ export function CarePlanView({ patientId, program }) {
               ...intv,
               config: { ...(intv.config || {}), ...next },
             }, intv.id)}
-            onOpenNotes={(i) => openNotesFor('intervention', i)}
+            onOpenNotes={(i, rect) => openNotesFor('intervention', i, rect)}
             onTitleChange={(intv, title) => savePatientCarePlanIntervention(patientId, program, { ...intv, title }, intv.id)}
             hasNote={(i) => noteLookup('intervention', i.id)}
             linked={linkedForChildRow}
@@ -1600,7 +1643,7 @@ export function CarePlanView({ patientId, program }) {
             onPriorityMenu={setPriorityMenu}
             onRowMenu={setStatusMenu}
             onOpenBarrier={setPreviewBarrier}
-            onOpenNotes={(b) => openNotesFor('barrier', b)}
+            onOpenNotes={(b, rect) => openNotesFor('barrier', b, rect)}
             onTitleChange={renameBarrier}
             hasNote={(b) => noteLookup('barrier', b.id)}
             linked={linkedForChildRow}

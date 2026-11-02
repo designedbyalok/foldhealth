@@ -15,7 +15,7 @@
   /* Align drawer list rows with care-plan GBI table columns. */
   --gbi-col-priority: 28px;
   --gbi-col-assignee: 124px;
-  --gbi-col-status: 116px;
+  --gbi-col-status: 140px;
   --gbi-col-actions: 36px;
   --gbi-row-pad-y: calc(var(--space-1) + var(--space-1) / 2);
   --gbi-row-pad-x: var(--space-2);
