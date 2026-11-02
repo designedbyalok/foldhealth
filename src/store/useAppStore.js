@@ -6524,8 +6524,11 @@ export const useAppStore = create((set, get) => ({
     }
     const patch = {
       status: 'archived', replaced_by_template_id: replacementId || null,
-      retired_at: now, retired_by: actor, retired_reason: reason.trim() || null, retire_on: null,
+      retired_at: now, retired_by: actor, retired_reason: reason.trim() || null,
       updated_by: actor, updated_at: now,
+      // Only a scheduled one has a date to clear; leaving the column out
+      // otherwise keeps Retire now working before the scheduling migration.
+      ...(get().carePlanTemplates.find(t => t.id === id)?.retireOn && { retire_on: null }),
     };
     const update = p => supabase.from('care_plan_templates').update(p).eq('id', id);
     let { error } = await update(patch);
@@ -6567,10 +6570,10 @@ export const useAppStore = create((set, get) => ({
     const actor = get().currentActorName?.() || get().currentUserProfile?.name || null;
     const update = p => supabase.from('care_plan_templates').update(p).eq('id', id);
     let { error } = await update({
-      status: 'published', replaced_by_template_id: null, retired_at: null, retired_by: null, retired_reason: null, retire_on: null,
+      status: 'published', replaced_by_template_id: null, retired_at: null, retired_by: null, retired_reason: null,
       updated_by: actor, updated_at: now,
     });
-    if (error && /replaced_by_template_id|retired_|retire_on/.test(error.message || '')) {
+    if (error && /replaced_by_template_id|retired_/.test(error.message || '')) {
       ({ error } = await update({ status: 'published', updated_by: actor, updated_at: now }));
     }
     if (error) {
