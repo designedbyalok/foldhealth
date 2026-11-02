@@ -1,0 +1,18 @@
+/* The patient's tags in the banner, and the Add Tag drawer. */
+
+.pill {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  height: 22px; padding: calc(var(--space-1) / 2) calc(var(--space-1) * 1.5); border-radius: 4px; border: 0.5px solid;
+  font-size: var(--font-base); white-space: nowrap;
+}
+.pillClose { display: flex; align-items: center; padding: 0; border: none; background: none; color: inherit; cursor: pointer; }
+
+.body { display: flex; flex-direction: column; gap: var(--space-4); }
+.group { display: flex; flex-direction: column; }
+.groupLabel { font-size: var(--font-base); color: var(--neutral-300); margin-bottom: var(--space-1); }
+/* Every row is the same height, with or without the Added badge. */
+.option { display: flex; align-items: center; gap: var(--space-2); min-height: var(--space-8); font-size: var(--font-base); color: var(--neutral-400); }
+.optionPick { cursor: pointer; color: var(--neutral-300); }
+.optionName { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.divider { height: 0.5px; margin-top: var(--space-2); background: var(--neutral-150); }
+.none { font-size: var(--font-base); color: var(--neutral-300); }

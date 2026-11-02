@@ -15,6 +15,9 @@
 }
 .empty p { margin: 0; font-size: var(--font-md); }
 
+/* Tags tab: the WorklistShell table fills the rest of the panel. */
+.tagsWrap { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
 /* ── Create New popover ──
    Small dropdown anchored to the Create New button, Care Program Team /
    HEDIS Team / HCC Team rows that each open ConfigureTeamDrawer with the

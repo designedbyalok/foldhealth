@@ -102,6 +102,5 @@
   gap: var(--space-1);
 }
 
-.empty {
-  padding-top: calc(var(--space-12) * 2.5);
-}
+/* The standard ring empty state, top of the list with 120px above it. */
+.empty { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding-top: calc(var(--space-12) * 2.5); }

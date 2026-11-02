@@ -77,6 +77,7 @@ const LSC_PHLEBOTOMISTS = [
 import { PRACTICE_LOCATIONS } from '../src/features/settings/account/locations/data/mock.js';
 import { CANCEL_REASONS, RETIRED_CANCEL_REASON_IDS, cancelReasonToRow } from '../src/features/calendar/list/cancelReasons.js';
 import { sampleListAppointments } from '../src/features/calendar/list/listSeed.js';
+import { DEFAULT_TAGS, tagToRow } from '../src/features/settings/member-leads/tags/contactTags.js';
 
 // Care-program letters library. Metadata mirrors PROGRAM_LETTERS_MOCK; the PDF
 // bytes are read from supabase/seed-assets/letters and stored base64 in the
@@ -1262,6 +1263,14 @@ async function main() {
     const { error } = await supabase.from('appointment_cancel_reasons').upsert(rows, { onConflict: 'id' });
     if (error) { console.error('  ✗', error.message); } else { console.log(`  ✓ ${rows.length} cancel reasons`); }
     await supabase.from('appointment_cancel_reasons').update({ active: false }).in('id', RETIRED_CANCEL_REASON_IDS);
+  }
+
+  // Settings > Member/Leads > Tags: the practice's member tags.
+  console.log('Seeding contact_tags...');
+  {
+    const rows = DEFAULT_TAGS.map(tagToRow);
+    const { error } = await supabase.from('contact_tags').upsert(rows, { onConflict: 'id' });
+    if (error) { console.error('  ✗', error.message); } else { console.log(`  ✓ ${rows.length} tags`); }
   }
 
   // Calendar List view: appointments for 10 providers who have none yet.

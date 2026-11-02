@@ -53,3 +53,16 @@ describe('Age filter', () => {
     expect(matches({}, ['75+'])).toBe(false);
   });
 });
+
+describe('Source and Instance filters', () => {
+  const m = { gaps: [
+    { code: 'BCS', status: 'Open', source: 'fold-native' },
+    { code: 'CBP', status: 'Completed', supersededAt: '10/31/2026' },
+  ] };
+  it('matches a member when any gap has the picked source or instance', () => {
+    expect(memberMatchesFilters(m, { gapSource: ['Manual'] })).toBe(true);
+    expect(memberMatchesFilters({ gaps: [m.gaps[1]] }, { gapSource: ['Manual'] })).toBe(false);
+    expect(memberMatchesFilters(m, { gapInstance: ['Previous'] })).toBe(true);
+    expect(memberMatchesFilters({ gaps: [m.gaps[0]] }, { gapInstance: ['Previous'] })).toBe(false);
+  });
+});

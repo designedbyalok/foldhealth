@@ -14,6 +14,8 @@ export const DOC_CATEGORIES = [
   { key: 'report', label: 'Reports', icon: 'solar:file-linear' },
   { key: 'form', label: 'Forms', icon: 'solar:document-add-linear' },
   { key: 'personal_id', label: 'Personal Ids', icon: 'solar:user-id-linear' },
+  // What backs a decision maker (Add Family, Caregivers & Decision Makers).
+  { key: 'legal_authority', label: 'Legal Authority', icon: 'solar:document-text-linear' },
   { key: 'other', label: 'Others', icon: 'solar:layers-linear' },
 ];
 
@@ -28,7 +30,7 @@ export function withCustomCategories(custom = []) {
 
 export const FILE_TYPES = [
   'Assessment', 'Authorization', 'Consent', 'FaceSheet', 'Form', 'ID Card',
-  'Imaging', 'Insurance Card', 'Lab Result', 'Referral', 'Report', 'Other',
+  'Imaging', 'Insurance Card', 'Lab Result', 'Legal Authority', 'Referral', 'Report', 'Other',
 ];
 
 // Rows from program steps have no category; place them by their file type.
@@ -47,6 +49,7 @@ const CATEGORY_BY_TYPE = {
   Consent: 'form',
   'ID Card': 'personal_id',
   'Insurance Card': 'personal_id',
+  'Legal Authority': 'legal_authority',
 };
 
 export const categoryOf = doc => doc.category || CATEGORY_BY_TYPE[doc.type] || 'other';

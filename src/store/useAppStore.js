@@ -1505,6 +1505,62 @@ export const useAppStore = create((set, get) => ({
     }
     set({ p360Loading: false });
   },
+  // ── Primary Care Team (patient_care_team) ──
+  // { [patientId]: { current: member[], history: member[] } }. Until the
+  // migration runs, the profile's care_team is the current team and saves
+  // stay in memory (careTeamLocal).
+  careTeams: {},
+  careTeamLocal: false,
+  fetchCareTeam: async (patientId) => {
+    if (!patientId) return;
+    const key = String(patientId);
+    const { data, error } = await supabase
+      .from('patient_care_team')
+      .select('*')
+      .eq('patient_id', key)
+      .order('sort_order')
+      .order('created_at');
+    if (error) {
+      // The profile's team, read once it has loaded.
+      if (get().p360ProfilesById[key] === undefined) await get().fetchP360Profile(key);
+      const fromProfile = (get().p360ProfilesById[key]?.care_team || []).map((m, i) => ({ ...m, id: `ct-${key}-${i + 1}` }));
+      set(s => ({ careTeamLocal: true, careTeams: { ...s.careTeams, [key]: s.careTeams[key] || { current: fromProfile, history: [] } } }));
+      return;
+    }
+    const toMember = r => ({ id: r.id, userId: r.user_id, name: r.name, initials: r.initials, role: r.role, title: r.title, endedAt: r.ended_at });
+    set(s => ({ careTeams: { ...s.careTeams, [key]: {
+      current: data.filter(r => r.status === 'current').map(toMember),
+      history: data.filter(r => r.status === 'historical').map(toMember),
+    } } }));
+  },
+  // Writes the whole team: members kept are updated, members removed are deleted.
+  saveCareTeam: async (patientId, current, history) => {
+    const key = String(patientId);
+    const before = get().careTeams[key] || { current: [], history: [] };
+    const now = new Date().toISOString();
+    const stamp = (m, status) => (status === 'historical' ? { ...m, endedAt: m.endedAt || now } : { ...m, endedAt: null });
+    const next = { current: current.map(m => stamp(m, 'current')), history: history.map(m => stamp(m, 'historical')) };
+    if (!get().careTeamLocal) {
+      const by = get().currentUserProfile?.name || null;
+      const row = (m, status, i) => ({
+        id: m.id, patient_id: key, user_id: m.userId || null, name: m.name, initials: m.initials || null,
+        role: m.role || null, title: m.title || null, status, sort_order: i, ended_at: m.endedAt, added_by: m.addedBy || by,
+      });
+      const rows = [...next.current.map((m, i) => row(m, 'current', i)), ...next.history.map((m, i) => row(m, 'historical', i))];
+      const keep = new Set(rows.map(r => r.id));
+      const gone = [...before.current, ...before.history].map(m => m.id).filter(id => !keep.has(id));
+      if (rows.length) {
+        const { error } = await supabase.from('patient_care_team').upsert(rows, { onConflict: 'id' });
+        if (error) return false;
+      }
+      if (gone.length) {
+        const { error } = await supabase.from('patient_care_team').delete().in('id', gone);
+        if (error) return false;
+      }
+    }
+    set(s => ({ careTeams: { ...s.careTeams, [key]: next } }));
+    return true;
+  },
   updateP360Profile: async (patientId, updates) => {
     const { error } = await supabase
       .from('p360_profiles')
@@ -9553,9 +9609,15 @@ export const useAppStore = create((set, get) => ({
     });
   },
 
+  // Add Care Gaps opens on a row's patient, or (worklist header) with a
+  // Member picker first, like HCC's Add Manually.
   addCareGapsMember: null,
-  openAddCareGaps: (member) => set({ addCareGapsMember: member }),
-  closeAddCareGaps: () => set({ addCareGapsMember: null }),
+  addCareGapsPicker: false,
+  openAddCareGaps: (member) => set({ addCareGapsMember: member, addCareGapsPicker: false }),
+  openAddCareGapsPicker: () => set({ addCareGapsMember: null, addCareGapsPicker: true }),
+  // The member picked in the drawer's Member field (picker mode).
+  pickAddCareGapsMember: (member) => set({ addCareGapsMember: member }),
+  closeAddCareGaps: () => set({ addCareGapsMember: null, addCareGapsPicker: false }),
 
   // Adds whitelisted gaps to a member. When the member already has a closed
   // gap for the same measure, that gap becomes the new gap's parent: it stays
@@ -9563,7 +9625,8 @@ export const useAppStore = create((set, get) => ({
   // `parentGap` snapshot) is inserted just before it. Gaps are looked up by
   // code across the app, so first-match lookups land on the active gap and
   // the status / assignee mutations skip superseded ones.
-  addCareGaps: (memberId, { items, ipa, hpCode, measureYear, workflows }) => {
+  // Each item carries its own workflows and (when re-added) reason.
+  addCareGaps: (memberId, { items, ipa, hpCode, measureYear }) => {
     track('hedis.gaps_added', { memberId, count: items.length });
     const startDate = new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
     const actor = get().currentActorName();
@@ -9571,7 +9634,7 @@ export const useAppStore = create((set, get) => ({
       hedisMembers: (s.hedisMembers || []).map(m => {
         if (m.id !== memberId) return m;
         let gaps = [...(m.gaps || [])];
-        items.forEach(({ whitelist, parent }) => {
+        items.forEach(({ whitelist, parent, workflows, reason }) => {
           const next = {
             code: whitelist.code,
             status: 'Open',
@@ -9583,6 +9646,7 @@ export const useAppStore = create((set, get) => ({
             ipa,
             hpCode,
             workflows,
+            reason: reason || null,
             parentGap: parent ? { ...parent } : null,
           };
           const idx = gaps.findIndex(g => g.code === whitelist.code && !g.supersededAt);
@@ -16065,6 +16129,80 @@ export const useAppStore = create((set, get) => ({
     if (error) console.warn('fetchPatientContacts: falling back to samples:', error.message);
     const list = !error && data?.length ? data.map(rowToContact) : sampleContactsFor(String(patientId));
     set(s => ({ patientContacts: { ...s.patientContacts, [patientId]: list } }));
+    // People added in Add Family, Caregivers & Decision Makers win over both.
+    await get().fetchFamilyMembers(patientId);
+  },
+
+  // ── Family, caregivers & decision makers (patient_family_members) ──
+  // { [patientId]: person[] }, and who lists the patient as their family
+  // ({ [patientId]: count }). Until the migration runs, additions stay in
+  // memory (familyMembersLocal).
+  familyMembers: {},
+  familyOfCount: {},
+  familyMembersLocal: false,
+  fetchFamilyMembers: async (patientId) => {
+    if (!patientId) return;
+    const key = String(patientId);
+    const { rowToFamilyMember } = await import('../features/patient/family/familyMembers');
+    const { data, error } = await supabase
+      .from('patient_family_members')
+      .select('*')
+      .or(`patient_id.eq.${key},related_patient_id.eq.${key}`)
+      .order('created_at');
+    if (error) {
+      set(s => ({ familyMembersLocal: true, familyMembers: { ...s.familyMembers, [key]: s.familyMembers[key] || [] } }));
+      return;
+    }
+    const rows = (data || []).map(rowToFamilyMember);
+    const mine = rows.filter(m => m.patientId === key);
+    set(s => ({
+      familyMembers: { ...s.familyMembers, [key]: mine },
+      familyOfCount: { ...s.familyOfCount, [key]: rows.filter(m => m.relatedPatientId === key).length },
+    }));
+    if (mine.length) get().syncFamilyContacts(key);
+  },
+  // Send To reads the patient's people as role contacts.
+  syncFamilyContacts: async (patientId) => {
+    const key = String(patientId);
+    const { familyToContacts } = await import('../features/patient/family/familyMembers');
+    const mine = get().familyMembers[key] || [];
+    set(s => ({ patientContacts: { ...s.patientContacts, [key]: familyToContacts(mine, s.allPatients || []) } }));
+  },
+  // Adds a person. A decision-maker role moves off whoever held it.
+  addFamilyMember: async (patientId, person) => {
+    const key = String(patientId);
+    const { familyMemberToRow } = await import('../features/patient/family/familyMembers');
+    const member = {
+      ...person,
+      id: `fam-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+      patientId: key,
+      createdBy: get().currentUserProfile?.name || null,
+    };
+    const current = get().familyMembers[key] || [];
+    const displaced = member.decisionMaker ? current.find(m => m.decisionMaker === member.decisionMaker) : null;
+    if (!get().familyMembersLocal) {
+      if (displaced) {
+        const { error } = await supabase.from('patient_family_members')
+          .update({ decision_maker: null, authority_type: null, document_ids: [] }).eq('id', displaced.id);
+        if (error) return null;
+      }
+      const { error } = await supabase.from('patient_family_members').insert(familyMemberToRow(member));
+      if (error) return null;
+    }
+    const kept = current.map(m => (m.id === displaced?.id ? { ...m, decisionMaker: null, authorityType: null, documentIds: [] } : m));
+    set(s => ({ familyMembers: { ...s.familyMembers, [key]: [...kept, member] } }));
+    get().syncFamilyContacts(key);
+    return member;
+  },
+  removeFamilyMember: async (patientId, id) => {
+    const key = String(patientId);
+    if (!get().familyMembersLocal) {
+      const { error } = await supabase.from('patient_family_members').delete().eq('id', id);
+      if (error) return false;
+    }
+    set(s => ({ familyMembers: { ...s.familyMembers, [key]: (s.familyMembers[key] || []).filter(m => m.id !== id) } }));
+    get().syncFamilyContacts(key);
+    return true;
   },
 
   // ── Inbound eFax (Comms → E-fax) ──
@@ -16691,6 +16829,84 @@ export const useAppStore = create((set, get) => ({
       .eq('id', id);
     if (error) { console.error('Delete appointment error:', error); return false; }
     get().fetchAppointments({ force: true });
+    return true;
+  },
+
+  // ── Member tags (Settings > Member/Leads > Tags) and patient tags ──
+  // Until contact_tags_migration.sql runs, the built-in tags, and edits and
+  // patient tags stay in memory (contactTagsLocal).
+  contactTags: [],
+  contactTagsLoading: false,
+  contactTagsDidFetch: false,
+  contactTagsLocal: false,
+  fetchContactTags: (opts) => mountFetch('fetchContactTags', async () => {
+    const { DEFAULT_TAGS, rowToTag } = await import('../features/settings/member-leads/tags/contactTags');
+    set({ contactTagsLoading: true });
+    const { data, error } = await supabase.from('contact_tags').select('*').eq('active', true).order('sort_order');
+    const live = !error && data?.length;
+    set({
+      contactTags: live ? data.map(rowToTag) : (get().contactTags.length ? get().contactTags : DEFAULT_TAGS),
+      contactTagsLocal: !!error,
+      contactTagsLoading: false,
+      contactTagsDidFetch: true,
+    });
+  }, opts),
+  saveContactTag: async (tag) => {
+    const { tagToRow } = await import('../features/settings/member-leads/tags/contactTags');
+    const list = get().contactTags;
+    const existing = list.find(t => t.id === tag.id);
+    const next = existing
+      ? { ...existing, ...tag }
+      : { ...tag, id: tag.id || `tag-${Date.now().toString(36)}`, sortOrder: list.length + 1 };
+    if (!get().contactTagsLocal) {
+      const { error } = await supabase.from('contact_tags').upsert({ ...tagToRow(next), updated_at: new Date().toISOString() }, { onConflict: 'id' });
+      if (error) return null;
+    }
+    set({ contactTags: existing ? list.map(t => (t.id === next.id ? next : t)) : [...list, next] });
+    return next;
+  },
+  deleteContactTag: async (id) => {
+    if (!get().contactTagsLocal) {
+      const { error } = await supabase.from('contact_tags').update({ active: false }).eq('id', id);
+      if (error) return false;
+    }
+    const patientTags = Object.fromEntries(Object.entries(get().patientTags).map(([pid, ids]) => [pid, ids.filter(x => x !== id)]));
+    set({ contactTags: get().contactTags.filter(t => t.id !== id), patientTags });
+    return true;
+  },
+  // patientId → tag ids.
+  patientTags: {},
+  fetchPatientTags: async (patientId) => {
+    if (patientId == null) return;
+    const key = String(patientId);
+    const { data, error } = await supabase.from('patient_tags').select('tag_id').eq('patient_id', key).order('created_at');
+    // Until patient_tags exists a patient has no tags (no sample ones: they'd read as real).
+    if (error) {
+      if (!get().patientTags[key]) set({ patientTags: { ...get().patientTags, [key]: [] } });
+      return;
+    }
+    set({ patientTags: { ...get().patientTags, [key]: data.map(r => r.tag_id) } });
+  },
+  addPatientTags: async (patientId, tagIds) => {
+    const key = String(patientId);
+    const current = get().patientTags[key] || [];
+    const added = tagIds.filter(id => !current.includes(id));
+    if (!added.length) return true;
+    if (!get().contactTagsLocal) {
+      const by = get().currentUserProfile?.name || null;
+      const { error } = await supabase.from('patient_tags').upsert(added.map(tag_id => ({ patient_id: key, tag_id, added_by: by })), { onConflict: 'patient_id,tag_id' });
+      if (error) return false;
+    }
+    set({ patientTags: { ...get().patientTags, [key]: [...current, ...added] } });
+    return true;
+  },
+  removePatientTag: async (patientId, tagId) => {
+    const key = String(patientId);
+    if (!get().contactTagsLocal) {
+      const { error } = await supabase.from('patient_tags').delete().eq('patient_id', key).eq('tag_id', tagId);
+      if (error) return false;
+    }
+    set({ patientTags: { ...get().patientTags, [key]: (get().patientTags[key] || []).filter(id => id !== tagId) } });
     return true;
   },
 
