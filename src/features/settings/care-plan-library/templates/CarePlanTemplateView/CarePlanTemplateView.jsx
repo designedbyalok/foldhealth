@@ -15,7 +15,7 @@ import { CreateGoalDrawer } from '../../goals/CreateGoalDrawer/CreateGoalDrawer'
 import { AddGoalsDrawer } from '../../goals/AddGoalsDrawer/AddGoalsDrawer';
 import { AddInterventionsDrawer } from '../../interventions/AddInterventionsDrawer';
 import { AddBarriersDrawer } from '../../barriers/AddBarriersDrawer/AddBarriersDrawer';
-import { INTERVENTION_EDITORS } from '../../interventions';
+import { INTERVENTION_EDITORS, interventionTemplateFromValues } from '../../interventions';
 import {
   goalPayloadFromTemplateEntry,
   interventionPayloadFromTemplateEntry,
@@ -31,6 +31,15 @@ import { useTemplateSdoh } from '../../lib/useTemplateSdoh';
 import { isSdohBarrier } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/sdohTaxonomy';
 import styles from './CarePlanTemplateView.module.css';
 
+
+// A template entry references a library row; an intervention keeps its kind
+// and config (its task template) so applying it doesn't need the library.
+const entryOf = (row) => ({
+  id: row.id,
+  title: row.title,
+  ...(row.kind && { kind: row.kind }),
+  ...(row.config && { config: row.config }),
+});
 
 // A goal's row icon follows its measure category, the way an intervention's
 // follows its kind: the flag is the fallback for an uncategorised goal.
@@ -137,7 +146,7 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
         const key = norm(l.title);
         if (!key || seen.has(key)) continue;
         seen.add(key);
-        add.push({ id: l.id, title: l.title });
+        add.push(entryOf(l));
       }
       return add.length ? [...list, ...add] : list;
     };
@@ -176,7 +185,7 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
       seen.add(key);
       return true;
     });
-    if (fresh.length) setList([...list, ...fresh.map(p => ({ id: p.id, title: p.title }))]);
+    if (fresh.length) setList([...list, ...fresh.map(entryOf)]);
     setPicker(null);
   };
 
@@ -372,21 +381,30 @@ export function CarePlanTemplateView({ template, onClose, onSave }) {
       </div>
 
       {editingIntervention && (() => {
-        const Editor = INTERVENTION_EDITORS[editingIntervention.kind];
+        const entry = editingIntervention;
+        const Editor = INTERVENTION_EDITORS[entry.kind];
         // A template entry is a reference, { id, kind, title }, so the
         // prefill is its title plus whatever the library row carries. Only a
         // config saved from this drawer has the scheduling fields.
-        const libRow = (interventionLibrary || []).find(i => i.id === editingIntervention.id);
+        const libRow = (interventionLibrary || []).find(i => i.id === entry.id);
         return (
           <Editor
-            kind={editingIntervention.kind}
+            kind={entry.kind}
             intervention={{
-              title: editingIntervention.title || libRow?.title || '',
+              title: entry.title || libRow?.title || '',
               note: libRow?.description || '',
-              ...(editingIntervention.config || {}),
+              ...(entry.config || {}),
             }}
+            taskTemplate
             onClose={() => setEditingIntervention(null)}
-            onSave={() => setEditingIntervention(null)}
+            onSave={(values) => {
+              // The entry is the task template: what spawns on a patient's
+              // queue reads it when the task is created.
+              const next = interventionTemplateFromValues(values, { kind: entry.kind });              setInterventions(list => list.map(e => (e.id === entry.id
+                ? { ...e, kind: next.kind, title: next.title, config: next.config }
+                : e)));
+              setEditingIntervention(null);
+            }}
           />
         );
       })()}

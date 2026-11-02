@@ -807,6 +807,11 @@ async function applyTemplateToPlan(get, patientId, program, template, libraryGoa
     const payload = interventionPayloadFromTemplateEntry(
       entry, goalIdsFor(owners.intervention, titleKey)[0] || null,
     );
+    // A task entry points back at itself so spawn_care_plan_tasks reads the
+    // task template as it is when the task is created, not as it was now.
+    if (TASK_KINDS.has(payload.kind) && template.id && entry.id) {
+      payload.config = { ...payload.config, taskTemplate: { templateId: String(template.id), entryId: String(entry.id) } };
+    }
     const saved = await get().savePatientCarePlanIntervention(patientId, program, payload);
     if (saved) existingIntvTitles.add(titleKey);
   }
@@ -820,7 +825,11 @@ async function applyTemplateToPlan(get, patientId, program, template, libraryGoa
     );
     if (saved) existingBarrierTitles.add(titleKey);
   }
+
+  await get().spawnCarePlanTasks(patientId, program);
 }
+
+const TASK_KINDS = new Set(['patient-task', 'internal-task']);
 
 export {
   mapCarePlanGoalRow,

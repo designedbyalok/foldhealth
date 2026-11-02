@@ -5531,6 +5531,42 @@ export const useAppStore = create((set, get) => ({
   },
 
   // Sign the plan: snapshot a version, stamp signed_by/at, and audit it.
+  /**
+   * Create the tasks this plan's task templates are due to spawn
+   * (care_plan_task_templates migration), then pull the links and the new
+   * tasks into the store. Silent when the migration hasn't run.
+   */
+  spawnCarePlanTasks: async (patientId, program) => {
+    const key = carePlanKey(patientId, program.id);
+    const planId = get().patientCarePlans[key]?.plan?.id;
+    if (!planId) return 0;
+    const { data: made, error } = await supabase.rpc('spawn_care_plan_tasks', { p_plan_id: planId });
+    if (error) { console.warn('spawnCarePlanTasks:', error.message); return 0; }
+    if (!made) return 0;
+    const { data: links } = await supabase.from('patient_care_plan_interventions')
+      .select('id, task_id, assignee_name, assignee_initials').eq('plan_id', planId).not('task_id', 'is', null);
+    const byId = new Map((links || []).map(l => [l.id, l]));
+    set(s => {
+      const c = s.patientCarePlans[key];
+      if (!c) return {};
+      const interventions = (c.interventions || []).map(i => {
+        const l = byId.get(i.id);
+        return l ? { ...i, taskId: l.task_id, assignee: { name: l.assignee_name || 'Unassigned', initials: l.assignee_initials || '' } } : i;
+      });
+      return { patientCarePlans: { ...s.patientCarePlans, [key]: { ...c, interventions } } };
+    });
+    if (get().tasksDidFetch) {
+      const known = new Set(get().tasks.map(t => t.id));
+      const ids = (links || []).map(l => l.task_id).filter(id => !known.has(id));
+      if (ids.length) {
+        const { data: rows } = await supabase.from('tasks').select('*').in('id', ids);
+        if (rows?.length) set(s => ({ tasks: [...s.tasks, ...rows.map(t => ({ ...t, hedisMemberId: null, hedisGapCodes: [] }))] }));
+      }
+    }
+    get().showToast(`${made} task${made === 1 ? '' : 's'} created from the care plan`);
+    return made;
+  },
+
   signCarePlan: async (patientId, program, note = '') => {
     const key = carePlanKey(patientId, program.id);
     const cur = get().patientCarePlans[key];
@@ -5566,6 +5602,8 @@ export const useAppStore = create((set, get) => ({
       const c = s.patientCarePlans[key];
       return c ? { patientCarePlans: { ...s.patientCarePlans, [key]: { ...c, plan: { ...c.plan, signedBy: name, signedAt, updatedAt: signedAt } } } } : {};
     });
+    // "Care Plan Signed" is the default task creation trigger.
+    get().spawnCarePlanTasks(patientId, program);
     // Care Plan Status on the SNP worklist is derived from the plan's signed
     // state, so reflect the signature there immediately (the projection on next
     // load would too, but this keeps an open worklist in sync).
