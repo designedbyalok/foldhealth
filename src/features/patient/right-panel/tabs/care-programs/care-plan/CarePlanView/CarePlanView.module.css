@@ -937,3 +937,15 @@
 
 /* Strip: the template groups menu anchors on this wrapper. */
 .stripGroups { display: inline-flex; }
+/* Scheduled retirement warning on a template chip. */
+.retiringTag {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--space-1) / 2);
+  margin-left: var(--space-1);
+  padding: 0 var(--space-1);
+  border-radius: var(--space-1);
+  background: color-mix(in srgb, var(--status-warning) 16%, transparent);
+  font-size: var(--font-xs);
+  color: var(--status-warning-dark);
+}

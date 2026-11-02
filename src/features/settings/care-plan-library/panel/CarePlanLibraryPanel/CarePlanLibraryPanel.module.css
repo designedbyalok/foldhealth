@@ -423,6 +423,8 @@
 }
 
 /* Retire dialog: replacement picker and reason. */
+/* Wider than the default confirm so the date, replacement and reason fields breathe. */
+.retireDialog.retireDialog { max-width: 480px; width: 100%; }
 .retireFields {
   display: flex;
   flex-direction: column;
