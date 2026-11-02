@@ -189,7 +189,7 @@ export function buildProtocolParsePrompt(text, { programs = [], fileName = '' } 
     '- crossReferences: other guidelines, protocols, policies or order sets the document cites.',
     '- metadata: title as the document names itself; organization that issued it; conditions it covers by common clinical name; effectiveDate and reviewDate as YYYY-MM-DD only if stated, else null; author (person or committee) and version only if stated.',
     `- metadata.programCodes: only codes from this list, and only when the document clearly applies to that program: ${JSON.stringify(programs)}. Otherwise an empty list.`,
-    '- warnings: anything a reviewer should know: conflicting values, unreadable or truncated text, tables you could not interpret, or rules that depend on unstated context.',
+    '- warnings: anything a reviewer should know: conflicting values, unreadable or truncated text, tables you could not interpret, or rules that depend on unstated context. Each one short, plain sentence a nurse can act on (under 160 characters), naming the page when you can.',
     '- summary: two plain sentences on what the protocol covers.',
     '',
     `Document${fileName ? ` (${clip(fileName, 200)})` : ''}:`,
@@ -228,11 +228,11 @@ export function isoDateOrNull(v) {
     ? m[0] : null;
 }
 
-const uniqueStrings = (values, max) => {
+const uniqueStrings = (values, max, len = 120) => {
   const seen = new Set();
   const out = [];
   for (const v of list(values)) {
-    const s = str(v, 120);
+    const s = str(v, len);
     if (s && !seen.has(s.toLowerCase())) { seen.add(s.toLowerCase()); out.push(s); }
     if (out.length >= max) break;
   }
@@ -314,7 +314,8 @@ const keep = (items, fn) => list(items).map(fn).filter(Boolean);
 export function normalizeProtocol(raw, { programCodes = null } = {}) {
   const m = raw?.metadata || {};
   const allowed = programCodes ? new Set(programCodes) : null;
-  const warnings = uniqueStrings(raw?.warnings, 20);
+  // Warnings are sentences a reviewer reads in full, not tags.
+  const warnings = uniqueStrings(raw?.warnings, 20, 400);
 
   const metadata = {
     title: str(m.title, 200),

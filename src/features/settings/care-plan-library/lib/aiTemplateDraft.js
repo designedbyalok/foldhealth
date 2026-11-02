@@ -23,7 +23,10 @@ const MAX_INTERVENTIONS_PER_GOAL = 5;
 const MAX_BARRIERS_PER_GOAL = 4;
 const CATALOG_MAX = 400;
 const MAX_CATEGORIES = 4;
+// A protocol scope may name one more grade (e.g. hypertensive crisis).
+const MAX_SCOPE_CATEGORIES = 5;
 const MAX_CATEGORY_GOALS = 5;
+const SCOPE_TEXT_MAX = 600;
 const LAB_KEYS = LAB_CATALOG.map(l => l.key);
 
 const clip = (s, n) => String(s ?? '').replace(/\s+/g, ' ').trim().slice(0, n);
@@ -147,6 +150,53 @@ export const TEMPLATE_DRAFT_SCHEMA = {
 };
 
 /**
+ * The same draft as a protocol's scope (options.scope): a plain-language
+ * overview for care managers and nurses, and for Common and each category
+ * its range and what the plan does there, goal by goal.
+ */
+export const TEMPLATE_SCOPE_SCHEMA = {
+  ...TEMPLATE_DRAFT_SCHEMA,
+  properties: {
+    ...TEMPLATE_DRAFT_SCHEMA.properties,
+    overview: { type: 'string' },
+    commonExplanation: { type: 'string' },
+    categories: {
+      type: 'array',
+      items: {
+        ...TEMPLATE_DRAFT_SCHEMA.properties.categories.items,
+        properties: {
+          ...TEMPLATE_DRAFT_SCHEMA.properties.categories.items.properties,
+          range: { type: 'string' },
+          explanation: { type: 'string' },
+        },
+        required: ['name', 'range', 'explanation', 'criteria', 'goals'],
+      },
+    },
+  },
+  required: [...TEMPLATE_DRAFT_SCHEMA.required, 'overview', 'commonExplanation', 'categories'],
+};
+
+/**
+ * A reviewer's edits to a scope, sent back to redraft it: the categories to
+ * keep (name, range, how many goals) and how many Common goals. What the
+ * server accepts back too (it runs this again on the body). Null when there
+ * is nothing to follow.
+ */
+export function buildScopeRequest(scope) {
+  if (!scope || typeof scope !== 'object') return null;
+  const goalCount = (v) => {
+    const n = Math.round(Number(v));
+    return Number.isFinite(n) && n >= 0 && n <= MAX_GOALS ? n : null;
+  };
+  const categories = (Array.isArray(scope.categories) ? scope.categories : [])
+    .map(c => ({ name: clip(c?.name, 80), range: clip(c?.range, 200), goals: goalCount(c?.goals) }))
+    .filter(c => c.name)
+    .slice(0, MAX_SCOPE_CATEGORIES);
+  const commonGoals = goalCount(scope.commonGoals);
+  return categories.length || commonGoals != null ? { categories, commonGoals } : null;
+}
+
+/**
  * `protocol` (optional): { title, version, organization, guidance }, an
  * Active clinical protocol the template should follow, its content as plain
  * lines (protocolGuidanceText).
@@ -157,18 +207,43 @@ export const TEMPLATE_DRAFT_SCHEMA = {
  * barriers live in the template, so new ones are fine.
  * `options.reference`: an existing template to base the draft on
  * (buildTemplateReference).
+ * `options.scope`: answer as a protocol's scope (TEMPLATE_SCOPE_SCHEMA): true,
+ * or a reviewer's edits to follow (buildScopeRequest).
  */
 export function buildTemplateDraftPrompt(description, catalog, protocol = null, options = {}) {
   const labs = LAB_CATALOG.map(l => `${l.key} = ${l.label} (${l.unit})`).join('; ');
+  const scope = options.scope;
+  const maxCategories = scope ? MAX_SCOPE_CATEGORIES : MAX_CATEGORIES;
   const categoryLines = options.categories ? [
     '',
     'Categories:',
     '- goals are the Common section: what every patient the protocol covers gets, at any severity.',
-    `- When the protocol grades patients on one of the labs below (blood pressure stages, A1C bands, eGFR stages, LDL ranges) and the grades get different actions, monitoring, cadence, medication review or escalation, make one category per grade that changes care, up to ${MAX_CATEGORIES}: cover every such grade from the most severe (urgent escalation) down, grouping grades that get the same care.`,
+    `- When the protocol grades patients on one of the labs below (blood pressure stages, A1C bands, eGFR stages, LDL ranges) and the grades get different actions, monitoring, cadence, medication review or escalation, make one category per grade that changes care, up to ${maxCategories}: cover every such grade from the most severe (urgent escalation) down, grouping grades that get the same care.`,
     `- Each category: a short name a care manager recognizes (e.g. "SBP 140 or above", "A1C 9% or above"), its entry criteria, and 1 to ${MAX_CATEGORY_GOALS} goals with what differs for those patients. A category may repeat a Common goal to attach that grade's own interventions (more frequent readings, titration review, escalation); list only what the grade adds.`,
     `- A criterion is either { type: "lab", lab, op, value, withinDays } using only these labs: ${labs}; op one of ${NUMERIC_OPS.join(' ')}; withinDays from the protocol's recheck cadence (e.g. 180), or null; or { type: "condition", condition } naming a chronic condition. Set the fields a criterion does not use to null. Nothing else can be checked (no diastolic pressure, symptoms or risk scores), so name each category only by the criteria you give it.`,
     '- Order categories most severe first: a patient gets the first category they match, so a later one may use a broader threshold (">= 7" after ">= 9").',
-    '- Return no categories only when the protocol has no graded thresholds on those labs.',
+    scope
+      ? '- When the protocol instead grades patients by something those labs cannot check (time since onset, red flags, risk level), still make a category per grade that changes care, with an empty criteria list: the care team assigns those patients.'
+      : '- Return no categories only when the protocol has no graded thresholds on those labs.',
+  ] : [];
+  const editedScope = scope && typeof scope === 'object' ? scope : null;
+  const scopeLines = scope ? [
+    '',
+    'Scope (a plain-language plan care managers and nurses read before anything is created):',
+    `- overview: 2 to 4 short sentences on what the protocol asks the care team to do, in everyday words, no abbreviations a nurse would not know. At most ${SCOPE_TEXT_MAX} characters.`,
+    '- goals (Common) are only what every patient gets whatever their grade, 2 to 4 of them. commonExplanation: one sentence naming them in order ("Every patient: goal 1 is ..., goal 2 is ...").',
+    '- In a scope each category is that grade\'s whole plan, not just what it adds: 2 to 4 goals in the order the care team works through them (for example lifestyle change, then a lab test, then medication if needed, then escalation). Use different goals per grade where the protocol\'s care differs, and attach that grade\'s own interventions (cadence, labs, titration, escalation) and barriers to them.',
+    '- Every category must differ from Common and from the other categories: give it the protocol\'s steps specific to that grade (its check-in or measurement cadence, labs, medication step, referral, escalation, timing such as "after 2 weeks without improvement") as interventions, under goals Common does not have or repeated from Common with those extra interventions. A category identical to Common, or to another category, is useless; merge or drop it.',
+    '- For each category, range: only the measured range or situation it covers, under 60 characters, with numbers and units exactly as the protocol states them (e.g. "Systolic BP 130–139 mmHg", "Pain for 4 to 12 weeks").',
+    '- For each category, explanation: one or two sentences in the form "For <range>, goal 1 is ..., goal 2 is ..., goal 3 is ... if needed", naming exactly the goals you return for it, in the same order and no others, and saying when a step only applies sometimes. Plain words, e.g. "lifestyle change", "a lab test", "medication if needed".',
+    ...(editedScope ? [
+      '',
+      'A reviewer edited the scope. Follow it exactly:',
+      ...(editedScope.categories.length
+        ? [`- Use exactly these categories, in this order, with these names and ranges; derive each one's criteria from its range. Where goals is a number, give that category exactly that many goals: ${JSON.stringify(editedScope.categories)}`]
+        : ['- Return no categories.']),
+      ...(editedScope.commonGoals != null ? [`- Give exactly ${editedScope.commonGoals} Common goals.`] : []),
+    ] : []),
   ] : [];
   const reuseRule = options.libraryOnly
     ? '- Goals come from the library only: return a catalog goal\'s id as libraryId with its exact title, and leave out a goal the catalog has no entry for. For interventions and barriers, reuse a catalog entry with the same meaning (its id and exact title); when none fits, especially for the protocol\'s escalation and monitoring steps, return libraryId null and a short new title.'
@@ -201,6 +276,7 @@ export function buildTemplateDraftPrompt(description, catalog, protocol = null, 
     ...protocolLines,
     ...referenceLines,
     ...categoryLines,
+    ...scopeLines,
     '',
     'Library catalog (JSON):',
     JSON.stringify(catalog),
@@ -302,7 +378,8 @@ const slug = (s) => norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').sl
  * the catalog, enums clamped, lengths and counts capped, empties and
  * duplicates dropped. Returns null when there are no goals.
  * `options.categories` keeps categories with valid criteria and their own
- * goals; `options.libraryOnly` drops goals not in the catalog.
+ * goals; `options.libraryOnly` drops goals not in the catalog;
+ * `options.scope` keeps the scope's text and categories without criteria.
  */
 export function normalizeTemplateDraft(raw, catalog, options = {}) {
   if (!raw || typeof raw !== 'object') return null;
@@ -312,24 +389,31 @@ export function normalizeTemplateDraft(raw, catalog, options = {}) {
     interventions: indexCatalog(catalog.interventions),
     barriers: indexCatalog(catalog.barriers),
   };
+  const scope = !!options.scope;
   const seenGoals = new Set();
   const goals = normalizeGoals(raw.goals, index, { max: MAX_GOALS, seenGoals, libraryOnly });
-  if (!goals.length) return null;
+  // A scope may put every goal in its categories.
+  if (!goals.length && !scope) return null;
 
   const categories = [];
   const names = new Set();
   for (const c of options.categories && Array.isArray(raw.categories) ? raw.categories : []) {
-    if (categories.length >= MAX_CATEGORIES) break;
+    if (categories.length >= (scope ? MAX_SCOPE_CATEGORIES : MAX_CATEGORIES)) break;
     const name = clip(c?.name, 80);
     if (!name || names.has(norm(name))) continue;
     const criteria = (Array.isArray(c.criteria) ? c.criteria : []).map(normalizeCriterion).filter(Boolean).slice(0, 4);
     // Categories may share a goal, or repeat a Common one to add its own
     // interventions; what Common already has is dropped when it's mapped.
     const catGoals = normalizeGoals(c.goals, index, { max: MAX_CATEGORY_GOALS, seenGoals: new Set(), libraryOnly });
-    if (!criteria.length || !catGoals.length) continue;
+    // In a scope a category the labs can't check stays, for the care team to assign.
+    if ((!criteria.length && !scope) || !catGoals.length) continue;
     names.add(norm(name));
-    categories.push({ id: `cat-${categories.length + 1}-${slug(name)}`, name, match: 'all', criteria, goals: catGoals });
+    categories.push({
+      id: `cat-${categories.length + 1}-${slug(name)}`, name, match: 'all', criteria, goals: catGoals,
+      ...(scope ? { range: clip(c.range, 200), explanation: clip(c.explanation, SCOPE_TEXT_MAX) } : {}),
+    });
   }
+  if (!goals.length && !categories.length) return null;
 
   const templateType = raw.templateType === 'chronic' ? 'chronic' : 'general';
   const conditions = templateType === 'chronic'
@@ -342,5 +426,6 @@ export function normalizeTemplateDraft(raw, catalog, options = {}) {
     conditions,
     goals,
     categories,
+    ...(scope ? { overview: clip(raw.overview, SCOPE_TEXT_MAX), commonExplanation: clip(raw.commonExplanation, SCOPE_TEXT_MAX) } : {}),
   };
 }

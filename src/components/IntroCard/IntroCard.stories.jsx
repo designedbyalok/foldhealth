@@ -59,6 +59,20 @@ export const Steps = {
   },
 };
 
+export const Flow = {
+  args: {
+    title: 'From guidance to care plan',
+    description: 'UnityAI turns a client’s clinical practice guidance into a plan you review. Nothing is created until you approve it.',
+    layout: 'flow',
+    items: [
+      { title: 'Upload', description: 'PDF, Word or Fold JSON, many at once.' },
+      { title: 'Review the scope', description: 'Each category’s goals, interventions and barriers.' },
+      { title: 'Approve', description: 'An admin approves; rejecting removes the upload.' },
+      { title: 'Use the template', description: 'A linked draft care plan template.' },
+    ],
+  },
+};
+
 export const WithoutItems = {
   args: { icon: 'solar:info-circle-linear', title: 'About this section', description: 'A single sentence explaining what the section is for.' },
 };

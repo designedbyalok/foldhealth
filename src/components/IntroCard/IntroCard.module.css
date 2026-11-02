@@ -55,3 +55,36 @@
   border: 0.5px solid var(--primary-200);
 }
 .step .itemText { padding-top: calc(var(--space-1) / 2); }
+
+/* Flow: the steps of a short process on one numbered row, each marker
+   joined to the next by a hairline. Below 640px of card width the row
+   stacks, markers joined top to bottom instead. */
+.flowRoot { container-type: inline-size; gap: var(--space-4); }
+.flowDescription { margin: 0; font-size: var(--font-sm); line-height: var(--leading-normal); color: var(--neutral-400); }
+.flow {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--space-2);
+  margin: 0; padding: 0; list-style: none;
+}
+.flowItem { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.flowTrack { display: flex; align-items: center; gap: var(--space-2); }
+.flowItem:not(:last-child) .flowTrack::after {
+  content: ''; flex: 1; height: 1px; background: var(--primary-200);
+}
+.flowMarker {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: var(--space-6); height: var(--space-6); border-radius: 50%;
+  background: var(--neutral-0); border: 0.5px solid var(--primary-200);
+  font-size: var(--font-sm); font-weight: 500; color: var(--primary-300);
+}
+.flowItem .itemText { padding-right: var(--space-4); }
+.flowTitle { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--font-base); font-weight: 500; color: var(--neutral-500); }
+
+@container (max-width: 640px) {
+  .flow { grid-auto-flow: row; gap: 0; }
+  .flowItem { flex-direction: row; gap: var(--space-3); }
+  /* The space between steps sits inside each step, so the line reaches the next marker. */
+  .flowTrack { align-self: stretch; flex-direction: column; gap: 0; }
+  .flowItem:not(:last-child) .flowTrack::after { width: 1px; height: auto; }
+  .flowItem .itemText { padding: calc(var(--space-1) / 2) 0 var(--space-3); }
+  .flowItem:last-child .itemText { padding-bottom: 0; }
+}

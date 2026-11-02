@@ -3,6 +3,7 @@ import { Button } from '../../../components/Button/Button';
 import { Badge } from '../../../components/Badge/Badge';
 import { Dropzone } from '../../../components/Dropzone/Dropzone';
 import { Icon } from '../../../components/Icon/Icon';
+import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { useAppStore } from '../../../store/useAppStore';
 import { PROTOCOL_ACCEPT, PROTOCOL_ACCEPT_MIME } from './lib/extractProtocolText';
 import { foldProtocolJsonTemplate } from './lib/protocolSchema';
@@ -13,6 +14,7 @@ const STATUS = {
   reading: { label: 'Reading file', tone: 'info' },
   uploading: { label: 'Storing file', tone: 'info' },
   parsing: { label: 'Parsing', tone: 'info' },
+  scoping: { label: 'Building scope', tone: 'info' },
   done: { label: 'Ready for review', tone: 'success' },
   failed: { label: 'Failed', tone: 'error' },
 };
@@ -30,13 +32,15 @@ function downloadTemplate() {
 
 /**
  * Upload clinical practice guidance: drop PDFs, Word files or JSON (many at
- * once). Each file is stored, parsed into a draft protocol and queued for
- * review; uploads keep running if the drawer is closed.
+ * once). Each file is stored, parsed into a draft protocol with its scope and
+ * queued for review; uploads keep running if the drawer is closed. Cancel
+ * removes an upload and anything it stored.
  */
 export function ProtocolUploadDrawer({ onClose, onReview }) {
   const uploads = useAppStore(s => s.protocolUploads);
   const uploadClinicalProtocols = useAppStore(s => s.uploadClinicalProtocols);
   const clearFinished = useAppStore(s => s.clearFinishedProtocolUploads);
+  const cancelUpload = useAppStore(s => s.cancelProtocolUpload);
   const showToast = useAppStore(s => s.showToast);
   const finished = uploads.filter(u => u.status === 'done' || u.status === 'failed').length;
   const running = uploads.length - finished;
@@ -56,9 +60,9 @@ export function ProtocolUploadDrawer({ onClose, onReview }) {
     >
       <div className={styles.drawerBody}>
         <p className={styles.hint}>
-          Upload a client&apos;s clinical practice guidance. Each file is parsed into a draft protocol (thresholds, decision rules,
-          cadence, medication titration and cross-references) for an admin to review. Nothing is used until it is approved.
-          JSON in the Fold protocol format imports directly.
+          Upload a client&apos;s clinical practice guidance. Each file is parsed into a draft protocol and its scope: a plain-language
+          plan with the protocol&apos;s categories and the goals, interventions and barriers for each. An admin reviews it; the care
+          plan template is created only when the protocol is approved. JSON in the Fold protocol format imports directly.
         </p>
         <Dropzone
           accept={PROTOCOL_ACCEPT}
@@ -85,7 +89,10 @@ export function ProtocolUploadDrawer({ onClose, onReview }) {
                       <span className={styles.queueName}>{u.name}</span>
                       {u.error && <span className={styles.queueError}>{u.error}</span>}
                     </span>
-                    <Badge tone={status.tone} size="S" label={status.label} />
+                    <Badge tone={status.tone} size="S" label={u.cancelled ? 'Cancelling' : status.label} />
+                    {u.status !== 'done' && u.status !== 'failed' && !u.cancelled && (
+                      <ActionButton icon="solar:close-circle-linear" size="sm" tooltip="Cancel upload" tooltipLeft onClick={() => cancelUpload(u.key)} />
+                    )}
                     {u.status === 'done' && u.protocolId && (
                       <Button variant="outline" size="sm" onClick={() => onReview(u.protocolId)}>Review</Button>
                     )}

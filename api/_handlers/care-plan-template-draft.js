@@ -9,7 +9,8 @@
  * Body: { description: string, catalog: { goals, interventions, barriers },
  *         protocol?: { title, version, organization, guidance },
  *         reference?: { name, goals, interventions, barriers } (titles),
- *         options?: { categories?: boolean, libraryOnly?: boolean } }
+ *         options?: { categories?: boolean, libraryOnly?: boolean,
+ *                     scope?: true | { categories, commonGoals } } }
  * Returns: { draft } or { error: { message } }
  */
 
@@ -19,6 +20,8 @@ import { bodyWithinLimit } from '../_lib/limits.js';
 import {
   TEMPLATE_DESCRIPTION_MAX,
   TEMPLATE_DRAFT_SCHEMA,
+  TEMPLATE_SCOPE_SCHEMA,
+  buildScopeRequest,
   buildTemplateDraftPrompt,
   buildTemplateReference,
   normalizeTemplateDraft,
@@ -58,6 +61,8 @@ export default async function handler(req, res) {
     libraryOnly: body.options?.libraryOnly === true,
     // An existing template the draft starts from.
     reference: buildTemplateReference(body.reference),
+    // A protocol's scope (plain-language plan), maybe as a reviewer edited it.
+    scope: protocol && body.options?.scope ? (buildScopeRequest(body.options.scope) || true) : null,
   };
   const catalog = {
     goals: asList(body.catalog?.goals),
@@ -68,15 +73,15 @@ export default async function handler(req, res) {
   try {
     const ai = await generateJson({
       prompt: buildTemplateDraftPrompt(description, catalog, protocol, options),
-      schema: TEMPLATE_DRAFT_SCHEMA,
+      schema: options.scope ? TEMPLATE_SCOPE_SCHEMA : TEMPLATE_DRAFT_SCHEMA,
       name: 'care_plan_template',
       temperature: 0.3,
       geminiThinking: 'low',
       logTag: 'care-plan-template-draft',
       // A stalled call fails over instead of leaving the editor waiting; a
       // busy model's quick 503 falls through to the next, within a minute.
-      timeoutMs: 25000,
-      deadlineMs: 60000,
+      timeoutMs: options.scope ? 45000 : 25000,
+      deadlineMs: options.scope ? 90000 : 60000,
     });
     if (!ai.ok) {
       const message = aiBusy(ai.status)
