@@ -999,6 +999,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
         return (
           <Editor
             kind={interventionDrawer.kind}
+            taskTemplate
             intervention={editing ? interventions[interventionDrawer.index]?.config : undefined}
             onClose={() => setInterventionDrawer(null)}
             onSave={(config) => {

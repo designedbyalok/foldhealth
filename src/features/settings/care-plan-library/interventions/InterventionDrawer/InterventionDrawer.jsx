@@ -19,6 +19,8 @@ import { ActionButton } from '../../../../../components/ActionButton/ActionButto
 import { Icon } from '../../../../../components/Icon/Icon';
 import { ActivityLog } from '../../../../../components/ActivityLog/ActivityLog';
 import { AssigneeChange } from '../../../../../components/AssigneeChange/AssigneeChange';
+import { CreatableLabelDropdown } from '../../../../tasks/TasksViewDropdowns';
+import { CARE_TEAM_ROLES } from '../../../../patient/care-team/careTeamRoles';
 
 const initialsOf = (name) => (name || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 import { LinkGoalToBarrierDrawer } from '../../../../patient/right-panel/tabs/care-programs/care-plan/drawers/BarrierDetailDrawer/LinkGoalToBarrierDrawer';
@@ -109,6 +111,11 @@ export function InterventionDrawer({
   // Offer a "From library" picker on a new intervention. Off for the
   // library's own editor, where the item being written is the library.
   showLibrary = false,
+  // Authoring a task template (Settings > Care Plan Library) rather than a
+  // patient's intervention: a task kind then takes labels, and an Internal
+  // Task is routed by care team role (with a pool when nobody holds it)
+  // instead of a named person. spawn_care_plan_tasks reads these.
+  taskTemplate = false,
 }) {
   const [linkedGoalIds, setLinkedGoalIds] = useState(() => (
     Array.isArray(linkedGoalIdsProp) && linkedGoalIdsProp.length > 0
@@ -162,6 +169,24 @@ export function InterventionDrawer({
   const [assignedTo, setAssignedTo] = useState(intervention?.assignedTo ?? '');
   const assignedToInitialized = useRef(!!intervention?.assignedTo);
   const [member, setMember] = useState(intervention?.member ?? '');
+  const [labels, setLabels] = useState(() => (Array.isArray(intervention?.labels) ? intervention.labels : []));
+  const [assigneeRole, setAssigneeRole] = useState(intervention?.assigneeRole ?? '');
+  const [pool, setPool] = useState(intervention?.pool ?? 'Care Management');
+  const [roleOpen, setRoleOpen] = useState(false);
+  const roleRef = useRef(null);
+  const [poolOpen, setPoolOpen] = useState(false);
+  const poolRef = useRef(null);
+  const taskPools = useAppStore(s => s.taskPools);
+  const fetchTaskPools = useAppStore(s => s.fetchTaskPools);
+  const fetchTaskLabels = useAppStore(s => s.fetchTaskLabels);
+  const templatingTask = taskTemplate && isTask(kind);
+  const routeByRole = templatingTask && kind === 'internal-task';
+  useEffect(() => {
+    if (!templatingTask) return;
+    fetchTaskPools();
+    fetchTaskLabels();
+  }, [templatingTask, fetchTaskPools, fetchTaskLabels]);
+  const toggleLabel = (l) => setLabels(prev => (prev.includes(l) ? prev.filter(x => x !== l) : [...prev, l]));
   const [creationTiming, setCreationTiming] = useState(intervention?.creationTiming ?? 'immediate');
   const [creationCount, setCreationCount] = useState(intervention?.creationCount ?? '1');
   const [creationTrigger, setCreationTrigger] = useState(intervention?.creationTrigger ?? 'Care Plan Signed');
@@ -273,8 +298,12 @@ export function InterventionDrawer({
           repeatEnds,
           repeatEndsUnit,
           goalIds: linkedGoalIds,
-          assignedTo,
+          assignedTo: routeByRole ? '' : assignedTo,
           member,
+          ...(templatingTask ? {
+            labels,
+            ...(routeByRole ? { assigneeRole, pool } : {}),
+          } : {}),
         })}
       >
         {intervention ? 'Update' : 'Add'}
@@ -461,6 +490,66 @@ export function InterventionDrawer({
             rows so the fields read the same wherever an intervention
             surfaces as a task. Borderless DetailDropdown values keep
             the row visually calm: no double borders / boxes. */}
+        {routeByRole ? (
+          <>
+            <div className={styles.detailRow}>
+              <span className={styles.detailLabel}>Assignee Role</span>
+              <div className={styles.inlineRow}>
+                <button
+                  ref={roleRef}
+                  type="button"
+                  className={styles.badgeTrigger}
+                  aria-haspopup="menu"
+                  aria-expanded={roleOpen}
+                  onClick={() => setRoleOpen(v => !v)}
+                >
+                  <Badge tone="white" size="M" label={assigneeRole || 'Select role'} chevron />
+                </button>
+                <span className={styles.inlineText}>on the patient&apos;s care team</span>
+              </div>
+              {roleOpen && (
+                <MenuPopover
+                  anchorRef={roleRef}
+                  align="left"
+                  width={220}
+                  ariaLabel="Assignee role"
+                  items={[{ key: 'none', label: 'No role' }, ...CARE_TEAM_ROLES.map(r => ({ key: r, label: r }))]}
+                  onSelect={k => setAssigneeRole(k === 'none' ? '' : k)}
+                  onClose={() => setRoleOpen(false)}
+                />
+              )}
+            </div>
+            <div className={styles.detailRow}>
+              <span className={styles.detailLabel}>Task Pool</span>
+              <div className={styles.inlineRow}>
+                <button
+                  ref={poolRef}
+                  type="button"
+                  className={styles.badgeTrigger}
+                  aria-haspopup="menu"
+                  aria-expanded={poolOpen}
+                  onClick={() => setPoolOpen(v => !v)}
+                >
+                  <Badge tone="white" size="M" label={pool} chevron />
+                </button>
+                <span className={styles.inlineText}>
+                  {assigneeRole ? 'When nobody holds the role' : 'Unassigned, for the team to claim'}
+                </span>
+              </div>
+              {poolOpen && (
+                <MenuPopover
+                  anchorRef={poolRef}
+                  align="left"
+                  width={220}
+                  ariaLabel="Task pool"
+                  items={(taskPools || []).map(p => ({ key: p.name, label: p.name }))}
+                  onSelect={setPool}
+                  onClose={() => setPoolOpen(false)}
+                />
+              )}
+            </div>
+          </>
+        ) : (
         <div className={styles.detailRow}>
           <span className={styles.detailLabel}>
             Assigned To
@@ -484,6 +573,18 @@ export function InterventionDrawer({
             disabled={kind !== 'internal-task'}
           />
         </div>
+        )}
+        {templatingTask && (
+          <div className={styles.detailRow}>
+            <span className={styles.detailLabel}>Labels</span>
+            <div className={tasksViewStyles.detailValueLabels}>
+              {labels.map(l => (
+                <Badge key={l} variant="overflow" label={l} trailingIcon="solar:close-circle-linear" onClick={() => toggleLabel(l)} />
+              ))}
+              <CreatableLabelDropdown selectedLabels={labels} onToggle={toggleLabel} />
+            </div>
+          </div>
+        )}
         {/* Priority: was inline in the Title field, now its own row so
             the layout matches the care-plan Add Task drawer. */}
         <div className={styles.detailRow}>

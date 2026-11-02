@@ -11,7 +11,7 @@ import { AddGoalsDrawer } from '../../goals/AddGoalsDrawer/AddGoalsDrawer';
 import { AddInterventionsDrawer } from '../../interventions/AddInterventionsDrawer';
 import { AddBarriersDrawer } from '../../barriers/AddBarriersDrawer/AddBarriersDrawer';
 import { CreateGoalDrawer } from '../../goals/CreateGoalDrawer/CreateGoalDrawer';
-import { INTERVENTION_EDITORS } from '../../interventions';
+import { INTERVENTION_EDITORS, interventionTemplateFromValues } from '../../interventions';
 import { ApplyTemplatesDrawer } from '../../../../patient/right-panel/tabs/care-programs/care-plan/drawers/ApplyTemplatesDrawer/ApplyTemplatesDrawer';
 import { useAppStore } from '../../../../../store/useAppStore';
 import { MenuPopover } from '../../../../../components/MenuPopover/MenuPopover';
@@ -182,7 +182,7 @@ export function CarePlanCreateView({ onClose, onSave }) {
       const key = norm(item.title);
       if (!key || seen.has(key)) continue;
       seen.add(key);
-      add.push({ id: item.id, title: item.title, kind: item.kind });
+      add.push({ id: item.id, title: item.title, kind: item.kind, ...(item.config && { config: item.config }) });
     }
     return add.length ? [...list, ...add] : list;
   };
@@ -653,8 +653,15 @@ export function CarePlanCreateView({ onClose, onSave }) {
               note: libRow?.description || '',
               ...(editingIntervention.config || {}),
             }}
+            taskTemplate
             onClose={() => setEditingIntervention(null)}
-            onSave={() => setEditingIntervention(null)}
+            onSave={(values) => {
+              const next = interventionTemplateFromValues(values, { kind: editingIntervention.kind });
+              setInterventions(list => list.map(e => (e.id === editingIntervention.id
+                ? { ...e, kind: next.kind, title: next.title, config: next.config }
+                : e)));
+              setEditingIntervention(null);
+            }}
           />
         );
       })()}

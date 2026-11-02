@@ -166,6 +166,7 @@ export function AddInterventionsDrawer({ onClose, onAdd, primaryLabel = 'Add' })
       {createKind && (
         <InterventionDrawer
           kind={createKind}
+          taskTemplate
           onKindChange={setCreateKind}
           onClose={() => setCreateKind(null)}
           onSave={async (values) => {
