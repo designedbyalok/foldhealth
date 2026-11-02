@@ -64,7 +64,7 @@ export function useCarePlanItemActivity({ patientId, program, audit, ids, goals 
     const rows = (audit || [])
       .filter(a => a.entityType !== 'plan' && a.entityId != null && idSet.has(String(a.entityId)))
       .sort((x, y) => ms(y.createdAt) - ms(x.createdAt));
-    const actionOf = new Map(rows.map(r => [`a-${r.id}`, NOTE_ACTIONS.has(r.action) ? 'note' : r.action]));
+    const actionOf = new Map(rows.map(r => [`a-${r.id}`, NOTE_ACTIONS.has(r.action) || r.action === 'note_linked' ? 'note' : r.action]));
     const entries = [
       ...activityEntries(rows, measurements, goals).filter(e => e.type !== 'plan_event'),
       ...rows.filter(isStructuralRow).map(structuralEntry),

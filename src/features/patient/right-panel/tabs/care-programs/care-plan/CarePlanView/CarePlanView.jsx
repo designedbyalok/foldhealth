@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useAppStore } from '../../../../../../../store/useAppStore';
 import { uniqueById } from '../lib/carePlanDraft';
 import { Icon } from '@/components/Icon/Icon';
+import { Tooltip } from '@/components/Tooltip/Tooltip';
 import { AddIconMinimalist } from '@/components/Icon/AddIconMinimalist';
 import { ActionButton } from '@/components/ActionButton/ActionButton';
 import { Button } from '@/components/Button/Button';
@@ -71,6 +72,8 @@ import { CategorySuggestionBanner } from './CategorySuggestionBanner';
 import { categorySuggestions, hasCategories } from '../../../../../../settings/care-plan-library/lib/templateCategories';
 import { groupUpdates } from '../../../../../../settings/care-plan-library/lib/templateGroups';
 import { isRetired, replacementFor } from '../../../../../../settings/care-plan-library/lib/templateRetirement';
+import { collectMentions, collectLinks } from '@/components/Textarea/mentions';
+import { sanitizeRichText } from '@/lib/sanitizeHtml';
 import styles from './CarePlanView.module.css';
 
 export function CarePlanView({ patientId, program }) {
@@ -306,6 +309,8 @@ export function CarePlanView({ patientId, program }) {
     noteOpen,
     noteText,
     setNoteText,
+    notePlain,
+    setNotePlain,
     noteDiscardOpen,
     setNoteDiscardOpen,
     noteDeleteOpen,
@@ -534,11 +539,26 @@ export function CarePlanView({ patientId, program }) {
     });
     showToast?.('Care note removed');
   };
+  // The note box tags care team members with "@" and links this plan's
+  // goals, interventions and barriers with "/".
+  const noteMentionUsers = useMemo(() => (platformUsers || [])
+    .filter(u => u?.name)
+    .map(u => ({ id: u.id, name: u.name, initials: u.initials, role: (u.clinicalRoles || [])[0], realProfile: true }))
+    .toSorted((a, b) => a.name.localeCompare(b.name)), [platformUsers]);
+  const noteLinkItems = useMemo(() => [
+    ...(data?.goals || []).map(g => ({ id: g.id, kind: 'goal', label: g.title, group: 'Goals', icon: 'solar:flag-linear', meta: g.status })),
+    ...(data?.interventions || []).map(i => ({ id: i.id, kind: 'intervention', label: i.title, group: 'Interventions', icon: 'solar:checklist-minimalistic-linear', meta: i.status })),
+    ...(data?.barriers || []).map(b => ({ id: b.id, kind: 'barrier', label: b.title, group: 'Barriers', icon: 'custom:barrier', meta: b.status })),
+  ].filter(l => l.id != null && l.label), [data]);
   const doAddNote = async () => {
-    const body = noteText.trim();
+    const body = notePlain.trim();
     if (!body) return;
+    // Read the tags and links back from the saved HTML, so a chip deleted
+    // after it was picked is not counted.
+    const root = new DOMParser().parseFromString(noteText, 'text/html').body;
+    const details = { html: noteText, mentions: collectMentions(root), links: collectLinks(root) };
     closeNoteDrawer({ force: true });
-    await addCarePlanNote(patientId, program, body);
+    await addCarePlanNote(patientId, program, body, { details });
   };
   // The drawer is driven entirely by the store flag, the toolbar button and
   // the step header (a separate component) both set it, and closing clears it.
@@ -1055,7 +1075,8 @@ export function CarePlanView({ patientId, program }) {
     addBarriersDrawerOpen, setAddBarriersDrawerOpen, barrierAddGoalIdRef, handleAddBarriersFromPicker,
     barrierDrawer, setBarrierDrawer, handleAddBarrier, shareOpen, clearCarePlanShareRequest, canEdit,
     historyOpen, setHistoryOpen, versionsOpen, setVersionsOpen, signOpen, setSignOpen, doSign, signNote, setSignNote,
-    noteOpen, closeNoteDrawer, doAddNote, noteText, setNoteText, noteDirty, latestPlanNote, noteTimelineEntries,
+    noteOpen, closeNoteDrawer, doAddNote, noteText, setNoteText, notePlain, setNotePlain, noteDirty, latestPlanNote, noteTimelineEntries,
+    noteMentionUsers, noteLinkItems,
     noteDiscardOpen, setNoteDiscardOpen, noteDeleteOpen, setNoteDeleteOpen, doClearCareNote,
     problemOpen, setProblemOpen, doAddProblem, problemText, setProblemText,
     trendsOpen, setTrendsOpen, measurements,
@@ -1313,7 +1334,11 @@ export function CarePlanView({ patientId, program }) {
               open={openSections.careNote}
               onToggle={() => toggleSection('careNote')}
             />
-            <span className={styles.careNoteHint}>Visible to the whole care team. Doesn&apos;t change the signed version.</span>
+            <Tooltip label="Visible to the whole care team. Doesn't change the signed version.">
+              <span className={styles.careNoteInfo} aria-label="About care notes">
+                <Icon name="solar:info-circle-linear" size={14} color="var(--neutral-300)" />
+              </span>
+            </Tooltip>
           </div>
           {openSections.careNote && !latestPlanNote && (
             <div className={styles.careNoteEmpty}>
@@ -1334,7 +1359,9 @@ export function CarePlanView({ patientId, program }) {
                 disabled={!canEdit}
                 aria-label="Edit care note"
               >
-                <p className={styles.careNoteBody}>{latestPlanNote.detail}</p>
+                {latestPlanNote.meta?.html
+                  ? <div className={styles.careNoteBody} dangerouslySetInnerHTML={{ __html: sanitizeRichText(latestPlanNote.meta.html) }} />
+                  : <p className={styles.careNoteBody}>{latestPlanNote.detail}</p>}
                 <div className={styles.careNoteMeta}>
                   <span className={styles.careNoteAuthor}>{latestPlanNote.actor || 'Unknown'}</span>
                   <span className={styles.careNoteDot} aria-hidden="true">•</span>
