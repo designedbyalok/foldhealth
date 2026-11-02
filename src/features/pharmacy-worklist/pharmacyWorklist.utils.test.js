@@ -1,8 +1,18 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import {
   addDaysMdy, annotateClaims, claimRecordStatus, enrichPharmacyMember, matchFill, measureStatus, medicationStatus,
   activeBarriers, memberPriority, needsVerification, nextFillDueSource, outreachSummary, planTimers, reconcileMeasure, savability, setPlanTimers, todayMdy,
 } from './pharmacyWorklist.utils.js';
+
+// The fixtures are relative to today, and the code takes the measure year
+// from the fail date (today + 60 by default), so the real clock breaks them:
+// from Nov 2 the fail date lands in next year and the claims fall outside
+// it, and before Aug 9 one 120-day fill can't reach 80% PDC by Dec 31. Pin
+// today inside that window. Set at module level so the describe-scope
+// fixtures, built at collection, see it too.
+vi.useFakeTimers({ toFake: ['Date'] });
+vi.setSystemTime(new Date(2026, 9, 1, 12));
+afterAll(() => vi.useRealTimers());
 
 const daysAgo = (n) => addDaysMdy(todayMdy(), -n);
 const inDays = (n) => addDaysMdy(todayMdy(), n);
