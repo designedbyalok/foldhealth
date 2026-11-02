@@ -252,6 +252,7 @@ import { itemsLeaving, withCategory } from '../features/settings/care-plan-libra
 import { buildRuleInputs } from '../features/automations/lib/clinicalCriteria';
 import { effectiveVersion as effectiveTemplateVersion, todayIso as todayIsoDate } from '../features/settings/care-plan-library/lib/templateVersions';
 import { createClinicalProtocolsSlice } from './slices/clinicalProtocolsSlice';
+import { createProtocolMigrationsSlice } from './slices/protocolMigrationsSlice';
 import { createTemplateSuggestionsSlice } from './slices/templateSuggestionsSlice';
 
 // patientId → in-flight fetchPatientConsents request.
@@ -396,6 +397,7 @@ export const useAppStore = create((set, get) => ({
   ...createTemplateVersionsSlice(set, get),
   ...createIpaOverlaysSlice(set, get),
   ...createClinicalProtocolsSlice(set, get),
+  ...createProtocolMigrationsSlice(set, get),
   ...createTemplateSuggestionsSlice(set, get),
 
   // Patient Monitoring: per-patient snapshot for the P360 Monitoring tab,
@@ -4648,6 +4650,8 @@ export const useAppStore = create((set, get) => ({
       get().logCarePlanAudit(patientId, program, rows);
       // "Next review only" template versions land now.
       await get().applyPendingTemplateMigrations(patientId, program, 'review');
+      // So do clinical protocol versions approved with "Next review only".
+      await get().applyPendingProtocolMigrations(patientId, program);
     }
     return saved;
   },

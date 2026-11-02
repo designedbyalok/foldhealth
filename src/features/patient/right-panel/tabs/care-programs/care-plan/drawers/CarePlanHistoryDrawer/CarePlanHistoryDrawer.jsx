@@ -35,7 +35,7 @@ import { GBI_STATUS_META } from '../../lib/gbiStatus';
 import styles from './CarePlanHistoryDrawer.module.css';
 
 
-const TYPE_LABEL = { goal: 'Goal', intervention: 'Intervention', barrier: 'Barrier', share: 'Share', plan: 'Plan' };
+const TYPE_LABEL = { goal: 'Goal', intervention: 'Intervention', barrier: 'Barrier', share: 'Share', plan: 'Plan', protocol: 'Clinical Protocol' };
 const ACTION_LABEL = {
   created: 'Added to Care Plan', updated: 'Edited', status_changed: 'Status Updated',
   progress_changed: 'Progress Updated', value_changed: 'Value Updated',

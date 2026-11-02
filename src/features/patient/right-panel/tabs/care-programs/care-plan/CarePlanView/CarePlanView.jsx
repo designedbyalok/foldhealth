@@ -452,10 +452,13 @@ export function CarePlanView({ patientId, program }) {
       .map(item => item.template);
   }, [appliedTemplateIds, carePlanTemplates, appliedTemplatePriorities]);
   // Retired templates still on this plan, with what to use instead.
-  const retiredOnPlan = useMemo(() => appliedTemplates.filter(isRetired).map(t => ({
-    template: t,
-    replacement: replacementFor(t, carePlanTemplates),
-  })), [appliedTemplates, carePlanTemplates]);
+  const retiredOnPlan = useMemo(() => {
+    const onPlan = new Set(appliedTemplates.map(t => String(t.id)));
+    return appliedTemplates.filter(isRetired).map((t) => {
+      const replacement = replacementFor(t, carePlanTemplates);
+      return { template: t, replacement, replacementOnPlan: !!replacement && onPlan.has(String(replacement.id)) };
+    });
+  }, [appliedTemplates, carePlanTemplates]);
   // Templates no longer on the plan whose earlier runs (an ended episode)
   // still show on the strip.
   const liveAppliedIds = live?.plan?.appliedTemplateIds;
@@ -1141,7 +1144,7 @@ export function CarePlanView({ patientId, program }) {
           onDismiss={({ run, to }) => dismissCarePlanCategorySuggestion(patientId, program, run.id, to.id)}
         />
       ))}
-      {!viewedVersion && !viewedRun && retiredOnPlan.map(({ template: t, replacement }) => (
+      {!viewedVersion && !viewedRun && retiredOnPlan.map(({ template: t, replacement, replacementOnPlan }) => (
         <div key={t.id} className={styles.pausedBanner}>
           <Alert
             tone="info"
@@ -1154,7 +1157,7 @@ export function CarePlanView({ patientId, program }) {
               </>
             )}
           />
-          {canEdit && replacement && !appliedTemplateIds.includes(replacement.id) && (
+          {canEdit && replacement && !replacementOnPlan && (
             <Button
               variant="outline"
               size="sm"

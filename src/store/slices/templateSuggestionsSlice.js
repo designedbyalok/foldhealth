@@ -40,6 +40,8 @@ export const createTemplateSuggestionsSlice = (set, get) => {
     templateSuggestionsDidFetch: false,
     templateSuggestionsMissing: false,
     templateSuggestionsWording: false,
+    // { ranAt, source: 'nightly' | 'manual', runBy, openCount } of the latest analysis, or null.
+    templateAnalysisLastRun: null,
 
     fetchTemplateSuggestions: async ({ force = false } = {}) => {
       if (get().templateSuggestionsLoading) return;
@@ -47,10 +49,20 @@ export const createTemplateSuggestionsSlice = (set, get) => {
       set({ templateSuggestionsLoading: true });
       // Open ones, plus the last 90 days of decisions for the Decided view.
       const since = new Date(Date.now() - 90 * 86400000).toISOString();
-      const { data, error } = await supabase.from('care_plan_template_suggestions')
-        .select('*')
-        .or(`status.eq.open,decided_at.gte.${since}`)
-        .order('detected_at', { ascending: false });
+      const [{ data, error }, lastRun] = await Promise.all([
+        supabase.from('care_plan_template_suggestions')
+          .select('*')
+          .or(`status.eq.open,decided_at.gte.${since}`)
+          .order('detected_at', { ascending: false }),
+        // Optional: the runs table comes with care_plan_template_analysis_runs_migration.sql.
+        supabase.from('care_plan_template_analysis_runs')
+          .select('ran_at, source, run_by, open_count')
+          .order('ran_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+      const run = lastRun.data;
+      set({ templateAnalysisLastRun: run ? { ranAt: run.ran_at, source: run.source, runBy: run.run_by || '', openCount: run.open_count } : null });
       if (error) {
         if (!isMissingTable(error)) console.warn('fetchTemplateSuggestions:', error.message);
         set({ templateSuggestionsLoading: false, templateSuggestionsDidFetch: true, templateSuggestionsMissing: isMissingTable(error) });
