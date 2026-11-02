@@ -151,7 +151,7 @@ export function AssessmentsTab({ patient }) {
               onToggle={toggle}
               onToggleAll={checked => setSelectedIds(checked ? shown.map(r => r.id) : [])}
               onOpen={open}
-              emptyLabel={narrowed ? 'No assessments match these filters.' : 'No assessments sent to this patient yet.'}
+              emptyLabel={narrowed ? 'No Matching Assessments' : 'No Assessments Sent'}
             />
           )}
       </div>

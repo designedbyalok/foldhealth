@@ -101,3 +101,7 @@
   flex-wrap: wrap;
   gap: var(--space-1);
 }
+
+.empty {
+  padding-top: calc(var(--space-12) * 2.5);
+}

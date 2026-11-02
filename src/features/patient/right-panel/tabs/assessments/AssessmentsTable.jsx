@@ -1,5 +1,6 @@
 import { Badge } from '../../../../../components/Badge/Badge';
 import { Icon } from '../../../../../components/Icon/Icon';
+import { RingEmptyState } from '../../../../../components/RingEmptyState/RingEmptyState';
 import { ProfileTable } from '../../../../../components/ProfileTable/ProfileTable';
 import { profileCellClass, profileRowClass } from '../../../../../components/ProfileTable/profileTableClasses';
 import { Checkbox } from '../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
@@ -43,6 +44,13 @@ function ResponseStatus({ pending, completed }) {
  * for the narrow list beside an open assessment.
  */
 export function AssessmentsTable({ rows, compact, activeId, selectedIds, onToggle, onToggleAll, onOpen, emptyLabel }) {
+  if (!rows.length) {
+    return (
+      <div className={styles.empty}>
+        <RingEmptyState icon="solar:clipboard-list-linear" label={emptyLabel} size={compact ? 'S' : 'M'} />
+      </div>
+    );
+  }
   const selected = new Set(selectedIds);
   return (
     <ProfileTable
@@ -50,7 +58,6 @@ export function AssessmentsTable({ rows, compact, activeId, selectedIds, onToggl
       rows={rows}
       selectedIds={selectedIds}
       onSelectAll={onToggleAll}
-      emptyState={<span className={styles.muted}>{emptyLabel}</span>}
       renderRow={r => (
         <tr
           key={r.id}

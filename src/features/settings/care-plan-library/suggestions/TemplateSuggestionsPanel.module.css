@@ -6,7 +6,7 @@
   display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap;
   padding: var(--space-2) var(--space-4); border-bottom: 0.5px solid var(--neutral-150);
 }
-.filterNote { margin-left: auto; font-size: var(--font-sm); color: var(--neutral-300); }
+.lastRun { font-size: var(--font-sm); color: var(--neutral-300); white-space: nowrap; }
 .notice { padding: var(--space-3) var(--space-4) 0; }
 
 .row { border-bottom: 0.5px solid var(--neutral-100); }
@@ -28,13 +28,15 @@
 .nameSub { font-size: var(--font-sm); color: var(--neutral-300); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nowrap { white-space: nowrap; }
 
-.why { display: flex; flex-direction: column; gap: var(--space-1); }
-.whyText, .aiText { font-size: var(--font-base); line-height: var(--leading-normal); color: var(--neutral-400); }
-.aiText { display: flex; align-items: flex-start; gap: var(--space-1); }
-.aiText > :first-child { flex-shrink: 0; margin-top: calc(var(--space-1) / 2); }
-.whySub { font-size: var(--font-sm); line-height: var(--leading-tight); color: var(--neutral-300); }
+.why { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+/* Two lines in the row; the full explanation is in the cell's tooltip. */
+.whyText {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+  font-size: var(--font-base); line-height: var(--leading-tight); color: var(--neutral-400);
+}
+.whySub { font-size: var(--font-sm); line-height: var(--leading-tight); color: var(--neutral-300); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.actionCell { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); }
+.actionCell { display: flex; align-items: center; gap: var(--space-1); }
 .emptyState {
   display: flex; flex-direction: column; align-items: center; gap: var(--space-3);
   padding: var(--space-12) 0; color: var(--neutral-300); font-size: var(--font-base);
