@@ -160,10 +160,13 @@
 .pausedBanner {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-2);
   margin: var(--space-2) var(--space-3) 0;
 }
-.pausedBanner > :first-child { flex: 1; min-width: 0; }
+/* In a narrow plan column the actions drop below the message instead of
+   squeezing it. */
+.pausedBanner > :first-child { flex: 1 1 260px; min-width: 0; }
 
 .summaryStrip {
   display: flex;

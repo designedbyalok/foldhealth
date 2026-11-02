@@ -41,6 +41,8 @@ import { todayIso } from '../../lib/templateVersions';
 import { BulkBar } from '../../../../../components/BulkBar/BulkBar';
 import { useCanManageTemplates } from '../../lib/useCanManageTemplates';
 import { TemplateGroupsPanel } from '../../groups/TemplateGroupsPanel';
+import { RetireTemplateDialog } from './RetireTemplateDialog';
+import { isRetired } from '../../lib/templateRetirement';
 import styles from './CarePlanLibraryPanel.module.css';
 
 const CARE_PLAN_TABS = [
@@ -51,6 +53,7 @@ const CARE_PLAN_TABS = [
   { key: 'interventions', label: 'Interventions Library' },
   { key: 'barriers', label: 'Barriers Library' },
   { key: 'drafts', label: 'Draft Templates' },
+  { key: 'retired', label: 'Retired Templates' },
   { key: 'overlays', label: 'IPA Overlays' },
   { key: 'suggestions', label: 'Suggestions' },
 ];
@@ -61,6 +64,7 @@ const TAB_META = {
   interventions: { entityLabel: 'Intervention', emptyIcon: 'solar:clipboard-check-linear' },
   barriers: { entityLabel: 'Barrier', emptyIcon: 'custom:barrier' },
   drafts: { entityLabel: 'Draft', emptyIcon: 'solar:clipboard-list-linear' },
+  retired: { entityLabel: 'Retired Template', emptyIcon: 'solar:archive-down-linear' },
   overlays: { entityLabel: 'Overlay', emptyIcon: 'solar:layers-linear' },
   protocols: { entityLabel: 'Protocol', emptyIcon: 'solar:document-medicine-linear' },
   suggestions: { entityLabel: 'Suggestion', emptyIcon: 'solar:magic-stick-3-linear' },
@@ -149,6 +153,13 @@ const TEMPLATE_COLUMNS = [
 ];
 // Drafts add Approve to the row actions.
 const DRAFT_COLUMNS = TEMPLATE_COLUMNS.map(c => (c.key === 'actions' ? { ...c, width: 168 } : c));
+const RETIRED_COLUMNS = [
+  { key: 'name', label: 'Template Name', sticky: 'left', left: 0, width: 280 },
+  { key: 'replacement', label: 'Use Instead', width: 240 },
+  { key: 'retired', label: 'Retired', width: 200 },
+  { key: 'reason', label: 'Reason', width: 280 },
+  { key: 'actions', label: 'Actions', sticky: 'right', width: 100 },
+];
 
 // Figma 14181:316571, checkbox, Goals Title, Type, Linked Items, Target
 // Value, Duration, Chronic Conditions, Created On, Actions. Widths are the
@@ -201,7 +212,7 @@ function simpleDraftFrom(kind, item) {
 // Kebab "More Action" menu on a template row: Figma only breaks Delete out
 // into this overflow menu; Edit/Duplicate get their own always-visible
 // ActionButtons.
-function TemplateRowMenu({ onDuplicate, onCustomize, onDelete }) {
+function TemplateRowMenu({ onDuplicate, onCustomize, onRetire, onDelete }) {
   const [open, setOpen] = useState(false);
   const btnRef = useRef(null);
   const [pos, setPos] = useState({ top: 0, left: 0 });
@@ -230,6 +241,12 @@ function TemplateRowMenu({ onDuplicate, onCustomize, onDelete }) {
               <button className={styles.overflowItem} onClick={() => { setOpen(false); onCustomize(); }}>
                 <Icon name="solar:layers-linear" size={15} color="var(--neutral-300)" />
                 Customize for an IPA
+              </button>
+            )}
+            {onRetire && (
+              <button className={styles.overflowItem} onClick={() => { setOpen(false); onRetire(); }}>
+                <Icon name="solar:archive-down-linear" size={15} color="var(--neutral-300)" />
+                Retire
               </button>
             )}
             <button
@@ -342,12 +359,20 @@ export function CarePlanLibraryPanel() {
   };
 
   // The Plan Template tab lists published templates; Draft Templates lists
-  // the ones saved from New Care Plan's "Save as Draft". Archived (retired
-  // from Suggestions) templates are in neither.
+  // the ones saved from New Care Plan's "Save as Draft"; Retired Templates
+  // the ones retired here or from Suggestions.
   const publishedTemplates = useMemo(
-    () => templates.filter(t => t.status !== 'draft' && t.status !== 'archived'),
+    () => templates.filter(t => t.status !== 'draft' && !isRetired(t)),
     [templates],
   );
+  const retiredTemplates = useMemo(() => {
+    const q = searchValue.trim().toLowerCase();
+    return templates.filter(t => isRetired(t) && (!q || t.name.toLowerCase().includes(q)))
+      .toSorted((a, b) => String(b.retiredAt || b.updatedAt || '').localeCompare(String(a.retiredAt || a.updatedAt || '')));
+  }, [templates, searchValue]);
+  const [retireTarget, setRetireTarget] = useState(null);
+  const retireCarePlanTemplate = useAppStore(s => s.retireCarePlanTemplate);
+  const restoreCarePlanTemplate = useAppStore(s => s.restoreCarePlanTemplate);
   const draftTemplates = useMemo(
     () => templates.filter(t => t.status === 'draft'),
     [templates],
@@ -591,12 +616,48 @@ export function CarePlanLibraryPanel() {
               scope: templateScopeOf(t) === 'user' ? 'user' : 'org',
             })}
             onCustomize={t.status !== 'draft' && canManageTemplates ? () => setOverlayEditor({ overlay: null, templateId: t.id }) : undefined}
+            onRetire={t.status !== 'draft' && canManageTemplates ? () => setRetireTarget(t) : undefined}
             onDelete={() => setDeleteTarget({ kind: 'template', id: t.id, name: t.name })}
           />
         </div>
       </td>
     </tr>
   );
+
+  // A retired template: what to use instead, who retired it and why. Restore
+  // puts it back in use.
+  const renderRetiredRow = (t) => {
+    const replacement = t.replacedByTemplateId && templates.find(x => x.id === t.replacedByTemplateId);
+    return (
+      <tr key={t.id} className={styles.row}>
+        <td className={nameTdClass}>
+          <span className={styles.nameWithScope}>
+            <button type="button" className={styles.nameLink} onClick={() => openEditTemplate(t)}>{t.name}</button>
+            <TemplateScopeBadge template={t} />
+          </span>
+        </td>
+        <td className={styles.tdMuted}>
+          {replacement
+            ? <button type="button" className={styles.nameLink} onClick={() => openEditTemplate(replacement)}>{replacement.name}</button>
+            : '-'}
+        </td>
+        <td className={styles.tdUpdated}><StampCell name={t.retiredBy || t.updatedBy}>{formatDateTime(t.retiredAt || t.updatedAt)}</StampCell></td>
+        <td className={styles.tdMuted}>{t.retiredReason || '-'}</td>
+        <td className={styles.tdActions} onClick={e => e.stopPropagation()}>
+          <div className={styles.actionCell}>
+            {canManageTemplates && (
+              <ActionButton
+                icon="solar:restart-linear"
+                size="sm"
+                tooltip="Restore"
+                onClick={async () => { if (await restoreCarePlanTemplate(t.id)) showToast(`"${t.name}" restored`); }}
+              />
+            )}
+          </div>
+        </td>
+      </tr>
+    );
+  };
 
   const renderGoalRow = (g) => (
     <tr key={g.id} className={styles.row}>
@@ -751,7 +812,7 @@ export function CarePlanLibraryPanel() {
 
   const meta = TAB_META[activeTab];
   const isTemplateTab = activeTab === 'template' || activeTab === 'drafts';
-  const primaryActionLabel = (activeTab === 'overlays' && !canManageTemplates) ? undefined : `New ${meta.entityLabel}`;
+  const primaryActionLabel = activeTab === 'retired' || (activeTab === 'overlays' && !canManageTemplates) ? undefined : `New ${meta.entityLabel}`;
 
   // Protocols have their own search, filters and upload, so the tab hands
   // the whole pane, title bar included, to the protocols panel.
@@ -792,10 +853,12 @@ export function CarePlanLibraryPanel() {
               Import
             </Button>
           )}
-          <BulkSelectToggle
-            active={bulkMode}
-            onToggle={() => (bulkMode ? exitBulkMode() : setBulkMode(true))}
-          />
+          {activeTab !== 'retired' && (
+            <BulkSelectToggle
+              active={bulkMode}
+              onToggle={() => (bulkMode ? exitBulkMode() : setBulkMode(true))}
+            />
+          )}
           </>
         )}
       />
@@ -860,6 +923,28 @@ export function CarePlanLibraryPanel() {
             }
             minTableWidth={1100}
           />
+          )
+        )}
+        {!(libraryLoading && !libraryDidFetch) && activeTab === 'retired' && (
+          templates.some(isRetired) ? (
+            <WorklistShell
+              header={null}
+              columns={RETIRED_COLUMNS}
+              rows={retiredTemplates}
+              renderRow={renderRetiredRow}
+              emptyState={(
+                <div className={styles.emptyState}>
+                  <Icon name={meta.emptyIcon} size={32} color="var(--neutral-150)" />
+                  <p>No retired templates match "<strong>{searchValue.trim()}</strong>".</p>
+                </div>
+              )}
+              minTableWidth={1100}
+            />
+          ) : (
+            <div className={styles.emptyPane}>
+              <RingEmptyState icon={meta.emptyIcon} label="No Retired Templates" />
+              <p className={styles.emptyHint}>Retire a template from its row menu when it shouldn't be used for new care plans. Plans already using it keep it.</p>
+            </div>
           )
         )}
         {activeTab === 'overlays' && (
@@ -1127,6 +1212,19 @@ export function CarePlanLibraryPanel() {
         </DialogContent>
       </Dialog>
 
+      {retireTarget && (
+        <RetireTemplateDialog
+          template={retireTarget}
+          templates={templates}
+          onCancel={() => setRetireTarget(null)}
+          onConfirm={async (values) => {
+            if (await retireCarePlanTemplate(retireTarget.id, values)) {
+              showToast(`"${retireTarget.name}" retired`);
+              setRetireTarget(null);
+            }
+          }}
+        />
+      )}
       {deleteTarget && (
         <ConfirmDialog
           icon="solar:danger-triangle-linear"

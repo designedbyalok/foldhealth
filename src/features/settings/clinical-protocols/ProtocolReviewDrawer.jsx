@@ -17,6 +17,7 @@ import { useAppStore } from '../../../store/useAppStore';
 import { protocolCounts, protocolStatus } from './lib/protocolSchema';
 import { isFoldProtocol } from './lib/foldProtocols';
 import { PROTOCOL_SECTIONS, itemComplete } from './lib/protocolSections';
+import { ProtocolMigrationDrawer } from './ProtocolMigrationDrawer';
 import styles from './ClinicalProtocols.module.css';
 
 const EDITABLE = new Set(['draft', 'active', 'failed']);
@@ -138,7 +139,8 @@ function ProtocolSection({ section, items, editable, onItemsChange }) {
  * extracted item next to the passage it came from. Edit, remove or add items,
  * save, and approve (Active), which supersedes the Active protocol with the
  * same title and organization. `onApproved(id)` runs after a successful
- * approval, before the drawer closes.
+ * approval. Approving a new version of a protocol then opens the impact
+ * analysis for the care plans on earlier versions (ProtocolMigrationDrawer).
  */
 export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
   const protocol = useAppStore(s => s.clinicalProtocols.find(p => p.id === protocolId));
@@ -173,6 +175,7 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
   const [menu, setMenu] = useState(null);
   const [confirm, setConfirm] = useState(null); // 'approve' | 'discard' | 'delete' | 'reparse'
   const [busy, setBusy] = useState(false);
+  const [migrating, setMigrating] = useState(false);
 
   // A re-parse or another tab replaces the stored protocol: start from it again.
   const storedKey = protocol ? `${protocol.updatedAt}|${protocol.status}` : '';
@@ -190,6 +193,7 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
   }, [careProgramTypes, draft?.programCodes]);
 
   if (!protocol || !draft) return null;
+  if (migrating) return <ProtocolMigrationDrawer protocolId={protocol.id} onClose={onClose} />;
   const status = protocolStatus(protocol.status);
   // Fold's own protocols are maintained by Fold: read-only here.
   const isFold = isFoldProtocol(protocol);
@@ -221,7 +225,8 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
       if (await approveClinicalProtocol(protocol.id, draft, { supersede })) {
         showToast?.(`${supersede ? `Approved; replaces version ${supersede.version || 'on file'}` : 'Protocol approved and active'}${isFold ? '' : '. UnityAI is drafting its care plan template'}`);
         onApproved?.(protocol.id);
-        onClose();
+        if (supersede) setMigrating(true);
+        else onClose();
       }
     } finally {
       setBusy(false);
@@ -236,6 +241,7 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
   const menuItems = [
     ...(protocol.sourcePath ? [{ key: 'original', icon: 'solar:file-download-linear', label: 'Open Original File' }] : []),
     ...(editable && protocol.sourceKind !== 'json' ? [{ key: 'reparse', icon: 'solar:refresh-linear', label: 'Parse Again' }] : []),
+    ...(protocol.status === 'active' && protocol.supersedesId && canManage ? [{ key: 'migrate', icon: 'solar:transfer-horizontal-linear', label: 'Migrate Care Plans' }] : []),
     ...(protocol.status === 'active' && canManage ? [{ key: 'retire', icon: 'solar:archive-linear', label: 'Retire' }] : []),
     ...(canManage ? [{ key: 'delete', icon: 'solar:trash-bin-trash-linear', label: 'Delete', danger: true }] : []),
   ];
@@ -418,6 +424,7 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
             setMenu(null);
             if (key === 'original') openOriginal();
             else if (key === 'reparse') setConfirm('reparse');
+            else if (key === 'migrate') setMigrating(true);
             else if (key === 'retire') setClinicalProtocolStatus(protocol.id, 'retired').then(ok => ok && showToast?.('Protocol retired'));
             else if (key === 'delete') setConfirm('delete');
           }}

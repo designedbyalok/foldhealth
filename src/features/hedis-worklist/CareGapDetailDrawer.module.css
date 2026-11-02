@@ -714,3 +714,20 @@
   cursor: pointer;
 }
 .activityClearAll:hover { color: var(--neutral-400); }
+
+/* Header instance dropdown (shown once a gap has a second instance). */
+.instancePickerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: inherit;
+  color: var(--primary-300);
+  cursor: pointer;
+}
+.instancePickerBtn:hover { text-decoration: underline; }
+.instanceOption { display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); min-width: 0; white-space: normal; }
+.instanceOptionMeta { font-size: var(--font-sm); color: var(--neutral-300); }
+.gapTitleWithSource { display: flex; align-items: center; gap: var(--space-2); }

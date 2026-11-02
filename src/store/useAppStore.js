@@ -252,6 +252,7 @@ import { itemsLeaving, withCategory } from '../features/settings/care-plan-libra
 import { buildRuleInputs } from '../features/automations/lib/clinicalCriteria';
 import { effectiveVersion as effectiveTemplateVersion, todayIso as todayIsoDate } from '../features/settings/care-plan-library/lib/templateVersions';
 import { createClinicalProtocolsSlice } from './slices/clinicalProtocolsSlice';
+import { createProtocolMigrationsSlice } from './slices/protocolMigrationsSlice';
 import { createTemplateSuggestionsSlice } from './slices/templateSuggestionsSlice';
 import { createTemplateGroupsSlice } from './slices/templateGroupsSlice';
 
@@ -397,6 +398,7 @@ export const useAppStore = create((set, get) => ({
   ...createTemplateVersionsSlice(set, get),
   ...createIpaOverlaysSlice(set, get),
   ...createClinicalProtocolsSlice(set, get),
+  ...createProtocolMigrationsSlice(set, get),
   ...createTemplateSuggestionsSlice(set, get),
   ...createTemplateGroupsSlice(set, get),
 
@@ -4653,6 +4655,8 @@ export const useAppStore = create((set, get) => ({
       get().logCarePlanAudit(patientId, program, rows);
       // "Next review only" template versions land now.
       await get().applyPendingTemplateMigrations(patientId, program, 'review');
+      // So do clinical protocol versions approved with "Next review only".
+      await get().applyPendingProtocolMigrations(patientId, program);
     }
     return saved;
   },
@@ -6374,6 +6378,57 @@ export const useAppStore = create((set, get) => ({
     const failed = outcomes.filter(o => o.failed).length;
     if (failed) get().showToast(`Could not approve ${failed} template${failed === 1 ? '' : 's'}`);
     return { approved: published.size, failed };
+  },
+
+  // Retiring: no longer offered for new plans; plans using it keep it.
+  // `replacementId` is the template to use instead (optional).
+  retireCarePlanTemplate: async (id, { replacementId = null, reason = '' } = {}) => {
+    const now = new Date().toISOString();
+    const actor = get().currentActorName?.() || get().currentUserProfile?.name || null;
+    const patch = {
+      status: 'archived', replaced_by_template_id: replacementId || null,
+      retired_at: now, retired_by: actor, retired_reason: reason.trim() || null,
+      updated_by: actor, updated_at: now,
+    };
+    const update = p => supabase.from('care_plan_templates').update(p).eq('id', id);
+    let { error } = await update(patch);
+    // Before the retirement migration it still retires, without the details.
+    if (error && /replaced_by_template_id|retired_/.test(error.message || '')) {
+      ({ error } = await update({ status: 'archived', updated_by: actor, updated_at: now }));
+    }
+    if (error) {
+      console.warn('retireCarePlanTemplate:', error.message);
+      get().showToast('Could not retire the template');
+      return false;
+    }
+    set(s => ({ carePlanTemplates: s.carePlanTemplates.map(t => (t.id === id ? {
+      ...t, status: 'archived', replacedByTemplateId: replacementId || null,
+      retiredAt: now, retiredBy: actor || '', retiredReason: reason.trim(), updatedBy: actor || t.updatedBy, updatedAt: now,
+    } : t)) }));
+    return true;
+  },
+
+  // Back into use: published again, the retirement details cleared.
+  restoreCarePlanTemplate: async (id) => {
+    const now = new Date().toISOString();
+    const actor = get().currentActorName?.() || get().currentUserProfile?.name || null;
+    const update = p => supabase.from('care_plan_templates').update(p).eq('id', id);
+    let { error } = await update({
+      status: 'published', replaced_by_template_id: null, retired_at: null, retired_by: null, retired_reason: null,
+      updated_by: actor, updated_at: now,
+    });
+    if (error && /replaced_by_template_id|retired_/.test(error.message || '')) {
+      ({ error } = await update({ status: 'published', updated_by: actor, updated_at: now }));
+    }
+    if (error) {
+      console.warn('restoreCarePlanTemplate:', error.message);
+      get().showToast('Could not restore the template');
+      return false;
+    }
+    set(s => ({ carePlanTemplates: s.carePlanTemplates.map(t => (t.id === id ? {
+      ...t, status: 'published', replacedByTemplateId: null, retiredAt: null, retiredBy: '', retiredReason: '', updatedBy: actor || t.updatedBy, updatedAt: now,
+    } : t)) }));
+    return true;
   },
 
   deleteCarePlanTemplate: async (id) => {
