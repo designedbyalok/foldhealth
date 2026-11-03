@@ -2188,6 +2188,60 @@ async function main() {
     }
   }
 
+  // ── Care Note with @ tag and "/" links (demo) ──
+  // Annette Brave's (11089) SNP care plan gets a Care Note that tags a care
+  // team member and links a goal and an intervention, plus the note_linked
+  // rows that put it in those items' activity logs. It becomes her current
+  // Care Note; the earlier ones stay in the plan's History. The rich text
+  // and links live in care_plan_audit.meta (care_plan_audit_meta_migration.sql);
+  // without that column the note still saves as plain text.
+  console.log('\nSeeding care plan Care Note with tags and links (demo)...');
+  {
+    const patientId = '11089';
+    const { data: prog } = await supabase.from('patient_care_programs')
+      .select('id, code').eq('patient_id', patientId).eq('code', 'SNP').limit(1).maybeSingle();
+    const { data: plan } = prog
+      ? await supabase.from('patient_care_plans').select('id').eq('patient_id', patientId).eq('program_id', prog.id).maybeSingle()
+      : { data: null };
+    if (!plan) {
+      console.log('  ⚠ no SNP care plan for 11089: skipped');
+    } else {
+      const pick = async (table, title) => {
+        const { data } = await supabase.from(table).select('id, title').eq('plan_id', plan.id);
+        return (data || []).find(r => r.title === title) || (data || [])[0] || null;
+      };
+      const goal = await pick('patient_care_plan_goals', 'Improve A1C control');
+      const intv = await pick('patient_care_plan_interventions', 'A1C follow-up');
+      const { data: tagged } = await supabase.from('profiles').select('id, full_name').eq('full_name', 'Fold Demo').limit(1).maybeSingle();
+      const person = { id: tagged?.id || null, name: tagged?.full_name || 'Fold Demo' };
+      const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      const mention = `<span data-mention-name="${esc(person.name)}"${person.id ? ` data-mention-id="${esc(person.id)}"` : ''}>@${esc(person.name)}</span>`;
+      const link = (item, kind) => `<span data-link-id="${esc(item.id)}" data-link-kind="${kind}" data-link-label="${esc(item.title)}">${esc(item.title)}</span>`;
+      const links = [goal && { ...goal, kind: 'goal' }, intv && { ...intv, kind: 'intervention' }].filter(Boolean);
+      const detail = `Reviewed the A1C plan with @${person.name}. Next: ${links.map(l => l.title).join(' and ')} before the next review.`;
+      const html = `Reviewed the A1C plan with ${mention}. Next: ${links.map(l => link(l, l.kind)).join(' and ')} before the next review.`;
+      const actor = 'Delores Conn';
+      const base = { patient_id: patientId, program_id: prog.id, program_code: prog.code, actor };
+      // Re-runs replace the demo note rather than stacking copies.
+      await supabase.from('care_plan_audit').delete()
+        .eq('program_id', prog.id).eq('actor', actor).in('action', ['note', 'note_linked']).eq('detail', detail);
+      const noteRow = {
+        ...base, entity_type: 'plan', entity_id: null, action: 'note', summary: 'Note added', detail,
+        meta: { html, mentions: [{ id: person.id, name: person.name }], links: links.map(l => ({ id: l.id, kind: l.kind, label: l.title })) },
+      };
+      const linkedRows = links.map(l => ({ ...base, entity_type: l.kind, entity_id: String(l.id), action: 'note_linked', summary: l.title, detail }));
+      let { error } = await supabase.from('care_plan_audit').insert([noteRow, ...linkedRows]);
+      if (error && /meta/.test(error.message || '')) {
+        const { meta: _meta, ...plain } = noteRow;
+        ({ error } = await supabase.from('care_plan_audit').insert([plain, ...linkedRows]));
+        if (!error) console.log('  ⚠ care_plan_audit.meta missing (run supabase/care_plan_audit_meta_migration.sql): note saved as plain text');
+      }
+      console.log(error
+        ? `  ✗ care note demo: ${error.message}`
+        : `  ✓ Care Note for 11089 SNP tagging ${person.name}, linking ${links.length} item(s)`);
+    }
+  }
+
   // ── Patient Care Plan (demo) ──
   // The Care Plan step is Supabase-backed (patient_care_plan_* tables). There is
   // no seeded patient/program to attach to at build time, so we instantiate one
