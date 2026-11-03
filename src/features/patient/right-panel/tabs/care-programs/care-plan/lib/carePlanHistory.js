@@ -35,8 +35,9 @@ export const HISTORY_TYPES = [
 
 const NOUN = { goal: 'Goal', intervention: 'Intervention', barrier: 'Barrier' };
 const SCHEDULE_DETAIL = /^(Due Date|Repeat|Repeat Count|Repeats Every|Repeat Unit|Repeat Ends|Repeat Ends Unit):/;
-// call_note and review_finished come from the Review care plan drawer.
-const PLAN_EVENT_ACTIONS = new Set(['review_requested', 'shared', 'discarded', 'restored', 'call_note', 'review_finished']);
+// call_note and review_finished come from the Review care plan drawer;
+// cadence_changed from the care plan's Review cadence override.
+const PLAN_EVENT_ACTIONS = new Set(['review_requested', 'shared', 'discarded', 'restored', 'call_note', 'review_finished', 'cadence_changed']);
 
 /** The activity type of an audit row that records live progress, else null. */
 export function liveActivityType(row) {
@@ -290,8 +291,9 @@ export function activityEntries(audit, measurements, goals) {
         shared: e.summary || 'Care Plan Shared',
         discarded: 'Discarded Unsigned Changes',
         restored: e.summary || 'Loaded an Older Version Into the Draft',
+        cadence_changed: e.summary || 'Review Cadence Changed',
       }[e.action];
-      const detail = e.action === 'discarded' || e.action === 'review_finished' ? e.detail || '' : '';
+      const detail = ['discarded', 'review_finished', 'cadence_changed'].includes(e.action) ? e.detail || '' : '';
       out.push({ id: `a-${e.id}`, kind: 'activity', type: 'plan_event', entityType: 'plan', headline, detail, at: e.createdAt, actor: e.actor || '' });
     }
   }

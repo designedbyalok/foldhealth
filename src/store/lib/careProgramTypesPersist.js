@@ -15,11 +15,14 @@ export async function fetchProgramTypeRows() {
 }
 
 export async function persistProgramType(type) {
-  const { data, error } = await supabase
-    .from('care_program_types')
-    .upsert(programTypeToRow(type), { onConflict: 'id' })
-    .select('*')
-    .single();
+  const save = row => supabase.from('care_program_types').upsert(row, { onConflict: 'id' }).select('*').single();
+  let { data, error } = await save(programTypeToRow(type));
+  // Before care_plan_cadence_migration.sql has run there is no cadence column:
+  // save the rest so the other tabs keep working.
+  if (error && /cadence/i.test(error.message || '')) {
+    const { cadence: _cadence, ...row } = programTypeToRow(type);
+    ({ data, error } = await save(row));
+  }
   return { type: data ? rowToProgramType(data) : null, error };
 }
 

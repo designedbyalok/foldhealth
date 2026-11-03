@@ -36,6 +36,8 @@
 .switchHint { font-size: var(--font-sm); line-height: var(--leading-tight); color: var(--neutral-300); }
 .numberField { width: 120px; flex-shrink: 0; }
 .selectField { width: 220px; flex-shrink: 0; }
+.cadenceControls { display: inline-flex; align-items: center; gap: var(--space-3); flex-shrink: 0; }
+.intervalField { width: 180px; }
 /* ── Worklists / care team lists ── */
 .listRow {
   display: grid; align-items: center; gap: var(--space-3);

@@ -82,6 +82,7 @@ import { makeActivityRow as buildHccActivityRow } from '../features/hcc/activity
 import { hccRoleDefaultFilters } from '../features/hcc/filters';
 import { deriveGoalTableFields } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/goalMetrics';
 import { barrierPayloadFromTemplateEntry, goalPayloadFromTemplateEntry, interventionPayloadFromTemplateEntry, templateLinkOwners } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanTemplateApply';
+import { dischargeDates } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/cadence';
 import { buildPatientFacts, buildTemplateChoices, draftCounts, withDescription } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/individualizedPlan';
 import { assessmentSuggestionsFor, pendingRecommendation } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanRecommendation';
 import { buildTemplateCatalog } from '../features/settings/care-plan-library/lib/aiTemplateDraft';
@@ -2683,6 +2684,8 @@ export const useAppStore = create((set, get) => ({
       instance:       r.instance || null,
       plannedEndDate: r.planned_end_date || null,
       enrolledBy:     r.enrolled_by || null,
+      // Review cadence override (care_plan_cadence_migration.sql).
+      cadenceOverride: r.cadence_override || null,
       closureReason:  r.closure_reason || null,
       closureNote:    r.closure_note || null,
       closedAt:       r.closed_at || null,
@@ -4536,6 +4539,48 @@ export const useAppStore = create((set, get) => ({
       else get().showToast('Templates updated');
     }
     get().touchCarePlanModified(patientId, program.id);
+    return true;
+  },
+
+  // ── Review cadence (care_plan_cadence_migration.sql) ──
+  // Discharge dates per patient from ADT clinical events, for the cadence's
+  // post-discharge spike: { [patientId]: Date[] }.
+  patientDischarges: {},
+  fetchPatientDischarges: async (patientId) => {
+    if (!patientId) return;
+    const { data, error } = await supabase.from('patient_clinical_events')
+      .select('event_type, effective_date, end_date, raw_meta')
+      .eq('patient_id', String(patientId)).eq('event_type', 'adt')
+      .order('effective_date', { ascending: false }).limit(50);
+    if (error) { console.warn('fetchPatientDischarges:', error.message); return; }
+    set(s => ({ patientDischarges: { ...s.patientDischarges, [patientId]: dischargeDates(data || []) } }));
+  },
+  // Sets (or with null clears) one enrollment's review cadence override and
+  // logs it to the care plan History.
+  setCadenceOverride: async (patientId, program, override, { fromLabel, toLabel } = {}) => {
+    if (!patientId || !program?.id) return false;
+    const value = override ? { ...override, setBy: get().currentUserProfile?.name || null, setAt: new Date().toISOString() } : null;
+    const prev = (get().careProgramsByPatient[patientId] || []).find(p => p.id === program.id)?.cadenceOverride ?? null;
+    const apply = v => set(s => ({
+      careProgramsByPatient: {
+        ...s.careProgramsByPatient,
+        [patientId]: (s.careProgramsByPatient[patientId] || []).map(p => (p.id === program.id ? { ...p, cadenceOverride: v } : p)),
+      },
+    }));
+    apply(value);
+    const { error } = await supabase.from('patient_care_programs').update({ cadence_override: value }).eq('id', program.id);
+    if (error) {
+      console.warn('setCadenceOverride:', error.message);
+      apply(prev);
+      get().showToast?.('Couldn\u2019t save the review cadence');
+      return false;
+    }
+    get().logCarePlanAudit(patientId, program, {
+      entityType: 'plan',
+      action: 'cadence_changed',
+      summary: override ? `Review Cadence Set to ${toLabel}` : 'Review Cadence Reset to the Program Default',
+      detail: [fromLabel && toLabel ? `${fromLabel} \u2192 ${toLabel}` : '', override?.reason || ''].filter(Boolean).join(' \u00b7 '),
+    });
     return true;
   },
 
