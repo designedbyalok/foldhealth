@@ -1,0 +1,11 @@
+/* The status move the reason is for: from → to. */
+.change {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.optional {
+  margin-left: var(--space-2);
+  font-size: var(--font-sm);
+  color: var(--neutral-200);
+}

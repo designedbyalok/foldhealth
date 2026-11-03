@@ -33,6 +33,7 @@ import { ReviewTimer } from './ReviewTimer';
 import { CompleteReviewPopover } from './CompleteReviewPopover';
 import bones from '../../../../../../../../components/TableSkeleton/TableSkeleton.module.css';
 import styles from './CarePlanReviewDrawer.module.css';
+import { confirmStatusChange, statusReasonPatch } from '../../lib/confirmStatusChange';
 
 const KINDS = {
   goals: { kind: 'goal', noun: 'goal', title: 'Goals' },
@@ -560,7 +561,10 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
           items={gbiStatusMenuItems(statusMenu.kind, statusMenu.items.length === 1 ? statusMenu.items[0].status : undefined)}
           onSelect={async (status) => {
             const changed = statusMenu.items.filter(i => i.status !== status);
-            await Promise.all(changed.map(i => saveLive(patientId, program, statusMenu.kind, i.id, { status })));
+            const menu = statusMenu;
+            const why = await confirmStatusChange(changed.map(item => ({ type: menu.kind, item })), status, { source: menu.bulk ? 'bulk' : 'manual' });
+            if (!why) return;
+            await Promise.all(changed.map(i => saveLive(patientId, program, menu.kind, i.id, { status, ...statusReasonPatch(i, why) })));
             if (changed.length) await markManyDiscussed(patientId, program, statusMenu.kind, changed.map(i => i.id));
             if (statusMenu.bulk) {
               showToast(`${plural(statusMenu.items.length, listTab?.noun || 'item')} set to ${status}`);
