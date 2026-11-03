@@ -143,7 +143,7 @@ function ProtocolSection({ section, items, editable, onItemsChange, onOpenPage }
       title={(
         <>
           {section.label}<span className={styles.sectionCount}>{items.length}</span>
-          {toCheck > 0 && <Badge tone="warning" size="S" label={`${toCheck} to check`} className={styles.statusWarning} />}
+          {toCheck > 0 && <Badge tone="warning" size="sm" label={`${toCheck} to check`} className={styles.statusWarning} />}
         </>
       )}
       actions={editable && <ActionButton icon="solar:add-linear" size="sm" tooltip={`Add to ${section.label}`} onClick={add} />}
@@ -371,7 +371,7 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
           : (
             <div className={styles.nameCell}>
               <span className={styles.label}>Conditions</span>
-              <span className={styles.chips}>{(draft.conditions || []).map(c => <Badge key={c} tone="grey" size="S" label={c} />)}</span>
+              <span className={styles.chips}>{(draft.conditions || []).map(c => <Badge key={c} size="sm" label={c} />)}</span>
             </div>
           )}
       </div>
@@ -436,10 +436,10 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
                 {t.name}
               </button>
               <span className={styles.chips}>
-                <Badge tone={t.status === 'draft' ? 'grey' : 'success'} size="S" label={t.status === 'draft' ? 'Draft' : 'Published'} />
+                <Badge tone={t.status === 'draft' ? 'neutral' : 'success'} size="sm" label={t.status === 'draft' ? 'Draft' : 'Published'} />
                 {t.sourceProtocol.version && t.sourceProtocol.version !== protocol.version
-                  ? <Badge tone="warning" size="S" label={`From v${t.sourceProtocol.version}, now v${protocol.version || '?'}`} />
-                  : t.sourceProtocol.version && <Badge tone="grey" size="S" label={`v${t.sourceProtocol.version}`} />}
+                  ? <Badge tone="warning" size="sm" label={`From v${t.sourceProtocol.version}, now v${protocol.version || '?'}`} />
+                  : t.sourceProtocol.version && <Badge size="sm" label={`v${t.sourceProtocol.version}`} />}
               </span>
             </div>
           ))}
@@ -523,7 +523,7 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
       noCloseDivider
       headerRight={(
         <>
-          {!showScope && <Badge tone={status.tone} size="S" label={status.label} className={status.tone === 'warning' ? styles.statusWarning : undefined} />}
+          {!showScope && <Badge tone={status.tone} size="sm" label={status.label} className={status.tone === 'warning' ? styles.statusWarning : undefined} />}
           {!showScope && (menuItems.length > 0 || editable) && <span className={styles.headerDivider} />}
           {menuItems.length > 0 && (
             <ActionButton icon="solar:menu-dots-linear" tooltip="More" onClick={e => setMenu(e.currentTarget.getBoundingClientRect())} />
@@ -574,7 +574,7 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
                 { key: 'details', label: 'Details' },
                 { key: 'items', label: 'Extracted Items', count: counts.total, notif: warnings.length > 0 || itemChecks > 0 },
               ]}
-              trailing={<Badge tone={status.tone} size="S" label={status.label} className={status.tone === 'warning' ? styles.statusWarning : undefined} />}
+              trailing={<Badge tone={status.tone} size="sm" label={status.label} className={status.tone === 'warning' ? styles.statusWarning : undefined} />}
             />
             <div className={styles.paneScroll}>
               {protocol.status === 'failed' && <Alert tone="error" message={protocol.parseError || 'This file could not be parsed.'} />}
@@ -620,7 +620,7 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
             {draft.protocol.summary && <p className={styles.summary}>{draft.protocol.summary}</p>}
             {(draft.protocol.scope?.conditions || []).length > 0 && (
               <span className={styles.chips}>
-                {draft.protocol.scope.conditions.map(c => <Badge key={c.name} tone="grey" size="S" label={c.code ? `${c.name} · ${c.code}` : c.name} />)}
+                {draft.protocol.scope.conditions.map(c => <Badge key={c.name} size="sm" label={c.code ? `${c.name} · ${c.code}` : c.name} />)}
               </span>
             )}
             {draft.protocol.scope?.population && <p className={styles.summary}><span className={styles.label}>Population </span>{draft.protocol.scope.population}</p>}

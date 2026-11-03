@@ -46,7 +46,7 @@ export function AiSuggestionBadge({ kind, item }) {
         onClick={(e) => { e.stopPropagation(); setRect(e.currentTarget.getBoundingClientRect()); }}
         aria-label="Suggested by UnityAI: view why and review"
       >
-        <Badge tone="unity" size="XS" icon="custom:ai" label="AI · Review" />
+        <Badge tone="unity" size="xs" icon="custom:ai" label="AI · Review" />
       </button>
       {rect && (
         <AnchoredPopover

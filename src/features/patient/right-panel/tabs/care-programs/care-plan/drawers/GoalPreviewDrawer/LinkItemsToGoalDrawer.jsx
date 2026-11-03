@@ -150,7 +150,7 @@ function renderRow(item, selected, toggle) {
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-2)' }}>
           {item.badge && (
             <>
-              <Badge tone="grey" size="S" label={item.badge} />
+              <Badge size="sm" label={item.badge} />
               {(item.priority || linkedTotal > 0) && (
                 <span className={styles.headerDivider} aria-hidden />
               )}

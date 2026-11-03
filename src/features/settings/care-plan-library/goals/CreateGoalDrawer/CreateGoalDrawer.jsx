@@ -781,9 +781,9 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
                   <span className={styles.linkedLabel}>
                     {sec.label}
                     {sec.key === 'interventions' && interventions.length > 0
-                      && <Badge tone="grey" size="S" label={String(interventions.length)} />}
+                      && <Badge size="sm" label={String(interventions.length)} />}
                     {sec.key === 'barriers' && barriers.length > 0
-                      && <Badge tone="grey" size="S" label={String(barriers.length)} />}
+                      && <Badge size="sm" label={String(barriers.length)} />}
                   </span>
                   <ActionButton
                     size="sm"
@@ -881,8 +881,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
                                 )}
                               >
                                 <Badge
-                                  tone="grey"
-                                  size="S"
+                                  size="sm"
                                   label={due}
                                   trailingIcon="solar:refresh-linear"
                                 />
@@ -937,8 +936,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
                           {(b.config?.linkCount || 0) > 0 && (
                             <>
                               <Badge
-                                tone="grey"
-                                size="S"
+                                size="sm"
                                 icon="solar:link-minimalistic-linear"
                                 label={String(b.config.linkCount)}
                               />

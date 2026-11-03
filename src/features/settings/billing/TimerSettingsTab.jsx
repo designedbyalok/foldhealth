@@ -69,8 +69,8 @@ export function TimerSettingsTab({ settings, loading }) {
                 <td className={styles.td}>
                   {extra ? (
                     <span className={styles.people}>
-                      {s.userNames.length > 0 && <Badge tone="grey" size="S" label={plural(s.userNames.length, 'user')} />}
-                      {s.roles.length > 0 && <Badge tone="secondary" size="S" label={plural(s.roles.length, 'role')} />}
+                      {s.userNames.length > 0 && <Badge size="sm" label={plural(s.userNames.length, 'user')} />}
+                      {s.roles.length > 0 && <Badge tone="secondary" size="sm" label={plural(s.roles.length, 'role')} />}
                     </span>
                   ) : dash}
                 </td>

@@ -44,7 +44,7 @@ function GapHistory({ history }) {
         {history.map((g, i) => (
           <tr key={`${g.startDate}-${i}`}>
             <td>{history.length - i}{g.supersededAt ? ' (Previous)' : ' (Latest)'}</td>
-            <td><Badge size="S" variant={isClosed(g.status) ? 'ai-neutral' : 'status-queued'} label={g.status} /></td>
+            <td><Badge size="sm" tone={isClosed(g.status) ? 'neutral' : 'warning'} label={g.status} /></td>
             <td>{g.startDate || '-'}</td>
             <td>{g.closedDate || '-'}</td>
           </tr>
@@ -67,7 +67,7 @@ function GapRow({ whitelist, parent, history, checked, config, onToggle, onConfi
         <span className={styles.gapCode}>{whitelist.code}</span>
         <span className={styles.gapName}>{whitelist.name}</span>
         <span className={styles.gapMeta}>
-          {parent && <Badge size="S" variant={STATUS_BADGE_VARIANT[parent.status] || 'ai-neutral'} label={parent.status} />}
+          {parent && <Badge size="sm" tone={STATUS_BADGE_VARIANT[parent.status] || 'neutral'} label={parent.status} />}
         </span>
       </label>
       {checked && (

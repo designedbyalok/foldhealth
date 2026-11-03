@@ -22,7 +22,7 @@ const KINDS = {
 };
 const KIND_BY_LABEL = Object.fromEntries(Object.entries(KINDS).map(([k, v]) => [v.label, k]));
 const STATUS_LABEL = { open: 'Open', accepted: 'Accepted', dismissed: 'Dismissed', resolved: 'Resolved' };
-const STATUS_TONE = { open: 'primary', accepted: 'success', dismissed: 'grey', resolved: 'grey' };
+const STATUS_TONE = { open: 'primary', accepted: 'success', dismissed: 'neutral', resolved: 'neutral' };
 const STATUS_BY_LABEL = Object.fromEntries(Object.entries(STATUS_LABEL).map(([k, v]) => [v, k]));
 
 const COLUMNS = [
@@ -161,7 +161,7 @@ export function TemplateSuggestionsPanel({ tabs, activeTab, onTabChange }) {
           </span>
         </td>
         <td className={styles.td}>
-          <Badge tone={kind.tone} size="S" label={kind.label} />
+          <Badge tone={kind.tone} size="sm" label={kind.label} />
         </td>
         <td className={styles.td}>
           <span className={styles.why} title={s.aiRationale ? `${s.aiRationale}\n\n${s.rationale}` : s.rationale}>
@@ -171,7 +171,7 @@ export function TemplateSuggestionsPanel({ tabs, activeTab, onTabChange }) {
         </td>
         <td className={`${styles.td} ${styles.nowrap}`}>{fmtDay(s.detectedAt)}</td>
         <td className={styles.td}>
-          <Badge tone={STATUS_TONE[s.status]} size="S" label={STATUS_LABEL[s.status]} />
+          <Badge tone={STATUS_TONE[s.status]} size="sm" label={STATUS_LABEL[s.status]} />
         </td>
         <td className={`${styles.td} ${styles.tdActions}`}>
           {canManage && (

@@ -89,7 +89,7 @@ export function ProtocolUploadDrawer({ onClose, onReview }) {
                       <span className={styles.queueName}>{u.name}</span>
                       {u.error && <span className={styles.queueError}>{u.error}</span>}
                     </span>
-                    <Badge tone={status.tone} size="S" label={u.cancelled ? 'Cancelling' : status.label} />
+                    <Badge tone={status.tone} size="sm" label={u.cancelled ? 'Cancelling' : status.label} />
                     {u.status !== 'done' && u.status !== 'failed' && !u.cancelled && (
                       <ActionButton icon="solar:close-circle-linear" size="sm" tooltip="Cancel upload" tooltipLeft onClick={() => cancelUpload(u.key)} />
                     )}

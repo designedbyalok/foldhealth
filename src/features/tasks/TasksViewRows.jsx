@@ -297,7 +297,7 @@ export function TaskRow({ task, onToggle, onTaskClick, hideAssignedTo, hideMembe
           {labels.length > 0 ? (
             <>
               {labels.slice(0, 2).map(l => (
-                <Badge key={l} variant="overflow" label={l} />
+                <Badge key={l} label={l} />
               ))}
               {labels.length > 2 && (
                 <span className={styles.labelOverflow} title={labels.slice(2).join(', ')}>+{labels.length - 2}</span>
@@ -404,7 +404,7 @@ export function TaskTableRow({ task, onToggle, onTaskClick, hideAssignedTo, hide
             {labels.length > 0 ? (
               <>
                 {labels.slice(0, 2).map(l => (
-                  <Badge key={l} variant="overflow" label={l} />
+                  <Badge key={l} label={l} />
                 ))}
                 {labels.length > 2 && (
                   <span className={styles.labelOverflow} title={labels.slice(2).join(', ')}>+{labels.length - 2}</span>
@@ -529,7 +529,7 @@ function LinkedNoteHoverCard({ note, style, onOpen, onHoverBridge }) {
   const status = note.status === 'signed' ? 'Signed'
     : note.status === 'submitted' ? 'Pending Review'
     : 'Draft';
-  const tone = status === 'Signed' ? 'success' : status === 'Draft' ? 'grey' : 'warning';
+  const tone = status === 'Signed' ? 'success' : status === 'Draft' ? 'neutral' : 'warning';
   const subtitle = note.status === 'signed'
     ? `Signed by ${note.signedByName || note.reviewerName || 'Provider'}`
     : note.status === 'submitted'
@@ -559,11 +559,11 @@ function LinkedNoteHoverCard({ note, style, onOpen, onHoverBridge }) {
       </div>
       {!!codes.length && (
         <div className={styles.linkedNoteHoverChips}>
-          {codes.map(c => <Badge key={c} tone="grey" size="S" label={c} />)}
+          {codes.map(c => <Badge key={c} size="sm" label={c} />)}
         </div>
       )}
       <div className={styles.linkedNoteHoverFooter}>
-        <Badge tone={tone} size="S" label={status} />
+        <Badge tone={tone} size="sm" label={status} />
         <button
           type="button"
           className={styles.linkedNoteHoverAction}

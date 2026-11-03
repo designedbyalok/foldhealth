@@ -34,7 +34,7 @@ export function CarePlanSections({
     <div className={styles.section}>
       <div className={styles.sectionHead}>
         <span className={styles.sectionTitle}>{label}</span>
-        <Badge tone="grey" size="S" label={String(count)} />
+        <Badge size="sm" label={String(count)} />
         {onAdd && (
           <>
             <span className={styles.headDivider} aria-hidden="true" />

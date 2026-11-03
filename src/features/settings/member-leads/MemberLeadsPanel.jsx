@@ -31,9 +31,9 @@ const TABS = [
 ];
 
 const CREATED_FOR_BADGE = {
-  HCC:            { variant: 'toc-oncall',       label: 'HCC' },
-  'Care Program': { variant: 'status-scheduled', label: 'Care Program' },
-  HEDIS:          { variant: 'status-review',    label: 'HEDIS' },
+  HCC:            { variant: 'primary',       label: 'HCC' },
+  'Care Program': { variant: 'info', label: 'Care Program' },
+  HEDIS:          { variant: 'warning',    label: 'HEDIS' },
 };
 
 const ASSIGNED_BAR_COLOR = {
@@ -286,7 +286,7 @@ function CareTeamTable({ searchVal = '', onEdit }) {
         {rows.map(t => {
           const badge = CREATED_FOR_BADGE[t.createdFor]
             || (t.kind && { variant: KIND_BADGE_VARIANT[t.kind], label: KIND_LABEL[t.kind] })
-            || { variant: 'toc-new', label: t.createdFor };
+            || { variant: 'neutral', label: t.createdFor };
           return (
             <tr key={t.id}>
               <td className={[agentStyles.stickyLeft, agentStyles.colName].filter(Boolean).join(' ')}>
@@ -295,7 +295,7 @@ function CareTeamTable({ searchVal = '', onEdit }) {
                   <div className={styles.nameMeta}>Created on {t.createdAt} by {t.createdBy}</div>
                 </div>
               </td>
-              <td><Badge variant={badge.variant} label={badge.label} /></td>
+              <td><Badge tone={badge.variant} label={badge.label} /></td>
               <td>{t.teamType}</td>
               <td>
                 <HoverCard

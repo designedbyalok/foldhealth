@@ -185,11 +185,11 @@ export function AssessmentFormView({
   const interpLabel = scoredBand?.label || interpretation;
   const interpTone = scoredBand
     ? (scoredBand.severity === SEVERITY.CRITICAL || scoredBand.severity === SEVERITY.HIGH
-      ? 'error'
+      ? 'danger'
       : scoredBand.severity === SEVERITY.WARNING ? 'warning'
       : scoredBand.severity === SEVERITY.INFO ? 'info'
-      : 'grey')
-    : 'error';
+      : 'neutral')
+    : 'danger';
 
   if (loading) return <AssessmentFormSkeleton />;
   if (!form) {
@@ -216,7 +216,7 @@ export function AssessmentFormView({
           <span className={styles.stripDot} />
           <span className={styles.stripItem}>Assessment Score: <span className={styles.stripValue}>{score}</span></span>
           <span className={styles.stripDot} />
-          <span className={styles.stripItem}>Interpretation Score : <Badge tone={interpTone} size="S" label={interpLabel} /></span>
+          <span className={styles.stripItem}>Interpretation Score : <Badge tone={interpTone} size="sm" label={interpLabel} /></span>
         </div>
       )}
 

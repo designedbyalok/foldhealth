@@ -48,9 +48,9 @@ const SAMPLE_MEMBERS = [
 ];
 
 const STATUS_VARIANT = {
-  'New':      { variant: 'toc-new',      label: 'New',      icon: 'solar:star-bold' },
-  'Engaged':  { variant: 'toc-engaged',  label: 'Engaged',  icon: 'solar:link-round-bold' },
-  'Enrolled': { variant: 'toc-enrolled', label: 'Enrolled', icon: 'solar:check-circle-bold' },
+  'New':      { variant: 'neutral',      label: 'New',      icon: 'solar:star-bold' },
+  'Engaged':  { variant: 'info',  label: 'Engaged',  icon: 'solar:link-round-bold' },
+  'Enrolled': { variant: 'success', label: 'Enrolled', icon: 'solar:check-circle-bold' },
 };
 
 const fmtMins = (s) => {
@@ -123,7 +123,7 @@ export const Playground = {
               </div>
             </div>
           </td>
-          <td className={styles.td}><Badge variant={cfg.variant} label={cfg.label} icon={cfg.icon} /></td>
+          <td className={styles.td}><Badge tone={cfg.variant} label={cfg.label} icon={cfg.icon} /></td>
           <td className={styles.td}>{r.assignee}</td>
           <td className={styles.td}>{r.startDate}</td>
           <td className={styles.td}>{fmtMins(r.mins)}</td>

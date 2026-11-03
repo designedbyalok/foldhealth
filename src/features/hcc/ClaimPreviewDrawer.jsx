@@ -20,11 +20,11 @@ import styles from './ClaimPreviewDrawer.module.css';
 // Status → badge variant. Keep in sync with the DiagPanel version so a
 // "Paid" claim reads the same in the tab and in this drawer.
 const CLAIM_STATUS_BADGE = {
-  Paid:     'status-completed',
-  Pending:  'status-queued',
-  Billed:   'status-scheduled',
-  Denied:   'status-failed',
-  Rejected: 'status-failed',
+  Paid:     'success',
+  Pending:  'warning',
+  Billed:   'info',
+  Denied:   'danger',
+  Rejected: 'danger',
 };
 
 /**
@@ -91,7 +91,7 @@ export function ClaimPreviewDrawer() {
         <section className={styles.claimSection}>
           <div className={styles.claimSectionHead}>
             <span className={styles.claimSectionTitle}>Claim Information</span>
-            <Badge size="M" variant={CLAIM_STATUS_BADGE[claim.status] || 'status-scheduled'} label={claim.status} />
+            <Badge size="md" tone={CLAIM_STATUS_BADGE[claim.status] || 'info'} label={claim.status} />
           </div>
           <div className={styles.claimInfoGrid}>
             <ClaimField label="Claims Number" value={claim.number} />

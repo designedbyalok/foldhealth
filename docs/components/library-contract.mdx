@@ -105,6 +105,16 @@ so the common buttons need one prop:
 | `dangerFilled` | `tone="danger"` |
 | `info` | `tone="info"` |
 
+`Badge` follows the same split. Its tones are the Figma Badge types plus three
+accents (`secondary` orange, `magenta` Out of Office, `unity` AI gradient);
+its variants are `soft` (default), `outline`, `ghost` and `solid`. The old
+`grey`, `white`, `ghost`, `error` and `disabled` tones became
+`tone="neutral"`, `variant="outline"`, `variant="ghost"`, `tone="danger"` and
+the `disabled` prop. The 60-odd feature looks (`toc-enrolled`,
+`compliance-pass`, …) are gone from the primitive; each feature now maps its
+statuses to a tone in its own table, and `scripts/codemods/badge-tones.mjs`
+did that move.
+
 `scripts/codemods/button-variants.mjs` rewrites `Button` and `ActionButton`
 call sites (run it on a branch that predates the change). The old names still
 work at runtime with a one-time warning in development, and the guardrails
@@ -254,7 +264,6 @@ Still positioning themselves:
 
 | Component | Today | Target |
 |---|---|---|
-| `Badge` | `tone` plus a legacy `variant` with about 30 feature looks (`status*`, `outreach*`, `awv*`, `toc*`, `compliance*`); `size` `XS`/`S`/`M`/`L` | `variant` + `tone` only; feature looks move to domain badges; `xs`/`sm`/`md`/`lg` |
 | `InfoBar`, `Alert` | Both carry `tone`; `InfoBar` adds a `variant` | One `Banner` with `tone` and `variant` |
 | `Toggle`, `SubTabs` | `size="M"`; `onChange(key)` | `size="md"`; `value`/`defaultValue`/`onValueChange` |
 | `Textarea` | `onChange` is an event in plain mode and `(value, event)` in rich mode | Native `onChange(event)` plus `onValueChange(value)` |

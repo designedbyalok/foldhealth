@@ -17,7 +17,7 @@ const JOURNEYS = [
     total: 7,
     unit: 'Days',
     status: 'Assigned',
-    badgeVariant: 'toc-oncall',
+    badgeVariant: 'primary',
   },
   {
     id: 2,
@@ -28,7 +28,7 @@ const JOURNEYS = [
     total: 180,
     unit: 'Days',
     status: 'Active',
-    badgeVariant: 'toc-enrolled',
+    badgeVariant: 'success',
   },
   {
     id: 3,
@@ -39,7 +39,7 @@ const JOURNEYS = [
     total: 7,
     unit: 'Days',
     status: 'Stopped',
-    badgeVariant: 'status-failed',
+    badgeVariant: 'danger',
   },
   {
     id: 4,
@@ -50,7 +50,7 @@ const JOURNEYS = [
     total: 7,
     unit: 'Days',
     status: 'Paused',
-    badgeVariant: 'toc-attempted',
+    badgeVariant: 'warning',
   },
 ];
 
@@ -96,7 +96,7 @@ export function CareJourneysWidget() {
                 leading={<Avatar type="icon" variant="patient" iconName="solar:routing-2-linear" size="M" />}
                 title={j.name}
                 meta={[j.date, j.type]}
-                trailing={<Badge variant={j.badgeVariant} label={j.status} />}
+                trailing={<Badge tone={j.badgeVariant} label={j.status} />}
               >
                 <div className={styles.progressRow}>
                   <div

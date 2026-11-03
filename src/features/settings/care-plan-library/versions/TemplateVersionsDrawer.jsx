@@ -56,7 +56,7 @@ export function TemplateVersionsDrawer({ template, onClose }) {
               <li key={v.id} className={styles.version}>
                 <div className={styles.versionHead}>
                   <span className={styles.versionName}>Version {v.versionNumber}</span>
-                  <Badge tone={state.tone} size="S" label={state.label} />
+                  <Badge tone={state.tone} size="sm" label={state.label} />
                   <span className={styles.versionDate}>Effective {usDate(v.effectiveDate)}</span>
                 </div>
                 {v.note && <p className={styles.versionNote}>{v.note}</p>}

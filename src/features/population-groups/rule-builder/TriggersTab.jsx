@@ -139,7 +139,7 @@ export function TriggersTab({ groupId, showToast }) {
               </span>
             </div>
             <div className={styles.triggerCardBody}>
-              <Badge tone="info" size="S" label={ev?.label || t.trigger_event} />
+              <Badge tone="info" size="sm" label={ev?.label || t.trigger_event} />
               <Icon name="solar:arrow-right-linear" size={12} color="var(--neutral-200)" />
               <Icon name={act?.icon || 'solar:bolt-linear'} size={14} color="var(--neutral-300)" />
               <span className={styles.triggerCardAction}>{act?.label || t.action_type}</span>

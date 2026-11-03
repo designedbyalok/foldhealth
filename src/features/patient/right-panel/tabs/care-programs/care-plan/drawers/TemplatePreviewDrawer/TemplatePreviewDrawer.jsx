@@ -96,7 +96,7 @@ export function TemplatePreviewDrawer({ template, onClose }) {
           <span className={styles.name}>{template.name}</span>
           {conditions.length > 0 && (
             <div className={styles.conditions}>
-              {conditions.map(c => <Badge key={c} tone="grey" size="S" label={c} />)}
+              {conditions.map(c => <Badge key={c} size="sm" label={c} />)}
             </div>
           )}
         </div>

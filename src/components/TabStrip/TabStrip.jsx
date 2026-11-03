@@ -106,7 +106,7 @@ export function TabStrip({
             )}
             {it.label}
             {typeof it.count === 'number' && (
-              <Badge variant="overflow" label={String(it.count)} />
+              <Badge label={String(it.count)} />
             )}
             {it.notif && <span className={styles.notifDot} title="New activity" />}
           </button>

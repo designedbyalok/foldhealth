@@ -350,7 +350,7 @@ export function DsfaEvidenceForm({ v, data, submitted, onOpenPhq9Gap }) {
             )}
             <Badge
               tone={positive ? 'warning' : 'success'}
-              size="M"
+              size="md"
               label={`Score : ${phq2Total} Point${phq2Total === 1 ? '' : 's'} (${positive ? 'Positive for Depression' : 'Negative for Depression'})`}
               trailingIconElement={
                 <Tooltip
@@ -451,8 +451,8 @@ export function DsfbEvidenceForm({ v, data, submitted }) {
   const bandTone = branch === 'minimal' ? 'success'
     : branch === 'mild' ? 'warning'
     : branch === 'moderate' ? 'secondary'
-    : branch === 'severe' ? 'error'
-    : 'grey';
+    : branch === 'severe' ? 'danger'
+    : 'neutral';
   // Save requires: all 9 items answered, not already saved, not
   // declined. Mild bands' sub-question stays available before AND after
   // save; the care plan panel below only surfaces once both the score
@@ -560,7 +560,7 @@ export function DsfbEvidenceForm({ v, data, submitted }) {
             )}
             <Badge
               tone={bandTone}
-              size="M"
+              size="md"
               label={`Score : ${phq9Total} Point${phq9Total === 1 ? '' : 's'} (${bandLabel})`}
               trailingIconElement={
                 <Tooltip

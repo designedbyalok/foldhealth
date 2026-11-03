@@ -65,7 +65,7 @@ export function TemplateGroupDrawer({ group, readOnly = false, onClose }) {
       noCloseDivider
       headerRight={(
         <>
-          {group && <Badge tone="grey" size="S" label={`v${group.versionNumber}`} />}
+          {group && <Badge size="sm" label={`v${group.versionNumber}`} />}
           {!readOnly && (
             <>
               <span className={styles.headerDivider} />
@@ -102,8 +102,8 @@ export function TemplateGroupDrawer({ group, readOnly = false, onClose }) {
                   <li key={id} className={styles.memberRow}>
                     <span className={styles.memberIndex}>{i + 1}</span>
                     <span className={styles.memberName}>{t?.name || 'Deleted template'}</span>
-                    {t?.status === 'archived' && <Badge tone="warning" size="S" label="Retired, skipped" />}
-                    {!t && <Badge tone="warning" size="S" label="Skipped" />}
+                    {t?.status === 'archived' && <Badge tone="warning" size="sm" label="Retired, skipped" />}
+                    {!t && <Badge tone="warning" size="sm" label="Skipped" />}
                     {!readOnly && (
                       <span className={styles.memberActions}>
                         <ActionButton icon="solar:alt-arrow-up-linear" size="sm" tooltip="Earlier" disabled={i === 0} onClick={() => move(i, -1)} />

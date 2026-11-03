@@ -19,7 +19,7 @@ export function StatusGroup({ status, label: labelProp, tasks, onToggle, onTaskC
       <div className={styles.groupHeader} onClick={() => setCollapsed(v => !v)}>
         <div className={styles.groupHeaderLeft}>
           <span className={styles.groupTitle}>{label}</span>
-          <Badge variant="overflow" label={`${tasks.length} ${tasks.length === 1 ? 'task' : 'tasks'}`} />
+          <Badge label={`${tasks.length} ${tasks.length === 1 ? 'task' : 'tasks'}`} />
         </div>
         <div className={styles.groupActions}>
           <ActionButton
@@ -75,7 +75,7 @@ export function StatusGroupRows({ group, colCount, onToggle, onTaskClick, hideAs
           <div className={styles.groupHeaderInner}>
             <div className={styles.groupHeaderLeft}>
               <span className={styles.groupTitle}>{label}</span>
-              <Badge variant="overflow" label={`${tasks.length} ${tasks.length === 1 ? 'task' : 'tasks'}`} />
+              <Badge label={`${tasks.length} ${tasks.length === 1 ? 'task' : 'tasks'}`} />
             </div>
             <div className={styles.groupActions}>
               <ActionButton

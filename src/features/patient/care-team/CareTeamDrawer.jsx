@@ -28,7 +28,7 @@ function MemberRow({ member, historical, onMenu }) {
       <div className={styles.memberText}>
         <span className={styles.memberName}>
           {member.name}
-          {member.role && <Badge tone="grey" size="XS" label={member.role} />}
+          {member.role && <Badge size="xs" label={member.role} />}
         </span>
         {member.title && <span className={styles.memberTitle}>{member.title}</span>}
       </div>

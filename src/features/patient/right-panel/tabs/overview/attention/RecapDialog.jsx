@@ -22,8 +22,8 @@ import styles from './RecapDialog.module.css';
 // Each slide carries a lot to read, so it stays up longer than the default.
 const AUTOPLAY_MS = 10000;
 const SEVERITY_COLOR = { high: 'var(--status-error)', medium: 'var(--status-warning)', low: 'var(--status-info)' };
-const OUTCOME_TONE = { success: 'success', warning: 'warning', error: 'error' };
-const DELTA_TONE = { worse: 'error', better: 'success', neutral: 'grey' };
+const OUTCOME_TONE = { success: 'success', warning: 'warning', error: 'danger' };
+const DELTA_TONE = { worse: 'danger', better: 'success', neutral: 'neutral' };
 const NOTE_CLASS = { worse: styles.noteWorse, better: styles.noteBetter };
 
 const pad = n => String(n).padStart(2, '0');
@@ -64,7 +64,7 @@ function Kpis({ items }) {
           <span className={styles.kpiLabel}>{k.label}</span>
           <span className={styles.kpiValueRow}>
             <span className={`${styles.kpiValue} ${k.tone === 'worse' ? styles.kpiWorse : ''}`}>{k.value}</span>
-            {k.delta && <Badge tone={DELTA_TONE[k.tone || 'neutral']} size="S" label={k.delta} />}
+            {k.delta && <Badge tone={DELTA_TONE[k.tone || 'neutral']} size="sm" label={k.delta} />}
           </span>
           {k.sub && <span className={styles.kpiSub}>{k.sub}</span>}
         </div>
@@ -88,7 +88,7 @@ function ChangeRows({ rows }) {
               </>
             )}
             <span className={styles.changeTo}>{r.to}</span>
-            {r.delta && <Badge tone={DELTA_TONE[r.tone]} size="S" label={r.delta} />}
+            {r.delta && <Badge tone={DELTA_TONE[r.tone]} size="sm" label={r.delta} />}
           </span>
           <span className={`${styles.changeNote} ${NOTE_CLASS[r.tone] || ''}`}>{r.note}</span>
         </li>
@@ -123,11 +123,11 @@ function EventRows({ events, newSince }) {
             <span className={styles.eventText}>
               <span className={styles.eventTitleRow}>
                 <span className={styles.eventTitle}>{e.title}</span>
-                {newSince != null && e.at >= newSince && <Badge tone="info" size="S" label="New" />}
+                {newSince != null && e.at >= newSince && <Badge tone="info" size="sm" label="New" />}
               </span>
               {meta.length > 0 && <span className={styles.eventMeta}>{meta.join(' • ')}</span>}
             </span>
-            {e.outcome && <Badge tone={OUTCOME_TONE[e.tone] || 'grey'} size="S" label={e.outcome} />}
+            {e.outcome && <Badge tone={OUTCOME_TONE[e.tone] || 'neutral'} size="sm" label={e.outcome} />}
           </li>
         );
       })}
@@ -151,7 +151,7 @@ function SignalRows({ signals, reviews, onRun, onReview }) {
             <span className={styles.eventText}>
               <span className={styles.eventTitleRow}>
                 <span className={styles.eventTitle}>{s.title}</span>
-                {s.isNew && !review && <Badge tone="info" size="S" label="New" />}
+                {s.isNew && !review && <Badge tone="info" size="sm" label="New" />}
               </span>
               <span className={styles.eventMeta}>
                 {review

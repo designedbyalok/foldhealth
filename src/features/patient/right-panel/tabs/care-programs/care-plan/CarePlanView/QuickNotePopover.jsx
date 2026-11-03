@@ -58,7 +58,7 @@ export function QuickNotePopover({ kind, item, rect, audit, onSave, onOpenFull, 
         <div className={styles.tags} aria-label="Quick tags">
           {QUICK_TAGS.map(t => (
             <button key={t} type="button" className={styles.tag} onClick={() => toggleTag(t)} aria-pressed={tags.includes(t)}>
-              <Badge size="S" tone={tags.includes(t) ? 'primary' : 'white'} label={t} />
+              <Badge size="sm" tone={tags.includes(t) ? 'primary' : 'neutral'} variant={tags.includes(t) ? 'soft' : 'outline'} label={t} />
             </button>
           ))}
         </div>

@@ -291,8 +291,15 @@ function DosBlock({ block, providerOptions, onChange, onRemove }) {
           <Icon name="solar:alt-arrow-right-linear" size={16} color="var(--neutral-400)" />
           <span className={styles.dosBlockTitle}>DOS: {block.dos || '-'}</span>
           {complete
-            ? <Badge size="M" variant="status-ready" icon="solar:check-circle-linear" label="Ready" />
-            : <Badge size="M" variant="status-review" icon="solar:hourglass-line-linear" label="Not Ready" />}
+            ? <Badge
+                size="md"
+                tone="success"
+                icon="solar:check-circle-linear"
+                label="Ready"
+                // A brighter green than the success tone, kept from the old status-ready look.
+                style={{ color: 'var(--status-success-bright)', borderColor: 'color-mix(in srgb, var(--status-success-bright) 20%, transparent)' }}
+              />
+            : <Badge size="md" tone="warning" icon="solar:hourglass-line-linear" label="Not Ready" />}
         </div>
         <button type="button" className={styles.trashBtn} onClick={onRemove} aria-label="Remove DOS">
           <Icon name="solar:trash-bin-trash-linear" size={16} color="var(--neutral-300)" />

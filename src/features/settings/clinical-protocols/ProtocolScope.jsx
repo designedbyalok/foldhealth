@@ -50,9 +50,9 @@ export function PlanCounts({ plan }) {
   }, [plan, loaded, libraryGoals, interventionLibrary, barrierLibrary]);
   return (
     <span className={styles.countChips} title={`${c.goals} goals, ${c.interventions} interventions, ${c.barriers} barriers`}>
-      <Badge tone="grey" size="S" label={`G${c.goals}`} />
-      <Badge tone="grey" size="S" label={`I${c.interventions}`} />
-      <Badge tone="grey" size="S" label={`B${c.barriers}`} />
+      <Badge size="sm" label={`G${c.goals}`} />
+      <Badge size="sm" label={`I${c.interventions}`} />
+      <Badge size="sm" label={`B${c.barriers}`} />
     </span>
   );
 }
@@ -89,7 +89,7 @@ export function ScopeOverview({ plan, protocol, editable, building, selected, on
       {overview && <p className={styles.overview}>{overview}</p>}
       {(scope.conditions || []).length > 0 && (
         <span className={styles.chips}>
-          {scope.conditions.map(c => <Badge key={c.name} tone="grey" size="S" label={c.code ? `${c.name} · ${c.code}` : c.name} />)}
+          {scope.conditions.map(c => <Badge key={c.name} size="sm" label={c.code ? `${c.name} · ${c.code}` : c.name} />)}
         </span>
       )}
       {(scope.population || (scope.exclusions || []).length > 0) && (

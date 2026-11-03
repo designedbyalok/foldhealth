@@ -37,7 +37,7 @@ export function ProgramActivityDay({ day, onOpenVersion, versionGlance, onOpenIt
   // mounts once its entry has been opened, then stays for the close animation.
   const [seenVersions, setSeenVersions] = useState(() => new Set());
 
-  const programBadge = code => (code ? <Badge tone="primary" size="XS" label={code} /> : null);
+  const programBadge = code => (code ? <Badge tone="primary" size="xs" label={code} /> : null);
 
   // A signature is two entries, as in the Care Plan History: "Changes in Care
   // Plan", closed by the one-line signed marker. Hovering the first shows
@@ -91,7 +91,7 @@ export function ProgramActivityDay({ day, onOpenVersion, versionGlance, onOpenIt
       meta.context = item.planVersion == null ? 'Draft' : item.planVersionCurrent ? (
         <span className={styles.versionTag}>
           v{item.planVersion}
-          <Badge size="S" tone="grey" label="Current" className={styles.currentBadge} />
+          <Badge size="sm" label="Current" className={styles.currentBadge} />
         </span>
       ) : `v${item.planVersion}`;
       return {
@@ -222,7 +222,7 @@ export function ProgramActivityDay({ day, onOpenVersion, versionGlance, onOpenIt
     <div className={styles.day}>
       <div className={styles.dateCol}>
         <span className={styles.date}>{day.date}</span>
-        <Badge tone="grey" size="XS" label={day.day} />
+        <Badge size="xs" label={day.day} />
       </div>
       <div className={styles.dayEntries}>
         <ActivityLog entries={entries} relaxed continuous />

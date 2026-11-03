@@ -6,6 +6,7 @@ import { PatientAvatarHover } from '../../../components/PatientHoverCard/Patient
 import { AssigneeChange } from '../../../components/AssigneeChange/AssigneeChange';
 import { platformUsersForAssigneePicker } from '../../../lib/worklistAssignee';
 import { Badge } from '../../../components/Badge/Badge';
+import { laceTone } from '../../../lib/riskTone';
 import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { useAppStore } from '../../../store/useAppStore';
 import { FoldIdTag } from '../../../components/FoldIdTag/FoldIdTag';
@@ -30,16 +31,16 @@ function computeAgentDueOn(dischargeDate, outreachType) {
 }
 
 const TOC_STATUS_MAP = {
-  enrolled: { variant: 'toc-enrolled', label: 'Enrolled', icon: 'solar:check-circle-linear' },
-  engaged: { variant: 'toc-engaged', label: 'Engaged', icon: 'solar:link-round-linear' },
-  attempted: { variant: 'toc-attempted', label: 'Attempted', icon: 'solar:history-linear' },
-  new: { variant: 'toc-new', label: 'New', icon: 'solar:star-linear' },
-  oncall: { variant: 'toc-oncall', label: 'On Call', icon: 'solar:phone-calling-linear' },
+  enrolled: { variant: 'success', label: 'Enrolled', icon: 'solar:check-circle-linear' },
+  engaged: { variant: 'info', label: 'Engaged', icon: 'solar:link-round-linear' },
+  attempted: { variant: 'warning', label: 'Attempted', icon: 'solar:history-linear' },
+  new: { variant: 'neutral', label: 'New', icon: 'solar:star-linear' },
+  oncall: { variant: 'primary', label: 'On Call', icon: 'solar:phone-calling-linear' },
 };
 
 function TocStatusBadge({ status }) {
   const cfg = TOC_STATUS_MAP[status] || TOC_STATUS_MAP.new;
-  return <Badge size="M" variant={cfg.variant} label={cfg.label} icon={cfg.icon} />;
+  return <Badge size="md" tone={cfg.variant} label={cfg.label} icon={cfg.icon} />;
 }
 
 function GoalsTooltipPortal({ goalsDetail, pillRef, visible }) {
@@ -78,7 +79,7 @@ function StatusCell({ patient: p, voicemailCalls, completedCall }) {
     const pct = goals ? Math.round((goals.met / goals.total) * 100) : 0;
     return (
       <div className={styles.statusCompact}>
-        <Badge size="M" variant="status-completed" label="Completed" icon="solar:check-circle-linear" />
+        <Badge size="md" tone="success" label="Completed" icon="solar:check-circle-linear" />
         {goals && (
           <div
             className={styles.goalsPill}
@@ -103,8 +104,8 @@ function StatusCell({ patient: p, voicemailCalls, completedCall }) {
     const pct = total > 0 ? Math.round((done / total) * 100) : 0;
     return (
       <div className={styles.statusCompact}>
-        <Badge size="M"
-          variant="status-oncall"
+        <Badge size="md"
+          tone="success"
           label={callDuration || '00:00'}
           icon="solar:phone-calling-linear"
           dot={false}
@@ -123,7 +124,7 @@ function StatusCell({ patient: p, voicemailCalls, completedCall }) {
   if (status === 'scheduled') {
     return (
       <div className={styles.statusCompact}>
-        <Badge size="M" variant="status-scheduled" label="Scheduled" icon="solar:calendar-linear" />
+        <Badge size="md" tone="info" label="Scheduled" icon="solar:calendar-linear" />
         {scheduledTime && <div className={styles.scheduledSub}>{scheduledTime.split(' ')[0]}</div>}
       </div>
     );
@@ -131,14 +132,14 @@ function StatusCell({ patient: p, voicemailCalls, completedCall }) {
   if (status === 'queued') {
     return (
       <div className={styles.statusCompact}>
-        <Badge size="M" variant="status-queued" label="Queued" icon="solar:clock-circle-linear" />
+        <Badge size="md" tone="warning" label="Queued" icon="solar:clock-circle-linear" />
       </div>
     );
   }
   if (status === 'failed') {
     return (
       <div className={styles.statusCompact}>
-        <Badge size="M" variant="status-failed" label="Failed" icon="solar:close-circle-linear" />
+        <Badge size="md" tone="danger" label="Failed" icon="solar:close-circle-linear" />
         {attempts?.length > 0 && (
           <div className={styles.attemptsWrapper}>
             <Tooltip
@@ -172,7 +173,7 @@ function StatusCell({ patient: p, voicemailCalls, completedCall }) {
     );
   }
   if (status === 'review') {
-    return <Badge size="M" variant="status-review" label="Review" icon="solar:danger-triangle-linear" />;
+    return <Badge size="md" tone="warning" label="Review" icon="solar:danger-triangle-linear" />;
   }
   return <span style={{ fontSize: 'var(--font-md)', color: 'var(--neutral-200)' }}>-</span>;
 }
@@ -204,7 +205,7 @@ function StatusPill({ status, onOpen, ariaLabel }) {
       onClick={(e) => { e.stopPropagation(); onOpen(); }}
       aria-label={ariaLabel}
     >
-      <Badge size="M" variant={cfg.variant} label={status} icon={cfg.icon} />
+      <Badge size="md" tone={cfg.variant} label={status} icon={cfg.icon} />
       <Icon name="solar:alt-arrow-right-linear" size={12} color="var(--neutral-300)" />
     </button>
   );
@@ -242,7 +243,7 @@ export function getQueueMiddleColumns(programLabel = 'TOC') {
     label: 'LACE Acuity',
     tdClassName: rowStyles.td,
     renderCell: (p) => (
-      <Badge size="M" variant={`lace-${p.lace.toLowerCase()}`} label={p.lace} />
+      <Badge size="md" tone={laceTone(p.lace)} label={p.lace} />
     ),
   },
   {
@@ -250,10 +251,10 @@ export function getQueueMiddleColumns(programLabel = 'TOC') {
     label: 'Outreach Window',
     tdClassName: rowStyles.td,
     renderCell: (p) => {
-      const outreachBadgeVariant = p.outreachType === '48h' ? 'outreach-48h' : 'outreach-7d';
+      const outreachBadgeVariant = p.outreachType === '48h' ? 'danger' : 'info';
       return (
         <div className={rowStyles.outreachCell}>
-          <Badge size="M" variant={outreachBadgeVariant} label={`${programLabel} ${p.outreachType}`} />
+          <Badge size="md" tone={outreachBadgeVariant} label={`${programLabel} ${p.outreachType}`} />
           {p.onCall ? (
             <span className={rowStyles.outreachOncall}>
               <Icon name="solar:phone-calling-bold" size={14} />
@@ -382,8 +383,8 @@ export function getQueueMiddleColumns(programLabel = 'TOC') {
     tdClassName: rowStyles.td,
     renderCell: (p) => (
       p.readmission === 'Yes'
-        ? <Badge size="M" variant="yes" label="Yes" />
-        : <Badge size="M" variant="no" label="No" />
+        ? <Badge size="md" tone="danger" label="Yes" />
+        : <Badge size="md" label="No" />
     ),
   },
   {
@@ -404,10 +405,10 @@ export function getQueueMiddleColumns(programLabel = 'TOC') {
     tdClassName: rowStyles.td,
     renderCell: (p) => (
       p.carePlanStatus === 'updated'
-        ? <Badge size="M" variant="care-plan-updated" label="Updated" icon="solar:check-circle-linear" />
+        ? <Badge size="md" tone="success" label="Updated" icon="solar:check-circle-linear" />
         : p.carePlanStatus === 'pending'
-          ? <Badge size="M" variant="care-plan-pending" label="Pending" icon="solar:clock-circle-linear" />
-          : <Badge size="M" variant="care-plan-none" label="No Care Plan" />
+          ? <Badge size="md" tone="warning" label="Pending" icon="solar:clock-circle-linear" />
+          : <Badge size="md" label="No Care Plan" />
     ),
   },
 ];

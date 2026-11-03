@@ -1,15 +1,15 @@
 export const HCC_ROLES = ['Support', 'Coder', 'QA', 'Compliance'];
 
 export const ROLE_COLORS = {
-  'Support':                       'toc-attempted',
-  'Coder':                         'ai-care',
-  'QA':                            'ai-med',
-  'Compliance':                    'compliance-warn',
-  'Physician/Doctor':              'ai-care', 'Nurse': 'toc-engaged', 'Medical Assistant': 'status-scheduled',
-  'Admin/Practice Manager':        'outreach-post-visit', 'Billing Specialist': 'compliance-warn',
-  'Front Desk Staff/Receptionist': 'ai-neutral', 'Lab Technician': 'status-queued',
-  'Pharmacist':                    'ai-med', 'Health Information Manager (HIM)': 'ai-care',
-  'Radiologist':                   'toc-engaged', 'Phlebotomist': 'status-queued', 'Patient': 'ai-neutral',
+  'Support':                       'warning',
+  'Coder':                         'primary',
+  'QA':                            'success',
+  'Compliance':                    'warning',
+  'Physician/Doctor':              'primary', 'Nurse': 'info', 'Medical Assistant': 'info',
+  'Admin/Practice Manager':        'primary', 'Billing Specialist': 'warning',
+  'Front Desk Staff/Receptionist': 'neutral', 'Lab Technician': 'warning',
+  'Pharmacist':                    'success', 'Health Information Manager (HIM)': 'primary',
+  'Radiologist':                   'info', 'Phlebotomist': 'warning', 'Patient': 'neutral',
 };
 
 export function getInitials(name) {

@@ -21,7 +21,7 @@ const STATUS_TONE = {
   Scheduled: 'primary',
   'Checked In': 'success',
   'No Show': 'warning',
-  Cancelled: 'error',
+  Cancelled: 'danger',
   Pending: 'warning',
   Completed: 'success',
 };
@@ -325,7 +325,7 @@ export function CareGapAppointmentsTab({
                   </div>
                 </td>
                 <td className={styles.td}>
-                  <Badge size="S" tone={STATUS_TONE[r.status] || 'grey'} label={r.status} />
+                  <Badge size="sm" tone={STATUS_TONE[r.status] || 'neutral'} label={r.status} />
                 </td>
                 <td className={styles.td}>
                   <AssigneeChange

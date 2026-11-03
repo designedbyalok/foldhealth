@@ -149,7 +149,7 @@ export function TitleBlock({ title, statusLabel = 'In Progress', stacked = false
   return (
     <span className={styles.titleBlock}>
       <span className={styles.titleText}>{title}</span>
-      <Badge tone="warning" size="S" dot label={statusLabel} />
+      <Badge tone="warning" size="sm" dot label={statusLabel} />
     </span>
   );
 }
@@ -251,7 +251,7 @@ export function NoteContextPane({ v, member, year }) {
             <span className={styles.dosTitle}>
               Date of Service &amp; Telehealth Statement <span className={styles.required}>•</span>
             </span>
-            <Badge tone="info" size="S" label="Common for all gaps" />
+            <Badge tone="info" size="sm" label="Common for all gaps" />
           </div>
           <div className={styles.dosBody}>
             <div className={styles.fieldStack}>
@@ -328,7 +328,7 @@ function GapRow({ gap, data, ready, mandatoryComplete, assignee, isActive, onSel
           <span className={styles.gapName}>{gap.code} - {measureName}</span>
         </div>
         <div className={styles.gapRowMeta}>
-          <Badge size="S" variant="ai-care" label={gap.status} />
+          <Badge size="sm" tone="primary" label={gap.status} />
           {data && !!Object.keys(data).some(k => k !== 'manuallyOff' && data[k]) && (
             <span className={styles.gapRowUpdate}>
               <span className={styles.dot}>•</span> Last Updated Today, 09:15 AM <span className={styles.dot}>•</span> You
@@ -381,7 +381,7 @@ export function GapEvidencePane({ v }) {
             {gap.code} - {measureName}
           </span>
           <div className={styles.gapEvidenceStatusRow}>
-            <Badge size="S" variant="ai-care" label={gap.status} />
+            <Badge size="sm" tone="primary" label={gap.status} />
             <span className={styles.headerDivider} aria-hidden="true" />
             <AssigneeDisplay name={assignee} />
           </div>
@@ -476,7 +476,7 @@ export function ConsolidatedNoteBody({ v }) {
             <span className={styles.dosTitle}>
               Date of Service &amp; Telehealth Statement <span className={styles.required}>•</span>
             </span>
-            <Badge tone="info" size="S" label="Common for all gaps" />
+            <Badge tone="info" size="sm" label="Common for all gaps" />
           </div>
           <div className={styles.dosBody}>
             <div className={styles.fieldStack}>

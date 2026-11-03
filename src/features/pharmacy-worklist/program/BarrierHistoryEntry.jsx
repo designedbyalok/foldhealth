@@ -46,24 +46,24 @@ export function EntryBody({ entry }) {
         {line.completed && (
           <Row label="Intervention">
             {line.completed.outcome === 'Done'
-              ? <Badge size="S" tone="success" icon="solar:check-circle-linear" label={line.completed.intervention} />
-              : <Badge size="S" tone="error" icon="solar:close-circle-linear" label={line.completed.intervention} />}
+              ? <Badge size="sm" tone="success" icon="solar:check-circle-linear" label={line.completed.intervention} />
+              : <Badge size="sm" tone="danger" icon="solar:close-circle-linear" label={line.completed.intervention} />}
           </Row>
         )}
         {line.resolvedList && (
           <Row label={line.completed ? 'Resolved' : 'Barrier'}>
-            {line.resolvedList.map(v => <Badge key={v} size="S" tone="success" icon="solar:check-circle-linear" label={v} />)}
+            {line.resolvedList.map(v => <Badge key={v} size="sm" tone="success" icon="solar:check-circle-linear" label={v} />)}
           </Row>
         )}
         {!line.completed && !line.resolvedList && (changed ? <>
-          {line.addB.length > 0 && <Row label="Barrier">{line.addB.map(v => <Badge key={v} size="S" tone="error" label={v} />)}</Row>}
-          {line.addI.length > 0 && <Row label="Intervention">{line.addI.map(v => <Badge key={v} size="S" tone="grey" label={v} />)}</Row>}
+          {line.addB.length > 0 && <Row label="Barrier">{line.addB.map(v => <Badge key={v} size="sm" tone="danger" label={v} />)}</Row>}
+          {line.addI.length > 0 && <Row label="Intervention">{line.addI.map(v => <Badge key={v} size="sm" label={v} />)}</Row>}
           {(line.remB.length > 0 || line.remI.length > 0) && (
-            <Row label="Removed">{[...line.remB, ...line.remI].map(v => <Badge key={v} size="S" tone="grey" label={v} className={styles.struck} />)}</Row>
+            <Row label="Removed">{[...line.remB, ...line.remI].map(v => <Badge key={v} size="sm" label={v} className={styles.struck} />)}</Row>
           )}
         </> : <>
-          {line.rec.barriers.length > 0 && <Row label="Barrier">{line.rec.barriers.map(v => <Badge key={v} size="S" tone="error" label={v} />)}</Row>}
-          {line.rec.interventions.length > 0 && <Row label="Intervention">{line.rec.interventions.map(v => <Badge key={v} size="S" tone="grey" label={v} />)}</Row>}
+          {line.rec.barriers.length > 0 && <Row label="Barrier">{line.rec.barriers.map(v => <Badge key={v} size="sm" tone="danger" label={v} />)}</Row>}
+          {line.rec.interventions.length > 0 && <Row label="Intervention">{line.rec.interventions.map(v => <Badge key={v} size="sm" label={v} />)}</Row>}
         </>)}
       </div>
       {entry.note && <span className={styles.entryNote}>{entry.note}</span>}

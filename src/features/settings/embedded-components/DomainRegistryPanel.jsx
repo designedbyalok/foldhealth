@@ -24,12 +24,12 @@ const thStyle = {
 const tdStyle = { padding: '12px 16px', fontSize: 'var(--font-base)', fontWeight: 400, color: 'var(--neutral-300)', verticalAlign: 'middle' };
 
 const CATEGORY_BADGE_MAP = {
-  'Internal': 'ai-care', 'Prior authorization': 'ai-care',
-  'Analytics': 'compliance-warn', 'Care gaps / HEDIS': 'toc-engaged',
+  'Internal': 'primary', 'Prior authorization': 'primary',
+  'Analytics': 'warning', 'Care gaps / HEDIS': 'info',
 };
 const HIPAA_BADGE_MAP = {
-  'Verified': 'status-completed', 'BAA in place': 'status-completed',
-  'Pending BAA': 'compliance-warn', 'Verify externally': 'ai-neutral',
+  'Verified': 'success', 'BAA in place': 'success',
+  'Pending BAA': 'warning', 'Verify externally': 'neutral',
 };
 
 function getComponentStats(domainId, components) {
@@ -312,12 +312,12 @@ export function DomainRegistryPanel({ searchQuery = '' }) {
                 <td style={tdStyle}>
                   <code style={{ background: 'var(--neutral-50)', padding: '2px 6px', borderRadius: 4, fontSize: 'var(--font-xs)', fontFamily: "'SF Mono', monospace", color: 'var(--neutral-400)' }}>{d.domain}</code>
                 </td>
-                <td style={tdStyle}><Badge variant={CATEGORY_BADGE_MAP[d.category] || 'ai-neutral'} label={d.category} /></td>
-                <td style={tdStyle}><Badge variant={HIPAA_BADGE_MAP[d.hipaa] || 'ai-neutral'} label={d.hipaa} /></td>
+                <td style={tdStyle}><Badge tone={CATEGORY_BADGE_MAP[d.category] || 'neutral'} label={d.category} /></td>
+                <td style={tdStyle}><Badge tone={HIPAA_BADGE_MAP[d.hipaa] || 'neutral'} label={d.hipaa} /></td>
                 <td style={tdStyle}>
-                  {stats.active > 0 && <Badge variant="status-completed" label={`${stats.active} active`} />}
-                  {stats.active === 0 && stats.disabled === 0 && <Badge variant="status-queued" label="0 active" />}
-                  {stats.disabled > 0 && <span style={{ marginLeft: stats.active > 0 ? 4 : 0 }}><Badge variant="status-failed" label={`${stats.disabled} disabled`} /></span>}
+                  {stats.active > 0 && <Badge tone="success" label={`${stats.active} active`} />}
+                  {stats.active === 0 && stats.disabled === 0 && <Badge tone="warning" label="0 active" />}
+                  {stats.disabled > 0 && <span style={{ marginLeft: stats.active > 0 ? 4 : 0 }}><Badge tone="danger" label={`${stats.disabled} disabled`} /></span>}
                 </td>
                 <td style={tdStyle} {...(isFirst ? { 'data-tour': 'embed-toggle' } : {})}><Switch checked={d.enabled !== false} onChange={() => handleToggle(d.id)} /></td>
                 <td style={tdStyle}>

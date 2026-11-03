@@ -796,7 +796,7 @@ export function CarePlanView({ patientId, program }) {
       >
         <Badge
           tone="secondary"
-          size="S"
+          size="sm"
           icon="solar:danger-triangle-linear"
           label={`${flags.length} possible duplicate${flags.length === 1 ? '' : 's'}`}
         />
@@ -1317,7 +1317,7 @@ export function CarePlanView({ patientId, program }) {
           {planStats.statuses.length > 0 && (
             <span className={styles.summaryStatuses}>
               {planStats.statuses.map(({ status, count, tone }) => (
-                <Badge key={status} tone={tone} size="S" label={`${count} ${status}`} />
+                <Badge key={status} tone={tone} size="sm" label={`${count} ${status}`} />
               ))}
             </span>
           )}

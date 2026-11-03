@@ -1015,7 +1015,7 @@ function renderCommentBody(body, users) {
   while ((match = re.exec(body)) !== null) {
     if (match.index > lastIdx) nodes.push(body.slice(lastIdx, match.index));
     nodes.push(
-      <Badge key={`m-${key++}`} variant="mention" label={match[1]} />,
+      <span key={`m-${key++}`} className={styles.mention}>{match[1]}</span>,
     );
     lastIdx = match.index + match[0].length;
   }
@@ -1117,9 +1117,9 @@ function CommentEntry({ item, isFirst, isLast, onEdit, onDelete, mentionUsers })
               <div className={styles.commentStatusChange}>
                 <div className={styles.commentStatusHeader}>Status Changed</div>
                 <div className={styles.commentStatusPills}>
-                  <Badge size="S" tone={statusTone(item.statusFrom)} label={item.statusFrom} />
+                  <Badge size="sm" tone={statusTone(item.statusFrom)} label={item.statusFrom} />
                   <Icon name="solar:arrow-right-linear" size={12} color="var(--neutral-300)" />
-                  <Badge size="S" tone={statusTone(item.statusTo)} label={item.statusTo} />
+                  <Badge size="sm" tone={statusTone(item.statusTo)} label={item.statusTo} />
                 </div>
               </div>
             )}
@@ -1242,9 +1242,9 @@ function DocumentsTrailingAction() {
 // + (type · date, time · uploadedBy(role)) meta, status Badge, menu-dots.
 const DOC_EXT_LABEL = { pdf: 'PDF', doc: 'DOC', docx: 'DOC', img: 'IMG', png: 'IMG', jpg: 'IMG', xls: 'XLS', xlsx: 'XLS', csv: 'CSV' };
 const DOC_STATUS_BADGE = {
-  passed:  { variant: 'status-completed', label: 'Passed'  },
-  pending: { variant: 'status-queued',    label: 'Pending' },
-  failed:  { variant: 'status-failed',    label: 'Failed'  },
+  passed:  { variant: 'success', label: 'Passed'  },
+  pending: { variant: 'warning',    label: 'Pending' },
+  failed:  { variant: 'danger',    label: 'Failed'  },
 };
 const EMPTY_CHARTS = [];
 
@@ -1371,8 +1371,8 @@ function DocumentsTab({ member, icdScope, charts = EMPTY_CHARTS, openDocId, setO
               return (
                 <Badge
                   key={d.id}
-                  size="M"
-                  tone={isOpen ? 'primary' : 'grey'}
+                  size="md"
+                  tone={isOpen ? 'primary' : 'neutral'}
                   className={styles.docsTabBadge}
                   label={(
                     <button
@@ -1480,7 +1480,7 @@ function DocumentsTab({ member, icdScope, charts = EMPTY_CHARTS, openDocId, setO
                     </div>
                   </div>
                 </div>
-                <Badge size="M" variant={status.variant} label={status.label} />
+                <Badge size="md" tone={status.variant} label={status.label} />
                 <div className={styles.dataTableActions} onClick={(e) => e.stopPropagation()}>
                   <ActionButton
                     icon="solar:menu-dots-linear"
@@ -1943,8 +1943,8 @@ function NotesTab({ filters }) {
                 {n.author}({n.role})
               </div>
             </div>
-            <Badge size="M"
-              variant="status-completed"
+            <Badge size="md"
+              tone="success"
               icon="solar:pen-new-square-linear"
               label={n.signed ? 'Signed' : 'Draft'}
             />
@@ -1975,11 +1975,11 @@ function NotesTab({ filters }) {
 // button: clicking dispatches openHccClaimPreview to open the existing
 // ClaimPreviewDrawer.
 const CLAIM_STATUS_BADGE = {
-  Paid:     'status-completed',
-  Pending:  'status-queued',
-  Billed:   'status-scheduled',
-  Denied:   'status-failed',
-  Rejected: 'status-failed',
+  Paid:     'success',
+  Pending:  'warning',
+  Billed:   'info',
+  Denied:   'danger',
+  Rejected: 'danger',
 };
 
 // Find the claim for a given DOS, or synthesize one when the DOS has no row in
@@ -2054,7 +2054,7 @@ function ClaimsTab({ member, filters, claims }) {
               {c.number || c.id}
             </button>
             <span className={styles.claimDate}>{c.dos}</span>
-            <Badge size="M" variant={CLAIM_STATUS_BADGE[c.status] || 'toc-new'} label={c.status} />
+            <Badge size="md" tone={CLAIM_STATUS_BADGE[c.status] || 'neutral'} label={c.status} />
             <span className={styles.claimAmount}>{c.amount}</span>
           </div>
         ))}
@@ -2108,7 +2108,7 @@ function ClaimDetail({ member, claim, onBack }) {
       <section className={styles.claimSection}>
         <div className={styles.claimSectionHead}>
           <span className={styles.claimSectionTitle}>Claim Information</span>
-          <Badge size="M" variant={CLAIM_STATUS_BADGE[claim.status] || 'toc-new'} label={claim.status} />
+          <Badge size="md" tone={CLAIM_STATUS_BADGE[claim.status] || 'neutral'} label={claim.status} />
         </div>
         <div className={styles.claimInfoGrid}>
           <ClaimField label="Claims Number" value={claim.number} />

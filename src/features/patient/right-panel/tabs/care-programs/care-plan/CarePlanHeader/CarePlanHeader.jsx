@@ -256,8 +256,7 @@ export function CarePlanHeader({ patientId, program, inPanel = false }) {
                     <span className={styles.carePlanCreatedCollapsed}>
                       <Tooltip label={createdText}>
                         <Badge
-                          size="S"
-                          tone="grey"
+                          size="sm"
                           icon="solar:menu-dots-linear"
                           className={styles.carePlanCreatedDotsBadge}
                           aria-label={createdText}

@@ -53,7 +53,7 @@ export function HealthRecords({ memberId }) {
           <Line
             main={p.title}
             sub={p.since ? `Since ${recordDate(p.since)}` : p.type}
-            badge={p.status && p.status !== 'Active' ? <Badge size="S" tone="grey" label={p.status} /> : null}
+            badge={p.status && p.status !== 'Active' ? <Badge size="sm" label={p.status} /> : null}
           />
         )}
       />

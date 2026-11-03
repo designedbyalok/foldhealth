@@ -142,7 +142,7 @@ function GapList({ gaps, title, titleExtra, onSetStatus }) {
           const isOpen = expanded.has(g.code);
           const workable = onSetStatus && MANUAL_GAP_STATUSES.includes(g.status.gap);
           const badge = (
-            <Badge size="S" tone={GAP_STATUS_TONE[g.status.gap]} label={g.status.gap}
+            <Badge size="sm" tone={GAP_STATUS_TONE[g.status.gap]} label={g.status.gap}
               trailingIconElement={workable ? <DownChevronIcon size={12} color="currentColor" /> : undefined} />
           );
           return (
@@ -240,11 +240,11 @@ export function PharmacyGapsCard({ member, onSetStatus, compact = false, titleEx
                     aria-haspopup="menu"
                     aria-label={`Change ${g.code} status`}
                   >
-                    <Badge size="S" tone={GAP_STATUS_TONE[g.status.gap]} label={g.status.gap} trailingIconElement={<DownChevronIcon size={12} color="currentColor" />} />
+                    <Badge size="sm" tone={GAP_STATUS_TONE[g.status.gap]} label={g.status.gap} trailingIconElement={<DownChevronIcon size={12} color="currentColor" />} />
                   </button>
                 ) : (
                   <Tooltip label={onSetStatus ? `Set by Fold${g.status.label ? '' : `: ${g.status.detail}`}` : ''} placement="bottom">
-                    <span><Badge size="S" tone={GAP_STATUS_TONE[g.status.gap]} label={g.status.gap} /></span>
+                    <span><Badge size="sm" tone={GAP_STATUS_TONE[g.status.gap]} label={g.status.gap} /></span>
                   </Tooltip>
                 )}
                 <SubStatus label={g.status.label} />
@@ -376,7 +376,7 @@ export function PharmacyContacts({ member }) {
                 <tr key={p.name}>
                   <td>
                     <span className={styles.contactName}>{p.name}</span>
-                    {i === 0 && pharmacies.length > 1 && <Badge size="S" tone="grey" label="Last used" className={styles.lastUsed} />}
+                    {i === 0 && pharmacies.length > 1 && <Badge size="sm" label="Last used" className={styles.lastUsed} />}
                     <span className={styles.address}>{addressOf(p)}</span>
                   </td>
                   <td><PhoneLink number={p.phone} label={p.name} onDial={dial(p.name, p.phone)} /></td>

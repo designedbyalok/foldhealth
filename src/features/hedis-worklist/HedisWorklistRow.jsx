@@ -28,11 +28,11 @@ const LANG_MAP = {
 };
 
 const RISK_BADGE_VARIANT = {
-  '1_High':     'priority-critical',
-  '2_Mod-High': 'priority-high',
-  '3_Moderate': 'priority-medium',
-  '4_Mod-Low':  'toc-engaged',
-  '5_Low':      'compliance-pass',
+  '1_High':     'danger',
+  '2_Mod-High': 'secondary',
+  '3_Moderate': 'warning',
+  '4_Mod-Low':  'info',
+  '5_Low':      'success',
 };
 
 function CisDueLabel({ member }) {
@@ -71,7 +71,7 @@ function GapSourceIcon({ gap, gaps, onOpenInstance }) {
       <div className={styles.srcCard}>
         <div className={styles.srcRow}>
           <span className={styles.srcLabel}>Source</span>
-          <Badge size="S" tone={manual ? 'secondary' : 'primary'} label={manual ? 'Manual' : 'Claim'} />
+          <Badge size="sm" tone={manual ? 'secondary' : 'primary'} label={manual ? 'Manual' : 'Claim'} />
         </div>
         {gap.reason && (
           <div className={styles.srcBlock}>
@@ -113,15 +113,15 @@ function GapSourceIcon({ gap, gaps, onOpenInstance }) {
 const gapItemClass = (g) => (gapInstanceLabel(g) === 'Previous' ? `${styles.gapItem} ${styles.gapItemPrevious}` : styles.gapItem);
 
 export const STATUS_BADGE_VARIANT = {
-  Open:                            'ai-care',
-  Engaged:                         'status-queued',
-  'Engaged Requires Follow-Up':    'status-queued',
-  Submitted:                       'status-queued',
-  Completed:                       'status-completed',
-  'Closed - Data':                 'ai-neutral',
-  'Closed - Do not call':          'ai-neutral',
-  'Closed - UTR':                  'ai-neutral',
-  'Closed - Other':                'ai-neutral',
+  Open:                            'primary',
+  Engaged:                         'warning',
+  'Engaged Requires Follow-Up':    'warning',
+  Submitted:                       'warning',
+  Completed:                       'success',
+  'Closed - Data':                 'neutral',
+  'Closed - Do not call':          'neutral',
+  'Closed - UTR':                  'neutral',
+  'Closed - Other':                'neutral',
 };
 
 // Outreach: the shared worklist outreach status (icon, result, date, attempt dots).
@@ -167,7 +167,7 @@ export const HEDIS_MIDDLE_COLUMNS = [
             <span className={styles.gapCodeLine}>
             {g.supersededAt ? (
               <Tooltip label={`${MEASURE_NAMES[g.code] || g.code} · previous gap, re-added ${g.supersededAt}`}>
-                <Badge size="M" variant="compliance-na" label={g.code} />
+                <Badge size="md" label={g.code} />
               </Tooltip>
             ) : (
             <Tooltip label={MEASURE_NAMES[g.code] || g.code}>
@@ -177,7 +177,7 @@ export const HEDIS_MIDDLE_COLUMNS = [
                 aria-label={`Open ${g.code}${MEASURE_NAMES[g.code] ? ` (${MEASURE_NAMES[g.code]})` : ''} care gap details`}
                 onClick={(e) => { e.stopPropagation(); ctx.onOpenGap?.(member, g.code); }}
               >
-                <Badge size="M" variant="compliance-na" label={g.code} />
+                <Badge size="md" label={g.code} />
               </button>
             </Tooltip>
             )}
@@ -221,7 +221,7 @@ export const HEDIS_MIDDLE_COLUMNS = [
       <div className={styles.gapItems}>
         {(ctx.visibleGaps || []).map((g, i) => (
           <div key={`${g.code}-${i}`} className={gapItemClass(g)}>
-            <Badge size="M" variant={STATUS_BADGE_VARIANT[g.status] || 'ai-neutral'} label={STATUS_LABEL[g.status] || g.status} />
+            <Badge size="md" tone={STATUS_BADGE_VARIANT[g.status] || 'neutral'} label={STATUS_LABEL[g.status] || g.status} />
           </div>
         ))}
         {/* Empty spacer keeps this column bottom-aligned with Total Gaps' expander. */}
@@ -350,7 +350,7 @@ export const HEDIS_MIDDLE_COLUMNS = [
     sortKey: 'riskLevel',
     renderCell: (member) => (
       member.riskLevel
-        ? <Badge size="M" variant={RISK_BADGE_VARIANT[member.riskLevel]} label={member.riskLevel} />
+        ? <Badge size="md" tone={RISK_BADGE_VARIANT[member.riskLevel]} label={member.riskLevel} />
         : <span className={styles.muted}>-</span>
     ),
   },

@@ -95,7 +95,7 @@ export function ClinicalNoteVersionsDrawer({ note, onClose }) {
               const status = v.status || 'unknown';
               const statusTone = status === 'signed' ? 'success'
                 : status === 'submitted' ? 'warning'
-                : 'grey';
+                : 'neutral';
               return (
                 <li key={key} className={styles.versionRow}>
                   <button
@@ -105,7 +105,7 @@ export function ClinicalNoteVersionsDrawer({ note, onClose }) {
                     aria-expanded={isOpen}
                   >
                     <span className={styles.versionNumber}>v{v.version}</span>
-                    <Badge tone={statusTone} size="S" label={statusLabel(status)} />
+                    <Badge tone={statusTone} size="sm" label={statusLabel(status)} />
                     <span className={styles.versionMeta}>
                       <span className={styles.versionActor}>
                         {v.signedByName || v.reviewerName || v.authorName || 'Unknown'}

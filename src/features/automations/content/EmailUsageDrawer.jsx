@@ -47,7 +47,7 @@ function UsageCard({ automation, onOpen }) {
       <div className={styles.cardDivider} />
       <div className={styles.cardBottom}>
         {isDraft ? (
-          <Badge tone={status.tone} size="S" label={status.label} />
+          <Badge tone={status.tone} size="sm" label={status.label} />
         ) : (
           <>
             <Switch
@@ -56,7 +56,7 @@ function UsageCard({ automation, onOpen }) {
               onChange={toggle}
               ariaLabel={`Turn ${automation.name} ${automation.status === 'active' ? 'off' : 'on'}`}
             />
-            <Badge tone={status.tone} size="S" label={status.label} />
+            <Badge tone={status.tone} size="sm" label={status.label} />
           </>
         )}
       </div>

@@ -23,7 +23,7 @@ export function BlockSummary({ block, title, children }) {
       <span className={styles.summaryHead}>
         <span className={styles.summaryTitleBadge}>
           <span className={styles.summaryTitle}>{title}</span>
-          <Badge tone={status.tone} size="S" label={status.label} />
+          <Badge tone={status.tone} size="sm" label={status.label} />
         </span>
       </span>
       <BlockMeta block={block} />

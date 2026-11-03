@@ -79,7 +79,7 @@ function fmtDay(value) {
 function CallTimer({ seconds }) {
   const m = String(Math.floor(seconds / 60)).padStart(2, '0');
   const s = String(seconds % 60).padStart(2, '0');
-  return <Badge size="S" tone="success" icon="solar:phone-calling-linear" label={`On call · ${m}:${s}`} />;
+  return <Badge size="sm" tone="success" icon="solar:phone-calling-linear" label={`On call · ${m}:${s}`} />;
 }
 
 /**
@@ -279,7 +279,7 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
       title={(
         <span className={styles.title}>
           {`Review ${program.code || program.name || ''} care plan`.replace(/\s+/g, ' ')}
-          <Badge size="S" tone={signed ? 'success' : 'grey'} label={signed ? 'Signed' : 'Draft'} />
+          <Badge size="sm" tone={signed ? 'success' : 'neutral'} label={signed ? 'Signed' : 'Draft'} />
         </span>
       )}
       onClose={onClose}

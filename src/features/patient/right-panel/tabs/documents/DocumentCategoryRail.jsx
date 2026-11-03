@@ -19,7 +19,7 @@ export function DocumentCategoryRail({ categories, active, counts, onSelect, onA
               <button type="button" className={styles.categoryButton} aria-current={selected ? 'true' : undefined} onClick={() => onSelect(c.key)}>
                 <Icon name={c.icon} size={16} color={selected ? 'var(--primary-300)' : 'var(--neutral-300)'} />
                 <span className={styles.categoryLabel}>{c.label}</span>
-                <Badge tone="grey" size="XS" label={String(counts[c.key] || 0)} />
+                <Badge size="xs" label={String(counts[c.key] || 0)} />
               </button>
             </li>
           );

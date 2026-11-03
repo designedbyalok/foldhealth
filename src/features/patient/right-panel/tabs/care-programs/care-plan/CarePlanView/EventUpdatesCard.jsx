@@ -30,12 +30,12 @@ function ChangeRow({ change, busy, canEdit, onDecide }) {
           </span>
           {d.from !== undefined && (
             <span className={styles.pills}>
-              <Badge size="S" tone="grey" label={d.from || 'None'} />
+              <Badge size="sm" label={d.from || 'None'} />
               <Icon name="solar:arrow-right-linear" size={14} color="var(--neutral-200)" />
-              <Badge size="S" tone="primary" label={d.to} />
+              <Badge size="sm" tone="primary" label={d.to} />
             </span>
           )}
-          {change.source === 'ai' && <Badge size="S" tone="unity" label="AI" />}
+          {change.source === 'ai' && <Badge size="sm" tone="unity" label="AI" />}
         </div>
         <span className={styles.rationale}>{change.rationale}</span>
       </div>
@@ -92,7 +92,7 @@ export function EventUpdatesCard({ patientId, program, live, canEdit }) {
         <button type="button" className={styles.title} onClick={() => setOpen(v => !v)} aria-expanded={open}>
           Plan updates from new events
         </button>
-        {count > 0 && <Badge size="S" tone="primary" label={`${count} to review`} />}
+        {count > 0 && <Badge size="sm" tone="primary" label={`${count} to review`} />}
         {state?.evaluating && <span className={styles.muted}>Checking new events…</span>}
         <span className={styles.spacer} />
         <Icon

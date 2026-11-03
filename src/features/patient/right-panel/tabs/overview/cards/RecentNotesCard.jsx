@@ -80,7 +80,7 @@ export function RecentNotesCard({ patientId, actions }) {
                   </button>
                 )}
                 meta={[n.authorName, formatDate(n.updatedAt || n.createdAt)]}
-                trailing={<span className={styles.statusSlotWide}><Badge tone={status.tone} size="S" label={status.label} /></span>}
+                trailing={<span className={styles.statusSlotWide}><Badge tone={status.tone} size="sm" label={status.label} /></span>}
               />
             </div>
           );

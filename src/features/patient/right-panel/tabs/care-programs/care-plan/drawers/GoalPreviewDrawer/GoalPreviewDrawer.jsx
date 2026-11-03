@@ -968,13 +968,13 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
           )}
           {(goalTypeLabel || programBadges.length > 0 || conditionBadges.length > 0) && (
             <div className={styles.badges}>
-              {goalTypeLabel && <Badge tone="grey" label={goalTypeLabel} />}
+              {goalTypeLabel && <Badge label={goalTypeLabel} />}
               {goalTypeLabel && (programBadges.length > 0 || conditionBadges.length > 0) && (
                 <span className={styles.badgeDivider} />
               )}
-              {programBadges.map(b => <Badge key={b} tone="grey" label={b} />)}
+              {programBadges.map(b => <Badge key={b} label={b} />)}
               {programBadges.length > 0 && conditionBadges.length > 0 && <span className={styles.badgeDivider} />}
-              {conditionBadges.map(b => <Badge key={b} tone="grey" label={b} />)}
+              {conditionBadges.map(b => <Badge key={b} label={b} />)}
             </div>
           )}
         </div>
@@ -1007,7 +1007,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
               />
             </div>
             <Badge
-              size="S"
+              size="sm"
               tone={progressTone(progressBand(pct))}
               label={`${pct}% • ${progressBand(pct)}`}
             />

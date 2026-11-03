@@ -101,7 +101,7 @@ function LogTableRow({
       <div className={[styles.tableGrid, styles.dataRow, warning ? styles.dataRowWarning : ''].filter(Boolean).join(' ')}>
         <div className={[styles.cell, warning ? styles.cellProgramWarning : ''].filter(Boolean).join(' ')}>
           <button type="button" className={styles.badgeTrigger} aria-label="Program">
-            <Badge tone="primary" size="S" label={row.program} trailingIconElement={<DownChevronIcon size={13} color="currentColor" />} />
+            <Badge tone="primary" size="sm" label={row.program} trailingIconElement={<DownChevronIcon size={13} color="currentColor" />} />
           </button>
         </div>
 

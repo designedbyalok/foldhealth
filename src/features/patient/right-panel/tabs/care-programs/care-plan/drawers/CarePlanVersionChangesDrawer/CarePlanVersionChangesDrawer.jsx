@@ -415,7 +415,7 @@ function EntityRow({ entity, anchor, chained = false }) {
         <span className={styles.entityLink}>
           <GbiLinkButton data={linked} keepSlot />
         </span>
-        {typeLabel && <Badge tone="grey" size="S" label={typeLabel} />}
+        {typeLabel && <Badge size="sm" label={typeLabel} />}
         {priority && <PriorityIcon priority={priority} size={16} />}
       </span>
     </div>
@@ -432,9 +432,9 @@ function ChangeRow({ row }) {
         {row.change ? (
           <div className={styles.change}>
             <span>{row.change.label}:</span>
-            <Badge tone={row.change.fromTone} size="S" label={row.change.from} />
+            <Badge tone={row.change.fromTone} size="sm" label={row.change.from} />
             <Icon name="solar:arrow-right-linear" size={16} color="var(--neutral-200)" />
-            <Badge tone={row.change.toTone} size="S" label={row.change.to} />
+            <Badge tone={row.change.toTone} size="sm" label={row.change.to} />
           </div>
         ) : (
           row.detail && <div className={styles.target}>{row.detail}</div>
@@ -569,7 +569,7 @@ export function CarePlanVersionChangesDrawer({ rows, signedAt, anchor, plan, pat
             <span className={styles.currentPillText}>Current</span>
           </span>
         )}
-        {draft && <Badge size="S" tone="grey" label="Draft" />}
+        {draft && <Badge size="sm" label="Draft" />}
       </span>
       {stamp && (
         <span className={styles.subtitle}>
@@ -684,9 +684,9 @@ export function CarePlanVersionChangesDrawer({ rows, signedAt, anchor, plan, pat
               {node.change && (
                 <div className={styles.change}>
                   <span>{node.change.label}:</span>
-                  <Badge tone={node.change.fromTone} size="S" label={node.change.from} />
+                  <Badge tone={node.change.fromTone} size="sm" label={node.change.from} />
                   <Icon name="solar:arrow-right-linear" size={16} color="var(--neutral-200)" />
-                  <Badge tone={node.change.toTone} size="S" label={node.change.to} />
+                  <Badge tone={node.change.toTone} size="sm" label={node.change.to} />
                 </div>
               )}
             </>

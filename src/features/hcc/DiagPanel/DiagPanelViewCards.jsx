@@ -112,9 +112,9 @@ export function DiagPanelViewCards(p) {
               // panel and the worklist agree on where each DOS came from.
               // No document on file → 'D' is impossible.
               const srcLetter = dosSourceLetter(d, chartsList.length > 0);
-              const srcMeta = srcLetter === 'D' ? { label: 'Documents', variant: 'dos-source-documents' }
-                : srcLetter === 'C' ? { label: 'Claims',   variant: 'dos-source-claims'    }
-                :                     { label: 'Manual',   variant: 'dos-source-manual'    };
+              const srcMeta = srcLetter === 'D' ? { label: 'Documents', variant: 'neutral' }
+                : srcLetter === 'C' ? { label: 'Claims',   variant: 'primary'    }
+                :                     { label: 'Manual',   variant: 'secondary'    };
               const isClaim = srcLetter === 'C';
               return (
                 <div key={d.date} className={styles.dosPanelRow}>
@@ -127,12 +127,12 @@ export function DiagPanelViewCards(p) {
                         title={`Open claim for DOS ${d.date}`}
                       >
                         <span className={styles.dosPanelDate}>{d.date}</span>
-                        <Badge size="S" variant={srcMeta.variant} label={srcMeta.label} />
+                        <Badge size="sm" tone={srcMeta.variant} label={srcMeta.label} />
                       </button>
                     ) : (
                       <div className={styles.dosPanelDateRow}>
                         <span className={styles.dosPanelDate}>{d.date}</span>
-                        <Badge size="S" variant={srcMeta.variant} label={srcMeta.label} />
+                        <Badge size="sm" tone={srcMeta.variant} label={srcMeta.label} />
                       </div>
                     )}
                     <div className={styles.dosPanelMeta}>

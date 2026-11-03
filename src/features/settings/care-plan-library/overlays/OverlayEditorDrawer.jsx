@@ -140,10 +140,10 @@ export function OverlayEditorDrawer({ overlay, onClose, canEdit }) {
             </p>
             {summary && (
               <div className={styles.summaryChips}>
-                <Badge tone="grey" size="S" label={`${summary.hidden} hidden`} />
-                <Badge tone="grey" size="S" label={`${summary.changed} changed`} />
-                <Badge tone="grey" size="S" label={`${summary.added} added`} />
-                <Badge tone={summary.signoff ? 'info' : 'grey'} size="S" label={summary.signoff ? `Sign-off: ${summary.signoff}` : 'Anyone can sign'} />
+                <Badge size="sm" label={`${summary.hidden} hidden`} />
+                <Badge size="sm" label={`${summary.changed} changed`} />
+                <Badge size="sm" label={`${summary.added} added`} />
+                <Badge tone={summary.signoff ? 'info' : 'neutral'} size="sm" label={summary.signoff ? `Sign-off: ${summary.signoff}` : 'Anyone can sign'} />
               </div>
             )}
             {summary?.orphaned.length > 0 && (
@@ -172,7 +172,7 @@ export function OverlayEditorDrawer({ overlay, onClose, canEdit }) {
               <ul className={styles.localList}>
                 {KINDS.flatMap(([kind, listKey]) => additions[listKey].map(x => (
                   <li key={x.id} className={styles.localRow}>
-                    <Badge tone="grey" size="S" label={cap(kind)} />
+                    <Badge size="sm" label={cap(kind)} />
                     <span className={styles.itemTitle}>{x.title}</span>
                     <span className={styles.muted}>{[cap(x.priority || x.config?.priority), x.kind, x.goalTitle || x.goalTitles?.[0]].filter(Boolean).join(' • ')}</span>
                     {canEdit && <ActionButton icon="solar:trash-bin-trash-linear" size="sm" tooltip="Remove" onClick={() => removeLocal(listKey, x.id)} />}

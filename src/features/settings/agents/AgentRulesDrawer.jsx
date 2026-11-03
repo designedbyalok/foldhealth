@@ -9,7 +9,7 @@ import { useAppStore } from '../../../store/useAppStore';
 import { Switch } from '../../../components/Switch/Switch';
 import { defaultRules, customRules, groupSettings } from '../../../data/chatGroups'; // Rules defaults, TODO: move to store
 
-const RULE_BADGE_VARIANT = { safety: 'status-failed', system: 'ai-care', custom: 'status-completed' };
+const RULE_BADGE_VARIANT = { safety: 'danger', system: 'primary', custom: 'success' };
 const RULE_TYPE_LABEL = { safety: 'Safety', system: 'System', custom: 'Custom' };
 
 export function AgentRulesDrawer() {
@@ -73,8 +73,8 @@ export function AgentRulesDrawer() {
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 'var(--font-lg)', fontWeight: 500, color: 'var(--neutral-500)', display: 'flex', alignItems: 'center', gap: 6 }}>
               Care Assistant
-              <Badge variant="ai-care" label="AI Agent" />
-              <Badge variant="compliance-na" label="FAQ Responder" />
+              <Badge tone="primary" label="AI Agent" />
+              <Badge label="FAQ Responder" />
             </div>
             <div style={{ fontSize: 'var(--font-sm)', color: 'var(--neutral-200)', marginTop: 2 }}>
               Assigned to: <strong style={{ color: 'var(--neutral-300)' }}>{group.name}</strong> · Global defaults + group overrides
@@ -218,7 +218,7 @@ export function AgentRulesDrawer() {
             {/* Content */}
             <div style={{ flex: 1, padding: '10px 14px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                <Badge variant={RULE_BADGE_VARIANT[r.type]} label={RULE_TYPE_LABEL[r.type]} />
+                <Badge tone={RULE_BADGE_VARIANT[r.type]} label={RULE_TYPE_LABEL[r.type]} />
                 <span style={{ fontWeight: 500, fontSize: 'var(--font-md)', color: 'var(--neutral-500)' }}>{r.name}</span>
                 {r.locked && <Icon name="solar:shield-check-linear" size={12} color="var(--neutral-200)" />}
                 {r.priority && (

@@ -43,7 +43,7 @@ export function ImpactAnalysis({ rows, marked, versionOf = templateVersion, empt
                 <td>{r.ipa || '-'}</td>
                 <td>{r.careManager || 'Unassigned'}</td>
                 <td>{versionOf(r)}</td>
-                <td>{marked && (marked.has(r.instanceId) ? <Badge tone="info" size="S" label="Moves" /> : <span className={styles.muted}>Stays</span>)}</td>
+                <td>{marked && (marked.has(r.instanceId) ? <Badge tone="info" size="sm" label="Moves" /> : <span className={styles.muted}>Stays</span>)}</td>
               </tr>
             ))}
           </tbody>

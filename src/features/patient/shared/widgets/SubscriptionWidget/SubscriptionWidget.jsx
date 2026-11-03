@@ -4,7 +4,7 @@ import { PanelSection, PanelSectionItem } from '../../../../../components/PanelS
 import styles from './SubscriptionWidget.module.css';
 
 const SUBSCRIPTIONS = [
-  { id: 1, name: 'Daily Subscription', period: 'Feb 11, 2025 – Mar 11, 2026', expiry: 'Expires in an hour', status: 'Active', badgeVariant: 'toc-enrolled', price: '$10/Day' },
+  { id: 1, name: 'Daily Subscription', period: 'Feb 11, 2025 – Mar 11, 2026', expiry: 'Expires in an hour', status: 'Active', badgeVariant: 'success', price: '$10/Day' },
 ];
 
 export function SubscriptionWidget() {
@@ -19,7 +19,7 @@ export function SubscriptionWidget() {
           trailing={(
             <>
               <span className={styles.price}>{s.price}</span>
-              <Badge variant={s.badgeVariant} label={s.status} />
+              <Badge tone={s.badgeVariant} label={s.status} />
             </>
           )}
         />

@@ -285,7 +285,7 @@ function PharmacyGapDrawerBody({ target, row }) {
                 onSelect={(u) => setPharmacyAssignee(m.id, u)}
               />
               <Tooltip label={`Member progress: ${m.progress.closed} of ${m.progress.total} gaps closed (Closed or Met for Year)`} placement="bottom">
-                <span><Badge size="M" tone={PROGRESS_TONE[m.progress.label]} label={m.progress.label} style={{ height: 28 }} /></span>
+                <span><Badge size="md" tone={PROGRESS_TONE[m.progress.label]} label={m.progress.label} style={{ height: 28 }} /></span>
               </Tooltip>
               <span className={styles.headerDivider} />
               <ActionButton

@@ -1,8 +1,8 @@
-import { Fragment } from 'react';
 import { Badge } from './Badge';
 
-const TONES = ['white','grey','ghost','primary','secondary','success','warning','error','info','disabled'];
-const SIZES = ['S','M','L'];
+const TONES = ['neutral', 'primary', 'secondary', 'success', 'warning', 'danger', 'info', 'magenta', 'unity'];
+const VARIANTS = ['soft', 'outline', 'ghost', 'solid'];
+const SIZES = ['xs', 'sm', 'md', 'lg'];
 
 export default {
   title: 'Core/Badge',
@@ -12,112 +12,103 @@ export default {
     docs: {
       description: {
         component:
-          'A small pill that surfaces status, category, or scoring at a glance. Canonical API: pick a `tone` + `size` from the Figma "Fold Pixel 1.0" spec. Legacy `variant` prop (`lace-*`, `toc-*`, `awv-*`, `status-*`, etc.) stays supported for existing callers.',
+          'A small pill that surfaces a status, category or count. Two axes, as in the Figma "Fold Pixel 1.0" Badge (node 24:1678): `tone` is the meaning (`neutral`, `primary`, `secondary`, `success`, `warning`, `danger`, `info`, plus the `magenta` Out of Office and `unity` AI accents) and `variant` is the emphasis (`soft` tinted pill, `outline` white with a border, `ghost` bare text, `solid` filled count). Statuses belong to features: a feature maps its own values to a tone and the Badge only paints it.',
       },
     },
   },
   argTypes: {
-    tone: {
-      control: 'select',
-      options: TONES,
-      description: 'Canonical Figma tone. Drives the color palette.',
-      table: { defaultValue: { summary: 'undefined' } },
-    },
+    tone: { control: 'select', options: TONES, table: { defaultValue: { summary: 'neutral' } } },
+    variant: { control: 'select', options: VARIANTS, table: { defaultValue: { summary: 'soft' } } },
     size: {
-      control: 'inline-radio',
-      options: SIZES,
-      description: 'S=18px, M=22px, L=30px height.',
-      table: { defaultValue: { summary: 'M' } },
-    },
-    hover: {
-      control: 'boolean',
-      description: 'Force the hover-state class (Storybook demo). Real UX uses CSS :hover.',
-    },
-    label: { control: 'text', description: 'Badge text' },
-    icon: { control: 'text', description: 'Optional leading Solar icon name (e.g. solar:check-circle-bold)' },
-    trailingIcon: { control: 'text', description: 'Optional trailing Solar icon name' },
-    dot: { control: 'boolean', description: 'Show leading colored dot' },
-    chevron: { control: 'boolean', description: 'Show the shared DownChevronIcon trailing (popover-trigger badges).' },
-    variant: {
       control: 'select',
-      options: [
-        '',
-        'status-completed', 'status-scheduled', 'status-queued', 'status-failed',
-        'lace-high', 'lace-medium', 'lace-low',
-        'toc-enrolled', 'toc-engaged', 'toc-attempted', 'toc-new', 'toc-oncall',
-        'outreach-48h', 'outreach-7d', 'ai-care',
-        'awv-open', 'awv-new', 'awv-unable', 'awv-engaged', 'awv-attempted', 'awv-engaged-followup',
-      ],
-      description: 'Legacy variant (feature-specific). Prefer `tone`.',
+      options: [undefined, ...SIZES],
+      description: 'xs 18px, sm 20px, md 24px, lg 28px. Unset is the compact base (about 18px) older rows use.',
     },
+    disabled: { control: 'boolean', description: 'Muted, for a value that does not apply' },
+    hover: { control: 'boolean', description: 'Force the hover look (only badges with a chevron or dismiss button tint for real)' },
+    label: { control: 'text' },
+    icon: { control: 'text', description: 'Leading Solar icon name' },
+    trailingIcon: { control: 'text', description: 'Trailing Solar icon name' },
+    dot: { control: 'boolean', description: 'Leading dot in the text color' },
+    chevron: { control: 'boolean', description: 'Trailing chevron, for a popover-trigger badge' },
   },
 };
 
 export const Playground = {
-  args: { tone: 'primary', size: 'M', label: 'Badge', hover: false, dot: false, chevron: false },
-  render: (args) => <Badge {...args} />,
+  args: { tone: 'primary', variant: 'soft', size: 'md', label: 'Badge', disabled: false, hover: false, dot: false, chevron: false },
+};
+
+const cell = { padding: 'var(--space-1) var(--space-2)' };
+const head = { ...cell, fontSize: 'var(--font-xs)', color: 'var(--neutral-300)', textAlign: 'left', fontWeight: 500 };
+
+/** Every tone × variant at md, plus the hover look. The Figma matrix, node 24:1678. */
+export const ToneMatrix = {
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <table style={{ borderCollapse: 'collapse' }}>
+      <thead>
+        <tr>
+          <th style={head} />
+          {VARIANTS.map(v => <th key={v} style={head}>{v}</th>)}
+          <th style={head}>soft, hover</th>
+        </tr>
+      </thead>
+      <tbody>
+        {TONES.map(t => (
+          <tr key={t}>
+            <th style={head}>{t}</th>
+            {VARIANTS.map(v => <td key={v} style={cell}><Badge tone={t} variant={v} size="md" label="Badge" /></td>)}
+            <td style={cell}><Badge tone={t} size="md" hover chevron label="Badge" /></td>
+          </tr>
+        ))}
+        <tr>
+          <th style={head}>disabled</th>
+          <td style={cell} colSpan={5}><Badge size="md" disabled label="Not applicable" /></td>
+        </tr>
+      </tbody>
+    </table>
+  ),
+};
+
+/** The four sizes, and the unsized compact base. */
+export const Sizes = {
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
+      {SIZES.map(s => <Badge key={s} tone="primary" size={s} icon="solar:check-circle-linear" label={`size="${s}"`} />)}
+      <Badge tone="primary" icon="solar:check-circle-linear" label="unsized" />
+    </div>
+  ),
+};
+
+/** Slots: dot, leading icon, chevron, count, dismiss. */
+export const Slots = {
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+      <Badge tone="success" size="md" label="Enrolled" />
+      <Badge tone="success" size="md" label="Enrolled" dot />
+      <Badge tone="success" size="md" label="Enrolled" icon="solar:check-circle-linear" />
+      <Badge tone="primary" size="md" label="DOS" chevron />
+      <Badge size="md" label="Recorded By" chevron />
+      <Badge tone="secondary" variant="solid" size="xs" label="3" />
+      <Badge variant="outline" size="md" label="Tag" trailingIcon="solar:close-circle-linear" onTrailingIconClick={() => {}} />
+    </div>
+  ),
 };
 
 /**
- * Mirrors the Figma matrix at node 24:1678, every tone (rows) × size
- * (columns) × hover=false/true (row pairs). Read-only visual reference.
+ * How a feature shows its statuses: it owns the map from its values to a tone.
+ * (Before, each status was its own Badge variant.)
  */
-export const AllStates = {
-  parameters: {
-    docs: {
-      description: {
-        story: 'Every tone × size × hover=false/true. Mirrors the Figma "Badge" node 24:1678 layout.',
-      },
-    },
-  },
+export const FeatureStatusMap = {
+  parameters: { controls: { disable: true } },
   render: () => {
-    const cellStyle = { padding: 6, display: 'flex', justifyContent: 'center' };
-    const labelStyle = { padding: '6px 12px', fontSize: 'var(--font-sm)', fontWeight: 500, color: 'var(--neutral-300)', textTransform: 'capitalize', textAlign: 'right' };
-    const headerStyle = { padding: '6px 12px', fontSize: 'var(--font-xs)', fontWeight: 600, color: 'var(--neutral-400)', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center' };
+    const TOC_STATUS_TONE = { Enrolled: 'success', Engaged: 'info', Attempted: 'warning', New: 'neutral', 'On Call': 'primary' };
     return (
-      <div style={{ padding: 24, fontFamily: 'Inter, sans-serif' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '120px repeat(3, 1fr)', gap: 4, alignItems: 'center' }}>
-          <div />
-          {SIZES.map(size => <div key={size} style={headerStyle}>Size {size}</div>)}
-          {TONES.flatMap(tone => {
-            // Disabled + Ghost skip the hover row (matches Figma: those types
-            // don't have a hover state defined).
-            const hoverStates = (tone === 'disabled') ? [false] : [false, true];
-            return hoverStates.map(hover => (
-              <Fragment key={`${tone}-${hover}`}>
-                <div style={labelStyle}>
-                  {tone}{hover ? ' (hover)' : ''}
-                </div>
-                {SIZES.map(size => (
-                  <div key={size} style={cellStyle}>
-                    <Badge tone={tone} size={size} hover={hover} label="Badge" />
-                  </div>
-                ))}
-              </Fragment>
-            ));
-          })}
-        </div>
+      <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+        {Object.entries(TOC_STATUS_TONE).map(([status, tone]) => <Badge key={status} tone={tone} size="md" label={status} />)}
       </div>
     );
   },
-};
-
-/**
- * Slot variations: dot, leading icon, trailing icon, count, all together.
- */
-export const Slots = {
-  parameters: {
-    docs: { description: { story: 'Slot options: dot, leading icon, trailing icon.' } },
-  },
-  render: () => (
-    <div style={{ display: 'flex', gap: 12, padding: 24, flexWrap: 'wrap', fontFamily: 'Inter, sans-serif' }}>
-      <Badge tone="success" size="M" label="Enrolled" />
-      <Badge tone="success" size="M" label="Enrolled" dot />
-      <Badge tone="success" size="M" label="Enrolled" icon="solar:check-circle-bold" />
-      <Badge tone="warning" size="M" label="Attempted" trailingIcon="solar:alt-arrow-down-linear" />
-      <Badge tone="primary" size="M" label="DOS" chevron />
-      <Badge tone="grey" size="M" label="Recorded By" chevron />
-      <Badge tone="error" size="M" label="3" />
-    </div>
-  ),
 };

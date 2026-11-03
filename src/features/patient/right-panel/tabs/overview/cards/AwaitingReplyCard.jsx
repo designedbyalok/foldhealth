@@ -63,7 +63,7 @@ export function AwaitingReplyCard({ patient }) {
                       <span key="wait" className={TONE_CLASS[wait.tone]}>Waiting {wait.label}</span>,
                       c.assigned_to ? `Reply: ${c.assigned_to}` : 'Unassigned',
                     ]}
-                    trailing={<Badge tone="info" size="S" label={String(c.unread_count)} />}
+                    trailing={<Badge tone="info" size="sm" label={String(c.unread_count)} />}
                   />
                 </div>
               );

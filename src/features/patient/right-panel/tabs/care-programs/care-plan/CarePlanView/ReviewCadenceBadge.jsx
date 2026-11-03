@@ -121,7 +121,7 @@ export function ReviewCadenceBadge({ patientId, program, plan, canEdit }) {
     `Overdue ${plural(Number(config.overdueAfterDays) || 0, 'day')} after the due date`,
   ].filter(Boolean);
 
-  const tone = status.state === 'overdue' ? 'error' : status.state === 'due' ? 'warning' : 'grey';
+  const tone = status.state === 'overdue' ? 'danger' : status.state === 'due' ? 'warning' : 'neutral';
   const stateLabel = status.state === 'overdue'
     ? `Overdue ${plural(status.daysOverdue, 'day')}`
     : status.state === 'due' ? (status.daysOverdue ? `Due ${plural(status.daysOverdue, 'day')} ago` : 'Due today') : null;
@@ -148,7 +148,7 @@ export function ReviewCadenceBadge({ patientId, program, plan, canEdit }) {
         aria-expanded={open}
         aria-label={`Review cadence: ${label}`}
       >
-        <Badge size="S" tone={tone} icon="solar:calendar-linear" label={label} />
+        <Badge size="sm" tone={tone} icon="solar:calendar-linear" label={label} />
       </button>
       {open && (
         <Popover anchor={btnRef} onOpenChange={o => !o && close()} placement="bottom-start" width={320}>
@@ -169,7 +169,7 @@ export function ReviewCadenceBadge({ patientId, program, plan, canEdit }) {
                   <Detail label="Cadence"><strong>{cadence.label}</strong> ({why})</Detail>
                   <Detail label="Next review">
                     {due ? <strong>{fmt(due)}</strong> : 'Scheduled once the plan is signed'}
-                    {stateLabel && <Badge size="S" tone={tone} label={stateLabel} />}
+                    {stateLabel && <Badge size="sm" tone={tone} label={stateLabel} />}
                   </Detail>
                   <Detail label="Last reviewed">{lastReview ? fmt(new Date(lastReview)) : 'Not reviewed with the patient yet'}</Detail>
                 </div>

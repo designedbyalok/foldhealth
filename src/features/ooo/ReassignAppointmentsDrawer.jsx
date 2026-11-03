@@ -134,7 +134,7 @@ export function ReassignAppointmentsDrawer({ users, initialUser, initialRecordId
               <span className={styles.recordOptionHead}>{span}</span>
               <span className={styles.recordOptionSub}>{length}</span>
             </span>
-            <Badge tone={STATUS_TONE[status]} size="S" label={status} />
+            <Badge tone={STATUS_TONE[status]} size="sm" label={status} />
           </span>
         ),
         triggerLabel: `${span} • ${length}`,

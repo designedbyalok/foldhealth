@@ -22,10 +22,10 @@ const STATUS_TONE = {
   'Engaged Requires Follow-Up':  'warning',
   'Submitted':                   'warning',
   'Completed':                   'success',
-  'Closed - Data':               'grey',
-  'Closed - Do not call':        'grey',
-  'Closed - UTR':                'grey',
-  'Closed - Other':              'grey',
+  'Closed - Data':               'neutral',
+  'Closed - Do not call':        'neutral',
+  'Closed - UTR':                'neutral',
+  'Closed - Other':              'neutral',
 };
 
 export function CareGapDetailDrawerHeader({
@@ -147,8 +147,8 @@ export function CareGapDetailDrawerHeader({
                 aria-expanded={statusOpen}
               >
                 <Badge
-                  size="M"
-                  tone={STATUS_TONE[status] || 'grey'}
+                  size="md"
+                  tone={STATUS_TONE[status] || 'neutral'}
                   label={status}
                   chevron={!statusLocked}
                   icon={status === 'Completed' ? 'solar:check-circle-linear' : undefined}

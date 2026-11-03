@@ -218,7 +218,7 @@ const Section = forwardRef(function Section({ title, count, open, onToggle, chil
         type="button"
         className={[styles.sectionHead, dimmed ? styles.dimmed : ''].filter(Boolean).join(' ')} onClick={onToggle} aria-expanded={open}>
         <span className={styles.sectionTitle}>{title}</span>
-        {count > 0 && <Badge tone="grey" size="S" label={String(count)} className={styles.countBadge} />}
+        {count > 0 && <Badge size="sm" label={String(count)} className={styles.countBadge} />}
         <DownChevronIcon size={14} className={open ? styles.chevron : styles.chevronClosed} />
       </button>
       <div className={[styles.sectionBody, open ? styles.sectionBodyOpen : ''].filter(Boolean).join(' ')}>

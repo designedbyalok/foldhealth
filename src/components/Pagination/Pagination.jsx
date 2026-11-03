@@ -230,7 +230,7 @@ export function Pagination({
     <div className={styles.pagination} ref={barRef}>
       {showCount && (
         <span className={styles.summary}>
-          <Badge tone="grey" size="S" label={`${matched} of ${totalCount} records found`} />
+          <Badge size="sm" label={`${matched} of ${totalCount} records found`} />
         </span>
       )}
 

@@ -15,7 +15,7 @@ export function RetiringBadge({ template, templates, className }) {
   return (
     <Tooltip label={retirementSummary(template, templates)}>
       <Badge
-        size="S"
+        size="sm"
         tone="warning"
         icon="solar:calendar-mark-linear"
         label={`Retiring on ${formatRetireDate(day)}`}

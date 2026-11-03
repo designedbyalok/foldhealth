@@ -151,7 +151,7 @@ export function ReassignPlanner({ appointments, awayUser, timeWindow, plan, onPl
   };
   const cancelledTag = (ids) => (
     <span className={styles.cancelledTag}>
-      <Badge tone="error" size="S" label="Cancelled" />
+      <Badge tone="danger" size="sm" label="Cancelled" />
       <ActionButton icon="solar:undo-left-linear" size="sm" tooltip="Undo Cancellation" tooltipLeft onClick={() => clear(ids)} />
     </span>
   );

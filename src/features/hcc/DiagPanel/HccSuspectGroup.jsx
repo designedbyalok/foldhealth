@@ -191,8 +191,8 @@ export function SuspectCard({ icd, dosList = EMPTY_DOS_LIST, member, reviewLocke
       </div>
 
       <div className={styles.chips}>
-        <Badge tone="grey" size="S" label={(icd.hcc || '').split(' - ')[0] || 'No HCC'} />
-        {icd.type && <Badge tone="primary" size="S" label={icd.type} />}
+        <Badge size="sm" label={(icd.hcc || '').split(' - ')[0] || 'No HCC'} />
+        {icd.type && <Badge tone="primary" size="sm" label={icd.type} />}
       </div>
 
       <div className={styles.dosRow}>
@@ -315,7 +315,7 @@ function ResolvedPill({ action }) {
     return <span className={styles.dismissedPill}><Icon name="solar:close-circle-linear" size={13} color="currentColor" /> Dismissed</span>;
   }
   if (action === 'missed') {
-    return <Badge size="S" tone="warning" icon="solar:flag-linear" label="Missed Opportunity" />;
+    return <Badge size="sm" tone="warning" icon="solar:flag-linear" label="Missed Opportunity" />;
   }
   return <span className={styles.deferredPill}><Icon name="solar:alarm-linear" size={13} color="currentColor" /> Deferred</span>;
 }

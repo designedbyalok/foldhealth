@@ -33,25 +33,67 @@
 .sizeM { height: 24px; padding: var(--space-1) var(--space-2); font-size: var(--font-base); box-sizing: border-box; }
 .sizeL { height: 28px; padding: var(--space-2);                font-size: var(--font-lg);   box-sizing: border-box; border-radius: 6px; }
 
-/* Tones: the 10 canonical Types from the Figma matrix. Uses design-token
-   backgrounds + color-mix borders (matches the pattern from .status-ready,
-   .compliance-*, .awv-*). `.hover` forces the hover-state background for
-   Storybook demos. Real hover only darkens badges that do something
-   (a chevron popover or a dismiss button); status / count badges stay still. */
-.tone-white     { background: var(--neutral-0);           color: var(--neutral-400);    border-color: var(--neutral-150); }
-.tone-grey      { background: var(--neutral-50);          color: var(--neutral-400);    border-color: var(--neutral-150); }
-.tone-ghost     { background: transparent;                color: var(--neutral-300);    border-color: transparent; }
-.tone-primary   { background: var(--primary-50);          color: var(--primary-300);    border-color: color-mix(in srgb, var(--primary-300) 20%, transparent); }
-.tone-secondary { background: var(--secondary-50);        color: var(--secondary-300);  border-color: color-mix(in srgb, var(--secondary-300) 20%, transparent); }
-.tone-success   { background: var(--status-success-light);color: var(--status-success); border-color: color-mix(in srgb, var(--status-success) 20%, transparent); }
-.tone-warning   { background: var(--status-warning-light);color: var(--status-warning); border-color: color-mix(in srgb, var(--status-warning) 20%, transparent); }
-.tone-error     { background: var(--status-error-light);  color: var(--status-error);   border-color: color-mix(in srgb, var(--status-error) 20%, transparent); }
-.tone-info      { background: var(--status-info-light);   color: var(--status-info);    border-color: color-mix(in srgb, var(--status-info) 20%, transparent); }
-.tone-disabled  { background: var(--neutral-50);          color: var(--neutral-200);    border-color: var(--neutral-100); }
+/* ── Tone × variant ──
+ * A tone sets custom properties; a variant decides how to paint them. The
+ * tone lands as data-tone on the badge. Values are the Figma "Fold Pixel
+ * 1.0" Badge types (node 24:1678). */
+.badge {
+  --badge-fg: var(--neutral-400);
+  --badge-bg: var(--neutral-50);
+  --badge-border: var(--neutral-150);
+  --badge-line: var(--neutral-150);
+  --badge-solid: var(--neutral-400);
+  --badge-hover: var(--neutral-100);
+  --badge-ghost-fg: var(--neutral-300);
+}
+.badge[data-tone='primary'] {
+  --badge-fg: var(--primary-300);
+  --badge-bg: var(--primary-50);
+  --badge-border: color-mix(in srgb, var(--primary-300) 20%, transparent);
+  --badge-line: color-mix(in srgb, var(--primary-300) 40%, transparent);
+  --badge-solid: var(--primary-300);
+  --badge-hover: var(--primary-100);
+  --badge-ghost-fg: var(--primary-300);
+}
+/* The AA text shade of the orange accent; the base 300 is too light for text. */
+.badge[data-tone='secondary'] {
+  --badge-fg: var(--secondary-300-fg);
+  --badge-bg: var(--secondary-50);
+  --badge-border: color-mix(in srgb, var(--secondary-300) 20%, transparent);
+  --badge-line: color-mix(in srgb, var(--secondary-300) 40%, transparent);
+  --badge-solid: var(--secondary-300);
+  --badge-hover: var(--secondary-100);
+  --badge-ghost-fg: var(--secondary-300-fg);
+}
+.badge[data-tone='success'],
+.badge[data-tone='warning'],
+.badge[data-tone='danger'],
+.badge[data-tone='info'],
+.badge[data-tone='magenta'] {
+  --badge-bg: var(--badge-tone-light);
+  --badge-fg: var(--badge-tone);
+  --badge-border: color-mix(in srgb, var(--badge-tone) 20%, transparent);
+  --badge-line: color-mix(in srgb, var(--badge-tone) 40%, transparent);
+  --badge-solid: var(--badge-tone);
+  --badge-hover: color-mix(in srgb, var(--badge-tone) 12%, transparent);
+  --badge-ghost-fg: var(--badge-tone);
+}
+.badge[data-tone='success'] { --badge-tone: var(--status-success); --badge-tone-light: var(--status-success-light); }
+.badge[data-tone='warning'] { --badge-tone: var(--status-warning); --badge-tone-light: var(--status-warning-light); }
+.badge[data-tone='danger']  { --badge-tone: var(--status-error);   --badge-tone-light: var(--status-error-light); }
+.badge[data-tone='info']    { --badge-tone: var(--status-info);    --badge-tone-light: var(--status-info-light); }
 /* Out of Office pink (Figma Eventus 17581:115194). */
-.tone-magenta   { background: var(--accent-light-magenta); color: var(--accent-magenta); border-color: color-mix(in srgb, var(--accent-magenta) 20%, transparent); }
+.badge[data-tone='magenta'] { --badge-tone: var(--accent-magenta); --badge-tone-light: var(--accent-light-magenta); }
 /* Figma "Accent Dark / AI Color": gradient text on primary-50. */
-.tone-unity     { background: var(--primary-50);          color: var(--unity-gradient-mid); border-color: var(--unity-gradient-from); }
+.badge[data-tone='unity'] {
+  --badge-fg: var(--unity-gradient-mid);
+  --badge-bg: var(--primary-50);
+  --badge-border: var(--unity-gradient-from);
+  --badge-line: var(--unity-gradient-from);
+  --badge-solid: var(--unity-gradient-mid);
+  --badge-hover: var(--primary-100);
+  --badge-ghost-fg: var(--unity-gradient-mid);
+}
 .unityText {
   background: linear-gradient(160deg, var(--unity-gradient-from) 2%, var(--unity-gradient-mid) 52%, var(--unity-gradient-to) 94%);
   -webkit-background-clip: text;
@@ -59,16 +101,24 @@
   color: transparent;
 }
 
-.tone-white.hover,     .interactive.tone-white:hover     { background: var(--neutral-50); }
-.tone-grey.hover,      .interactive.tone-grey:hover      { background: var(--neutral-100); }
-.tone-ghost.hover,     .interactive.tone-ghost:hover     { background: var(--neutral-50); }
-.tone-primary.hover,   .interactive.tone-primary:hover   { background: var(--primary-100); }
-.tone-secondary.hover, .interactive.tone-secondary:hover { background: var(--secondary-100); }
-.tone-success.hover,   .interactive.tone-success:hover   { background: color-mix(in srgb, var(--status-success) 12%, transparent); }
-.tone-warning.hover,   .interactive.tone-warning:hover   { background: color-mix(in srgb, var(--status-warning) 12%, transparent); }
-.tone-error.hover,     .interactive.tone-error:hover     { background: color-mix(in srgb, var(--status-error) 12%, transparent); }
-.tone-info.hover,      .interactive.tone-info:hover      { background: color-mix(in srgb, var(--status-info) 12%, transparent); }
-/* Disabled never darkens on hover: it's disabled. */
+.soft    { background: var(--badge-bg);   color: var(--badge-fg);       border-color: var(--badge-border); }
+.outline { background: var(--neutral-0);  color: var(--badge-fg);       border-color: var(--badge-line); }
+.ghost   { background: transparent;       color: var(--badge-ghost-fg); border-color: transparent; }
+.solid   { background: var(--badge-solid); color: var(--on-color);      border-color: transparent; }
+
+/* Only badges you can act on (a chevron popover or a dismiss button) tint
+ * on hover; `.hover` forces it for Storybook. */
+.soft.hover,    .interactive.soft:hover    { background: var(--badge-hover); }
+.outline.hover, .interactive.outline:hover,
+.ghost.hover,   .interactive.ghost:hover   { background: var(--neutral-50); }
+
+/* A value that doesn't apply: muted, and never tints. */
+.disabled,
+.disabled.hover {
+  background: var(--neutral-50);
+  color: var(--neutral-200);
+  border-color: var(--neutral-100);
+}
 
 .dot {
   width: 6px;
@@ -76,179 +126,6 @@
   border-radius: 50%;
   background: currentColor;
   flex-shrink: 0;
-}
-
-/* Notification count pill */
-.notification {
-  background: var(--secondary-300);
-  color: #fff;
-  font-size: var(--font-2xs);
-  padding: 1px 4px;
-  min-width: 16px;
-  justify-content: center;
-  border-color: transparent;
-}
-
-/* LACE */
-.lace-high { background: var(--status-error-light); color: var(--status-error); border-color: rgba(215,40,37,0.2); }
-.lace-medium { background: var(--status-warning-light); color: var(--status-warning); border-color: rgba(217,165,11,0.2); }
-.lace-low { background: var(--status-success-light); color: var(--status-success); border-color: rgba(0,155,83,0.2); }
-
-/* TOC Status */
-.toc-enrolled { background: var(--status-success-light); color: var(--status-success); border-color: rgba(0,155,83,0.2); }
-.toc-engaged { background: var(--status-info-light); color: var(--status-info); border-color: rgba(20,94,204,0.2); }
-.toc-attempted { background: var(--status-warning-light); color: var(--status-warning); border-color: rgba(217,165,11,0.2); }
-.toc-new { background: var(--neutral-50); color: var(--neutral-300); border-color: rgba(111,122,144,0.2); }
-.toc-oncall { background: var(--primary-100); color: var(--primary-300); border-color: rgba(140,90,226,0.2); }
-
-/* Agent Status */
-.status-ready { background: var(--status-success-light); color: var(--status-success-bright); border-color: color-mix(in srgb, var(--status-success-bright) 20%, transparent); }
-.status-completed { background: var(--status-success-light); color: var(--status-success); border-color: rgba(0,155,83,0.2); }
-.status-oncall { background: var(--status-success-light); color: var(--status-success); border-color: rgba(0,155,83,0.2); }
-.status-scheduled { background: var(--status-info-light); color: var(--status-info); border-color: rgba(20,94,204,0.2); }
-.status-queued { background: var(--status-warning-light); color: var(--status-warning); border-color: rgba(217,165,11,0.2); }
-.status-failed { background: var(--status-error-light); color: var(--status-error); border-color: rgba(215,40,37,0.2); }
-.status-review { background: var(--status-warning-light); color: var(--status-warning); border-color: rgba(217,165,11,0.2); }
-
-/* AI Tags */
-.ai-risk { background: var(--status-error-light); color: var(--status-error); border-color: rgba(215,40,37,0.2); }
-.ai-care { background: var(--primary-100); color: var(--primary-300); border-color: rgba(140,90,226,0.2); }
-.ai-social { background: var(--status-warning-light); color: var(--status-warning); border-color: rgba(217,165,11,0.2); }
-.ai-med { background: var(--status-success-light); color: var(--status-success); border-color: rgba(0,155,83,0.2); }
-.ai-neutral { background: var(--neutral-50); color: var(--neutral-300); border-color: rgba(111,122,144,0.2); }
-
-/* Outreach */
-.outreach-48h { background: var(--status-error-light); color: var(--status-error); border-color: rgba(215,40,37,0.2); }
-.outreach-7d { background: var(--status-info-light); color: var(--status-info); border-color: rgba(20,94,204,0.2); }
-
-/* Yes/No */
-.yes { background: var(--status-error-light); color: var(--status-error); border-color: rgba(215,40,37,0.2); }
-.no { background: var(--neutral-50); color: var(--neutral-300); border-color: rgba(111,122,144,0.2); }
-
-/* DOS source: matches the letter badge in HccWorklistRow (D/C/M) so the
-   DiagPanel and worklist tell the same colour story per source. */
-.dos-source-documents { background: var(--neutral-50);   color: var(--neutral-300);   border-color: var(--neutral-150); }
-.dos-source-claims    { background: var(--primary-50);   color: var(--primary-300);   border-color: var(--primary-200); }
-.dos-source-manual    { background: var(--secondary-50); color: var(--secondary-300); border-color: var(--secondary-200); }
-
-/* @mention rendered inline in comment bodies. Reads as a link, not a
-   pill: no chip background/border, just the secondary (orange) text tone
-   so the reader can spot the tagged user without the chip breaking the
-   sentence rhythm. Padding is zeroed so the name sits flush with
-   surrounding text. */
-.mention {
-  background: transparent;
-  color: var(--secondary-300);
-  border-color: transparent;
-  padding: 0;
-  font-weight: 500;
-}
-
-/* Care Plan */
-.care-plan-none { background: var(--neutral-50); color: var(--neutral-300); border-color: rgba(111,122,144,0.2); }
-.care-plan-updated { background: var(--status-success-light); color: var(--status-success); border-color: rgba(0,155,83,0.2); }
-.care-plan-pending { background: var(--status-warning-light); color: var(--status-warning); border-color: rgba(217,165,11,0.2); }
-
-/* AWV Program Sub Status: mirrors the TOC status palette. `open` / `new`
-   are informational (blue), `unable` is neutral, `engaged` is success,
-   `attempted` + `engaged-followup` are warning. */
-.awv-open              { background: var(--status-info-light);    color: var(--status-info);    border-color: color-mix(in srgb, var(--status-info) 20%, transparent); }
-.awv-new               { background: var(--status-info-light);    color: var(--status-info);    border-color: color-mix(in srgb, var(--status-info) 20%, transparent); }
-.awv-unable            { background: var(--neutral-50);           color: var(--neutral-300);    border-color: color-mix(in srgb, var(--neutral-300) 20%, transparent); }
-.awv-engaged           { background: var(--status-success-light); color: var(--status-success); border-color: color-mix(in srgb, var(--status-success) 20%, transparent); }
-.awv-attempted         { background: var(--status-warning-light); color: var(--status-warning); border-color: color-mix(in srgb, var(--status-warning) 20%, transparent); }
-.awv-engaged-followup  { background: var(--status-warning-light); color: var(--status-warning); border-color: color-mix(in srgb, var(--status-warning) 20%, transparent); }
-
-/* No new SNP-specific or tag-specific variants are declared here, SNP Program
-   Sub Status pills and worklist row Tags cells map their values to the
-   existing status/tone variants above (toc-* / lace-* / priority-* /
-   ai-* / outreach-*). See features/snp-worklist/SnpWorklistRow.jsx for the
-   value → variant lookup tables. */
-
-/* Language */
-.lang {
-  background: var(--primary-100);
-  color: var(--primary-300);
-  border-color: rgba(140,90,226,0.2);
-  font-size: var(--font-xs);
-  text-transform: uppercase;
-  letter-spacing: .04em;
-  cursor: default;
-}
-
-/* Overflow */
-.overflow {
-  background: var(--neutral-50);
-  color: var(--neutral-300);
-  border-color: rgba(111,122,144,0.2);
-  cursor: default;
-}
-
-/* ── Compliance Badges ── */
-.compliance-pass { background: var(--status-success-light); color: var(--status-success); border-color: rgba(0,155,83,0.2); }
-.compliance-fail { background: var(--status-error-light); color: var(--status-error); border-color: rgba(215,40,37,0.2); }
-.compliance-warn { background: var(--status-warning-light); color: var(--status-warning); border-color: rgba(217,165,11,0.2); }
-.compliance-na { background: var(--neutral-50); color: var(--neutral-300); border-color: rgba(111,122,144,0.2); }
-.compliance-emergency { background: var(--status-error-light); color: var(--status-error); border-color: color-mix(in srgb, var(--status-error) 25%, transparent); font-weight: 400; }
-
-/* ── Priority Badges ── */
-.priority-critical { background: var(--status-error-light); color: var(--status-error); border-color: rgba(215,40,37,0.2); }
-.priority-high { background: var(--secondary-50); color: var(--secondary-300-fg); border-color: color-mix(in srgb, var(--secondary-300) 20%, transparent); }
-.priority-medium { background: var(--status-warning-light); color: var(--status-warning); border-color: rgba(217,165,11,0.2); }
-.priority-low { background: var(--neutral-50); color: var(--neutral-300); border-color: rgba(111,122,144,0.2); }
-
-/* ── Outreach Category Badges ── */
-.outreach-appointment { background: var(--status-info-light); color: var(--status-info); border-color: rgba(20,94,204,0.2); }
-.outreach-refill { background: var(--status-success-light); color: var(--status-success); border-color: rgba(0,155,83,0.2); }
-.outreach-care-gap { background: var(--status-warning-light); color: var(--status-warning); border-color: rgba(217,165,11,0.2); }
-.outreach-post-visit { background: var(--primary-100); color: var(--primary-300); border-color: rgba(140,90,226,0.2); }
-.outreach-waitlist { background: var(--neutral-50); color: var(--neutral-300); border-color: rgba(111,122,144,0.2); }
-
-/* ── Escalation Badges ── */
-.escalation-confidence { background: var(--status-error-light); color: var(--status-error); border-color: rgba(215,40,37,0.2); }
-.escalation-sentiment { background: var(--secondary-50); color: var(--secondary-300-fg); border-color: color-mix(in srgb, var(--secondary-300) 20%, transparent); }
-.escalation-loops { background: var(--status-warning-light); color: var(--status-warning); border-color: rgba(217,165,11,0.2); }
-.escalation-max-turns { background: var(--neutral-50); color: var(--neutral-400); border-color: rgba(111,122,144,0.2); }
-.escalation-emergency { background: var(--status-error-light); color: var(--status-error); border-color: color-mix(in srgb, var(--status-error) 25%, transparent); font-weight: 400; }
-
-/* ── Security Badges ── */
-.security-pass { background: var(--status-success-light); color: var(--status-success); border-color: rgba(0,155,83,0.2); }
-.security-fail { background: var(--status-error-light); color: var(--status-error); border-color: rgba(215,40,37,0.2); }
-.security-alert { background: var(--status-error-light); color: var(--status-error); border-color: color-mix(in srgb, var(--status-error) 25%, transparent); font-weight: 400; animation: securityPulse 2s infinite; }
-
-/* ── Quality Score ── */
-.quality-good { background: var(--status-success-light); color: var(--status-success); border-color: rgba(0,155,83,0.2); }
-.quality-fair { background: var(--status-warning-light); color: var(--status-warning); border-color: rgba(217,165,11,0.2); }
-.quality-poor { background: var(--status-error-light); color: var(--status-error); border-color: rgba(215,40,37,0.2); }
-
-/* ── Sentiment ── */
-.sentiment-positive { background: var(--status-success-light); color: var(--status-success); border-color: rgba(0,155,83,0.2); }
-.sentiment-neutral { background: var(--neutral-50); color: var(--neutral-300); border-color: rgba(111,122,144,0.2); }
-.sentiment-negative { background: var(--status-error-light); color: var(--status-error); border-color: rgba(215,40,37,0.2); }
-
-/* ── System Health ── */
-.health-ok { background: var(--status-success-light); color: var(--status-success); border-color: rgba(0,155,83,0.2); }
-.health-degraded { background: var(--status-warning-light); color: var(--status-warning); border-color: rgba(217,165,11,0.2); }
-.health-down { background: var(--status-error-light); color: var(--status-error); border-color: rgba(215,40,37,0.2); }
-
-/* ── Keyboard Key Cap ── */
-.kbd {
-  background: var(--neutral-0);
-  color: var(--neutral-500);
-  border-color: var(--neutral-150);
-  font-size: var(--font-xs);
-  font-weight: 400;
-  padding: 3px 6px;
-  min-width: 24px;
-  min-height: 24px;
-  justify-content: center;
-  border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
-}
-
-@keyframes securityPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: .7; }
 }
 
 .trailingButton {

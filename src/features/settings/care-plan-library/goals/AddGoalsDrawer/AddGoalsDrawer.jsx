@@ -176,7 +176,7 @@ export function AddGoalsDrawer({
         </span>
         <span className={styles.rowActionsDivider} aria-hidden />
         <span className={styles.rowMeta}>
-          {g.category && <Badge tone="grey" size="S" label={normalizeCategory(g.category)} />}
+          {g.category && <Badge size="sm" label={normalizeCategory(g.category)} />}
           <PriorityIcon priority={g.priority} size={16} />
         </span>
       </div>

@@ -95,7 +95,7 @@ export function AddPatientTagDrawer({ patient, onClose }) {
               <div key={t.id} className={styles.option}>
                 <Checkbox checked disabled aria-label={`${t.name} (added)`} />
                 <span className={styles.optionName}>{t.name}</span>
-                <Badge tone="grey" size="S" label="Added" />
+                <Badge size="sm" label="Added" />
               </div>
             ))}
             <span className={styles.divider} />

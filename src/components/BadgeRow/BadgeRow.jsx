@@ -18,11 +18,11 @@ const GAP = 4;
  * @param {string[]} props.items          – Badge labels
  * @param {number}   [props.maxLines=2]   – Lines to fill before overflowing
  * @param {string}   [props.tone='grey']
- * @param {'S'|'M'|'L'} [props.size='S']
+ * @param {'xs'|'sm'|'md'|'lg'} [props.size='sm']
  * @param {string}   [props.icon]         – Leading Solar icon on each item badge (not the +N)
  * @param {string}   [props.className]
  */
-export function BadgeRow({ items = [], maxLines = 2, tone = 'grey', size = 'S', icon, className }) {
+export function BadgeRow({ items = [], maxLines = 2, tone = 'neutral', size = 'sm', icon, className }) {
   const rowRef = useRef(null);
   const measureRef = useRef(null);
   const [visibleCount, setVisibleCount] = useState(items.length);

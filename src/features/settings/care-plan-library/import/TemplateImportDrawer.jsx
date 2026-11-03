@@ -41,7 +41,7 @@ function PlanRow({ plan }) {
     <li className={styles.planRow}>
       <div className={styles.planHead}>
         <span className={styles.planName}>{plan.name}</span>
-        <Badge tone={errors.length ? 'error' : meta.tone} size="S" label={errors.length ? 'Error' : meta.label} />
+        <Badge tone={errors.length ? 'danger' : meta.tone} size="sm" label={errors.length ? 'Error' : meta.label} />
       </div>
       <p className={styles.planMeta}>
         {[

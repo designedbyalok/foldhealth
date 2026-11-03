@@ -95,11 +95,11 @@ export function HistoryLogDrawer({ automation, onClose }) {
                         <>
                           <span className={styles.text}>{runTitle(e)}</span>
                           <span className={styles.badges}>
-                            {e.success > 0 && <Badge tone="success" size="S" label={plural(e.success, 'member')} />}
-                            {e.inProgress > 0 && <Badge tone="warning" size="S" label={`${plural(e.inProgress, 'member')} in progress`} />}
+                            {e.success > 0 && <Badge tone="success" size="sm" label={plural(e.success, 'member')} />}
+                            {e.inProgress > 0 && <Badge tone="warning" size="sm" label={`${plural(e.inProgress, 'member')} in progress`} />}
                             {e.failed > 0 && (
                               <button type="button" className={styles.badgeButton} onClick={openFailed} aria-label={`View ${plural(e.failed, 'failed member')}`}>
-                                <Badge tone="error" size="S" label={`${plural(e.failed, 'member')} failed`} trailingIcon="solar:alt-arrow-right-linear" />
+                                <Badge tone="danger" size="sm" label={`${plural(e.failed, 'member')} failed`} trailingIcon="solar:alt-arrow-right-linear" />
                               </button>
                             )}
                           </span>

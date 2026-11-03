@@ -6,7 +6,7 @@ import { RENEWAL_CHOICES, TEMPLATE_RENEWALS } from '../../../../patient/right-pa
 /** Org / Private / Patient indicator for a template row. */
 export function TemplateScopeBadge({ template, className }) {
   const s = TEMPLATE_SCOPES[templateScopeOf(template)];
-  return <Badge size="S" tone={s.tone} icon={s.icon} label={s.badge} className={className} />;
+  return <Badge size="sm" tone={s.tone} icon={s.icon} label={s.badge} className={className} />;
 }
 
 /**

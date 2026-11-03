@@ -99,7 +99,7 @@ export function PharmacyGapClosureStep() {
           <DashboardCard
             key={x.code}
             title={<span className={styles.measureTitle}><MeasureCode code={x.code} />{MEASURE_NAMES[x.code]}</span>}
-            actions={<Badge size="S" tone={GAP_STATUS_TONE[st.gap]} label={st.gap} />}
+            actions={<Badge size="sm" tone={GAP_STATUS_TONE[st.gap]} label={st.gap} />}
           >
             <div className={styles.body}>
             <div className={styles.detail}><SubStatus label={st.label} /><span>{st.detail}</span></div>
@@ -123,10 +123,10 @@ export function PharmacyGapClosureStep() {
 
             <div className={styles.signals}>
               <span className={styles.signalsLabel}>Plan Signals</span>
-              {x.projectedStatus && <Badge size="S" tone="grey" label={x.projectedStatus} />}
-              {x.oneFillToInvincible && <Badge size="S" tone="grey" label="1 fill left" />}
-              {x.excluded && <Badge size="S" tone="grey" label="Excluded" />}
-              {x.priorYearNonCompliant && <Badge size="S" tone="grey" label="Prior-year non-compliant" />}
+              {x.projectedStatus && <Badge size="sm" label={x.projectedStatus} />}
+              {x.oneFillToInvincible && <Badge size="sm" label="1 fill left" />}
+              {x.excluded && <Badge size="sm" label="Excluded" />}
+              {x.priorYearNonCompliant && <Badge size="sm" label="Prior-year non-compliant" />}
               {!x.projectedStatus && !x.oneFillToInvincible && !x.excluded && !x.priorYearNonCompliant && <span className={styles.muted}>None reported</span>}
             </div>
 

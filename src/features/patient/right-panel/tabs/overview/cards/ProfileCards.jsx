@@ -124,7 +124,7 @@ export function CareTeamCard({ patientId }) {
                   leading={<Avatar variant="assignee" initials={m.initials} />}
                   title={m.name}
                   meta={[m.title, owned[m.name] && `Owns ${owned[m.name].join(', ')}`]}
-                  trailing={m.role ? <span className={styles.statusSlotWide}><Badge tone="grey" size="S" label={m.role} /></span> : null}
+                  trailing={m.role ? <span className={styles.statusSlotWide}><Badge size="sm" label={m.role} /></span> : null}
                 />
               )}
             />
@@ -157,7 +157,7 @@ export function CaregiversCard({ patientId }) {
                   title={m.name}
                   meta={[m.relation, m.phone, m.phone_hours]}
                   trailing={authority && role && !alreadyNamed
-                    ? <span className={styles.statusSlotWide}><Badge tone="info" size="S" label={role} /></span>
+                    ? <span className={styles.statusSlotWide}><Badge tone="info" size="sm" label={role} /></span>
                     : null}
                 />
               );
@@ -235,7 +235,7 @@ export function MedicationsCard({ patientId }) {
                       {meta && <span className={styles.medMeta}>{meta}</span>}
                     </span>
                     <span className={styles.medStatus}>
-                      {c ? <Badge tone={c.tone} size="S" label={c.label} /> : <span className={styles.medMeta}>{m.status || 'Active'}</span>}
+                      {c ? <Badge tone={c.tone} size="sm" label={c.label} /> : <span className={styles.medMeta}>{m.status || 'Active'}</span>}
                     </span>
                   </button>
                 );
@@ -321,12 +321,12 @@ export function ConditionsCard({ patientId, patient }) {
                 <div className={styles.chips}>
                   {extraChronic.map(c => (
                     <button key={c} type="button" className={styles.chipButton} onClick={() => openDiagnosis(c)}>
-                      <Badge tone="warning" size="S" label={c} />
+                      <Badge tone="warning" size="sm" label={c} />
                     </button>
                   ))}
                   {extraProblems.map(c => (
                     <button key={c} type="button" className={styles.chipButton} onClick={() => openDiagnosis(c)}>
-                      <Badge tone="grey" size="S" label={c} />
+                      <Badge size="sm" label={c} />
                     </button>
                   ))}
                 </div>

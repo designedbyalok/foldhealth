@@ -75,8 +75,8 @@ const fillMatchOf = (d, plan) => {
 // Part D is a rework link to the drug's Claim History.
 function FillMatchTag({ match, onRework }) {
   if (!match) return null;
-  if (match.kind === 'verified') return <Badge size="S" tone="success" icon="solar:check-circle-linear" label="Claim matched" />;
-  if (match.kind === 'pending') return <Badge size="S" tone="warning" label="Projected" />;
+  if (match.kind === 'verified') return <Badge size="sm" tone="success" icon="solar:check-circle-linear" label="Claim matched" />;
+  if (match.kind === 'pending') return <Badge size="sm" tone="warning" label="Projected" />;
   return (
     <button type="button" className={styles.reworkLink} onClick={(e) => { e.stopPropagation(); onRework?.(); }} title={match.detail}>
       {match.kind === 'voided' ? 'Fill reversed' : 'Claim not matched'}
@@ -103,7 +103,7 @@ function RecentFillChip({ date, label, onChange }) {
   return (
     <>
       <button type="button" className={styles.cChip} onClick={(e) => setRect(e.currentTarget.getBoundingClientRect())} aria-haspopup="dialog" aria-label={`${label}: ${date || 'not set'}`}>
-        <Badge tone="white" size="M" label={date || 'Select Date'} className={date ? undefined : styles.cChipEmpty} />
+        <Badge variant="outline" size="md" label={date || 'Select Date'} className={date ? undefined : styles.cChipEmpty} />
       </button>
       {rect && (
         <DatePickerPopover
@@ -193,10 +193,10 @@ export function MedicationDetail({ med, memberRowId, plan, initialTab, flushTabs
             {/* Call-confirmed pickups land here before the claim does. */}
             {r.source ? (
               <span className={styles.sourceCell}>
-                <Badge size="S" tone="grey" icon={r.manual ? 'solar:pen-linear' : 'solar:phone-linear'} label={r.manual ? 'Entered by hand' : r.source} />
+                <Badge size="sm" icon={r.manual ? 'solar:pen-linear' : 'solar:phone-linear'} label={r.manual ? 'Entered by hand' : r.source} />
                 <FillMatchTag match={matchFill(r, claims, plan)} onRework={() => setTab('claims')} />
               </span>
-            ) : <span><Badge size="S" tone="grey" label="Claim" /></span>}
+            ) : <span><Badge size="sm" label="Claim" /></span>}
           </div>
         ))}
       </div>
@@ -424,10 +424,10 @@ export function PharmacyMedicationReview({ member: memberProp, onOpenMed, compac
                 drug rows show them once it is open. */}
             {!expanded && barriersOf(x).length > 0 && (
               <Tooltip label={barriersOf(x).join(', ')} placement="bottom">
-                <Badge size="S" tone="error" icon={BARRIER_ICON} label={`${barriersOf(x).length} Barrier${barriersOf(x).length === 1 ? '' : 's'}`} />
+                <Badge size="sm" tone="danger" icon={BARRIER_ICON} label={`${barriersOf(x).length} Barrier${barriersOf(x).length === 1 ? '' : 's'}`} />
               </Tooltip>
             )}
-            <Badge size="S" tone="grey" label={`${x.medications.length} Med${x.medications.length === 1 ? '' : 's'}`} />
+            <Badge size="sm" label={`${x.medications.length} Med${x.medications.length === 1 ? '' : 's'}`} />
           </span>
         </button>
         {expanded && (
@@ -604,7 +604,7 @@ export function PharmacyMedicationReview({ member: memberProp, onOpenMed, compac
                 <span className={styles.groupMeta}>{x.medications.length} medication{x.medications.length === 1 ? '' : 's'}</span>
               </span>
               {!compact && <span className={styles.gapCardMeta}>
-                <Badge size="S" tone={GAP_STATUS_TONE[x.st.gap]} label={x.st.gap} />
+                <Badge size="sm" tone={GAP_STATUS_TONE[x.st.gap]} label={x.st.gap} />
                 <SubStatus label={x.st.label} />
                 <span className={styles.groupMeta}>{x.pdcProjected != null ? 'Projected PDC' : 'PDC'} <b className={riskClass(x.code, pdcTone(effectivePdc(x)))}>{effectivePdc(x) == null ? '-' : `${effectivePdc(x)}%`}</b></span>
                 <span className={styles.groupMeta}>Next due <b className={riskClass(x.code, fillDueTone(x.nextFillDue))}>{x.nextFillDue || '-'}</b></span>
@@ -641,7 +641,7 @@ export function PharmacyMedicationReview({ member: memberProp, onOpenMed, compac
                               <span className={styles.groupHead}>
                                 <span className={styles.groupName}>{g.cls}</span>
                                 <span className={styles.groupMeta}>{g.meds.length} medication{g.meds.length === 1 ? '' : 's'}</span>
-                                {switched && <Badge size="S" tone="grey" icon="solar:refresh-linear" label="Drug switched" />}
+                                {switched && <Badge size="sm" icon="solar:refresh-linear" label="Drug switched" />}
                               </span>
                             </td>
                           </tr>
@@ -685,7 +685,7 @@ export function PharmacyMedicationReview({ member: memberProp, onOpenMed, compac
                                 <td>{d.mpr ?? '-'}</td>
                                 <td>{d.daysSupply}</td>
                                 <td>{d.qty}</td>
-                                <td>{d.nonAdherenceReason ? <Badge size="S" tone="grey" label={d.nonAdherenceReason} /> : '-'}</td>
+                                <td>{d.nonAdherenceReason ? <Badge size="sm" label={d.nonAdherenceReason} /> : '-'}</td>
                                 <td>{d.prescriber?.name || '-'}</td>
                                 <td>{d.pharmacy?.name || '-'}</td>
                               </>}

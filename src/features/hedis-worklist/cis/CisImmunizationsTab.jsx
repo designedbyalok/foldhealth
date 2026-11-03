@@ -200,7 +200,7 @@ export function CisImmunizationsTab({ member, immunizations, savedNotes, loading
         {/* Why there is nothing to track (aged out / no DOB). */}
         {!trackable && (
           <div className={styles.notEligible}>
-            <CisStatusBadge map={EVALUATION_BADGE} status={result.evaluation} size="M" />
+            <CisStatusBadge map={EVALUATION_BADGE} status={result.evaluation} size="md" />
             <p className={styles.reason}>{result.reason}</p>
           </div>
         )}
@@ -602,9 +602,9 @@ function DoseRow({ antigen, row, note, onDateChange, onNoteSave, dob, highlight,
         <span role="cell">
           {row.status === CIS_DOSE_STATUS.completedLate ? (
             <Tooltip label={row.reason} variant="light" maxWidth={240}>
-              <CisStatusBadge map={DOSE_BADGE} status={row.status} size="M" hideIcon />
+              <CisStatusBadge map={DOSE_BADGE} status={row.status} size="md" hideIcon />
             </Tooltip>
-          ) : <CisStatusBadge map={DOSE_BADGE} status={row.status} size="M" hideIcon />}
+          ) : <CisStatusBadge map={DOSE_BADGE} status={row.status} size="md" hideIcon />}
 
         </span>
         <span role="cell" className={styles.noteCol}>

@@ -241,13 +241,13 @@ function ViewField({ label, value }) {
 }
 
 // A titled row of badges, rendered only when there's something to show.
-function ViewBadgeSection({ label, items, variant }) {
+function ViewBadgeSection({ label, items, tone }) {
   if (!items?.length) return null;
   return (
     <div className={styles.viewSection}>
       <div className={styles.viewSectionLabel}>{label}</div>
       <div className={styles.viewBadges}>
-        {items.map(v => <Badge key={v} variant={variant} label={v} />)}
+        {items.map(v => <Badge key={v} tone={tone} label={v} />)}
       </div>
     </div>
   );
@@ -270,16 +270,16 @@ function UserDetailsView({ user, raw }) {
       <div className={styles.viewSection}>
         <div className={styles.viewSectionLabel}>Administrative Role</div>
         <div className={styles.viewBadges}>
-          <Badge variant="ai-neutral" label={adminRole} />
+          <Badge label={adminRole} />
         </div>
       </div>
 
-      <ViewBadgeSection label="Roles" items={roles} variant="ai-care" />
-      <ViewBadgeSection label="Location" items={raw.locations} variant="ai-neutral" />
+      <ViewBadgeSection label="Roles" items={roles} tone="primary" />
+      <ViewBadgeSection label="Location" items={raw.locations} tone="neutral" />
       {/* Doctors always show Specialty, even before one is set. */}
       {roles.includes(PHYSICIAN_ROLE) && (
         raw.specialties?.length ? (
-          <ViewBadgeSection label="Specialty" items={raw.specialties} variant="ai-neutral" />
+          <ViewBadgeSection label="Specialty" items={raw.specialties} tone="neutral" />
         ) : (
           <div className={styles.viewSection}>
             <div className={styles.viewSectionLabel}>Specialty</div>
@@ -287,7 +287,7 @@ function UserDetailsView({ user, raw }) {
           </div>
         )
       )}
-      <ViewBadgeSection label="Languages" items={raw.languages} variant="toc-engaged" />
+      <ViewBadgeSection label="Languages" items={raw.languages} tone="info" />
 
       <div className={styles.viewSection}>
         <div className={styles.viewSectionTitle}>Basic Info</div>

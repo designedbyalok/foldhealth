@@ -43,11 +43,11 @@ export function GbiStatusReasonHost() {
       <div className={styles.change}>
         {froms.length === 1 && (
           <>
-            <Badge size="S" tone={GBI_STATUS_TONE[froms[0]] || 'grey'} label={froms[0]} />
+            <Badge size="sm" tone={GBI_STATUS_TONE[froms[0]] || 'neutral'} label={froms[0]} />
             <Icon name="solar:arrow-right-linear" size={14} color="var(--neutral-200)" />
           </>
         )}
-        <Badge size="S" tone={GBI_STATUS_TONE[to] || 'grey'} label={to} />
+        <Badge size="sm" tone={GBI_STATUS_TONE[to] || 'neutral'} label={to} />
         {!required && <span className={styles.optional}>Reason optional</span>}
       </div>
     </ReasonDialog>

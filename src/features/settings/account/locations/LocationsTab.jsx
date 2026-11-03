@@ -24,9 +24,9 @@ const LOCATION_COLUMNS = [
 // EHR badge tone map: keeps each EHR visually distinct in the table + the
 // filter chip (Fold = primary purple, Elation = teal-adjacent, NEXTGEN = amber).
 const EHR_TONE = {
-  'Fold EHR':          'ai-care',
-  'Elation Montrose':  'toc-engaged',
-  'NEXTGEN':           'ai-social',
+  'Fold EHR':          'primary',
+  'Elation Montrose':  'info',
+  'NEXTGEN':           'warning',
 };
 
 /**
@@ -162,7 +162,7 @@ export function LocationsTab({ tabsForBar, activeTab, setActiveTab }) {
       </td>
       <td className={styles.td}>
         {loc.ehrInstance ? (
-          <Badge variant={EHR_TONE[loc.ehrInstance] || 'ai-neutral'} label={loc.ehrInstance} />
+          <Badge tone={EHR_TONE[loc.ehrInstance] || 'neutral'} label={loc.ehrInstance} />
         ) : <span style={{ color: 'var(--neutral-200)' }}>-</span>}
       </td>
       <td className={styles.td}>

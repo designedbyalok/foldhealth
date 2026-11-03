@@ -37,7 +37,7 @@ export function ClaimDetailsDrawer({ claim, onClose }) {
           </dl>
           <span className={styles.claimHead}>
             <span>Service Date: {serviceDate(claim.service_date)} • {claim.network === 'out' ? 'Out of network' : 'In network'}</span>
-            <Badge size="S" tone={s.tone} icon={s.icon} label={s.label} />
+            <Badge size="sm" tone={s.tone} icon={s.icon} label={s.label} />
           </span>
         </div>
 

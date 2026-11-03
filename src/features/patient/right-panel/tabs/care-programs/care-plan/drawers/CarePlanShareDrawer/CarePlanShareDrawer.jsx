@@ -275,7 +275,7 @@ export function CarePlanShareDrawer({ patientId, program, data: draftData, patie
   const tagsFor = (kind, id) => (versionTags ? (
     <span className={styles.rowVersions}>
       {(versionTags[kind].get(String(id)) || []).map(t => (
-        <Badge key={t.short} size="XS" tone={t.newest ? 'primary' : 'grey'} label={t.short} />
+        <Badge key={t.short} size="xs" tone={t.newest ? 'primary' : 'neutral'} label={t.short} />
       ))}
     </span>
   ) : null);
@@ -729,7 +729,7 @@ export function CarePlanShareDrawer({ patientId, program, data: draftData, patie
                       aria-pressed={active}
                       onClick={() => toggleConditionFilter(label)}
                     >
-                      <Badge tone={active ? 'primary' : 'grey'} size="S" label={label} />
+                      <Badge tone={active ? 'primary' : 'neutral'} size="sm" label={label} />
                     </button>
                   );
                 })}

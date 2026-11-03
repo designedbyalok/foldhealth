@@ -117,7 +117,7 @@ export function CarePlanVersionsDrawer({ patientId, program, onClose }) {
                 </div>
                 <div className={styles.cardHead}>
                   <span className={styles.version}>Version {v.versionNumber}</span>
-                  {isCurrent && <Badge tone="unity" size="S" label="Current" />}
+                  {isCurrent && <Badge tone="unity" size="sm" label="Current" />}
                 </div>
                 <div className={styles.counts}>{counts}</div>
               </div>

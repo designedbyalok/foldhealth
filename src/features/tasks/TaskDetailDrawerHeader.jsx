@@ -37,7 +37,7 @@ export function TaskDetailDrawerHeader({
 
       <div className={styles.drawerTitleBlock}>
         {task.is_subtask && task.parent_task && (
-          <Badge variant="overflow" label={task.parent_task} />
+          <Badge label={task.parent_task} />
         )}
         <InlineEditable
           value={task.name}

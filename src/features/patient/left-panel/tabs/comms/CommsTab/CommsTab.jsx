@@ -86,7 +86,7 @@ export function CommsTab({ patient }) {
             </div>
             <div className={msgStyles.convPreviewRow}>
               <div className={msgStyles.convPreview}>{c.last_preview || 'No messages yet'}</div>
-              {c.unread_count > 0 && <Badge variant="notification" label={c.unread_count} />}
+              {c.unread_count > 0 && <Badge tone="secondary" variant="solid" label={c.unread_count} />}
             </div>
           </div>
         </button>

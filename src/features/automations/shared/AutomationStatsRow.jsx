@@ -36,7 +36,7 @@ export function AutomationStatsRow({ automation, runs = [], members = [] }) {
           <dt className={styles.label}>{it.label}</dt>
           <dd className={styles.value}>
             {it.value}
-            {it.badge && <Badge size="S" tone={it.badge.tone} label={it.badge.label} />}
+            {it.badge && <Badge size="sm" tone={it.badge.tone} label={it.badge.label} />}
           </dd>
         </div>
       ))}

@@ -124,7 +124,7 @@ const STATUS_TONE = {
   Deleted:                       'grey',
   None:                          'grey',
 };
-const statusTone = (label) => STATUS_TONE[label] || 'grey';
+const statusTone = (label) => STATUS_TONE[label] || 'neutral';
 
 /**
  * Shared per-record activity feed.
@@ -472,7 +472,7 @@ function OutreachEntryBody({ entry }) {
           const badge = typeof b === 'string' ? { label: b } : b;
           return (
             <span key={badge.label} title={badge.title} className={styles.badgeWrap}>
-              <Badge tone={badge.tone || 'primary'} size="S" label={badge.label} />
+              <Badge tone={badge.tone || 'primary'} size="sm" label={badge.label} />
             </span>
           );
         })}
@@ -583,9 +583,9 @@ function StatusChangeEntryBody({ entry }) {
       </div>
       {entry.from && entry.to && (
         <div className={htStyles.transition}>
-          <Badge size="S" tone={statusTone(entry.from)} label={entry.from} />
+          <Badge size="sm" tone={statusTone(entry.from)} label={entry.from} />
           <Icon name="solar:arrow-right-linear" size={12} color="var(--neutral-300)" />
-          <Badge size="S" tone={statusTone(entry.to)} label={entry.to} />
+          <Badge size="sm" tone={statusTone(entry.to)} label={entry.to} />
         </div>
       )}
     </>
@@ -631,7 +631,7 @@ function DetailCardEntryBody({ entry, variant, onOpenTask, onOpenNote }) {
                 )}
               </div>
               <div className={styles.detailCardTrailing}>
-                {dc.status && <Badge tone={statusTone(dc.status)} size="M" label={dc.status} />}
+                {dc.status && <Badge tone={statusTone(dc.status)} size="md" label={dc.status} />}
                 <span className={styles.detailCardActionsDivider} aria-hidden="true" />
                 <button
                   type="button"
@@ -661,7 +661,7 @@ function DetailCardEntryBody({ entry, variant, onOpenTask, onOpenNote }) {
                 )}
               </div>
               <div className={styles.detailCardTrailing}>
-                {dc.status && <Badge tone={statusTone(dc.status)} size="M" label={dc.status} />}
+                {dc.status && <Badge tone={statusTone(dc.status)} size="md" label={dc.status} />}
                 <button type="button" className={styles.detailCardIconBtn} aria-label="Open">
                   <Icon name="solar:arrow-right-up-linear" size={14} color="var(--neutral-400)" />
                 </button>
@@ -775,10 +775,10 @@ export function ClinicalNoteCardActions({ dc, draftLock = null, onOpenTask, onOp
               // older activity entries.
               (dc.gapNames?.length || dc.gapCodes?.length) ? (
                 <Tooltip label={(dc.gapNames || dc.gapCodes).join(', ')}>
-                  <Badge tone="grey" size="S" label={dc.chip} />
+                  <Badge size="sm" label={dc.chip} />
                 </Tooltip>
               ) : (
-                <Badge tone="grey" size="S" label={dc.chip} />
+                <Badge size="sm" label={dc.chip} />
               )
             )}
           </div>
@@ -786,7 +786,7 @@ export function ClinicalNoteCardActions({ dc, draftLock = null, onOpenTask, onOp
         </div>
         <div className={styles.detailCardTrailing}>
           <span className={styles.detailCardStatusSlot}>
-            {noteStatus && <Badge tone={statusTone(noteStatus)} size="M" label={noteStatus} />}
+            {noteStatus && <Badge tone={statusTone(noteStatus)} size="md" label={noteStatus} />}
           </span>
           <span className={styles.detailCardActionsSlot}>
             <Tooltip label={draftLocked ? lockReason : null} maxWidth={240}>
@@ -821,7 +821,7 @@ export function ClinicalNoteCardActions({ dc, draftLock = null, onOpenTask, onOp
             )}
           </div>
           <div className={styles.detailCardTrailing}>
-            {reviewTaskStatus && <Badge tone={statusTone(reviewTaskStatus)} size="M" label={reviewTaskStatus} />}
+            {reviewTaskStatus && <Badge tone={statusTone(reviewTaskStatus)} size="md" label={reviewTaskStatus} />}
             <span className={styles.detailCardActionsDivider} aria-hidden="true" />
             <button type="button" className={styles.detailCardIconBtn} aria-label="Preview task" onClick={handleOpenTask}>
               <Icon name="solar:eye-linear" size={14} color="var(--neutral-400)" />
@@ -1038,7 +1038,7 @@ function ReferralEntryBody({ entry }) {
               <div className={styles.referralParty}>
                 <span className={styles.referralNameRow}>
                   <span className={styles.referralName}>{dc.toName}</span>
-                  {dc.toBadge && <Badge tone="primary" size="S" label={dc.toBadge} className={styles.referralBadge} />}
+                  {dc.toBadge && <Badge tone="primary" size="sm" label={dc.toBadge} className={styles.referralBadge} />}
                 </span>
                 {toSubtitle && <span className={styles.referralSub}>{toSubtitle}</span>}
               </div>

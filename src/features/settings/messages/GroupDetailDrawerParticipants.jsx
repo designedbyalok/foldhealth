@@ -163,7 +163,7 @@ export function GroupDetailDrawerParticipants(props) {
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 'var(--font-base)', color: 'var(--neutral-500)', display: 'flex', alignItems: 'center', gap: 6 }}>
                           {p.name}
-                          {p.isAgent && <Badge variant="ai-care" label="AI Agent" />}
+                          {p.isAgent && <Badge tone="primary" label="AI Agent" />}
                         </div>
                         <div style={{ fontSize: 'var(--font-sm)', color: 'var(--neutral-200)' }}>{p.role}</div>
                       </div>

@@ -209,7 +209,7 @@ function RuleNode({ rule, readOnly, combinator, onOpenEditor, onJoin, onRemove, 
         </button>
       )}
       <span className={styles.nodeBadges}>
-        {summary.map(b => <Badge key={b.text} tone={b.tone} size="S" label={b.text} className={styles.nodeBadge} />)}
+        {summary.map(b => <Badge key={b.text} tone={b.tone} size="sm" label={b.text} className={styles.nodeBadge} />)}
       </span>
       {!readOnly && (
         <span className={styles.nodeRight}>

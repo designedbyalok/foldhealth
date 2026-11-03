@@ -113,7 +113,7 @@ export function CloneFromUserDrawer({ users, exclude, imported = [], target, onI
                     <span className={styles.cloneOptionName}>{u.name}</span>
                     {u.role && <span className={styles.cloneOptionRole}>{u.role}</span>}
                   </span>
-                  <Badge tone="grey" size="S" label={`${u.blocks.length} slot${u.blocks.length === 1 ? '' : 's'}`} />
+                  <Badge size="sm" label={`${u.blocks.length} slot${u.blocks.length === 1 ? '' : 's'}`} />
                 </span>
               ),
               triggerLabel: u.name,
@@ -194,7 +194,7 @@ export function CloneFromUserDrawer({ users, exclude, imported = [], target, onI
                         </span>
                       </>)}
                       </td>
-                      <td className={`${styles.td} ${styles.cloneStatusTd}`}>{tip(<><Badge tone={status.tone} size="S" label={status.label} /></>)}</td>
+                      <td className={`${styles.td} ${styles.cloneStatusTd}`}>{tip(<><Badge tone={status.tone} size="sm" label={status.label} /></>)}</td>
                       <td className={styles.td}>
                         {moved ? (
                           // No access here: flagged in red, the reason on the icon.

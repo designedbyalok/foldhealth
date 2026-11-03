@@ -150,7 +150,7 @@ export function AddInterventionsDrawer({ onClose, onAdd, primaryLabel = 'Add' })
                   <span className={styles.rowTitle}>{i.title}</span>
                 </span>
                 <span className={styles.rowMeta}>
-                  <Badge tone="grey" size="S" label={KIND_LABELS[i.kind] || i.kind} />
+                  <Badge size="sm" label={KIND_LABELS[i.kind] || i.kind} />
                   <Icon
                     name={CARE_PLAN_INTERVENTION_ICONS[i.kind] || 'solar:clipboard-list-linear'}
                     size={16}

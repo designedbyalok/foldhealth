@@ -160,9 +160,9 @@ const CHANNEL_ICONS = {
 };
 
 const HEALTH_VARIANT = {
-  Good:     'health-ok',
-  Moderate: 'health-degraded',
-  Poor:     'status-review',
+  Good:     'success',
+  Moderate: 'warning',
+  Poor:     'warning',
 };
 
 // `primary: true` → chip renders by default in the shared FilterBar.
@@ -306,7 +306,7 @@ function CampaignRow({ campaign, onToggle }) {
       {/* 7. Health (derived from delivered/opened gap) */}
       <td className={styles.tdHealth}>
         {health
-          ? <Badge variant={HEALTH_VARIANT[health]} label={health} />
+          ? <Badge tone={HEALTH_VARIANT[health]} label={health} />
           : <span className={styles.dash}>-</span>
         }
       </td>

@@ -84,9 +84,9 @@ export const STATUS_LABELS = { pending: 'Pending', missed: 'Missed', completed: 
 export const PRIORITY_ORDER = ['high', 'medium', 'low', 'none'];
 export const PRIORITY_LABELS = { high: 'High', medium: 'Medium', low: 'Low', none: 'None' };
 export const STATUS_BADGE_VARIANTS = {
-  pending: 'status-queued',
-  missed: 'status-failed',
-  completed: 'status-completed',
+  pending: 'warning',
+  missed: 'danger',
+  completed: 'success',
 };
 export const STATUS_COLORS = {
   pending: 'var(--status-warning)',

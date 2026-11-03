@@ -187,7 +187,7 @@ function SplitPanesDemo({ firstCta, secondCta }) {
                 {['E11.65 Type 2 diabetes mellitus', 'N18.3 Chronic kidney disease, stage 3', 'I10 Essential hypertension'].map((title, i) => (
                   <div key={title} className={splitStyles.placeholderCard}>
                     <span className={splitStyles.placeholderTitle}>{title}</span>
-                    <Badge variant={i === 0 ? 'toc-oncall' : 'toc-new'} label={i === 0 ? 'Suspect' : 'HCC Linked'} />
+                    <Badge tone={i === 0 ? 'primary' : 'neutral'} label={i === 0 ? 'Suspect' : 'HCC Linked'} />
                     <span className={splitStyles.placeholderLine} style={{ width: '80%' }} />
                     <span className={splitStyles.placeholderLine} style={{ width: '55%' }} />
                   </div>

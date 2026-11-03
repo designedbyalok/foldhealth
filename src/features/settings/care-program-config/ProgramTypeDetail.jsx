@@ -58,8 +58,8 @@ export function ProgramTypeDetail({ type, tab, onTab, onDirtyChange }) {
             <span className={styles.detailTitle}>{draft.name}</span>
             <span className={styles.detailCode}>({draft.code})</span>
             <span className={styles.detailBadges}>
-              <Badge size="S" tone="white" icon="solar:checklist-minimalistic-linear" label={`${counts.on}/${counts.total}`} />
-              <Badge size="S" tone={status.tone} label={status.label} />
+              <Badge size="sm" variant="outline" icon="solar:checklist-minimalistic-linear" label={`${counts.on}/${counts.total}`} />
+              <Badge size="sm" tone={status.tone} label={status.label} />
             </span>
           </div>
           <div className={styles.headerActions}>

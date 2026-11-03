@@ -51,8 +51,8 @@ function ChangesTable({ rows }) {
             </td>
             <td className={`${styles.td} ${styles.historyChangeTd}`}>
               {r.added
-                ? <Badge tone="success" size="S" label="Granted" />
-                : <Badge tone="error" size="S" label="Revoked" />}
+                ? <Badge tone="success" size="sm" label="Granted" />
+                : <Badge tone="danger" size="sm" label="Revoked" />}
             </td>
           </tr>
         )}
@@ -106,7 +106,7 @@ export function TimerHistoryBody({ entry }) {
       )}
       {badges.length > 0 && (
         <div className={styles.historyBadges}>
-          {badges.map(b => <Badge key={b.label} tone={b.tone} size="XS" icon={b.icon} label={b.label} />)}
+          {badges.map(b => <Badge key={b.label} tone={b.tone} size="xs" icon={b.icon} label={b.label} />)}
           <span className={`${styles.historyDot} ${styles.historyReveal}`} aria-hidden="true">•</span>
           <Link
             className={styles.historyReveal}

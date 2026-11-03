@@ -65,10 +65,10 @@ export function TypographyPopover({ anchorRect, anchorEl, rows, families, weight
             <span className={styles.rowLabel}>{row.label}</span>
             <div className={styles.controls}>
               <button type="button" className={styles.badgeBtn} onClick={pick(row, 'family')} aria-haspopup="menu" aria-label={`${row.label} font`}>
-                <Badge tone="white" size="M" label={sized(families, row.value.family)} chevron />
+                <Badge variant="outline" size="md" label={sized(families, row.value.family)} chevron />
               </button>
               <button type="button" className={styles.badgeBtn} onClick={pick(row, 'weight')} aria-haspopup="menu" aria-label={`${row.label} weight`}>
-                <Badge tone="white" size="M" label={sized(weights, row.value.weight)} chevron />
+                <Badge variant="outline" size="md" label={sized(weights, row.value.weight)} chevron />
               </button>
               <NumberStepper
                 value={row.value.size}

@@ -50,7 +50,7 @@ export function ClaimsLog({ claims }) {
                 <button type="button" className={styles.claim} onClick={() => setOpen(c)}>
                   <span className={styles.claimHead}>
                     <span>Service Date: {serviceDate(c.service_date)}</span>
-                    <Badge size="S" tone={s.tone} icon={s.icon} label={s.label} />
+                    <Badge size="sm" tone={s.tone} icon={s.icon} label={s.label} />
                   </span>
                   <span className={styles.claimBody}>
                     <Icon name="solar:document-text-linear" size={20} color="currentColor" />

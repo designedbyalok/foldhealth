@@ -21,7 +21,7 @@ function CarePlanLinkRow({ type, id, icon, title, meta, linked, onToggle }) {
         {meta && <span className={styles.rowMeta}>{meta}</span>}
       </span>
       {linked
-        ? <Badge tone="green" size="S" label="Linked" />
+        ? <Badge tone="success" size="sm" label="Linked" />
         : <span className={styles.addLink}><Icon name="solar:add-circle-linear" size={16} color="var(--primary-300)" />Link</span>}
     </button>
   );
@@ -70,7 +70,7 @@ export function CarePlanLinkDrawer({ patientId, program, patientName, owner, onC
       <div className={styles.body}>
         <div className={styles.ownerLine}>
           Linking to <strong>{owner.item.title}</strong>
-          {ownerLinks.length > 0 && <Badge tone="grey" size="S" label={`${ownerLinks.length} linked`} />}
+          {ownerLinks.length > 0 && <Badge size="sm" label={`${ownerLinks.length} linked`} />}
         </div>
 
         <div className={styles.section}>

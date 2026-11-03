@@ -21,7 +21,7 @@ export function AiOutcomeCell({ patient, onOpen }) {
       onClick={(e) => { e.stopPropagation(); onOpen(); }}
       aria-label={`Open outreach status for ${patient.name}`}
     >
-      <Badge size="M" tone={cfg.tone} label={label} icon={cfg.icon} />
+      <Badge size="md" tone={cfg.tone} label={label} icon={cfg.icon} />
       {invokedAt && <span className={styles.aiOutcomeInvokedAt}>{invokedAt}</span>}
     </button>
   );

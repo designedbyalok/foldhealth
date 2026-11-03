@@ -74,7 +74,7 @@ export function DosStatusMenu({ value, onChange, disabled = false, disabledReaso
         title={disabled ? disabledReason : undefined}
       >
         <Badge
-          size="M"
+          size="md"
           style={{ color: spec.color, background: spec.bg, borderColor: spec.border }}
           chevron={!disabled}
           label={(

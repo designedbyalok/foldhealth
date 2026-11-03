@@ -162,7 +162,7 @@ export function AddBarriersDrawer({
           />
         )}
         <span className={styles.rowText}>{barrier.title}</span>
-        {selectable && added ? <Badge tone="grey" size="M" label="Added" /> : null}
+        {selectable && added ? <Badge size="md" label="Added" /> : null}
       </label>
     </div>
   );
