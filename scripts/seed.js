@@ -1476,6 +1476,28 @@ async function main() {
     else console.error('  ✗', cptypeErr.message);
   } else console.log(`  ✓ ${programTypeRows.length} care program types`);
 
+  console.log('Seeding care_plan_events (event-based plan updates demo)...');
+  // A few recent events for Annette Brave (11089) so the care plan's "Plan
+  // updates from new events" card has something to evaluate. Live events come
+  // from the triggers in supabase/care_plan_event_updates_migration.sql.
+  const daysAgo = n => new Date(Date.now() - n * 86400000).toISOString();
+  const carePlanEventRows = [
+    { kind: 'adt', action: 'discharge', display: 'Inpatient discharge', occurred_at: daysAgo(5), dedupe_key: 'seed:11089:adt-discharge',
+      meta: { raw: { action: 'discharge', facility: 'St. Mary Medical Center', disposition: 'Home', followUp: 'PCP within 7 days' } } },
+    { kind: 'lab', code: '4548-4', display: 'Hemoglobin A1c', numeric_value: 8.1, unit: '%', abnormal: true, occurred_at: daysAgo(3), dedupe_key: 'seed:11089:lab-a1c',
+      meta: { referenceLow: 4, referenceHigh: 5.6 } },
+    { kind: 'vital', code: 'bp', display: 'bp', value_text: '146/90', numeric_value: 146, abnormal: true, occurred_at: daysAgo(2), dedupe_key: 'seed:11089:vital-bp' },
+    { kind: 'medication', action: 'started', display: 'Empagliflozin 10 mg', value_text: '1 tab once a day', occurred_at: daysAgo(2), dedupe_key: 'seed:11089:med-empagliflozin' },
+    { kind: 'assessment', action: 'completed', display: 'PHQ-9', numeric_value: 14, value_text: 'Moderate', occurred_at: daysAgo(1), dedupe_key: 'seed:11089:phq9' },
+  ].map(r => ({ patient_id: '11089', source_table: 'seed', source_id: r.dedupe_key, ...r }));
+  const { error: cpeErr } = await supabase
+    .from('care_plan_events')
+    .upsert(carePlanEventRows, { onConflict: 'dedupe_key', ignoreDuplicates: true });
+  if (cpeErr) {
+    if (cpeErr.code === '42P01' || cpeErr.code === 'PGRST205') console.log('  \u26a0 care_plan_events missing: run supabase/care_plan_event_updates_migration.sql');
+    else console.error('  \u2717', cpeErr.message);
+  } else console.log(`  \u2713 ${carePlanEventRows.length} care plan events`);
+
   console.log('Seeding care_plan_templates (library)...');
   const templateRows = CARE_PLAN_TEMPLATE_LIBRARY.map(carePlanTemplateLibraryToRow);
   const { error: cptErr } = await supabase
