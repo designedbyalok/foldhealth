@@ -31,6 +31,7 @@ import styles from './AppLayout.module.css';
 import { CaptureConsentDrawerHost } from '../features/patient/shared/CaptureConsentDrawer/CaptureConsentDrawerHost';
 import { ConsentHistoryDrawer } from '../features/patient/shared/ConsentHistoryDrawer/ConsentHistoryDrawer';
 import { ContactConsentDialog } from '../features/patient/shared/ContactConsentDialog/ContactConsentDialog';
+import { GbiStatusReasonHost } from '../features/patient/right-panel/tabs/care-programs/care-plan/GbiStatusReasonHost';
 
 // Lazy-loaded features. These pull in heavy deps (recharts, @xyflow, @schedule-x,
 // @usewaypoint/email-builder, react-grid-layout) and are not used on the default
@@ -693,6 +694,7 @@ export function AppLayout() {
         <PgProcessingHost />
         <ReassignmentSummaryHost />{/* opens from a reassignment's "summary is ready" notification */}
         <DesignReviewHost />{/* the floating Design Signoff review box, while a review is active */}
+        <GbiStatusReasonHost />{/* asks why a care plan goal, intervention or barrier changes status */}
       </Suspense>
       <Toaster />
     </div>
