@@ -3,7 +3,8 @@ import { ActionButton } from '../../../../../../components/ActionButton/ActionBu
 import { SearchBar } from '../../../../../../components/SearchBar/SearchBar';
 import { FilterChip } from '../../../../../../components/FilterChip/FilterChip';
 import { Icon } from '../../../../../../components/Icon/Icon';
-import { LogGroup } from './OutreachTabLog';
+import { ActivityLog } from '../../../../../../components/ActivityLog/ActivityLog';
+import { outreachActivityEntries } from './OutreachTabLog';
 import { ACTIVITY_FILTERS } from './OutreachTab.utils';
 import styles from './OutreachTab.module.css';
 
@@ -145,15 +146,11 @@ export function OutreachTabActivity({
         </div>
       )}
 
-      {visibleGroups.map(group => (
-        <LogGroup
-          key={group.id}
-          label={group.label}
-          logs={group.logs}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
-      ))}
+      <ActivityLog
+        entries={outreachActivityEntries(visibleGroups, { onEdit, onDelete })}
+        emptyLabel="No outreach logged yet."
+        flushTop
+      />
 
     </>
   );

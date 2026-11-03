@@ -14,6 +14,7 @@ export function OutreachTab(props) {
     programsLabel = 'Select Programs/Gaps',
     hideLogForRow = false,
     hideActivity = false,
+    classicForm = false,
     ...hookProps
   } = props;
 
@@ -25,6 +26,7 @@ export function OutreachTab(props) {
       programsLabel={programsLabel}
       hideLogForRow={hideLogForRow}
       hideActivity={hideActivity}
+      classicForm={classicForm}
       taskMember={hookProps.memberName}
     />
   );
@@ -44,6 +46,8 @@ export function OutreachTab(props) {
  *                     Actions row created
  *   onLogNew        : replaces the inline form when "Log New Outreach" is
  *                     clicked (host opens its own outreach workspace)
+ *   classicForm     : the pre-chat outreach form instead of the composer
+ *                     (the patient profile's Outreach tab)
  */
 export function OutreachTabView({
   tab,
@@ -58,13 +62,14 @@ export function OutreachTabView({
   onTaskCreated,
   onAppointmentScheduled,
   onLogNew,
+  classicForm = false,
 }) {
   // A host with its own outcome list (the Pharmacy program's Intervention
   // Schema) keeps the form with the Select Outcome menu: its outcomes drive
   // fills and interventions, which the composer's outcome chips can't carry.
-  const Form = tab.outcomeItems ? OutreachTabForm : OutreachComposer;
+  const Form = tab.outcomeItems || classicForm ? OutreachTabForm : OutreachComposer;
   return (
-    <div className={`${styles.wrapper} ${flush ? styles.wrapperFlush : ''}`}>
+    <div className={`${styles.wrapper} ${flush ? styles.wrapperFlush : ''} ${classicForm ? styles.wrapperClassic : ''}`}>
       {hideForm ? null : !tab.formOpen && !tab.scopedProgram ? (
         <div className={styles.emptyCard}>
           <Button
