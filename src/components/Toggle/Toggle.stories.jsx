@@ -15,6 +15,7 @@ export default {
   },
   argTypes: {
     size: { control: 'select', options: ['S', 'M'], description: 'S = 28px/13px, M = 32px/14px' },
+    variant: { control: 'select', options: ['soft', 'ghost'], description: 'soft: grey track; ghost: no track (on a grey surface), 28px segments, only the selected pill' },
     fullWidth: { control: 'boolean', description: 'Flex buttons to fill width' },
   },
 };

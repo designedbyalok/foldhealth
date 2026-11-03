@@ -2,14 +2,12 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useAppStore } from '../../../../../../../store/useAppStore';
 import { uniqueById } from '../lib/carePlanDraft';
 import { Icon } from '@/components/Icon/Icon';
-import { Tooltip } from '@/components/Tooltip/Tooltip';
 import { AddIconMinimalist } from '@/components/Icon/AddIconMinimalist';
 import { ActionButton } from '@/components/ActionButton/ActionButton';
 import { Button } from '@/components/Button/Button';
 import { Alert } from '@/components/Alert/Alert';
 import { PauseCarePlanDialog } from '../drawers/PauseCarePlanDialog/PauseCarePlanDialog';
 import { CarePlanPausedContext } from '../lib/carePlanPausedContext';
-import { fmtCarePlanDate } from '../tables/carePlanTableModel';
 import { isCarePlanPaused, pauseSummary } from '../lib/carePlanPause';
 import { assessmentSuggestionsFor, pendingRecommendation } from '../lib/carePlanRecommendation';
 import { resolvePatientStoreId } from '../../../../../../../lib/resolvePatientStoreId';
@@ -25,7 +23,6 @@ import {
   PRIORITY_LABELS,
   GbiSectionHead,
   SectionEmptyState,
-  SectionTitle,
 } from './CarePlanViewSections';
 import { useCarePlanViewData } from './useCarePlanViewData';
 import { useCarePlanViewFetchEffects } from './useCarePlanViewFetchEffects';
@@ -49,17 +46,15 @@ import { isSdohBarrier, referralInterventionFields, sdohBarrierFields } from '..
 import { RingEmptyState } from '@/components/RingEmptyState/RingEmptyState';
 import { SimpleTableSkeleton } from '@/components/SimpleTableSkeleton/SimpleTableSkeleton';
 import { BulkBar } from '@/components/BulkBar/BulkBar';
-import { Badge } from '@/components/Badge/Badge';
 import { CarePlanDuplicatePopover } from '../DuplicateFlag/CarePlanDuplicatePopover';
 import { CarePlanViewDrawers } from './CarePlanViewDrawers';
 import { CarePlanViewOverlays } from './CarePlanViewOverlays';
 import { AppliedTemplateStrip } from './AppliedTemplateStrip';
 import { useCarePlanEpisodes } from './useCarePlanEpisodes';
 import { CarePlanLinkageSection } from './CarePlanLinkageSection';
-import { CarePlanAiSummarySection } from './CarePlanAiSummarySection';
+import { Badge } from '@/components/Badge/Badge';
+import { CarePlanOverview } from './CarePlanOverview';
 import { QuickNotePopover } from './QuickNotePopover';
-import { ReviewCadenceBadge } from './ReviewCadenceBadge';
-import { EventUpdatesCard } from './EventUpdatesCard';
 import { addGoalsFromPicker, addBarriersFromPicker } from './carePlanPickerHandlers';
 import { formatInstanceDate } from '../lib/templateRenewal';
 import {
@@ -74,8 +69,7 @@ import { CategorySuggestionBanner } from './CategorySuggestionBanner';
 import { categorySuggestions, hasCategories } from '../../../../../../settings/care-plan-library/lib/templateCategories';
 import { groupUpdates } from '../../../../../../settings/care-plan-library/lib/templateGroups';
 import { isRetired, replacementFor } from '../../../../../../settings/care-plan-library/lib/templateRetirement';
-import { collectMentions, collectLinks } from '@/components/Textarea/mentions';
-import { sanitizeRichText } from '@/lib/sanitizeHtml';
+import { useCarePlanNoteRefs, noteDetails } from '../lib/carePlanNoteRefs';
 import styles from './CarePlanView.module.css';
 
 export function CarePlanView({ patientId, program }) {
@@ -172,6 +166,14 @@ export function CarePlanView({ patientId, program }) {
   const [problemText, setProblemText] = useState('');
   const [trendsOpen, setTrendsOpen] = useState(false);
   const { openSections, toggleSection } = useCarePlanOpenSections();
+  // An AI summary action opens the goal, intervention or barrier it names.
+  const openSummaryItem = (kind, item) => {
+    const list = { goal: data.goals, intervention: data.interventions, barrier: data.barriers }[kind] || [];
+    const row = list.find(x => String(x.id) === String(item.id)) || item;
+    if (kind === 'goal') setPreviewGoal(row);
+    else if (kind === 'intervention') setPreviewIntervention(row);
+    else setPreviewBarrier(row);
+  };
   // Which section's duplicate flags are expanded: { goal: bool, intervention: bool, barrier: bool }.
   // Default collapsed; clicking the section-header duplicates badge toggles the panel.
   // The section whose duplicates popover is open: { kind, rect } or null.
@@ -543,24 +545,12 @@ export function CarePlanView({ patientId, program }) {
   };
   // The note box tags care team members with "@" and links this plan's
   // goals, interventions and barriers with "/".
-  const noteMentionUsers = useMemo(() => (platformUsers || [])
-    .filter(u => u?.name)
-    .map(u => ({ id: u.id, name: u.name, initials: u.initials, role: (u.clinicalRoles || [])[0], realProfile: true }))
-    .toSorted((a, b) => a.name.localeCompare(b.name)), [platformUsers]);
-  const noteLinkItems = useMemo(() => [
-    ...(data?.goals || []).map(g => ({ id: g.id, kind: 'goal', label: g.title, group: 'Goals', icon: 'solar:flag-linear', meta: g.status })),
-    ...(data?.interventions || []).map(i => ({ id: i.id, kind: 'intervention', label: i.title, group: 'Interventions', icon: 'solar:checklist-minimalistic-linear', meta: i.status })),
-    ...(data?.barriers || []).map(b => ({ id: b.id, kind: 'barrier', label: b.title, group: 'Barriers', icon: 'custom:barrier', meta: b.status })),
-  ].filter(l => l.id != null && l.label), [data]);
+  const { mentionUsers: noteMentionUsers, links: noteLinkItems } = useCarePlanNoteRefs(patientId, program?.id);
   const doAddNote = async () => {
     const body = notePlain.trim();
     if (!body) return;
-    // Read the tags and links back from the saved HTML, so a chip deleted
-    // after it was picked is not counted.
-    const root = new DOMParser().parseFromString(noteText, 'text/html').body;
-    const details = { html: noteText, mentions: collectMentions(root), links: collectLinks(root) };
     closeNoteDrawer({ force: true });
-    await addCarePlanNote(patientId, program, body, { details });
+    await addCarePlanNote(patientId, program, body, { details: noteDetails(noteText) });
   };
   // The drawer is driven entirely by the store flag, the toolbar button and
   // the step header (a separate component) both set it, and closing clears it.
@@ -1290,115 +1280,25 @@ export function CarePlanView({ patientId, program }) {
       ) : !carePlanLoading && planIsEmpty && canEdit && !viewedVersion ? (
         <IndividualizedPlanCard state="start" error={aiError} onDraft={() => runIndividualizedPlan()} onUseTemplate={handleTemplates} />
       ) : null}
-      {!carePlanLoading && !planIsEmpty && !viewedVersion && !viewedRun && !planPaused && (
-        <EventUpdatesCard patientId={patientId} program={program} live={live} canEdit={canEdit} />
-      )}
-      {!carePlanLoading && (viewData.goals.length + viewData.interventions.length + (viewData.barriers || []).length) > 0 && (
-        <div className={styles.summaryStrip}>
-          <span className={styles.summaryMetric}><strong>{planStats.goals}</strong> goals</span>
-          <span className={styles.summaryDot} aria-hidden="true" />
-          <span className={styles.summaryMetric}><strong>{planStats.iv}</strong> interventions</span>
-          <span className={styles.summaryDot} aria-hidden="true" />
-          <span className={styles.summaryMetric}><strong>{planStats.br}</strong> barriers</span>
-          <span className={styles.summaryDot} aria-hidden="true" />
-          <span className={styles.summaryMetric}><strong>{planStats.avgProgress}%</strong> avg progress</span>
-          {!viewedVersion && !viewedRun && !planPaused && (
-            <>
-              <span className={styles.summaryDot} aria-hidden="true" />
-              <ReviewCadenceBadge patientId={patientId} program={program} plan={live?.plan} canEdit={canEdit} />
-            </>
-          )}
-          {!planPaused && live?.plan?.nextTouchpoint && (
-            <>
-              <span className={styles.summaryDot} aria-hidden="true" />
-              <span className={styles.summaryMetric}>Next touchpoint <strong>{fmtCarePlanDate(live.plan.nextTouchpoint)}</strong></span>
-            </>
-          )}
-          {planStats.statuses.length > 0 && (
-            <span className={styles.summaryStatuses}>
-              {planStats.statuses.map(({ status, count, tone }) => (
-                <Badge key={status} tone={tone} size="sm" label={`${count} ${status}`} />
-              ))}
-            </span>
-          )}
-        </div>
-      )}
-      {!carePlanLoading && !planIsEmpty && !viewedVersion && !viewedRun && (
-        <CarePlanAiSummarySection
+      {!carePlanLoading && (
+        <CarePlanOverview
           patientId={patientId}
           program={program}
           patientName={patientName}
           live={live}
-          open={openSections.aiSummary}
-          onToggle={() => toggleSection('aiSummary')}
+          audit={auditAll}
+          showSummary={!planIsEmpty && !viewedVersion && !viewedRun}
+          showEvents={!planIsEmpty && !viewedVersion && !viewedRun && !planPaused}
+          showCadence={!viewedVersion && !viewedRun && !planPaused}
+          stats={{ ...planStats, nextTouchpoint: planPaused ? null : live?.plan?.nextTouchpoint }}
+          canEdit={canEdit}
+          latestPlanNote={latestPlanNote}
+          mentionUsers={noteMentionUsers}
+          linkItems={noteLinkItems}
+          onOpenNoteHistory={openNoteDrawer}
+          onDeleteNote={() => setNoteDeleteOpen(true)}
+          onOpenItem={openSummaryItem}
         />
-      )}
-      {/* The plan's note is always on show (#80): never collapsed, and with a
-          way to add one when there is none. Notes are live, outside the
-          signed snapshot, so adding one never makes a new version. */}
-      {!carePlanLoading && (
-        <section className={styles.careNoteSection}>
-          <div className={styles.careNoteHead}>
-            {/* Same title treatment as the Goals / Interventions / Barriers heads. */}
-            <SectionTitle
-              label="Care Note"
-              open={openSections.careNote}
-              onToggle={() => toggleSection('careNote')}
-            />
-            <Tooltip label="Visible to the whole care team. Doesn't change the signed version.">
-              <span className={styles.careNoteInfo} aria-label="About care notes">
-                <Icon name="solar:info-circle-linear" size={14} color="var(--neutral-300)" />
-              </span>
-            </Tooltip>
-          </div>
-          {openSections.careNote && !latestPlanNote && (
-            <div className={styles.careNoteEmpty}>
-              <span>No care note yet.</span>
-              {canEdit && (
-                <Button variant="soft" size="sm" leadingIconElement={<AddIconMinimalist size={16} />} onClick={openNoteDrawer}>
-                  Add Note
-                </Button>
-              )}
-            </div>
-          )}
-          {openSections.careNote && latestPlanNote && (
-            <div className={styles.careNoteCardWrap}>
-              <button
-                type="button"
-                className={styles.careNoteCard}
-                onClick={openNoteDrawer}
-                disabled={!canEdit}
-                aria-label="Edit care note"
-              >
-                {latestPlanNote.meta?.html
-                  ? <div className={styles.careNoteBody} dangerouslySetInnerHTML={{ __html: sanitizeRichText(latestPlanNote.meta.html) }} />
-                  : <p className={styles.careNoteBody}>{latestPlanNote.detail}</p>}
-                <div className={styles.careNoteMeta}>
-                  <span className={styles.careNoteAuthor}>{latestPlanNote.actor || 'Unknown'}</span>
-                  <span className={styles.careNoteDot} aria-hidden="true">•</span>
-                  <span className={styles.careNoteTimestamp}>
-                    {latestPlanNote.createdAt
-                      ? new Date(latestPlanNote.createdAt).toLocaleString('en-US', {
-                          month: '2-digit', day: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit',
-                        })
-                      : ''}
-                  </span>
-                </div>
-              </button>
-              {canEdit && (
-                <span className={styles.careNoteDelete}>
-                  <ActionButton
-                    icon="solar:trash-bin-trash-linear"
-                    size="sm"
-                    tooltip="Delete note"
-                    onClick={() => setNoteDeleteOpen(true)}
-                    aria-label="Delete care note"
-                  />
-                </span>
-              )}
-            </div>
-          )}
-        </section>
       )}
 
       {quickNote && (
@@ -1407,15 +1307,16 @@ export function CarePlanView({ patientId, program }) {
           item={quickNote.item}
           rect={quickNote.rect}
           audit={auditAll}
+          noteRefs={{ mentionUsers: noteMentionUsers, links: noteLinkItems }}
           onClose={() => setQuickNote(null)}
           onOpenFull={() => {
             const { kind, item } = quickNote;
             setQuickNote(null);
             openNotesFor(kind, item);
           }}
-          onSave={async (body) => {
+          onSave={async (body, details) => {
             const { kind, item } = quickNote;
-            await addCarePlanNote(patientId, program, body, { entityType: kind, entityId: item.id, summary: `Note on ${item.title}` });
+            await addCarePlanNote(patientId, program, body, { entityType: kind, entityId: item.id, summary: `Note on ${item.title}`, details });
             markCarePlanNoteSeen(kind, item.id);
             setQuickNote(null);
           }}
