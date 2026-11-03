@@ -85,6 +85,10 @@ BEGIN
   ON CONFLICT (dedupe_key) DO NOTHING;
 END;
 $$;
+-- Only the triggers below call it. As a SECURITY DEFINER function it would
+-- otherwise be callable over RPC with the public anon key and skip RLS.
+REVOKE ALL ON FUNCTION public.record_care_plan_event(text, text, text, text, text, text, numeric, text, boolean, timestamptz, text, text, text, jsonb)
+  FROM PUBLIC, anon, authenticated;
 
 -- patient_clinical_events: ADT, labs, encounters, medications, PROMs, devices.
 CREATE OR REPLACE FUNCTION public.care_plan_events_from_clinical_event()
