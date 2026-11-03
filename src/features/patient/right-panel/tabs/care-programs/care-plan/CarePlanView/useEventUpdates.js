@@ -30,7 +30,12 @@ export function useEventUpdates({ patientId, program, live }) {
   const run = async (impact, changes, decision) => {
     setBusy(impact.id);
     try {
-      for (const c of changes) await decide(patientId, program, impact.id, c.id, decision);
+      // One at a time: each decision rewrites the impact's whole changes list,
+      // so parallel calls would overwrite each other's decisions.
+      for (const c of changes) {
+        // react-doctor-disable-next-line react-doctor/async-await-in-loop
+        await decide(patientId, program, impact.id, c.id, decision);
+      }
     } finally { setBusy(null); }
   };
 

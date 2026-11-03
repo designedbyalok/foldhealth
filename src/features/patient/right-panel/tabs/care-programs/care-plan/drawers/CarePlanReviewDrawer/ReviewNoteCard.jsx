@@ -37,7 +37,7 @@ export function ReviewNoteCard({ note, canEdit, noteRefs, onSave }) {
   const initial = rich ? (note.detail || '') : noteEditorValue(note);
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(initial);
-  const [plain, setPlain] = useState((note.detail || '').trim());
+  const [plain, setPlain] = useState(() => (note.detail || '').trim());
   const [saving, setSaving] = useState(false);
 
   return (
