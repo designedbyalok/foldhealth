@@ -116,6 +116,7 @@
     "LinkageTree",
     "MessageComposer",
     "MessageStatus",
+    "NoteHoverCard",
     "PanelSection",
     "PanelStack",
     "PdfPassageViewer",
