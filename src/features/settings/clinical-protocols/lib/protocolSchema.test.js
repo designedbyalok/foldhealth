@@ -93,3 +93,20 @@ describe('protocolGuidanceText', () => {
     expect(text.split('\n').every(l => !l.endsWith('…'))).toBe(true);
   });
 });
+
+describe('reviewer checks', () => {
+  it('keeps a check on the item it concerns, and whole-document warnings in full', () => {
+    const long = `Page 3 ${'gives two different cut-offs for the same stage and should be confirmed with the author '.repeat(2)}`.trim();
+    const { protocol, warnings } = normalizeProtocol({
+      metadata: { title: 'HTN', conditions: [], programCodes: [] },
+      thresholds: [
+        { measure: 'Systolic BP', comparator: '>', value: 140, source: 'over 140', page: 3, check: 'Page 1 says <140 is the goal; confirm 140 belongs to Stage 2.' },
+        { measure: 'Systolic BP', comparator: '>=', value: 180, source: '180/120', page: 4, check: '  ' },
+      ],
+      warnings: [long],
+    });
+    expect(protocol.thresholds[0].check).toBe('Page 1 says <140 is the goal; confirm 140 belongs to Stage 2.');
+    expect(protocol.thresholds[1].check).toBeNull();
+    expect(warnings[0]).toBe(long);
+  });
+});

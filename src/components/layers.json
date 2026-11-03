@@ -116,6 +116,7 @@
     "MessageStatus",
     "PanelSection",
     "PanelStack",
+    "PdfPassageViewer",
     "PdfPreview",
     "PdfPreviewOverlay",
     "PermissionCard",
