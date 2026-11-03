@@ -7149,6 +7149,9 @@ export const useAppStore = create((set, get) => ({
   // Org-level feature flags (from org_settings).
   showPatientAppIndicator: false,
   carePlanMode: DEFAULT_CARE_PLAN_MODE,
+  // Off by default: a care plan status change only asks for a reason when
+  // the org turns this on (org_settings_status_change_reason_migration.sql).
+  askStatusChangeReason: false,
   orgFeaturesDidFetch: false,
   fetchOrgFeatures: async () => {
     if (useAppStore.getState().orgFeaturesDidFetch) return;
@@ -7159,19 +7162,20 @@ export const useAppStore = create((set, get) => ({
         set({ orgFeaturesDidFetch: false });
         return;
       }
-      let { data, error } = await supabase
+      // Schema-tolerant: a column whose migration hasn't run is dropped from
+      // the select and its setting stays on the default.
+      let columns = ['show_patient_app_indicator', 'care_plan_mode', 'ask_status_change_reason'];
+      const read = () => supabase
         .from('org_settings')
-        .select('show_patient_app_indicator, care_plan_mode')
+        .select(columns.join(', '))
         .eq('user_id', session.user.id)
         .maybeSingle();
-      // Schema-tolerant: before the care_plan_mode migration runs, read the
-      // indicator alone and stay on the program-level default.
-      if (error && /care_plan_mode/.test(error.message || '')) {
-        ({ data, error } = await supabase
-          .from('org_settings')
-          .select('show_patient_app_indicator')
-          .eq('user_id', session.user.id)
-          .maybeSingle());
+      let { data, error } = await read();
+      for (let i = 0; i < 2 && error; i += 1) {
+        const missing = columns.find(c => c !== 'show_patient_app_indicator' && (error.message || '').includes(c));
+        if (!missing) break;
+        columns = columns.filter(c => c !== missing);
+        ({ data, error } = await read());
       }
       if (error) {
         console.warn('fetchOrgFeatures error:', error.message);
@@ -7181,6 +7185,7 @@ export const useAppStore = create((set, get) => ({
       set({
         showPatientAppIndicator: !!data?.show_patient_app_indicator,
         carePlanMode: normalizeCarePlanMode(data?.care_plan_mode),
+        askStatusChangeReason: !!data?.ask_status_change_reason,
       });
     } catch (err) {
       console.warn('fetchOrgFeatures failed:', err?.message || err);
