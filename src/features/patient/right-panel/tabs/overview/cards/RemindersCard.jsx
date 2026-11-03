@@ -123,7 +123,7 @@ export function RemindersCard({ patient }) {
             <DateTimePicker value={when} onChange={setWhen} hour12 fullWidth minDate={new Date(now)} />
             <span className={styles.reminderActions}>
               <Button variant="ghost" size="sm" type="button" onClick={() => setAdding(false)}>Cancel</Button>
-              <Button size="sm" type="submit" disabled={!canSave}>{saving ? 'Saving…' : 'Add Reminder'}</Button>
+              <Button size="sm" type="submit" disabled={!canSave} loading={saving}>Add Reminder</Button>
             </span>
           </form>
         )}

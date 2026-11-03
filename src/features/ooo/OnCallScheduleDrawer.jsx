@@ -72,7 +72,7 @@ export function OnCallScheduleDrawer({ preset, oooRecordId, excludeUser, onClose
       noCloseDivider
       headerRight={(
         <>
-          <Button disabled={!ready || saving} onClick={create}>{saving ? 'Creating…' : 'Create'}</Button>
+          <Button disabled={!ready} onClick={create} loading={saving}>Create</Button>
           <span className={styles.headerDivider} aria-hidden="true" />
         </>
       )}

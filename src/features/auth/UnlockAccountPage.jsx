@@ -130,8 +130,8 @@ export function UnlockAccountPage({ token, onDone }) {
                   {error}
                 </div>
               )}
-              <Button fullWidth type="submit" disabled={saving}>
-                {saving ? 'Saving...' : 'Set Password and Sign In'}
+              <Button fullWidth type="submit" loading={saving}>
+                Set Password and Sign In
               </Button>
             </form>
           )}

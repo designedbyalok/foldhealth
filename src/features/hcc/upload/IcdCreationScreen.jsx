@@ -205,10 +205,9 @@ export function IcdCreationScreen() {
                 variant="outline" tone="primary"
                 size="sm"
                 leadingIcon="solar:refresh-linear"
-                disabled={syncing}
-                onClick={handleSftpSync}
+                onClick={handleSftpSync} loading={syncing}
               >
-                {syncing ? 'Syncing…' : 'Sync via SFTP'}
+                Sync via SFTP
               </Button>
             </div>
 

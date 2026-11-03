@@ -91,8 +91,8 @@ function ConfigureForm({ agent, initialForm, expanded, toggleExpanded, setGoalDe
         setGoalDetailId={setGoalDetailId}
       />
       <div className={styles.saveBar}>
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? 'Saving…' : 'Save Configuration'}
+        <Button onClick={handleSave} loading={saving}>
+          Save Configuration
         </Button>
       </div>
     </>

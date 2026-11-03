@@ -76,7 +76,7 @@ export function HolidayDrawer({ holiday, copyFrom, onClose }) {
       noCloseDivider
       headerRight={(
         <>
-          <Button disabled={saving || (touched && hasErrors)} onClick={save}>{saving ? 'Saving…' : 'Save'}</Button>
+          <Button disabled={touched && hasErrors} onClick={save} loading={saving}>Save</Button>
           <span className={styles.headerDivider} aria-hidden="true" />
         </>
       )}

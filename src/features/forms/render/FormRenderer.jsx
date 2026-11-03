@@ -380,7 +380,7 @@ export function FormRenderer({
           <>
             {fields.map((f) => <FieldNode key={f.linkId} field={f} answers={answers} onAnswer={handleAnswer} missing={missing} visibility={visibility} pipe={pipe} />)}
             <div className={styles.submitRow}>
-              <Button disabled={submitting} onClick={doSubmit}>{submitting ? 'Submitting…' : 'Submit'}</Button>
+              <Button onClick={doSubmit} loading={submitting}>Submit</Button>
             </div>
           </>
         )}

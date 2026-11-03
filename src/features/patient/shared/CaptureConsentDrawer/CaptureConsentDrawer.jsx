@@ -148,7 +148,7 @@ export function CaptureConsentDrawer({ patientId, scopeType: initialType, scope:
         </>
       )}
       primaryAction={showHistory ? null : (
-        <Button disabled={!!problem || saving} onClick={save}>{saving ? 'Saving…' : 'Save Consent'}</Button>
+        <Button disabled={!!problem} onClick={save} loading={saving}>Save Consent</Button>
       )}
       banner={patient ? (
         <PatientBanner

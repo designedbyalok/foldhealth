@@ -668,12 +668,11 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
         <Button
           leadingIcon="solar:download-minimalistic-linear"
           trailingIcon="solar:alt-arrow-down-linear"
-          disabled={savingPage}
           aria-haspopup="menu"
           aria-expanded={downloadOpen}
-          onClick={() => setDownloadOpen(v => !v)}
+          onClick={() => setDownloadOpen(v => !v)} loading={savingPage}
         >
-          {savingPage ? 'Preparing…' : 'Download'}
+          Download
         </Button>
       </span>
       {downloadOpen && (

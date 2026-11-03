@@ -36,7 +36,7 @@ export function InviteUserBulkReviewStep({
       headerRight={
         <div style={{ display: 'flex', gap: 8 }}>
           <Button variant="outline" onClick={onPrevious}>Previous</Button>
-          <Button onClick={onImport} disabled={sending}>{sending ? 'Importing...' : 'Import'}</Button>
+          <Button onClick={onImport} loading={sending}>Import</Button>
         </div>
       }
     >

@@ -339,8 +339,8 @@ export function ComposeEmailDrawer({ initial = {}, onClose, onSent }) {
           return false;
         }}
         primaryAction={(
-          <Button leadingIcon="solar:plain-2-linear" onClick={send} disabled={!canSend} disabledReason={sendBlockedReason}>
-            {busy ? 'Sending…' : 'Send'}
+          <Button leadingIcon="solar:plain-2-linear" onClick={send} disabled={!canSend} disabledReason={sendBlockedReason} loading={busy}>
+            Send
           </Button>
         )}
         bodyClassName={`${styles.composeBody} ${useTemplate ? '' : styles.composeBodySolo}`}

@@ -210,8 +210,8 @@ function TriggerEditorDrawer({ triggerId, groupId, triggers, onClose, onSaved })
       title={triggerId ? 'Edit Trigger' : 'New Trigger'}
       onClose={onClose}
       primaryAction={
-        <Button disabled={!canSave || saving} onClick={save}>
-          {saving ? 'Saving...' : 'Save'}
+        <Button disabled={!canSave} onClick={save} loading={saving}>
+          Save
         </Button>
       }
     >

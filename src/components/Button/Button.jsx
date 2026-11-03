@@ -3,6 +3,8 @@ import { Icon } from '../Icon/Icon';
 import { DownChevronIcon } from '../Icon/DownChevronIcon';
 import { MenuPopover } from '../MenuPopover/MenuPopover';
 import { Tooltip } from '../Tooltip/Tooltip';
+import { Spinner } from '../Spinner/Spinner';
+import { usePendingClick } from './usePendingClick';
 import styles from './Button.module.css';
 
 // Custom icon elements (leadingIconElement / trailingIconElement) inherit the
@@ -80,6 +82,11 @@ function resolveButtonLook(variant = 'solid', tone, size = 'md') {
  * @param {boolean}  [props.iconOnly=false]          – Square icon-only button (no text)
  * @param {boolean}  [props.fullWidth=false]          – Full-width button
  * @param {boolean}  [props.disabled=false]
+ * @param {boolean}  [props.loading=false]           – Busy: a spinner replaces the content (the
+ *                                                    button keeps its size and colors) and clicks
+ *                                                    are ignored. Set automatically while a promise
+ *                                                    returned from `onClick` is pending, so an async
+ *                                                    handler gets this for free.
  * @param {string}   [props.disabledReason]          – While disabled, why (e.g. "Pick a form"):
  *                                                    shown in a tooltip on hover, so a greyed-out
  *                                                    action never fails silently.
@@ -108,6 +115,7 @@ export const Button = forwardRef(function Button(
     iconOnly = false,
     fullWidth = false,
     disabled = false,
+    loading = false,
     disabledReason,
     menuItems,
     onMenuSelect,
@@ -122,6 +130,9 @@ export const Button = forwardRef(function Button(
   ref
 ) {
   const { variant, tone, size } = resolveButtonLook(variantProp, toneProp, sizeProp);
+  const { onClick, ...domRest } = rest;
+  const [pending, handleClick] = usePendingClick(onClick, loading);
+  const busy = loading || pending;
 
   // Split-button rendering (main + divider + chevron + menu) when the caller
   // supplies `menuItems`. Delegates both halves to the base render below so
@@ -146,7 +157,8 @@ export const Button = forwardRef(function Button(
         menuAlign={menuAlign}
         className={className}
         type={type}
-        rest={rest}
+        busy={busy}
+        rest={onClick ? { ...domRest, onClick: handleClick } : domRest}
       >
         {children}
       </SplitButtonBody>
@@ -169,13 +181,28 @@ export const Button = forwardRef(function Button(
     styles[variant],
     iconOnly ? styles.iconOnly : '',
     fullWidth ? styles.fullWidth : '',
+    busy ? styles.loading : '',
     className || '',
   ]
     .filter(Boolean)
     .join(' ');
 
+  // Busy is not disabled: the button keeps its look and focus (so the
+  // spinner reads as "working on it", not "unavailable") and the handler
+  // swallows clicks instead.
   const button = (
-    <button ref={ref} type={type} className={cls} data-tone={tone} disabled={disabled} {...rest}>
+    <button
+      ref={ref}
+      type={type}
+      className={cls}
+      data-tone={tone}
+      disabled={disabled && !busy}
+      aria-busy={busy || undefined}
+      aria-disabled={busy || undefined}
+      onClick={handleClick}
+      {...domRest}
+    >
+      {busy && <span className={styles.spinnerSlot}><Spinner size={iconSize} /></span>}
       {leadingIconElement && tintIconElement(leadingIconElement)}
       {!leadingIconElement && leadingIcon && (
         <Icon name={leadingIcon} size={iconSize} color={iconColor} className={styles.icon} />
@@ -190,7 +217,7 @@ export const Button = forwardRef(function Button(
 
   // A disabled button gets no pointer events, so the reason's tooltip hangs
   // off a wrapper (the button lets hovers through to it).
-  if (disabled && disabledReason) {
+  if (disabled && disabledReason && !busy) {
     return (
       <Tooltip label={disabledReason} placement="bottom" align="right" maxWidth={260} className={fullWidth ? styles.fullWidth : undefined}>
         <span className={[styles.disabledWrap, fullWidth ? styles.fullWidth : ''].filter(Boolean).join(' ')}>{button}</span>
@@ -225,6 +252,7 @@ const SplitButtonBody = forwardRef(function SplitButtonBody(
     menuAlign,
     className,
     type,
+    busy,
     rest,
     children,
   },
@@ -255,7 +283,7 @@ const SplitButtonBody = forwardRef(function SplitButtonBody(
   // The wrapper owns the variant chrome (background, border, radius, color);
   // the two halves are transparent click regions inside it, so the pill reads
   // as one cohesive shape and only paints a hover tint on the hovered half.
-  const mainCls = [styles.btn, sizeClass, styles.splitMain].filter(Boolean).join(' ');
+  const mainCls = [styles.btn, sizeClass, styles.splitMain, busy ? styles.loading : ''].filter(Boolean).join(' ');
   const chevronCls = [styles.btn, sizeClass, styles.iconOnly, styles.splitChevron]
     .filter(Boolean).join(' ');
 
@@ -273,10 +301,13 @@ const SplitButtonBody = forwardRef(function SplitButtonBody(
         ref={ref}
         type={type}
         className={mainCls}
-        disabled={disabled}
+        disabled={disabled && !busy}
+        aria-busy={busy || undefined}
+        aria-disabled={busy || undefined}
         onClick={handleMainClick}
         {...restNoClick}
       >
+        {busy && <span className={styles.spinnerSlot}><Spinner size={iconSize} /></span>}
         {leadingIconElement && tintIconElement(leadingIconElement)}
         {!leadingIconElement && leadingIcon && (
           <Icon name={leadingIcon} size={iconSize} color={iconColor} className={styles.icon} />

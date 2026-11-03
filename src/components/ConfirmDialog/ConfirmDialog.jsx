@@ -132,8 +132,8 @@ export function ConfirmDialog({
           {cancelLabel}
         </Button>
       )}
-      <Button variant={preset.button.variant} tone={preset.button.tone} size={buttonSize} onClick={onConfirm} disabled={loading || confirmDisabled} className="flex-1">
-        {loading ? 'Processing…' : confirmLabel}
+      <Button variant={preset.button.variant} tone={preset.button.tone} size={buttonSize} onClick={onConfirm} disabled={confirmDisabled} className="flex-1" loading={loading}>
+        {confirmLabel}
       </Button>
     </AlertDialogFooter>
   );

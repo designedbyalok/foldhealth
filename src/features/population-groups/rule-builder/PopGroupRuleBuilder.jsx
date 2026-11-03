@@ -565,8 +565,8 @@ export function PopGroupRuleBuilder() {
             <Button variant="outline" disabled={countLeaves(query) === 0 || saving} onClick={() => handleSave('draft')}>
               Save as Draft
             </Button>
-            <Button disabled={!canSaveGroup || saving} onClick={() => handleSave('active')}>
-              {saving ? 'Saving…' : (mode === 'edit' ? 'Save' : 'Next')}
+            <Button disabled={!canSaveGroup} onClick={() => handleSave('active')} loading={saving}>
+              {mode === 'edit' ? 'Save' : 'Next'}
             </Button>
           </div>
         </div>

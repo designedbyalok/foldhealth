@@ -44,11 +44,11 @@ export function CopyPermissionsDialog({ from, roles, onCancel, onConfirm }) {
             <Button variant="outline" fullWidth onClick={onCancel} disabled={saving}>Cancel</Button>
             <Button
               fullWidth
-              disabled={!picked.length || saving}
+              disabled={!picked.length}
               disabledReason={!picked.length ? 'Pick at least one role' : undefined}
-              onClick={async () => { setSaving(true); await onConfirm(picked); }}
+              onClick={async () => { setSaving(true); await onConfirm(picked); }} loading={saving}
             >
-              {saving ? 'Copying…' : 'Confirm'}
+              Confirm
             </Button>
           </div>
         </div>

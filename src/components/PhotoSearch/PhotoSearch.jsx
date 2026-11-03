@@ -108,8 +108,8 @@ export function PhotoSearch({
         </div>
         {current.nextPage && (
           <div className={styles.more}>
-            <Button variant="outline" size="sm" disabled={loadingMore} onClick={loadMore}>
-              {loadingMore ? 'Loading…' : 'Load more'}
+            <Button variant="outline" size="sm" onClick={loadMore} loading={loadingMore}>
+              Load more
             </Button>
           </div>
         )}

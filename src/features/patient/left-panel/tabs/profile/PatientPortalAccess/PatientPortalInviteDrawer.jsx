@@ -41,8 +41,8 @@ export function PatientPortalInviteDrawer({ patient, memberId, defaultEmail = ''
       dismissed={dismissed}
       width={520}
       primaryAction={(
-        <Button disabled={sending || !email.trim() || !relationship} onClick={send}>
-          {sending ? 'Sending…' : 'Send invite'}
+        <Button disabled={!email.trim() || !relationship} onClick={send} loading={sending}>
+          Send invite
         </Button>
       )}
     >

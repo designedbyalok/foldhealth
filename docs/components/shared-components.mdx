@@ -23,6 +23,7 @@ src/components/Button/Button.jsx
 | `iconOnly` | boolean | Icon-only mode |
 | `fullWidth` | boolean | Full container width |
 | `disabled` | boolean | Disabled state |
+| `loading` | boolean | Spinner over the label (same size and colors), clicks ignored. Automatic while an async `onClick` is pending, so `onClick={save}` with an async `save` needs nothing else |
 
 ### ActionButton
 
@@ -38,6 +39,7 @@ Square icon-only toolbar button with optional tooltip, badge, dot, and chevron.
 | `size` | string | `sm`, `md` (default), `lg` |
 | `tone` | string | `neutral` (default) or `danger` for destructive actions |
 | `disabled` | boolean | Disabled state |
+| `loading` | boolean | Spinner instead of the icon, clicks ignored. Automatic while an async `onClick` is pending |
 | `tooltip` | string | Tooltip text |
 | `notification` | boolean | Show notification dot |
 | `count` | number | Badge count |
