@@ -66,6 +66,12 @@
   line-height: 1.2;
   white-space: nowrap;
 }
+.outcomeAside {
+  display: inline-flex;
+  align-items: center;
+  margin-left: var(--space-2);
+}
+.badgeWrap { display: inline-flex; }
 /* Shared "View more" affordance: used by every expandable variant
    (outreach note, task/note/appointment detail card, comment expander).
    Hidden by default, revealed when the row is hovered/focused, and
@@ -160,6 +166,17 @@
   font-weight: 400;
   line-height: 1.5;
   color: var(--neutral-400);
+}
+/* A note with nothing else in the card: a tight inset, no heading. */
+.expandedCardCompact {
+  padding: var(--space-2) var(--space-3);
+}
+.expandedNoteOnly {
+  margin: 0;
+  font-size: var(--font-base);
+  line-height: 1.4;
+  color: var(--neutral-400);
+  white-space: pre-wrap;
 }
 
 /* ── Call transcript inset ─────────────────────────────────────────── */

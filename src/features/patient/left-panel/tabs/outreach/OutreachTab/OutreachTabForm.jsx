@@ -103,6 +103,8 @@ export function OutreachTabForm({
                     setCalledToNumber('Dr. Katherine Moss (581 824-1591)');
                     setCallDurationMin('05');
                     setCallDurationSec('29');
+                    // The last call is now in the fields below; the card is done.
+                    setCallBannerVisible(false);
                   }}
                 >
                   Use This
@@ -160,7 +162,7 @@ export function OutreachTabForm({
         <div className={styles.section}>
           <div className={styles.sectionLabelRow}>
             <span className={styles.sectionLabel}>{programsLabel}</span>
-            <Tooltip label="Select from programs or gaps below to log outreach.">
+            <Tooltip label="Select the programs or gaps this outreach is for. Leave them all unselected to log it as a Member Outreach.">
               <Icon name="solar:info-circle-linear" size={15} color="var(--neutral-300)" />
             </Tooltip>
           </div>
@@ -201,7 +203,8 @@ export function OutreachTabForm({
           </div>
         </div>
 
-        {selectedProgs.length > 0 && (
+        {/* No program or gap picked: the note still opens, as a Member Outreach. */}
+        {(selectedProgs.length > 0 || !scopedProgram) && (
           <div className={styles.notePanels}>
             {useSeparate ? (
               selectedProgs.map(prog => {

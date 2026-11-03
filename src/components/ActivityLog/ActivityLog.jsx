@@ -466,7 +466,16 @@ function OutreachEntryBody({ entry }) {
       <MetaLine entry={entry} />
       <div className={htStyles.headlineRow}>
         <span className={htStyles.headline}>{entry.title}</span>
-        {(entry.badges || []).map(b => <Badge key={b} tone="primary" size="M" label={b} />)}
+        {/* A badge is a label, or `{ label, tone, title }` for a quieter one
+            (an outreach not tied to any program, say). */}
+        {(entry.badges || []).map((b) => {
+          const badge = typeof b === 'string' ? { label: b } : b;
+          return (
+            <span key={badge.label} title={badge.title} className={styles.badgeWrap}>
+              <Badge tone={badge.tone || 'primary'} size="S" label={badge.label} />
+            </span>
+          );
+        })}
       </div>
       <div className={styles.outcomeRow}>
         {entry.outcome && (
@@ -474,6 +483,9 @@ function OutreachEntryBody({ entry }) {
             {entry.outcome}
           </span>
         )}
+        {/* `outcomeAside`: a quiet note beside the outcome (e.g. a call whose
+            details never reached Fold). */}
+        {entry.outcomeAside && <span className={styles.outcomeAside}>{entry.outcomeAside}</span>}
         {expandable && (
           <button
             type="button"
@@ -481,7 +493,7 @@ function OutreachEntryBody({ entry }) {
             onClick={entry.onViewDetails || (() => setExpanded(v => !v))}
           >
             {entry.outcome && <span className={styles.viewNoteDot} aria-hidden="true">•</span>}
-            {entry.viewDetailsLabel || (hasDetails ? 'View details' : 'View more')}
+            {entry.viewDetailsLabel || entry.expandLabel || (hasDetails ? 'View details' : 'View more')}
             {entry.viewDetailsLabel
               ? <Icon name="solar:alt-arrow-right-linear" size={12} color="currentColor" />
               : <DownChevronIcon size={11} color="currentColor" className={expanded ? styles.viewMoreChevronOpen : undefined} />}
@@ -490,7 +502,7 @@ function OutreachEntryBody({ entry }) {
       </div>
 
       {expanded && (hasCall || hasNote || hasDetails) && (
-        <div className={styles.expandedCard}>
+        <div className={`${styles.expandedCard} ${!hasCall && !hasDetails ? styles.expandedCardCompact : ''}`}>
           {hasCall && (
             <>
               <div className={styles.expandedLabel}>Call Details:</div>
@@ -548,12 +560,13 @@ function OutreachEntryBody({ entry }) {
               ))}
             </dl>
           )}
-          {!hasCall && hasNote && (
+          {/* On its own the note needs no heading: "View Note" opened it. */}
+          {!hasCall && hasNote && (hasDetails ? (
             <>
               <div className={styles.expandedNoteLabel}>Note :</div>
               <p className={styles.expandedNote}>{entry.note}</p>
             </>
-          )}
+          ) : <p className={styles.expandedNoteOnly}>{entry.note}</p>)}
         </div>
       )}
     </>

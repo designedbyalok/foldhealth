@@ -348,7 +348,7 @@ export function PatientProfileTabs({
 
         {currentTab === 'Comms' && <CommsTab patient={patient} />}
 
-        {currentTab === 'Outreach' && <OutreachTab memberName={patient?.name} />}
+        {currentTab === 'Outreach' && <OutreachTab memberName={patient?.name} classicForm />}
 
         {currentTab === 'Summary' && <SummaryTab widgets={visibleWidgets(layout, 'Summary')} />}
 
