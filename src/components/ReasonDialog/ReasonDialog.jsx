@@ -31,6 +31,8 @@ import styles from './ReasonDialog.module.css';
  *   is the whole record and free text has nothing to add; the standard reason
  *   then becomes mandatory, since it is the only input left
  * @param {string}   [props.notesPlaceholder] – Placeholder for the notes box
+ * @param {boolean}  [props.required=true]  – False lets the dialog confirm with
+ *   neither a reason nor a note (the reason is asked for, not demanded)
  * @param {'select'|'radio'} [props.reasonInput='select'] – How the standard
  *   reasons are picked: a dropdown, or a radio list ("Other" stays picked)
  * @param {node}     props.children         – Extra fields, above the reason
@@ -50,6 +52,7 @@ export function ReasonDialog({
   notes = true,
   notesPlaceholder,
   reasonInput = 'select',
+  required = true,
   children,
   childrenBelow = false,
   onCancel,
@@ -60,7 +63,7 @@ export function ReasonDialog({
   const code = choice === '__other__' ? '' : choice;
   const [freeText, setFreeText] = useState('');
 
-  const valid = (!!code || (notes && freeText.trim().length > 0)) && !confirmDisabled;
+  const valid = (!required || !!code || (notes && freeText.trim().length > 0)) && !confirmDisabled;
 
   const submit = () => {
     if (!valid) return;
@@ -95,7 +98,7 @@ export function ReasonDialog({
             <Select
               id={`${uid}-reason-code`}
               label="Standard reason"
-              required={!notes}
+              required={required && !notes}
               options={options}
               value={code}
               onChange={(v) => setChoice(v === '__other__' ? '' : v)}
@@ -106,8 +109,8 @@ export function ReasonDialog({
           {notes && (
             <div className={styles.field}>
               <label className={styles.label} htmlFor={`${uid}-reason-notes`}>
-                <span>Additional notes{code ? ' (optional)' : ''}</span>
-                {!code && <span className={styles.required} aria-hidden="true" />}
+                <span>Additional notes{code || !required ? ' (optional)' : ''}</span>
+                {!code && required && <span className={styles.required} aria-hidden="true" />}
               </label>
               <Textarea
                 id={`${uid}-reason-notes`}

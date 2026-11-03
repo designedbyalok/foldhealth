@@ -59,6 +59,7 @@ import { CarePlanLinkageSection } from './CarePlanLinkageSection';
 import { CarePlanAiSummarySection } from './CarePlanAiSummarySection';
 import { QuickNotePopover } from './QuickNotePopover';
 import { ReviewCadenceBadge } from './ReviewCadenceBadge';
+import { EventUpdatesCard } from './EventUpdatesCard';
 import { addGoalsFromPicker, addBarriersFromPicker } from './carePlanPickerHandlers';
 import { formatInstanceDate } from '../lib/templateRenewal';
 import {
@@ -1289,6 +1290,9 @@ export function CarePlanView({ patientId, program }) {
       ) : !carePlanLoading && planIsEmpty && canEdit && !viewedVersion ? (
         <IndividualizedPlanCard state="start" error={aiError} onDraft={() => runIndividualizedPlan()} onUseTemplate={handleTemplates} />
       ) : null}
+      {!carePlanLoading && !planIsEmpty && !viewedVersion && !viewedRun && !planPaused && (
+        <EventUpdatesCard patientId={patientId} program={program} live={live} canEdit={canEdit} />
+      )}
       {!carePlanLoading && (viewData.goals.length + viewData.interventions.length + (viewData.barriers || []).length) > 0 && (
         <div className={styles.summaryStrip}>
           <span className={styles.summaryMetric}><strong>{planStats.goals}</strong> goals</span>
