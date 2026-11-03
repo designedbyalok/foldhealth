@@ -137,7 +137,8 @@ export function BulkRescheduleDrawer({ provider, appointments, onDone, onClose }
       headerRight={(
         <>
           {/* A disabled button gets no hover, so its wrapper carries the tooltip. */}
-          <Tooltip label={complete ? '' : 'Select a date and time for every appointment to save'} maxWidth={240} align="right" placement="bottom" className={styles.saveTip}>
+          {/* Two even lines that hug the text (a max width would leave a ragged gap). */}
+          <Tooltip label={complete ? '' : <>Select a date and time<br />for every appointment to save</>} align="right" placement="bottom" className={styles.saveTip}>
             <span className={complete ? undefined : styles.saveBlocked}>
               <Button variant="solid" disabled={!complete || saving} onClick={save}>Save</Button>
             </span>

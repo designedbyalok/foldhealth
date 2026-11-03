@@ -21,23 +21,19 @@ import { apptPerson, describeRange, initialsOf, OOO_ICON, recordsFor } from '../
 import { apptSpan } from '../../ooo/reassignUtils';
 import { ReassignAppointmentsDrawer } from '../../ooo/ReassignAppointmentsDrawer';
 import {
-  dateLabel, groupByProvider, inPeriod, lockedReason, periodRange, sortAppointments, statusLabel, timeRangeLabel,
+  dateLabel, groupByProvider, inPeriod, lockedReason, periodRange, sortAppointments, STATUS_OPTIONS, statusBlockedReason, statusLabel, timeRangeLabel,
 } from './appointmentList';
 import { BulkRescheduleDrawer } from './BulkRescheduleDrawer';
-import { CancelAppointmentsDialog } from './CancelAppointmentsDialog';
+import { BulkEditAppointmentsDrawer } from './BulkEditAppointmentsDrawer';
+import { CancelAppointmentsDrawer } from './CancelAppointmentsDrawer';
 import styles from './AppointmentListView.module.css';
-
-const ONE_PROVIDER = 'Select appointments from one provider at a time';
-
-// What the Status badge can change an appointment to, and what each saves as.
-const STATUS_OPTIONS = ['Scheduled', 'No Show', 'Checked In', 'Checked Out', 'Cancelled'];
 
 const STATUS_TONE = { Scheduled: 'grey', 'Checked In': 'success', 'Checked Out': 'success', Cancelled: 'error', 'No Show': 'grey' };
 
 const COLUMNS = [
   { key: 'check', showCheckbox: true, width: 36 },
-  { key: 'member', label: 'Member', width: 250 },
   { key: 'type', label: 'Appt Type', width: 240 },
+  { key: 'member', label: 'Member', width: 250 },
   { key: 'status', label: 'Status', width: 120 },
   { key: 'department', label: 'Department', width: 160 },
   { key: 'when', label: 'Date & Time', width: 210, sortKey: 'date', sortType: 'date' },
@@ -54,8 +50,10 @@ const ROW_MENU = [
 /**
  * The calendar's List view (VBC-25651, Figma 3023:575134): the period's
  * appointments (same filters as the calendar), grouped by provider. Rows
- * from one provider can be picked together for a bulk Reschedule, Reassign
- * or Cancel; checked-in, checked-out and cancelled ones can't be picked.
+ * from one provider can be bulk Rescheduled, Reassigned, Edited (location,
+ * reason, instructions), marked No Show or Cancelled; rows across providers
+ * only marked No Show or Cancelled. No Show skips ones not yet started.
+ * Checked-in, checked-out and cancelled ones can't be picked.
  *
  * @param {object[]} props.appointments – the calendar's filtered appointments
  * @param {'week'|'day'|'month-grid'} props.view
@@ -77,21 +75,13 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
   const [seenMode, setSeenMode] = useState(groupsMode);
   if (seenMode !== groupsMode) { setSeenMode(groupsMode); setFlipped(new Set()); }
   const isOpen = (key) => (groupsMode === 'collapsed') === flipped.has(key);
-  // Picks are one provider's: { provider: groupKey, ids: Set }.
-  const [selection, setSelection] = useState({ provider: null, ids: new Set() });
-  const [action, setAction] = useState(null); // { kind: 'reschedule'|'reassign'|'cancel', appts, provider }
+  // Picks can span providers; Reschedule and Reassign need just one.
+  const [selection, setSelection] = useState(() => new Set());
+  const [action, setAction] = useState(null); // { kind: 'reschedule'|'reassign'|'edit'|'cancel', appts, provider }
   const [menu, setMenu] = useState(null); // { appt, anchor }
   const menuAnchor = useRef(null);
   const openQuickView = useAppStore(s => s.openQuickView);
   const oooRecords = useAppStore(s => s.oooRecords);
-  const allPatients = useAppStore(s => s.allPatients);
-  // "F • 67Y • #10035" when the appointment links to a known patient.
-  const memberMeta = (a) => {
-    const p = a.patient_id ? (allPatients || []).find(x => String(x.id) === String(a.patient_id) || String(x.memberId) === String(a.patient_id)) : null;
-    if (!p) return '';
-    const gender = (p.gender || p.g || '')[0];
-    return [gender, p.age != null ? `${p.age}Y` : null, p.memberId ? `#${p.memberId}` : null].filter(Boolean).join(' • ');
-  };
   // The provider's out of office record covering this appointment, if any.
   const oooDuring = (a) => {
     const { start, end } = apptSpan(a);
@@ -100,11 +90,15 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
   const updateAppointment = useAppStore(s => s.updateAppointment);
   const setAppointmentsStatus = useAppStore(s => s.setAppointmentsStatus);
 
+  // Marks the ones that have started; the rest are skipped and counted.
   const markNoShow = async () => {
-    if (!selected.length) return;
-    const ok = await setAppointmentsStatus(selected, 'No Show');
+    const due = selected.filter(a => !statusBlockedReason(a, 'No Show'));
+    const skipped = selected.length - due.length;
+    const skipNote = `${skipped} ${skipped === 1 ? 'appointment hasn\'t' : 'appointments haven\'t'} started yet, so ${skipped === 1 ? 'it was' : 'they were'} skipped.`;
+    if (!due.length) { toast.error(`No appointments marked as No Show. ${skipNote}`); return; }
+    const ok = await setAppointmentsStatus(due, 'No Show');
     if (!ok) { toast.error('Appointments could not be updated. Try again.'); return; }
-    toast.success('Status Updated Successfully');
+    toast.success('Status Updated Successfully', skipped ? { description: skipNote } : undefined);
     clear();
   };
 
@@ -112,6 +106,8 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
   const changeStatus = async (a, next) => {
     if (next === statusLabel(a)) return;
     if (next === 'Cancelled') { setAction({ kind: 'cancel', appts: [a] }); return; }
+    const blocked = statusBlockedReason(a, next);
+    if (blocked) { toast.error(blocked); return; }
     const ok = await updateAppointment(a.id, { status: next });
     if (ok) toast.success('Status Updated Successfully');
     else toast.error('Status could not be updated. Try again.');
@@ -129,30 +125,30 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
     setSeenKey(listKey);
     setPage(1);
     setSelection(s => {
-      const ids = new Set([...s.ids].filter(id => rows.some(a => a.id === id && !lockedReason(a))));
-      return ids.size === s.ids.size ? s : { provider: ids.size ? s.provider : null, ids };
+      const ids = new Set([...s].filter(id => rows.some(a => a.id === id && !lockedReason(a))));
+      return ids.size === s.size ? s : ids;
     });
   }
 
   const pageRows = rows.slice((page - 1) * perPage, page * perPage);
   const groups = groupByProvider(pageRows);
   const allGroups = useMemo(() => groupByProvider(rows), [rows]);
-  const selected = rows.filter(a => selection.ids.has(a.id));
-  const selectedGroup = allGroups.find(g => g.key === selection.provider) || null;
+  const selected = rows.filter(a => selection.has(a.id));
+  const selectedGroups = allGroups.filter(g => g.appointments.some(a => selection.has(a.id)));
+  const selectedGroup = selectedGroups.length === 1 ? selectedGroups[0] : null;
 
-  const clear = () => setSelection({ provider: null, ids: new Set() });
-  const toggle = (group, ids, on) => setSelection((s) => {
-    const next = new Set(s.provider === group.key ? s.ids : []);
+  const clear = () => setSelection(new Set());
+  const toggle = (ids, on) => setSelection((s) => {
+    const next = new Set(s);
     ids.forEach(id => (on ? next.add(id) : next.delete(id)));
-    return { provider: next.size ? group.key : null, ids: next };
+    return next;
   });
-  const blockedBy = (group) => (selection.provider && selection.provider !== group.key ? ONE_PROVIDER : '');
 
   const onSort = (key) => setSort(s => ({ key, dir: s.key === key && s.dir === 'asc' ? 'desc' : 'asc' }));
 
   const startBulk = (kind) => {
-    if (!selected.length || !selectedGroup) return;
-    setAction({ kind, appts: selected, provider: selectedGroup.person });
+    if (!selected.length || (kind !== 'cancel' && !selectedGroup)) return;
+    setAction({ kind, appts: selected, provider: selectedGroup?.person });
   };
 
   // A checkbox that explains itself when it can't be used.
@@ -165,8 +161,8 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
   );
 
   const renderRow = (group, a) => {
-    const tip = lockedReason(a) || blockedBy(group);
-    const checked = selection.ids.has(a.id);
+    const tip = lockedReason(a);
+    const checked = selection.has(a.id);
     const status = statusLabel(a);
     const ooo = oooDuring(a);
     const cell = (content, extra = '') => <td className={`${profileCellClass} ${extra}`}><span className={styles.cellText}>{content}</span></td>;
@@ -177,11 +173,12 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
             <Checkbox
               checked={checked}
               disabled={!!tip}
-              onCheckedChange={(v) => toggle(group, [a.id], !!v)}
+              onCheckedChange={(v) => toggle([a.id], !!v)}
               aria-label={`Select ${a.patient_name || 'appointment'}`}
             />
           ))}
         </td>
+        {cell(a.appointment_type_name)}
         <td className={profileCellClass}>
           {/* The member as a link (user icon + name) that opens their quick view. */}
           <span className={styles.memberLine}>
@@ -196,10 +193,8 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
               <Icon name="solar:user-linear" size={16} />
               <span className={styles.memberLinkText}>{a.patient_name || 'Member'}</span>
             </Link>
-            {memberMeta(a) && <span className={styles.memberMeta}>({memberMeta(a)})</span>}
           </span>
         </td>
-        {cell(a.appointment_type_name)}
         <td className={profileCellClass}>
           <BadgeSelect
             value={status}
@@ -208,6 +203,9 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
             tone={STATUS_TONE[status] || 'grey'}
             size="S"
             align="left"
+            // Bulk actions own the rows while anything is selected, so the
+            // status badge and the row menu wait until it's cleared.
+            disabled={selection.size > 0}
           />
         </td>
         {cell(a.location)}
@@ -231,6 +229,7 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
             icon="solar:menu-dots-linear"
             size="sm"
             tooltip="More actions"
+            disabled={selection.size > 0}
             onClick={(e) => { menuAnchor.current = e.currentTarget; setMenu({ appt: a }); }}
           />
         </td>
@@ -249,8 +248,8 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
         {groups.map((group) => {
           const full = allGroups.find(g => g.key === group.key) || group;
           const pickable = full.appointments.filter(a => !lockedReason(a)).map(a => a.id);
-          const picked = pickable.filter(id => selection.ids.has(id)).length;
-          const blocked = blockedBy(group) || (!pickable.length ? 'Nothing here can be rescheduled, reassigned or cancelled' : '');
+          const picked = pickable.filter(id => selection.has(id)).length;
+          const blocked = !pickable.length ? 'Nothing here can be rescheduled, reassigned or cancelled' : '';
           const allState = picked && picked === pickable.length ? true : picked ? 'indeterminate' : false;
           const open = isOpen(group.key);
           const n = full.appointments.length;
@@ -263,7 +262,7 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
                   <Checkbox
                     checked={allState}
                     disabled={!!blocked}
-                    onCheckedChange={() => toggle(group, pickable, picked !== pickable.length)}
+                    onCheckedChange={() => toggle(pickable, picked !== pickable.length)}
                     aria-label={`Select ${group.person.name}'s appointments`}
                   />
                 ))}
@@ -293,9 +292,9 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
                   onSort={onSort}
                   rows={group.appointments}
                   renderRow={(a) => renderRow(group, a)}
-                  selectedIds={group.appointments.filter(a => selection.ids.has(a.id)).map(a => a.id)}
+                  selectedIds={group.appointments.filter(a => selection.has(a.id)).map(a => a.id)}
                   selectAll={{ checked: allState, disabled: !!blocked, tooltip: blocked }}
-                  onSelectAll={() => toggle(group, pickable, picked !== pickable.length)}
+                  onSelectAll={() => toggle(pickable, picked !== pickable.length)}
                 />
               )}
             </section>
@@ -316,15 +315,19 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
       <BulkBar
         selectedIds={selected.map(a => a.id)}
         onClear={clear}
-        actions={[
+        // Picks across providers can only be cancelled or marked No Show;
+        // one provider's can also be rescheduled, reassigned or edited.
+        actions={selectedGroup ? [
           { label: 'Reschedule', iconElement: <CalendarRefreshIcon size={16} />, size: 'md', onClick: () => startBulk('reschedule') },
           { label: 'Reassign', icon: 'solar:user-linear', size: 'md', onClick: () => startBulk('reassign') },
-          { label: 'Mark as No Show', icon: 'solar:close-circle-linear', size: 'md', onClick: markNoShow },
+          { divider: true },
+          { label: 'Edit', icon: 'solar:pen-linear', size: 'md', onClick: () => startBulk('edit') },
+        ] : [
+          { label: 'Cancel', iconElement: <CalendarCrossIcon size={16} />, variant: 'soft', tone: 'danger', size: 'md', onClick: () => startBulk('cancel') },
         ]}
         moreActions={[
-          // Edit is a later ticket.
-          { label: 'Edit', icon: 'solar:pen-linear', onClick: () => {} },
-          { label: 'Cancel', iconElement: <CalendarCrossIcon size={16} />, variant: 'destructive', onClick: () => startBulk('cancel') },
+          { label: 'Mark as No Show', icon: 'solar:close-circle-linear', onClick: markNoShow },
+          ...(selectedGroup ? [{ label: 'Cancel', iconElement: <CalendarCrossIcon size={16} />, variant: 'destructive', onClick: () => startBulk('cancel') }] : []),
         ]}
       />
 
@@ -337,7 +340,8 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
           onSelect={(key) => {
             const a = menu.appt;
             setMenu(null);
-            if (key === 'view') onViewDetails(a);
+            // The appointment drawer edits in place, so Edit opens it too.
+            if (key === 'view' || key === 'edit') onViewDetails(a);
             if (key === 'cancel') setAction({ kind: 'cancel', appts: [a] });
           }}
           onClose={() => setMenu(null)}
@@ -345,7 +349,10 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
       )}
 
       {action?.kind === 'cancel' && (
-        <CancelAppointmentsDialog appointments={action.appts} onDone={clear} onClose={() => setAction(null)} />
+        <CancelAppointmentsDrawer appointments={action.appts} onDone={clear} onClose={() => setAction(null)} />
+      )}
+      {action?.kind === 'edit' && (
+        <BulkEditAppointmentsDrawer provider={action.provider} appointments={action.appts} onDone={clear} onClose={() => setAction(null)} />
       )}
       {action?.kind === 'reschedule' && (
         <BulkRescheduleDrawer provider={action.provider} appointments={action.appts} onDone={clear} onClose={() => setAction(null)} />

@@ -63,6 +63,7 @@ import { LabResultReview } from './labs/LabResultReview';
 import { CANCELLABLE_STATUSES, PERFORMING_LABS } from './labs/labRules';
 import { useCareGapReferralForm, REFERRAL_CHANNELS, REFERRAL_STATUS, isReferralDraft, CUSTOM_SENDER, isEmail, providerContact } from './useCareGapReferralForm';
 import { draftReferralEmail } from './referralEmail';
+import { useReferralDirectory } from './useReferralDirectory';
 import { ScheduleDrawer } from '../../components/ScheduleDrawer/ScheduleDrawer';
 import { FilePreview } from '../../components/FilePreview/FilePreview';
 import { useAppStore } from '../../store/useAppStore';
@@ -149,34 +150,16 @@ function CareGapDetailDrawerContent({ member, gapCode, instanceNo = null, year, 
   // "Last N days" is measured from when the drawer opened.
   const [activityOpenedAt] = useState(() => Date.now());
   // Send Referral workspace (caregap_referrals): eFax / Email.
-  const directoryProviders = useAppStore(s => s.referralProviders);
-  const practiceSenderLines = useAppStore(s => s.referralSenderLines);
-  // eFax senders are the practice eFax numbers (Settings > Messages > eFax)
-  // that are active and linked to the signed-in user; email lines come from
-  // referral_sender_lines.
-  const efaxNumbers = useAppStore(s => s.efaxNumbers);
-  const fetchEfaxNumbers = useAppStore(s => s.fetchEfaxNumbers);
   const meId = useAppStore(s => s.currentUserProfile?.id);
-  useEffect(() => { fetchEfaxNumbers(); }, [fetchEfaxNumbers]);
-  const referralSenderLines = useMemo(() => [
-    ...efaxNumbers
-      .filter(n => n.isActive && meId && n.linkedUserIds.includes(meId))
-      .map((n, i) => ({ id: n.id, channel: 'efax', label: n.name, value: n.number, isDefault: i === 0 })),
-    ...practiceSenderLines.filter(l => l.channel !== 'efax'),
-  ], [efaxNumbers, meId, practiceSenderLines]);
-  const fetchReferralDirectory = useAppStore(s => s.fetchReferralDirectory);
+  const {
+    providers: referralProviders, senderLines: referralSenderLines, meProvider,
+    emailSignature: referralEmailSignature, senderDefaults: referralSenderDefaults,
+  } = useReferralDirectory();
   const memberReferrals = useAppStore(s => s.caregapReferrals[member?.id]) || EMPTY_REMINDERS;
   const fetchCaregapReferrals = useAppStore(s => s.fetchCaregapReferrals);
   const addCaregapReferral = useAppStore(s => s.addCaregapReferral);
   const updateCaregapReferral = useAppStore(s => s.updateCaregapReferral);
-  useEffect(() => { fetchReferralDirectory(); fetchCaregapReferrals(); }, [fetchReferralDirectory, fetchCaregapReferrals]);
-  // A user linked to an active practice eFax number can receive referrals on
-  // it, so that number fills in when their profile has no fax of its own.
-  const referralProviders = useMemo(() => directoryProviders.map(p => {
-    if (p.fax) return p;
-    const linked = efaxNumbers.find(n => n.isActive && n.linkedUserIds.includes(p.id));
-    return linked ? { ...p, fax: linked.number } : p;
-  }), [directoryProviders, efaxNumbers]);
+  useEffect(() => { fetchCaregapReferrals(); }, [fetchCaregapReferrals]);
   const referralForm = useCareGapReferralForm();
   const referralProvider = referralProviders.find(p => p.id === referralForm.values.providerId);
   const referralContact = providerContact(referralProvider, referralForm.values.channel);
@@ -189,17 +172,6 @@ function CareGapDetailDrawerContent({ member, gapCode, instanceNo = null, year, 
     && (referralForm.values.channel !== 'email'
       || (referralForm.values.emailSubject.trim() && referralForm.values.emailBody.trim()))
   );
-  // Email signature: the sender's own directory entry (profile).
-  const meProvider = referralProviders.find(p => p.id === meId);
-  const referralEmailSignature = meProvider && {
-    name: meProvider.name,
-    lines: [meProvider.specialty, meProvider.practice, meProvider.address],
-    details: [
-      { label: 'Phone', value: meProvider.phone },
-      { label: 'Fax', value: meProvider.fax },
-      { label: 'Email', value: meProvider.email },
-    ],
-  };
   const [generatingReferralEmail, setGeneratingReferralEmail] = useState(false);
   const handleGenerateReferralEmail = async () => {
     const v = referralForm.values;
@@ -225,10 +197,6 @@ function CareGapDetailDrawerContent({ member, gapCode, instanceNo = null, year, 
     referralForm.set('emailSubject')(draft.subject);
     referralForm.set('emailBody')(draft.body);
     showToast(draft.source === 'ai' ? 'Email drafted with UnityAI' : 'UnityAI is unavailable, drafted from the referral details');
-  };
-  const referralSenderDefaults = () => {
-    const defaultFor = (ch) => (referralSenderLines.find(l => l.channel === ch && l.isDefault) || referralSenderLines.find(l => l.channel === ch))?.id || '';
-    return { efax: defaultFor('efax'), email: defaultFor('email') };
   };
   const openReferral = () => {
     referralForm.reset(referralSenderDefaults());

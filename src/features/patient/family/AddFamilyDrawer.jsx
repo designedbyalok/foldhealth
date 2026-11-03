@@ -6,6 +6,7 @@ import { Select } from '../../../components/Select/Select';
 import { Link } from '../../../components/Link/Link';
 import { Badge } from '../../../components/Badge/Badge';
 import { Avatar } from '../../../components/Avatar/Avatar';
+import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { RadioButton } from '../../../components/RadioButton/RadioButton';
 import { InfoBar } from '../../../components/InfoBar/InfoBar';
@@ -176,12 +177,12 @@ export function AddFamilyDrawer({ patient, onClose }) {
 
           {form.mode === 'search' && (
             <Select
-              label="Fold Member"
+              label="Search Member"
               searchable
               options={memberOptions}
               value=""
               onChange={(id) => set({ mode: 'member', relatedPatientId: id })}
-              placeholder="Search Fold members"
+              placeholder="Search members"
               searchPlaceholder="Search by name or member ID"
               emptyText={() => (
                 <span className={styles.notMember}>
@@ -300,11 +301,12 @@ export function AddFamilyDrawer({ patient, onClose }) {
                 const m = resolveMember(raw, patients);
                 return (
                   <div key={m.id} className={styles.person}>
-                    <Avatar variant="patient" size="M" initials={m.initials} />
+                    {m.relatedPatientId
+                      ? <Avatar variant="patient" size="M" initials={m.initials} />
+                      : <Tooltip label="Not a Fold Member"><Avatar variant="others" size="M" initials={m.initials} /></Tooltip>}
                     <div className={styles.personText}>
                       <span className={styles.personName}>
                         {m.name}
-                        {m.relatedPatientId && <Badge tone="primary" size="XS" label="Fold Member" />}
                       </span>
                       <span className={styles.personMeta}>{[m.relationship, m.phone, m.email].filter(Boolean).join(' • ')}</span>
                       {rolesOfMember(m).length > 0 && (

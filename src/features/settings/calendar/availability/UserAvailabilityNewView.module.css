@@ -324,6 +324,20 @@
   border-top: 0.5px dashed var(--neutral-200);
 }
 .dayRangesOff { opacity: 0.6; }
+/* One day (the Calendar's Day view): the day's ranges side by side, split
+   by the same dashed line, standing up. */
+.dayRangesRow {
+  flex-direction: row;
+  flex-wrap: wrap;
+  row-gap: var(--space-3);
+}
+.dayRangesRow .dayRange { width: 220px; }
+.dayRangesRow .dayRange + .dayRange {
+  margin: 0 0 0 var(--space-3);
+  padding: 0 0 0 var(--space-3);
+  border-top: 0;
+  border-left: 0.5px dashed var(--neutral-200);
+}
 .dayRange {
   display: flex;
   flex-direction: column;

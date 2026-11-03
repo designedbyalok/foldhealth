@@ -35,6 +35,7 @@ import { LinkIcon } from './LinkIcon';
 import { AllergyIcon } from './AllergyIcon';
 import { ScalpelIcon } from './ScalpelIcon';
 import { ImagingIcon } from './ImagingIcon';
+import { ReferIcon } from './ReferIcon';
 import { MedicalHistoryIcon } from './MedicalHistoryIcon';
 import { FamilyHistoryIcon } from './FamilyHistoryIcon';
 import { SocialHistoryIcon } from './SocialHistoryIcon';
@@ -97,6 +98,7 @@ export function Icon({ name, size = 18, color, style, className }) {
   if (name === 'custom:allergy') return <AllergyIcon size={size} color={color} />;
   if (name === 'custom:scalpel') return <ScalpelIcon size={size} color={color} />;
   if (name === 'custom:imaging') return <ImagingIcon size={size} color={color} />;
+  if (name === 'custom:refer') return <ReferIcon size={size} color={color} />;
   if (name === 'custom:medical-history') return <MedicalHistoryIcon size={size} color={color} />;
   if (name === 'custom:family-history') return <FamilyHistoryIcon size={size} color={color} />;
   if (name === 'custom:social-history') return <SocialHistoryIcon size={size} color={color} />;

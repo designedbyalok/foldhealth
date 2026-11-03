@@ -174,7 +174,7 @@ export function useCalendarView({ onOooSlot } = {}) {
 
   const handleViewChange = (view) => {
     setCurrentView(view);
-    // Month has no available-slots shading, so it falls back to the calendar.
+    // Available Slots has no Month, so Month goes back to the calendar.
     if (view === 'month-grid' && layout === 'availability') setLayout('calendar');
     const app = calendarRef.current;
     if (app?.$app?.calendarState) {

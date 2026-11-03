@@ -46,6 +46,19 @@ export const lockedReason = (a) => LOCKED[a?.status] || null;
 
 export const statusLabel = (a) => displayAppointmentStatus(a?.status);
 
+// What an appointment's status can be changed to, and what each saves as.
+export const STATUS_OPTIONS = ['Scheduled', 'No Show', 'Checked In', 'Checked Out', 'Cancelled'];
+
+// Why an appointment can't take `status` yet, or null. A patient can check
+// in from the morning of the visit; No Show and Checked Out need it started.
+export const statusBlockedReason = (a, status, now = Date.now()) => {
+  const { start } = apptSpan(a);
+  if (!start) return null;
+  if (status === 'Checked In' && new Date(start).setHours(0, 0, 0, 0) > now) return 'Checked In is available from the day of the appointment';
+  if ((status === 'No Show' || status === 'Checked Out') && start > now) return `${status} is available once the appointment has started`;
+  return null;
+};
+
 const SORTERS = {
   date: (a, b) => apptSpan(a).start - apptSpan(b).start,
   member: (a, b) => String(a.patient_name || '').localeCompare(String(b.patient_name || '')),
