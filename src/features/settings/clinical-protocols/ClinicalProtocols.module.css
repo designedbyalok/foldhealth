@@ -87,6 +87,22 @@
 .item { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-2) 0; }
 .item + .item { border-top: 0.5px solid var(--neutral-100); }
 .rowTitle { font-size: var(--font-base); font-weight: 400; line-height: var(--leading-normal); color: var(--neutral-500); }
+/* What a section holds, in one plain line under its title. */
+.sectionAbout { margin: 0 0 var(--space-1); font-size: var(--font-sm); line-height: var(--leading-normal); color: var(--neutral-300); }
+/* A parser doubt about one item, on that item. */
+.itemCheck {
+  display: flex; align-items: flex-start; gap: var(--space-2);
+  padding: var(--space-2) var(--space-3); border-radius: 6px;
+  background: color-mix(in srgb, var(--status-warning-dark) 8%, var(--neutral-0));
+  font-size: var(--font-sm); line-height: var(--leading-normal); color: var(--neutral-500);
+}
+.itemCheck > :first-child { flex-shrink: 0; margin-top: calc(var(--space-1) / 2); color: var(--status-warning-dark); }
+.itemCheckText { flex: 1; min-width: 0; }
+.itemCheckDone {
+  flex-shrink: 0; padding: 0; border: 0; background: none; cursor: pointer;
+  font-size: var(--font-sm); font-weight: 500; color: var(--primary-300);
+}
+.itemCheckDone:hover { color: var(--primary-400); }
 /* The sections bleed by their own inset so their titles line up with the tabs. */
 .panelStack { display: flex; flex-direction: column; margin: calc(-1 * var(--space-2)) calc(-1 * var(--space-2)) 0; }
 .fileThumb {

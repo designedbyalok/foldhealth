@@ -56,6 +56,8 @@ export const REFERENCE_KINDS = [
 const sourced = {
   source: { type: 'string' },
   page: { type: 'integer', nullable: true },
+  // What a reviewer should check about this one item, or null.
+  check: { type: 'string', nullable: true },
 };
 
 export const PROTOCOL_PARSE_SCHEMA = {
@@ -189,7 +191,8 @@ export function buildProtocolParsePrompt(text, { programs = [], fileName = '' } 
     '- crossReferences: other guidelines, protocols, policies or order sets the document cites.',
     '- metadata: title as the document names itself; organization that issued it; conditions it covers by common clinical name; effectiveDate and reviewDate as YYYY-MM-DD only if stated, else null; author (person or committee) and version only if stated.',
     `- metadata.programCodes: only codes from this list, and only when the document clearly applies to that program: ${JSON.stringify(programs)}. Otherwise an empty list.`,
-    '- warnings: anything a reviewer should know: conflicting values, unreadable or truncated text, tables you could not interpret, or rules that depend on unstated context. Each one short, plain sentence a nurse can act on (under 160 characters), naming the page when you can.',
+    '- check: when one item is uncertain (a conflicting value, unclear wording, an apparent typo, a missing cut-off or dose), put one short, plain sentence a nurse can act on (under 160 characters) on that item\'s `check`; otherwise null. Put every concern about a specific item there, not in warnings.',
+    '- warnings: only concerns about the document as a whole that belong to no single item (unreadable or truncated text, a table you could not interpret). Each one short, plain sentence, naming the page when you can.',
     '- summary: two plain sentences on what the protocol covers.',
     '',
     `Document${fileName ? ` (${clip(fileName, 200)})` : ''}:`,
@@ -216,7 +219,7 @@ const pageOf = (v) => {
   const n = int(v);
   return n != null && n > 0 ? n : null;
 };
-const sourceOf = (item) => ({ source: str(item?.source, 600), page: pageOf(item?.page) });
+const sourceOf = (item) => ({ source: str(item?.source, 600), page: pageOf(item?.page), check: strOrNull(item?.check, 400) });
 
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 /** A real calendar date as YYYY-MM-DD, else null. */

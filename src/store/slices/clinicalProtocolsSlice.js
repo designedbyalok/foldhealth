@@ -439,7 +439,10 @@ export const createClinicalProtocolsSlice = (set, get) => {
       patchLocal(id, { status: 'processing' });
       try {
         const parsed = await parseExtracted({ text: data.source_text, json: null }, cur.sourceName);
-        const plan = await requestScope({ ...cur, protocol: parsed.protocol }).catch(() => null);
+        const plan = await requestScope({ ...cur, protocol: parsed.protocol }).catch(() => {
+          get().showToast?.('Parsed again, but the scope could not be rebuilt. Build it from the Scope tab.');
+          return null;
+        });
         const values = {
           protocol: plan ? { ...parsed.protocol, plan } : parsed.protocol,
           parseMeta: { ...cur.parseMeta, via: parsed.via, model: parsed.model || null, parsedAt: new Date().toISOString(), warnings: parsed.warnings || [] },
