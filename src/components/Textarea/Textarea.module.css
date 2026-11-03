@@ -332,10 +332,11 @@
   user-select: all;
 }
 
-/* Portaled @mention picker: anchored under (or above) the editor. */
+/* Portaled @mention picker: anchored under (or above) the editor, and above
+   a Popover (10000), which can hold a note box. */
 .mentionMenu {
   position: fixed;
-  z-index: 9800;
+  z-index: 10001;
   max-height: 280px;
   overflow-y: auto;
   background: var(--neutral-0);

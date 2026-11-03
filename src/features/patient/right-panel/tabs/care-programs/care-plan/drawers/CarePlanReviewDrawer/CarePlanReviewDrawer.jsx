@@ -6,6 +6,7 @@ import { Badge } from '../../../../../../../../components/Badge/Badge';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
 import { Textarea } from '../../../../../../../../components/Textarea/Textarea';
+import { useCarePlanNoteRefs, noteDetails } from '../../lib/carePlanNoteRefs';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { BulkBar } from '../../../../../../../../components/BulkBar/BulkBar';
 import { MenuPopover } from '../../../../../../../../components/MenuPopover/MenuPopover';
@@ -152,6 +153,8 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
     dob: record?.dob,
     memberId: patient?.memberId || record?.memberId,
   };
+  // Every note box here tags people with "@" and links plan items with "/".
+  const noteRefs = useCarePlanNoteRefs(patientId, program?.id);
   const open = review?.open || null;
   const discussed = open?.discussed || {};
   const [callNote, setCallNote] = useState(null); // null: not edited, shows the saved one
@@ -228,7 +231,7 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
 
   const completeReview = async () => {
     const note = callNote == null ? undefined : (plainText(callNote) ? callNote : '');
-    const saved = await finishReview(patientId, program, note, { startedAt, stoppedAt, baseSeconds, discussedCount: totalDiscussed });
+    const saved = await finishReview(patientId, program, note, { startedAt, stoppedAt, baseSeconds, discussedCount: totalDiscussed }, note ? noteDetails(note) : undefined);
     if (!saved) return;
     showToast(`Review completed · ${plural(totalDiscussed, 'item')} discussed`);
     setCompleteOpen(false);
@@ -291,7 +294,10 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
         <div className={styles.composer}>
           <Textarea
             richText
-            placeholder="General note for this call"
+            mentions
+            mentionUsers={noteRefs.mentionUsers}
+            links={noteRefs.links}
+            placeholder="General note for this call. Type @ to tag someone, / to link a goal, intervention or barrier."
             value={callNoteValue}
             onChange={(v) => setCallNote(typeof v === 'string' ? v : (v?.target?.value ?? ''))}
             rows={2}
@@ -306,7 +312,7 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
             <Button
               disabled={!callNoteFilled || callNoteValue === (open?.callNote || '')}
               onClick={async () => {
-                const saved = await saveCallNote(patientId, program, callNoteValue, { startedAt, stoppedAt, baseSeconds });
+                const saved = await saveCallNote(patientId, program, callNoteValue, { startedAt, stoppedAt, baseSeconds }, noteDetails(callNoteValue));
                 if (saved) { setCallNote(null); showToast('Call note saved'); }
               }}
             >
@@ -463,10 +469,11 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
                     onOpen={() => openItem(listTab.kind, item)}
                     onStatusMenu={(rect) => setStatusMenu({ kind: listTab.kind, items: [item], rect })}
                     onPriorityMenu={(rect) => setPriorityMenu({ kind: listTab.kind, item, rect })}
-                    onSaveNote={async (text, tags) => {
+                    noteRefs={noteRefs}
+                    onSaveNote={async (text, tags, details) => {
                       if (text.trim()) {
                         await addCarePlanNote(patientId, program, text.trim(), {
-                          entityType: listTab.kind, entityId: item.id, summary: `Note on ${item.title}`,
+                          entityType: listTab.kind, entityId: item.id, summary: `Note on ${item.title}`, details,
                         });
                       }
                       await setItemTags(patientId, program, listTab.kind, item.id, tags);
@@ -515,7 +522,8 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
               key={`${n.id}:${n.detail}`}
               note={n}
               canEdit={isMine(n.actor)}
-              onSave={text => updateNote(patientId, program.id, n.id, text)}
+              noteRefs={noteRefs}
+              onSave={(text, details) => updateNote(patientId, program.id, n.id, text, { program, details })}
             />
           ))}
         </div>
@@ -528,6 +536,7 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
           discussed={discussedItems}
           note={callNoteValue}
           onNoteChange={setCallNote}
+          noteRefs={noteRefs}
           onResume={resumeReview}
           onComplete={completeReview}
           onClose={() => setCompleteOpen(false)}

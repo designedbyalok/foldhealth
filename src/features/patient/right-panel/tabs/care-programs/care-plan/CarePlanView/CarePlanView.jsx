@@ -74,7 +74,7 @@ import { CategorySuggestionBanner } from './CategorySuggestionBanner';
 import { categorySuggestions, hasCategories } from '../../../../../../settings/care-plan-library/lib/templateCategories';
 import { groupUpdates } from '../../../../../../settings/care-plan-library/lib/templateGroups';
 import { isRetired, replacementFor } from '../../../../../../settings/care-plan-library/lib/templateRetirement';
-import { collectMentions, collectLinks } from '@/components/Textarea/mentions';
+import { useCarePlanNoteRefs, noteDetails } from '../lib/carePlanNoteRefs';
 import { sanitizeRichText } from '@/lib/sanitizeHtml';
 import styles from './CarePlanView.module.css';
 
@@ -543,24 +543,12 @@ export function CarePlanView({ patientId, program }) {
   };
   // The note box tags care team members with "@" and links this plan's
   // goals, interventions and barriers with "/".
-  const noteMentionUsers = useMemo(() => (platformUsers || [])
-    .filter(u => u?.name)
-    .map(u => ({ id: u.id, name: u.name, initials: u.initials, role: (u.clinicalRoles || [])[0], realProfile: true }))
-    .toSorted((a, b) => a.name.localeCompare(b.name)), [platformUsers]);
-  const noteLinkItems = useMemo(() => [
-    ...(data?.goals || []).map(g => ({ id: g.id, kind: 'goal', label: g.title, group: 'Goals', icon: 'solar:flag-linear', meta: g.status })),
-    ...(data?.interventions || []).map(i => ({ id: i.id, kind: 'intervention', label: i.title, group: 'Interventions', icon: 'solar:checklist-minimalistic-linear', meta: i.status })),
-    ...(data?.barriers || []).map(b => ({ id: b.id, kind: 'barrier', label: b.title, group: 'Barriers', icon: 'custom:barrier', meta: b.status })),
-  ].filter(l => l.id != null && l.label), [data]);
+  const { mentionUsers: noteMentionUsers, links: noteLinkItems } = useCarePlanNoteRefs(patientId, program?.id);
   const doAddNote = async () => {
     const body = notePlain.trim();
     if (!body) return;
-    // Read the tags and links back from the saved HTML, so a chip deleted
-    // after it was picked is not counted.
-    const root = new DOMParser().parseFromString(noteText, 'text/html').body;
-    const details = { html: noteText, mentions: collectMentions(root), links: collectLinks(root) };
     closeNoteDrawer({ force: true });
-    await addCarePlanNote(patientId, program, body, { details });
+    await addCarePlanNote(patientId, program, body, { details: noteDetails(noteText) });
   };
   // The drawer is driven entirely by the store flag, the toolbar button and
   // the step header (a separate component) both set it, and closing clears it.
@@ -1407,15 +1395,16 @@ export function CarePlanView({ patientId, program }) {
           item={quickNote.item}
           rect={quickNote.rect}
           audit={auditAll}
+          noteRefs={{ mentionUsers: noteMentionUsers, links: noteLinkItems }}
           onClose={() => setQuickNote(null)}
           onOpenFull={() => {
             const { kind, item } = quickNote;
             setQuickNote(null);
             openNotesFor(kind, item);
           }}
-          onSave={async (body) => {
+          onSave={async (body, details) => {
             const { kind, item } = quickNote;
-            await addCarePlanNote(patientId, program, body, { entityType: kind, entityId: item.id, summary: `Note on ${item.title}` });
+            await addCarePlanNote(patientId, program, body, { entityType: kind, entityId: item.id, summary: `Note on ${item.title}`, details });
             markCarePlanNoteSeen(kind, item.id);
             setQuickNote(null);
           }}

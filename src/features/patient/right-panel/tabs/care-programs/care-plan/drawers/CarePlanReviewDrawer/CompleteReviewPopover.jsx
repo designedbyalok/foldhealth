@@ -18,7 +18,7 @@ const KIND_ICON = {
  * call (still editable). Complete Review finishes the review, the plan's new
  * last reviewed date, logged to the Activity Log. Resume restarts the clock.
  */
-export function CompleteReviewPopover({ elapsedMs, discussed, note, onNoteChange, onResume, onComplete, onClose }) {
+export function CompleteReviewPopover({ elapsedMs, discussed, note, onNoteChange, noteRefs, onResume, onComplete, onClose }) {
   const [saving, setSaving] = useState(false);
   return (
     <AnchoredPopover
@@ -57,6 +57,9 @@ export function CompleteReviewPopover({ elapsedMs, discussed, note, onNoteChange
         )}
         <Textarea
           richText
+          mentions
+          mentionUsers={noteRefs?.mentionUsers}
+          links={noteRefs?.links}
           title="Call note"
           placeholder="What was discussed, what's next"
           value={note}
