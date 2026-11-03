@@ -17,11 +17,14 @@ export function buildSummaryPayload({ patientName, programs, conditions, goals, 
     patientName: patientName || 'the patient',
     programs: (programs || []).map(p => ({ name: progName(p), status: p?.status || null })),
     conditions: (conditions || []).map(c => (typeof c === 'string' ? c : c?.label)).filter(Boolean),
-    goals: (goals || []).map(g => ({ title: g.title, status: g.status, progress: g.progress ?? null, priority: g.priority || null, program: g.programCode || null })),
-    interventions: (interventions || []).map(i => ({ title: i.title, status: i.status, assignee: i.assignee?.name || null, program: i.programCode || null })),
-    barriers: (barriers || []).map(b => ({ title: b.title, status: b.status, program: b.programCode || null })),
+    goals: (goals || []).map(g => ({ id: g.id != null ? String(g.id) : undefined, title: g.title, status: g.status, progress: g.progress ?? null, priority: g.priority || null, program: g.programCode || null })),
+    interventions: (interventions || []).map(i => ({ id: i.id != null ? String(i.id) : undefined, title: i.title, status: i.status, assignee: i.assignee?.name || null, program: i.programCode || null })),
+    barriers: (barriers || []).map(b => ({ id: b.id != null ? String(b.id) : undefined, title: b.title, status: b.status, program: b.programCode || null })),
   };
 }
+
+// Summaries saved before actions named their item hold plain strings.
+export const actionText = a => (typeof a === 'string' ? a : a?.text || '');
 
 // Call the server-side Gemini proxy (keeps the API key off the client) and
 // return one { intro, points, actions } summary. Throws a user-readable
@@ -53,20 +56,28 @@ export function useCarePlanAiSummary({ saved, onSave, onDelete, buildPayload, is
   const showToast = useAppStore(s => s.showToast);
   // In flight while the model writes; everything else derives from `saved`.
   const [generating, setGenerating] = useState(false);
+  // The last failure, for a caller that shows it inline (an automatic run
+  // doesn't toast).
+  const [error, setError] = useState(null);
   const state = generating ? 'loading' : (saved ? 'ready' : 'idle');
 
-  const generate = async ({ regenerate = false } = {}) => {
-    if (generating) return;
+  const generate = async ({ regenerate = false, silent = false } = {}) => {
+    if (generating) return false;
     if (isEmpty) {
-      showToast?.('No care plan content to summarize yet');
-      return;
+      if (!silent) showToast?.('No care plan content to summarize yet');
+      return false;
     }
     setGenerating(true);
-    if (regenerate) showToast?.('Regenerating summary…');
+    setError(null);
+    if (regenerate && !silent) showToast?.('Regenerating summary…');
     try {
       await onSave(await fetchCarePlanSummary(buildPayload()));
+      return true;
     } catch (err) {
-      showToast?.(err.message || (regenerate ? 'Could not regenerate the summary' : 'Could not generate the summary'));
+      const message = err.message || (regenerate ? 'Could not regenerate the summary' : 'Could not generate the summary');
+      setError(message);
+      if (!silent) showToast?.(message);
+      return false;
     } finally {
       setGenerating(false);
     }
@@ -78,7 +89,7 @@ export function useCarePlanAiSummary({ saved, onSave, onDelete, buildPayload, is
       ...saved.points.map((p, i) => `${i + 1}. ${p.title}: ${p.body}`),
       '',
       'Action Items :',
-      ...saved.actions.map(a => `• ${a}`),
+      ...saved.actions.map(a => `• ${actionText(a)}`),
     ].join('\n');
     navigator.clipboard?.writeText(text).then(
       () => showToast?.('Summary copied'),
@@ -87,7 +98,11 @@ export function useCarePlanAiSummary({ saved, onSave, onDelete, buildPayload, is
   };
   return {
     state,
+    error,
     generate: () => generate(),
+    // Written without being asked (the care plan screen opening): no toasts.
+    // Resolves true once a summary is saved.
+    autoGenerate: () => generate({ regenerate: !!saved, silent: true }),
     regenerate: () => { if (saved) generate({ regenerate: true }); },
     copy,
     clear: onDelete,

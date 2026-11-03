@@ -4,10 +4,13 @@
  * Server-side AI summary (OpenAI; see _lib/aiJson.js). Keeps the AI keys
  * off the client: the browser posts the plan data, this function builds the
  * prompt, calls the model, and returns a structured summary
- * the UI renders as { intro, points:[{title, body}], actions:[string] }.
+ * the UI renders as { intro, points:[{title, body}], actions:[{text, refType, refId}] }.
+ * Each action names the goal, intervention or barrier it is about (refType +
+ * refId, from the ids sent), or refType 'plan' for the plan as a whole, so the
+ * care plan screen can open that item.
  *
  * Body: { patientName, programs, conditions, goals, interventions, barriers }
- * where each list item is a small { title, status, progress?, ... } object.
+ * where each list item is a small { id?, title, status, progress?, ... } object.
  *
  * Always keeps the API key server-side. Errors return a soft message the
  * client can toast; upstream error bodies stay in the server log.
@@ -30,7 +33,18 @@ const RESPONSE_SCHEMA = {
         required: ['title', 'body'],
       },
     },
-    actions: { type: 'array', items: { type: 'string' } },
+    actions: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          text: { type: 'string' },
+          refType: { type: 'string', enum: ['goal', 'intervention', 'barrier', 'plan'] },
+          refId: { type: 'string' },
+        },
+        required: ['text', 'refType', 'refId'],
+      },
+    },
   },
   required: ['intro', 'points', 'actions'],
 };
@@ -105,7 +119,11 @@ function buildPrompt(plan) {
     '  progressing; Interventions (what the care team is doing); Barriers',
     '  getting in the way; and Program coverage. Skip any section with no data.',
     '- actions: 2 to 5 specific next steps the care team should take, focused on',
-    '  what is stalled, overdue, not started, or blocked by a barrier.',
+    '  what is stalled, overdue, not started, or blocked by a barrier. Each one',
+    '  is a short instruction (text) about ONE goal, intervention or barrier:',
+    '  set refType to "goal", "intervention" or "barrier" and refId to that',
+    '  item\'s "id" exactly as given. Only when a step is about the whole plan,',
+    '  set refType to "plan" and refId to "".',
     '',
     'Patient care plan data (JSON):',
     JSON.stringify(payload),
@@ -148,6 +166,17 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: { message: msg } });
     }
     const summary = ai.data;
+    // An action's item must be one that was sent, else it is about the plan.
+    const ids = {
+      goal: new Set((plan.goals || []).map(g => String(g?.id ?? ''))),
+      intervention: new Set((plan.interventions || []).map(i => String(i?.id ?? ''))),
+      barrier: new Set((plan.barriers || []).map(b => String(b?.id ?? ''))),
+    };
+    const action = (a) => {
+      if (typeof a === 'string') return { text: a, refType: 'plan', refId: '' };
+      const known = ids[a?.refType]?.has(String(a?.refId ?? '')) && String(a.refId) !== '';
+      return { text: String(a?.text || ''), refType: known ? a.refType : 'plan', refId: known ? String(a.refId) : '' };
+    };
 
     // Guard the shape so the client never renders undefined.
     const safe = {
@@ -155,7 +184,7 @@ export default async function handler(req, res) {
       points: Array.isArray(summary.points)
         ? summary.points.filter(p => p && p.title && p.body).map(p => ({ title: String(p.title), body: String(p.body) }))
         : [],
-      actions: Array.isArray(summary.actions) ? summary.actions.filter(Boolean).map(String) : [],
+      actions: Array.isArray(summary.actions) ? summary.actions.filter(Boolean).map(action).filter(a => a.text) : [],
     };
 
     return res.status(200).json({ summary: safe });

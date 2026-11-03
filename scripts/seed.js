@@ -2242,6 +2242,57 @@ async function main() {
     }
   }
 
+  // ── AI summary with action items (demo) ──
+  // Annette Brave's (11089) SNP care plan opens on a saved AI summary whose
+  // action items each name the goal, intervention or barrier they are about,
+  // the shape /api/care-plan-summary returns. One is already ticked off.
+  // Re-runs overwrite it (one row per patient + program).
+  console.log('\nSeeding care plan AI summary with action items (demo)...');
+  {
+    const patientId = '11089';
+    const { data: prog } = await supabase.from('patient_care_programs')
+      .select('id').eq('patient_id', patientId).eq('code', 'SNP').limit(1).maybeSingle();
+    const { data: plan } = prog
+      ? await supabase.from('patient_care_plans').select('id').eq('patient_id', patientId).eq('program_id', prog.id).maybeSingle()
+      : { data: null };
+    if (!plan) {
+      console.log('  ⚠ no SNP care plan for 11089: skipped');
+    } else {
+      const rows = async table => (await supabase.from(table).select('id, title, status').eq('plan_id', plan.id)).data || [];
+      const [goals, intvs, barriers] = await Promise.all([
+        rows('patient_care_plan_goals'), rows('patient_care_plan_interventions'), rows('patient_care_plan_barriers'),
+      ]);
+      const find = (list, title) => list.find(r => r.title === title) || null;
+      const a1c = find(goals, 'Improve A1C control');
+      const renal = find(goals, 'Improve renal risk monitoring');
+      const followUp = find(intvs, 'A1C follow-up');
+      const barrier = barriers.find(b => /A1C/i.test(b.title)) || barriers[0] || null;
+      const ref = (item, type) => (item ? { refType: type, refId: String(item.id) } : { refType: 'plan', refId: '' });
+      const count = (list, status) => list.filter(r => r.status === status).length;
+      const summary = {
+        intro: `Annette Brave's SNP care plan has ${goals.length} goals, ${intvs.length} interventions and ${barriers.length} barriers; most goals have not started yet.`,
+        points: [
+          { title: 'Diabetes', body: 'A1C (average blood sugar over 3 months) is above target, so A1C control is the main focus.' },
+          { title: 'Goals', body: `${count(goals, 'In Progress')} goals are in progress and ${count(goals, 'Not Started')} have not started.` },
+          { title: 'Barriers', body: 'Limited progress toward the A1C target is holding the diabetes goals back.' },
+        ],
+        actions: [
+          { text: 'Schedule the A1C follow-up lab and record the result.', ...ref(followUp, 'intervention') },
+          { text: 'Review A1C control with the patient and set a target date.', ...ref(a1c, 'goal') },
+          { text: 'Start renal risk monitoring: order the yearly kidney function test.', ...ref(renal, 'goal') },
+          { text: 'Talk through what is blocking progress toward the A1C target.', ...ref(barrier, 'barrier') },
+        ],
+        done: [0],
+      };
+      const now = new Date().toISOString();
+      const { error } = await supabase.from('patient_care_plan_program_summaries').upsert(
+        { patient_id: patientId, program_id: prog.id, summary, generated_by: 'Delores Conn', generated_at: now, updated_at: now },
+        { onConflict: 'patient_id,program_id' },
+      );
+      console.log(error ? `  ✗ AI summary demo: ${error.message}` : `  ✓ AI summary for 11089 SNP with ${summary.actions.length} action items`);
+    }
+  }
+
   // ── Patient Care Plan (demo) ──
   // The Care Plan step is Supabase-backed (patient_care_plan_* tables). There is
   // no seeded patient/program to attach to at build time, so we instantiate one

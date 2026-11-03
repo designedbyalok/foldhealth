@@ -86,6 +86,55 @@
   font-size: var(--font-base);
 }
 
+/* ── Leading icon + label ── */
+.withIcon {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.leadIcon {
+  display: inline-flex;
+  color: var(--neutral-300);
+}
+
+/* ── Notification dot (same as TabStrip's): something new behind a segment ── */
+.notifDot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  margin-left: var(--space-1);
+  border-radius: 50%;
+  background: var(--secondary-300);
+  animation: toggleNotifPulse 1.4s infinite;
+}
+@keyframes toggleNotifPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: .5; transform: scale(.75); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .notifDot { animation: none; }
+}
+
+/* ── Variant: ghost (Figma P360 Revamp 8340:295351): no track, so it sits on
+   a grey surface; 28px segments, 4px apart, the selected one a white pill.
+   Unselected text and icons use the spec's lighter grey. ── */
+.ghost {
+  gap: var(--space-1);
+  padding: 0;
+  background: none;
+}
+.ghost .slider { top: 0; bottom: 0; }
+.ghost .btn {
+  height: 28px;
+  padding: var(--space-1) calc(var(--space-1) * 1.5);
+  font-size: var(--font-base);
+  color: var(--placeholder-text);
+}
+.ghost .btn:hover { color: var(--neutral-300); }
+.ghost .btnActive { color: var(--neutral-400); }
+.ghost .leadIcon { color: var(--placeholder-text); }
+.ghost .btnActive .leadIcon { color: var(--neutral-300); }
+
 /* ── Icon-only mode: tighter padding so 4+ icon buttons fit narrow columns.
    Triggered automatically when every item has an icon and no text label. ── */
 .iconOnly .btn {
