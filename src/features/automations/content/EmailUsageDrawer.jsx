@@ -92,8 +92,8 @@ export function EmailUsageDrawer({ emailIds, emailName, deleting = false, onDele
 
   const headerRight = (
     <>
-      <Button variant="soft" tone="danger" leadingIcon="solar:trash-bin-trash-linear" disabled={deleting} onClick={() => onDelete()}>
-        {deleting ? 'Deleting…' : several ? 'Delete emails' : 'Delete email'}
+      <Button variant="soft" tone="danger" leadingIcon="solar:trash-bin-trash-linear" onClick={() => onDelete()} loading={deleting}>
+        {several ? 'Delete emails' : 'Delete email'}
       </Button>
       <span className={styles.headerDivider} />
     </>

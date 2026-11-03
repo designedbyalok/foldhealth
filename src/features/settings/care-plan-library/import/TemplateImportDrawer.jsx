@@ -120,8 +120,8 @@ export function TemplateImportDrawer({ onClose, onReviewDrafts }) {
   } else if (plan) {
     secondaryAction = <Button variant="outline" onClick={reset} disabled={importing}>Choose another file</Button>;
     primaryAction = (
-      <Button onClick={runImport} disabled={!importable.length || importing}>
-        {importing ? 'Importing…' : `Import ${plural(importable.length, 'template')} as drafts`}
+      <Button onClick={runImport} disabled={!importable.length} loading={importing}>
+        {`Import ${plural(importable.length, 'template')} as drafts`}
       </Button>
     );
   }

@@ -1125,9 +1125,9 @@ export function CarePlanView({ patientId, program }) {
                     size="sm"
                     leadingIcon="solar:folder-with-files-linear"
                     onClick={() => setGroupsMenuOpen(v => !v)}
-                    disabled={!canEdit || applyingGroup}
+                    disabled={!canEdit} loading={applyingGroup}
                   >
-                    {applyingGroup ? 'Applying…' : 'Groups'}
+                    Groups
                   </Button>
                 </span>
               )}

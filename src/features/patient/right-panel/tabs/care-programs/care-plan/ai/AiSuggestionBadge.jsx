@@ -70,8 +70,8 @@ export function AiSuggestionBadge({ kind, item }) {
               ))}
             </ul>
             {review?.onReview && (
-              <Button size="sm" leadingIcon="solar:check-circle-linear" disabled={saving} onClick={markReviewed}>
-                {saving ? 'Saving…' : 'Mark Reviewed'}
+              <Button size="sm" leadingIcon="solar:check-circle-linear" onClick={markReviewed} loading={saving}>
+                Mark Reviewed
               </Button>
             )}
           </div>

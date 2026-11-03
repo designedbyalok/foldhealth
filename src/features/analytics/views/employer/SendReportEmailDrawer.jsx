@@ -110,8 +110,8 @@ export function SendReportEmailDrawer({ buildPdf, filename, title, employerName,
 
   const headerRight = (
     <>
-      <Button leadingIcon="solar:plain-2-linear" disabled={!canSend} onClick={send}>
-        {sending ? 'Sending…' : 'Send'}
+      <Button leadingIcon="solar:plain-2-linear" disabled={!canSend} onClick={send} loading={sending}>
+        Send
       </Button>
       <span className={styles.headerDivider} aria-hidden="true" />
     </>

@@ -69,7 +69,7 @@ export function TemplateGroupDrawer({ group, readOnly = false, onClose }) {
           {!readOnly && (
             <>
               <span className={styles.headerDivider} />
-              <Button disabled={!canSave} onClick={save}>{saving ? 'Saving…' : 'Save'}</Button>
+              <Button disabled={!canSave} onClick={save} loading={saving}>Save</Button>
             </>
           )}
           <span className={styles.headerDivider} />

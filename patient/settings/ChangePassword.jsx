@@ -46,8 +46,8 @@ export function ChangePassword() {
       <Input label="Current password" aria-label="Current password" type="password" autoComplete="current-password" showPasswordToggle value={current} onChange={(e) => setCurrent(e.target.value)} />
       <Input label="New password" aria-label="New password" type="password" autoComplete="new-password" showPasswordToggle helperText={`At least ${MIN_LENGTH} characters`} value={next} onChange={(e) => setNext(e.target.value)} />
       <Input label="Confirm new password" aria-label="Confirm new password" type="password" autoComplete="new-password" showPasswordToggle value={confirm} onChange={(e) => setConfirm(e.target.value)} />
-      <Button type="submit" disabled={saving || !current || !next || !confirm}>
-        {saving ? 'Saving…' : 'Change password'}
+      <Button type="submit" disabled={!current || !next || !confirm} loading={saving}>
+        Change password
       </Button>
     </form>
   );

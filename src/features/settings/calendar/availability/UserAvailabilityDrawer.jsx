@@ -575,11 +575,11 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
           <Tooltip label={saveBlocker} placement="bottom" align="right">
             <Button
               onClick={() => save()}
-              disabled={saving || !!saveBlocker}
+              disabled={!!saveBlocker}
               // A disabled button swallows hover, so let it reach the tooltip's wrapper.
-              style={saveBlocker ? { pointerEvents: 'none' } : undefined}
+              style={saveBlocker ? { pointerEvents: 'none' } : undefined} loading={saving}
             >
-              {saving ? 'Saving…' : 'Save'}
+              Save
             </Button>
           </Tooltip>
         )}

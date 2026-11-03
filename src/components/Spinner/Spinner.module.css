@@ -1,0 +1,25 @@
+/* A ring with one quarter drawn at full strength over a faint track. */
+.spinner {
+  display: inline-block;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, currentColor 25%, transparent);
+  border-top-color: currentColor;
+  animation: spinnerTurn 700ms linear infinite;
+}
+
+@keyframes spinnerTurn {
+  to { transform: rotate(360deg); }
+}
+
+/* Still say "busy" without motion: a slow pulse instead of a spin. */
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: spinnerPulse 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes spinnerPulse {
+  50% { opacity: 0.4; }
+}

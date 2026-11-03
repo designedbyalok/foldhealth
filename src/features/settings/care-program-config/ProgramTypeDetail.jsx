@@ -63,8 +63,8 @@ export function ProgramTypeDetail({ type, tab, onTab, onDirtyChange }) {
           <div className={styles.headerActions}>
             {dirty && <span className={styles.dirtyHint}>Unsaved changes</span>}
             <Button variant="outline" disabled={!dirty || saving} onClick={() => setDraft(type)}>Discard</Button>
-            <Button disabled={!dirty || saving || !draft.name.trim()} onClick={save}>
-              {saving ? 'Saving…' : 'Save Changes'}
+            <Button disabled={!dirty || !draft.name.trim()} onClick={save} loading={saving}>
+              Save Changes
             </Button>
           </div>
         </div>

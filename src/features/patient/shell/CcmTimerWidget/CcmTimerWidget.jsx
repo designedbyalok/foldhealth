@@ -668,8 +668,8 @@ export function CcmTimerWidget({ patient }) {
           />
           <div className={styles.formActions}>
             <Button variant="outline" size="sm" onClick={cancelLog} disabled={saving}>Cancel</Button>
-            <Button size="sm" onClick={persist} disabled={saving || elapsed === 0 || !consentGate.allowed}>
-              {saving ? 'Saving…' : 'Save'}
+            <Button size="sm" onClick={persist} disabled={elapsed === 0 || !consentGate.allowed} loading={saving}>
+              Save
             </Button>
           </div>
         </div>

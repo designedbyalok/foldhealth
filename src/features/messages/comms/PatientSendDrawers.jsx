@@ -353,7 +353,7 @@ export function SendContentDrawer({ patient, onClose }) {
       title="Send Content"
       onClose={onClose}
       secondaryAction={<Button variant="outline" onClick={onClose}>Cancel</Button>}
-      primaryAction={<Button onClick={send} disabled={busy}>{busy ? 'Sending…' : 'Send'}</Button>}
+      primaryAction={<Button onClick={send} loading={busy}>Send</Button>}
     >
       <div className={styles.card}>
         <Row label="Member" required>
@@ -516,16 +516,16 @@ export function SendAssessmentDrawer({ patient, initialFormIds, onClose }) {
       primaryAction={(
         <Button
           onClick={send}
-          disabled={busy || !picked.length || !reachText.length || blockers.length > 0}
+          disabled={!picked.length || !reachText.length || blockers.length > 0}
           disabledReason={
             busy ? null
               : !picked.length ? 'Pick a form'
                 : !reachText.length ? (sendTo.hasRoles ? 'Pick someone with an email or phone on record' : "This member doesn't have an email or phone on record")
                   : blockers.length ? "Someone in Send To can't verify their identity"
                     : null
-          }
+          } loading={busy}
         >
-          {busy ? 'Sending…' : 'Send Forms'}
+          Send Forms
         </Button>
       )}
     >

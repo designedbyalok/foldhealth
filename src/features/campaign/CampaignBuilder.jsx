@@ -293,7 +293,7 @@ export function CampaignBuilder() {
             )}
             <Button
               size="sm"
-              disabled={!isComplete || sending}
+              disabled={!isComplete}
               onClick={async () => {
                 setSending(true);
                 try {
@@ -302,9 +302,9 @@ export function CampaignBuilder() {
                 } finally {
                   setSending(false);
                 }
-              }}
+              }} loading={sending}
             >
-              {sending ? 'Sending…' : 'Run Campaign Now'}
+              Run Campaign Now
             </Button>
             <CloseButton onClick={closeBuilder} />
           </div>

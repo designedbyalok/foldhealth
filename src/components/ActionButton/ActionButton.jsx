@@ -2,6 +2,8 @@ import { forwardRef, useCallback, useEffect, useLayoutEffect, useRef, useState }
 import { createPortal } from 'react-dom';
 import { Icon } from '../Icon/Icon';
 import { DownChevronIcon } from '../Icon/DownChevronIcon';
+import { Spinner } from '../Spinner/Spinner';
+import { usePendingClick } from '../Button/usePendingClick';
 import styles from './ActionButton.module.css';
 
 const SIZE_CLASS = { sm: 'sizeS', md: 'sizeL', lg: 'sizeXL' };
@@ -35,6 +37,9 @@ function warnLegacy(size, state) {
  * @param {'sm'|'md'|'lg'} [props.size='md']          – sm=16px icon, md=20px icon, lg=32px icon
  * @param {'neutral'|'danger'} [props.tone='neutral']  – danger paints the icon red (destructive actions)
  * @param {boolean}  [props.disabled=false]
+ * @param {boolean}  [props.loading=false]          – Busy: a spinner replaces the icon and clicks are
+ *                                                    ignored. Set automatically while a promise returned
+ *                                                    from `onClick` is pending.
  * @param {string}   [props.tooltip]                    – Tooltip text (styled bubble on hover or keyboard
  *   focus). It renders on the page, not inside the button, so no scrolling or clipped container
  *   cuts it off; it flips below when there's no room above and stays inside the window.
@@ -61,6 +66,7 @@ export const ActionButton = forwardRef(function ActionButton({
   // Deprecated: 'disabled' → `disabled`, 'error' → tone="danger".
   state,
   disabled: disabledProp = false,
+  loading = false,
   tooltip,
   notification = false,
   count,
@@ -80,6 +86,7 @@ export const ActionButton = forwardRef(function ActionButton({
   onPointerLeave,
   onFocus,
   onBlur,
+  onClick,
   ...rest
 }, ref) {
   const btnRef = useRef(null);
@@ -99,7 +106,11 @@ export const ActionButton = forwardRef(function ActionButton({
   }, [anchor]);
 
   const size = LEGACY_SIZE[sizeProp] ?? (ICON_SIZE[sizeProp] ? sizeProp : 'md');
-  const disabled = disabledProp || state === 'disabled';
+  const [pending, handleClick] = usePendingClick(onClick, loading);
+  const busy = loading || pending;
+  // Busy wins over disabled: callers often disable while saving, and the
+  // spinner should still show that the click is being worked on.
+  const disabled = (disabledProp || state === 'disabled') && !busy;
   const tone = state === 'error' ? 'danger' : toneProp;
   warnLegacy(sizeProp, state);
   const iconSize = ICON_SIZE[size];
@@ -116,6 +127,7 @@ export const ActionButton = forwardRef(function ActionButton({
     styles.root,
     sizeClass,
     stateClass,
+    busy ? styles.loading : '',
     className || '',
   ].filter(Boolean).join(' ');
 
@@ -127,13 +139,17 @@ export const ActionButton = forwardRef(function ActionButton({
       disabled={disabled}
       aria-label={tooltip}
       aria-pressed={active || undefined}
+      aria-busy={busy || undefined}
+      aria-disabled={busy || undefined}
       data-tone={tone}
+      onClick={handleClick}
       onPointerEnter={(e) => { show(); onPointerEnter?.(e); }}
       onPointerLeave={(e) => { hide(); onPointerLeave?.(e); }}
       onFocus={(e) => { if (e.currentTarget.matches(':focus-visible')) show(); onFocus?.(e); }}
       onBlur={(e) => { hide(); onBlur?.(e); }}
       {...rest}
     >
+      {busy && <span className={styles.spinnerSlot}><Spinner size={Math.round(iconSize * 0.8)} /></span>}
       {children || <Icon name={icon} size={iconSize} color={resolvedColor} />}
 
       {tooltip && anchor && <ActionTooltip text={tooltip} anchor={anchor} below={tooltipBelow} alignRight={tooltipLeft} />}

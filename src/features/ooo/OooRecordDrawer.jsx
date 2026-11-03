@@ -177,8 +177,8 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], onClo
 
   const headerRight = (
     <>
-      <Button disabled={(isEdit && !dirty) || saving || (touched && hasErrors)} onClick={save}>
-        {saving ? 'Saving…' : 'Save'}
+      <Button disabled={isEdit && !dirty || touched && hasErrors} onClick={save} loading={saving}>
+        Save
       </Button>
       <span className={styles.headerDivider} aria-hidden="true" />
     </>

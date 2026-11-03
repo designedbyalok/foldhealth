@@ -54,8 +54,8 @@ export function UploadDocumentDrawer({ memberId, onClose, onUploaded }) {
       dismissed={dismissed}
       width={560}
       primaryAction={(
-        <Button disabled={!file || !!error || saving} onClick={upload}>
-          {saving ? 'Uploading…' : 'Upload'}
+        <Button disabled={!file || !!error} onClick={upload} loading={saving}>
+          Upload
         </Button>
       )}
     >

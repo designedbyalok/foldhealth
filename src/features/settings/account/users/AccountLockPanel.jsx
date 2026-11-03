@@ -90,10 +90,9 @@ export function AccountLockPanel({ lock, canUnlock, onUnlock, onResendLink }) {
             size="sm"
             leadingIcon="solar:letter-linear"
             leadingIconElement={resending ? <Icon name="solar:restart-linear" size={14} className={styles.spin} /> : undefined}
-            disabled={resending}
-            onClick={resend}
+            onClick={resend} loading={resending}
           >
-            {resending ? 'Sending…' : 'Resend Link'}
+            Resend Link
           </Button>
         )}
       </div>

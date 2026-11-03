@@ -94,8 +94,8 @@ export function MemberTrace({ id, runMemberId }) {
           <div className={styles.headerActions}>
             <Button variant="outline" leadingIcon="solar:user-id-linear" onClick={() => navigateToPatient(member.patientId)}>View patient profile</Button>
             <Tooltip label={member.status === 'completed' ? 'This member completed the automation.' : RETRY_HINT} maxWidth={260} align="right">
-              <Button leadingIcon="solar:restart-linear" disabled={member.status === 'completed' || busy} onClick={retrigger}>
-                {busy ? 'Re-triggering…' : 'Re-trigger'}
+              <Button leadingIcon="solar:restart-linear" disabled={member.status === 'completed'} onClick={retrigger} loading={busy}>
+                Re-trigger
               </Button>
             </Tooltip>
             <span className={styles.headerDivider} aria-hidden />

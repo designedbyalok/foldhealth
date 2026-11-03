@@ -1084,11 +1084,11 @@ export function ComponentWizardDrawer() {
 
   const headerRight = (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-      <Button disabled={!canNext || saving} onClick={() => {
+      <Button disabled={!canNext} onClick={() => {
         if (step < STEPS.length - 1) setStep(step + 1);
         else handleSave();
-      }}>
-        {saving ? 'Saving...' : step === STEPS.length - 1 ? (editId ? 'Save Changes' : 'Save & Enable') : 'Next'}
+      }} loading={saving}>
+        {step === STEPS.length - 1 ? (editId ? 'Save Changes' : 'Save & Enable') : 'Next'}
       </Button>
     </div>
   );

@@ -117,10 +117,9 @@ export function EmailBuilderToolbar({
           </span>
         )}
         <Button
-          disabled={saving}
-          onClick={onSave}
+          onClick={onSave} loading={saving}
         >
-          {saving ? 'Saving…' : 'Save'}
+          Save
         </Button>
         <CloseButton
           size={18}

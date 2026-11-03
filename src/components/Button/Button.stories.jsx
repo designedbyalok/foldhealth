@@ -1,3 +1,4 @@
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Button } from './Button';
 
 export default {
@@ -71,6 +72,11 @@ export default {
     disabled: {
       control: 'boolean',
       description: 'Disable the button',
+      table: { defaultValue: { summary: 'false' } },
+    },
+    loading: {
+      control: 'boolean',
+      description: 'Busy: spinner over the label, same size and colors, clicks ignored. Also set automatically while a promise returned from onClick is pending',
       table: { defaultValue: { summary: 'false' } },
     },
   },
@@ -155,6 +161,51 @@ export const VariantMatrix = {
       ))}
     </div>
   ),
+};
+
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+/**
+ * An async `onClick` makes the button busy on its own: the click registers at
+ * once (repeat clicks are ignored) and, after 150ms, a spinner replaces the
+ * label until the promise settles. No `loading` prop needed.
+ */
+export const LoadingFromAsyncClick = {
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
+      <Button onClick={() => wait(2000)}>Save</Button>
+      <Button variant="outline" leadingIcon="solar:refresh-linear" onClick={() => wait(2000)}>Sync</Button>
+      <Button variant="soft" tone="danger" size="sm" onClick={() => wait(2000)}>Delete</Button>
+      <Button variant="ghost" onClick={() => wait(100)}>Fast (no flicker)</Button>
+      <Button
+        onClick={() => wait(2000)}
+        menuItems={[{ key: 'draft', label: 'Save as draft' }]}
+      >
+        Publish
+      </Button>
+    </div>
+  ),
+};
+
+/** A second click while the first is still running doesn't run the handler again. */
+export const IgnoresRepeatClicks = {
+  args: { children: 'Save', onClick: fn(() => wait(300)) },
+  play: async ({ args, canvasElement }) => {
+    const button = within(canvasElement).getByRole('button', { name: 'Save' });
+    await userEvent.click(button);
+    await userEvent.click(button);
+    await expect(args.onClick).toHaveBeenCalledTimes(1);
+    await expect(button).toHaveAttribute('aria-busy', 'true');
+    await waitFor(() => expect(button).not.toHaveAttribute('aria-busy'));
+    await userEvent.click(button);
+    await expect(args.onClick).toHaveBeenCalledTimes(2);
+  },
+};
+
+/** `loading` set by the caller, for work that doesn't come from the click. */
+export const Loading = {
+  args: { loading: true, children: 'Save' },
 };
 
 /** Disabled with a reason: hovering the greyed-out button says what's missing. */

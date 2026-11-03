@@ -140,9 +140,9 @@ export function LoginPage({ notice }) {
           <Button
             fullWidth
             type="submit"
-            disabled={loading || !agreed || !identifier.trim() || !password}
+            disabled={!agreed || !identifier.trim() || !password} loading={loading}
           >
-            {loading ? 'Signing in…' : 'Login'}
+            Login
           </Button>
 
           <OAuthButtons onSelect={handleOAuth} disabled={loading} label="Care team? Continue with" />

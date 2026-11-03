@@ -612,8 +612,8 @@ function ReviewRow({
           <div className={styles.actionSlots}>
             <span className={styles.signOffSlot}>
               {showSignOff && (
-                <Button variant="soft" size="sm" leadingIcon="solar:check-circle-linear" onClick={handleSignOff} disabled={signing}>
-                  {signing ? 'Signing…' : 'Sign off'}
+                <Button variant="soft" size="sm" leadingIcon="solar:check-circle-linear" onClick={handleSignOff} loading={signing}>
+                  Sign off
                 </Button>
               )}
             </span>
@@ -882,7 +882,7 @@ function CommentBox({ signoff, onDone }) {
       />
       <div className={styles.commentActions}>
         <Button variant="outline" size="sm" onClick={onDone} disabled={saving}>Cancel</Button>
-        <Button size="sm" onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
+        <Button size="sm" onClick={save} loading={saving}>Save</Button>
       </div>
     </div>
   );

@@ -127,7 +127,7 @@ export const AwvStatusBadge = ({ status }) => (
 | Prop | Meaning |
 |---|---|
 | `disabled` | Not interactive. Also sets `aria-disabled` or the native attribute. |
-| `loading` | Busy. Keeps its size, shows a spinner, blocks repeat clicks. |
+| `loading` | Busy. Keeps its size, shows a spinner, blocks repeat clicks. `Button` and `ActionButton` also set it on their own while a promise returned from `onClick` is pending, so an async handler needs no extra state. |
 | `invalid` | Fails validation. Sets `aria-invalid`. Pair with an `error` message prop on form fields. |
 | `readOnly` | Shows a value that cannot be edited. |
 

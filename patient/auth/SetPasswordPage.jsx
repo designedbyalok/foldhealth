@@ -80,8 +80,8 @@ export function SetPasswordPage({ token, onDone }) {
             onChange={(e) => setConfirm(e.target.value)}
             autoComplete="new-password"
           />
-          <Button fullWidth type="submit" disabled={loading || !password || !confirm}>
-            {loading ? 'Saving…' : 'Set password'}
+          <Button fullWidth type="submit" disabled={!password || !confirm} loading={loading}>
+            Set password
           </Button>
         </form>
       </div>

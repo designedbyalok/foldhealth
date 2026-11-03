@@ -339,10 +339,9 @@ export function OrgPanel() {
       <div className={styles.formGroup}>
         <Button
           onClick={saveOrgData}
-          disabled={saving}
-          className={styles.saveButton}
+          className={styles.saveButton} loading={saving}
         >
-          {saving ? 'Saving…' : 'Save Changes'}
+          Save Changes
         </Button>
       </div>
     </div>

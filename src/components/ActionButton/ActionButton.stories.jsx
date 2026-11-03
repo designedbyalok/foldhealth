@@ -17,6 +17,7 @@ export default {
     size: { control: 'select', options: ['sm', 'md', 'lg'], description: 'sm=16px, md=20px (default), lg=32px icon' },
     tone: { control: 'select', options: ['neutral', 'danger'], description: 'danger paints the icon red, for destructive actions' },
     disabled: { control: 'boolean' },
+    loading: { control: 'boolean', description: 'Busy: spinner instead of the icon, clicks ignored. Also set while a promise returned from onClick is pending' },
     tooltip: { control: 'text' },
     notification: { control: 'boolean', description: 'Orange notification badge' },
     count: { control: 'text', description: 'Badge count text' },
@@ -40,6 +41,17 @@ export const Matrix = {
         <ActionButton key={`${size}-d`} icon="solar:trash-bin-trash-linear" size={size} tone="danger" tooltip={`${size} danger`} />,
         <ActionButton key={`${size}-x`} icon="solar:pen-linear" size={size} disabled tooltip={`${size} disabled`} />,
       ])}
+    </div>
+  ),
+};
+
+/** An async onClick shows the spinner until it settles. */
+export const LoadingFromAsyncClick = {
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+      <ActionButton icon="solar:refresh-linear" tooltip="Refresh" onClick={() => new Promise(r => setTimeout(r, 2000))} />
+      <ActionButton icon="solar:trash-bin-trash-linear" tone="danger" tooltip="Delete" onClick={() => new Promise(r => setTimeout(r, 2000))} />
     </div>
   ),
 };

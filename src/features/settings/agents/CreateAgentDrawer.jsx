@@ -505,10 +505,10 @@ export function CreateAgentDrawer() {
     <Button
       variant={isFormValid ? 'solid' : 'outline'}
       leadingIcon="solar:ghost-smile-linear"
-      disabled={!isFormValid || creating}
-      onClick={handleCreateAgent}
+      disabled={!isFormValid}
+      onClick={handleCreateAgent} loading={creating}
     >
-      {creating ? 'Creating...' : 'Create Agent'}
+      Create Agent
     </Button>
   );
 

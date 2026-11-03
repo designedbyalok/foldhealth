@@ -67,7 +67,7 @@ export function QuickNotePopover({ kind, item, rect, audit, onSave, onOpenFull, 
           <Button variant="ghost" size="sm" onClick={onOpenFull}>Open Notes</Button>
           <span className={styles.spacer} />
           <Button variant="outline" size="sm" onClick={onClose}>Cancel</Button>
-          <Button size="sm" disabled={!body || saving} onClick={save}>{saving ? 'Saving…' : 'Save Note'}</Button>
+          <Button size="sm" disabled={!body} onClick={save} loading={saving}>Save Note</Button>
         </div>
       </div>
     </Popover>

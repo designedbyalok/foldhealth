@@ -262,8 +262,8 @@ function TemplateTab({ block }) {
                 <Button variant="outline" size="sm" onClick={() => setSaveOpen(false)}>
                   Cancel
                 </Button>
-                <Button size="sm" onClick={handleSave} disabled={saving}>
-                  {saving ? 'Saving…' : 'Save'}
+                <Button size="sm" onClick={handleSave} loading={saving}>
+                  Save
                 </Button>
               </div>
             </div>

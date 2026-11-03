@@ -977,8 +977,8 @@ export function FormBuilder() {
           <ActionButton icon="solar:link-linear" tooltip="Copy share link" onClick={copyShareLink} />
           <ActionButton icon="solar:printer-linear" tooltip="Print" onClick={() => window.print()} />
           <span className={styles.hDivider} />
-          <Button disabled={saving} onClick={handleSave}>
-            {saving ? 'Saving…' : 'Save'}
+          <Button onClick={handleSave} loading={saving}>
+            Save
           </Button>
           <span className={styles.hDivider} />
           <CloseButton onClick={closeFormBuilder} />

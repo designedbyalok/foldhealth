@@ -1024,8 +1024,8 @@ export function MedicationReconciliation({ programCode } = {}) {
       )}
 
       <div className={styles.formActions}>
-        <Button size="sm" onClick={saveDraft} disabled={!canSave}>
-          {saving ? 'Saving…' : 'Save'}
+        <Button size="sm" onClick={saveDraft} disabled={!canSave} loading={saving}>
+          Save
         </Button>
         <span className={styles.formDivider} />
         <button type="button" className={styles.formCancel} onClick={discard} disabled={saving}>

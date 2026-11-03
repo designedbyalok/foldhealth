@@ -58,10 +58,10 @@ function FaqDrawer({ mode, faq, onClose, onSave, saving }) {
       <Button
         size="sm"
         onClick={() => canSave && onSave(form)}
-        disabled={!canSave || saving}
-        style={{ opacity: saving ? 0.6 : 1 }}
+        disabled={!canSave}
+        style={{ opacity: saving ? 0.6 : 1 }} loading={saving}
       >
-        {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add FAQ'}
+        {isEdit ? 'Save Changes' : 'Add FAQ'}
       </Button>
     </div>
   );

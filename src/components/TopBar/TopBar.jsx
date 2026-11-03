@@ -158,8 +158,8 @@ function ProfilePopover({ user, onClose, onPreferences, anchorRef }) {
           </div>
           <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
             <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>Cancel</Button>
-            <Button size="sm" disabled={saving || !firstName.trim() || !lastName.trim()} onClick={handleSaveName}>
-              {saving ? 'Saving...' : 'Save'}
+            <Button size="sm" disabled={!firstName.trim() || !lastName.trim()} onClick={handleSaveName} loading={saving}>
+              Save
             </Button>
           </div>
         </div>

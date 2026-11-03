@@ -173,6 +173,40 @@
   background: var(--tone-soft);
 }
 
+/* ── Loading ──
+ * The label stays in the layout (invisible) so the button keeps its width,
+ * and the spinner sits over it in the label's color. Both switch after
+ * 150ms, so a quick action never flickers; the button is busy (clicks
+ * ignored) from the first instant. */
+.loading {
+  position: relative;
+  cursor: progress;
+  animation: btnLoadingText 1ms 150ms forwards;
+}
+.loading > :not(.spinnerSlot) {
+  animation: btnLoadingHide 1ms 150ms forwards;
+}
+@keyframes btnLoadingText { to { color: transparent; } }
+@keyframes btnLoadingHide { to { visibility: hidden; } }
+
+.spinnerSlot {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  color: var(--tone);
+  animation: btnLoadingShow 1ms 150ms forwards;
+}
+@keyframes btnLoadingShow { to { opacity: 1; } }
+.solid .spinnerSlot,
+.btn.soft:hover .spinnerSlot { color: var(--tone-on); }
+/* Split button: the halves are transparent, so color comes from the wrapper's tone. */
+.splitWrapper .loading > .spinnerSlot { color: var(--tone); }
+.splitWrapper.solid .loading > .spinnerSlot { color: var(--tone-on); }
+
 /* ── Disabled (all types) ── */
 .btn:disabled {
   background: var(--neutral-50);

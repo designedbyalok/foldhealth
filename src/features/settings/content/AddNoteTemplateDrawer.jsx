@@ -89,9 +89,9 @@ export function AddNoteTemplateDrawer({ onClose }) {
       primaryAction={
         <Button
           onClick={handleSave}
-          disabled={!canSave || saving}
+          disabled={!canSave} loading={saving}
         >
-          {saving ? 'Creating…' : 'Continue'}
+          Continue
         </Button>
       }
       secondaryAction={

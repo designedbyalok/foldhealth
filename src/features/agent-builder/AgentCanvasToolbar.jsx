@@ -49,8 +49,8 @@ export function AgentCanvasToolbar({
           onClick={onRedo}
         />
         <span className={styles.toolbarDivider} />
-        <Button variant="outline" onClick={onSave} disabled={saving}>
-          {saving ? 'Saving…' : 'Save'}
+        <Button variant="outline" onClick={onSave} loading={saving}>
+          Save
         </Button>
         <span className={styles.toolbarDivider} />
         <Button variant="ghost" leadingIcon="solar:play-linear" disabled>
