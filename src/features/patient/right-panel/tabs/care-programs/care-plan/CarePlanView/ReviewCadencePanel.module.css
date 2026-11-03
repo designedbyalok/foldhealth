@@ -1,27 +1,8 @@
-/* The badge is the trigger: no chrome of its own. */
-.trigger {
-  display: inline-flex;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-}
-.trigger:focus-visible {
-  outline: 2px solid var(--primary-300);
-  outline-offset: 2px;
-  border-radius: var(--space-1);
-}
-
-.popover {
+/* The review cadence, laid out in the care plan overview's Review Cadence tab. */
+.panel {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  padding: var(--space-3);
-}
-.title {
-  font-size: var(--font-base);
-  font-weight: 500;
-  color: var(--neutral-400);
 }
 .details {
   display: flex;
@@ -31,12 +12,12 @@
 .detail {
   display: flex;
   gap: var(--space-2);
-  font-size: var(--font-sm);
+  font-size: var(--font-base);
 }
 .detailLabel {
-  width: 88px;
+  width: 104px;
   flex-shrink: 0;
-  color: var(--neutral-300);
+  color: var(--placeholder-text);
 }
 .detailValue {
   display: inline-flex;
@@ -50,8 +31,8 @@
   margin: 0;
   padding: var(--space-2) 0 0 var(--space-4);
   border-top: 0.5px solid var(--neutral-100);
-  font-size: var(--font-sm);
-  color: var(--neutral-300);
+  font-size: var(--font-base);
+  color: var(--placeholder-text);
   list-style: disc;
 }
 .rules li + li { margin-top: var(--space-1); }

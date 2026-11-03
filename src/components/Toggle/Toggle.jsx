@@ -11,14 +11,21 @@ import styles from './Toggle.module.css';
  * at the first-measured size and visibly fall behind its button.
  *
  * Props:
- *  - items      (string[] | {key, label, icon?, ariaLabel?}[])  ariaLabel names an icon-only segment
+ *  - items      (string[] | {key, label, icon?, leadingIcon?, notif?, ariaLabel?}[])
+ *                            ariaLabel names an icon-only segment; leadingIcon
+ *                            (Solar name or node) sits before the label;
+ *                            notif adds TabStrip's pulsing dot (something new)
  *  - active     (string)     Currently selected key
  *  - onChange   (function)   Called with the key of the clicked segment
  *  - className  (string)     Extra class on the outer container
  *  - size       ('S'|'M')    S=28px height/13px font, M=32px height/14px font
+ *  - variant    ('soft'|'ghost') soft (default) sits the segments on a grey
+ *                            track; ghost drops the track (for a toggle on a
+ *                            grey surface): 28px segments, 14px text, only
+ *                            the selected segment's white pill shows
  *  - fullWidth  (boolean)    Stretch to parent and let buttons flex equally
  */
-export function Toggle({ items = [], active, onChange, className, size = 'M', fullWidth = false }) {
+export function Toggle({ items = [], active, onChange, className, size = 'M', variant = 'soft', fullWidth = false }) {
   const containerRef = useRef(null);
   const [sliderStyle, setSliderStyle] = useState({ left: 0, width: 0, opacity: 0 });
 
@@ -64,6 +71,7 @@ export function Toggle({ items = [], active, onChange, className, size = 'M', fu
       className={[
         styles.toggle,
         sizeClass,
+        variant === 'ghost' ? styles.ghost : '',
         fullWidth ? styles.fullWidth : '',
         iconOnly ? styles.iconOnly : '',
         className || '',
@@ -71,7 +79,7 @@ export function Toggle({ items = [], active, onChange, className, size = 'M', fu
       role="radiogroup"
     >
       <div className={styles.slider} style={sliderStyle} />
-      {normalized.map(({ key, label, icon, ariaLabel }) => (
+      {normalized.map(({ key, label, icon, leadingIcon, notif, ariaLabel }) => (
         <button
           key={key}
           type="button"
@@ -82,7 +90,15 @@ export function Toggle({ items = [], active, onChange, className, size = 'M', fu
           className={`${styles.btn} ${active === key ? styles.btnActive : ''}`}
           onClick={() => onChange(key)}
         >
-          {icon ? (typeof icon === 'string' ? <Icon name={icon} size={16} /> : icon) : label}
+          {icon ? (typeof icon === 'string' ? <Icon name={icon} size={16} /> : icon) : leadingIcon ? (
+            <span className={styles.withIcon}>
+              <span className={styles.leadIcon}>
+                {typeof leadingIcon === 'string' ? <Icon name={leadingIcon} size={16} color="currentColor" /> : leadingIcon}
+              </span>
+              {label}
+            </span>
+          ) : label}
+          {notif && <span className={styles.notifDot} aria-label="Something to review" />}
         </button>
       ))}
     </div>

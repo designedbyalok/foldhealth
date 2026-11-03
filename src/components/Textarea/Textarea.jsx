@@ -73,6 +73,13 @@ export const Textarea = forwardRef(function Textarea({
   onAttachmentClick,
   onAttachmentFiles,     // (FileList) → parent handles the upload
   moreActions,           // [{ icon, label, onClick, disabled }], appended to the toolbar
+  // richText only: keep the formatting footer out of sight until the box (or
+  // one of its buttons) has focus, for a box that should read as a plain field.
+  toolbarOnFocus = false,
+  // richText only: Enter (without Shift) and Escape, outside the @ and /
+  // pickers. Passing onEnter makes Enter submit; Shift+Enter still breaks a line.
+  onEnter,
+  onEscape,
   // Mentions: richText-only. Pass an array of `{ id, name, initials, role?
   // realProfile? }` and the editor will pop a picker on "@". `onMentionSelect`
   // and `onMentionsChange` mirror CommentComposer's contract so consumers
@@ -172,6 +179,9 @@ export const Textarea = forwardRef(function Textarea({
       onAttachmentClick={onAttachmentClick}
       onAttachmentFiles={onAttachmentFiles}
       moreActions={moreActions}
+      toolbarOnFocus={toolbarOnFocus}
+      onEnter={onEnter}
+      onEscape={onEscape}
       mentions={mentions}
       mentionUsers={mentionUsers}
       onMentionsChange={onMentionsChange}
@@ -276,6 +286,9 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
   onAttachmentClick,
   onAttachmentFiles,
   moreActions,
+  toolbarOnFocus,
+  onEnter,
+  onEscape,
   mentions,
   mentionUsers,
   onMentionsChange,
@@ -406,6 +419,16 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
 
   const handleRichKeyDown = (e) => {
     const mentionOpen = triggersOn && mentionCtx && mentionMatches.length > 0;
+    if (!mentionOpen && onEnter && e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      onEnter();
+      return;
+    }
+    if (!mentionOpen && onEscape && e.key === 'Escape') {
+      e.preventDefault();
+      onEscape();
+      return;
+    }
     // Enter on an empty list item steps out of the list (see richTextLists).
     if (!mentionOpen && e.key === 'Enter' && !e.shiftKey && exitEmptyListItem(editorRef.current)) {
       e.preventDefault();
@@ -556,7 +579,7 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
   };
 
   return (
-    <div className={styles.enhRoot}>
+    <div className={`${styles.enhRoot} ${toolbarOnFocus ? styles.enhToolbarOnFocus : ''}`}>
       {(title || mandatory || info) && (
         <div className={styles.enhLabelRow}>
           <label className={styles.enhLabel}>{title}</label>

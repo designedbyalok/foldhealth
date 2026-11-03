@@ -250,6 +250,8 @@
 
 /* Footer: thin top-divider, formatting buttons flow left, primary CTA
    and speech-to-text pin to the right. */
+/* toolbarOnFocus: the footer shows while the box or a toolbar button has focus. */
+.enhToolbarOnFocus:not(:focus-within) .enhFooter { display: none; }
 .enhFooter {
   display: flex;
   align-items: center;

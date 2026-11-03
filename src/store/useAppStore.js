@@ -3019,6 +3019,22 @@ export const useAppStore = create((set, get) => ({
     if (error) reportPersistFailure(`saveProgramCarePlanSummary(${key})`, error);
   },
 
+  // Tick or untick a summary's action items (`done`: their indexes). Kept in
+  // the summary itself, so generated_at still dates the summary, not the tick.
+  setProgramCarePlanSummaryDone: async (patientId, programId, done) => {
+    const key = carePlanKey(patientId, programId);
+    const entry = get().programCarePlanSummaries[key];
+    if (!entry?.summary) return;
+    const summary = { ...entry.summary, done };
+    set(s => ({ programCarePlanSummaries: { ...s.programCarePlanSummaries, [key]: { ...entry, summary } } }));
+    const { error } = await supabase
+      .from('patient_care_plan_program_summaries')
+      .update({ summary, updated_at: new Date().toISOString() })
+      .eq('patient_id', String(patientId))
+      .eq('program_id', programId);
+    if (error) reportPersistFailure(`setProgramCarePlanSummaryDone(${key})`, error);
+  },
+
   deleteProgramCarePlanSummary: async (patientId, programId) => {
     if (!patientId || !programId) return;
     const key = carePlanKey(patientId, programId);
