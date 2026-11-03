@@ -2054,6 +2054,51 @@ async function main() {
       : `  ✓ caregap_whitelist (${CAREGAP_WHITELIST_MOCK.length})`);
   }
 
+  // ── Review cadence (demo, #131) ──
+  // Annette Brave (11089): an inpatient discharge 6 days ago, so her programs
+  // with a post-discharge rule (SNP, CCM, HICM) review weekly for 30 days,
+  // and a cadence override on her CCM enrollment (every 2 weeks) with its
+  // History entry. Needs care_plan_cadence_migration.sql and
+  // patient_event_stream_migration.sql (which allows 'adt' events).
+  console.log('\nSeeding review cadence (demo)...');
+  {
+    const patientId = '11089';
+    const daysAgo = n => new Date(Date.now() - n * 86400000).toISOString();
+    const dateOnly = iso => iso.slice(0, 10);
+    const dischargeCode = 'seed:11089:discharge';
+    await supabase.from('patient_clinical_events').delete().eq('patient_id', patientId).eq('code', dischargeCode);
+    const { error: adtErr } = await supabase.from('patient_clinical_events').insert({
+      patient_id: patientId, event_type: 'adt', code: dischargeCode, code_system: 'seed', display: 'Inpatient discharge',
+      effective_date: dateOnly(daysAgo(9)), end_date: dateOnly(daysAgo(6)), status: 'completed', source: 'seed',
+      raw_meta: { action: 'discharge', facility: 'St. Mary Medical Center', disposition: 'Home' },
+    });
+    console.log(adtErr
+      ? `  ✗ discharge event: ${adtErr.message}`
+      : '  ✓ ADT discharge 6 days ago (post-discharge weekly reviews)');
+
+    const { data: ccm } = await supabase.from('patient_care_programs')
+      .select('id, code').eq('patient_id', patientId).eq('code', 'CCM').limit(1).maybeSingle();
+    if (!ccm) {
+      console.log('  ⚠ no CCM enrollment for 11089: override skipped');
+    } else {
+      const actor = 'Delores Conn';
+      const reason = 'Recent fall, closer follow-up';
+      const { error: oErr } = await supabase.from('patient_care_programs').update({
+        cadence_override: { every: 2, unit: 'week', reason, setBy: actor, setAt: daysAgo(4) },
+      }).eq('id', ccm.id);
+      await supabase.from('care_plan_audit').delete().eq('program_id', ccm.id).eq('actor', actor).eq('action', 'cadence_changed');
+      const { error: aErr } = await supabase.from('care_plan_audit').insert({
+        patient_id: patientId, program_id: ccm.id, program_code: ccm.code, entity_type: 'plan', action: 'cadence_changed',
+        summary: 'Review Cadence Set to Every 2 weeks', detail: `Monthly → Every 2 weeks · ${reason}`,
+        actor, created_at: daysAgo(4),
+      });
+      const err = oErr || aErr;
+      console.log(err
+        ? `  ✗ cadence override: ${err.message}${/cadence_override/.test(err.message || '') ? ' (run supabase/care_plan_cadence_migration.sql)' : ''}`
+        : '  ✓ CCM review cadence override: every 2 weeks');
+    }
+  }
+
   // ── Patient Care Plan (demo) ──
   // The Care Plan step is Supabase-backed (patient_care_plan_* tables). There is
   // no seeded patient/program to attach to at build time, so we instantiate one
