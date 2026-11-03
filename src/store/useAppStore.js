@@ -82,6 +82,8 @@ import { makeActivityRow as buildHccActivityRow } from '../features/hcc/activity
 import { hccRoleDefaultFilters } from '../features/hcc/filters';
 import { deriveGoalTableFields } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/goalMetrics';
 import { barrierPayloadFromTemplateEntry, goalPayloadFromTemplateEntry, interventionPayloadFromTemplateEntry, templateLinkOwners } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanTemplateApply';
+import { dischargeDates } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/cadence';
+import { EVENT_LOOKBACK_DAYS, evaluateEventImpact, eventsToEvaluate, mapCarePlanEventRow, mapEventImpactRow, planForPrompt } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/eventImpact';
 import { buildPatientFacts, buildTemplateChoices, draftCounts, withDescription } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/individualizedPlan';
 import { assessmentSuggestionsFor, pendingRecommendation } from '../features/patient/right-panel/tabs/care-programs/care-plan/lib/carePlanRecommendation';
 import { buildTemplateCatalog } from '../features/settings/care-plan-library/lib/aiTemplateDraft';
@@ -404,6 +406,10 @@ const mapReminderRow = r => ({
   doneAt: r.done_at || null,
   createdAt: r.created_at,
 });
+
+// Reasons picked in the status dialog, waiting for the save they belong to
+// (recordGbiStatusHistory reads them when the save's audit is written).
+const pendingStatusReasons = new Map();
 
 export const useAppStore = create((set, get) => ({
   ...createShellSlice(set, get),
@@ -2683,6 +2689,8 @@ export const useAppStore = create((set, get) => ({
       instance:       r.instance || null,
       plannedEndDate: r.planned_end_date || null,
       enrolledBy:     r.enrolled_by || null,
+      // Review cadence override (care_plan_cadence_migration.sql).
+      cadenceOverride: r.cadence_override || null,
       closureReason:  r.closure_reason || null,
       closureNote:    r.closure_note || null,
       closedAt:       r.closed_at || null,
@@ -4539,6 +4547,185 @@ export const useAppStore = create((set, get) => ({
     return true;
   },
 
+  // ── Review cadence (care_plan_cadence_migration.sql) ──
+  // Discharge dates per patient from ADT clinical events, for the cadence's
+  // post-discharge spike: { [patientId]: Date[] }.
+  patientDischarges: {},
+  fetchPatientDischarges: async (patientId) => {
+    if (!patientId) return;
+    const { data, error } = await supabase.from('patient_clinical_events')
+      .select('event_type, effective_date, end_date, raw_meta')
+      .eq('patient_id', String(patientId)).eq('event_type', 'adt')
+      .order('effective_date', { ascending: false }).limit(50);
+    if (error) { console.warn('fetchPatientDischarges:', error.message); return; }
+    set(s => ({ patientDischarges: { ...s.patientDischarges, [patientId]: dischargeDates(data || []) } }));
+  },
+  // Sets (or with null clears) one enrollment's review cadence override and
+  // logs it to the care plan History.
+  setCadenceOverride: async (patientId, program, override, { fromLabel, toLabel } = {}) => {
+    if (!patientId || !program?.id) return false;
+    const value = override ? { ...override, setBy: get().currentUserProfile?.name || null, setAt: new Date().toISOString() } : null;
+    const prev = (get().careProgramsByPatient[patientId] || []).find(p => p.id === program.id)?.cadenceOverride ?? null;
+    const apply = v => set(s => ({
+      careProgramsByPatient: {
+        ...s.careProgramsByPatient,
+        [patientId]: (s.careProgramsByPatient[patientId] || []).map(p => (p.id === program.id ? { ...p, cadenceOverride: v } : p)),
+      },
+    }));
+    apply(value);
+    const { error } = await supabase.from('patient_care_programs').update({ cadence_override: value }).eq('id', program.id);
+    if (error) {
+      console.warn('setCadenceOverride:', error.message);
+      apply(prev);
+      get().showToast?.('Couldn\u2019t save the review cadence');
+      return false;
+    }
+    get().logCarePlanAudit(patientId, program, {
+      entityType: 'plan',
+      action: 'cadence_changed',
+      summary: override ? `Review Cadence Set to ${toLabel}` : 'Review Cadence Reset to the Program Default',
+      detail: [fromLabel && toLabel ? `${fromLabel} \u2192 ${toLabel}` : '', override?.reason || ''].filter(Boolean).join(' \u00b7 '),
+    });
+    return true;
+  },
+
+  // ── Event-based plan updates (care_plan_event_updates_migration.sql, #84) ──
+  // `${patientId}::${programId}` → { events: { [id]: event }, impacts: [impact],
+  // loading, evaluating, missing }. Events come from the care_plan_events
+  // inbox (database triggers); each one is evaluated once per plan with the
+  // rules in care-plan/lib/eventImpact.js and, when they match, drafted by
+  // /api/care-plan-event-update. The result is a care_plan_event_impacts row.
+  carePlanEventUpdates: {},
+  fetchCarePlanEventUpdates: async (patientId, program, plan) => {
+    if (!patientId || !program?.id || !plan) return;
+    const key = carePlanKey(patientId, program.id);
+    const cur = get().carePlanEventUpdates[key];
+    if (cur?.loading || cur?.evaluating) return;
+    const patch = p => set(s => ({ carePlanEventUpdates: { ...s.carePlanEventUpdates, [key]: { ...(s.carePlanEventUpdates[key] || {}), ...p } } }));
+    patch({ loading: true });
+    const since = new Date(Date.now() - EVENT_LOOKBACK_DAYS * 86400000).toISOString();
+    const [ev, im] = await Promise.all([
+      supabase.from('care_plan_events').select('*').eq('patient_id', String(patientId))
+        .gte('occurred_at', since).order('occurred_at', { ascending: false }).limit(100),
+      supabase.from('care_plan_event_impacts').select('*').eq('patient_id', String(patientId))
+        .eq('program_id', String(program.id)).order('evaluated_at', { ascending: false }).limit(200),
+    ]);
+    const err = ev.error || im.error;
+    if (err) {
+      // Before the migration has run the tables don't exist: show nothing.
+      if (!/does not exist|schema cache|42P01|PGRST205/i.test(`${err.code} ${err.message}`)) console.warn('fetchCarePlanEventUpdates:', err.message);
+      patch({ loading: false, missing: true, events: {}, impacts: [] });
+      return;
+    }
+    const events = (ev.data || []).map(mapCarePlanEventRow);
+    let impacts = (im.data || []).map(mapEventImpactRow);
+    patch({ loading: false, missing: false, events: Object.fromEntries(events.map(e => [e.id, e])), impacts });
+
+    const todo = eventsToEvaluate(events, impacts, { planCreatedAt: plan.plan?.createdDate });
+    if (!todo.length) return;
+    patch({ evaluating: true });
+    const planView = { goals: plan.goals || [], interventions: plan.interventions || [], barriers: plan.barriers || [] };
+    // Oldest first, and only a handful of AI drafts per visit; the rest wait for the next one.
+    let aiBudget = 5;
+    for (const event of todo.slice().reverse()) {
+      const result = evaluateEventImpact(event, planView);
+      const row = {
+        event_id: event.id, patient_id: String(patientId), program_id: String(program.id),
+        status: result.relevant ? 'pending' : 'no_impact', reasons: result.reasons, changes: result.changes,
+      };
+      if (result.relevant && result.askAi) {
+        if (aiBudget-- <= 0) continue;
+        try {
+          const res = await apiFetch('/api/care-plan-event-update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ event, reasons: result.reasons, ruleChanges: result.changes, plan: planForPrompt(planView), programName: program.name || program.code }),
+          });
+          const json = await res.json().catch(() => ({}));
+          if (res.ok && json.draft) {
+            row.changes = [...result.changes, ...json.draft.changes];
+            row.ai_summary = json.draft.summary || null;
+          } else row.ai_error = json.error?.message || 'Could not draft plan updates for this event.';
+        } catch (e) {
+          row.ai_error = e?.message || 'Could not reach the AI service.';
+        }
+      }
+      // Nothing to change after all: record it as reviewed so it isn't asked again.
+      if (row.status === 'pending' && !row.changes.length && !row.ai_error) row.status = 'no_impact';
+      const { data, error } = await supabase.from('care_plan_event_impacts')
+        .upsert(row, { onConflict: 'event_id,program_id', ignoreDuplicates: true }).select();
+      if (error) { console.warn('fetchCarePlanEventUpdates: save impact:', error.message); continue; }
+      if (data?.[0]) {
+        impacts = [mapEventImpactRow(data[0]), ...impacts];
+        patch({ impacts });
+      }
+    }
+    patch({ evaluating: false });
+  },
+  // Sets aside an event with nothing left to decide (e.g. the AI draft failed).
+  dismissCarePlanEventImpact: async (patientId, program, impactId) => {
+    const key = carePlanKey(patientId, program.id);
+    const actor = get().currentUserProfile?.name || null;
+    const next = { status: 'resolved', resolved_at: new Date().toISOString(), resolved_by: actor };
+    set(s => ({
+      carePlanEventUpdates: {
+        ...s.carePlanEventUpdates,
+        [key]: {
+          ...s.carePlanEventUpdates[key],
+          impacts: (s.carePlanEventUpdates[key]?.impacts || []).map(i => (i.id === impactId
+            ? { ...i, status: 'resolved', resolvedAt: next.resolved_at, resolvedBy: actor } : i)),
+        },
+      },
+    }));
+    const { error } = await supabase.from('care_plan_event_impacts').update(next).eq('id', impactId);
+    if (error) console.warn('dismissCarePlanEventImpact:', error.message);
+  },
+  // Accepts (applying it to the plan) or dismisses one proposed change.
+  decideCarePlanEventChange: async (patientId, program, impactId, changeId, decision) => {
+    const key = carePlanKey(patientId, program.id);
+    const state = get().carePlanEventUpdates[key];
+    const impact = state?.impacts.find(i => i.id === impactId);
+    const change = impact?.changes.find(c => c.id === changeId);
+    if (!impact || !change || change.decision) return false;
+    if (decision === 'accepted') {
+      const event = state.events?.[impact.eventId];
+      let ok = true;
+      if (change.kind === 'goal_value') {
+        ok = !!(await get().saveGoalMeasurement(patientId, program.id, change.targetId, {
+          value: change.value ?? change.to, unit: change.unit || '', takenAt: event?.occurredAt,
+        }));
+      } else if (change.kind === 'status') {
+        ok = !!(await get().saveCarePlanLiveField(patientId, program, change.targetType, change.targetId, { status: change.to }));
+      } else if (change.kind === 'goal_target') {
+        ok = !!(await get().saveCarePlanLiveField(patientId, program, 'goal', change.targetId, { targetValue: change.to }));
+      } else if (change.kind === 'add_goal') {
+        ok = !!(await get().savePatientCarePlanGoal(patientId, program, { title: change.item?.title || change.to, status: 'Not Started' }));
+      } else if (change.kind === 'add_intervention') {
+        ok = !!(await get().savePatientCarePlanIntervention(patientId, program, { title: change.item?.title || change.to, kind: change.item?.kind || 'internal-task', goalId: change.item?.goalId || null, status: 'Not Started' }));
+      } else if (change.kind === 'add_barrier') {
+        ok = !!(await get().savePatientCarePlanBarrier(patientId, program, { title: change.item?.title || change.to, status: 'Not Started' }));
+      }
+      if (!ok) { get().showToast?.('Couldn’t apply the change'); return false; }
+    }
+    const actor = get().currentUserProfile?.name || null;
+    const changes = impact.changes.map(c => (c.id === changeId ? { ...c, decision, decidedBy: actor, decidedAt: new Date().toISOString() } : c));
+    const done = changes.every(c => c.decision);
+    const next = { changes, status: done ? 'resolved' : 'pending', resolved_at: done ? new Date().toISOString() : null, resolved_by: done ? actor : null };
+    set(s => ({
+      carePlanEventUpdates: {
+        ...s.carePlanEventUpdates,
+        [key]: {
+          ...s.carePlanEventUpdates[key],
+          impacts: (s.carePlanEventUpdates[key]?.impacts || []).map(i => (i.id === impactId
+            ? { ...i, changes, status: next.status, resolvedAt: next.resolved_at, resolvedBy: next.resolved_by } : i)),
+        },
+      },
+    }));
+    const { error } = await supabase.from('care_plan_event_impacts').update(next).eq('id', impactId);
+    if (error) console.warn('decideCarePlanEventChange:', error.message);
+    return true;
+  },
+
   // ── Care plan call reviews (care_plan_call_reviews migration) ──
   // The Review care plan drawer, opened from a worklist's Care Plan Status:
   // { patientId, patientName, program: { id, code, name } } or null.
@@ -5414,12 +5601,68 @@ export const useAppStore = create((set, get) => ({
   // it already carries: those writes restore what should have been there, so
   // they must not read as care decisions in History.
   carePlanAuditSuppressed: false,
+  // ── GBI status reasons (gbi_status_history_migration.sql, #62) ──
+  // A status change asks for a reason first: the caller awaits
+  // requestGbiStatusReason({ items: [{ type, id, title, from }], to, source })
+  // and gets { reason, note } or null when cancelled. GbiStatusReasonDialog
+  // renders the open request.
+  gbiStatusReasonRequest: null,
+  requestGbiStatusReason: ({ items, to, source = 'manual' }) => new Promise((resolve) => {
+    get().gbiStatusReasonRequest?.resolve(null);
+    set({ gbiStatusReasonRequest: { items, to, source, resolve } });
+  }),
+  resolveGbiStatusReason: (result) => {
+    const req = get().gbiStatusReasonRequest;
+    set({ gbiStatusReasonRequest: null });
+    if (!req) return;
+    if (result) {
+      for (const it of req.items) {
+        pendingStatusReasons.set(String(it.id), { reason: result.reason || null, note: result.note || null, source: req.source, at: Date.now() });
+      }
+    }
+    req.resolve(result);
+  },
+  // Records a reason without asking, for a status the app sets as part of
+  // another action (e.g. completing an assessment goal sets it to Met).
+  presetGbiStatusReason: (ids, { reason, note = null, source = 'manual' }) => {
+    for (const id of ids) pendingStatusReasons.set(String(id), { reason, note, source, at: Date.now() });
+  },
+  // Writes a gbi_status_history row for each status change in an audit batch.
+  recordGbiStatusHistory: (patientId, program, entries, actor) => {
+    const rows = entries
+      .filter(e => e.action === 'status_changed' && ['goal', 'intervention', 'barrier'].includes(e.entityType) && e.entityId != null)
+      .map((e) => {
+        const id = String(e.entityId);
+        const pending = pendingStatusReasons.get(id);
+        if (pending) pendingStatusReasons.delete(id);
+        const fresh = pending && Date.now() - pending.at < 120000 ? pending : null;
+        const [from, to] = e.history ? [e.history.from, e.history.to] : String(e.detail || '').split(': ').pop().split(' → ');
+        if (!to) return null;
+        return {
+          patient_id: String(patientId), program_id: String(program.id),
+          entity_type: e.entityType, entity_id: id, entity_title: e.summary || '',
+          from_status: from || null, to_status: to,
+          reason: fresh?.reason ?? e.history?.reason ?? null, note: fresh?.note ?? null,
+          source: fresh?.source || e.history?.source || 'manual',
+          changed_by: e.history?.source === 'automation' ? 'Automations' : actor,
+        };
+      })
+      .filter(Boolean);
+    if (!rows.length) return;
+    supabase.from('gbi_status_history').insert(rows).then(({ error }) => {
+      // Until the migration has run there is no table: the change itself still saves.
+      if (error && !/does not exist|schema cache|42P01|PGRST205/i.test(`${error.code} ${error.message}`)) {
+        console.warn('recordGbiStatusHistory:', error.message);
+      }
+    });
+  },
   logCarePlanAudit: async (patientId, program, entry) => {
     if (get().carePlanAuditSuppressed) return true;
     if (!patientId || !program?.id || !entry) return false;
     const list = (Array.isArray(entry) ? entry : [entry]).filter(Boolean);
     if (list.length === 0) return false;
     const actor = get().currentUserProfile?.name || null;
+    get().recordGbiStatusHistory(patientId, program, list, actor);
     const rows = list.map(e => ({
       patient_id: patientId,
       program_id: program.id,

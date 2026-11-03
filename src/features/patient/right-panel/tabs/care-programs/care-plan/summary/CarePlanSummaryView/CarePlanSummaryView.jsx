@@ -50,6 +50,7 @@ import { isProgramClosed } from '../../../../../../data/programStatus';
 import { isEmptyDash } from '../../../../../../../../lib/emptyDash';
 import { latestPlanNote } from '../../lib/carePlanNotes';
 import { Toggle } from '../../../../../../../../components/Toggle/Toggle';
+import { confirmStatusChange, statusReasonPatch } from '../../lib/confirmStatusChange';
 
 const PRIORITIES = ['high', 'medium', 'low'];
 
@@ -950,11 +951,14 @@ export function CarePlanSummaryView({
     if (item.program) saveCarePlanLiveField(patientId, item.program, TYPE_OF[kind], item.id, { priority });
   };
 
-  const changeStatus = (status) => {
+  const changeStatus = async (status) => {
     if (!statusMenu) return;
     const { kind, item } = statusMenu;
     setStatusMenu(null);
-    if (item.program) saveCarePlanLiveField(patientId, item.program, TYPE_OF[kind], item.id, { status });
+    if (!item.program) return;
+    const why = await confirmStatusChange([{ type: TYPE_OF[kind], item }], status);
+    if (!why) return;
+    saveCarePlanLiveField(patientId, item.program, TYPE_OF[kind], item.id, { status, ...statusReasonPatch(item, why) });
   };
 
   // Only Internal Task's assignee is editable; other kinds stay with the member.

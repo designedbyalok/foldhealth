@@ -9,6 +9,7 @@ import { StepsTab } from './tabs/StepsTab';
 import { WorklistsTab } from './tabs/WorklistsTab';
 import { CareTeamTab } from './tabs/CareTeamTab';
 import { CompletionTab } from './tabs/CompletionTab';
+import { CadenceTab } from './tabs/CadenceTab';
 import { AccessTab } from './tabs/AccessTab';
 import styles from './CareProgramConfig.module.css';
 
@@ -18,6 +19,7 @@ const TABS = [
   { key: 'worklists', label: 'Worklists' },
   { key: 'care-team', label: 'Care Team' },
   { key: 'completion', label: 'Completion Criteria' },
+  { key: 'cadence', label: 'Cadence' },
   { key: 'access', label: 'Access' },
 ];
 
@@ -78,6 +80,7 @@ export function ProgramTypeDetail({ type, tab, onTab, onDirtyChange }) {
         {activeTab === 'worklists' && <WorklistsTab {...props} />}
         {activeTab === 'care-team' && <CareTeamTab {...props} />}
         {activeTab === 'completion' && <CompletionTab {...props} />}
+        {activeTab === 'cadence' && <CadenceTab {...props} />}
         {activeTab === 'access' && <AccessTab {...props} />}
       </div>
     </>

@@ -395,6 +395,7 @@ export function GbiStatusButton({ value, reason, disabled, onOpen, badgeSize = '
       />
     </button>
   );
-  // Why it holds this status, when an automation set it (e.g. Program UTR).
+  // Why it holds this status: the reason picked when it changed, or the
+  // automation that set it (e.g. Program UTR).
   return reason ? <Tooltip label={`Reason: ${reason}`}>{button}</Tooltip> : button;
 }

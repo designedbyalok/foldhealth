@@ -1476,6 +1476,28 @@ async function main() {
     else console.error('  ✗', cptypeErr.message);
   } else console.log(`  ✓ ${programTypeRows.length} care program types`);
 
+  console.log('Seeding care_plan_events (event-based plan updates demo)...');
+  // A few recent events for Annette Brave (11089) so the care plan's "Plan
+  // updates from new events" card has something to evaluate. Live events come
+  // from the triggers in supabase/care_plan_event_updates_migration.sql.
+  const daysAgo = n => new Date(Date.now() - n * 86400000).toISOString();
+  const carePlanEventRows = [
+    { kind: 'adt', action: 'discharge', display: 'Inpatient discharge', occurred_at: daysAgo(5), dedupe_key: 'seed:11089:adt-discharge',
+      meta: { raw: { action: 'discharge', facility: 'St. Mary Medical Center', disposition: 'Home', followUp: 'PCP within 7 days' } } },
+    { kind: 'lab', code: '4548-4', display: 'Hemoglobin A1c', numeric_value: 8.1, unit: '%', abnormal: true, occurred_at: daysAgo(3), dedupe_key: 'seed:11089:lab-a1c',
+      meta: { referenceLow: 4, referenceHigh: 5.6 } },
+    { kind: 'vital', code: 'bp', display: 'bp', value_text: '146/90', numeric_value: 146, abnormal: true, occurred_at: daysAgo(2), dedupe_key: 'seed:11089:vital-bp' },
+    { kind: 'medication', action: 'started', display: 'Empagliflozin 10 mg', value_text: '1 tab once a day', occurred_at: daysAgo(2), dedupe_key: 'seed:11089:med-empagliflozin' },
+    { kind: 'assessment', action: 'completed', display: 'PHQ-9', numeric_value: 14, value_text: 'Moderate', occurred_at: daysAgo(1), dedupe_key: 'seed:11089:phq9' },
+  ].map(r => ({ patient_id: '11089', source_table: 'seed', source_id: r.dedupe_key, ...r }));
+  const { error: cpeErr } = await supabase
+    .from('care_plan_events')
+    .upsert(carePlanEventRows, { onConflict: 'dedupe_key', ignoreDuplicates: true });
+  if (cpeErr) {
+    if (cpeErr.code === '42P01' || cpeErr.code === 'PGRST205') console.log('  \u26a0 care_plan_events missing: run supabase/care_plan_event_updates_migration.sql');
+    else console.error('  \u2717', cpeErr.message);
+  } else console.log(`  \u2713 ${carePlanEventRows.length} care plan events`);
+
   console.log('Seeding care_plan_templates (library)...');
   const templateRows = CARE_PLAN_TEMPLATE_LIBRARY.map(carePlanTemplateLibraryToRow);
   const { error: cptErr } = await supabase
@@ -2052,6 +2074,172 @@ async function main() {
     console.log(error
       ? `  ✗ caregap_whitelist: ${error.message} (run supabase/caregap_whitelist_migration.sql first)`
       : `  ✓ caregap_whitelist (${CAREGAP_WHITELIST_MOCK.length})`);
+  }
+
+  // ── Review cadence (demo, #131) ──
+  // Annette Brave (11089): an inpatient discharge 6 days ago, so her programs
+  // with a post-discharge rule (SNP, CCM, HICM) review weekly for 30 days,
+  // and a cadence override on her CCM enrollment (every 2 weeks) with its
+  // History entry. Needs care_plan_cadence_migration.sql and
+  // patient_event_stream_migration.sql (which allows 'adt' events).
+  console.log('\nSeeding review cadence (demo)...');
+  {
+    const patientId = '11089';
+    const daysAgo = n => new Date(Date.now() - n * 86400000).toISOString();
+    const dateOnly = iso => iso.slice(0, 10);
+    const dischargeCode = 'seed:11089:discharge';
+    await supabase.from('patient_clinical_events').delete().eq('patient_id', patientId).eq('code', dischargeCode);
+    const { error: adtErr } = await supabase.from('patient_clinical_events').insert({
+      patient_id: patientId, event_type: 'adt', code: dischargeCode, code_system: 'seed', display: 'Inpatient discharge',
+      effective_date: dateOnly(daysAgo(9)), end_date: dateOnly(daysAgo(6)), status: 'completed', source: 'seed',
+      raw_meta: { action: 'discharge', facility: 'St. Mary Medical Center', disposition: 'Home' },
+    });
+    console.log(adtErr
+      ? `  ✗ discharge event: ${adtErr.message}`
+      : '  ✓ ADT discharge 6 days ago (post-discharge weekly reviews)');
+
+    const { data: ccm } = await supabase.from('patient_care_programs')
+      .select('id, code').eq('patient_id', patientId).eq('code', 'CCM').limit(1).maybeSingle();
+    if (!ccm) {
+      console.log('  ⚠ no CCM enrollment for 11089: override skipped');
+    } else {
+      const actor = 'Delores Conn';
+      const reason = 'Recent fall, closer follow-up';
+      const { error: oErr } = await supabase.from('patient_care_programs').update({
+        cadence_override: { every: 2, unit: 'week', reason, setBy: actor, setAt: daysAgo(4) },
+      }).eq('id', ccm.id);
+      await supabase.from('care_plan_audit').delete().eq('program_id', ccm.id).eq('actor', actor).eq('action', 'cadence_changed');
+      const { error: aErr } = await supabase.from('care_plan_audit').insert({
+        patient_id: patientId, program_id: ccm.id, program_code: ccm.code, entity_type: 'plan', action: 'cadence_changed',
+        summary: 'Review Cadence Set to Every 2 weeks', detail: `Monthly → Every 2 weeks · ${reason}`,
+        actor, created_at: daysAgo(4),
+      });
+      const err = oErr || aErr;
+      console.log(err
+        ? `  ✗ cadence override: ${err.message}${/cadence_override/.test(err.message || '') ? ' (run supabase/care_plan_cadence_migration.sql)' : ''}`
+        : '  ✓ CCM review cadence override: every 2 weeks');
+    }
+  }
+
+  // ── GBI status changes with reasons (demo, #62) ──
+  // A few status changes on Annette Brave's (11089) SNP care plan, each with
+  // the reason and note the status dialog asks for: the items' current status
+  // and reason, the History entries, and gbi_status_history rows. Needs
+  // gbi_status_history_migration.sql (and gbi_status_reason_migration.sql for
+  // the reason on the item).
+  console.log('\nSeeding GBI status changes with reasons (demo)...');
+  {
+    const patientId = '11089';
+    const { data: prog } = await supabase.from('patient_care_programs')
+      .select('id, code').eq('patient_id', patientId).eq('code', 'SNP').limit(1).maybeSingle();
+    const { data: plan } = prog
+      ? await supabase.from('patient_care_plans').select('id').eq('patient_id', patientId).eq('program_id', prog.id).maybeSingle()
+      : { data: null };
+    if (!plan) {
+      console.log('  ⚠ no SNP care plan for 11089: skipped');
+    } else {
+      const TABLE = { goal: 'patient_care_plan_goals', intervention: 'patient_care_plan_interventions', barrier: 'patient_care_plan_barriers' };
+      const items = {};
+      for (const [kind, table] of Object.entries(TABLE)) {
+        const { data } = await supabase.from(table).select('id, title, status').eq('plan_id', plan.id);
+        items[kind] = data || [];
+      }
+      const daysAgo = n => new Date(Date.now() - n * 86400000).toISOString();
+      // Oldest first, so an item changed twice ends on its last status.
+      const CHANGES = [
+        { kind: 'goal', title: 'Improve lipid management', from: 'Not Started', to: 'In Progress', reason: 'Work started', note: 'Statin started at last PCP visit', days: 20 },
+        { kind: 'barrier', title: 'Medication adherence difficulty', from: 'Not Started', to: 'Resolved', reason: 'Resources connected', note: 'Enrolled in pharmacy auto-refill', days: 12 },
+        { kind: 'intervention', title: 'Activity coaching', from: 'Not Started', to: 'Discontinued', reason: 'Patient refused', note: 'Prefers to walk with family instead', days: 9 },
+        { kind: 'goal', title: 'Improve lipid management', from: 'In Progress', to: 'On Hold', reason: 'Waiting on provider', note: 'Cardiology referral pending', days: 6 },
+        { kind: 'intervention', title: 'BP technique education', from: 'In Progress', to: 'Met', reason: 'Target reached', note: 'Teach-back passed on home cuff', days: 3 },
+      ].map(c => ({ ...c, item: items[c.kind].find(i => i.title === c.title) })).filter(c => c.item);
+      const actor = 'Delores Conn';
+      const ids = [...new Set(CHANGES.map(c => String(c.item.id)))];
+      // Re-runs replace the demo rows rather than stacking copies.
+      await supabase.from('gbi_status_history').delete().eq('program_id', prog.id).eq('changed_by', actor).in('entity_id', ids);
+      await supabase.from('care_plan_audit').delete().eq('program_id', prog.id).eq('actor', actor).eq('action', 'status_changed').in('entity_id', ids);
+
+      const { error: hErr } = await supabase.from('gbi_status_history').insert(CHANGES.map(c => ({
+        patient_id: patientId, program_id: prog.id, entity_type: c.kind, entity_id: String(c.item.id), entity_title: c.item.title,
+        from_status: c.from, to_status: c.to, reason: c.reason, note: c.note, source: 'manual', changed_by: actor, changed_at: daysAgo(c.days),
+      })));
+      const { error: aErr } = await supabase.from('care_plan_audit').insert(CHANGES.map(c => ({
+        patient_id: patientId, program_id: prog.id, program_code: prog.code, entity_type: c.kind, entity_id: String(c.item.id),
+        action: 'status_changed', summary: c.item.title, detail: `${c.from} → ${c.to}`, actor, created_at: daysAgo(c.days),
+      })));
+      // Each item ends on its last change, with that change's reason.
+      const latest = new Map(CHANGES.map(c => [`${c.kind}:${c.item.id}`, c]));
+      let reasonColumn = true;
+      for (const c of latest.values()) {
+        const patch = { status: c.to, status_reason: `${c.reason}: ${c.note}` };
+        let { error } = await supabase.from(TABLE[c.kind]).update(reasonColumn ? patch : { status: c.to }).eq('id', c.item.id);
+        if (error && /status_reason/.test(error.message || '')) {
+          reasonColumn = false;
+          ({ error } = await supabase.from(TABLE[c.kind]).update({ status: c.to }).eq('id', c.item.id));
+        }
+        if (error) console.log(`  ✗ ${c.item.title}: ${error.message}`);
+      }
+      const missing = err => err && /does not exist|schema cache|42P01|PGRST205/i.test(`${err.code} ${err.message}`);
+      if (missing(hErr)) console.log('  ⚠ gbi_status_history missing: run supabase/gbi_status_history_migration.sql');
+      else if (hErr) console.log(`  ✗ gbi_status_history: ${hErr.message}`);
+      if (aErr) console.log(`  ✗ care_plan_audit: ${aErr.message}`);
+      if (!reasonColumn) console.log('  ⚠ status_reason column missing: run supabase/gbi_status_reason_migration.sql');
+      console.log(`  ✓ ${CHANGES.length} status changes on ${latest.size} items for 11089 SNP`);
+    }
+  }
+
+  // ── Care Note with @ tag and "/" links (demo) ──
+  // Annette Brave's (11089) SNP care plan gets a Care Note that tags a care
+  // team member and links a goal and an intervention, plus the note_linked
+  // rows that put it in those items' activity logs. It becomes her current
+  // Care Note; the earlier ones stay in the plan's History. The rich text
+  // and links live in care_plan_audit.meta (care_plan_audit_meta_migration.sql);
+  // without that column the note still saves as plain text.
+  console.log('\nSeeding care plan Care Note with tags and links (demo)...');
+  {
+    const patientId = '11089';
+    const { data: prog } = await supabase.from('patient_care_programs')
+      .select('id, code').eq('patient_id', patientId).eq('code', 'SNP').limit(1).maybeSingle();
+    const { data: plan } = prog
+      ? await supabase.from('patient_care_plans').select('id').eq('patient_id', patientId).eq('program_id', prog.id).maybeSingle()
+      : { data: null };
+    if (!plan) {
+      console.log('  ⚠ no SNP care plan for 11089: skipped');
+    } else {
+      const pick = async (table, title) => {
+        const { data } = await supabase.from(table).select('id, title').eq('plan_id', plan.id);
+        return (data || []).find(r => r.title === title) || (data || [])[0] || null;
+      };
+      const goal = await pick('patient_care_plan_goals', 'Improve A1C control');
+      const intv = await pick('patient_care_plan_interventions', 'A1C follow-up');
+      const { data: tagged } = await supabase.from('profiles').select('id, full_name').eq('full_name', 'Fold Demo').limit(1).maybeSingle();
+      const person = { id: tagged?.id || null, name: tagged?.full_name || 'Fold Demo' };
+      const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      const mention = `<span data-mention-name="${esc(person.name)}"${person.id ? ` data-mention-id="${esc(person.id)}"` : ''}>@${esc(person.name)}</span>`;
+      const link = (item, kind) => `<span data-link-id="${esc(item.id)}" data-link-kind="${kind}" data-link-label="${esc(item.title)}">${esc(item.title)}</span>`;
+      const links = [goal && { ...goal, kind: 'goal' }, intv && { ...intv, kind: 'intervention' }].filter(Boolean);
+      const detail = `Reviewed the A1C plan with @${person.name}. Next: ${links.map(l => l.title).join(' and ')} before the next review.`;
+      const html = `Reviewed the A1C plan with ${mention}. Next: ${links.map(l => link(l, l.kind)).join(' and ')} before the next review.`;
+      const actor = 'Delores Conn';
+      const base = { patient_id: patientId, program_id: prog.id, program_code: prog.code, actor };
+      // Re-runs replace the demo note rather than stacking copies.
+      await supabase.from('care_plan_audit').delete()
+        .eq('program_id', prog.id).eq('actor', actor).in('action', ['note', 'note_linked']).eq('detail', detail);
+      const noteRow = {
+        ...base, entity_type: 'plan', entity_id: null, action: 'note', summary: 'Note added', detail,
+        meta: { html, mentions: [{ id: person.id, name: person.name }], links: links.map(l => ({ id: l.id, kind: l.kind, label: l.title })) },
+      };
+      const linkedRows = links.map(l => ({ ...base, entity_type: l.kind, entity_id: String(l.id), action: 'note_linked', summary: l.title, detail }));
+      let { error } = await supabase.from('care_plan_audit').insert([noteRow, ...linkedRows]);
+      if (error && /meta/.test(error.message || '')) {
+        const { meta: _meta, ...plain } = noteRow;
+        ({ error } = await supabase.from('care_plan_audit').insert([plain, ...linkedRows]));
+        if (!error) console.log('  ⚠ care_plan_audit.meta missing (run supabase/care_plan_audit_meta_migration.sql): note saved as plain text');
+      }
+      console.log(error
+        ? `  ✗ care note demo: ${error.message}`
+        : `  ✓ Care Note for 11089 SNP tagging ${person.name}, linking ${links.length} item(s)`);
+    }
   }
 
   // ── Patient Care Plan (demo) ──

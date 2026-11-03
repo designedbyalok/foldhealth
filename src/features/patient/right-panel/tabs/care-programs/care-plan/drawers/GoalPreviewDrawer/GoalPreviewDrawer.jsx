@@ -58,6 +58,7 @@ import { localDateMs } from '../../../../../../../../lib/localDate';
 import { GBI_STATUSES, gbiStatusMeta } from '../../lib/gbiStatus';
 import { isCarePlanPaused } from '../../lib/carePlanPause';
 import { gbiStatusMenuItems } from '../../tables/carePlanTableShared';
+import { confirmStatusChange, presetStatusReason, statusReasonPatch } from '../../lib/confirmStatusChange';
 
 /** Session-persisted accordion open state for Goal Details sections. */
 const GOAL_PREVIEW_SECTIONS_KEY = 'fold.carePlan.goalPreview.sections';
@@ -651,9 +652,11 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
     saveLive({ progress: next });
   };
 
-  const changeStatus = (status) => {
+  const changeStatus = async (status) => {
     if (!canDocument || status === live.status) return;
-    saveLive({ status });
+    const why = await confirmStatusChange([{ type: 'goal', item: live }], status);
+    if (!why) return;
+    saveLive({ status, ...statusReasonPatch(live, why) });
   };
 
 
@@ -685,7 +688,7 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
       value: ASSESSMENT_COMPLETED, unit: '', favorable: true, takenAt,
     });
     if (saved && live.status !== 'Met') {
-      await saveLive({ status: 'Met' });
+      await saveLive({ status: 'Met', ...presetStatusReason(live, 'Assessment completed') });
     }
   };
 
@@ -718,15 +721,17 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
     showToast?.(`Assigned to ${user.name}`);
   };
 
-  const changeLinkedItemStatus = (status) => {
+  const changeLinkedItemStatus = async (status) => {
     const { kind, item } = linkedStatusMenu || {};
     setLinkedStatusMenu(null);
     if (!item || !canEdit || status === item.status) return;
+    const why = await confirmStatusChange([{ type: kind === 'barrier' ? 'barrier' : 'intervention', item }], status);
+    if (!why) return;
     if (kind === 'barrier') {
-      savePatientCarePlanBarrier(patientId, program, { ...item, status }, item.id);
+      savePatientCarePlanBarrier(patientId, program, { ...item, status, ...statusReasonPatch(item, why) }, item.id);
       return;
     }
-    savePatientCarePlanIntervention(patientId, program, { ...item, status }, item.id);
+    savePatientCarePlanIntervention(patientId, program, { ...item, status, ...statusReasonPatch(item, why) }, item.id);
   };
 
   // Inline-edit hook for the Due Date on a linked intervention row.

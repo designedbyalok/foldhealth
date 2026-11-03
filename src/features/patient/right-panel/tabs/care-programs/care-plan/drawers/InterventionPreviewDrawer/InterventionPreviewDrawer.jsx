@@ -36,6 +36,7 @@ import barrierStyles from '../BarrierDetailDrawer/BarrierDetailDrawer.module.css
 import { parseLocalDate } from '../../../../../../../../lib/localDate';
 
 import { GBI_STATUSES, gbiStatusMeta } from '../../lib/gbiStatus';
+import { confirmStatusChange, statusReasonPatch } from '../../lib/confirmStatusChange';
 
 function adherenceNum(value) {
   const n = Number(value);
@@ -264,9 +265,11 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
     saveLive({ adherence: String(next) });
   };
 
-  const changeStatus = (status) => {
+  const changeStatus = async (status) => {
     if (!canDocument || status === live.status) return;
-    saveLive({ status });
+    const why = await confirmStatusChange([{ type: 'intervention', item: live }], status);
+    if (!why) return;
+    saveLive({ status, ...statusReasonPatch(live, why) });
   };
 
 

@@ -32,6 +32,7 @@ import goalStyles from '../GoalPreviewDrawer/GoalPreviewDrawer.module.css';
 
 import { BARRIER_STATUSES, gbiStatusMeta } from '../../lib/gbiStatus';
 import { isCompletedStatus } from '../../tables/carePlanTableModel';
+import { confirmStatusChange, statusReasonPatch } from '../../lib/confirmStatusChange';
 
 function fmtDate(iso) {
   if (!iso) return null;
@@ -211,9 +212,13 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
   const persistedStatus = liveBarrier.status || 'Not Started';
   const persistBarrier = async (nextTitle, nextStatus, doneVerb) => {
     const rows = legacyClones.length ? legacyClones : [barrier];
+    // A status change asks why first; every clone shares the one answer.
+    const why = await confirmStatusChange(rows.map(item => ({ type: 'barrier', item })), nextStatus);
+    if (!why) return;
     for (const row of rows) {
       await savePatientCarePlanBarrier(patientId, program, {
         ...row,
+        ...(row.status !== nextStatus ? statusReasonPatch(row, why) : {}),
         title: nextTitle,
         status: nextStatus,
         description: description.trim(),

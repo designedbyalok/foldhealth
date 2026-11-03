@@ -90,6 +90,10 @@
       "destination": "/api/ai?route=clinical-protocol-parse"
     },
     {
+      "source": "/api/care-plan-event-update",
+      "destination": "/api/ai?route=care-plan-event-update"
+    },
+    {
       "source": "/s/:section",
       "destination": "/api/share?s=:section"
     },

@@ -737,6 +737,7 @@ export function createAutomationsSlice(set, get) {
           get().logCarePlanAudit(patientId, program, changed.map(t => ({
             entityType: t.kind, entityId: t.id, action: 'status_changed', summary: t.title,
             detail: `Program ${prevStatus} → ${status}: ${t.from} → ${t.to}`,
+            history: { from: t.from, to: t.to, reason: t.reason || `Program ${status}`, source: 'automation' },
           })));
           patchStore(changed);
           get().showToast?.(`${changed.length} care plan item${changed.length === 1 ? '' : 's'} back to ${changed.length === 1 ? 'its' : 'their'} status before ${prevStatus}`);
@@ -773,6 +774,7 @@ export function createAutomationsSlice(set, get) {
         get().logCarePlanAudit(patientId, program, changed.map(t => ({
           entityType: t.kind, entityId: t.id, action: 'status_changed', summary: t.title,
           detail: `${t.reason || `Program ${status}`}: ${t.from} → ${t.to}`,
+          history: { from: t.from, to: t.to, reason: t.reason || `Program ${status}`, source: 'automation' },
         })));
         patchStore(changed);
         const to = [...new Set(changed.map(t => t.to))].join(', ');
