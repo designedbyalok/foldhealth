@@ -6,6 +6,7 @@ import { Avatar } from '../../../components/Avatar/Avatar';
 import { PatientAvatarHover } from '../../../components/PatientHoverCard/PatientAvatarHover';
 import { AssigneeChange } from '../../../components/AssigneeChange/AssigneeChange';
 import { Badge } from '../../../components/Badge/Badge';
+import { laceTone } from '../../../lib/riskTone';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { formatDobDisplay, deriveDob } from '../../../lib/patientDob';
 import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
@@ -23,16 +24,16 @@ import { outreachFromDots } from '../../../components/OutreachStatus/outreachSta
 const LANG_MAP = { en: 'English', es: 'Spanish', zh: 'Chinese', yue: 'Cantonese', ko: 'Korean', vi: 'Vietnamese', hi: 'Hindi', pa: 'Punjabi' };
 
 const TOC_STATUS_MAP = {
-  enrolled: { variant: 'toc-enrolled', label: 'Enrolled', icon: 'solar:check-circle-bold' },
-  engaged: { variant: 'toc-engaged', label: 'Engaged', icon: 'solar:link-round-bold' },
-  attempted: { variant: 'toc-attempted', label: 'Attempted', icon: 'solar:history-bold' },
-  new: { variant: 'toc-new', label: 'New', icon: 'solar:star-bold' },
-  oncall: { variant: 'toc-oncall', label: 'On Call', icon: 'solar:phone-calling-bold' },
+  enrolled: { variant: 'success', label: 'Enrolled', icon: 'solar:check-circle-bold' },
+  engaged: { variant: 'info', label: 'Engaged', icon: 'solar:link-round-bold' },
+  attempted: { variant: 'warning', label: 'Attempted', icon: 'solar:history-bold' },
+  new: { variant: 'neutral', label: 'New', icon: 'solar:star-bold' },
+  oncall: { variant: 'primary', label: 'On Call', icon: 'solar:phone-calling-bold' },
 };
 
 function TocStatusBadge({ status }) {
   const cfg = TOC_STATUS_MAP[status] || TOC_STATUS_MAP.new;
-  return <Badge size="M" variant={cfg.variant} label={cfg.label} icon={cfg.icon} />;
+  return <Badge size="md" tone={cfg.variant} label={cfg.label} icon={cfg.icon} />;
 }
 
 function OutreachCell({ patient }) {
@@ -141,7 +142,7 @@ export const WORKLIST_MIDDLE_COLUMNS = [
     label: 'LACE Acuity',
     renderCell: (p) => (
       p.lace
-        ? <Badge size="M" variant={`lace-${p.lace.toLowerCase()}`} label={p.lace} />
+        ? <Badge size="md" tone={laceTone(p.lace)} label={p.lace} />
         : <span>-</span>
     ),
   },
@@ -149,10 +150,10 @@ export const WORKLIST_MIDDLE_COLUMNS = [
     key: 'outreachWindow',
     label: 'Outreach Window',
     renderCell: (p) => {
-      const outreachBadgeVariant = p.outreachType === '48h' ? 'outreach-48h' : 'outreach-7d';
+      const outreachBadgeVariant = p.outreachType === '48h' ? 'danger' : 'info';
       return (
         <div className={styles.outreachCell}>
-          <Badge size="M" variant={outreachBadgeVariant} label={`TCM ${p.outreachType}`} />
+          <Badge size="md" tone={outreachBadgeVariant} label={`TCM ${p.outreachType}`} />
           {p.onCall ? (
             <span className={styles.outreachOncall}>
               <Icon name="solar:phone-calling-bold" size={14} />

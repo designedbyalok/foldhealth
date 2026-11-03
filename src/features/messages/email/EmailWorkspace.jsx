@@ -256,7 +256,7 @@ function EmailThread({ email }) {
     <div className={listStyles.chatPanel}>
       <div className={styles.subjectBar}>
         <span>Subject : {email.emailSubject || '(no subject)'}</span>
-        {email.status === 'Draft' && <Badge tone="warning" size="S" label="Draft" />}
+        {email.status === 'Draft' && <Badge tone="warning" size="sm" label="Draft" />}
       </div>
       {email.status === 'Draft' && (
         <div className={styles.draftNotice}>

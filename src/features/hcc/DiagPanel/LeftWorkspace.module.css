@@ -1896,3 +1896,10 @@
   transition: color 0.12s, background 0.12s;
 }
 .docsTabExternalLink:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
+
+/* @mention inside a comment body: reads as a link, not a pill, so the
+   tagged name stands out without breaking the sentence. */
+.mention {
+  color: var(--secondary-300);
+  font-weight: 500;
+}

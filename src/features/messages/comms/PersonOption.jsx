@@ -21,7 +21,7 @@ export function PersonOption({ name, initials, meta, tag }) {
       {/* One tag per role ("Care Giver · Decision Maker" is two). */}
       {tag && (
         <span className={styles.tags}>
-          {String(tag).split(' · ').map(t => <Badge key={t} tone="grey" size="S" label={t} />)}
+          {String(tag).split(' · ').map(t => <Badge key={t} size="sm" label={t} />)}
         </span>
       )}
     </span>

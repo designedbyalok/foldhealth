@@ -165,7 +165,7 @@ export function GoalDetailPanel({ call }) {
           <div className={styles.goalProgressHeader}>
             <span className={styles.goalProgressLabel}>Goal Progress</span>
             <Badge
-              variant={goalsMet ? 'compliance-pass' : 'compliance-fail'}
+              tone={goalsMet ? 'success' : 'danger'}
               label={goalsMet ? 'Goals Met' : 'Goals Not Met'}
               icon="solar:info-circle-linear"
             />
@@ -187,7 +187,7 @@ export function GoalDetailPanel({ call }) {
                   <span className={styles.goalCardName}>{g.name}</span>
                   <span className={styles.goalCardDesc}>{g.desc}</span>
                 </div>
-                <Badge variant={g.pass ? 'compliance-pass' : 'compliance-fail'} label={g.pass ? 'Pass' : 'Fail'} />
+                <Badge tone={g.pass ? 'success' : 'danger'} label={g.pass ? 'Pass' : 'Fail'} />
               </div>
             ))}
           </div>
@@ -204,7 +204,7 @@ export function GoalDetailPanel({ call }) {
                   <span className={styles.goalCardName}>{g.name}</span>
                   <span className={styles.goalCardDesc}>{g.desc}</span>
                 </div>
-                <Badge variant={g.pass ? 'compliance-pass' : 'compliance-fail'} label={g.pass ? 'Pass' : 'Fail'} />
+                <Badge tone={g.pass ? 'success' : 'danger'} label={g.pass ? 'Pass' : 'Fail'} />
               </div>
             ))}
           </div>
@@ -245,7 +245,7 @@ export function GoalDetailPanel({ call }) {
             <div className={styles.callQualitySentiment}>
               <span className={styles.callQualitySentimentLabel}>Sentiment &middot; From Transcript</span>
               <div>
-                <Badge variant={goalsMet ? 'sentiment-positive' : 'sentiment-negative'} label={goalsMet ? 'Positive' : 'Negative'} />
+                <Badge tone={goalsMet ? 'success' : 'danger'} label={goalsMet ? 'Positive' : 'Negative'} />
               </div>
               <span className={styles.callQualitySentimentDesc}>Based on the end of the conversation (LLM). Re-check the transcript if needed.</span>
             </div>
@@ -546,7 +546,7 @@ export function CallLogTab({ onSelectCall, selectedCallId, searchQuery }) {
                               />
                             </td>
                             <td>
-                              <Badge variant={isFailed ? 'status-failed' : 'status-completed'} label={call.status} />
+                              <Badge tone={isFailed ? 'danger' : 'success'} label={call.status} />
                             </td>
                             <td>
                               <span className={isFailed ? styles.durationFailed : styles.duration}>

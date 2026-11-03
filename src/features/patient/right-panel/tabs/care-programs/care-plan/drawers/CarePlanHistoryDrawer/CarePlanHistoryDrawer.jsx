@@ -452,7 +452,7 @@ export function CarePlanHistoryView({ patientId, program, lastVisit = null, sinc
     ? (
       <span className={styles.versionTag}>
         v{n}
-        <Badge size="S" tone="grey" label="Current" className={styles.currentBadge} />
+        <Badge size="sm" label="Current" className={styles.currentBadge} />
       </span>
     )
     : `v${n}`);
@@ -510,7 +510,7 @@ export function CarePlanHistoryView({ patientId, program, lastVisit = null, sinc
               ? (e.neverSigned ? 'Care Plan Drafted' : 'Care Plan Has Unsigned Changes')
               : 'Changes in Care Plan'}
           </span>
-          {unsigned && viewBy !== 'version' && <Badge size="S" tone="warning" label={`Draft · v${e.nextVersion}`} />}
+          {unsigned && viewBy !== 'version' && <Badge size="sm" tone="warning" label={`Draft · v${e.nextVersion}`} />}
           {group.rows.length > 0 && <ViewMoreButton expanded={isOpen} onToggle={() => toggle(e.id)} />}
         </div>
         {card}
@@ -613,9 +613,9 @@ export function CarePlanHistoryView({ patientId, program, lastVisit = null, sinc
               <span className={htStyles.headline}>{base.title}</span>
             </div>
             <div className={htStyles.transition}>
-              <Badge size="S" tone={toneOf(e.from)} label={e.from || 'None'} />
+              <Badge size="sm" tone={toneOf(e.from)} label={e.from || 'None'} />
               <Icon name="solar:arrow-right-linear" size={12} color="var(--neutral-300)" />
-              <Badge size="S" tone={toTone} label={e.to || 'None'} />
+              <Badge size="sm" tone={toTone} label={e.to || 'None'} />
             </div>
           </>
         ),
@@ -742,7 +742,7 @@ export function CarePlanHistoryView({ patientId, program, lastVisit = null, sinc
             // The draft group carries its Draft badge here, not on the entry.
             <span className={styles.groupLabel}>
               Version {month.draftOf}
-              <Badge size="S" tone="grey" label="Draft" />
+              <Badge size="sm" label="Draft" />
             </span>
           ) : undefined,
         },

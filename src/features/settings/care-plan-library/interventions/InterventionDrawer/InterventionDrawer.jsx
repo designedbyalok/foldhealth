@@ -503,7 +503,7 @@ export function InterventionDrawer({
                   aria-expanded={roleOpen}
                   onClick={() => setRoleOpen(v => !v)}
                 >
-                  <Badge tone="white" size="M" label={assigneeRole || 'Select role'} chevron />
+                  <Badge variant="outline" size="md" label={assigneeRole || 'Select role'} chevron />
                 </button>
                 <span className={styles.inlineText}>on the patient&apos;s care team</span>
               </div>
@@ -530,7 +530,7 @@ export function InterventionDrawer({
                   aria-expanded={poolOpen}
                   onClick={() => setPoolOpen(v => !v)}
                 >
-                  <Badge tone="white" size="M" label={pool} chevron />
+                  <Badge variant="outline" size="md" label={pool} chevron />
                 </button>
                 <span className={styles.inlineText}>
                   {assigneeRole ? 'When nobody holds the role' : 'Unassigned, for the team to claim'}
@@ -579,7 +579,7 @@ export function InterventionDrawer({
             <span className={styles.detailLabel}>Labels</span>
             <div className={tasksViewStyles.detailValueLabels}>
               {labels.map(l => (
-                <Badge key={l} variant="overflow" label={l} trailingIcon="solar:close-circle-linear" onClick={() => toggleLabel(l)} />
+                <Badge key={l} label={l} trailingIcon="solar:close-circle-linear" onClick={() => toggleLabel(l)} />
               ))}
               <CreatableLabelDropdown selectedLabels={labels} onToggle={toggleLabel} />
             </div>
@@ -648,7 +648,7 @@ export function InterventionDrawer({
                 aria-expanded={creationTimingOpen}
                 onClick={() => setCreationTimingOpen(v => !v)}
               >
-                <Badge tone="white" size="M" label="immediate" chevron />
+                <Badge variant="outline" size="md" label="immediate" chevron />
               </button>
             ) : (
               <Input
@@ -716,7 +716,7 @@ export function InterventionDrawer({
               aria-expanded={creationTriggerOpen}
               onClick={() => setCreationTriggerOpen(v => !v)}
             >
-              <Badge tone="white" size="M" label={creationTrigger} chevron />
+              <Badge variant="outline" size="md" label={creationTrigger} chevron />
             </button>
             {creationTriggerOpen && (
               <MenuPopover

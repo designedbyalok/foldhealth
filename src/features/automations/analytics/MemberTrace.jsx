@@ -90,7 +90,7 @@ export function MemberTrace({ id, runMemberId }) {
         <p className={styles.meta}>{member.patientName} • Executed on {fmtDateTime(member.startedAt)}</p>
         <div className={styles.titleRow}>
           <h1 className={styles.title}>{automation.name}</h1>
-          <Badge tone={status.tone} size="S" label={status.label} />
+          <Badge tone={status.tone} size="sm" label={status.label} />
           <div className={styles.headerActions}>
             <Button variant="outline" leadingIcon="solar:user-id-linear" onClick={() => navigateToPatient(member.patientId)}>View patient profile</Button>
             <Tooltip label={member.status === 'completed' ? 'This member completed the automation.' : RETRY_HINT} maxWidth={260} align="right">
@@ -135,7 +135,7 @@ export function MemberTrace({ id, runMemberId }) {
                   <div className={styles.stepText}>
                     <div className={styles.stepHead}>
                       <span className={styles.stepLabel}>{stepLabel(node)}</span>
-                      {outcome && <Badge tone="grey" size="S" label={outcome} />}
+                      {outcome && <Badge size="sm" label={outcome} />}
                     </div>
                     {summary && <span className={styles.stepSummary}>{summary}</span>}
                     <span className={styles.memberMeta}>{fmtDateTime(step.at)}</span>

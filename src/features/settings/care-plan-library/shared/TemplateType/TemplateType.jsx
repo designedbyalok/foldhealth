@@ -157,7 +157,7 @@ export function EpisodeBadge({ template, className }) {
   if (!episode) return null;
   return (
     <Badge
-      size="S"
+      size="sm"
       tone="info"
       icon="solar:calendar-mark-linear"
       label={`Episodic · ${episode.days ? `${episode.days} days` : 'until closed'}`}

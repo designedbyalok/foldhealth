@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, Fragment } from 'react';
 import { Icon } from '../../components/Icon/Icon';
-import { Badge } from '../../components/Badge/Badge';
+import { Kbd } from '../../components/Kbd/Kbd';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { CloseButton } from '../../components/CloseButton/CloseButton';
 import styles from './EmailBuilder.module.css';
@@ -48,7 +48,7 @@ export function ShortcutsHelpButton() {
                 {s.keys.map((k, i) => (
                   <Fragment key={i}>
                     {i > 0 && <span className={styles.keySep}>+</span>}
-                    <Badge variant="kbd" label={k.text} icon={k.icon} />
+                    <Kbd icon={k.icon}>{k.text}</Kbd>
                   </Fragment>
                 ))}
               </div>

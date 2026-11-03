@@ -31,7 +31,7 @@ export function CareGapReferralDetail({ referral: r, member, providers = [] }) {
 
   return (
     <div className={styles.root}>
-      <Badge tone={statusTone(r.status)} size="M" label={r.status || 'Sent'} className={styles.status} />
+      <Badge tone={statusTone(r.status)} size="md" label={r.status || 'Sent'} className={styles.status} />
 
       <section className={styles.section}>
         <span className={styles.label}>Patient</span>

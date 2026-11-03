@@ -136,7 +136,7 @@ function ComponentRow({ comp, onToggle, onEdit, onPreview, onAuditLog, onDuplica
         </code>
         {isDomainRemoved && (
           <div style={{ marginTop: 2 }}>
-            <Badge variant="compliance-warn" label="Domain removed" />
+            <Badge tone="warning" label="Domain removed" />
           </div>
         )}
       </td>
@@ -147,7 +147,7 @@ function ComponentRow({ comp, onToggle, onEdit, onPreview, onAuditLog, onDuplica
           {comp.surfaces?.map(surface => {
             const placement = comp.placements?.[surface];
             const label = placement ? (PLACEMENT_LABELS[placement] || placement) : SURFACE_LABELS[surface];
-            return <Badge key={surface} variant="ai-neutral" label={label} />;
+            return <Badge key={surface} label={label} />;
           })}
         </div>
       </td>
@@ -226,7 +226,7 @@ function PreviewDrawer({ comp, onClose }) {
           }}
         >
           <span style={{ fontSize: 'var(--font-md)', fontWeight: 500, color: 'var(--neutral-400)', flex: 1 }}>{comp.name}</span>
-          <Badge variant="compliance-warn" label="External" />
+          <Badge tone="warning" label="External" />
           <DownChevronIcon size={12} color="var(--neutral-200)" style={collapsed ? { transform: 'rotate(-90deg)' } : undefined} />
         </button>
 

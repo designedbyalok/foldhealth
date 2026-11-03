@@ -28,7 +28,7 @@ const BarrierChips = ({ items, onResolve, context, since }) => (items.length ? (
   <span className={styles.chips}>
     {items.map(v => (
       <span key={v} className={styles.resolvable}>
-        <Badge size="S" tone="error" label={v} />
+        <Badge size="sm" tone="danger" label={v} />
         <Since date={since?.[v]} />
         <ActionButton size="sm" icon="solar:check-circle-linear" tooltip={`Mark ${v} resolved`} aria-label={`Mark ${v} resolved for ${context}`} onClick={() => onResolve(v)} />
         {/* Holds the place of an intervention's ✕ so every ✓ lines up. */}
@@ -43,7 +43,7 @@ const InterventionChips = ({ items, context, onFinish, since }) => (
   <span className={styles.chips}>
     {items.map(v => (
       <span key={v} className={styles.resolvable}>
-        <Badge size="S" tone="grey" label={v} />
+        <Badge size="sm" label={v} />
         <Since date={since?.[v]} />
         <ActionButton size="sm" icon="solar:check-circle-linear" tooltip={`Mark ${v} done`} aria-label={`Mark ${v} done for ${context}`} onClick={() => onFinish(v, 'Done')} />
         <ActionButton size="sm" icon="solar:close-circle-linear" tooltip={`${v} didn't work`} aria-label={`Mark ${v} didn't work for ${context}`} onClick={() => onFinish(v, "Didn't work")} />

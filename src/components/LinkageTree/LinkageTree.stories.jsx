@@ -36,7 +36,7 @@ export const Default = {
       title: t,
       icon: iconFor(t),
       meta: iconFor(t) === 'solar:signpost-2-linear' ? 'Barrier' : 'Intervention',
-      trailing: <Badge tone="grey" size="S" label="Not Started" />,
+      trailing: <Badge size="sm" label="Not Started" />,
     }));
     const groups = [
       ...GOALS.map(g => ({ ...g, icon: 'solar:flag-linear', emptyText: 'Nothing linked yet', items: toItems(links[g.key]) })),

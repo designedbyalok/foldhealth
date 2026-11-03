@@ -70,14 +70,14 @@ function LinkedItemsPopover({ anchorRect, data, onMouseEnter, onMouseLeave, onNa
       onMouseLeave={onMouseLeave}
     >
       <div className={styles.head}>
-        <Badge tone="grey" size="S" label={String(total)} />
+        <Badge size="sm" label={String(total)} />
         <span className={styles.headText}>Linked Items</span>
       </div>
       {programs.length > 0 && (
         <div className={styles.section}>
           <span className={styles.sectionLabel}>Care Program</span>
           <div className={styles.badges}>
-            {programs.map(p => <Badge key={p} tone="grey" size="S" label={p} />)}
+            {programs.map(p => <Badge key={p} size="sm" label={p} />)}
           </div>
         </div>
       )}

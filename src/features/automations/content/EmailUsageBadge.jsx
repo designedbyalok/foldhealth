@@ -14,7 +14,7 @@ export function EmailUsageBadge({ emailId }) {
   if (!count) return null;
   return (
     <Tooltip label={usedByLabel(count)}>
-      <Badge tone="primary" size="XS" icon="solar:bolt-linear" label={String(count)} />
+      <Badge tone="primary" size="xs" icon="solar:bolt-linear" label={String(count)} />
     </Tooltip>
   );
 }

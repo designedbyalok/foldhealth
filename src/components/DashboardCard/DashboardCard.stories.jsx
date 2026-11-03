@@ -34,7 +34,7 @@ export const Default = {
     >
       <DashboardCardBody>
         {NOTES.map(n => (
-          <PanelSectionItem key={n.id} title={n.title} meta={n.meta} trailing={<Badge tone={n.tone} size="S" label={n.status} />} />
+          <PanelSectionItem key={n.id} title={n.title} meta={n.meta} trailing={<Badge tone={n.tone} size="sm" label={n.status} />} />
         ))}
       </DashboardCardBody>
     </DashboardCard>

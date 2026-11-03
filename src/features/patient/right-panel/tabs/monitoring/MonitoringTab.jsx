@@ -78,7 +78,7 @@ function ProgramCard({ program, defaultExpanded, onAction }) {
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
       >
-        <Badge tone="info" size="S" label={program.code} />
+        <Badge tone="info" size="sm" label={program.code} />
         <span className={styles.programName}>{program.name}</span>
         <span className={styles.programProgress}>{program.progress}</span>
         <span className={styles.programNext}>
@@ -421,7 +421,7 @@ function StorySection({ events }) {
                 <div className={styles.storyCard}>
                   <div className={styles.storyCardHead}>
                     <span className={styles.storyCardTitle}>{event.title}</span>
-                    <Badge tone={cat.tone} size="S" label={cat.label} />
+                    <Badge tone={cat.tone} size="sm" label={cat.label} />
                     <button
                       type="button"
                       className={styles.storyToggle}

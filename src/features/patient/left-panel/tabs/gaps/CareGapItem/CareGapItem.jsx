@@ -29,7 +29,7 @@ export function CareGapItem({ item, selected, onSelect, onOpen }) {
       </td>
       <td className={profileCellClass}>
         <span className={styles.status}>
-          {item.statusVariant ? <Badge variant={item.statusVariant} label={item.status} /> : item.status}
+          {item.statusVariant ? <Badge tone={item.statusVariant} label={item.status} /> : item.status}
         </span>
       </td>
       <td className={profileCellClass} onClick={e => e.stopPropagation()}>

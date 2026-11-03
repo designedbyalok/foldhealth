@@ -19,7 +19,7 @@ function StepRow({ step, on, onToggle, onFocus }) {
   return (
     <div className={styles.cardRow} onPointerDownCapture={onFocus}>
       <span className={styles.rowText}>{step.name}</span>
-      <Badge size="S" tone={badge.tone} label={badge.label} />
+      <Badge size="sm" tone={badge.tone} label={badge.label} />
       <Switch checked={on} onChange={onToggle} ariaLabel={`Include ${step.name}`} />
     </div>
   );

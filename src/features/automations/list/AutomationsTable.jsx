@@ -90,7 +90,7 @@ export function AutomationsTable({ automations, runsOf, actions, emptyState }) {
         </td>
         <td className={styles.td} onClick={e => e.stopPropagation()}>
           {a.status === 'draft'
-            ? <Badge tone="grey" size="S" label="Draft" />
+            ? <Badge size="sm" label="Draft" />
             : <Switch checked={a.status === 'active'} onChange={on => actions.toggle(a, on)} ariaLabel={a.status === 'active' ? 'Turn off automation' : 'Turn on automation'} />}
         </td>
         <td className={`${styles.td} ${styles.stickyRight}`} onClick={e => e.stopPropagation()}>

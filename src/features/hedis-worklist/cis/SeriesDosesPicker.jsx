@@ -36,7 +36,7 @@ export function SeriesDosesPicker({ choice, onChange }) {
         aria-label={`Series length: ${choice.value} doses`}
         onClick={toggle}
       >
-        <Badge tone="grey" size="S" label={`${choice.value} doses`} chevron />
+        <Badge size="sm" label={`${choice.value} doses`} chevron />
       </button>
       {rect && (
         <MenuPopover

@@ -76,7 +76,7 @@ export function CardInsights({ open }) {
             key={s.id}
             title={s.title}
             description={s.detail}
-            aside={s.isNew ? <Badge tone="info" size="S" label="New" /> : null}
+            aside={s.isNew ? <Badge tone="info" size="sm" label="New" /> : null}
             actions={<SignalActions signal={s} onRun={ctx.run} onReview={ctx.review} />}
           />
         ))}

@@ -1,6 +1,7 @@
 import { Icon } from '../../components/Icon/Icon';
 import { BotIcon } from '../../components/Icon/BotIcon';
 import { Badge } from '../../components/Badge/Badge';
+import { laceTone } from '../../lib/riskTone';
 import { AssigneeChange } from '../../components/AssigneeChange/AssigneeChange';
 import rowStyles from './worklist/WorklistRow.module.css';
 import styles from './tocColumns.module.css';
@@ -11,21 +12,21 @@ import { assessmentLabel, resolveAssessmentStatus } from './tocAssessment';
 import { OutreachCell } from './tocColumnCells/OutreachCell';
 
 const PROGRAM_SUB_STATUS = {
-  enrolled: { variant: 'toc-enrolled', label: 'Enrolled', icon: 'solar:check-circle-bold' },
-  engaged: { variant: 'toc-engaged', label: 'Engaged', icon: 'solar:link-round-bold' },
-  attempted: { variant: 'toc-attempted', label: 'Attempted', icon: 'solar:history-bold' },
-  new: { variant: 'toc-new', label: 'New', icon: 'solar:star-bold' },
-  oncall: { variant: 'toc-oncall', label: 'On Call', icon: 'solar:phone-calling-bold' },
+  enrolled: { variant: 'success', label: 'Enrolled', icon: 'solar:check-circle-bold' },
+  engaged: { variant: 'info', label: 'Engaged', icon: 'solar:link-round-bold' },
+  attempted: { variant: 'warning', label: 'Attempted', icon: 'solar:history-bold' },
+  new: { variant: 'neutral', label: 'New', icon: 'solar:star-bold' },
+  oncall: { variant: 'primary', label: 'On Call', icon: 'solar:phone-calling-bold' },
 };
 
 const ADMIT_CLASS = { IP: 'Inpatient', ED: 'Emergency' };
 
 const TAG_VARIANT_BY_TONE = {
-  grey:  'ai-neutral',
-  blue:  'outreach-appointment',
-  green: 'ai-med',
-  amber: 'outreach-care-gap',
-  red:   'ai-risk',
+  grey:  'neutral',
+  blue:  'info',
+  green: 'success',
+  amber: 'warning',
+  red:   'danger',
 };
 
 const SAMPLE_TAGS = [
@@ -197,8 +198,8 @@ function TagCell({ patient }) {
       {tags.map(t => (
         <Badge
           key={t.label}
-          size="M"
-          variant={TAG_VARIANT_BY_TONE[t.tone] || 'ai-neutral'}
+          size="md"
+          tone={TAG_VARIANT_BY_TONE[t.tone] || 'neutral'}
           label={t.label}
         />
       ))}
@@ -220,7 +221,7 @@ export const TOC_MIDDLE_COLUMNS = [
     tdClassName: rowStyles.td,
     renderCell: (p) => {
       const cfg = programSubStatus(p);
-      return <Badge size="M" variant={cfg.variant} label={cfg.label} icon={cfg.icon} />;
+      return <Badge size="md" tone={cfg.variant} label={cfg.label} icon={cfg.icon} />;
     },
   },
   {
@@ -238,7 +239,7 @@ export const TOC_MIDDLE_COLUMNS = [
     sortType: 'priority',
     tdClassName: rowStyles.td,
     renderCell: (p) => (
-      <Badge size="M" variant={`lace-${(p.lace || 'low').toLowerCase()}`} label={p.lace || 'Low'} />
+      <Badge size="md" tone={laceTone(p.lace || 'low')} label={p.lace || 'Low'} />
     ),
   },
   {
@@ -292,7 +293,7 @@ export const TOC_MIDDLE_COLUMNS = [
             onClick={(e) => { e.stopPropagation(); ctx.openAiTasksDrawer(p.id); }}
             aria-label={`Open AI tasks for ${p.name}`}
           >
-            <Badge size="M" tone="primary" label={String(taskCount)} />
+            <Badge size="md" tone="primary" label={String(taskCount)} />
           </button>
         )
         : <span className={styles.dash}>-</span>;
@@ -471,8 +472,8 @@ export const TOC_MIDDLE_COLUMNS = [
     tdClassName: rowStyles.td,
     renderCell: (p) => (
       p.readmission === 'Yes'
-        ? <Badge size="M" variant="yes" label="Yes" />
-        : <Badge size="M" variant="no" label="No" />
+        ? <Badge size="md" tone="danger" label="Yes" />
+        : <Badge size="md" label="No" />
     ),
   },
   {
@@ -483,10 +484,10 @@ export const TOC_MIDDLE_COLUMNS = [
     tdClassName: rowStyles.td,
     renderCell: (p) => (
       p.carePlanStatus === 'updated'
-        ? <Badge size="M" variant="care-plan-updated" label="Updated" icon="solar:check-circle-linear" />
+        ? <Badge size="md" tone="success" label="Updated" icon="solar:check-circle-linear" />
         : p.carePlanStatus === 'pending'
-          ? <Badge size="M" variant="care-plan-pending" label="Pending" icon="solar:clock-circle-linear" />
-          : <Badge size="M" variant="care-plan-none" label="No Care Plan" />
+          ? <Badge size="md" tone="warning" label="Pending" icon="solar:clock-circle-linear" />
+          : <Badge size="md" label="No Care Plan" />
     ),
   },
   {

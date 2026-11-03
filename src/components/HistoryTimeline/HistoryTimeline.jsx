@@ -33,7 +33,7 @@ const STATUS_META = {
 // Stored values that display under a different name.
 const STATUS_ALIAS = { Reject: 'Rejected', 'Action Needed': 'Awaiting', Deferred: 'Defer' };
 const statusMeta = (label) => STATUS_META[STATUS_ALIAS[label] || label];
-const toneFor = (label) => statusMeta(label)?.tone || 'grey';
+const toneFor = (label) => statusMeta(label)?.tone || 'neutral';
 // Stored status values render under the names the worklist uses.
 const STATUS_LABEL = { Reject: 'Rejected', Deferred: 'Defer' };
 const labelFor = (value) => STATUS_LABEL[value] || value;
@@ -253,9 +253,9 @@ export function HistoryTimelineEntry({
         {hasTransition && (
           <>
             <div className={styles.transition}>
-              <Badge size="S" tone={toneFor(item.from)} label={labelFor(item.from)} />
+              <Badge size="sm" tone={toneFor(item.from)} label={labelFor(item.from)} />
               <Icon name="solar:arrow-right-linear" size={12} color="var(--neutral-300)" />
-              <Badge size="S" tone={toneFor(item.to)} label={labelFor(item.to)} />
+              <Badge size="sm" tone={toneFor(item.to)} label={labelFor(item.to)} />
               {item.note && (
                 <button
                   type="button"
@@ -280,7 +280,7 @@ export function HistoryTimelineEntry({
         )}
         {hasSingleStatus && (
           <div className={styles.transition}>
-            <Badge size="S" tone={toneFor(singleStatusValue)} label={labelFor(singleStatusValue)} />
+            <Badge size="sm" tone={toneFor(singleStatusValue)} label={labelFor(singleStatusValue)} />
           </div>
         )}
 
@@ -339,13 +339,13 @@ export function HistoryTimelineEntry({
                   </div>
                   {d.from && d.to && (
                     <div className={styles.detailBadges}>
-                      <Badge size="S" tone={toneFor(d.from)} label={d.from} />
+                      <Badge size="sm" tone={toneFor(d.from)} label={d.from} />
                       <Icon name="solar:arrow-right-linear" size={12} color="var(--neutral-300)" />
-                      <Badge size="S" tone={toneFor(d.to)} label={d.to} />
+                      <Badge size="sm" tone={toneFor(d.to)} label={d.to} />
                     </div>
                   )}
                   {!d.from && !d.to && (
-                    <Badge size="S" tone="grey" label="Deleted" />
+                    <Badge size="sm" label="Deleted" />
                   )}
                 </div>
               ))}

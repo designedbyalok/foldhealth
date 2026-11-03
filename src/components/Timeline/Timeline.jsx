@@ -39,7 +39,7 @@ export function Timeline({ entries, currentUserName, renderExtra, emptyLabel = '
               <div style={{ width: 0.5, flex: 1, background: gi === 0 ? 'transparent' : 'var(--neutral-150)' }} />
             </div>
             <div style={{ padding: gi === 0 ? '0 0 8px' : '8px 0' }}>
-              <Badge tone="grey" size="S" label={group.label} />
+              <Badge size="sm" label={group.label} />
             </div>
           </div>
           {group.entries.map((entry, i) => (
@@ -75,12 +75,12 @@ const DEFAULT_CONFIG = { icon: 'solar:document-text-linear', bg: 'var(--neutral-
 // Map status strings to the shared Badge component's variant keys so status
 // pills in the changelog match the rest of the app's status badges.
 const STATUS_VARIANT = {
-  Enabled:  'status-ready',
-  Disabled: 'status-queued',
-  Active:   'status-ready',
-  Inactive: 'status-queued',
-  Verified: 'status-ready',
-  Removed:  'status-failed',
+  Enabled:  'success',
+  Disabled: 'warning',
+  Active:   'success',
+  Inactive: 'warning',
+  Verified: 'success',
+  Removed:  'danger',
 };
 
 function ArrowRight() {
@@ -92,9 +92,9 @@ export function ChangeDisplay({ change }) {
   if (change.type === 'status') {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <Badge variant={STATUS_VARIANT[change.from] || 'toc-new'} label={change.from} />
+        <Badge tone={STATUS_VARIANT[change.from] || 'neutral'} label={change.from} />
         <ArrowRight />
-        <Badge variant={STATUS_VARIANT[change.to] || 'toc-new'} label={change.to} />
+        <Badge tone={STATUS_VARIANT[change.to] || 'neutral'} label={change.to} />
       </div>
     );
   }

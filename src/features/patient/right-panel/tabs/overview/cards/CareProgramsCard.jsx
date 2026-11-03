@@ -68,7 +68,7 @@ export function CareProgramsCard({ patientId }) {
                       </span>
                       <span className={`${styles.muted} ${styles.pct}`}>{prog.progress}%</span>
                     </span>
-                    <span className={styles.statusSlotWide}><Badge tone="primary" size="S" label={prog.status} /></span>
+                    <span className={styles.statusSlotWide}><Badge tone="primary" size="sm" label={prog.status} /></span>
                   </span>
                 )}
               />

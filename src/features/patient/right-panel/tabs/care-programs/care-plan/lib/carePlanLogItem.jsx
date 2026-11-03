@@ -32,7 +32,7 @@ export function versionContext(versionNumber, current) {
   return (
     <span className={styles.versionTag}>
       v{versionNumber}
-      <Badge size="S" tone="grey" label="Current" className={styles.currentBadge} />
+      <Badge size="sm" label="Current" className={styles.currentBadge} />
     </span>
   );
 }
@@ -71,9 +71,9 @@ export function carePlanLogItem(e, { meta = {}, noteOpen = false, onToggleNote }
             <span className={htStyles.headline}>{base.title}</span>
           </div>
           <div className={htStyles.transition}>
-            <Badge size="S" tone={toneOf(e.from)} label={e.from || 'None'} />
+            <Badge size="sm" tone={toneOf(e.from)} label={e.from || 'None'} />
             <Icon name="solar:arrow-right-linear" size={12} color="var(--neutral-300)" />
-            <Badge size="S" tone={toTone} label={e.to || 'None'} />
+            <Badge size="sm" tone={toTone} label={e.to || 'None'} />
           </div>
         </>
       ),

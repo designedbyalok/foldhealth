@@ -571,10 +571,10 @@ export function CarePlanLibraryPanel() {
             <EpisodeBadge template={t} />
             {t.status === 'draft' && t.replacesTemplateId && (
               <Tooltip label={`Replaces the published "${templates.find(x => x.id === t.replacesTemplateId)?.name || 'template'}" when approved`}>
-                <Badge tone="info" size="S" label="Revision" />
+                <Badge tone="info" size="sm" label="Revision" />
               </Tooltip>
             )}
-            {t.status === 'draft' && t.importBatchId && !t.replacesTemplateId && <Badge tone="info" size="S" label="Imported" />}
+            {t.status === 'draft' && t.importBatchId && !t.replacesTemplateId && <Badge tone="info" size="sm" label="Imported" />}
           </span>
           <span className={styles.nameMeta}>
             <span>{TEMPLATE_SCOPES[templateScopeOf(t)].badge}</span>
@@ -718,7 +718,7 @@ export function CarePlanLibraryPanel() {
         </span>
       </td>
       <td className={styles.tdType}>
-        {g.type ? <Badge tone="grey" size="S" label={g.type} /> : '-'}
+        {g.type ? <Badge size="sm" label={g.type} /> : '-'}
       </td>
       <td className={styles.tdMuted}>{formatGoalDuration(g) || '-'}</td>
       <td className={styles.tdConditions}>
@@ -790,7 +790,7 @@ export function CarePlanLibraryPanel() {
           <button type="button" className={styles.nameLink} onClick={() => setOverlayEditor({ overlay: o })}>{t.name}</button>
         </td>
         <td className={styles.tdMuted}>{ipaById.get(o.ipaId)?.name || '-'}</td>
-        <td><Badge tone={o.status === 'active' ? 'success' : 'grey'} size="S" label={o.status === 'active' ? 'Active' : 'Draft'} /></td>
+        <td><Badge tone={o.status === 'active' ? 'success' : 'neutral'} size="sm" label={o.status === 'active' ? 'Active' : 'Draft'} /></td>
         <td className={styles.tdMuted}>{changes}</td>
         <td className={styles.tdUpdated}><StampCell name={o.updatedBy}>{formatDateTime(o.updatedAt)}</StampCell></td>
         <td className={styles.tdActions} onClick={e => e.stopPropagation()}>
@@ -825,7 +825,7 @@ export function CarePlanLibraryPanel() {
         <button type="button" className={styles.nameLink} onClick={() => openEditIntervention(item)}>{item.title}</button>
       </td>
       <td className={styles.tdType}>
-        <Badge tone="grey" size="S" label={kindLabel(item.kind)} />
+        <Badge size="sm" label={kindLabel(item.kind)} />
       </td>
       <td className={styles.tdMuted}><StampCell name={item.createdBy}>{formatDateTime(item.createdAt)}</StampCell></td>
       <td className={styles.tdUpdated}><StampCell name={item.updatedBy}>{formatRelative(item.updatedAt)}</StampCell></td>

@@ -274,7 +274,7 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
                   onClick={() => setFlipped((c) => { const next = new Set(c); if (next.has(group.key)) next.delete(group.key); else next.add(group.key); return next; })}
                 >
                   {group.person.name}
-                  <span className={styles.groupCount}><Badge tone="grey" size="S" label={`${n} ${n === 1 ? 'Appointment' : 'Appointments'}`} /></span>
+                  <span className={styles.groupCount}><Badge size="sm" label={`${n} ${n === 1 ? 'Appointment' : 'Appointments'}`} /></span>
                   <Icon name="solar:alt-arrow-down-linear" size={12} className={open ? styles.caretOpen : styles.caret} />
                 </button>
               </div>

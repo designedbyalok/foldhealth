@@ -4,6 +4,7 @@ import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { PatientAvatarHover } from '../../components/PatientHoverCard/PatientAvatarHover';
 import { AssigneeChange } from '../../components/AssigneeChange/AssigneeChange';
 import { Badge } from '../../components/Badge/Badge';
+import { laceTone } from '../../lib/riskTone';
 import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { formatDobDisplay, deriveDob } from '../../lib/patientDob';
@@ -18,15 +19,15 @@ import styles from './CcmWorklistRow.module.css';
 const LANG_MAP = { en: 'English', es: 'Spanish', zh: 'Chinese', yue: 'Cantonese', ko: 'Korean', vi: 'Vietnamese', hi: 'Hindi', pa: 'Punjabi', ch: 'Chinese' };
 
 const STATUS_VARIANT = {
-  'New':             { variant: 'toc-new',       label: 'New',             icon: 'solar:star-bold' },
-  'Engaged':         { variant: 'toc-engaged',   label: 'Engaged',         icon: 'solar:link-round-bold' },
-  'Enrolled':        { variant: 'toc-enrolled',  label: 'Enrolled',        icon: 'solar:check-circle-bold' },
-  'Unable to Reach': { variant: 'toc-attempted', label: 'Unable to Reach', icon: 'solar:history-bold' },
+  'New':             { variant: 'neutral',       label: 'New',             icon: 'solar:star-bold' },
+  'Engaged':         { variant: 'info',   label: 'Engaged',         icon: 'solar:link-round-bold' },
+  'Enrolled':        { variant: 'success',  label: 'Enrolled',        icon: 'solar:check-circle-bold' },
+  'Unable to Reach': { variant: 'warning', label: 'Unable to Reach', icon: 'solar:history-bold' },
 };
 
 function StatusBadge({ status }) {
   const cfg = STATUS_VARIANT[status] || STATUS_VARIANT['New'];
-  return <Badge size="M" variant={cfg.variant} label={cfg.label} icon={cfg.icon} />;
+  return <Badge size="md" tone={cfg.variant} label={cfg.label} icon={cfg.icon} />;
 }
 
 const formatMins = (seconds) => {
@@ -130,7 +131,7 @@ export const CCM_MIDDLE_COLUMNS = [
     label: 'Risk Level',
     renderCell: (m) => (
       m.riskLevel
-        ? <Badge size="M" variant={`lace-${m.riskLevel.toLowerCase()}`} label={m.riskLevel} />
+        ? <Badge size="md" tone={laceTone(m.riskLevel)} label={m.riskLevel} />
         : <span className={styles.mutedDash}>-</span>
     ),
   },

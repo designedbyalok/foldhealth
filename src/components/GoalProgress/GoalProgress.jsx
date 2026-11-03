@@ -48,7 +48,7 @@ export function GoalProgress({ goalsDetail, goals }) {
       <div className={styles.header}>
         <span className={styles.label}>Goal Progress</span>
         <Badge
-          variant={goalsMet ? 'compliance-pass' : 'compliance-fail'}
+          tone={goalsMet ? 'success' : 'danger'}
           label={goalsMet ? 'Goals Met' : 'Goals Not Met'}
           icon="solar:info-circle-linear"
         />
@@ -80,7 +80,7 @@ export function GoalProgress({ goalsDetail, goals }) {
                 {g.desc && <span className={styles.cardDesc}>{g.desc}</span>}
               </div>
               <Badge
-                variant={g.pass ? 'compliance-pass' : 'compliance-fail'}
+                tone={g.pass ? 'success' : 'danger'}
                 label={g.pass ? 'Pass' : 'Fail'}
               />
             </div>

@@ -314,7 +314,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
               {cloneFrom && targetCount > 0 && i === targetCount && (
                 <div className={styles.groupLabel}>
                   <span className={styles.groupTitle}>Copied from {cloneFrom.name}</span>
-                  <Badge tone="grey" size="S" label={String(blocks.length - targetCount)} />
+                  <Badge size="sm" label={String(blocks.length - targetCount)} />
                 </div>
               )}
               <section
@@ -341,7 +341,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                     <span className={styles.blockTitleText}>
                       <span className={styles.blockTitle}>
                         {unit} {blockNumber(i)}
-                        {status && <Badge tone={status.tone} size="S" label={status.label} />}
+                        {status && <Badge tone={status.tone} size="sm" label={status.label} />}
                       </span>
                       {b.collapsed && ruleSummary(b) && <span className={styles.blockSub}>{ruleSummary(b)}</span>}
                     </span>
@@ -652,7 +652,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
             <section className={[styles.current, styles.arrive].join(' ')}>
               <div className={styles.groupLabel}>
                 <span className={styles.groupTitle}>{user.name}'s current availability</span>
-                <Badge tone="grey" size="S" label={String(targetCount)} />
+                <Badge size="sm" label={String(targetCount)} />
               </div>
               <ul className={styles.currentList}>
                 {blocks.slice(0, targetCount).map((b, k) => (
@@ -689,7 +689,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                 aria-expanded={pastOpen}
               >
                 <span className={styles.pastTitle}>Past slots</span>
-                <Badge tone="grey" size="S" label={String(pastCount)} className={styles.pastCount} />
+                <Badge size="sm" label={String(pastCount)} className={styles.pastCount} />
                 <DownChevronIcon size={12} color="var(--neutral-200)" style={pastOpen ? undefined : { transform: 'rotate(-90deg)' }} />
               </button>
               <Collapse open={pastOpen}>
@@ -708,7 +708,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
               <section key={from || 'imported'} className={[styles.newGroup, styles.arrive].join(' ')}>
                 <div className={styles.groupLabel}>
                   <span className={styles.groupTitle}>{from ? `Imported from ${from}` : 'Imported'}</span>
-                  <Badge tone="primary" size="S" label={String(count)} className={styles.countBadge} />
+                  <Badge tone="primary" size="sm" label={String(count)} className={styles.countBadge} />
                 </div>
                 {blocks.map((b, i) => (b.arrive && b.importedFrom === from ? renderBlock(b, i) : null))}
               </section>

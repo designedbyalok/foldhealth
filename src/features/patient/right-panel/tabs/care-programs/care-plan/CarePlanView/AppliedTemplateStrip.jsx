@@ -30,8 +30,8 @@ function TemplateBadge({
       title={[templateVersion?.title, retiringOn(template) && `Retiring on ${formatRetireDate(retiringOn(template))}`].filter(Boolean).join('. ') || undefined}
     >
       <Badge
-        tone={isActive ? 'primary' : 'grey'}
-        size="S"
+        tone={isActive ? 'primary' : 'neutral'}
+        size="sm"
         label={(
           <>
             <PriorityIcon priority={templatePriority} size={12} />
@@ -90,8 +90,8 @@ function RunBadge({ template, run, isActive, onSelect, disabled = false }) {
       title={how}
     >
       <Badge
-        tone={isActive ? 'primary' : 'grey'}
-        size="S"
+        tone={isActive ? 'primary' : 'neutral'}
+        size="sm"
         label={(
           <>
             <Icon name="solar:check-circle-linear" size={12} color={isActive ? 'var(--primary-300)' : 'var(--status-success)'} />
@@ -112,7 +112,7 @@ function RecommendedBadge({ template }) {
     <span className={styles.recommendedTemplate} title={`Recommended: applies when the plan is approved. ${by}${template.why || ''}`.trim()}>
       <Badge
         tone="primary"
-        size="S"
+        size="sm"
         label={(
           <>
             <UnityIcon size={12} color="var(--primary-300)" />

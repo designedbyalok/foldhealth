@@ -27,7 +27,7 @@ const REACTION_TYPE_OPTIONS = ['Adverse Reaction', 'Allergy', 'Intolerance']
 // Criticality drives the badge tone: High is the one that changes care.
 const CRITICALITY_OPTIONS = ['High', 'Low', 'Unable to Assess']
   .map(v => ({ value: v, label: v }));
-const CRITICALITY_TONE = { High: 'error', Low: 'grey', 'Unable to Assess': 'grey' };
+const CRITICALITY_TONE = { High: 'danger', Low: 'neutral', 'Unable to Assess': 'neutral' };
 // Coded reactions, so a recorded reaction carries its SNOMED concept rather
 // than a string someone typed.
 const REACTION_OPTIONS = ALLERGY_REACTIONS.map(r => ({ value: r.code, label: r.display }));
@@ -52,8 +52,8 @@ function AllergyRow({ allergy, onStatusChange, onEdit, dimmed }) {
             <span className={styles.rowTitle}>{allergy.title}</span>
             {allergy.criticality && (
               <Badge
-                tone={CRITICALITY_TONE[allergy.criticality] || 'grey'}
-                size="S"
+                tone={CRITICALITY_TONE[allergy.criticality] || 'neutral'}
+                size="sm"
                 label={allergy.criticality}
               />
             )}
@@ -247,7 +247,7 @@ const Section = forwardRef(function Section({ title, count, open, onToggle, chil
         type="button"
         className={[styles.sectionHead, dimmed ? styles.dimmed : ''].filter(Boolean).join(' ')} onClick={onToggle} aria-expanded={open}>
         <span className={styles.sectionTitle}>{title}</span>
-        {count > 0 && <Badge tone="grey" size="S" label={String(count)} className={styles.countBadge} />}
+        {count > 0 && <Badge size="sm" label={String(count)} className={styles.countBadge} />}
         <DownChevronIcon size={14} className={open ? styles.chevron : styles.chevronClosed} />
       </button>
       <div className={[styles.sectionBody, open ? styles.sectionBodyOpen : ''].filter(Boolean).join(' ')}>

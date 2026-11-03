@@ -140,7 +140,7 @@ export function CarePlanPrintPersonalize({
             value={presetId || NO_PRESET}
             onChange={v => onPickPreset(v === NO_PRESET ? null : v)}
           />
-          {preset && <Badge size="S" tone={TEMPLATE_SCOPES[preset.scope].tone} icon={TEMPLATE_SCOPES[preset.scope].icon} label={TEMPLATE_SCOPES[preset.scope].badge} />}
+          {preset && <Badge size="sm" tone={TEMPLATE_SCOPES[preset.scope].tone} icon={TEMPLATE_SCOPES[preset.scope].icon} label={TEMPLATE_SCOPES[preset.scope].badge} />}
           <Button
             variant="outline"
             disabled={!dirty || (preset && !canEditPreset)}

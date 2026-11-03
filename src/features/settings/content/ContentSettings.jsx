@@ -142,11 +142,11 @@ const CONTENT_TABS = [
 ];
 
 const STATUS_BADGE = {
-  running:   { variant: 'health-ok',     label: 'Running' },
-  paused:    { variant: 'status-review', label: 'Paused' },
-  scheduled: { variant: 'ai-neutral',    label: 'Scheduled' },
-  draft:     { variant: 'compliance-na', label: 'Draft' },
-  ended:     { variant: 'compliance-na', label: 'Ended' },
+  running:   { variant: 'success',     label: 'Running' },
+  paused:    { variant: 'warning', label: 'Paused' },
+  scheduled: { variant: 'neutral',    label: 'Scheduled' },
+  draft:     { variant: 'neutral', label: 'Draft' },
+  ended:     { variant: 'neutral', label: 'Ended' },
 };
 
 const STATUS_CYCLE = ['all', 'running', 'paused', 'scheduled', 'draft', 'ended'];
@@ -321,7 +321,7 @@ function EmailsTab({
         </td>
         <td className={styles.tdCategory}>
           {campaign.category ? (
-            <Badge variant="ai-neutral" label={campaign.category} />
+            <Badge label={campaign.category} />
           ) : (
             <span className={styles.cellMuted}>-</span>
           )}
@@ -448,7 +448,7 @@ const FORM_TYPE_TONE = {
   Assessment: 'info',
   Intake: 'success',
   Consent: 'warning',
-  Other: 'grey',
+  Other: 'neutral',
 };
 
 function FormRowMenu({ onCopyLink, onDuplicate, onDelete }) {
@@ -576,10 +576,10 @@ function FormsTab({ searchVal, onDuplicate, onDelete, bulkMode, selectedIds, onT
           </div>
         </td>
         <td className={styles.tdCategory}>
-          <Badge tone={FORM_TYPE_TONE[form.formType] || 'grey'} size="S" label={form.formType || 'Other'} />
+          <Badge tone={FORM_TYPE_TONE[form.formType] || 'neutral'} size="sm" label={form.formType || 'Other'} />
         </td>
         <td className={styles.tdCategory}>
-          {form.category ? <Badge variant="ai-neutral" label={form.category} /> : <span className={styles.cellMuted}>-</span>}
+          {form.category ? <Badge label={form.category} /> : <span className={styles.cellMuted}>-</span>}
         </td>
         <td className={styles.tdSubject}>
           <span className={styles.cellText}>{form.responseCount ?? 0}</span>
@@ -727,13 +727,13 @@ function NoteTemplatesTab({ searchVal, showArchived }) {
                 </div>
               </td>
               <td className={styles.tdCategory}>
-                <Badge tone="grey" size="S" label={isCareGap ? 'Care Gap' : 'Normal'} />
+                <Badge size="sm" label={isCareGap ? 'Care Gap' : 'Normal'} />
               </td>
               <td className={styles.tdCategory}>
                 {t.gap_code
                   ? (
                     <div className={styles.gapStack}>
-                      <Badge variant="ai-neutral" label={t.gap_code} />
+                      <Badge label={t.gap_code} />
                       {t.context && (
                         <span className={styles.cellMuted}>
                           {t.context === 'non_visit' ? 'Non-Visit' : 'Visit'}
@@ -752,7 +752,7 @@ function NoteTemplatesTab({ searchVal, showArchived }) {
                 <span className={styles.cellMuted}>-</span>
               </td>
               <td className={styles.tdCategory}>
-                <Badge tone={isActive ? 'success' : 'grey'} size="S" label={t.status || 'active'} />
+                <Badge tone={isActive ? 'success' : 'neutral'} size="sm" label={t.status || 'active'} />
               </td>
               <td className={styles.tdCategory}>
                 <div className={styles.updatedStack}>
@@ -1000,16 +1000,16 @@ function NoteTemplateInspector({ template, onClose, onEditFields, onSetDefault, 
           <ActionButton icon="solar:close-circle-linear" size="sm" tooltip="Close" onClick={onClose} />
         </header>
         <div className={styles.inspectorMeta}>
-          <Badge tone="grey" size="S" label={isCareGap ? 'Care Gap Note' : 'Normal Note'} />
+          <Badge size="sm" label={isCareGap ? 'Care Gap Note' : 'Normal Note'} />
           {template.gap_code && (
-            <Badge variant="ai-neutral" label={gapName ? `${template.gap_code} · ${gapName}` : `Gap: ${template.gap_code}`} />
+            <Badge label={gapName ? `${template.gap_code} · ${gapName}` : `Gap: ${template.gap_code}`} />
           )}
-          {contextLabel && <Badge tone="grey" size="S" label={contextLabel} />}
+          {contextLabel && <Badge size="sm" label={contextLabel} />}
           {isDefault && (
-            <Badge tone="success" size="S" label={template.context === 'non_visit' ? 'Non-Visit default' : 'Visit default'} />
+            <Badge tone="success" size="sm" label={template.context === 'non_visit' ? 'Non-Visit default' : 'Visit default'} />
           )}
-          <Badge tone="grey" size="S" label={`${items.length} field${items.length === 1 ? '' : 's'}`} />
-          <Badge tone="grey" size="S" label={template.status || 'active'} />
+          <Badge size="sm" label={`${items.length} field${items.length === 1 ? '' : 's'}`} />
+          <Badge size="sm" label={template.status || 'active'} />
         </div>
         <div className={styles.inspectorActions}>
           <Button leadingIcon="solar:pen-linear" onClick={onEditFields}>
@@ -1041,8 +1041,8 @@ function NoteTemplateInspector({ template, onClose, onEditFields, onSetDefault, 
                     {f.required && <span className={styles.fieldReq}>required</span>}
                   </div>
                   <div className={styles.fieldMeta}>
-                    <Badge tone="grey" size="S" label={f.type || 'text'} />
-                    {f.column === 2 && <Badge tone="grey" size="S" label="half-width" />}
+                    <Badge size="sm" label={f.type || 'text'} />
+                    {f.column === 2 && <Badge size="sm" label="half-width" />}
                     {Array.isArray(f.options) && f.options.length > 0 && (
                       <span className={styles.fieldOpts}>
                         {f.options.map(o => o.label || o.value).slice(0, 4).join(' · ')}
@@ -1314,7 +1314,7 @@ export function ContentSettings() {
                     onClick={() => setStatusFilter('all')}
                     aria-label="Clear status filter"
                   >
-                    <Badge variant={statusBadge.variant} label={statusBadge.label} />
+                    <Badge tone={statusBadge.variant} label={statusBadge.label} />
                   </button>
                 )}
               </>

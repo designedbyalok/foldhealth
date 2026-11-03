@@ -72,7 +72,7 @@ export function TaskDetailDrawerSubtasks({
                   <div className={styles.subtaskCardRow}>
                     <PriorityIcon priority={sub.priority} size={16} />
                     <span className={`${styles.subtaskCardName} ${sub.status === 'completed' ? styles.subtaskCardNameDone : ''}`}>{sub.name}</span>
-                    <Badge variant={STATUS_BADGE_VARIANTS[sub.status]} label={STATUS_LABELS[sub.status]} />
+                    <Badge tone={STATUS_BADGE_VARIANTS[sub.status]} label={STATUS_LABELS[sub.status]} />
                     <span className={`${styles.subtaskCardDate} ${isOverdue(sub) ? styles.dueMissed : ''}`}>
                       {formatDateFriendly(sub.due_date)}
                     </span>

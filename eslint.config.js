@@ -111,6 +111,18 @@ export default defineConfig([globalIgnores([
         message: 'Sizes are sm | md | lg, and md is the default (S → sm, L → leave it out, XL → lg). See docs/components/library-contract.mdx.',
       },
       {
+        selector: "JSXOpeningElement[name.name='Badge'] > JSXAttribute[name.name='tone'] > Literal[value=/^(grey|white|ghost|error|disabled|green)$/]",
+        message: 'Badge tone names changed: grey → (default neutral), white → variant="outline", ghost → variant="ghost", error → tone="danger", disabled → disabled. See docs/components/library-contract.mdx.',
+      },
+      {
+        selector: "JSXOpeningElement[name.name='Badge'] > JSXAttribute[name.name='variant'] > Literal:not([value=/^(soft|outline|ghost|solid)$/])",
+        message: 'Badge variant is emphasis only: soft | outline | ghost | solid. A status look is a tone the feature picks (e.g. TOC Enrolled → tone="success"). See docs/components/library-contract.mdx.',
+      },
+      {
+        selector: "JSXOpeningElement[name.name='Badge'] > JSXAttribute[name.name='size'] > Literal[value=/^(XS|S|M|L)$/]",
+        message: 'Badge sizes are xs | sm | md | lg. See docs/components/library-contract.mdx.',
+      },
+      {
         selector: "JSXOpeningElement[name.name='ActionButton'] > JSXAttribute[name.name='state']",
         message: 'ActionButton has no state prop: use disabled, or tone="danger" for the destructive look. See docs/components/library-contract.mdx.',
       },

@@ -150,11 +150,11 @@ function renderRow(g, selected, toggle, subtitleFor, styles) {
           {subtitle && <span className={styles.subtitle}>{subtitle}</span>}
           {templateName && (
             <span className={styles.templateLine}>
-              Template: <Badge tone="grey" size="S" label={templateName} />
+              Template: <Badge size="sm" label={templateName} />
             </span>
           )}
         </div>
-        <Badge tone="grey" size="S" label={type} />
+        <Badge size="sm" label={type} />
       </button>
     </li>
   );

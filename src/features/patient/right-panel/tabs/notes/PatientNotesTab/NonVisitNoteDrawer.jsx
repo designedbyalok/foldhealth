@@ -221,7 +221,7 @@ export function NonVisitNoteDrawer({ patient, initialTitle = '', onClose }) {
             <div className={styles.chipRow}>
               <span className={styles.chipActive}>
                 <Icon name="solar:link-linear" size={12} color="var(--primary-300)" />
-                <Badge tone="primary" size="S" label={`${templateGapCode}: ${MEASURE_NAMES[templateGapCode] || templateGapCode}`} />
+                <Badge tone="primary" size="sm" label={`${templateGapCode}: ${MEASURE_NAMES[templateGapCode] || templateGapCode}`} />
               </span>
             </div>
             <p className={styles.templateHelp}>Locked by the selected template.</p>
@@ -242,7 +242,7 @@ export function NonVisitNoteDrawer({ patient, initialTitle = '', onClose }) {
                     onClick={() => toggleGap(code)}
                   >
                     {active && <Icon name="solar:check-circle-linear" size={12} color="var(--primary-300)" />}
-                    <Badge tone={active ? 'primary' : 'grey'} size="S" label={code} />
+                    <Badge tone={active ? 'primary' : 'neutral'} size="sm" label={code} />
                   </button>
                 );
               })}

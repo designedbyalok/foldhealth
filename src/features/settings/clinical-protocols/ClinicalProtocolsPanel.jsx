@@ -140,7 +140,7 @@ export function ClinicalProtocolsPanel({ tabs, activeTab, onTabChange }) {
         <td className={styles.td}>{p.programCodes.length ? <BadgeRow items={p.programCodes} maxLines={1} /> : '-'}</td>
         <td className={`${styles.td} ${styles.nowrap}`}>{fmtDay(p.effectiveDate)}</td>
         <td className={`${styles.td} ${styles.nowrap} ${reviewDue ? styles.overdue : ''}`}>{fmtDay(p.reviewDate)}{reviewDue ? ' · due' : ''}</td>
-        <td className={styles.td}><Badge tone={status.tone} size="S" label={status.label} className={status.tone === 'warning' ? styles.statusWarning : undefined} /></td>
+        <td className={styles.td}><Badge tone={status.tone} size="sm" label={status.label} className={status.tone === 'warning' ? styles.statusWarning : undefined} /></td>
         <td className={styles.td}>{p.status === 'processing' ? '…' : total}</td>
         <td className={styles.td}>{planOf(p.protocol) ? <PlanCounts plan={planOf(p.protocol)} /> : '-'}</td>
         <td className={`${styles.td} ${styles.nowrap}`}>{fmtDay(p.updatedAt)}</td>

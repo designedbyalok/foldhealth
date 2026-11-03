@@ -39,7 +39,7 @@ export function AutomationCard({ automation: a, runs, actions }) {
       <div className={styles.footer} onClick={e => e.stopPropagation()}>
         {isDraft ? (
           <>
-            <Badge tone="grey" size="S" label="Draft" />
+            <Badge size="sm" label="Draft" />
             <span className={styles.footerRight}>
               <Button variant="outline" size="sm" leadingIcon="solar:pen-linear" onClick={() => actions.edit(a)}>Continue editing</Button>
               <AutomationMenu hasRuns={runs.length > 0} onSelect={(key) => actions.menu(key, a)} />

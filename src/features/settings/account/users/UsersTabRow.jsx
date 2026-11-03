@@ -50,7 +50,7 @@ export function UsersTabRow({
       </td>
       <td className={styles.td}>
         <div className={styles.statusStack}>
-          <Badge variant={sb.variant} icon={sb.icon} label={status} />
+          <Badge tone={sb.variant} icon={sb.icon} label={status} />
           {isLocked(user.lock) && (
             <span className={styles.lockSince}>Since {formatLockTime(user.lock.locked_at)}</span>
           )}
@@ -58,7 +58,7 @@ export function UsersTabRow({
       </td>
       <td className={styles.td}>
         <div className={styles.rolesCell}>
-          <Badge variant={ROLE_COLORS[user.role] || 'ai-neutral'} label={user.role} />
+          <Badge tone={ROLE_COLORS[user.role] || 'neutral'} label={user.role} />
           {user.extraRoles > 0 && (
             <OverflowBadge count={user.extraRoles} items={user.clinicalRoles?.slice(1) || []} />
           )}

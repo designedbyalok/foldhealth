@@ -76,8 +76,8 @@ export function DocumentsTable({ rows, selectedIds, onToggle, onToggleAll, onOpe
           <td className={`${profileCellClass} ${styles.fileName}`} title={d.name}>
             <span className={styles.fileNameRow}>
               <span className={styles.fileNameText}>{d.name}</span>
-              {d.uploadedByPatient && <Badge size="S" tone="info" label="From patient" />}
-              {!d.uploadedByPatient && d.sharedWithPatient && <Badge size="S" tone="success" label="Shared with patient" />}
+              {d.uploadedByPatient && <Badge size="sm" tone="info" label="From patient" />}
+              {!d.uploadedByPatient && d.sharedWithPatient && <Badge size="sm" tone="success" label="Shared with patient" />}
             </span>
           </td>
           <td className={`${profileCellClass} ${styles.muted}`}>{d.type || '-'}</td>

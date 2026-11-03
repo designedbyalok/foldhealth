@@ -124,7 +124,7 @@ export function PatientProfileTabs({
           id: `hedis-${g.code}-${i}`,
           title: `${g.code} - ${MEASURE_NAMES[g.code] || g.code}`,
           status: g.status,
-          statusVariant: STATUS_BADGE_VARIANT[g.status] || 'ai-neutral',
+          statusVariant: STATUS_BADGE_VARIANT[g.status] || 'neutral',
           diagnosis: g.supersededAt
             ? `Previous gap · Closed ${g.closedDate || g.supersededAt}`
             : g.startDate ? `Opened ${g.startDate}` : '',

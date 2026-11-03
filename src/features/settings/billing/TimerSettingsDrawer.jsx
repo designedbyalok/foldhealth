@@ -308,7 +308,7 @@ export function TimerSettingsDrawer({ program, setting, onClose }) {
               {/* Team members come from the care program team; they're managed there.
                   The tag only tells them apart in the mixed All tab. */}
               {o.kind === 'team'
-                ? tab === 'all' && <Badge tone="grey" size="XS" label="Care program team" className={styles.optionTag} />
+                ? tab === 'all' && <Badge size="xs" label="Care program team" className={styles.optionTag} />
                 : (
                   <ActionButton
                     icon="solar:trash-bin-trash-linear"

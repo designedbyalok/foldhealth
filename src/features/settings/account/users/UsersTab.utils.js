@@ -1,11 +1,11 @@
 export function statusBadge(status) {
-  if (status === 'Locked') return { variant: 'status-failed', icon: 'solar:lock-keyhole-minimalistic-linear' };
-  if (status === 'Unlocked') return { variant: 'status-scheduled', icon: 'solar:lock-keyhole-unlocked-linear' };
-  if (status === 'Pending') return { variant: 'status-scheduled', icon: 'solar:clock-circle-linear' };
+  if (status === 'Locked') return { variant: 'danger', icon: 'solar:lock-keyhole-minimalistic-linear' };
+  if (status === 'Unlocked') return { variant: 'info', icon: 'solar:lock-keyhole-unlocked-linear' };
+  if (status === 'Pending') return { variant: 'info', icon: 'solar:clock-circle-linear' };
   const isActive = status === 'Active';
   const isInvited = status === 'Invited';
   return {
-    variant: isActive ? 'status-completed' : (isInvited ? 'status-queued' : 'status-failed'),
+    variant: isActive ? 'success' : (isInvited ? 'warning' : 'danger'),
     icon: isActive
       ? 'solar:check-circle-linear'
       : (isInvited ? 'solar:hourglass-linear' : 'solar:close-circle-linear'),

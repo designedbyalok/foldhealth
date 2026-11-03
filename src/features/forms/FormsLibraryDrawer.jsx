@@ -14,7 +14,7 @@ import styles from './FormsLibraryDrawer.module.css';
 const PAGE_SIZE = 100;
 const EMPTY = [];
 // Same tones as the Type badge in Settings > Content > Forms.
-const TYPE_TONE = { Note: 'primary', Assessment: 'info', Intake: 'success', Consent: 'warning', Other: 'grey' };
+const TYPE_TONE = { Note: 'primary', Assessment: 'info', Intake: 'success', Consent: 'warning', Other: 'neutral' };
 
 /**
  * Pick forms from the Forms library (Settings > Content > Forms), e.g. to
@@ -96,8 +96,8 @@ export function FormsLibraryDrawer({ title = 'Forms Library', linkedIds = EMPTY,
                   <span className={styles.itemName}>{f.name}</span>
                   {(f.category || f.description) && <span className={styles.itemMeta}>{f.category || f.description}</span>}
                 </span>
-                {isLinked && <Badge size="S" tone="success" label="Added" />}
-                {type && <Badge size="S" tone={TYPE_TONE[type] || 'grey'} label={type} />}
+                {isLinked && <Badge size="sm" tone="success" label="Added" />}
+                {type && <Badge size="sm" tone={TYPE_TONE[type] || 'neutral'} label={type} />}
               </label>
             );
           })}

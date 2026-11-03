@@ -25,7 +25,7 @@ function renderExport(entry) {
       </div>
       {entry.badges.length > 0 && (
         <div className={styles.badges}>
-          {entry.badges.map(b => <Badge key={b.label} tone="white" size="S" icon={b.icon} label={b.label} />)}
+          {entry.badges.map(b => <Badge key={b.label} variant="outline" size="sm" icon={b.icon} label={b.label} />)}
         </div>
       )}
     </>

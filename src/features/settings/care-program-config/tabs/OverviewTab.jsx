@@ -65,7 +65,7 @@ export function OverviewTab({ draft, patch, onTab }) {
             {draft.steps.filter(s => s.enabled !== false).flatMap(s => (s.type === 'section'
               ? (s.children || []).filter(c => c.enabled !== false).map(c => ({ ...c, label: `${s.name}: ${c.name}` }))
               : [{ ...s, label: s.name }])).map(s => (
-                <Badge key={s.id} size="M" tone={s.mandatory ? 'primary' : 'grey'} label={s.mandatory ? `${s.label} *` : s.label} />
+                <Badge key={s.id} size="md" tone={s.mandatory ? 'primary' : 'neutral'} label={s.mandatory ? `${s.label} *` : s.label} />
             ))}
           </div>
         )}

@@ -42,7 +42,7 @@ export function TagsTable({ search = '', onEdit }) {
 
   const renderRow = (t) => (
     <tr key={t.id} className={styles.row}>
-      <td className={styles.td}><Badge size="S" label={t.name} style={tagBadgeStyle(t.color)} /></td>
+      <td className={styles.td}><Badge size="sm" label={t.name} style={tagBadgeStyle(t.color)} /></td>
       <td className={`${styles.td} ${styles.desc}`}>{t.description}</td>
       <td className={styles.td}>
         <span className={styles.colorCell}>

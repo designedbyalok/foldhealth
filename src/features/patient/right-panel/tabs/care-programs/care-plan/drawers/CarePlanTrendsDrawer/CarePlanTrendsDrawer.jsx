@@ -34,9 +34,9 @@ function Sparkline({ values }) {
 
 function TrendBadge({ trend }) {
   if (!trend || trend === '-') return <span className={styles.dash}>-</span>;
-  const tone = trend === '↑' ? 'success' : trend === '↓' ? 'error' : 'grey';
+  const tone = trend === '↑' ? 'success' : trend === '↓' ? 'danger' : 'neutral';
   const icon = trend === '↑' ? 'solar:arrow-up-linear' : trend === '↓' ? 'solar:arrow-down-linear' : 'solar:minus-circle-linear';
-  return <Badge tone={tone} size="S" icon={icon} />;
+  return <Badge tone={tone} size="sm" icon={icon} />;
 }
 
 const EMPTY_GOALS = [];

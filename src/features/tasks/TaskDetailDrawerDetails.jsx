@@ -181,7 +181,6 @@ export function TaskDetailDrawerDetails({
               {labels.map(l => (
                 <Badge
                   key={l}
-                  variant="overflow"
                   label={l}
                   trailingIcon="solar:close-circle-linear"
                   trailingIconLabel={`Remove ${l}`}
@@ -281,7 +280,7 @@ function LinkedNoteCard({ note, task, setEditingNote, setPreviewNote }) {
   const status = note.status === 'signed' ? 'Signed'
     : note.status === 'submitted' ? 'Pending Review'
     : 'Draft';
-  const statusTone = status === 'Signed' ? 'success' : status === 'Draft' ? 'grey' : 'warning';
+  const statusTone = status === 'Signed' ? 'success' : status === 'Draft' ? 'neutral' : 'warning';
   const authorLine = note.status === 'signed'
     ? `Signed by ${note.signedByName || note.reviewerName || 'Provider'}${note.signedAt ? ` · ${fmtDate(note.signedAt)}` : ''}`
     : note.status === 'submitted'
@@ -298,12 +297,12 @@ function LinkedNoteCard({ note, task, setEditingNote, setPreviewNote }) {
         <div className={styles.linkedNoteText}>
           <div className={styles.linkedNoteTitleRow}>
             <span className={styles.linkedNoteTitle}>{title}</span>
-            {codes.length > 1 && <Badge tone="grey" size="S" label={`${codes.length} Gaps`} />}
+            {codes.length > 1 && <Badge size="sm" label={`${codes.length} Gaps`} />}
           </div>
           <div className={styles.linkedNoteSubtitle}>{authorLine}</div>
         </div>
         <div className={styles.linkedNoteTrailing}>
-          <Badge tone={statusTone} size="M" label={status} />
+          <Badge tone={statusTone} size="md" label={status} />
           <button
             type="button"
             className={styles.linkedNoteView}

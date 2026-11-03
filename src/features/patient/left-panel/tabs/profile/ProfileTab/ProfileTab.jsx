@@ -76,7 +76,7 @@ function ContactField({ contact }) {
         <span className={styles.fieldLabel}>
           {contact.name}{contact.relation ? ` (${contact.relation})` : ''}
         </span>
-        {contact.role && <Badge tone="grey" label={contact.role} size="S" />}
+        {contact.role && <Badge label={contact.role} size="sm" />}
       </div>
       <div className={styles.fieldValue}>
         {contact.phone}
@@ -278,7 +278,7 @@ export function ProfileTab({ patient }) {
               <Field key={`${cp.kind}:${cp.value}`} label={cp.kind === 'email' ? 'Email' : 'Phone'}>
                 <span className={styles.contactValidity}>
                   {cp.value}
-                  <Badge tone={CONTACT_STATUS_TONE[cp.status] || 'grey'} label={optionLabel(CONTACT_STATUS_OPTIONS, cp.status) || 'Unverified'} size="S" />
+                  <Badge tone={CONTACT_STATUS_TONE[cp.status] || 'neutral'} label={optionLabel(CONTACT_STATUS_OPTIONS, cp.status) || 'Unverified'} size="sm" />
                 </span>
               </Field>
             ))}

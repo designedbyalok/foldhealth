@@ -41,7 +41,7 @@ export function SinceLastTouchCard({ memberId }) {
                 inset
                 title={t.text}
                 wrapTitle
-                trailing={t.source ? <span className={styles.statusSlotWide}><Badge tone="grey" size="S" label={t.source} /></span> : null}
+                trailing={t.source ? <span className={styles.statusSlotWide}><Badge size="sm" label={t.source} /></span> : null}
               />
             )}
           />

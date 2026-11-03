@@ -32,7 +32,7 @@ function ProgramRow({ p, onOpen }) {
         </span>
       </span>
       <Badge
-        size="S"
+        size="sm"
         tone={attention ? 'warning' : 'success'}
         icon={attention ? 'solar:danger-triangle-linear' : 'solar:check-circle-linear'}
         label={attention ? `Needs attention · ${p.attentionMembers}` : 'On track'}

@@ -67,7 +67,7 @@ export function AssessmentsTable({ rows, compact, activeId, selectedIds, onToggl
               <td className={profileCellClass}><SignedCell signed={r.signed} /></td>
               <td className={profileCellClass}>
                 <span className={styles.badges}>
-                  {r.programs.length ? r.programs.map(p => <Badge key={p} tone="grey" size="XS" label={p} />) : <span className={styles.muted}>-</span>}
+                  {r.programs.length ? r.programs.map(p => <Badge key={p} size="xs" label={p} />) : <span className={styles.muted}>-</span>}
                 </span>
               </td>
               <td className={profileCellClass}><ResponseStatus pending={r.pendingCount} completed={r.completedCount} /></td>

@@ -42,9 +42,9 @@ function TagList({ tags, max = 2 }) {
   return (
     <div className={styles.tagList}>
       {shown.map((t, i) => (
-        <Badge key={i} variant="ai-care" label={t} />
+        <Badge key={i} tone="primary" label={t} />
       ))}
-      {overflow > 0 && <Badge variant="overflow" label={`+${overflow}`} />}
+      {overflow > 0 && <Badge label={`+${overflow}`} />}
     </div>
   );
 }
@@ -56,9 +56,9 @@ function ConditionList({ conditions, max = 2 }) {
   return (
     <div className={styles.tagList}>
       {shown.map((c, i) => (
-        <Badge key={i} variant="ai-risk" label={c} />
+        <Badge key={i} tone="danger" label={c} />
       ))}
-      {overflow > 0 && <Badge variant="overflow" label={`+${overflow}`} />}
+      {overflow > 0 && <Badge label={`+${overflow}`} />}
     </div>
   );
 }
@@ -162,7 +162,7 @@ const ALL_PATIENTS_BASE_COLUMNS = [
     label: 'Active Care Program',
     renderCell: (row) => (
       row.activeCareProgram
-        ? <Badge variant="toc-engaged" label={row.activeCareProgram} />
+        ? <Badge tone="info" label={row.activeCareProgram} />
         : <span className={styles.dash}>-</span>
     ),
   },
@@ -173,7 +173,7 @@ const ALL_PATIENTS_BASE_COLUMNS = [
       const ccm = row.ccmConsent;
       return (
         <Badge
-          variant={ccm === true ? 'compliance-pass' : ccm === false ? 'compliance-fail' : 'compliance-na'}
+          tone={ccm === true ? 'success' : ccm === false ? 'danger' : 'neutral'}
           label={ccm === true ? 'Yes' : ccm === false ? 'No' : 'N/A'}
         />
       );
@@ -186,7 +186,7 @@ const ALL_PATIENTS_BASE_COLUMNS = [
       const apcm = row.apcmConsent;
       return (
         <Badge
-          variant={apcm === true ? 'compliance-pass' : apcm === false ? 'compliance-fail' : 'compliance-na'}
+          tone={apcm === true ? 'success' : apcm === false ? 'danger' : 'neutral'}
           label={apcm === true ? 'Yes' : apcm === false ? 'No' : 'N/A'}
         />
       );

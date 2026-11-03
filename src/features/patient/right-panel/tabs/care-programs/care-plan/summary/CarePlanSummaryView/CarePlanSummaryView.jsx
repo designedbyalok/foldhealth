@@ -100,14 +100,14 @@ function ActiveProgramsTable({ rows, onView, onOpenActivity }) {
             return (
               <tr key={p.id}>
                 <td className={`${styles.stickyLeft} ${styles.colPlan}`}>
-                  <Badge tone="grey" size="S" label={p.code} />
+                  <Badge size="sm" label={p.code} />
                 </td>
                 <td>
                   {firstCondition ? (
                     <span className={styles.conditionCell} title={conditionsList.join(', ')}>
                       <span className={styles.conditionName}>{firstCondition}</span>
                       {extraConditions > 0 && (
-                        <Badge tone="grey" size="S" label={`+${extraConditions}`} />
+                        <Badge size="sm" label={`+${extraConditions}`} />
                       )}
                     </span>
                   ) : (
@@ -290,8 +290,8 @@ function ProgramCell({ code, overlap }) {
   const extra = Math.max((overlap || 1) - 1, 0);
   return (
     <span className={styles.programBadgeStack}>
-      <Badge tone="grey" size="S" label={code} />
-      {extra > 0 && <Badge tone="grey" size="S" label={`+${extra}`} />}
+      <Badge size="sm" label={code} />
+      {extra > 0 && <Badge size="sm" label={`+${extra}`} />}
     </span>
   );
 }

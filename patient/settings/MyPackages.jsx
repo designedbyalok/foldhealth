@@ -37,8 +37,8 @@ function PackageDrawer({ pkg, busy, onRequest, onClose }) {
     >
       <div className={styles.stack}>
         <span className={styles.packageIconLarge}><Icon name={pkg.icon} size={40} color="currentColor" /></span>
-        {pkg.status === 'requested' && <Badge size="S" tone="warning" label="Request sent to your care team" />}
-        {pkg.status === 'enrolled' && <Badge size="S" tone="success" label="Enrolled" />}
+        {pkg.status === 'requested' && <Badge size="sm" tone="warning" label="Request sent to your care team" />}
+        {pkg.status === 'enrolled' && <Badge size="sm" tone="success" label="Enrolled" />}
         <p className={styles.body}>{pkg.summary}</p>
         {pkg.details && <p className={styles.body}>{pkg.details}</p>}
         <p className={styles.note}>
@@ -95,7 +95,7 @@ export function MyPackages({ memberId }) {
               <span className={styles.packageIcon}><Icon name={p.icon} size={40} color="currentColor" /></span>
               <div className={styles.packageBody}>
                 <span className={styles.packageTitle}>{p.title}</span>
-                {p.status === 'requested' && <Badge size="S" tone="warning" label="Requested" />}
+                {p.status === 'requested' && <Badge size="sm" tone="warning" label="Requested" />}
                 <span className={styles.packageSummary}>{p.summary}</span>
                 <button type="button" className={styles.link} onClick={() => setOpen(p)}>View Details</button>
               </div>

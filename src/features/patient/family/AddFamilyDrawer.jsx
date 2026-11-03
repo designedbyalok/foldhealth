@@ -310,7 +310,7 @@ export function AddFamilyDrawer({ patient, onClose }) {
                       </span>
                       <span className={styles.personMeta}>{[m.relationship, m.phone, m.email].filter(Boolean).join(' • ')}</span>
                       {rolesOfMember(m).length > 0 && (
-                        <span className={styles.roles}>{rolesOfMember(m).map(r => <Badge key={r} tone="grey" size="XS" label={r} />)}</span>
+                        <span className={styles.roles}>{rolesOfMember(m).map(r => <Badge key={r} size="xs" label={r} />)}</span>
                       )}
                     </div>
                     <ActionButton icon="solar:trash-bin-trash-linear" size="sm" tooltip="Remove" tooltipLeft onClick={() => setRemoving(m)} />

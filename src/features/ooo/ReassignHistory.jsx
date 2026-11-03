@@ -83,7 +83,7 @@ export function useReassignHistory() {
             </div>
             {failed ? (
               <span className={styles.historyLine}>
-                <Badge tone="error" size="S" label="Failed" />
+                <Badge tone="danger" size="sm" label="Failed" />
               </span>
             ) : running ? (
               <span className={`${styles.historyLine} ${styles.historyRunning}`}>
@@ -105,9 +105,9 @@ export function useReassignHistory() {
                     <span className={styles.historyDot} aria-hidden="true">•</span>
                   </>
                 )}
-                <Badge tone="grey" size="S" label={`${j.results.length} Appointment${j.results.length === 1 ? '' : 's'}`} />
-                {j.conflictingCount > 0 && <Badge tone="warning" size="S" label={`${j.conflictingCount} Conflicting`} />}
-                {j.failedCount > 0 && <Badge tone="error" size="S" label={`${j.failedCount} Failed`} />}
+                <Badge size="sm" label={`${j.results.length} Appointment${j.results.length === 1 ? '' : 's'}`} />
+                {j.conflictingCount > 0 && <Badge tone="warning" size="sm" label={`${j.conflictingCount} Conflicting`} />}
+                {j.failedCount > 0 && <Badge tone="danger" size="sm" label={`${j.failedCount} Failed`} />}
                 <span className={styles.historyDot} aria-hidden="true">•</span>
                 <Link className={styles.historyLink} role="button" tabIndex={0} onClick={() => openSummary(j.id)}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSummary(j.id); } }}>

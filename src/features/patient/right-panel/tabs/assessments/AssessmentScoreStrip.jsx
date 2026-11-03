@@ -1,7 +1,7 @@
 import { Badge } from '../../../../../components/Badge/Badge';
 import styles from './AssessmentDetail.module.css';
 
-const BAND_TONE = { critical: 'error', high: 'error', warning: 'warning', info: 'info', neutral: 'grey' };
+const BAND_TONE = { critical: 'danger', high: 'danger', warning: 'warning', info: 'info', neutral: 'neutral' };
 const pad = n => String(n).padStart(2, '0');
 
 /** Questions answered, the score and its interpretation; parts without data stay hidden. */
@@ -23,7 +23,7 @@ export function AssessmentScoreStrip({ answered, total, score, band }) {
     ),
     band?.label && (
       <span key="band" className={styles.stripItem}>
-        Interpretation Score: <Badge tone={BAND_TONE[band.severity] || 'grey'} size="XS" label={band.label} />
+        Interpretation Score: <Badge tone={BAND_TONE[band.severity] || 'neutral'} size="xs" label={band.label} />
       </span>
     ),
   ].filter(Boolean);

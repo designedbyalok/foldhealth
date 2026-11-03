@@ -155,7 +155,7 @@ export function HccEvidenceCell({ charts, onClick, onMouseEnter, onMouseLeave, o
     >
       <Badge
         tone="primary"
-        size="S"
+        size="sm"
         icon="solar:document-text-linear"
         label={String(count)}
         chevron
@@ -444,7 +444,7 @@ export function OpenIcdsCell({ member, onOpenWithCode }) {
         onMouseEnter={gapCount ? onEnter : undefined}
         onMouseLeave={gapCount ? onLeave : undefined}
       >
-        <Badge size="M" variant="status-queued" label={String(count)} />
+        <Badge size="md" tone="warning" label={String(count)} />
       </div>
       {hovered && rect && gapCount > 0 && (
         <OpenIcdsHoverPopover
@@ -464,8 +464,8 @@ export function RafImpactCell({ value, ru }) {
   const positive = ru !== false; // default to positive/up unless explicitly false
   return (
     <Badge
-      tone={positive ? 'success' : 'error'}
-      size="M"
+      tone={positive ? 'success' : 'danger'}
+      size="md"
       label={String(value)}
       trailingIcon={positive ? 'solar:arrow-up-linear' : 'solar:arrow-down-linear'}
     />

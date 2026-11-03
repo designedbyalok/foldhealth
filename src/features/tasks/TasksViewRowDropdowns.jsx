@@ -135,7 +135,7 @@ export function RowStatusDropdown({ task }) {
         onClick={e => { e.stopPropagation(); setOpen(v => !v); }}
         aria-label="Change status"
       >
-        <Badge variant={STATUS_BADGE_VARIANTS[task.status]} label={STATUS_LABELS[task.status]} trailingIcon="solar:alt-arrow-down-linear" />
+        <Badge tone={STATUS_BADGE_VARIANTS[task.status]} label={STATUS_LABELS[task.status]} trailingIcon="solar:alt-arrow-down-linear" />
       </button>
       {open && (
         <MenuPopover

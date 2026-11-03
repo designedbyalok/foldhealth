@@ -129,7 +129,7 @@ export function PatientBanner({
                   <span className={styles.rafValue}>{raf}</span>
                   {rafChange && (
                     <Badge
-                      variant={rafUp ? 'compliance-pass' : 'compliance-fail'}
+                      tone={rafUp ? 'success' : 'danger'}
                       label={rafChange}
                       icon={rafUp ? 'solar:arrow-up-linear' : 'solar:arrow-down-linear'}
                     />
@@ -218,7 +218,7 @@ export function PatientBanner({
                 <div className={styles.synopsisFooterLeft}>
                   <Icon name="custom:ai" size={14} color="var(--primary-300)" />
                   <span className={styles.poweredBy}>Powered by Unity</span>
-                  <Badge variant="ai-neutral" label="BETA" />
+                  <Badge label="BETA" />
                 </div>
                 <div className={styles.synopsisFooterRight}>
                   <span className={styles.generatedAt}>Generated: {MOCK_SYNOPSIS.generatedAt}</span>

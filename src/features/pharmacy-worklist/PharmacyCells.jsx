@@ -12,7 +12,7 @@ import styles from './PharmacyWorklistRow.module.css';
 export function MeasureCode({ code }) {
   return (
     <Tooltip label={MEASURE_NAMES[code] || code} placement="bottom">
-      <span><Badge size="S" variant="compliance-na" label={code} /></span>
+      <span><Badge size="sm" label={code} /></span>
     </Tooltip>
   );
 }
@@ -166,7 +166,7 @@ export function OpenCareGaps({ gaps, onOpen }) {
                   <span className={styles.gapCardName}><b>{g.code}</b> - {g.name || g.code}</span>
                   {/* Same status colors as the HEDIS worklist. Badge centers
                       itself in a flex column; its own span keeps it left. */}
-                  {g.status && <span><Badge size="S" variant={STATUS_BADGE_VARIANT[g.status] || 'ai-neutral'} label={g.status} /></span>}
+                  {g.status && <span><Badge size="sm" tone={STATUS_BADGE_VARIANT[g.status] || 'neutral'} label={g.status} /></span>}
                 </>
               );
               return g.hedisMemberId ? (
@@ -193,7 +193,7 @@ export function OpenCareGaps({ gaps, onOpen }) {
 export function ProgressCell({ progress }) {
   return (
     <span className={styles.stack}>
-      <Badge size="S" tone={PROGRESS_TONE[progress.label]} label={progress.label} />
+      <Badge size="sm" tone={PROGRESS_TONE[progress.label]} label={progress.label} />
       <span className={styles.subText}>{progress.closed} of {progress.total} gap{progress.total === 1 ? '' : 's'} closed</span>
     </span>
   );
@@ -229,7 +229,7 @@ export function ClaimReconCell({ recon, showCode, followUpTask, onOpenClaims }) 
     <span className={styles.stack}>
       <Tooltip label={recon.detail} placement="bottom">
         <button type="button" className={styles.badgeBtn} onClick={onOpenClaims} aria-label={`${recon.status}: open claim history`}>
-          <Badge size="S" tone={RECON_TONE[recon.status]} label={showCode ? `${recon.status} · ${recon.code}` : recon.status} />
+          <Badge size="sm" tone={RECON_TONE[recon.status]} label={showCode ? `${recon.status} · ${recon.code}` : recon.status} />
         </button>
       </Tooltip>
       {windowLeft && <span className={styles.subText}>{windowLeft}</span>}
@@ -277,7 +277,7 @@ export function SubStatus({ label, suffix }) {
 
 // Gap status badge with its sub-status on the line below. Statuses Fold
 // sets say why on hover.
-export function GapStatus({ status, size = 'S' }) {
+export function GapStatus({ status, size = 'sm' }) {
   if (!status) return <Dash />;
   return (
     <span className={styles.stack}>
@@ -289,7 +289,7 @@ export function GapStatus({ status, size = 'S' }) {
   );
 }
 
-const SAVABILITY_TONE = { Safe: 'success', Savable: 'primary', 'Not savable': 'error' };
+const SAVABILITY_TONE = { Safe: 'success', Savable: 'primary', 'Not savable': 'danger' };
 const SAVABILITY_HINT = {
   Safe: 'PDC stays at or above 80% to year end with no further fills',
   Savable: 'Allowable gap days remain: the gap can still reach 80%',
@@ -314,7 +314,7 @@ export function SavabilityBadge({ value }) {
   if (!value) return <Dash />;
   return (
     <Tooltip label={SAVABILITY_HINT[value]} placement="bottom">
-      <span><Badge size="S" tone={SAVABILITY_TONE[value]} label={value} /></span>
+      <span><Badge size="sm" tone={SAVABILITY_TONE[value]} label={value} /></span>
     </Tooltip>
   );
 }

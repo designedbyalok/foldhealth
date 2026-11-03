@@ -22,19 +22,19 @@ import { outreachFromCount } from '../../components/OutreachStatus/outreachStatu
  * unreachable, green for engaged, amber for attempted / follow-up).
  */
 const STATUS_VARIANT = {
-  Open: 'awv-open',
-  New: 'awv-new',
-  'Unable to Reach': 'awv-unable',
-  Engaged: 'awv-engaged',
-  Attempted: 'awv-attempted',
-  'Engaged - Requires Follow Up': 'awv-engaged-followup',
+  Open: 'info',
+  New: 'info',
+  'Unable to Reach': 'neutral',
+  Engaged: 'success',
+  Attempted: 'warning',
+  'Engaged - Requires Follow Up': 'warning',
 };
 
 /** Risk IQ → shared Badge lace-* variant (Low / Medium / High). */
 const RISK_VARIANT = {
-  Low: 'lace-low',
-  Medium: 'lace-medium',
-  High: 'lace-high',
+  Low: 'success',
+  Medium: 'warning',
+  High: 'danger',
 };
 
 const LANG_MAP = {
@@ -73,8 +73,8 @@ export const AWV_MIDDLE_COLUMNS = [
           }}
         >
           <Badge
-            size="M"
-            variant={STATUS_VARIANT[member.progSubStatus] || 'awv-new'}
+            size="md"
+            tone={STATUS_VARIANT[member.progSubStatus] || 'info'}
             label={member.progSubStatus}
             trailingIconElement={<DownChevronIcon size={12} color="currentColor" />}
           />
@@ -182,7 +182,7 @@ export const AWV_MIDDLE_COLUMNS = [
     sortKey: 'ri',
     width: 110,
     renderCell: (member) => (
-      <Badge size="M" variant={RISK_VARIANT[member.ri] || 'lace-low'} label={member.ri} />
+      <Badge size="md" tone={RISK_VARIANT[member.ri] || 'success'} label={member.ri} />
     ),
   },
   {

@@ -29,9 +29,9 @@ export function OutreachProgramChip({
   disabled = false,
 }) {
   const tone = outcome === 'Successful' ? 'success'
-    : outcome === 'Unsuccessful' ? 'error'
+    : outcome === 'Unsuccessful' ? 'danger'
     : selected ? 'primary'
-    : 'grey';
+    : 'neutral';
 
   const next = outcome === 'Successful' ? 'Unsuccessful'
     : outcome === 'Unsuccessful' ? null
@@ -64,7 +64,7 @@ export function OutreachProgramChip({
       >
         <Badge
           tone={tone}
-          size="S"
+          size="sm"
           icon={outcomeIcon || undefined}
           label={label || code}
         />

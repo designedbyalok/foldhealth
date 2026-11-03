@@ -67,7 +67,7 @@ export function DocumentList({
                 {d.meta && <div className={styles.meta}>{d.meta}</div>}
               </div>
             </div>
-            {showStatus && (d.status ? <Badge size="M" variant={d.status.variant} label={d.status.label} /> : <span />)}
+            {showStatus && (d.status ? <Badge size="md" tone={d.status.variant} label={d.status.label} /> : <span />)}
             <div className={styles.actions} onClick={(e) => e.stopPropagation()}>
               {hasMenu && (
                 <ActionButton

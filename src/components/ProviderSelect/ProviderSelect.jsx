@@ -179,8 +179,8 @@ export function ProviderSelect({
               <div className={styles.text}>
                 <div className={styles.nameRow}>
                   <span className={styles.name}>{p.name}</span>
-                  {p.source === 'fold' && <Badge size="S" tone="primary" label="Fold Provider" />}
-                  {p.source === 'ehr' && <Badge size="S" tone="grey" label="EHR Provider" />}
+                  {p.source === 'fold' && <Badge size="sm" tone="primary" label="Fold Provider" />}
+                  {p.source === 'ehr' && <Badge size="sm" label="EHR Provider" />}
                 </div>
                 {p.subtitle && <span className={styles.sub}>{p.subtitle}</span>}
                 {p.contactValue

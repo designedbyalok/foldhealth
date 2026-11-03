@@ -757,7 +757,7 @@ function ThreadItem({ message: m, prev, conversation, attributed = false, canLog
   const label = source
     ? <span className={styles.byline}>{source}<Icon name="solar:arrow-right-linear" size={12} />{(member || loggedFor(m, conversation)).name}</span>
     : unassigned
-      ? <span className={styles.byline}>{shownName}<Badge tone="grey" size="XS" label="Unassigned" /></span>
+      ? <span className={styles.byline}>{shownName}<Badge size="xs" label="Unassigned" /></span>
       : member && own
         ? <span className={styles.byline}>{name}<Icon name="solar:arrow-right-linear" size={12} />{member.name}</span>
         : shownName;

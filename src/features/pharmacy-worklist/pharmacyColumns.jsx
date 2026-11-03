@@ -66,7 +66,7 @@ export const PHARMACY_MIDDLE_COLUMNS = [
     renderCell: perGap((g, m, ctx) => (
       <Tooltip label={MEASURE_NAMES[g.code]} placement="bottom">
         <button type="button" className={styles.gapBadgeButton} onClick={() => ctx.openGap(g.code)} aria-label={`Open ${g.code} (${MEASURE_NAMES[g.code]})`}>
-          <Badge size="M" variant="compliance-na" label={g.code} />
+          <Badge size="md" label={g.code} />
         </button>
       </Tooltip>
     ), viewMoreButton),
@@ -88,10 +88,10 @@ export const PHARMACY_MIDDLE_COLUMNS = [
           aria-haspopup="menu"
           aria-label={`Change ${g.code} status`}
         >
-          <Badge size="S" tone={GAP_STATUS_TONE[g.status.gap] || 'grey'} label={g.status.gap} trailingIconElement={<DownChevronIcon size={12} color="currentColor" />} />
+          <Badge size="sm" tone={GAP_STATUS_TONE[g.status.gap] || 'neutral'} label={g.status.gap} trailingIconElement={<DownChevronIcon size={12} color="currentColor" />} />
         </button>
       ) : (
-        <Badge size="S" tone={GAP_STATUS_TONE[g.status.gap] || 'grey'} label={g.status.gap} />
+        <Badge size="sm" tone={GAP_STATUS_TONE[g.status.gap] || 'neutral'} label={g.status.gap} />
       )
     )),
   },
@@ -234,8 +234,8 @@ export const PHARMACY_MIDDLE_COLUMNS = [
       if (!excluded && !safe) return <Dash />;
       return (
         <span className={styles.stack}>
-          {excluded && <Badge size="S" tone="grey" label={`Excluded · ${excluded}`} />}
-          {safe && <Badge size="S" tone="info" label={`Safe for year · ${safe}`} />}
+          {excluded && <Badge size="sm" label={`Excluded · ${excluded}`} />}
+          {safe && <Badge size="sm" tone="info" label={`Safe for year · ${safe}`} />}
         </span>
       );
     },
@@ -244,7 +244,7 @@ export const PHARMACY_MIDDLE_COLUMNS = [
   {
     key: 'drugInteraction', label: 'Drug Interaction', optional: true,
     renderCell: (m) => ((m.measures || []).some(x => x.drugInteraction)
-      ? <Badge size="S" tone="error" icon="solar:danger-triangle-linear" label="Flagged" />
+      ? <Badge size="sm" tone="danger" icon="solar:danger-triangle-linear" label="Flagged" />
       : <Dash />),
   },
   {

@@ -49,7 +49,7 @@ export function ProgramTaskSection({ title, tasks, onToggle, onTaskClick, hideAs
       ) : (
         <div className={styles.progSectionHead}>
           <span className={styles.progSectionTitle}>{title}</span>
-          <Badge variant="overflow" label={`${tasks.length} ${tasks.length === 1 ? 'task' : 'tasks'}`} />
+          <Badge label={`${tasks.length} ${tasks.length === 1 ? 'task' : 'tasks'}`} />
         </div>
       )}
       {tasks.length === 0 ? (

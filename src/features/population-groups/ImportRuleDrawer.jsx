@@ -90,7 +90,7 @@ export function ImportRuleDrawer({ onClose, onImport }) {
               >
                 <div className={styles.cardHeader}>
                   <span className={styles.cardName}>{t.name}</span>
-                  <Badge tone="grey" size="S" label={`${(t.rule?.rules || []).length} conditions`} />
+                  <Badge size="sm" label={`${(t.rule?.rules || []).length} conditions`} />
                 </div>
                 {t.description && <div className={styles.cardDesc}>{t.description}</div>}
               </button>

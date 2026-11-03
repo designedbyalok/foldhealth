@@ -147,7 +147,7 @@ function CodedTermEditor({ draft, field, onChange, onPatch }) {
       />
       {draft.code && (
         <div className={styles.selectedCode}>
-          <Badge tone="info" size="S" label={draft.code} />
+          <Badge tone="info" size="sm" label={draft.code} />
           <span className={styles.selectedCodeText}>{draft.display}</span>
           <ActionButton
             icon="solar:close-circle-linear"
@@ -179,7 +179,7 @@ function ObservationEditor({ draft, field, onChange, onPatch }) {
       />
       {draft.analyte?.code && (
         <div className={styles.selectedCode}>
-          <Badge tone="info" size="S" label={draft.analyte.code} />
+          <Badge tone="info" size="sm" label={draft.analyte.code} />
           <span className={styles.selectedCodeText}>{draft.analyte.display}</span>
           <ActionButton
             icon="solar:close-circle-linear"
@@ -245,7 +245,7 @@ function EventCountEditor({ draft, field, onChange, onPatch }) {
       />
       {draft.filter?.code && (
         <div className={styles.selectedCode}>
-          <Badge tone="info" size="S" label={draft.filter.code} />
+          <Badge tone="info" size="sm" label={draft.filter.code} />
           <span className={styles.selectedCodeText}>{draft.filter.display}</span>
           <ActionButton
             icon="solar:close-circle-linear"

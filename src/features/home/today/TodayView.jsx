@@ -40,7 +40,7 @@ const PULSE = [
 const LENS = ['All', 'CCM', 'TCM', 'BHI', 'AWV', 'DM'];
 const LENS_TABS = LENS.map((p) => ({ key: p, label: p }));
 
-const RISK_TONE = { High: 'error', Rising: 'warning', Moderate: 'info' };
+const RISK_TONE = { High: 'danger', Rising: 'warning', Moderate: 'info' };
 
 function initials(name) {
   return name.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
@@ -196,7 +196,7 @@ function TodayRow({ item, onSnooze, onOpen, showToast }) {
 
       <td className={styles.programsTd}>
         <div className={styles.programList}>
-          {item.programs.map((p) => <Badge key={p} tone="grey" size="S" label={p} />)}
+          {item.programs.map((p) => <Badge key={p} size="sm" label={p} />)}
         </div>
       </td>
 
@@ -216,7 +216,7 @@ function TodayRow({ item, onSnooze, onOpen, showToast }) {
       </td>
 
       <td className={styles.statusTd}>
-        <Badge tone={RISK_TONE[item.riskTier] || 'grey'} size="M" label={item.riskTier} />
+        <Badge tone={RISK_TONE[item.riskTier] || 'neutral'} size="md" label={item.riskTier} />
       </td>
 
       <td className={`${styles.actionsTd} ${styles.stickyRight}`} onClick={e => e.stopPropagation()}>

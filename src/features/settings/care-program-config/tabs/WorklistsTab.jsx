@@ -121,7 +121,7 @@ export function WorklistsTab({ draft, patch }) {
           <span className={styles.listMuted}>
             {w.assignmentMode === 'care-team' ? 'Care Manager' : (w.assigneeIds.map(nameOf).filter(Boolean).join(', ') || 'No one yet')}
           </span>
-          <span>{w.showInNavigation ? <Badge size="S" tone="success" label="Shown" /> : <Badge size="S" tone="grey" label="Hidden" />}</span>
+          <span>{w.showInNavigation ? <Badge size="sm" tone="success" label="Shown" /> : <Badge size="sm" label="Hidden" />}</span>
           <span className={styles.actionCell}>
             <ActionButton icon="solar:pen-linear" size="sm" tooltip="Edit" onClick={() => setEditing(w)} />
             <ActionButton icon="solar:trash-bin-trash-linear" size="sm" tooltip="Delete" onClick={() => setRemoving(w)} />

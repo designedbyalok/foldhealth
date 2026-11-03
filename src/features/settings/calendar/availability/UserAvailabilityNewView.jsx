@@ -226,7 +226,7 @@ function SlotTable({ outerLabel, innerLabel, rows, withActions }) {
                   </td>
                   <td className={styles.td}>
                     <span className={styles.statusCell}>
-                      <Badge tone={look.tone} size="S" label={look.label} />
+                      <Badge tone={look.tone} size="sm" label={look.label} />
                       <Flags segment={sl} overlaps={g.overlaps?.has(sl.id)} />
                     </span>
                   </td>

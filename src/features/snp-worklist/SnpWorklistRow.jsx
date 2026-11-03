@@ -20,17 +20,17 @@ import { OutreachStatus } from '../../components/OutreachStatus/OutreachStatus';
 import { outreachFromSummary } from '../../components/OutreachStatus/outreachStatusModel';
 
 const PROGRAM_SUB_STATUS_VARIANT = {
-  'New':                  'toc-new',
-  'Engaged':              'toc-engaged',
-  'Declined':             'lace-high',
-  'Unable to Reach':      'priority-high',
-  'Attempted':            'toc-attempted',
-  '2nd Cont. – Fail':     'toc-attempted',
-  'Enrolled':             'toc-enrolled',
-  'Completed':            'toc-enrolled',
-  'Closed - Other':       'toc-new',
-  'Closed - Excluded':    'toc-new',
-  'Closed - Do not call': 'lace-high',
+  'New':                  'neutral',
+  'Engaged':              'info',
+  'Declined':             'danger',
+  'Unable to Reach':      'secondary',
+  'Attempted':            'warning',
+  '2nd Cont. – Fail':     'warning',
+  'Enrolled':             'success',
+  'Completed':            'success',
+  'Closed - Other':       'neutral',
+  'Closed - Excluded':    'neutral',
+  'Closed - Do not call': 'danger',
 };
 
 const PROGRAM_SUB_STATUS_ITEMS = [
@@ -61,11 +61,11 @@ function OutreachCell({ outreach }) {
 }
 
 const TAG_VARIANT_BY_TONE = {
-  grey:  'ai-neutral',
-  blue:  'outreach-appointment',
-  green: 'ai-med',
-  amber: 'outreach-care-gap',
-  red:   'ai-risk',
+  grey:  'neutral',
+  blue:  'info',
+  green: 'success',
+  amber: 'warning',
+  red:   'danger',
 };
 
 function TagCell({ tags, tagsMore }) {
@@ -73,9 +73,9 @@ function TagCell({ tags, tagsMore }) {
   return (
     <span className={styles.tagCell}>
       {tags.map(t => (
-        <Badge size="M"
+        <Badge size="md"
           key={t.label}
-          variant={TAG_VARIANT_BY_TONE[t.tone] || 'ai-neutral'}
+          tone={TAG_VARIANT_BY_TONE[t.tone] || 'neutral'}
           label={t.label}
         />
       ))}
@@ -137,8 +137,8 @@ export const SNP_MIDDLE_COLUMNS = [
           aria-expanded={ctx.showStatusMenu}
         >
           <Badge
-            size="M"
-            variant={PROGRAM_SUB_STATUS_VARIANT[m.programSubStatus] || 'snp-new'}
+            size="md"
+            tone={PROGRAM_SUB_STATUS_VARIANT[m.programSubStatus] || 'neutral'}
             label={m.programSubStatus}
             trailingIconElement={<DownChevronIcon size={13} color="currentColor" />}
           />

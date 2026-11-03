@@ -9,11 +9,11 @@ import { SimpleTableSkeleton } from '../../../../components/SimpleTableSkeleton/
 import { ConfirmDialog } from '../../../../components/ConfirmDialog/ConfirmDialog';
 
 const CATEGORY_BADGE = {
-  General: 'ai-care',
-  Appointments: 'outreach-appointment',
-  Medications: 'ai-med',
-  Labs: 'compliance-warn',
-  Compliance: 'ai-risk',
+  General: 'primary',
+  Appointments: 'info',
+  Medications: 'success',
+  Labs: 'warning',
+  Compliance: 'danger',
 };
 
 const CATEGORIES = ['General', 'Appointments', 'Medications', 'Labs', 'Compliance'];
@@ -122,7 +122,7 @@ function FaqDrawer({ mode, faq, onClose, onSave, saving }) {
           <div style={{ fontWeight: 500, fontSize: 'var(--font-base)', color: 'var(--neutral-500)', marginBottom: 6 }}>{form.question}</div>
           {form.answer.trim() && <div style={{ fontSize: 'var(--font-md)', color: 'var(--neutral-300)', lineHeight: 1.5 }}>{form.answer}</div>}
           <div style={{ marginTop: 10 }}>
-            <Badge variant={CATEGORY_BADGE[form.category] || 'ai-neutral'} label={form.category} />
+            <Badge tone={CATEGORY_BADGE[form.category] || 'neutral'} label={form.category} />
           </div>
         </div>
       )}
@@ -254,7 +254,7 @@ export function KnowledgeBasePanel({ searchQuery = '' }) {
                 <div style={{ fontSize: 'var(--font-sm)', color: 'var(--neutral-200)', lineHeight: 1.4 }}>{faq.answer}</div>
               </td>
               <td style={tdStyle}>
-                <Badge variant={CATEGORY_BADGE[faq.category] || 'ai-neutral'} label={faq.category} />
+                <Badge tone={CATEGORY_BADGE[faq.category] || 'neutral'} label={faq.category} />
               </td>
               <td style={{ ...tdStyle, fontSize: 'var(--font-sm)', color: 'var(--neutral-200)', whiteSpace: 'nowrap' }}>{faq.updatedAt}</td>
               <td style={tdStyle} onClick={e => e.stopPropagation()}>

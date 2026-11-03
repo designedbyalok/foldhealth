@@ -134,7 +134,7 @@ export function TestRunPanel({ test, onConfigChange, onClose, onPublish, isActiv
         <div className={styles.stepTitleRow}>
           <span className={builderStyles.panelHeadingIcon} style={{ color: family.color, background: family.bg }}><Icon name={isTrigger ? 'solar:bolt-linear' : def?.icon} size={16} /></span>
           <span className={styles.stepTitle}>{isTrigger ? def?.label : def?.nodeLabel}</span>
-          {badge && <Badge size="S" tone={badge.tone} label={badge.label} />}
+          {badge && <Badge size="sm" tone={badge.tone} label={badge.label} />}
           {status === 'error' && <Button variant="outline" size="sm" className={styles.continueBtn} onClick={test.skip}>Continue</Button>}
         </div>
       </div>

@@ -74,10 +74,10 @@ export function TemplateGroupsPanel({ tabs, activeTab, onTabChange }) {
         <td className={styles.td}>
           <span className={styles.members}>
             <BadgeRow items={members.map(t => t?.name || 'Deleted template')} maxLines={2} />
-            {retired > 0 && <Badge tone="warning" size="S" label={`${retired} retired`} />}
+            {retired > 0 && <Badge tone="warning" size="sm" label={`${retired} retired`} />}
           </span>
         </td>
-        <td className={styles.td}><Badge tone="grey" size="S" label={`v${g.versionNumber}`} /></td>
+        <td className={styles.td}><Badge size="sm" label={`v${g.versionNumber}`} /></td>
         <td className={`${styles.td} ${styles.nowrap}`}>{fmt(g.updatedAt)}{g.updatedBy ? ` · ${g.updatedBy}` : ''}</td>
         <td className={`${styles.td} ${styles.tdActions}`}>
           <span className={styles.actionCell}>

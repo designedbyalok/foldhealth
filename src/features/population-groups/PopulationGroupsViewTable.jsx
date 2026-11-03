@@ -60,7 +60,7 @@ const POP_COLUMNS = [
     renderCell: (g) => (
       <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         {g.type}
-        {g.status === 'draft' && <Badge tone="warning" size="S" label="Draft" />}
+        {g.status === 'draft' && <Badge tone="warning" size="sm" label="Draft" />}
       </span>
     ),
   },

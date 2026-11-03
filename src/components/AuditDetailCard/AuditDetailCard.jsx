@@ -65,16 +65,16 @@ export function AuditDetailCard({ header, sections, onOpen, openTooltip = 'Open'
                       className={styles.badgeButton}
                       onClick={(e) => { e.stopPropagation(); b.onClick(); }}
                     >
-                      <Badge tone={b.tone || 'grey'} size="S" icon={b.icon} label={b.label} />
+                      <Badge tone={b.tone || 'neutral'} size="sm" icon={b.icon} label={b.label} />
                     </button>
                   )
-                  : <Badge key={bi} tone={b.tone || 'grey'} size="S" icon={b.icon} label={b.label} />
+                  : <Badge key={bi} tone={b.tone || 'neutral'} size="sm" icon={b.icon} label={b.label} />
                 ))}
                 {s.change && (
                   <>
-                    <Badge tone={s.change.fromTone || 'grey'} size="S" label={s.change.from} />
+                    <Badge tone={s.change.fromTone || 'neutral'} size="sm" label={s.change.from} />
                     <Icon name="solar:arrow-right-linear" size={16} color="var(--neutral-200)" />
-                    <Badge tone={s.change.toTone || 'grey'} size="S" label={s.change.to} />
+                    <Badge tone={s.change.toTone || 'neutral'} size="sm" label={s.change.to} />
                   </>
                 )}
               </div>

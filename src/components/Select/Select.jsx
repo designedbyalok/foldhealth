@@ -330,8 +330,7 @@ export function Select({
         const badge = (
           <Badge
             key={o.value}
-            tone="grey"
-            size="S"
+            size="sm"
             className={i === 0 ? styles.badgeShrink : undefined}
             label={i === 0 ? <span className={styles.badgeText}>{o.triggerLabel ?? o.label}</span> : (o.triggerLabel ?? o.label)}
             trailingIconElement={<CloseIcon size={12} color="currentColor" />}
@@ -349,7 +348,7 @@ export function Select({
           label={hiddenBadges.map(o => o.triggerLabel ?? o.label).join(', ')}
           maxWidth={280}
         >
-          <Badge tone="grey" size="S" label={`+${hiddenBadges.length}`} />
+          <Badge size="sm" label={`+${hiddenBadges.length}`} />
         </Tooltip>
       )}
       {/* Hidden mirror of the full set (plus a worst-case "+N") used
@@ -358,13 +357,12 @@ export function Select({
         {selectedMulti.map(o => (
           <Badge
             key={o.value}
-            tone="grey"
-            size="S"
+            size="sm"
             label={o.triggerLabel ?? o.label}
             trailingIconElement={<CloseIcon size={12} color="currentColor" />}
           />
         ))}
-        <Badge tone="grey" size="S" label={`+${selectedMulti.length}`} />
+        <Badge size="sm" label={`+${selectedMulti.length}`} />
       </span>
     </span>
   );

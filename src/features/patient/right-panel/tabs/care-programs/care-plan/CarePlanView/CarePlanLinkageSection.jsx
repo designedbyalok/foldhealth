@@ -14,7 +14,7 @@ const INTV_ICON = 'solar:checklist-minimalistic-linear';
 const BARRIER_ICON = 'solar:signpost-2-linear';
 
 const statusBadge = (status) => (status ? (
-  <Badge tone={GBI_STATUS_TONE[status] || 'grey'} size="S" icon={gbiStatusMeta(status).icon} label={status} />
+  <Badge tone={GBI_STATUS_TONE[status] || 'neutral'} size="sm" icon={gbiStatusMeta(status).icon} label={status} />
 ) : null);
 
 /** "Link to goal": adds a goal to a barrier, or moves an intervention (one goal each). */

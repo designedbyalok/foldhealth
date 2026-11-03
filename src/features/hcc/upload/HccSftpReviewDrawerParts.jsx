@@ -547,7 +547,7 @@ export function PatientCard({ group, hccMembers, encStatus, patchEnc, onAddToWor
           </div>
         </div>
         {anyMissing && (
-          <Badge size="M" variant="status-review" icon="solar:info-circle-bold" label="Missing Field" />
+          <Badge size="md" tone="warning" icon="solar:info-circle-bold" label="Missing Field" />
         )}
         <ActionButton
           size="sm"
@@ -621,7 +621,7 @@ export function StatusBadgeWithTip({ variant, icon, label, reason, tone }) {
     setPos({ left: r.left, top: r.bottom + 6 });
   }, [hover]);
   if (!reason) {
-    return <Badge size="M" variant={variant} icon={icon} label={label} />;
+    return <Badge size="md" tone={variant} icon={icon} label={label} />;
   }
   return (
     <span
@@ -630,7 +630,7 @@ export function StatusBadgeWithTip({ variant, icon, label, reason, tone }) {
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
-      <Badge size="M" variant={variant} icon={icon} label={label} />
+      <Badge size="md" tone={variant} icon={icon} label={label} />
       {hover && createPortal(
         <span
           role="tooltip"
@@ -680,8 +680,8 @@ export function EncounterBlock({ enc, status, isFirst, onPatch, onDelete, onCite
           />
         </button>
         <span className={styles.dosCardTitle}>DOS: {enc.dos || '-'}</span>
-        <Badge size="M"
-          variant={status === 'ready' ? 'status-completed' : status === 'mismatch' ? 'status-review' : 'status-review'}
+        <Badge size="md"
+          tone={status === 'ready' ? 'success' : status === 'mismatch' ? 'warning' : 'warning'}
           icon={status === 'ready' ? 'solar:check-circle-bold' : 'solar:hourglass-line-linear'}
           label={statusLabel}
         />

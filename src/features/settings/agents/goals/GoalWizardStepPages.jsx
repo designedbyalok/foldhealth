@@ -209,7 +209,7 @@ export function GoalWizardStepsStep({
             <div className={s.stepContent}>
               <div className={s.stepNameRow}>
                 <span style={{ fontSize: 'var(--font-base)', fontWeight: 500, color: 'var(--neutral-400)' }}>{st.name}</span>
-                <Badge variant={st.type === 'mandatory' ? 'compliance-pass' : 'status-queued'} label={st.type === 'mandatory' ? 'Required' : 'Optional'} />
+                <Badge tone={st.type === 'mandatory' ? 'success' : 'warning'} label={st.type === 'mandatory' ? 'Required' : 'Optional'} />
                 {weighted && <span className={s.scoreChip}>{st.score}pt</span>}
               </div>
               {st.desc && <div className={s.stepDesc}>{st.desc}</div>}

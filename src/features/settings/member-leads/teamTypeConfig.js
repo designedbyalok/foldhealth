@@ -42,9 +42,9 @@ export const KIND_LABEL = {
 
 // Display string used in the Care Team table's "Created For" badge.
 export const KIND_BADGE_VARIANT = {
-  hcc:            'toc-oncall',
-  'care-program': 'status-scheduled',
-  hedis:          'status-review',
+  hcc:            'primary',
+  'care-program': 'info',
+  hedis:          'warning',
 };
 
 // ── Rich TIN model ──

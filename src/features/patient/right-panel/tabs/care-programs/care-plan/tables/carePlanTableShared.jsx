@@ -369,16 +369,16 @@ export const GoalProgressCell = GbiProgressCell;
 
 export function TrendCell({ trend }) {
   if (!trend || trend === '-') return <span className={styles.trendDash}>-</span>;
-  const tone = trend === '↑' ? 'success' : trend === '↓' ? 'error' : 'grey';
+  const tone = trend === '↑' ? 'success' : trend === '↓' ? 'danger' : 'neutral';
   const icon = trend === '↑'
     ? 'solar:arrow-up-linear'
     : trend === '↓'
       ? 'solar:arrow-down-linear'
       : 'solar:minus-circle-linear';
-  return <Badge tone={tone} size="S" icon={icon} />;
+  return <Badge tone={tone} size="sm" icon={icon} />;
 }
 
-export function GbiStatusButton({ value, reason, disabled, onOpen, badgeSize = 'S' }) {
+export function GbiStatusButton({ value, reason, disabled, onOpen, badgeSize = 'sm' }) {
   const button = (
     <button
       type="button"
@@ -387,7 +387,7 @@ export function GbiStatusButton({ value, reason, disabled, onOpen, badgeSize = '
       onClick={(e) => onOpen?.(e.currentTarget.getBoundingClientRect())}
     >
       <Badge
-        tone={GBI_STATUS_TONE[value] || 'grey'}
+        tone={GBI_STATUS_TONE[value] || 'neutral'}
         size={badgeSize}
         icon={gbiStatusMeta(value).icon}
         label={value}

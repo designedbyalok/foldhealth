@@ -23,7 +23,7 @@ export function FamilyMembers() {
               </span>
             </span>
             {p.member_id === profile.member_id
-              ? <Badge size="S" tone="primary" label="Current" />
+              ? <Badge size="sm" tone="primary" label="Current" />
               : <button type="button" className={styles.link} onClick={() => select(p.member_id)}>Switch</button>}
           </li>
         ))}

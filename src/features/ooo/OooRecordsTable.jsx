@@ -107,7 +107,7 @@ export function OooRecordsTable({ records, showUser = false, oneLineDates = fals
         <td className={styles.td}>{formatDateTime(r.startAt)}</td>
         <td className={styles.td}>{formatDateTime(r.endAt)}</td>
         <td className={styles.td}><TruncatedText text={capFirst(r.reason) || '–'} /></td>
-        <td className={styles.td}><Badge tone={STATUS_TONE[status]} size="S" label={status} /></td>
+        <td className={styles.td}><Badge tone={STATUS_TONE[status]} size="sm" label={status} /></td>
         <td className={styles.td}><StampCell at={r.createdAt} by={r.createdBy} /></td>
         <td className={styles.td}><StampCell at={r.updatedAt || r.createdAt} by={r.updatedBy || r.createdBy} /></td>
         <td className={`${styles.td} ${styles.stickyRight}`}>

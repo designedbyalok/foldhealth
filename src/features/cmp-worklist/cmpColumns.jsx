@@ -7,16 +7,16 @@ import { CmpOutreachCell } from './CmpOutreachCell';
 import styles from './CmpWorklistRow.module.css';
 
 const STATUS_VARIANT = {
-  New: 'awv-new',
-  Open: 'awv-open',
-  Attempted: 'awv-attempted',
-  Engaged: 'awv-engaged',
-  'Engaged - Requires Follow Up': 'awv-engaged-followup',
-  'Unable to Reach': 'awv-unable',
+  New: 'info',
+  Open: 'info',
+  Attempted: 'warning',
+  Engaged: 'success',
+  'Engaged - Requires Follow Up': 'warning',
+  'Unable to Reach': 'neutral',
 };
 const STATUS_MENU = Object.keys(STATUS_VARIANT).map(key => ({ key, label: key }));
 
-const RISK_VARIANT = { Low: 'lace-low', Medium: 'lace-medium', High: 'lace-high' };
+const RISK_VARIANT = { Low: 'success', Medium: 'warning', High: 'danger' };
 
 const CARE_PLAN_LOOK = {
   Signed: { className: styles.carePlanSigned, icon: 'solar:check-circle-linear' },
@@ -76,8 +76,8 @@ export const CMP_MIDDLE_COLUMNS = [
           onClick={(ev) => { ev.stopPropagation(); ctx.setStatusAnchor({ id: e.id, el: ev.currentTarget }); }}
         >
           <Badge
-            size="M"
-            variant={STATUS_VARIANT[e.progSubStatus] || 'awv-new'}
+            size="md"
+            tone={STATUS_VARIANT[e.progSubStatus] || 'info'}
             label={e.progSubStatus}
             trailingIconElement={<DownChevronIcon size={12} color="currentColor" />}
           />
@@ -183,7 +183,7 @@ export const CMP_MIDDLE_COLUMNS = [
     sortKey: 'ri',
     width: 110,
     renderCell: (member) => (
-      member.ri ? <Badge size="M" variant={RISK_VARIANT[member.ri] || 'lace-low'} label={member.ri} /> : '-'
+      member.ri ? <Badge size="md" tone={RISK_VARIANT[member.ri] || 'success'} label={member.ri} /> : '-'
     ),
   },
   {

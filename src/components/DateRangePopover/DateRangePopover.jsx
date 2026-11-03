@@ -245,7 +245,7 @@ function YearBadge({ value, options, onChange }) {
         aria-label={`Year: ${value}`}
         onClick={() => setRect(rect ? null : ref.current?.getBoundingClientRect() ?? null)}
       >
-        <Badge tone="white" size="M" label={value} chevron />
+        <Badge variant="outline" size="md" label={value} chevron />
       </button>
       {rect && (
         <SearchListPopover

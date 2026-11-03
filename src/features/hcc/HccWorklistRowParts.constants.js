@@ -1,4 +1,4 @@
-export const RISK_VARIANT = { High: 'lace-high', Medium: 'lace-medium', Low: 'lace-low' };
+export const RISK_VARIANT = { High: 'danger', Medium: 'warning', Low: 'success' };
 
 // Short display label for the Visit Type column, keeps the underlying value
 // unchanged (filters + data still match the canonical name) while the cell

@@ -17,7 +17,7 @@ function fmtDate(iso) {
 function Copy({ tag, tone, where, who, when, onKeep, onEdit, slot }) {
   return (
     <div className={`${styles.copy} ${tone === 'primary' ? styles.copyNew : styles.copyExisting}`}>
-      <Badge size="S" tone={tone} label={tag} className={styles.tag} />
+      <Badge size="sm" tone={tone} label={tag} className={styles.tag} />
       <span className={styles.where}>
         {[where, who, when].filter(Boolean).join(' · ')}
       </span>

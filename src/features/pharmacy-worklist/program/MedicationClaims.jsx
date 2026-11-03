@@ -13,11 +13,11 @@ import styles from './MedicationClaims.module.css';
 // line never reads as a paid fill.
 const CLAIM_BADGE = {
   Paid: { tone: 'success', icon: 'solar:check-circle-linear' },
-  Pending: { tone: 'grey', icon: 'solar:clock-circle-linear' },
-  Reversed: { tone: 'error', icon: 'solar:undo-left-linear' },
+  Pending: { tone: 'neutral', icon: 'solar:clock-circle-linear' },
+  Reversed: { tone: 'danger', icon: 'solar:undo-left-linear' },
   Cancelled: { tone: 'warning', icon: 'solar:close-circle-linear' },
-  Rejected: { tone: 'error', icon: 'solar:forbidden-circle-linear' },
-  Deleted: { tone: 'grey', icon: 'solar:trash-bin-minimalistic-linear' },
+  Rejected: { tone: 'danger', icon: 'solar:forbidden-circle-linear' },
+  Deleted: { tone: 'neutral', icon: 'solar:trash-bin-minimalistic-linear' },
 };
 // Where a fill confirmed in Fold stands against its claim.
 const MATCH_BADGE = {
@@ -44,30 +44,30 @@ function ClaimStatusBadge({ claim }) {
   if (claim.effect === 'Not Part D') {
     return (
       <Tooltip label="Billed outside Part D: does not count in PDC" placement="bottom">
-        <span><Badge size="S" tone="info" icon="solar:shield-linear" label={`Non–Part D · ${claim.coverage}`} /></span>
+        <span><Badge size="sm" tone="info" icon="solar:shield-linear" label={`Non–Part D · ${claim.coverage}`} /></span>
       </Tooltip>
     );
   }
-  if (claim.effect === 'Superseded') return <Badge size="S" tone="grey" label="Replaced by a newer version" />;
+  if (claim.effect === 'Superseded') return <Badge size="sm" label="Replaced by a newer version" />;
   // A reversal line (a Reversal transaction, or negative values linked to a
   // fill) cancels its fill, whatever status the feed sent with it.
-  if (claim.effect === 'Reversal') return <Badge size="S" tone={CLAIM_BADGE.Reversed.tone} icon={CLAIM_BADGE.Reversed.icon} label="Reversal" />;
+  if (claim.effect === 'Reversal') return <Badge size="sm" tone={CLAIM_BADGE.Reversed.tone} icon={CLAIM_BADGE.Reversed.icon} label="Reversal" />;
   if (claim.effect === 'Invalid') {
     return (
       <Tooltip label="Days supply 0, or a negative value not linked to a fill: held for review and not counted in PDC" placement="bottom">
-        <span><Badge size="S" tone="warning" icon="solar:eye-linear" label="Held for review" /></span>
+        <span><Badge size="sm" tone="warning" icon="solar:eye-linear" label="Held for review" /></span>
       </Tooltip>
     );
   }
   const status = claim.effect === 'Reversed' && claim.claimStatus === 'Paid' ? 'Reversed' : (claim.claimStatus || 'Paid');
   const b = CLAIM_BADGE[status] || CLAIM_BADGE.Paid;
-  return <Badge size="S" tone={b.tone} icon={b.icon} label={status} />;
+  return <Badge size="sm" tone={b.tone} icon={b.icon} label={status} />;
 }
 
 function PendingConfirmation() {
   return (
     <Tooltip label={PENDING_FIELDS} placement="bottom" maxWidth={320}>
-      <span><Badge size="S" tone="warning" icon="solar:info-circle-linear" label="Pending data confirmation" /></span>
+      <span><Badge size="sm" tone="warning" icon="solar:info-circle-linear" label="Pending data confirmation" /></span>
     </Tooltip>
   );
 }
@@ -210,8 +210,8 @@ function FillRow({ f }) {
       </span>
       <span className={styles.claimDate}>{f.date}</span>
       <span className={styles.badges}>
-        {f.match.kind !== 'verified' && <Badge size="S" tone="warning" label="Projected" />}
-        <Badge size="S" tone={b.tone} label={b.label} />
+        {f.match.kind !== 'verified' && <Badge size="sm" tone="warning" label="Projected" />}
+        <Badge size="sm" tone={b.tone} label={b.label} />
       </span>
       <span />
     </div>

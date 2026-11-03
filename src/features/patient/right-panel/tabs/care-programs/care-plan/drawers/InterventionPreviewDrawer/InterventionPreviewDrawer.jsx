@@ -404,8 +404,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
               ))}
               {live.duration && (
                 <Badge
-                  tone="grey"
-                  size="S"
+                  size="sm"
                   icon="solar:clock-circle-linear"
                   label={live.duration}
                   trailingIcon={hasRepeat ? 'solar:refresh-linear' : undefined}
@@ -443,7 +442,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
               />
             </div>
             <Badge
-              size="S"
+              size="sm"
               tone={progressTone(progressBand(pct))}
               label={`${pct}% • ${progressBand(pct)}`}
             />
@@ -497,7 +496,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
                       return (
                         <li key={ymd} className={styles.scheduleRow}>
                           <span className={styles.scheduleDate}>{fmtDate(ymd)}</span>
-                          <Badge size="S" tone={when === 'Due today' ? 'warning' : 'grey'} label={when} />
+                          <Badge size="sm" tone={when === 'Due today' ? 'warning' : 'neutral'} label={when} />
                         </li>
                       );
                     })}

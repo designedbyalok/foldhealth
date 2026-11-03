@@ -56,7 +56,7 @@ export function PatientPortalAccess({ patient, defaultEmail }) {
                   {a.otherMembers > 0 && ` • also manages ${a.otherMembers} other ${a.otherMembers === 1 ? 'patient' : 'patients'}`}
                 </span>
               </div>
-              <Badge size="S" tone={a.lastSignInAt ? 'success' : 'grey'} label={a.lastSignInAt ? 'Active' : 'Invite sent'} />
+              <Badge size="sm" tone={a.lastSignInAt ? 'success' : 'neutral'} label={a.lastSignInAt ? 'Active' : 'Invite sent'} />
               <ActionButton icon="solar:trash-bin-trash-linear" size="sm" tooltip="Remove access" onClick={() => setRemoving(a)} />
             </li>
           ))}

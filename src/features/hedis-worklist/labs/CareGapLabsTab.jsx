@@ -121,7 +121,7 @@ export function CareGapLabsTab({ labs, measureName, onOrderLab, onViewOrder, onR
               <span className={styles.fieldHint}>Tests</span>
               <div className={styles.tagList}>
                 {testsOf(latestOrder).map(t => (
-                  <Badge key={t} tone={rule && t === rule.test ? 'primary' : 'grey'} size="S" label={t} />
+                  <Badge key={t} tone={rule && t === rule.test ? 'primary' : 'neutral'} size="sm" label={t} />
                 ))}
               </div>
             </div>

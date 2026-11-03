@@ -162,21 +162,21 @@ export function IcdDosCard({ icd, currentDos = null, focusKey, onFocusRow, selec
           )}
           <div className={styles.headMeta}>
             <Tooltip label={hccDesc}>
-              <Badge tone="grey" size="S" label={hccLabel} />
+              <Badge size="sm" label={hccLabel} />
             </Tooltip>
 
             {acceptedDos && (
               <Badge
                 tone="success"
-                size="S"
+                size="sm"
                 icon="solar:check-circle-linear"
                 label={`Already Accepted on ${acceptedDos}`}
               />
             )}
             {dismissedDos && (
               <Badge
-                tone="error"
-                size="S"
+                tone="danger"
+                size="sm"
                 icon="solar:close-circle-linear"
                 label={`Already Dismissed on ${dismissedDos}`}
               />
@@ -444,7 +444,7 @@ function DosActionRow({
             </>
           ) : isMissed ? (
             <>
-              <Badge size="S" tone="warning" icon="solar:flag-linear" label="Missed Opportunity" />
+              <Badge size="sm" tone="warning" icon="solar:flag-linear" label="Missed Opportunity" />
               <Tooltip label={canReview ? 'Undo' : (disabledReason || 'Undo')}>
                 <button
                   type="button"

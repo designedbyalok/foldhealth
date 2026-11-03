@@ -26,8 +26,8 @@ function ChangeSummary({ diff }) {
   return (
     <ul className={styles.changes}>
       {Object.entries(KIND_LABEL).flatMap(([kind, label]) => [
-        ...diff[kind].added.map(x => <li key={`${kind}+${x.title}`}><Badge tone="success" size="S" label="Added" /><span>{x.title}</span><span className={styles.muted}>{label.slice(0, -1)}</span></li>),
-        ...diff[kind].removed.map(x => <li key={`${kind}-${x.title}`}><Badge tone="grey" size="S" label="Removed" /><span>{x.title}</span><span className={styles.muted}>{label.slice(0, -1)}</span></li>),
+        ...diff[kind].added.map(x => <li key={`${kind}+${x.title}`}><Badge tone="success" size="sm" label="Added" /><span>{x.title}</span><span className={styles.muted}>{label.slice(0, -1)}</span></li>),
+        ...diff[kind].removed.map(x => <li key={`${kind}-${x.title}`}><Badge size="sm" label="Removed" /><span>{x.title}</span><span className={styles.muted}>{label.slice(0, -1)}</span></li>),
       ])}
     </ul>
   );

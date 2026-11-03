@@ -45,7 +45,7 @@ function Joined({ items }) {
 }
 
 function More({ count }) {
-  return count > 0 ? <Badge tone="grey" size="XS" label={`+${count}`} /> : null;
+  return count > 0 ? <Badge size="xs" label={`+${count}`} /> : null;
 }
 
 function InfoRow({ icon, label, children }) {
@@ -151,7 +151,7 @@ function PersonRow({ initials, variant, name, tag, sub }) {
     <div className={styles.personRow}>
       <Avatar variant={variant} size="S" initials={initials} />
       <div className={styles.personText}>
-        <span className={styles.personName}>{name}{tag && <Badge tone="grey" size="XS" label={tag} />}</span>
+        <span className={styles.personName}>{name}{tag && <Badge size="xs" label={tag} />}</span>
         <span className={styles.personRole}>{sub}</span>
       </div>
     </div>

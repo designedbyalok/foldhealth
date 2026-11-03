@@ -152,7 +152,7 @@ export function AutomationAnalytics({ id }) {
         <div className={styles.titleRow}>
           <ActionButton icon="solar:arrow-left-linear" tooltip="Back to automations" aria-label="Back to automations" onClick={() => openAutomationsList()} />
           <h1 className={styles.title}>{automation.name}</h1>
-          <Badge tone={status.tone} size="S" label={status.label} />
+          <Badge tone={status.tone} size="sm" label={status.label} />
           <div className={styles.headerActions}>
             <Toggle items={VIEW_ITEMS} active={tab} onChange={k => openAutomationAnalytics(id, k)} />
             <span className={styles.headerDivider} aria-hidden />

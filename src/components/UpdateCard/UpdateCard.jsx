@@ -38,7 +38,7 @@ export function UpdateCard({
       <div className={styles.body}>
         <div className={styles.titleRow}>
           <h2 className={styles.title}>{title}</h2>
-          {tag && <Badge tone="primary" size="S" label={tag} />}
+          {tag && <Badge tone="primary" size="sm" label={tag} />}
         </div>
         {description && <p className={styles.description}>{description}</p>}
         {highlights.length > 0 && (

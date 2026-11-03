@@ -1265,7 +1265,7 @@ export function MedicationReconciliation({ programCode } = {}) {
                 <div className={styles.medCardNameRow}>
                   <span className={styles.medCardName}>{m.name}</span>
                   {m.source === 'discharge_import' && !viewedNewMedIds.includes(m.id) && (
-                    <Badge tone="primary" size="S" label="New" />
+                    <Badge tone="primary" size="sm" label="New" />
                   )}
                 </div>
                 <div className={styles.medCardMeta}>

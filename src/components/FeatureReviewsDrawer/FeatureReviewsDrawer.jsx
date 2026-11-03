@@ -454,25 +454,25 @@ function signedOn(item, childItems) {
 }
 
 function ReviewStatus({ item, childItems }) {
-  if (item.status === 'suggested') return <Badge tone="primary" size="S" label="Suggested" />;
+  if (item.status === 'suggested') return <Badge tone="primary" size="sm" label="Suggested" />;
   if (isDone(item, childItems)) {
     const at = signedOn(item, childItems);
     return (
       <div className={styles.statusCell}>
-        <Badge tone="success" size="S" icon="solar:check-circle-linear" label="Signed" />
+        <Badge tone="success" size="sm" icon="solar:check-circle-linear" label="Signed" />
         {at && <time className={styles.signedOn} dateTime={at} title={fmt(at)}>{SHORT_FMT.format(new Date(at))}</time>}
       </div>
     );
   }
   if (childItems.length && item.reviewers.every(r => r.signedAt)) {
     const kidsDone = childItems.filter(c => isDone(c, [])).length;
-    return <Badge tone="grey" size="S" label={`${kidsDone}/${childItems.length} sub-items`} />;
+    return <Badge size="sm" label={`${kidsDone}/${childItems.length} sub-items`} />;
   }
   if (item.reviewers.length > 1) {
     const signed = item.reviewers.filter(r => r.signedAt).length;
-    return <Badge tone="warning" size="S" label={`${signed}/${item.reviewers.length} signed`} />;
+    return <Badge tone="warning" size="sm" label={`${signed}/${item.reviewers.length} signed`} />;
   }
-  return <Badge tone="warning" size="S" label="Pending" />;
+  return <Badge tone="warning" size="sm" label="Pending" />;
 }
 
 function ReviewRow({
@@ -587,7 +587,7 @@ function ReviewRow({
             </span>
             {reviewing && (
               <span className={styles.reviewingBadge}>
-                <Badge tone="primary" size="S" icon="solar:pen-new-square-linear" label="Reviewing" />
+                <Badge tone="primary" size="sm" icon="solar:pen-new-square-linear" label="Reviewing" />
               </span>
             )}
           </button>

@@ -75,7 +75,7 @@ export function KanbanCardContent({ task, onToggle }) {
         {labels.length > 0 && (
           <div className={styles.cardLabels}>
             {labels.map(l => (
-              <Badge key={l} variant="overflow" label={l} />
+              <Badge key={l} label={l} />
             ))}
           </div>
         )}
@@ -203,7 +203,7 @@ function DroppableKanbanColumn({ groupKey, label, tasks, onToggle, onTaskClick }
         <div className={styles.kanbanColumnTitle}>
           <div className={styles.kanbanStatusDot} style={{ background: `var(--status-${groupKey}, var(--neutral-200))` }} />
           <span className={styles.kanbanStatusLabel}>{label}</span>
-          <Badge variant="ai-neutral" label={tasks.length.toString()} />
+          <Badge label={tasks.length.toString()} />
         </div>
         <div className={styles.kanbanColumnActions}>
           <span className={styles.kanbanSort}>Due Date</span>

@@ -214,7 +214,7 @@ export function AddTaskDrawerBody({
       <span className={styles.detailLabel}>Labels</span>
       <div className={styles.detailValueLabels}>
         {selectedLabels.map(l => (
-          <Badge key={l} variant="overflow" label={l} trailingIcon="solar:close-circle-linear" onClick={() => toggleLabel(l)} />
+          <Badge key={l} label={l} trailingIcon="solar:close-circle-linear" onClick={() => toggleLabel(l)} />
         ))}
         <CreatableLabelDropdown selectedLabels={selectedLabels} onToggle={toggleLabel} />
       </div>
@@ -483,7 +483,7 @@ export function AddTaskDrawerBody({
                 aria-expanded={creationTimingOpen}
                 onClick={() => setCreationTimingOpen(v => !v)}
               >
-                <Badge tone="white" size="M" label="immediate" chevron />
+                <Badge variant="outline" size="md" label="immediate" chevron />
               </button>
             ) : (
               <Input
@@ -551,7 +551,7 @@ export function AddTaskDrawerBody({
               aria-expanded={creationTriggerOpen}
               onClick={() => setCreationTriggerOpen(v => !v)}
             >
-              <Badge tone="white" size="M" label={creationTrigger} chevron />
+              <Badge variant="outline" size="md" label={creationTrigger} chevron />
             </button>
             {creationTriggerOpen && (
               <MenuPopover
