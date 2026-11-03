@@ -128,8 +128,12 @@ function RowMenu({ onSelect, hasBlocks, items }) {
  * time ranges with their appointment types). Active blocks lead; the rest
  * fold under "Show N More". Filters open from the icon beside search. Users
  * without their own availability take their locations' practice hours.
+ *
+ * `embedded` shows just the Week view, without the settings title bar, for
+ * the Calendar's Available Slots layout, on the week of `weekOf` (ISO day),
+ * or just the day `onlyDay`.
  */
-export function UserAvailabilityTab({ tabs, activeTab, onTabChange }) {
+export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = false, weekOf, onlyDay }) {
   const platformUsers = useAppStore(s => s.platformUsers);
   const taskProfiles = useAppStore(s => s.taskProfiles);
   const usersFetched = useAppStore(s => s.platformUsersDidFetch);
@@ -141,7 +145,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange }) {
 
   const [query, setQuery] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [layout, setLayout] = useState('list');
+  const [layout, setLayout] = useState(embedded ? 'week' : 'list');
   const [fLocations, setFLocations] = useState([]);
   const [fStatuses, setFStatuses] = useState(DEFAULT_STATUSES);
   const [fTypes, setFTypes] = useState([]);
@@ -537,8 +541,8 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange }) {
 
   return (
     <div className={styles.wrapper}>
-      <SectionTitleBar tabs={tabs} activeTab={activeTab} onTabChange={onTabChange} actions={[]} rightExtras={tools} />
-      {showNotice && (
+      {!embedded && <SectionTitleBar tabs={tabs} activeTab={activeTab} onTabChange={onTabChange} actions={[]} rightExtras={tools} />}
+      {showNotice && !embedded && (
         <div className={styles.notice}>
           <InfoBar variant="inline" onClose={dismissNotice} className={styles.noticeBar}>
             Availability updates may take a few minutes to process. You can continue using Fold while processing completes. We'll notify you once the provider's availability has been updated successfully.
@@ -598,6 +602,8 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange }) {
       {layout === 'week' ? (
         <UserAvailabilityNewView
           view="week"
+          weekOf={embedded ? weekOf : undefined}
+          onlyDay={embedded ? onlyDay : undefined}
           users={users}
           loading={!usersFetched || !blocksFetched}
           onEdit={(u, focusId) => setEditing({ user: u, focusId })}

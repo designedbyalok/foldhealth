@@ -17,8 +17,9 @@ import styles from './BadgeSelect.module.css';
  * @param {'left'|'right'} [props.align='right'] – which edge of the menu meets the badge
  * @param {string}   [props.tone]            – Badge tone (overrides `variant`), e.g. a status colour
  * @param {'XS'|'S'|'M'|'L'} [props.size]    – Badge size
+ * @param {boolean}  [props.disabled]        – greys the badge out (chevron kept); it doesn't open
  */
-export function BadgeSelect({ label, value, options, onChange, variant = 'toc-new', align = 'right', tone, size }) {
+export function BadgeSelect({ label, value, options, onChange, variant = 'toc-new', align = 'right', tone, size, disabled = false }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const text = label ? `${label}: ${value}` : value;
@@ -31,12 +32,13 @@ export function BadgeSelect({ label, value, options, onChange, variant = 'toc-ne
         className={styles.trigger}
         aria-haspopup="menu"
         aria-expanded={open}
+        disabled={disabled}
         aria-label={label ? `${label}: ${value}` : `Change ${value}`}
         onClick={() => setOpen(v => !v)}
       >
-        <Badge variant={tone ? undefined : variant} tone={tone} size={size} label={text} trailingIcon="solar:alt-arrow-down-linear" />
+        <Badge variant={tone || disabled ? undefined : variant} tone={disabled ? 'disabled' : tone} size={size} label={text} trailingIcon="solar:alt-arrow-down-linear" />
       </button>
-      {open && (
+      {open && !disabled && (
         <MenuPopover
           anchorRef={ref}
           align={align}

@@ -13,7 +13,7 @@ import { VitalsLabsTab } from '../tabs/vitals-labs/VitalsLabsTab/VitalsLabsTab.j
 import { CommsTab } from '../tabs/comms/CommsTab/CommsTab.jsx';
 import { OutreachTab } from '../tabs/outreach/OutreachTab/OutreachTab.jsx';
 import { SummaryTab } from '../tabs/summary/SummaryTab/SummaryTab.jsx';
-import { TasksTab } from '../tabs/tasks/TasksTab/TasksTab.jsx';
+import { PatientTasksTab } from '../tabs/tasks/PatientTasksTab/PatientTasksTab.jsx';
 import { ProfileTab } from '../tabs/profile/ProfileTab/ProfileTab.jsx';
 import { CrmTab } from '../tabs/crm/CrmTab/CrmTab.jsx';
 import { CARE_GAP_SECTIONS_EXTENDED, CARE_GAP_TABS, CARE_GAP_TABS_DRAWER } from '../../data/careGapsMock';
@@ -354,7 +354,7 @@ export function PatientProfileTabs({
 
         {/* Tasks and Profile show here only in the QuickView drawer; on the
             full page they live in the right panel. */}
-        {currentTab === 'Tasks' && <TasksTab />}
+        {currentTab === 'Tasks' && <PatientTasksTab patient={patient} />}
 
         {currentTab === 'CRM' && <CrmTab patientId={patientId} />}
 

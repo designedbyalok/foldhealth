@@ -9,7 +9,7 @@ import { holidaysAt, holidaysForUser } from '../holidays/holidayUtils';
 import { useCalendarView } from './useCalendarView';
 import { useAppStore } from '../../store/useAppStore';
 import { CalendarOooLayer } from '../ooo/CalendarOooLayer';
-import { CalendarAvailabilityLayer } from './CalendarAvailabilityLayer';
+import { UserAvailabilityTab } from '../settings/calendar/availability/UserAvailabilityTab';
 import { AppointmentListView } from './list/AppointmentListView';
 import { OooAllRecordsDrawer } from '../ooo/OooRecordsDrawers';
 import { apptPerson, personKey, recordPerson, recordsOnDate, samePerson } from '../ooo/oooUtils';
@@ -29,9 +29,12 @@ export function CalendarView() {
   useEffect(() => { editOooRef.current = oooActions.openEdit; });
   const showToast = useAppStore(s => s.showToast);
   const isList = calendar.layout === 'list';
-  const isDay = !isList && calendar.currentView === 'day';
-  const isMonth = !isList && calendar.currentView === 'month-grid';
-  const isWeek = !isList && calendar.currentView === 'week';
+  // Available Slots: everyone's availability for the week, as in Settings.
+  const isAvailability = calendar.layout === 'availability';
+  const isGrid = !isList && !isAvailability;
+  const isDay = isGrid && calendar.currentView === 'day';
+  const isMonth = isGrid && calendar.currentView === 'month-grid';
+  const isWeek = isGrid && calendar.currentView === 'week';
   // Week and a one-user Month show that user's OOO time on the grid; Day
   // draws its own per-user columns.
   // { id, name }, kept stable while the same person is in view.
@@ -49,8 +52,14 @@ export function CalendarView() {
   const platformUsers = useAppStore(s => (s.platformPeople?.length ? s.platformPeople : s.platformUsers));
   useEffect(() => { fetchHolidayConfigs(); }, [fetchHolidayConfigs]);
   const [showHolidays, setShowHolidays] = useState(false);
-  // "Show available slots": shade what the user in view can't be booked for.
-  const showAvailable = calendar.layout === 'availability';
+  // List view search: member, appointment type, reason, location or provider.
+  const [listQuery, setListQuery] = useState('');
+  const listAppointments = useMemo(() => {
+    const q = listQuery.trim().toLowerCase();
+    if (!q) return calendar.filteredAppointments;
+    return calendar.filteredAppointments.filter(a => [a.patient_name, a.appointment_type_name, a.reason_for_visit, a.location, a.primary_user]
+      .some(v => String(v || '').toLowerCase().includes(q)));
+  }, [calendar.filteredAppointments, listQuery]);
   // List view: all provider groups open or closed.
   const [listGroups, setListGroups] = useState('expanded');
 
@@ -86,9 +95,6 @@ export function CalendarView() {
     return () => { clearTimeout(dateTimer); clearTimeout(fade); };
   }, [calendarFocus]); // eslint-disable-line react-hooks/exhaustive-deps
   /* eslint-enable react-hooks/set-state-in-effect */
-  const segments = useAppStore(s => s.userAvailability);
-  const fetchUserAvailability = useAppStore(s => s.fetchUserAvailability);
-  useEffect(() => { if (showAvailable) fetchUserAvailability?.(); }, [showAvailable, fetchUserAvailability]);
   const scopedHolidays = useMemo(() => {
     if (focusUser) return holidaysForUser(holidayConfigs, platformUsers, focusUser, calendar.filterLocation);
     if (calendar.filterLocation.length) return holidaysAt(holidayConfigs, calendar.filterLocation);
@@ -124,7 +130,11 @@ export function CalendarView() {
         currentView={calendar.currentView}
         onViewChange={calendar.handleViewChange}
         layout={calendar.layout}
-        onLayoutChange={calendar.setLayout}
+        onLayoutChange={(next) => {
+          // Available Slots has a Week and a Day; from Month it opens on the week.
+          if (next === 'availability' && calendar.currentView === 'month-grid') calendar.handleViewChange('week');
+          calendar.setLayout(next);
+        }}
         listGroups={listGroups}
         onListGroupsChange={setListGroups}
         onPrev={calendar.handlePrev}
@@ -142,6 +152,8 @@ export function CalendarView() {
         onOpenOoo={() => setOooAll({})}
         onOpenHolidays={() => setShowHolidays(true)}
         onRefresh={() => calendar.fetchAppointments({ force: true })}
+        search={listQuery}
+        onSearchChange={setListQuery}
         onScheduleSelect={(key) => {
           if (key === 'appointment') {
             setDayProvider(null);
@@ -183,9 +195,10 @@ export function CalendarView() {
           onBlocked={showToast}
         />
       )}
+      {isAvailability && <UserAvailabilityTab embedded weekOf={calendar.selectedDate} onlyDay={calendar.currentView === 'day' ? calendar.selectedDate : undefined} />}
       {isList && (
         <AppointmentListView
-          appointments={calendar.filteredAppointments}
+          appointments={listAppointments}
           view={calendar.currentView}
           selectedDate={calendar.selectedDate}
           users={calendar.users}
@@ -232,14 +245,6 @@ export function CalendarView() {
           eventsPluginRef={calendar.eventsPluginRef}
           dbAppointments={calendar.filteredAppointments}
         />
-        {calendar.currentView === 'week' && showAvailable && (
-          <CalendarAvailabilityLayer
-            focusUser={focusUser}
-            segments={segments}
-            holidays={scopedHolidays}
-            renderTick={`${calendar.renderTick}-${calendar.filteredAppointments.length}`}
-          />
-        )}
         {calendar.currentView === 'week' && (
           <CalendarOooLayer
             focusUser={focusUser}

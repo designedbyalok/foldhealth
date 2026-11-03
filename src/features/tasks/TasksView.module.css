@@ -43,6 +43,7 @@
 .progSection { display: flex; flex-direction: column; margin-bottom: 16px; }
 .progSectionHead { display: flex; align-items: center; gap: 8px; padding: 8px 12px 6px; }
 .progSectionTitle { font-size: var(--font-base); font-weight: 500; color: var(--neutral-400); }
+.progSectionHeadPlain { padding: var(--space-2) var(--space-1); font-size: var(--font-base); font-weight: 500; line-height: 1.2; color: var(--neutral-500); }
 .progEmpty {
   display: flex;
   flex-direction: column;
@@ -1975,22 +1976,14 @@
   justify-content: center;
 }
 
+/* Row ••• (shared ActionButton): hidden until the row is hovered or it has focus / its menu is open. */
 .actionMenuBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  border: none;
-  background: none;
-  cursor: pointer;
   opacity: 0;
-  transition: opacity .15s, background .15s;
+  transition: opacity .15s;
 }
 .taskRow:hover .actionMenuBtn,
-.actionMenuBtn:focus { opacity: 1; }
-.actionMenuBtn:hover { background: var(--neutral-100); }
+.actionMenuBtn:focus-visible,
+.actionMenuBtnOpen { opacity: 1; }
 
 .actionMenuDropdown {
   background: var(--neutral-0);

@@ -35,19 +35,21 @@ export const createPatientOrdersSlice = (set, get) => {
     createPatientReferral: async (patientId, values) => {
       if (!patientId) return false;
       const id = crypto.randomUUID();
-      const attachments = values.file ? [await uploadPatientReferralAttachment(patientId, id, values.file)] : [];
+      // `files` are new uploads; `docs` are the patient's Documents picked in
+      // the form, kept by reference.
+      const uploaded = await Promise.all((values.files || []).map(f => uploadPatientReferralAttachment(patientId, id, f)));
       const referral = {
         id,
         patientId: String(patientId),
-        referredByName: values.referredBy || get().currentActorName(),
-        referredBySpecialty: '',
-        referredToName: values.referredTo,
-        referredToSpecialty: values.specialty,
+        referredByName: get().currentActorName(),
+        referredBySpecialty: values.referredBySpecialty || '',
+        referredToName: values.providerName,
+        referredToSpecialty: values.providerSpecialty,
         status: values.status,
         reason: values.reason,
-        priority: values.priority,
-        note: '',
-        attachments,
+        priority: 'Routine',
+        note: values.note || '',
+        attachments: [...uploaded, ...(values.docs || [])],
         createdAt: new Date().toISOString(),
       };
       return insertOptimistic({

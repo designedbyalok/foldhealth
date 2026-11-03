@@ -6,6 +6,7 @@ import { Badge } from '../../../components/Badge/Badge';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { MenuPopover } from '../../../components/MenuPopover/MenuPopover';
+import { InfoBar } from '../../../components/InfoBar/InfoBar';
 import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
 import { toast } from '../../../components/Toast/sonnerToast';
 import { useAppStore } from '../../../store/useAppStore';
@@ -13,6 +14,9 @@ import { PersonOption } from '../../messages/comms/PersonOption';
 import { usePatientCareTeam } from './usePatientCareTeam';
 import { CARE_TEAM_ROLES } from './careTeamRoles';
 import styles from './CareTeamDrawer.module.css';
+
+// Roles only one current member can hold; a new holder sends the old one to Historical.
+const SINGLE_HOLDER_ROLES = ['Plan PCP'];
 
 const initialsOf = (name) => String(name || '').replace(/^Dr\.?\s+/i, '').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
 const keyOf = (m) => m.id || `${m.userId || m.name}|${m.role || ''}`;
@@ -59,6 +63,8 @@ export function CareTeamDrawer({ patient, onClose }) {
   // Remounting the user search clears it after each pick.
   const [pickerKey, setPickerKey] = useState(0);
 
+  const singleHolder = SINGLE_HOLDER_ROLES.includes(role) ? current.find(m => m.role === role) : null;
+
   // Someone already holding the picked role isn't offered again for it.
   const holders = new Set(current.filter(m => m.role === role).map(m => m.userId || m.name));
   const userOptions = people
@@ -73,7 +79,11 @@ export function CareTeamDrawer({ patient, onClose }) {
   const addUser = (id) => {
     const u = people.find(x => String(x.id) === id);
     if (!u) return;
-    setCurrent(list => [...list, { id: `ct-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`, userId: String(u.id), name: u.name, initials: u.initials || initialsOf(u.name), role, title: (u.clinicalRoles || [])[0] || '' }]);
+    if (SINGLE_HOLDER_ROLES.includes(role)) {
+      const displaced = current.filter(m => m.role === role);
+      setHistory(list => [...displaced, ...list]);
+    }
+    setCurrent(list => [...list.filter(m => !SINGLE_HOLDER_ROLES.includes(role) || m.role !== role), { id: `ct-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`, userId: String(u.id), name: u.name, initials: u.initials || initialsOf(u.name), role, title: (u.clinicalRoles || [])[0] || '' }]);
     setRole('');
     setPickerKey(k => k + 1);
     setDirty(true);
@@ -84,8 +94,9 @@ export function CareTeamDrawer({ patient, onClose }) {
     setDirty(true);
   };
   const restore = (m) => {
-    setHistory(list => list.filter(x => keyOf(x) !== keyOf(m)));
-    setCurrent(list => [...list, m]);
+    const displaced = SINGLE_HOLDER_ROLES.includes(m.role) ? current.filter(x => x.role === m.role) : [];
+    setHistory(list => [...displaced, ...list.filter(x => keyOf(x) !== keyOf(m))]);
+    setCurrent(list => [...list.filter(x => !displaced.includes(x)), m]);
     setDirty(true);
   };
   const remove = (m, historical) => {
@@ -133,6 +144,11 @@ export function CareTeamDrawer({ patient, onClose }) {
             searchPlaceholder="Search by name or role"
             emptyText="No users match"
           />
+          {singleHolder && (
+            <InfoBar variant="inline" tone="warning">
+              {singleHolder.name} is the current {role}. Adding someone else moves them to Historical Care Team Members.
+            </InfoBar>
+          )}
         </div>
 
         <section className={styles.section}>
@@ -141,13 +157,13 @@ export function CareTeamDrawer({ patient, onClose }) {
             ? <div className={styles.empty}><span className={styles.loadingText}>Loading care team…</span></div>
             : current.length === 0
             ? <div className={styles.empty}><RingEmptyState size="S" icon="solar:users-group-rounded-linear" label="No care team members yet" /></div>
-            : current.map(m => <MemberRow key={keyOf(m)} member={m} onMenu={rect => setMenu({ member: m, historical: false, rect })} />)}
+            : <div className={styles.list}>{current.map(m => <MemberRow key={keyOf(m)} member={m} onMenu={rect => setMenu({ member: m, historical: false, rect })} />)}</div>}
         </section>
 
         {history.length > 0 && (
           <section className={styles.section}>
             <h3 className={`${styles.sectionTitle} ${styles.sectionTitleMuted}`}>Historical Care Team Members</h3>
-            {history.map(m => <MemberRow key={keyOf(m)} member={m} historical onMenu={rect => setMenu({ member: m, historical: true, rect })} />)}
+            <div className={styles.list}>{history.map(m => <MemberRow key={keyOf(m)} member={m} historical onMenu={rect => setMenu({ member: m, historical: true, rect })} />)}</div>
           </section>
         )}
       </div>

@@ -17,7 +17,7 @@ import { OrdersReferralsTab } from './right-panel/tabs/orders-referrals/OrdersRe
 import { ClinicalNotePreviewDrawer } from '../tasks/ClinicalNotePreviewDrawer';
 import { ClinicalNotePanel } from '../hedis-worklist/ClinicalNotePanel';
 import { ProfileTab } from './left-panel/tabs/profile/ProfileTab/ProfileTab';
-import { TasksTab } from './left-panel/tabs/tasks/TasksTab/TasksTab';
+import { PatientTasksTab } from './left-panel/tabs/tasks/PatientTasksTab/PatientTasksTab';
 import { CcmTimerWidget } from './shell/CcmTimerWidget/CcmTimerWidget';
 import { CcmTimerDockProvider } from './shell/CcmTimerWidget/CcmTimerDockContext';
 import { PatientBreadcrumb } from './shell/PatientBreadcrumb/PatientBreadcrumb';
@@ -362,7 +362,7 @@ export function PatientDetailView() {
         : tab === 'Orders & Referrals' ? <OrdersReferralsTab patient={patientWithAppStatus} />
           : tab === 'Care Management' ? <CareManagementView />
             : tab === 'Profile' ? <ProfileTab patient={patientWithAppStatus} />
-              : tab === 'Tasks' ? <TasksTab />
+              : tab === 'Tasks' ? <PatientTasksTab patient={patientWithAppStatus} />
                 : <TabPlaceholder tabName={tab} />
   );
 

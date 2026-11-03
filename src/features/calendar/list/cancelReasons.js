@@ -1,6 +1,6 @@
 /**
  * Why appointments are cancelled (VBC-25651, Figma 3023:575134), in the
- * order the Cancel Appointments dialog lists them. The table
+ * order the Cancel Appointments drawer lists them. The table
  * appointment_cancel_reasons holds the practice's list; this is the
  * fallback until it exists, and what the seed writes.
  */

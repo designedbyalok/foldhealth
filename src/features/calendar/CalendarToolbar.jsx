@@ -6,6 +6,7 @@ import { Button } from '../../components/Button/Button';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
 import { Toggle } from '../../components/Toggle/Toggle';
 import { Select } from '../../components/Select/Select';
+import { SearchBar } from '../../components/SearchBar/SearchBar';
 // Locations and statuses come from the ScheduleDrawer constants, the booking
 // form is what writes these values, so sourcing the filter options from the
 // same place keeps every chip option matchable against real rows.
@@ -95,7 +96,16 @@ export function CalendarToolbar({
   onOpenOoo,
   onOpenHolidays,
   onRefresh,
+  search = '',
+  onSearchChange,
 }) {
+  const [searchOpen, setSearchOpen] = useState(false);
+  // Closing plays the search box shrinking back into the icon, then swaps.
+  const [searchClosing, setSearchClosing] = useState(false);
+  const closeSearch = () => {
+    setSearchClosing(true);
+    setTimeout(() => { setSearchOpen(false); setSearchClosing(false); onSearchChange?.(''); }, 200);
+  };
   // People by id; the chip speaks labels (a name, plus email when shared).
   const userOptions = useMemo(() => peopleOptions(users), [users]);
   const labelOf = useMemo(() => new Map(userOptions.map(o => [o.value, o.label])), [userOptions]);
@@ -164,7 +174,8 @@ export function CalendarToolbar({
             <ActionButton icon="solar:alt-arrow-right-linear" tooltip="Next" onClick={onNext} />
           </div>
           <Select
-            options={VIEWS.map(v => ({ value: v, label: VIEW_LABELS[v] }))}
+            // Available Slots has a Week and a Day, no Month.
+            options={VIEWS.filter(v => layout !== 'availability' || v !== 'month-grid').map(v => ({ value: v, label: VIEW_LABELS[v] }))}
             value={currentView}
             onChange={onViewChange}
             className={styles.viewSelect}
@@ -184,9 +195,8 @@ export function CalendarToolbar({
             Schedule
           </Button>
           {divider}
-          {/* Available slots shade the Week and Day grids; Month has none. */}
           <Toggle
-            items={LAYOUTS.filter(l => l.key !== 'availability' || currentView !== 'month-grid').map(l => ({ key: l.key, icon: l.icon, ariaLabel: l.tip }))}
+            items={LAYOUTS.map(l => ({ key: l.key, icon: l.icon, ariaLabel: l.tip }))}
             active={layout}
             onChange={onLayoutChange}
             size="S"
@@ -199,8 +209,18 @@ export function CalendarToolbar({
           )}
           {divider}
           <div className={styles.toolGroup}>
-            {/* Search isn't wired up yet. */}
-            <ActionButton icon="solar:magnifer-linear" tooltip="Search" />
+            {/* Search narrows the List view; the grids don't search yet. */}
+            {layout === 'list' && searchOpen ? (
+              <SearchBar
+                className={`${styles.listSearch} ${searchClosing ? styles.listSearchClosing : ''}`}
+                placeholder="Search appointments"
+                value={search}
+                onChange={e => onSearchChange?.(e.target.value)}
+                onClose={closeSearch}
+              />
+            ) : (
+              <ActionButton icon="solar:magnifer-linear" tooltip="Search" onClick={layout === 'list' ? () => setSearchOpen(true) : undefined} />
+            )}
             {divider}
             <ActionButton
               icon="custom:filter"
