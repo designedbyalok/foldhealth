@@ -2054,6 +2054,73 @@ async function main() {
       : `  ✓ caregap_whitelist (${CAREGAP_WHITELIST_MOCK.length})`);
   }
 
+  // ── GBI status changes with reasons (demo, #62) ──
+  // A few status changes on Annette Brave's (11089) SNP care plan, each with
+  // the reason and note the status dialog asks for: the items' current status
+  // and reason, the History entries, and gbi_status_history rows. Needs
+  // gbi_status_history_migration.sql (and gbi_status_reason_migration.sql for
+  // the reason on the item).
+  console.log('\nSeeding GBI status changes with reasons (demo)...');
+  {
+    const patientId = '11089';
+    const { data: prog } = await supabase.from('patient_care_programs')
+      .select('id, code').eq('patient_id', patientId).eq('code', 'SNP').limit(1).maybeSingle();
+    const { data: plan } = prog
+      ? await supabase.from('patient_care_plans').select('id').eq('patient_id', patientId).eq('program_id', prog.id).maybeSingle()
+      : { data: null };
+    if (!plan) {
+      console.log('  ⚠ no SNP care plan for 11089: skipped');
+    } else {
+      const TABLE = { goal: 'patient_care_plan_goals', intervention: 'patient_care_plan_interventions', barrier: 'patient_care_plan_barriers' };
+      const items = {};
+      for (const [kind, table] of Object.entries(TABLE)) {
+        const { data } = await supabase.from(table).select('id, title, status').eq('plan_id', plan.id);
+        items[kind] = data || [];
+      }
+      const daysAgo = n => new Date(Date.now() - n * 86400000).toISOString();
+      // Oldest first, so an item changed twice ends on its last status.
+      const CHANGES = [
+        { kind: 'goal', title: 'Improve lipid management', from: 'Not Started', to: 'In Progress', reason: 'Work started', note: 'Statin started at last PCP visit', days: 20 },
+        { kind: 'barrier', title: 'Medication adherence difficulty', from: 'Not Started', to: 'Resolved', reason: 'Resources connected', note: 'Enrolled in pharmacy auto-refill', days: 12 },
+        { kind: 'intervention', title: 'Activity coaching', from: 'Not Started', to: 'Discontinued', reason: 'Patient refused', note: 'Prefers to walk with family instead', days: 9 },
+        { kind: 'goal', title: 'Improve lipid management', from: 'In Progress', to: 'On Hold', reason: 'Waiting on provider', note: 'Cardiology referral pending', days: 6 },
+        { kind: 'intervention', title: 'BP technique education', from: 'In Progress', to: 'Met', reason: 'Target reached', note: 'Teach-back passed on home cuff', days: 3 },
+      ].map(c => ({ ...c, item: items[c.kind].find(i => i.title === c.title) })).filter(c => c.item);
+      const actor = 'Delores Conn';
+      const ids = [...new Set(CHANGES.map(c => String(c.item.id)))];
+      // Re-runs replace the demo rows rather than stacking copies.
+      await supabase.from('gbi_status_history').delete().eq('program_id', prog.id).eq('changed_by', actor).in('entity_id', ids);
+      await supabase.from('care_plan_audit').delete().eq('program_id', prog.id).eq('actor', actor).eq('action', 'status_changed').in('entity_id', ids);
+
+      const { error: hErr } = await supabase.from('gbi_status_history').insert(CHANGES.map(c => ({
+        patient_id: patientId, program_id: prog.id, entity_type: c.kind, entity_id: String(c.item.id), entity_title: c.item.title,
+        from_status: c.from, to_status: c.to, reason: c.reason, note: c.note, source: 'manual', changed_by: actor, changed_at: daysAgo(c.days),
+      })));
+      const { error: aErr } = await supabase.from('care_plan_audit').insert(CHANGES.map(c => ({
+        patient_id: patientId, program_id: prog.id, program_code: prog.code, entity_type: c.kind, entity_id: String(c.item.id),
+        action: 'status_changed', summary: c.item.title, detail: `${c.from} → ${c.to}`, actor, created_at: daysAgo(c.days),
+      })));
+      // Each item ends on its last change, with that change's reason.
+      const latest = new Map(CHANGES.map(c => [`${c.kind}:${c.item.id}`, c]));
+      let reasonColumn = true;
+      for (const c of latest.values()) {
+        const patch = { status: c.to, status_reason: `${c.reason}: ${c.note}` };
+        let { error } = await supabase.from(TABLE[c.kind]).update(reasonColumn ? patch : { status: c.to }).eq('id', c.item.id);
+        if (error && /status_reason/.test(error.message || '')) {
+          reasonColumn = false;
+          ({ error } = await supabase.from(TABLE[c.kind]).update({ status: c.to }).eq('id', c.item.id));
+        }
+        if (error) console.log(`  ✗ ${c.item.title}: ${error.message}`);
+      }
+      const missing = err => err && /does not exist|schema cache|42P01|PGRST205/i.test(`${err.code} ${err.message}`);
+      if (missing(hErr)) console.log('  ⚠ gbi_status_history missing: run supabase/gbi_status_history_migration.sql');
+      else if (hErr) console.log(`  ✗ gbi_status_history: ${hErr.message}`);
+      if (aErr) console.log(`  ✗ care_plan_audit: ${aErr.message}`);
+      if (!reasonColumn) console.log('  ⚠ status_reason column missing: run supabase/gbi_status_reason_migration.sql');
+      console.log(`  ✓ ${CHANGES.length} status changes on ${latest.size} items for 11089 SNP`);
+    }
+  }
+
   // ── Patient Care Plan (demo) ──
   // The Care Plan step is Supabase-backed (patient_care_plan_* tables). There is
   // no seeded patient/program to attach to at build time, so we instantiate one
