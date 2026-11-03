@@ -182,6 +182,20 @@ import { fetchCaregapCommentRows, persistCaregapCommentInsert, persistCaregapCom
 import { fetchCaregapReminderRows, persistCaregapReminderInsert, persistCaregapReminderUpdate, persistCaregapReminderDelete } from './lib/caregapRemindersPersist';
 
 // cis_dose_appointments row → app object.
+// A note's "@" tags and "/" links as saved on its audit row (`text` is only
+// for the note_linked rows).
+const noteMeta = (details) => {
+  if (!details) return undefined;
+  const { text, ...meta } = details;
+  void text;
+  return meta;
+};
+// One note_linked row per goal, intervention or barrier a note links with
+// "/", so the note also shows in that item's activity.
+const noteLinkedRows = details => (details?.links || []).map(l => ({
+  entityType: l.kind, entityId: l.id, action: 'note_linked', summary: l.label, detail: details.text || '',
+}));
+
 const cisAppointmentFromRow = (r) => ({
   id: r.id,
   memberId: r.hedis_member_id,
@@ -4822,23 +4836,25 @@ export const useAppStore = create((set, get) => ({
   },
   // The call note and the finished review are also logged to the plan's
   // activity (care_plan_audit), so the Activity Log shows them.
-  saveCarePlanReviewNote: async (patientId, program, note, clock) => {
+  // `details` (noteDetails): the note's "@" tags and "/" links.
+  saveCarePlanReviewNote: async (patientId, program, note, clock, details) => {
     const seconds = reviewSeconds(clock);
     const saved = await get().patchCarePlanReview(patientId, program, {
       call_note: note,
       ...(seconds != null ? { duration_seconds: seconds } : {}),
     });
     if (saved && note?.trim()) {
-      get().logCarePlanAudit(patientId, program, {
-        entityType: 'plan', entityId: saved.id, action: 'call_note', summary: 'Call note', detail: note.trim(),
-      });
+      get().logCarePlanAudit(patientId, program, [
+        { entityType: 'plan', entityId: saved.id, action: 'call_note', summary: 'Call note', detail: note.trim(), meta: noteMeta(details) },
+        ...noteLinkedRows(details),
+      ]);
     }
     return saved;
   },
   // clock: { startedAt, stoppedAt, baseSeconds } from the drawer's review
   // timer (baseSeconds: what the review had already run before this sitting),
   // and discussedCount (items still on the plan) so the log matches the drawer.
-  finishCarePlanReview: async (patientId, program, note, clock) => {
+  finishCarePlanReview: async (patientId, program, note, clock, details) => {
     const durationMs = clock?.startedAt ? (clock.stoppedAt ?? Date.now()) - clock.startedAt : 0;
     const seconds = reviewSeconds(clock);
     const before = get().carePlanReviews[carePlanKey(patientId, program.id)]?.open;
@@ -4850,7 +4866,10 @@ export const useAppStore = create((set, get) => ({
     if (saved) {
       const rows = [];
       if (note?.trim() && note.trim() !== (before?.callNote || '')) {
-        rows.push({ entityType: 'plan', entityId: saved.id, action: 'call_note', summary: 'Call note', detail: note.trim() });
+        rows.push(
+          { entityType: 'plan', entityId: saved.id, action: 'call_note', summary: 'Call note', detail: note.trim(), meta: noteMeta(details) },
+          ...noteLinkedRows(details),
+        );
       }
       const n = clock?.discussedCount ?? Object.keys(saved.discussed || {}).length;
       rows.push({
@@ -5983,9 +6002,6 @@ export const useAppStore = create((set, get) => ({
   // so the Figma Edit / Delete actions can persist.
   addCarePlanNote: async (patientId, program, note, meta = {}) => {
     if (!note?.trim()) return;
-    // `links`: goals, interventions and barriers the note references with
-    // "/". Each gets a note_linked row so the note shows in its activity.
-    const links = meta.details?.links || [];
     get().logCarePlanAudit(patientId, program, [
       {
         entityType: meta.entityType || 'plan',
@@ -5993,27 +6009,30 @@ export const useAppStore = create((set, get) => ({
         action: 'note',
         summary: meta.summary || 'Note added',
         detail: note.trim(),
-        meta: meta.details,
+        meta: noteMeta(meta.details),
       },
-      ...links.map(l => ({
-        entityType: l.kind,
-        entityId: l.id,
-        action: 'note_linked',
-        summary: l.label,
-        detail: note.trim(),
-      })),
+      ...noteLinkedRows({ ...meta.details, text: note.trim() }),
     ]);
     get().showToast('Note added');
   },
 
-  updateCarePlanNote: async (patientId, programId, id, detail) => {
+  // `program` and `details` (noteDetails) are passed when the edit can add
+  // "/" links: a newly linked item gets its note_linked row.
+  updateCarePlanNote: async (patientId, programId, id, detail, { program, details } = {}) => {
     if (!id || !detail?.trim()) return;
     const key = carePlanKey(patientId, programId);
     const prev = get().patientCarePlanAudit[key] || [];
-    const { data, error } = await supabase.from('care_plan_audit')
+    const before = prev.find(e => e.id === id);
+    const meta = noteMeta(details);
+    const update = payload => supabase.from('care_plan_audit')
       // Call notes (Review care plan drawer) are edited the same way.
-      .update({ detail: detail.trim() }).eq('id', id).in('action', ['note', 'call_note']).select().single();
+      .update(payload).eq('id', id).in('action', ['note', 'call_note']).select().single();
+    let { data, error } = await update({ detail: detail.trim(), ...(meta ? { meta } : {}) });
+    if (error && meta && /meta/.test(error.message || '')) ({ data, error } = await update({ detail: detail.trim() }));
     if (error) { console.warn('updateCarePlanNote:', error.message); get().showToast('Could not update note'); return; }
+    const linked = new Set((before?.meta?.links || []).map(l => `${l.kind}:${l.id}`));
+    const added = (details?.links || []).filter(l => !linked.has(`${l.kind}:${l.id}`));
+    if (program && added.length) get().logCarePlanAudit(patientId, program, noteLinkedRows({ ...details, links: added }));
     const mapped = mapCarePlanAuditRow(data);
     set(s => ({
       patientCarePlanAudit: {

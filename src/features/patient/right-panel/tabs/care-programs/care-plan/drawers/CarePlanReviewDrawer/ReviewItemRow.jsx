@@ -11,6 +11,7 @@ import { GbiStatusButton } from '../../tables/carePlanTableShared';
 import { parseLocalDate } from '../../../../../../../../lib/localDate';
 import { formatGoalTarget } from '../../../../../../../settings/care-plan-library/lib/goalFormat';
 import { CARE_PLAN_INTERVENTION_KINDS } from '../../lib/carePlanInterventionMenu';
+import { noteDetails } from '../../lib/carePlanNoteRefs';
 import styles from './CarePlanReviewDrawer.module.css';
 
 const QUICK_TAGS = ['Patient reported', 'Education given', 'Follow-up needed', 'Barrier found'];
@@ -85,9 +86,10 @@ function Facts({ kind, item, onPickDate }) {
  * a quick note with tags. "Open details" there opens the item's own drawer.
  */
 export function ReviewItemRow({
-  kind, item, discussed, selecting, selected, expanded, note, latestNote,
+  kind, item, discussed, selecting, selected, expanded, note, latestNote, noteRefs,
   onToggleSelected, onToggleDiscussed, onToggleExpanded, onOpen, onStatusMenu, onPriorityMenu, onSaveNote, onTargetDate,
 }) {
+  const [html, setHtml] = useState('');
   const [text, setText] = useState('');
   const [tags, setTags] = useState(() => discussed?.tags || []);
   const [saving, setSaving] = useState(false);
@@ -169,9 +171,13 @@ export function ReviewItemRow({
 
           <div className={styles.composeBox}>
             <Textarea
+              richText
+              mentions
+              mentionUsers={noteRefs?.mentionUsers}
+              links={noteRefs?.links}
               placeholder={latestNote ? 'Add to the notes' : `What did the patient say about this ${kind}?`}
-              value={text}
-              onChange={(v) => setText(typeof v === 'string' ? v : (v?.target?.value ?? ''))}
+              value={html}
+              onChange={(v, plain) => { setHtml(v); setText(plain || ''); }}
               rows={2}
             />
             <div className={styles.composeBar}>
@@ -195,7 +201,8 @@ export function ReviewItemRow({
                 onClick={async () => {
                   setSaving(true);
                   try {
-                    await onSaveNote(text, tags);
+                    await onSaveNote(text, tags, noteDetails(html));
+                    setHtml('');
                     setText('');
                   } finally {
                     setSaving(false);
