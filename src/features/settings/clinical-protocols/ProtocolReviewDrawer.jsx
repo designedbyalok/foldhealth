@@ -99,6 +99,18 @@ function ProtocolItem({ section, item, editable, onChange, onRemove, onOpenPage 
           </span>
         )}
       </div>
+      {item.check && (
+        // The parser's doubt about this item, beside it so it is fixed in place.
+        <div className={styles.itemCheck}>
+          <Icon name="solar:danger-triangle-linear" size={14} color="currentColor" />
+          <span className={styles.itemCheckText}>{item.check}</span>
+          {editable && (
+            <button type="button" className={styles.itemCheckDone} onClick={() => onChange({ ...item, check: null })}>
+              Mark Checked
+            </button>
+          )}
+        </div>
+      )}
       {item.source && (
         <>
           <button
@@ -106,8 +118,8 @@ function ProtocolItem({ section, item, editable, onChange, onRemove, onOpenPage 
             className={styles.sourceToggle}
             aria-expanded={showSource}
             onClick={() => {
-              // Showing the passage also turns the document beside it to its page.
-              if (!showSource && item.page) onOpenPage?.(item.page);
+              // Showing the passage also opens the document beside it, highlighted there.
+              if (!showSource && item.page) onOpenPage?.(item.page, item.source);
               setShowSource(v => !v);
             }}
           >
@@ -125,11 +137,18 @@ function ProtocolSection({ section, items, editable, onItemsChange, onOpenPage }
   const update = (idx, next) => onItemsChange(items.map((x, i) => (i === idx ? next : x)));
   const remove = idx => onItemsChange(items.filter((_, i) => i !== idx));
   const add = () => onItemsChange([...items, { id: `${section.key}-${crypto.randomUUID().slice(0, 8)}`, ...section.blank(), source: '', page: null, isNew: true }]);
+  const toCheck = items.filter(i => i.check).length;
   return (
     <PanelSection
-      title={<>{section.label}<span className={styles.sectionCount}>{items.length}</span></>}
+      title={(
+        <>
+          {section.label}<span className={styles.sectionCount}>{items.length}</span>
+          {toCheck > 0 && <Badge tone="warning" size="S" label={`${toCheck} to check`} className={styles.statusWarning} />}
+        </>
+      )}
       actions={editable && <ActionButton icon="solar:add-linear" size="sm" tooltip={`Add to ${section.label}`} onClick={add} />}
     >
+      {section.about && <p className={styles.sectionAbout}>{section.about}</p>}
       {items.length === 0
         ? <p className={styles.sectionEmpty}>Nothing extracted for this section.</p>
         : items.map((item, idx) => (
@@ -247,9 +266,10 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
   // A refresh renumbers categories: the open one closes if it is gone.
   const openSection = !doc && planSection(plan, selected) ? selected : null;
   const selectSection = key => { setDoc(null); setSelected(cur => (cur === key ? null : key)); };
-  const openDocument = async (page = null) => {
+  // `passage` is highlighted on `page` (an item's source).
+  const openDocument = async (page = null, passage = '') => {
     setSelected(null);
-    setDoc({ page });
+    setDoc({ page, passage });
     if (!docUrl) setDocUrl(await clinicalProtocolFileUrl(protocol.id));
   };
   const fileMeta = [
@@ -438,12 +458,13 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
       />
     )
   );
-  // The same flags as a section like the ones below it, for the scope view's Extracted Items tab.
+  const itemChecks = PROTOCOL_SECTIONS.reduce((n, s) => n + (draft.protocol[s.key] || []).filter(i => i.check).length, 0);
   // A sentence clipped by an older parse ends in an ellipsis rather than mid-word.
   const asSentence = w => (/[.!?)"”]$/.test(w.trim()) ? w.trim() : `${w.trim()}…`);
-  // The same flags as a section like the ones below it, for the scope view's Extracted Items tab.
+  // Flags about the document as a whole; a flag about one item sits on that item.
   const flagsSection = warnings.length > 0 && (
-    <PanelSection title={<>To Check<span className={styles.sectionCount}>{warnings.length}</span></>}>
+    <PanelSection title={<>About the Whole Document<span className={styles.sectionCount}>{warnings.length}</span></>}>
+      <p className={styles.sectionAbout}>What the parser flagged that belongs to no single item below.</p>
       <ol className={styles.flagList}>
         {warnings.map((w, i) => (
           <li key={w} className={styles.flagRow}>
@@ -457,6 +478,7 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
   // The uploaded file, shown or hidden in the left pane like an HCC chart.
   const fileSection = protocol.sourcePath && (
     <PanelSection title="Original File">
+      <p className={styles.sectionAbout}>The uploaded document. Open any item&apos;s Source to see its passage highlighted here.</p>
       <PanelSectionItem
         leading={<span className={styles.fileThumb}><Icon name="custom:pdf-file" size={20} color="var(--neutral-400)" /></span>}
         title={<button type="button" className={styles.fileName} onClick={() => openDocument(null)}>{protocol.sourceName || 'Original file'}</button>}
@@ -526,7 +548,9 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
             <DocumentPanel
               name={protocol.sourceName}
               url={docUrl}
+              kind={protocol.sourceKind}
               page={doc.page}
+              passage={doc.passage}
               onOpenNewTab={openOriginal}
               onClose={() => setDoc(null)}
             />
@@ -548,7 +572,7 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
               items={[
                 { key: 'scope', label: 'Scope' },
                 { key: 'details', label: 'Details' },
-                { key: 'items', label: 'Extracted Items', count: counts.total, notif: warnings.length > 0 },
+                { key: 'items', label: 'Extracted Items', count: counts.total, notif: warnings.length > 0 || itemChecks > 0 },
               ]}
               trailing={<Badge tone={status.tone} size="S" label={status.label} className={status.tone === 'warning' ? styles.statusWarning : undefined} />}
             />

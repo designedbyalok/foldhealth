@@ -8,9 +8,10 @@ import {
   formatThreshold,
 } from './protocolSchema';
 
-/* The review drawer's sections: how each kind of protocol item reads in a
-   row (title + detail) and which fields its editor shows. One config, so
-   every section edits and displays the same way. */
+/* The review drawer's sections: what each holds in plain words (about),
+   how each kind of protocol item reads in a row (title + detail) and which
+   fields its editor shows. One config, so every section edits and displays
+   the same way. */
 
 const opts = values => values.map(v => (typeof v === 'string' ? { value: v, label: v } : v));
 const cap = s => (s ? s[0].toUpperCase() + s.slice(1) : s);
@@ -19,6 +20,7 @@ export const PROTOCOL_SECTIONS = [
   {
     key: 'thresholds',
     label: 'Thresholds',
+    about: 'The numbers that sort patients, like a blood pressure cut-off, and what each band means or sets off.',
     icon: 'solar:danger-triangle-linear',
     title: t => formatThreshold(t),
     detail: t => [t.label, t.action].filter(Boolean).join(' · '),
@@ -36,6 +38,7 @@ export const PROTOCOL_SECTIONS = [
   {
     key: 'decisionRules',
     label: 'Decision Rules',
+    about: 'If-then steps the care team follows: when something happens, what to do next.',
     icon: 'solar:routing-2-linear',
     title: r => `When ${r.when}`,
     detail: r => `Then ${r.then}`,
@@ -48,6 +51,7 @@ export const PROTOCOL_SECTIONS = [
   {
     key: 'cadence',
     label: 'Cadence',
+    about: 'How often things happen: check-ins, home readings, labs, visits and medication reviews.',
     icon: 'solar:calendar-linear',
     title: c => `${formatCadence(c)} · ${c.activity}`,
     detail: c => [CADENCE_KINDS.find(k => k.value === c.kind)?.label, c.appliesWhen].filter(Boolean).join(' · '),
@@ -64,6 +68,7 @@ export const PROTOCOL_SECTIONS = [
   {
     key: 'titration',
     label: 'Medication Titration',
+    about: 'The order to start, raise, add or switch medicines, with doses as the document writes them.',
     icon: 'solar:pill-linear',
     title: m => `Step ${m.step} · ${cap(m.action)} ${m.medication}${m.dose ? ` ${m.dose}` : ''}`,
     detail: m => [m.drugClass, m.criteria, m.monitoring && `Monitor: ${m.monitoring}`].filter(Boolean).join(' · '),
@@ -81,6 +86,7 @@ export const PROTOCOL_SECTIONS = [
   {
     key: 'crossReferences',
     label: 'Cross-references',
+    about: 'Other guidelines, policies or order sets the document points to.',
     icon: 'solar:link-linear',
     title: x => x.title,
     detail: x => [REFERENCE_KINDS.find(k => k.value === x.kind)?.label, x.citation].filter(Boolean).join(' · '),

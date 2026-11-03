@@ -1,0 +1,38 @@
+/* PdfPassageViewer: pages stacked on a neutral backdrop, each a canvas with
+   highlight boxes laid over the passage being checked. */
+
+.root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  overflow-y: auto;
+  background: var(--neutral-75);
+  box-sizing: border-box;
+}
+
+.page {
+  position: relative;
+  flex-shrink: 0;
+  background: var(--neutral-0);
+  box-shadow: var(--shadow-card);
+}
+
+.canvas { display: block; }
+
+.highlight {
+  position: absolute;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--accent-amber) 35%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-amber) 60%, transparent);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+.status {
+  margin: var(--space-6) 0;
+  font-size: var(--font-base);
+  color: var(--neutral-300);
+}

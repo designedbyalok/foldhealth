@@ -9,6 +9,7 @@ import { CloseButton } from '../../../components/CloseButton/CloseButton';
 import { NumberStepper } from '../../../components/NumberStepper/NumberStepper';
 import { UnityIcon } from '../../../components/UnityIcon/UnityIcon';
 import { FilePreview } from '../../../components/FilePreview/FilePreview';
+import { PdfPassageViewer } from '../../../components/PdfPassageViewer/PdfPassageViewer';
 import { MenuPopover } from '../../../components/MenuPopover/MenuPopover';
 import { LinkageTree } from '../../../components/LinkageTree/LinkageTree';
 import { useAppStore } from '../../../store/useAppStore';
@@ -151,23 +152,23 @@ export function ScopeOverview({ plan, protocol, editable, building, selected, on
  * the uploaded document at `page` (from an item's source), with a way out to
  * a new tab. `url` is a short-lived signed link; null while it loads.
  */
-export function DocumentPanel({ name, url, page, onOpenNewTab, onClose }) {
+export function DocumentPanel({ name, url, kind, page, passage, onOpenNewTab, onClose }) {
+  let body = <p className={styles.hint}>Loading the document…</p>;
+  // A PDF is drawn here so an item's source passage can be highlighted on it.
+  if (url && kind === 'pdf') body = <PdfPassageViewer src={url} page={page} passage={passage} className={styles.docPreview} />;
+  else if (url) body = <FilePreview src={url} name={name} className={styles.docPreview} />;
   return (
     <div className={styles.leftPane}>
       <div className={styles.leftHead}>
         <span className={styles.leftHeadText}>
           <span className={styles.leftTitle}>{name || 'Original file'}</span>
-          {page ? <span className={styles.scopeRowRange}>Page {page}</span> : null}
+          {page ? <span className={styles.scopeRowRange}>Page {page}{passage ? ', passage highlighted' : ''}</span> : null}
         </span>
         <ActionButton icon="solar:square-top-down-linear" size="sm" tooltip="Open in new tab" onClick={onOpenNewTab} />
         <span className={styles.headerDivider} />
         <CloseButton onClick={onClose} label="Close document" />
       </div>
-      <div className={styles.docBody}>
-        {url
-          ? <FilePreview key={page || 0} src={page ? `${url}#page=${page}` : url} name={name} className={styles.docPreview} />
-          : <p className={styles.hint}>Loading the document…</p>}
-      </div>
+      <div className={styles.docBody}>{body}</div>
     </div>
   );
 }
