@@ -81,7 +81,7 @@ export function OrdersReferralsTab({ patient }) {
   const filterCount = filters.status.length + filters.referredTo.length + filters.created.length;
   const { label, noun } = viewOf(view);
   const emptyLabel = viewRows.length ? `No ${noun} match these filters` : `No ${noun} for this patient yet`;
-  const EMPTY_ICON = { referral: 'solar:square-share-line-linear', lab: 'solar:test-tube-linear', imaging: 'solar:scanner-linear', medication: 'solar:pill-linear' };
+  const EMPTY_ICON = { referral: 'custom:refer', lab: 'solar:test-tube-linear', imaging: 'solar:scanner-linear', medication: 'solar:pill-linear' };
 
   const switchView = (key) => { setView(key); setFilters(EMPTY_FILTERS); setSelectedIds([]); };
   const closeSearch = () => { setSearchOpen(false); setQuery(''); };
@@ -174,7 +174,7 @@ export function OrdersReferralsTab({ patient }) {
           : <OrdersTable view={view} {...tableProps} />}
       {openReferral && <ReferralDetailDrawer referral={openReferral} patient={patient} onClose={() => setOpenReferral(null)} />}
       {preview && <AttachmentPreviewDrawer attachment={preview} onClose={() => setPreview(null)} />}
-      {creating === 'referral' && <NewReferralDrawer patientId={patientId} onClose={closeCreate} />}
+      {creating === 'referral' && <NewReferralDrawer patient={patient} patientId={patientId} onClose={closeCreate} />}
       {(creating === 'lab' || creating === 'imaging') && <NewOrderDrawer key={creating} patientId={patientId} type={creating} onClose={closeCreate} />}
       {creating === 'medication' && <AddMedicationsDrawer patientId={patientId} onClose={closeCreate} />}
     </div>

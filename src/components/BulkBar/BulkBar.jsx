@@ -18,6 +18,7 @@ import styles from './BulkBar.module.css';
  * Run Automation / "More" cluster entirely. Each entry:
  *   { label, icon?, iconElement?, variant?: 'primary'|'secondary'|'destructive', size?: 'S'|'M'|'L' (default S), onClick(ids, event) }
  * (`iconElement`: a custom icon node, in place of a Solar `icon` name.)
+ * `{ divider: true }` in `actions` draws a divider between groups of actions.
  * `noun` (optional) names what's selected: "26 Appointments Selected".
  * Reach for `actions` when the calling surface has a distinct verb-set
  * (e.g. SFTP review only needs "Add to Worklist" + "Delete"). When
@@ -94,7 +95,7 @@ export function BulkBar({ selectedIds: selectedIdsProp, onClear, onChangeAssigne
       )}
       {actions && actions.length > 0 ? (
         <>
-          {actions.map((a, i) => (
+          {actions.map((a, i) => (a.divider ? <div key={`divider-${i}`} className={styles.divider} /> : (
             <Button
               key={a.label || i}
               variant={a.variant || 'outline'}
@@ -107,7 +108,7 @@ export function BulkBar({ selectedIds: selectedIdsProp, onClear, onChangeAssigne
             >
               {a.label}
             </Button>
-          ))}
+          )))}
           {/* Optional overflow menu for less-common actions (e.g. Missed
               Opportunity, Defer). Only renders when the caller passed a
               non-empty moreActions[]. Reuses the same dropdown chrome the

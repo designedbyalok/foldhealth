@@ -16,7 +16,7 @@ const stripExt = name => String(name || '').replace(/\.[a-z0-9]+$/i, '');
  * only if one is picked.
  */
 export function UploadDocumentDrawer({ categories, doc, initialCategory, initialFile = null, onUpload, onClose }) {
-  const categoryOptions = categories.filter(c => c.key !== ALL_CATEGORY).map(c => ({ value: c.key, label: c.label, icon: c.icon }));
+  const categoryOptions = categories.filter(c => c.key !== ALL_CATEGORY).map(c => ({ value: c.key, label: c.label }));
   // Pre-fill the caption from the dropped file's name (minus extension) the
   // same way useDocumentUploadForm does on first pick, so the drag path and
   // the browse path land in the same state.

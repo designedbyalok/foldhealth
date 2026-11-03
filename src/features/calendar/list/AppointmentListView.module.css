@@ -69,6 +69,9 @@
 }
 
 .actionCell { text-align: center; }
+/* Disabled while a selection is open: the dots in neutral-150 as they are,
+   without the button's extra dimming (doubled to outrank it). */
+.actionCell.actionCell button:disabled > svg { opacity: 1; }
 
 /* Room for two lines in every row, so a row with a second line (member
    details, Provider OOO) is no taller than one without. */
@@ -90,18 +93,12 @@
   min-width: 0;
 }
 
-/* The member's name with their details after it, on one line. */
+/* The member's name, cut short with an ellipsis when the column is narrow. */
 .memberLine {
   display: flex;
-  align-items: baseline;
-  gap: var(--space-1);
+  flex-direction: column;
+  align-items: flex-start;
   min-width: 0;
-}
-
-.memberMeta {
-  flex-shrink: 0;
-  color: var(--neutral-200);
-  white-space: nowrap;
 }
 
 /* The provider is out of office then: in the Out of Office pink. */
@@ -144,6 +141,7 @@
   align-items: center;
   gap: var(--space-1);
   min-width: 0;
+  max-width: 100%;
 }
 .memberLinkText {
   overflow: hidden;
@@ -151,12 +149,13 @@
   white-space: nowrap;
 }
 
-/* ── Cancel Appointments dialog ── */
+/* ── Cancel Appointments drawer ── */
 /* Doubled to win over the dialog's own max-width utility. */
-.cancelDialog.cancelDialog { max-width: 420px; width: 100%; }
-.cancelDesc { color: var(--neutral-300); }
+/* Cancel Appointments drawer (Close Case layout): the prompt, then the reasons. */
+.cancelBody { display: flex; flex-direction: column; gap: var(--space-4); }
+.cancelPrompt { font-size: var(--font-base); font-weight: 500; line-height: 1.2; color: var(--neutral-400); }
 /* The reasons: the prompt, then 12px between it and each radio. */
-.cancelReasons { align-self: stretch; gap: var(--space-3); text-align: left; }
+.cancelReasons { gap: var(--space-3); }
 .cancelReasons [role="radiogroup"] { gap: var(--space-3); }
 
 /* ── Bulk Reschedule drawer ── */
@@ -259,3 +258,113 @@
   border-bottom: 0.5px solid var(--neutral-150);
   vertical-align: middle;
 }
+
+/* ── Bulk Edit Appointments drawer ── */
+.bulkEdit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.fieldRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+/* Bulk Update Preview: Fields / Change To, in a bordered card. */
+.changeTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  overflow: hidden;
+}
+.changeFieldCol { width: 30%; }
+.changeTable th {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-base);
+  font-weight: 400;
+  color: var(--neutral-400);
+  text-align: left;
+  background: var(--neutral-50);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+.changeTable td {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-base);
+  vertical-align: top;
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+.changeTable tr:last-child td { border-bottom: 0; }
+.changeField { color: var(--neutral-300); }
+.changeValue {
+  color: var(--neutral-400);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.applyList {
+  display: flex;
+  flex-direction: column;
+}
+.applyRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+
+/* Bulk Edit, first step: "Applies to [N] appointments", a folded card in
+   the shape of Reassign's "No users available for reassignment", in neutral. */
+.appliesTo {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2);
+  background: var(--neutral-50);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+}
+.appliesToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--font-base);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--neutral-300);
+  text-align: left;
+  cursor: pointer;
+}
+.appliesToggle:focus-visible { outline: 2px solid var(--primary-300); outline-offset: 1px; border-radius: 2px; }
+.countBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  padding: calc(var(--space-1) / 2) var(--space-1);
+  border-radius: 4px;
+  background: var(--secondary-300);
+  font-size: var(--font-2xs);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--neutral-0);
+}
+/* The arrow turns as the card opens. */
+.chevron { flex-shrink: 0; transition: transform var(--duration-medium) var(--ease-out); }
+.chevronOpen { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .chevron { transition: none; } }
+/* The rows sit on white inside the card. */
+.appliesBody { padding-top: var(--space-2); }
+.appliesBody .applyList {
+  background: var(--neutral-0);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-1);
+}
+.appliesBody .applyRow:last-child { border-bottom: 0; }

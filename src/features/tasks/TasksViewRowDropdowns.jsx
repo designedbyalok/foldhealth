@@ -70,9 +70,14 @@ export function RowActionMenu({ task }) {
 
   return (
     <div ref={btnRef} style={{ position: 'relative' }}>
-      <button className={styles.actionMenuBtn} onClick={e => { e.stopPropagation(); setOpen(v => !v); }} aria-label="Task actions">
-        <Icon name="solar:menu-dots-bold" size={16} color="var(--neutral-300)" />
-      </button>
+      <ActionButton
+        icon="solar:menu-dots-linear"
+        size="sm"
+        tooltip="More"
+        tooltipLeft
+        className={`${styles.actionMenuBtn} ${open ? styles.actionMenuBtnOpen : ''}`}
+        onClick={e => { e.stopPropagation(); setOpen(v => !v); }}
+      />
       {open && pos && createPortal(
         <div style={{ position: 'fixed', inset: 0, zIndex: 9998 }} onClick={e => { e.stopPropagation(); setOpen(false); }}>
           <div

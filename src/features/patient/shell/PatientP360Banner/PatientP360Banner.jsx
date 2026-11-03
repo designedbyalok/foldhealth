@@ -216,10 +216,10 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
             <span className={styles.actionLabel}>Call</span>
           </div>
           <span className={styles.hDivider} />
-          <div className={styles.actionCol}><ActionButton icon="solar:letter-linear" tooltip="Email" /><span className={styles.actionLabel}>Email</span></div>
+          <div className={styles.actionCol}><ActionButton icon="solar:letter-linear" tooltip="Email" onClick={() => runPatientRowAction('Send Email', patient)} /><span className={styles.actionLabel}>Email</span></div>
           <span className={styles.hDivider} />
           <ActionButton
-            icon="solar:menu-dots-bold"
+            icon="solar:menu-dots-linear"
             tooltip="More"
             onClick={(e) => setMoreMenuRect(e.currentTarget.getBoundingClientRect())}
           />

@@ -17180,6 +17180,17 @@ export const useAppStore = create((set, get) => ({
     return true;
   },
 
+  // Sets the same fields (location, reason for visit, instructions) on
+  // every appointment; fields not in `changes` stay as they are.
+  updateAppointmentsDetails: async (appts, changes) => {
+    const { error } = await supabase.from('appointments').update(changes).in('id', appts.map(a => a.id));
+    if (error) { console.error('updateAppointmentsDetails:', error.message); return false; }
+    appts.forEach(a => get().logAudit('Appointment', a.id, a.patient_name || 'Appointment', 'updated', 'Bulk edited', 'Configuration',
+      Object.entries(changes).map(([field, to]) => ({ field, from: a[field] || '', to, type: 'text' }))));
+    await get().fetchAppointments({ force: true });
+    return true;
+  },
+
   // Moves each appointment to its new date and time ({ appt, date:
   // 'MM-DD-YYYY', time_start, time_end }). Returns how many failed.
   rescheduleAppointments: async (changes) => {

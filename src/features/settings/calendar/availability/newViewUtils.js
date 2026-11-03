@@ -97,10 +97,13 @@ export function occursOn(b, date) {
   return weeks % n === 0;
 }
 
+/** The Monday that starts `d`'s week (weeks run Mon–Sun, as the Calendar's do). */
+export const weekStart = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7));
+
 /** The seven days (Mon–Sun) of the week `offset` weeks from this one. */
 export function weekDays(offset = 0, today = new Date()) {
-  const sun = new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay() + offset * 7);
-  return Array.from({ length: 7 }, (_, i) => new Date(sun.getFullYear(), sun.getMonth(), sun.getDate() + i));
+  const mon = weekStart(today);
+  return Array.from({ length: 7 }, (_, i) => new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + offset * 7 + i));
 }
 
 /** "Sunday" */

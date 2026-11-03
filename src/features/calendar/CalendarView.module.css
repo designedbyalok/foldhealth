@@ -447,3 +447,23 @@
 
 /* Day view draws its own per-user columns; schedule-x stays mounted underneath. */
 .calendarHidden { display: none; }
+
+/* The List view's search, opened from the toolbar's search icon: it grows
+   out of the icon's spot and shrinks back into it on close. */
+.listSearch {
+  width: 240px;
+  overflow: hidden;
+  animation: listSearchIn var(--duration-base) var(--ease-out);
+}
+.listSearchClosing { animation: listSearchOut var(--duration-base) var(--ease-out) forwards; }
+@keyframes listSearchIn {
+  from { width: 28px; opacity: 0; }
+  to { width: 240px; opacity: 1; }
+}
+@keyframes listSearchOut {
+  from { width: 240px; opacity: 1; }
+  to { width: 28px; opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .listSearch, .listSearchClosing { animation: none; }
+}
