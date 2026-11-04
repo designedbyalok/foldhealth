@@ -24,7 +24,7 @@
   max-width: 140px;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-left: 6px;
+  padding-left: var(--space-2);
   border-left: 0.5px solid var(--primary-200);
   font-size: var(--font-md);
   color: var(--neutral-300);
