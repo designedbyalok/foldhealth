@@ -9,6 +9,7 @@ import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { ProviderSelect } from '../../components/ProviderSelect/ProviderSelect';
 import { DocumentPickerDrawer } from '../../components/DocumentPickerDrawer/DocumentPickerDrawer';
 import { EmailComposer } from '../../components/EmailComposer/EmailComposer';
+import { UnityAIBar } from '../../components/UnityAIBar/UnityAIBar';
 import { REFERRAL_CHANNELS, MEDICAL_SPECIALTIES, CUSTOM_SENDER, isEmail, providerContact } from './useCareGapReferralForm';
 import styles from './CareGapReferralForm.module.css';
 
@@ -195,8 +196,7 @@ export function CareGapReferralForm({
             body={values.emailBody}
             onBodyChange={set('emailBody')}
             bodyRequired
-            onGenerate={onGenerateEmail}
-            generating={generatingEmail}
+            assistant={<UnityAIBar onGenerate={onGenerateEmail} generating={generatingEmail} />}
             signature={emailSignature}
             // The member the referral is about rides along in CC.
             cc={ccMember?.name ? [{ key: String(ccMember.id || ccMember.name), name: ccMember.name, initials: ccMember.initials, role: 'Member' }] : []}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogTitle } from '../../components/Dialog/Dialog';
-import { Button } from '../../components/Button/Button';
+import { Dialog, DialogContent, DialogTitle } from '../Dialog/Dialog';
+import { Button } from '../Button/Button';
 import styles from './FilterNameDialog.module.css';
 
 /**

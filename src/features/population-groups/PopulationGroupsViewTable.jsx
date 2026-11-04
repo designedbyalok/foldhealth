@@ -4,7 +4,7 @@ import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Badge } from '../../components/Badge/Badge';
 import { SearchIconButton } from '../../components/SearchIconButton/SearchIconButton';
 import { SubnavToggle } from '../../components/SubnavToggle/SubnavToggle';
-import { WorklistShell } from '../../components/WorklistShell/WorklistShell';
+import { WorklistShell } from '../worklists/WorklistShell';
 import { PopulationGroupsRow } from './PopulationGroupsRow.jsx';
 import { BulkSelectIcon } from './PopulationGroupsViewPanels.jsx';
 import { ConfirmDialog } from '../../components/ConfirmDialog/ConfirmDialog';

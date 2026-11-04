@@ -1,13 +1,14 @@
 import { useMemo, useRef, useState, useLayoutEffect } from 'react';
 import { FilterChip } from '../FilterChip/FilterChip';
-import { useAppStore } from '../../store/useAppStore';
-import { FilterNameDialog } from '../../features/hcc/FilterNameDialog';
-import { MoreFiltersPopover } from '../../features/hcc/MoreFiltersPopover';
-import { filterDefsForList, resolveOptions, mergeRefs } from './filterBarUtils';
+import { FilterNameDialog } from './FilterNameDialog';
+import { MoreFiltersPopover } from './MoreFiltersPopover';
+import { mergeRefs } from './filterBarUtils';
 import { SingleSelectFilter } from './SingleSelectFilter';
-import { DefaultViewByToggle } from './DefaultViewByToggle';
 import { FilterBarTail } from './FilterBarTail';
 import styles from './FilterBar.module.css';
+
+const NO_DEFS = [];
+const NO_FILTERS = {};
 
 export function FilterBar({
   filterDefs,
@@ -53,13 +54,9 @@ export function FilterBar({
   // rather than under a page header: no border or background, tighter
   // spacing, and Clear All as a primary link with its icon.
   variant = 'page',
+  // More Filters' grouped layout: the order of the domain headings.
+  groupOrder,
 } = {}) {
-  const storeActiveFilters = useAppStore(s => s.activeFilters);
-  const storeSetFilter = useAppStore(s => s.setFilter);
-  const storeClearAllFilters = useAppStore(s => s.clearAllFilters);
-  const storePatients = useAppStore(s => s.patients);
-  const storeActiveSubnavList = useAppStore(s => s.activeSubnavList);
-  const storeSaveSavedFilter = useAppStore(s => s.saveSavedFilter);
 
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [customVisible, setCustomVisible] = useState(null);
@@ -74,16 +71,12 @@ export function FilterBar({
 
   // Memoised: filterDefsForList builds new defs each call, and the auto-fit
   // effect below depends on them.
-  const effectiveDefs = useMemo(
-    () => filterDefs ?? filterDefsForList(storeActiveSubnavList),
-    [filterDefs, storeActiveSubnavList],
-  );
-  const effectiveFilters = filters ?? storeActiveFilters;
-  const effectiveGetOptions = getOptions ?? ((def) => resolveOptions(def, storePatients));
-  const listForSave = storeActiveSubnavList || 'TCM';
-  const effectiveOnFilterChange = onFilterChange ?? ((key, next) => storeSetFilter(key, next));
-  const effectiveOnClearAll = onClearAll ?? storeClearAllFilters;
-  const effectiveOnSaveFilter = onSaveFilter ?? ((name) => storeSaveSavedFilter(listForSave, name));
+  const effectiveDefs = filterDefs ?? NO_DEFS;
+  const effectiveFilters = filters ?? NO_FILTERS;
+  const effectiveGetOptions = getOptions ?? ((def) => def.options ?? []);
+  const effectiveOnFilterChange = onFilterChange ?? (() => {});
+  const effectiveOnClearAll = onClearAll ?? (() => {});
+  const effectiveOnSaveFilter = onSaveFilter ?? (() => {});
   const effectiveMoreItems = moreFilterItems ?? effectiveDefs.map(fd => ({ k: fd.key, label: fd.label, primary: fd.primary, group: fd.group }));
   const fitToRow = autoFit || pinPrimary;
   // Spec mode: the filters picked from More Filters.
@@ -275,7 +268,7 @@ export function FilterBar({
     if (showSaveFilter) next.push(showInternalSaveDialog ? 'saveFilterDialog' : 'saveFilter');
     return next;
   }, [showMoreFilters, showSaveFilter, showInternalSaveDialog]);
-  const leadingNode = leading === undefined ? <DefaultViewByToggle /> : leading;
+  const leadingNode = leading ?? null;
 
   const renderOne = (k, mirror = false) => {
     if (renderChip) return renderChip(k, mirror);
@@ -353,6 +346,7 @@ export function FilterBar({
           visibleKeys={visibleKeys}
           moreFilterItems={effectiveMoreItems}
           grouped={pinPrimary}
+          groupOrder={groupOrder}
           hiddenKeys={inRow}
           onToggle={toggleVisible}
           onClear={clearVisible}

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { ActionButton } from '../../../../../components/ActionButton/ActionButton';
 import { ActivityLog } from '../../../../../components/ActivityLog/ActivityLog';
 import { Avatar } from '../../../../../components/Avatar/Avatar';
-import { FilterBar } from '../../../../../components/FilterBar/FilterBar';
+import { FilterBar } from '../../../../worklists/FilterBar';
 import { Icon } from '../../../../../components/Icon/Icon';
 import { Input } from '../../../../../components/Input/Input';
 import { Tabs } from '../../../../../components/Tabs/Tabs';

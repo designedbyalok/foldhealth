@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useAppStore } from '../../store/useAppStore';
 import { Button } from '../Button/Button';
 import { Avatar } from '../Avatar/Avatar';
 import { Icon } from '../Icon/Icon';
 import badgeStyles from '../Badge/Badge.module.css';
-import { SYSTEM_USERS } from '../../features/hcc/systemUsers';
+import { MentionRoster } from './MentionRoster';
 import styles from './CommentComposer.module.css';
 
 function handlePastePlainText(e) {
@@ -201,31 +200,9 @@ export function CommentComposer({
   // ── Mention picker state ──────────────────────────────────────────────
   const [mention, setMention] = useState(null); // { range, query } | null
   const [mentionIdx, setMentionIdx] = useState(0);
-  const platformUsers = useAppStore(s => s.platformUsers);
-  const currentUserProfile = useAppStore(s => s.currentUserProfile);
-  const fetchPlatformUsers = useAppStore(s => s.fetchPlatformUsers);
-  useEffect(() => { fetchPlatformUsers?.(); }, [fetchPlatformUsers]);
-  // Fall back to the mock so the picker still renders before the fetch lands.
-  // Always include the signed-in user so someone can @-mention themselves
-  // (or write a note visible in their own Mentions tab). Deduped by id.
-  const users = useMemo(() => {
-    if (usersProp) return usersProp;
-    // `realProfile` marks entries whose `id` is an actual profiles.id, so
-    // createMentionChip knows which ids are safe to persist. platformUsers is
-    // read straight from `profiles`; SYSTEM_USERS is a fixture roster whose
-    // ids are not uuids and must never be stored as a mention target.
-    const hasReal = !!platformUsers?.length;
-    const base = hasReal
-      ? platformUsers.map(u => ({ ...u, realProfile: true }))
-      : SYSTEM_USERS;
-    if (!currentUserProfile?.name) return base;
-    if (base.some(u => u.id === currentUserProfile.id || u.name === currentUserProfile.name)) return base;
-    const initials = currentUserProfile.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-    return [
-      { id: currentUserProfile.id, name: currentUserProfile.name, initials, role: currentUserProfile.role, source: 'self', realProfile: true },
-      ...base,
-    ];
-  }, [usersProp, platformUsers, currentUserProfile]);
+  const roster = useContext(MentionRoster);
+  useEffect(() => { if (!usersProp) roster.load?.(); }, [usersProp, roster]);
+  const users = useMemo(() => usersProp || roster.users || [], [usersProp, roster.users]);
   const matches = useMemo(() => {
     if (!mention) return [];
     const q = mention.query.toLowerCase();
@@ -265,7 +242,7 @@ export function CommentComposer({
     const editor = editorRef.current;
     // Re-hydrate against everyone we know, not just the pickable roster, so an
     // existing tag of someone outside the list survives an edit.
-    const known = [...users, ...(platformUsers || []).map(u => ({ ...u, realProfile: true }))];
+    const known = [...users, ...(roster.users || [])];
     if (!editor || !known.length) return;
     // Empty first so a re-mount with fresh initialValue doesn't stack.
     editor.innerHTML = '';
@@ -300,7 +277,7 @@ export function CommentComposer({
     setText(serialize(editor));
     setExpanded(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [users.length, platformUsers?.length]);
+  }, [users.length, roster.users?.length]);
 
   const refresh = useCallback(() => {
     const editor = editorRef.current;

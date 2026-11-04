@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
 import { AssigneeChange } from '../../../../../../../components/AssigneeChange/AssigneeChange';
 import { UserPickerPopover } from '../../../../../../../components/UserPickerPopover/UserPickerPopover';
-import { WorklistShell } from '../../../../../../../components/WorklistShell/WorklistShell';
+import { WorklistShell } from '../../../../../../worklists/WorklistShell';
 import { PriorityIcon } from '../../../../../../../components/PriorityIcon/PriorityIcon';
 import { useTableSort } from '../../../../../../../components/HeaderCell/useTableSort';
 import { DatePickerPopover } from '../../../../../../../components/DatePicker/DatePickerPopover';

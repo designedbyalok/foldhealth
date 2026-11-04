@@ -12,7 +12,7 @@ import { DownChevronIcon } from '../../../../../../../../components/Icon/DownChe
 import { PriorityIcon } from '../../../../../../../../components/PriorityIcon/PriorityIcon';
 import { EmptyState } from '../../../../../../../../components/EmptyState/EmptyState';
 import { TableSkeleton } from '../../../../../../../../components/TableSkeleton/TableSkeleton';
-import { WorklistShell } from '../../../../../../../../components/WorklistShell/WorklistShell';
+import { WorklistShell } from '../../../../../../../worklists/WorklistShell';
 import { MenuPopover } from '../../../../../../../../components/MenuPopover/MenuPopover';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
 import { AddIconMinimalist } from '../../../../../../../../components/Icon/AddIconMinimalist';

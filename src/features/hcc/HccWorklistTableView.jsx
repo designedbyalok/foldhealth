@@ -10,7 +10,7 @@ import { SortPopover } from '../../components/SortPopover/SortPopover';
 import { DUE_OPTIONS } from './dueDateFilter';
 import { SavedFiltersChip } from './SavedFiltersChip';
 import { FilterChipBar } from './FilterChipBar';
-import { FilterNameDialog } from './FilterNameDialog';
+import { FilterNameDialog } from '../../components/FilterBar/FilterNameDialog';
 import { ColumnConfigPopover } from '../../components/ColumnConfigPopover/ColumnConfigPopover';
 import { MEMBER_SORT_ITEMS } from './columns';
 import { Pagination } from '../../components/Pagination/Pagination';
@@ -22,6 +22,7 @@ import { StatusLegend } from './StatusLegend';
 import { HorizontalScrollbar } from '../../components/HorizontalScrollbar/HorizontalScrollbar';
 import { UploadMenuButton, EmptyState, ColumnsIcon } from './HccWorklistTableParts';
 import { COL_CLASS } from './HccWorklistTableParts.constants';
+import { useAppStore } from '../../store/useAppStore';
 import styles from './HccWorklistTable.module.css';
 import rowStyles from './HccWorklistRow.module.css';
 
@@ -36,6 +37,11 @@ export function HccWorklistTableView({
   bulkAssigneeOpen, setBulkAssigneeOpen, sortPop, setSort, clearSort, memberSortPop,
   toggleHccColumn, reorderHccColumns, clearHccColumnOrder, clearHccHiddenCols,
 }) {
+  // The table slices rows by the store's page, so the pager drives it too.
+  const currentPage = useAppStore(s => s.currentPage);
+  const setCurrentPage = useAppStore(s => s.setCurrentPage);
+  const perPage = useAppStore(s => s.perPage);
+  const setPerPage = useAppStore(s => s.setPerPage);
   return (
     <div className={styles.wrap}>
       <HccUploadProgressRibbon />
@@ -242,6 +248,10 @@ export function HccWorklistTableView({
       <StatusLegend />
 
       <Pagination
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+        perPage={perPage}
+        onPerPageChange={setPerPage}
         totalItems={combinedRows.length}
         totalCount={totalRecordCount}
         filtered={filtersActive || !!searchQuery?.trim()}

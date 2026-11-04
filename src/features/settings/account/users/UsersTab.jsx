@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Icon } from '../../../../components/Icon/Icon';
 import { SectionTitleBar } from '../../../../components/SectionTitleBar/SectionTitleBar';
-import { FilterBar } from '../../../../components/FilterBar/FilterBar';
+import { FilterBar } from '../../../worklists/FilterBar';
 import { WorklistShell } from '../../../../components/WorklistShell/WorklistShell';
 import { useTableSort } from '../../../../components/HeaderCell/useTableSort';
 import { ViewUserDrawer, EditUserDrawer } from '../AccountPanel';

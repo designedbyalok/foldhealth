@@ -1,7 +1,7 @@
 import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { TopBar } from '../../components/TopBar/TopBar';
 import { SectionTitleBar } from '../../components/SectionTitleBar/SectionTitleBar';
-import { FilterBar } from '../../components/FilterBar/FilterBar';
+import { FilterBar } from '../worklists/FilterBar';
 import { useAppStore } from '../../store/useAppStore';
 import { AddTaskDrawer } from './AddTaskDrawer';
 import { TaskDetailDrawer } from './TaskDetailDrawer';

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { usePatientHoverCard } from '../PatientHoverCard/usePatientHoverCard';
+import { useHoverIntent } from './useHoverIntent';
 import styles from './HoverCard.module.css';
 
 /**
@@ -22,7 +22,7 @@ import styles from './HoverCard.module.css';
  *               its cell)
  */
 export function HoverCard({ trigger, children, width = 280, ariaLabel, openDelay = 150, flush = false, pinOnClick = false, className = '' }) {
-  const hover = usePatientHoverCard({ openDelay, closeDelay: 200 });
+  const hover = useHoverIntent({ openDelay, closeDelay: 200 });
   const rect = hover.anchorRect;
   const [pinned, setPinned] = useState(false);
   const triggerRef = useRef(null);

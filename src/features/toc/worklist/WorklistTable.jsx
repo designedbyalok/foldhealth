@@ -9,7 +9,7 @@ import { Icon } from '../../../components/Icon/Icon';
 import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { HeaderCell } from '../../../components/HeaderCell/HeaderCell';
 import { ColumnsHeaderButton } from '../../../components/WorklistColumns/ColumnsHeaderButton';
-import { useWorklistColumns } from '../../../components/WorklistColumns/useWorklistColumns';
+import { useWorklistColumns } from '../../worklists/useWorklistColumns';
 
 function EmptySearch() {
   return (

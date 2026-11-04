@@ -6,7 +6,7 @@ import { AppSidebar } from '../components/Sidebar/AppSidebar';
 import { SubNav } from '../components/SubNav/SubNav';
 import { TopBar } from '../components/TopBar/TopBar';
 import { TabBar } from './TabBar';
-import { FilterBar } from '../components/FilterBar/FilterBar';
+import { FilterBar } from '../features/worklists/FilterBar';
 import { useSavedFilterActions } from '../features/hcc/useSavedFilterActions';
 import { Pagination } from '../components/Pagination/Pagination';
 import { ActiveCallCard } from '../components/ActiveCallCard/ActiveCallCard';

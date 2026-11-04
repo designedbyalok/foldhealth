@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Icon } from '../../components/Icon/Icon';
-import { Checkbox } from '../../components/Checkbox/Checkbox';
-import { MORE_FILTER_ITEMS as HCC_MORE_FILTER_ITEMS } from './filters';
-import { FILTER_DOMAINS } from './filterDomains';
+import { Icon } from '../Icon/Icon';
+import { Checkbox } from '../Checkbox/Checkbox';
 import styles from './MoreFiltersPopover.module.css';
 
 /**
@@ -18,20 +16,19 @@ import styles from './MoreFiltersPopover.module.css';
  *  - onClear    (fn)              Hide all chips.
  *  - onClose    (fn)              Dismiss the popover.
  *  - moreFilterItems ([{k, label, primary, group}])  Filter roster for the popover.
- *                                 Defaults to HCC's list so existing callers
- *                                 don't change; other worklists (e.g. HEDIS)
- *                                 pass their own.
  *  - grouped    (boolean)         Spec layout: primaries that aren't in the chip
  *                                 row under "Primary", then the secondary
  *                                 filters under their domain (`group`)
- *                                 headings, in FILTER_DOMAINS order. Search
- *                                 narrows across all of them.
+ *                                 headings, in `groupOrder` (then any other
+ *                                 group). Search narrows across all of them.
+ *  - groupOrder (string[])        Grouped mode: the order of the domain headings.
  *  - hiddenKeys (Set<string>)     Grouped mode: primaries already showing in the
  *                                 row (they fit), left out of the list.
  */
 const NO_KEYS = new Set();
+const NO_ITEMS = [];
 
-export function MoreFiltersPopover({ anchorRect, visibleKeys, onToggle, onClear, onClose, moreFilterItems = HCC_MORE_FILTER_ITEMS, grouped = false, hiddenKeys = NO_KEYS }) {
+export function MoreFiltersPopover({ anchorRect, visibleKeys, onToggle, onClear, onClose, moreFilterItems = NO_ITEMS, grouped = false, groupOrder = NO_ITEMS, hiddenKeys = NO_KEYS }) {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
@@ -72,7 +69,8 @@ export function MoreFiltersPopover({ anchorRect, visibleKeys, onToggle, onClear,
     const match = (x) => !q || x.label.toLowerCase().includes(q);
     const primary = moreFilterItems.filter(x => x.primary && !hiddenKeys.has(x.k) && match(x));
     const items = moreFilterItems.filter(x => !x.primary && match(x));
-    const names = [...FILTER_DOMAINS, ...new Set(items.map(x => x.group || 'Other').filter(g => !FILTER_DOMAINS.includes(g)))];
+    const ordered = new Set(groupOrder);
+    const names = [...groupOrder, ...new Set(items.map(x => x.group || 'Other').filter(g => !ordered.has(g)))];
     return [
       { name: 'Primary', items: primary },
       ...names.map(name => ({ name, items: items.filter(x => (x.group || 'Other') === name) })),

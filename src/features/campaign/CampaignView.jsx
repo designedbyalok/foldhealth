@@ -6,7 +6,7 @@ import { Switch } from '../../components/Switch/Switch';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { TopBar } from '../../components/TopBar/TopBar';
 import { SectionTitleBar } from '../../components/SectionTitleBar/SectionTitleBar';
-import { FilterBar } from '../../components/FilterBar/FilterBar';
+import { FilterBar } from '../worklists/FilterBar';
 import { Pagination } from '../../components/Pagination/Pagination';
 import { HeaderCell } from '../../components/HeaderCell/HeaderCell';
 import { EmptyState } from '../../components/EmptyState/EmptyState';
