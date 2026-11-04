@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Icon } from '@/components/Icon/Icon';
 import { EmptyState } from '@/components/EmptyState/EmptyState';
-import { Collapse } from '@/components/Collapse/Collapse';
+import { CollapsibleContent } from '@/components/Collapsible/Collapsible';
 import { accumulatorSummary, money, moneyWhole, short } from './claimFormat';
 import { CoverageGuideDrawer } from './CoverageGuideDrawer';
 import styles from './Claims.module.css';
@@ -29,12 +29,12 @@ function AccumulatorRow({ a }) {
         <span><span className={`${styles.dot} ${styles.dotIn}`} />{moneyWhole(a.in_spent)} /{short(a.in_limit)}</span>
         <span><span className={`${styles.dot} ${styles.dotOut}`} />{moneyWhole(a.out_spent)} /{short(a.out_limit)}</span>
       </div>
-      <Collapse open={open}>
+      <CollapsibleContent open={open}>
         <p className={`${styles.accNote} ${s.met ? styles.accMet : ''}`}>
           {s.met && <Icon name="solar:confetti-linear" size={16} color="currentColor" />}
           {s.text}
         </p>
-      </Collapse>
+      </CollapsibleContent>
     </li>
   );
 }

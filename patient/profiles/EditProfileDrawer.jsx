@@ -5,7 +5,7 @@ import { Drawer } from '@/components/Drawer/Drawer';
 import { Button } from '@/components/Button/Button';
 import { Input } from '@/components/Input/Input';
 import { RadioOptionGroup } from '@/components/RadioOptionGroup/RadioOptionGroup';
-import { Checkbox } from '@/components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '@/components/Checkbox/Checkbox';
 import { AvatarBase } from '@/components/Avatar/AvatarBase';
 import { CardSkeleton } from '@/components/CardSkeleton/CardSkeleton';
 import { initialsOf } from '../lib/profileFormat';

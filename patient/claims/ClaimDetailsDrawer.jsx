@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Drawer } from '@/components/Drawer/Drawer';
 import { Badge } from '@/components/Badge/Badge';
 import { Icon } from '@/components/Icon/Icon';
-import { Collapse } from '@/components/Collapse/Collapse';
+import { CollapsibleContent } from '@/components/Collapsible/Collapsible';
 import { money, serviceDate, statusOf } from './claimFormat';
 import styles from './Claims.module.css';
 
@@ -59,7 +59,7 @@ export function ClaimDetailsDrawer({ claim, onClose }) {
               Explanation of Benefits
               <Icon name={eob ? 'solar:alt-arrow-up-linear' : 'solar:alt-arrow-down-linear'} size={14} color="currentColor" />
             </button>
-            <Collapse open={eob}>
+            <CollapsibleContent open={eob}>
               <ul className={styles.eobList}>
                 {claim.lines.map((l) => (
                   <li key={`${l.procedure_code}-${l.description}`} className={styles.eob}>
@@ -80,7 +80,7 @@ export function ClaimDetailsDrawer({ claim, onClose }) {
                   </li>
                 ))}
               </ul>
-            </Collapse>
+            </CollapsibleContent>
           </>
         )}
       </div>

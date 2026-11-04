@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TabStrip } from '@/components/TabStrip/TabStrip';
+import { Tabs } from '@/components/Tabs/Tabs';
 import { ErrorBoundary } from '@/components/ErrorBoundary/ErrorBoundary';
 import { HealthRecords } from '../records/HealthRecords';
 import { CareTasks } from '../tasks/CareTasks';
@@ -19,7 +19,7 @@ export function HomeTabs({ memberId }) {
   const [tab, setTab] = useState('tasks');
   return (
     <div className={styles.tabs}>
-      <TabStrip items={TABS} activeKey={tab} onChange={setTab} fullWidth={false} />
+      <Tabs items={TABS} value={tab} onValueChange={setTab} fullWidth={false} />
       <div className={styles.tabBody}>
         {/* One broken tab must not take the rest of Home with it. */}
         <ErrorBoundary resetKeys={[tab, memberId]}>
