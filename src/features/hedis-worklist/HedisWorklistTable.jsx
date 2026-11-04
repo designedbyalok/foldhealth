@@ -270,16 +270,15 @@ export function HedisWorklistTable() {
       />
 
       {/* ── Filter chip bar (shared with HCC) ── */}
-      {filterBarOpen && (
-        <FilterChipBar
-          list="HEDIS"
-          filterDefMap={HEDIS_FILTER_DEF_MAP}
-          moreFilterItems={HEDIS_MORE_FILTER_ITEMS}
-          primaryFilterKeys={HEDIS_PRIMARY_FILTER_KEYS}
-          dynamicOpts={dynamicOpts}
-          onSaveFilter={() => setSaveDialogOpen(true)}
-        />
-      )}
+      <FilterChipBar
+        collapsed={!filterBarOpen}
+        list="HEDIS"
+        filterDefMap={HEDIS_FILTER_DEF_MAP}
+        moreFilterItems={HEDIS_MORE_FILTER_ITEMS}
+        primaryFilterKeys={HEDIS_PRIMARY_FILTER_KEYS}
+        dynamicOpts={dynamicOpts}
+        onSaveFilter={() => setSaveDialogOpen(true)}
+      />
 
       {/* ── Table ── */}
       <div className={styles.scrollWrap} style={{ flex: 1 }}>

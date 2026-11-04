@@ -9,7 +9,7 @@ import { Tabs } from '../Tabs/Tabs';
 import { Calendar } from '../Calendar/Calendar';
 import styles from './DateRangePopover.module.css';
 import { isoFromLocal as toISO, parseLocalDate } from '../../lib/localDate';
-import { yearSpan } from './yearSpan';
+import { yearSpan, monthSpan } from './yearSpan';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -36,10 +36,13 @@ const MONTH_NAMES = [
  *  - onClose    (fn)                   Dismiss on overlay click / Escape /
  *                                       Apply / Clear.
  *  - width      (number)               Default 504.
- *  - years      (boolean)              Adds a Years | Custom Dates switch (e.g.
- *                                       DOB): Years picks a From and To year,
- *                                       saved as Jan 1 to Dec 31; Custom Dates
- *                                       is the calendar, with a year jump.
+ *  - years      (boolean)              Adds a Years | Month & Year | Custom
+ *                                       Dates switch (e.g. DOB): Years picks a
+ *                                       From and To year, saved as Jan 1 to
+ *                                       Dec 31; Month & Year picks a From and
+ *                                       To month, saved as the 1st to the last
+ *                                       day of the month; Custom Dates is the
+ *                                       calendar, with a year jump.
  */
 export function DateRangePopover({
   anchorRect,
@@ -63,9 +66,31 @@ export function DateRangePopover({
     return s ? stepMonth({ y: s.getFullYear(), m: s.getMonth() }, 1) : { y: today.getFullYear(), m: today.getMonth() };
   });
   const savedYears = yearSpan(selected);
-  const [mode, setMode] = useState(() => (years && (savedYears || !selected.length) ? 'years' : 'custom'));
+  const savedMonths = savedYears ? null : monthSpan(selected);
+  const [mode, setMode] = useState(() => {
+    if (!years) return 'custom';
+    if (savedYears || !selected.length) return 'years';
+    return savedMonths ? 'months' : 'custom';
+  });
   const [fromYear, setFromYear] = useState(savedYears ? String(savedYears[0]) : '');
   const [toYear, setToYear] = useState(savedYears ? String(savedYears[1]) : '');
+  // Month & Year values are 'YYYY-MM'. With nothing saved they start on last
+  // month to this month, so Apply works straight away.
+  const [fromYM, setFromYM] = useState(() => (savedMonths ? ymKey(...savedMonths[0]) : defaultMonths(today)[0]));
+  const [toYM, setToYM] = useState(() => (savedMonths ? ymKey(...savedMonths[1]) : defaultMonths(today)[1]));
+  const monthYearOptions = useMemo(() => {
+    const out = [];
+    for (let i = today.getFullYear() * 12 + today.getMonth(); i >= (today.getFullYear() - YEAR_SPAN) * 12; i -= 1) {
+      const y = Math.floor(i / 12);
+      const m = i % 12;
+      out.push({
+        value: ymKey(y, m + 1),
+        label: `${MONTH_NAMES[m]} ${y}`,
+        searchText: `${MONTH_NAMES[m]} ${y} ${MONTH_NAMES[m].slice(0, 3)} ${y} ${pad2(m + 1)}/${y}`,
+      });
+    }
+    return out;
+  }, [today]);
   const yearOptions = useMemo(() => {
     const out = [];
     for (let y = today.getFullYear(); y >= today.getFullYear() - YEAR_SPAN; y -= 1) out.push({ value: String(y), label: String(y) });
@@ -126,13 +151,22 @@ export function DateRangePopover({
   );
 
   const yearsReady = !!fromYear && !!toYear;
-  const canApply = mode === 'years' ? yearsReady : !!(start && end);
+  const monthsReady = !!fromYM && !!toYM;
+  const canApply = mode === 'years' ? yearsReady : mode === 'months' ? monthsReady : !!(start && end);
 
   const apply = () => {
     if (mode === 'years') {
       if (!yearsReady) return;
       const [lo, hi] = [Number(fromYear), Number(toYear)].sort((a, b) => a - b);
       onChange?.([`${lo}-01-01`, `${hi}-12-31`]);
+      onClose?.();
+      return;
+    }
+    if (mode === 'months') {
+      if (!monthsReady) return;
+      const [lo, hi] = [fromYM, toYM].sort().map(k => k.split('-').map(Number));
+      const lastDay = new Date(hi[0], hi[1], 0).getDate();
+      onChange?.([`${lo[0]}-${pad2(lo[1])}-01`, `${hi[0]}-${pad2(hi[1])}-${pad2(lastDay)}`]);
       onClose?.();
       return;
     }
@@ -146,6 +180,9 @@ export function DateRangePopover({
     setEnd(null);
     setFromYear('');
     setToYear('');
+    const [d0, d1] = defaultMonths(today);
+    setFromYM(d0);
+    setToYM(d1);
     onChange?.([]);
   };
 
@@ -165,7 +202,11 @@ export function DateRangePopover({
         <Tabs
           variant="pill"
           className={styles.modeTabs}
-          items={[{ key: 'years', label: 'Years' }, { key: 'custom', label: 'Custom Dates' }]}
+          items={[
+            { key: 'years', label: 'Years' },
+            { key: 'months', label: 'Month & Year' },
+            { key: 'custom', label: 'Custom Dates' },
+          ]}
           value={mode}
           onValueChange={setMode}
         />
@@ -175,6 +216,11 @@ export function DateRangePopover({
         <div className={styles.yearRow}>
           <Select label="From" searchable placeholder="Year" options={yearOptions} value={fromYear} onValueChange={setFromYear} />
           <Select label="To" searchable placeholder="Year" options={yearOptions} value={toYear} onValueChange={setToYear} />
+        </div>
+      ) : mode === 'months' ? (
+        <div className={styles.yearRow}>
+          <Select label="From" searchable searchPlaceholder="e.g. Apr 1958" placeholder="Month & Year" options={monthYearOptions} value={fromYM} onValueChange={setFromYM} />
+          <Select label="To" searchable searchPlaceholder="e.g. Dec 1961" placeholder="Month & Year" options={monthYearOptions} value={toYM} onValueChange={setToYM} />
         </div>
       ) : (
       <div className={styles.calBody}>
@@ -274,3 +320,12 @@ function stepMonth(v, delta) {
 }
 
 
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function ymKey(y, m) { return `${y}-${pad2(m)}`; } // m: 1–12
+
+/** Last month and this month, as 'YYYY-MM' (January's last month is last December). */
+function defaultMonths(today) {
+  const prev = stepMonth({ y: today.getFullYear(), m: today.getMonth() }, -1);
+  return [ymKey(prev.y, prev.m + 1), ymKey(today.getFullYear(), today.getMonth() + 1)];
+}

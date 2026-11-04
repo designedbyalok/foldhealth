@@ -151,6 +151,7 @@ export function CmpWorklistTable() {
 
   const filterNode = (
     <FilterBar
+      collapsed={!filterBarOpen}
       autoFit
       pinPrimary
       multiSelect
@@ -209,7 +210,8 @@ export function CmpWorklistTable() {
     <WorklistShell
       header={header}
       worklistKey="cmp"
-      showFilters={filterBarOpen}
+      // Always passed: when closed, the bar shows just the applied filters.
+      showFilters
       filters={filterNode}
       columns={CMP_SHELL_COLUMNS}
       sortKey={sortKey}

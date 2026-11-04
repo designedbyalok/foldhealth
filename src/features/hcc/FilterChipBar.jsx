@@ -73,6 +73,7 @@ export function FilterChipBar({
   primaryFilterKeys = HCC_PRIMARY_FILTER_KEYS,
   dynamicOpts: dynamicOptsProp,
   onSaveFilter,
+  collapsed = false,
 }) {
   const sel = STORE_SELECTORS_BY_LIST[list] || STORE_SELECTORS_BY_LIST.HCC;
 
@@ -296,6 +297,7 @@ export function FilterChipBar({
 
   return (
     <FilterBar
+      collapsed={collapsed}
       autoFit
       // HCC and HEDIS follow the filter spec: primaries always show; More
       // Filters lists the secondary filters by domain.

@@ -204,8 +204,11 @@ function PopulationView() {
               TOC uses (title tab + right-side action icons) so the two
               worklists share one visual pattern. */}
           {(!chromeless || isCcm) && <TabBar />}
-          {!chromeless && showFilterBar && (
-            <WorklistFilterBar leading={(isToc || (isTcm && activeTab === 'toc-queue')) ? null : undefined} />
+          {!chromeless && (
+            <WorklistFilterBar
+              collapsed={!showFilterBar}
+              leading={(isToc || (isTcm && activeTab === 'toc-queue')) ? null : undefined}
+            />
           )}
           {isTcm && activeTab === 'toc-queue' && <QueueSummaryBar />}
           <Suspense fallback={<LazyFallback />}>

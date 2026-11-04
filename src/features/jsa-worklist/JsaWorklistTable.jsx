@@ -115,6 +115,7 @@ export function JsaWorklistTable() {
 
   const filterNode = (
     <FilterBar
+      collapsed={!filterBarOpen}
       autoFit
       pinPrimary
       multiSelect
@@ -159,7 +160,8 @@ export function JsaWorklistTable() {
   return (
     <WorklistShell
       header={header}
-      showFilters={filterBarOpen}
+      // Always passed: when closed, the bar shows just the applied filters.
+      showFilters
       filters={filterNode}
       worklistKey="jsa"
       columns={JSA_SHELL_COLUMNS}

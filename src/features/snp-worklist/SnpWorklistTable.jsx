@@ -338,43 +338,42 @@ export function SnpWorklistTable() {
         }
       />
 
-      {filterBarOpen && (
-        <FilterBar
-          filterDefs={FILTER_KEYS}
-          filters={filters}
-          onFilterChange={(k, vals) => setFilter(k, vals)}
-          onClearAll={savedActions.onClearAll}
-          clearAllLabel={savedActions.clearAllLabel}
-          saveLabel={savedActions.saveLabel}
-          saveMenuItems={savedActions.saveMenuItems}
-          onSaveMenuSelect={savedActions.onSaveMenuSelect}
-          hasActive={savedActions.edited || undefined}
-          onSaveFilter={(name) => saveSnpFilter(name)}
-          getOptions={(def) => filterOptions[def.key] || []}
-          multiSelect
-          visibleKeys={visibleKeys}
-          onToggleVisible={toggleVisible}
-          onClearVisible={clearVisibleFilters}
-          moreFilterItems={MORE_FILTER_ITEMS}
-          leading={null}
-          pinPrimary
-          // DOB gets the Years | Custom Dates picker; every other chip is the usual multi-select.
-          renderChip={(k) => {
-            if (k === 'dob') return <DobFilter value={filters.dob || []} onChange={vals => setFilter('dob', vals)} />;
-            const def = FILTER_KEYS.find(f => f.key === k);
-            if (!def) return null;
-            return (
-              <FilterChip
-                label={def.label}
-                options={filterOptions[k] || []}
-                selected={filters[k] || []}
-                onChange={vals => setFilter(k, vals)}
-                searchable={k === 'language'}
-              />
-            );
-          }}
-        />
-      )}
+      <FilterBar
+        collapsed={!filterBarOpen}
+        filterDefs={FILTER_KEYS}
+        filters={filters}
+        onFilterChange={(k, vals) => setFilter(k, vals)}
+        onClearAll={savedActions.onClearAll}
+        clearAllLabel={savedActions.clearAllLabel}
+        saveLabel={savedActions.saveLabel}
+        saveMenuItems={savedActions.saveMenuItems}
+        onSaveMenuSelect={savedActions.onSaveMenuSelect}
+        hasActive={savedActions.edited || undefined}
+        onSaveFilter={(name) => saveSnpFilter(name)}
+        getOptions={(def) => filterOptions[def.key] || []}
+        multiSelect
+        visibleKeys={visibleKeys}
+        onToggleVisible={toggleVisible}
+        onClearVisible={clearVisibleFilters}
+        moreFilterItems={MORE_FILTER_ITEMS}
+        leading={null}
+        pinPrimary
+        // DOB gets the Years | Custom Dates picker; every other chip is the usual multi-select.
+        renderChip={(k) => {
+          if (k === 'dob') return <DobFilter value={filters.dob || []} onChange={vals => setFilter('dob', vals)} />;
+          const def = FILTER_KEYS.find(f => f.key === k);
+          if (!def) return null;
+          return (
+            <FilterChip
+              label={def.label}
+              options={filterOptions[k] || []}
+              selected={filters[k] || []}
+              onChange={vals => setFilter(k, vals)}
+              searchable={k === 'language'}
+            />
+          );
+        }}
+      />
 
       <div className={styles.tableScroll}>
         {loading && members.length === 0 ? (

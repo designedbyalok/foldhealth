@@ -323,91 +323,90 @@ export function CcmWorklistTable() {
           FilterBar. All the bucket-based chips render from FILTER_KEYS;
           Billable Mins + Unlogged Mins slot in between memberStatus and
           unloggedUser to match the Figma order. */}
-      {showFilterBar && (
-        <FilterBar
-          autoFit
-          pinPrimary
-          leading={null}
-          filterDefs={CCM_FILTER_DEFS}
-          moreFilterItems={CCM_MORE_FILTER_ITEMS}
-          filters={{
-            ...filters,
-            // Mirror the two time-filter chips into FilterBar's `filters` bag
-            // so autoFit treats them as active (always visible) when set.
-            billableMins: isTimeFilterActive(billableFilter) ? ['active'] : [],
-            unloggedMins: isTimeFilterActive(unloggedFilter) ? ['active'] : [],
-          }}
-          multiSelect
-          onClearAll={savedActions.onClearAll}
-          clearAllLabel={savedActions.clearAllLabel}
-          saveLabel={savedActions.saveLabel}
-          saveMenuItems={savedActions.saveMenuItems}
-          onSaveMenuSelect={savedActions.onSaveMenuSelect}
-          onSaveFilter={(name) => saveSavedFilter('CCM', name)}
-          hasActive={hasAnyActive || savedActions.edited}
-          renderChip={(k /* , mirror */) => {
-            if (k === 'billableMins') {
-              return (
-                <FilterChip
-                  key={k}
-                  label="Billable Mins"
-                  active={isTimeFilterActive(billableFilter)}
-                  activeSummary={summarizeTimeFilter(billableFilter)}
-                  onClear={() => setBillableFilter(EMPTY_TIME_FILTER)}
-                  renderPopover={({ anchorRect, onClose }) => (
-                    <TimeFilterPopover
-                      anchorRect={anchorRect}
-                      onClose={onClose}
-                      label="Billable Mins"
-                      thresholds={BILLABLE_THRESHOLDS}
-                      userOptions={userOptions}
-                      value={billableFilter}
-                      onChange={setBillableFilter}
-                    />
-                  )}
-                />
-              );
-            }
-            if (k === 'unloggedMins') {
-              return (
-                <FilterChip
-                  key={k}
-                  label="Unlogged Mins"
-                  active={isTimeFilterActive(unloggedFilter)}
-                  activeSummary={summarizeTimeFilter(unloggedFilter)}
-                  onClear={() => setUnloggedFilter(EMPTY_TIME_FILTER)}
-                  renderPopover={({ anchorRect, onClose }) => (
-                    <TimeFilterPopover
-                      anchorRect={anchorRect}
-                      onClose={onClose}
-                      label="Unlogged Mins"
-                      thresholds={UNLOGGED_THRESHOLDS}
-                      userOptions={userOptions}
-                      value={unloggedFilter}
-                      onChange={setUnloggedFilter}
-                    />
-                  )}
-                />
-              );
-            }
-            if (k === 'dob') {
-              return <DobFilter key={k} value={filters.dob || []} onChange={vals => setFilter('dob', vals)} />;
-            }
-            const def = CCM_FILTER_DEFS.find(d => d.key === k);
-            if (!def) return null;
+      <FilterBar
+        collapsed={!showFilterBar}
+        autoFit
+        pinPrimary
+        leading={null}
+        filterDefs={CCM_FILTER_DEFS}
+        moreFilterItems={CCM_MORE_FILTER_ITEMS}
+        filters={{
+          ...filters,
+          // Mirror the two time-filter chips into FilterBar's `filters` bag
+          // so autoFit treats them as active (always visible) when set.
+          billableMins: isTimeFilterActive(billableFilter) ? ['active'] : [],
+          unloggedMins: isTimeFilterActive(unloggedFilter) ? ['active'] : [],
+        }}
+        multiSelect
+        onClearAll={savedActions.onClearAll}
+        clearAllLabel={savedActions.clearAllLabel}
+        saveLabel={savedActions.saveLabel}
+        saveMenuItems={savedActions.saveMenuItems}
+        onSaveMenuSelect={savedActions.onSaveMenuSelect}
+        onSaveFilter={(name) => saveSavedFilter('CCM', name)}
+        hasActive={hasAnyActive || savedActions.edited}
+        renderChip={(k /* , mirror */) => {
+          if (k === 'billableMins') {
             return (
               <FilterChip
                 key={k}
-                label={def.label}
-                options={filterOptions[k] || []}
-                selected={filters[k] || []}
-                onChange={vals => setFilter(k, vals)}
-                searchable={k === 'language'}
+                label="Billable Mins"
+                active={isTimeFilterActive(billableFilter)}
+                activeSummary={summarizeTimeFilter(billableFilter)}
+                onClear={() => setBillableFilter(EMPTY_TIME_FILTER)}
+                renderPopover={({ anchorRect, onClose }) => (
+                  <TimeFilterPopover
+                    anchorRect={anchorRect}
+                    onClose={onClose}
+                    label="Billable Mins"
+                    thresholds={BILLABLE_THRESHOLDS}
+                    userOptions={userOptions}
+                    value={billableFilter}
+                    onChange={setBillableFilter}
+                  />
+                )}
               />
             );
-          }}
-        />
-      )}
+          }
+          if (k === 'unloggedMins') {
+            return (
+              <FilterChip
+                key={k}
+                label="Unlogged Mins"
+                active={isTimeFilterActive(unloggedFilter)}
+                activeSummary={summarizeTimeFilter(unloggedFilter)}
+                onClear={() => setUnloggedFilter(EMPTY_TIME_FILTER)}
+                renderPopover={({ anchorRect, onClose }) => (
+                  <TimeFilterPopover
+                    anchorRect={anchorRect}
+                    onClose={onClose}
+                    label="Unlogged Mins"
+                    thresholds={UNLOGGED_THRESHOLDS}
+                    userOptions={userOptions}
+                    value={unloggedFilter}
+                    onChange={setUnloggedFilter}
+                  />
+                )}
+              />
+            );
+          }
+          if (k === 'dob') {
+            return <DobFilter key={k} value={filters.dob || []} onChange={vals => setFilter('dob', vals)} />;
+          }
+          const def = CCM_FILTER_DEFS.find(d => d.key === k);
+          if (!def) return null;
+          return (
+            <FilterChip
+              key={k}
+              label={def.label}
+              options={filterOptions[k] || []}
+              selected={filters[k] || []}
+              onChange={vals => setFilter(k, vals)}
+              searchable={k === 'language'}
+            />
+          );
+        }}
+      />
 
       {/* Table body. Uses the same inline th styles + sticky columns as
           src/features/toc/worklist/WorklistTable.jsx. */}

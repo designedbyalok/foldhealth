@@ -118,6 +118,7 @@ export function AwvWorklistTable() {
 
   const filterNode = (
     <FilterBar
+      collapsed={!filterBarOpen}
       autoFit
       pinPrimary
       multiSelect
@@ -163,7 +164,8 @@ export function AwvWorklistTable() {
     <WorklistShell
       header={header}
       worklistKey="awv"
-      showFilters={filterBarOpen}
+      // Always passed: when closed, the bar shows just the applied filters.
+      showFilters
       filters={filterNode}
       columns={AWV_SHELL_COLUMNS}
       sortKey={sortKey}
