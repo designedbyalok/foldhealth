@@ -8,7 +8,7 @@ import { createPortal } from 'react-dom';
 import { useAppStore } from '../../store/useAppStore';
 import { Icon } from '../../components/Icon/Icon';
 import { CloseButton } from '../../components/CloseButton/CloseButton';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { Input } from '../../components/Input/Input';
 import { Textarea } from '../../components/Textarea/Textarea';
 import { Select as SharedSelect } from '../../components/Select/Select';
@@ -733,7 +733,7 @@ export function TextStyleChips({ block, updateBlock, id }) {
     return byLevel ? byLevel.key : 'heading';
   })();
   return (
-    <Toggle
+    <SegmentedControl
       fullWidth
       size="sm"
       items={TEXT_STYLE_PRESETS.map(p => ({ key: p.key, label: p.label }))}
@@ -815,7 +815,7 @@ export function PaddingControl({ padding, onChangeSide, onChangeAll }) {
     <>
       <div className={styles.paddingLabelRow}>
         <span className={styles.fieldLabelStrong}>Padding</span>
-        <Toggle
+        <SegmentedControl
           size="sm"
           items={[
             { key: 'uniform',   label: '', icon: <PadUniformIcon /> },
@@ -957,7 +957,7 @@ export function BorderControl({ style, onUpdate }) {
       {open && (
         <>
           <div className={styles.fieldCol}>
-            <Toggle
+            <SegmentedControl
               fullWidth
               size="sm"
               items={[
@@ -984,7 +984,7 @@ export function BorderControl({ style, onUpdate }) {
               </Row2>
               <div className={styles.fieldCol}>
                 <span className={styles.fieldLabel}>Style</span>
-                <Toggle
+                <SegmentedControl
                   fullWidth
                   size="sm"
                   items={[

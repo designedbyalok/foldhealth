@@ -4,7 +4,7 @@ import { Badge } from '../../../../components/Badge/Badge';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
 import { FilterChip } from '../../../../components/FilterChip/FilterChip';
 import { DateRangeFilter } from '../../../../components/DateRangeFilter/DateRangeFilter';
-import { Toggle } from '../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../components/SegmentedControl/SegmentedControl';
 import { Tooltip } from '../../../../components/Tooltip/Tooltip';
 import { Icon } from '../../../../components/Icon/Icon';
 import { Link } from '../../../../components/Link/Link';
@@ -103,7 +103,7 @@ export function UserAvailabilityNewView({ users, loading, filtersOpen, onAdd, on
     <div className={styles.root}>
       {!fixedView && (
         <div className={styles.toolbar}>
-          <Toggle size="sm" items={VIEWS} value={view} onValueChange={setView} />
+          <SegmentedControl size="sm" items={VIEWS} value={view} onValueChange={setView} />
         </div>
       )}
       <CollapsibleContent open={!!filtersOpen}>

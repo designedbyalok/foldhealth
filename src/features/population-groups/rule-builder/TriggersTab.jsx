@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { Button } from '../../../components/Button/Button';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { Select } from '../../../components/Select/Select';
 import { Input } from '../../../components/Input/Input';
 import { Icon } from '../../../components/Icon/Icon';
@@ -131,7 +131,7 @@ export function TriggersTab({ groupId, showToast }) {
         return (
           <div key={t.id} className={styles.triggerCard}>
             <div className={styles.triggerCardHeader}>
-              <Toggle checked={t.enabled} onValueChange={() => handleToggle(t)} size="sm" />
+              <SegmentedControl checked={t.enabled} onValueChange={() => handleToggle(t)} size="sm" />
               <span className={styles.triggerCardName}>{t.name}</span>
               <span className={styles.triggerCardActions}>
                 <ActionButton icon="solar:pen-linear" size="sm" tooltip="Edit" onClick={() => setEditId(t.id)} />

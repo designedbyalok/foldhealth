@@ -26,7 +26,7 @@ import { UserAvailabilityNewView } from './UserAvailabilityNewView';
 import { UserPickerPopover } from '../../../../components/UserPickerPopover/UserPickerPopover';
 import { DateRangePopover } from '../../../../components/DateRangePopover/DateRangePopover';
 import { fmtDay } from '../../../../components/DateRangeFilter/dateRangePresets';
-import { Toggle } from '../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../components/SegmentedControl/SegmentedControl';
 import { FilterChip } from '../../../../components/FilterChip/FilterChip';
 import {
   blockStatus, STATUS_LOOK, cadenceText, formatDate, slotText, slotTextTz, ALL_TYPES,
@@ -274,7 +274,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
 
   const tools = (
     <>
-      <Toggle size="sm" items={[{ key: 'list', label: 'List' }, { key: 'week', label: 'Week' }]} value={layout} onValueChange={setLayout} />
+      <SegmentedControl size="sm" items={[{ key: 'list', label: 'List' }, { key: 'week', label: 'Week' }]} value={layout} onValueChange={setLayout} />
       <span className={styles.toolDivider} aria-hidden="true" />
       {searchOpen ? (
         <SearchBar

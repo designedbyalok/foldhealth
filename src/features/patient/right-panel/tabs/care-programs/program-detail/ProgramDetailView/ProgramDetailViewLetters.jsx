@@ -3,7 +3,7 @@ import { AddIconMinimalist } from '../../../../../../../components/Icon/AddIconM
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
 import { Button } from '../../../../../../../components/Button/Button';
 import { SearchBar } from '../../../../../../../components/SearchBar/SearchBar';
-import { Toggle } from '../../../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../../../components/SegmentedControl/SegmentedControl';
 import { FilterChip } from '../../../../../../../components/FilterChip/FilterChip';
 import { Checkbox } from '../../../../../../../components/Checkbox/Checkbox';
 import { EmptyState } from '../../../../../../../components/EmptyState/EmptyState';
@@ -66,7 +66,7 @@ export function ProgramDetailViewLetters({
             <>
               <ActionButton icon="solar:magnifer-linear" size="sm" tooltip="Search" onClick={() => setLetterSearchOpen(true)} />
               <span className={styles.tabDivider} />
-              <Toggle size="sm" items={LETTER_SUB_TABS} value={activeLetterTab} onValueChange={setActiveLetterTab} />
+              <SegmentedControl size="sm" items={LETTER_SUB_TABS} value={activeLetterTab} onValueChange={setActiveLetterTab} />
               <div style={{ flex: 1 }} />
             </>
           )}

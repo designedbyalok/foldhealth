@@ -5,7 +5,7 @@ import {
   BackgroundVariant,
   Panel,
 } from '@xyflow/react';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { Icon } from '../../components/Icon/Icon';
 import { useAppStore } from '../../store/useAppStore';
 import { SelectCursorIcon, PanHandIcon } from './AgentCanvasIcons';
@@ -113,7 +113,7 @@ export function AgentCanvasFlowArea({
               </button>
             </div>
             <div className={styles.modeTogglePill} title="Tool (V / H)">
-              <Toggle
+              <SegmentedControl
                 size="sm"
                 value={canvasMode}
                 onValueChange={setCanvasMode}

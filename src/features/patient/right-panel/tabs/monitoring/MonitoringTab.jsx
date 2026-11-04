@@ -6,7 +6,7 @@ import { Icon } from '../../../../../components/Icon/Icon';
 import { DownChevronIcon } from '../../../../../components/Icon/DownChevronIcon';
 import { CollapsibleContent } from '../../../../../components/Collapsible/Collapsible';
 import { Link } from '../../../../../components/Link/Link';
-import { Toggle } from '../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../components/SegmentedControl/SegmentedControl';
 import { Banner } from '../../../../../components/Banner/Banner';
 import { toast } from '../../../../../components/Toast/sonnerToast';
 import { TasksTab } from '../../../left-panel/tabs/tasks/TasksTab/TasksTab';
@@ -385,7 +385,7 @@ function StorySection({ events }) {
     <div className={styles.story}>
       <div className={styles.storyHead}>
         <SectionLabel>Story</SectionLabel>
-        <Toggle
+        <SegmentedControl
           className={styles.storyFilters}
           size="sm"
           items={STORY_FILTERS}

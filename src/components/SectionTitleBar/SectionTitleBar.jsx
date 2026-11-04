@@ -6,10 +6,10 @@ import { Button } from '../Button/Button';
 import { ActionButton } from '../ActionButton/ActionButton';
 import { SearchBar } from '../SearchBar/SearchBar';
 import { SearchIconButton } from '../SearchIconButton/SearchIconButton';
-import { Toggle } from '../Toggle/Toggle';
+import { SegmentedControl } from '../SegmentedControl/SegmentedControl';
 import { FilterChip } from '../FilterChip/FilterChip';
-import { TabStrip } from '../TabStrip/TabStrip';
-import tabStripStyles from '../TabStrip/TabStrip.module.css';
+import { Tabs } from '../Tabs/Tabs';
+import tabStripStyles from '../Tabs/Tabs.module.css';
 import styles from './SectionTitleBar.module.css';
 
 /**
@@ -368,10 +368,10 @@ function TabsSection({ tabs, activeTab, onTabChange, barRef, rightRef }) {
         ))}
       </div>
 
-      <TabStrip
+      <Tabs
         items={visible}
-        activeKey={activeTab}
-        onChange={onTabChange}
+        value={activeTab}
+        onValueChange={onTabChange}
         embedded
       />
 
@@ -445,7 +445,7 @@ function TitleToggleSection({ title, items, active, onChange }) {
     <div className={styles.titleRow}>
       <span className={styles.title}>{title}</span>
       {hasToggle && (
-        <Toggle items={items} value={active} onValueChange={onChange} size="sm" />
+        <SegmentedControl items={items} value={active} onValueChange={onChange} size="sm" />
       )}
     </div>
   );

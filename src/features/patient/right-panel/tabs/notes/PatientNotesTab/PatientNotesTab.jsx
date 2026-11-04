@@ -5,7 +5,7 @@ import { Button } from '../../../../../../components/Button/Button';
 import { FilterBar } from '../../../../../../components/FilterBar/FilterBar';
 import { Input } from '../../../../../../components/Input/Input';
 import { SimpleTableSkeleton } from '../../../../../../components/SimpleTableSkeleton/SimpleTableSkeleton';
-import { SubTabs } from '../../../../../../components/SubTabs/SubTabs';
+import { Tabs } from '../../../../../../components/Tabs/Tabs';
 import { useTableSort } from '../../../../../../components/HeaderCell/useTableSort';
 import { TaskDetailDrawer } from '../../../../../tasks/TaskDetailDrawer';
 import { NonVisitNoteDrawer } from './NonVisitNoteDrawer';
@@ -81,9 +81,10 @@ function usePatientNoteRows(ids) {
 function NotesToolbar({ view, onView, onSearch, onNewNote, filtersOpen, onToggleFilters, filterCount, canFilter }) {
   return (
     <div className={styles.toolbar}>
-      <SubTabs
+      <Tabs
+        variant="pill"
         className={styles.views}
-        tabs={VIEW_TABS}
+        items={VIEW_TABS}
         value={view}
         onValueChange={onView}
         leading={(

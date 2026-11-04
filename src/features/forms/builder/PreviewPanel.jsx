@@ -5,7 +5,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '../../../components/Icon/Icon';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { evaluate } from '../scoring/evaluate';
 import { toQuestionnaire } from './engineAdapter';
 import { FormRenderer } from '../render/FormRenderer';
@@ -80,7 +80,7 @@ export function PreviewPanel({ fields, scoring, formName, settings }) {
     <div className={styles.previewWrap}>
       <div className={styles.previewStage} ref={stageRef}>
         <div className={styles.deviceToolbar}>
-          <Toggle size="sm" items={DEVICES} value={device} onValueChange={setDevice} />
+          <SegmentedControl size="sm" items={DEVICES} value={device} onValueChange={setDevice} />
         </div>
         {device === 'form' ? (
           <div className={styles.plainArea}>

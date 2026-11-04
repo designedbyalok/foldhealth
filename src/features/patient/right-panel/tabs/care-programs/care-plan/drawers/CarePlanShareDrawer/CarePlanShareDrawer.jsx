@@ -9,7 +9,7 @@ import { DownChevronIcon } from '../../../../../../../../components/Icon/DownChe
 import { Badge } from '../../../../../../../../components/Badge/Badge';
 import { Select } from '../../../../../../../../components/Select/Select';
 import { DatePickerPopover } from '../../../../../../../../components/DatePicker/DatePickerPopover';
-import { TabStrip } from '../../../../../../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../../../../../../components/Tabs/Tabs';
 import { withReportHeader, withReportFooter } from '../../../../../../../email-builder/reportHeaderComponent';
 import { interFontFaces } from '../../../../../../../email-builder/rasterizeComponent';
 import { useComponentImage, loadInter, loadPng } from '../../../../../../../email-builder/reportPrintAssets';
@@ -632,7 +632,7 @@ export function CarePlanShareDrawer({ patientId, program, data: draftData, patie
   const editorPane = (
     <div className={styles.editorScroll}>
       <div className={styles.stickyTop}>
-      <TabStrip items={EDITOR_TABS} activeKey={editorTab} onChange={setEditorTab} fullWidth={false} />
+      <Tabs items={EDITOR_TABS} value={editorTab} onValueChange={setEditorTab} fullWidth={false} />
       {editorTab === 'content' && (
       <div className={styles.filterBar}>
         <div className={styles.filterField}>

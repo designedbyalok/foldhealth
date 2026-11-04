@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Input } from '../../../components/Input/Input';
 import { Select } from '../../../components/Select/Select';
 import { Textarea } from '../../../components/Textarea/Textarea';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { Banner } from '../../../components/Banner/Banner';
 import { useAppStore } from '../../../store/useAppStore';
 import { RUN_SCHEDULES, nodeDef, triggerDef } from '../lib/catalog';
@@ -91,7 +91,7 @@ export function SavePanel({ state, graph, problems, onSave, onClose, onShowProbl
         {scheduled && <Select label="At" options={TIMES} value={runTime} onValueChange={setRunTime} />}
         <div className={styles.saveStatus}>
           <span className={styles.panelSectionTitle}>After saving</span>
-          <Toggle
+          <SegmentedControl
             size="sm"
             items={[{ key: 'draft', label: 'Keep as draft' }, { key: 'active', label: 'Publish (Active)' }, { key: 'inactive', label: 'Inactive' }]}
             value={goLive}

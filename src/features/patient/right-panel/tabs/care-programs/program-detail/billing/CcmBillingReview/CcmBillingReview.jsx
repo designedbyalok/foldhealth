@@ -3,7 +3,7 @@ import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
 import { CardSkeleton } from '../../../../../../../../components/CardSkeleton/CardSkeleton';
-import { TabStrip } from '../../../../../../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../../../../../../components/Tabs/Tabs';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import { secondsToTime } from '../../../../../../data/ccmBillingMock';
 import { CcmBillingLogTable } from '../CcmBillingLogTable/CcmBillingLogTable.jsx';
@@ -210,10 +210,10 @@ export function CcmBillingReview({ program, patientId: patientIdProp }) {
       {/* Sub-tabs: shared TabStrip so the Billable/Billing History switch
           reads identically to every other tab surface (sliding underline,
           hairline divider, same typography). */}
-      <TabStrip
+      <Tabs
         items={TABS.map(t => ({ key: t, label: t }))}
-        activeKey={activeTab}
-        onChange={setActiveTab}
+        value={activeTab}
+        onValueChange={setActiveTab}
         fullWidth={false}
       />
 

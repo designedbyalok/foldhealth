@@ -11,8 +11,8 @@ import { CloseButton } from '../../components/CloseButton/CloseButton';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
 import { Icon } from '../../components/Icon/Icon';
 import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
-import { TabStrip } from '../../components/TabStrip/TabStrip';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { Tabs } from '../../components/Tabs/Tabs';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { clinicalRolesPickerLabel } from '../../lib/worklistAssignee';
 import { MEASURE_ORDER, PROGRESS_TONE, enrichPharmacyMember, medLabel, needsVerification, pharmaciesUsed, prescribersOf } from './pharmacyWorklist.utils';
 import { BARRIER_ICON } from './adherencePicklists';
@@ -349,7 +349,7 @@ function PharmacyGapDrawerBody({ target, row }) {
             compact
             member={scoped}
             titleExtra={codes.length > 1 && (
-              <Toggle
+              <SegmentedControl
                 size="sm"
                 items={[{ key: 'all', label: 'All' }, ...codes.map(c => ({ key: c, label: c }))]}
                 value={scope}
@@ -389,12 +389,12 @@ function PharmacyGapDrawerBody({ target, row }) {
           ))}
         </div>
 
-        <TabStrip
+        <Tabs
           items={TABS.map(t => ({ key: t.key, label: tabCounts[t.key] != null ? `${t.label} (${tabCounts[t.key]})` : t.label }))}
-          activeKey={tab}
-          onChange={setTab}
+          value={tab}
+          onValueChange={setTab}
           fullWidth={false}
-          size="S"
+          size="sm"
         />
 
         {/* The outreach and comments views pad themselves, as in the HEDIS drawer. */}

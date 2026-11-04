@@ -4,7 +4,7 @@ import { Icon } from '@/components/Icon/Icon';
 import { Badge } from '@/components/Badge/Badge';
 import { Button } from '@/components/Button/Button';
 import { ActionButton } from '@/components/ActionButton/ActionButton';
-import { Toggle } from '@/components/Toggle/Toggle';
+import { SegmentedControl } from '@/components/SegmentedControl/SegmentedControl';
 import { Textarea } from '@/components/Textarea/Textarea';
 import { Checkbox } from '@/components/Checkbox/Checkbox';
 import { collectLinks, collectMentions } from '@/components/Textarea/mentions';
@@ -195,7 +195,7 @@ export function CarePlanOverview({
 
   return (
     <section className={styles.card} aria-label="Care plan overview">
-      <Toggle items={tabs} value={active} onValueChange={setTab} variant="ghost" />
+      <SegmentedControl items={tabs} value={active} onValueChange={setTab} variant="ghost" />
 
       {active === 'note' && (
         editing ? (

@@ -3,7 +3,7 @@ import { Button } from '../../../components/Button/Button';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
 import { Input } from '../../../components/Input/Input';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { SearchBar } from '../../../components/SearchBar/SearchBar';
 import { Switch } from '../../../components/Switch/Switch';
 import { Badge } from '../../../components/Badge/Badge';
@@ -216,7 +216,7 @@ export function CisImmunizationsTab({ member, immunizations, savedNotes, loading
       {trackable && (
         <section className={styles.vaccines} aria-label="Combination 10 vaccines">
           <div className={styles.listBar}>
-            <Toggle
+            <SegmentedControl
               size="sm"
               items={[{ key: 'vaccine', label: 'Vaccine' }, { key: 'age', label: 'Age' }]}
               value={viewBy}

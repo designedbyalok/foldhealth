@@ -3,7 +3,7 @@ import { Input } from '../../../../../../../components/Input/Input';
 import { Textarea } from '../../../../../../../components/Textarea/Textarea';
 import { Switch } from '../../../../../../../components/Switch/Switch';
 import { Select } from '../../../../../../../components/Select/Select';
-import { Toggle } from '../../../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../../../components/SegmentedControl/SegmentedControl';
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
 import { ImageTileGallery } from '../../../../../../../components/ImageTileGallery/ImageTileGallery';
 import { TypographyPopover } from '../../../../../../../components/TypographyPopover/TypographyPopover';
@@ -127,7 +127,7 @@ export function ProgramReportPersonalize({
             <div className={styles.fieldGroup}>
               <div className={styles.groupHead}>
                 <span className={styles.groupTitle}>Cover Background</span>
-                <Toggle size="sm" items={BACKGROUND_TYPES} value={s.bgType} onValueChange={bgType => set({ bgType })} />
+                <SegmentedControl size="sm" items={BACKGROUND_TYPES} value={s.bgType} onValueChange={bgType => set({ bgType })} />
               </div>
               {s.bgType === 'color' && (
                 <CoverSwatches ariaLabel="Cover colour">

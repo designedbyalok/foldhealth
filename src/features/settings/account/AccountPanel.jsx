@@ -9,7 +9,7 @@ import { Button } from '../../../components/Button/Button';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { Drawer } from '../../../components/Drawer/Drawer';
-import { TabStrip } from '../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../components/Tabs/Tabs';
 import { UserProfileBanner } from './users/UserProfileBanner';
 import { AccountLockPanel } from './users/AccountLockPanel';
 import { Input } from '../../../components/Input/Input';
@@ -356,10 +356,10 @@ export function ViewUserDrawer({ user, onClose, onEdit, canEdit = true, lock, ca
     <Drawer title="User Profile" onClose={onClose} bodyClassName={styles.editDrawerBody} headerStyle={{ padding: '12px' }} titleStyle={{ fontSize: 'var(--font-base)' }}>
       <UserProfileBanner user={user} onChat={openChat} />
       <AccountLockPanel lock={lock} canUnlock={canUnlock} onUnlock={onUnlock} onResendLink={onResendLink} />
-      <TabStrip
+      <Tabs
         items={VIEW_TABS.map(t => ({ key: t, label: t }))}
-        activeKey={viewTab}
-        onChange={setViewTab}
+        value={viewTab}
+        onValueChange={setViewTab}
         fullWidth={false}
         trailing={canEdit && viewTab !== 'Audit Log' ? <ActionButton icon="solar:pen-linear" size="sm" tooltip="Edit Profile" onClick={onEdit} /> : undefined}
       />
@@ -665,10 +665,10 @@ export function EditUserDrawer({ user, onClose, onSave }) {
   return (
     <Drawer title="User Profile" onClose={onClose} beforeClose={beforeClose} bodyClassName={styles.editDrawerBody} headerStyle={{ padding: '12px' }} titleStyle={{ fontSize: 'var(--font-base)' }}>
       <UserProfileBanner user={user} />
-      <TabStrip
+      <Tabs
         items={DRAWER_TABS.map(t => ({ key: t, label: t }))}
-        activeKey={drawerTab}
-        onChange={setDrawerTab}
+        value={drawerTab}
+        onValueChange={setDrawerTab}
         fullWidth={false}
         trailing={<>
           <Button variant="ghost" size="sm" onClick={handleDiscard}>Discard</Button>

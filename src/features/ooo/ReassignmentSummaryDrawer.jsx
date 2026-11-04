@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Drawer } from '../../components/Drawer/Drawer';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { Icon } from '../../components/Icon/Icon';
-import { TabStrip } from '../../components/TabStrip/TabStrip';
+import { Tabs } from '../../components/Tabs/Tabs';
 import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../store/useAppStore';
 import { formatDate, initialsOf } from './oooUtils';
@@ -82,10 +82,10 @@ export function ReassignmentSummaryDrawer({ jobId, onClose }) {
           </div>
           <div className={styles.summaryField}>
             <span className={styles.summaryLabel}>Appointments Summary</span>
-            <TabStrip
+            <Tabs
               items={TABS.map(t => ({ key: t.key, label: `${t.label} (${job.results.filter(t.pick).length})` }))}
-              activeKey={tab}
-              onChange={setTab}
+              value={tab}
+              onValueChange={setTab}
               fullWidth={false}
             />
           </div>

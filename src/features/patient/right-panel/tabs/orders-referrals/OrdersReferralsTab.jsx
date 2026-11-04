@@ -3,7 +3,7 @@ import { ActionButton } from '../../../../../components/ActionButton/ActionButto
 import { Button } from '../../../../../components/Button/Button';
 import { FilterBar } from '../../../../../components/FilterBar/FilterBar';
 import { Input } from '../../../../../components/Input/Input';
-import { SubTabs } from '../../../../../components/SubTabs/SubTabs';
+import { Tabs } from '../../../../../components/Tabs/Tabs';
 import { TableSkeleton } from '../../../../../components/TableSkeleton/TableSkeleton';
 import { EmptyState } from '../../../../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../../../../store/useAppStore';
@@ -117,9 +117,10 @@ export function OrdersReferralsTab({ patient }) {
         </div>
       ) : (
         <div className={styles.toolbar}>
-          <SubTabs
+          <Tabs
+            variant="pill"
             className={styles.views}
-            tabs={VIEW_TABS}
+            items={VIEW_TABS}
             value={view}
             onValueChange={switchView}
             leading={(

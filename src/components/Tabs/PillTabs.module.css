@@ -43,3 +43,5 @@
   color: var(--neutral-300);
   text-align: center;
 }
+
+.tabList { display: contents; }

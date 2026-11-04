@@ -8,7 +8,7 @@ import { useMemo, useState } from 'react';
 import { Icon } from '../../../components/Icon/Icon';
 import { Input } from '../../../components/Input/Input';
 import { Avatar } from '../../../components/Avatar/Avatar';
-import { TabStrip } from '../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../components/Tabs/Tabs';
 import { leafFields, answerAverage, responseCompletion } from './aggregate';
 import { fieldIcon, initials, fmtDate, formatAnswerValue, SEV_COLOR } from './formAnalyticsUi';
 import styles from './FormAnalyticsPanel.module.css';
@@ -76,14 +76,14 @@ export function ResponsesView({ fields, scoring, formName, completed, pending })
           <Input placeholder="Search" value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
         <div className={styles.respTabs}>
-          <TabStrip
+          <Tabs
             embedded
             items={[
               { key: 'responded', label: 'Responded', count: completed.length },
               { key: 'pending', label: 'Pending', count: pending.length },
             ]}
-            activeKey={tab}
-            onChange={setTab}
+            value={tab}
+            onValueChange={setTab}
           />
         </div>
         <div className={styles.respItems}>

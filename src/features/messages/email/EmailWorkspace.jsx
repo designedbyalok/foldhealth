@@ -3,7 +3,7 @@ import { Icon } from '../../../components/Icon/Icon';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { Badge } from '../../../components/Badge/Badge';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { SearchBar } from '../../../components/SearchBar/SearchBar';
 import { useAppStore } from '../../../store/useAppStore';
 import { formatTime } from '../messageUtils';
@@ -164,7 +164,7 @@ export function EmailWorkspace({ onCompose, selectConversationId, onSelectedConv
           onFilter={() => setFilterOpen(v => !v)}
         />
         <div className={listStyles.convTabs}>
-          <Toggle
+          <SegmentedControl
             items={[{ key: 'inbox', label: 'Inbox' }, { key: 'draft', label: 'Draft' }, { key: 'sent', label: 'Sent' }]}
             value={folder}
             onValueChange={setFolder}

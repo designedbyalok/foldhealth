@@ -24,7 +24,7 @@ import { Input } from '../../../components/Input/Input';
 import { Textarea } from '../../../components/Textarea/Textarea';
 import { Switch } from '../../../components/Switch/Switch';
 import { Checkbox } from '../../../components/Checkbox/Checkbox';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { CloseButton } from '../../../components/CloseButton/CloseButton';
 import { Select } from '../../../components/Select/Select';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
@@ -966,7 +966,7 @@ export function FormBuilder() {
           <Icon name="solar:pen-2-linear" size={14} color="var(--neutral-300)" />
         </div>
 
-        <Toggle
+        <SegmentedControl
           items={[{ key: 'edit', label: 'Edit Form' }, { key: 'logic', label: 'Logic' }, { key: 'score', label: 'Score' }, { key: 'care-plan', label: 'Care Plan' }, { key: 'preview', label: 'Preview' }, { key: 'analytics', label: 'Analytics' }]}
           value={mode}
           onValueChange={setMode}

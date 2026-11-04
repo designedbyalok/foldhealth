@@ -15,7 +15,7 @@ Every folder in `src/components` belongs to exactly one layer, recorded in
 
 | Layer | What belongs here | May import | Examples |
 |---|---|---|---|
-| **primitives** | A single control or display element with no product vocabulary. Works in any React app. | Other primitives, `react`, `src/lib` utilities, `src/tokens` | `Button`, `Input`, `Select`, `Badge`, `Drawer`, `Tooltip`, `TabStrip` |
+| **primitives** | A single control or display element with no product vocabulary. Works in any React app. | Other primitives, `react`, `src/lib` utilities, `src/tokens` | `Button`, `Input`, `Select`, `Badge`, `Drawer`, `Tooltip`, `Tabs` |
 | **patterns** | A generic composition of primitives. Still product-agnostic, but opinionated about layout. | Primitives and other patterns | `WorklistShell`, `FilterBar`, `PanelSection`, `SectionTitleBar`, `ActivityLog` |
 | **app** | Fold app chrome and app-wide singletons. Free to read the store. | Anything | `Sidebar`, `TopBar`, `ThemePicker`, `NotificationsPopover` |
 | **domain** | Healthcare or Fold product concepts. Free to read the store. | Anything | `PatientBanner`, `ScheduleDrawer`, `Outreach*`, `CallPopover`, `Unity*` |
@@ -121,8 +121,8 @@ Text fields follow the same idea. `Input`, `Select` and `Textarea` take
 and Input and Select take `size` `md` (32px) or `sm` (28px). Their change
 callback is `onValueChange(value)`; Input and Textarea keep the native
 `onChange(event)` beside it, and a rich-text Textarea, which has no native
-event, reports `onValueChange(html, plain)`. `Toggle` and `SubTabs` take
-`value` / `defaultValue` / `onValueChange` and `size` `sm` / `md`. Select now
+event, reports `onValueChange(html, plain)`. `Tabs` and `SegmentedControl`
+take `value` / `defaultValue` / `onValueChange` and `size` `sm` / `md`. Select now
 forwards `ref` and spreads its other props onto the trigger, so `aria-label`
 lands on the control. `scripts/codemods/form-controls.mjs` did the move.
 
@@ -271,7 +271,7 @@ Still positioning themselves:
 
 | Layer | Components |
 |---|---|
-| primitives | `Select`, `Tooltip`, `HoverCard`, `TimePicker`, `DateTimePicker`, `Coachmark`, `Textarea` (mention menu), `TabStrip` (overflow menu) |
+| primitives | `Select`, `Tooltip`, `HoverCard`, `TimePicker`, `DateTimePicker`, `Coachmark`, `Textarea` (mention menu), `OverflowTabs` (More menu) |
 | patterns | `SectionTitleBar`, `CommentComposer` (mention menu), `AssigneeChange` |
 | app, domain | `CreateNewPopover`, `HelpPopover`, `NotificationsPopover`, `ConsentPopover`, `OutreachPopover`, `VoicePreviewPopover`, `CallPopover`, `PatientHoverCard`, `IcdSearch`, the `ScheduleDrawer` pickers |
 

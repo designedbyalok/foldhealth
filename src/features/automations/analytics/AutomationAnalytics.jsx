@@ -8,7 +8,7 @@ import { DashboardCardSkeleton } from '../../../components/DashboardCard/Dashboa
 import { FilterChip } from '../../../components/FilterChip/FilterChip';
 import { Link } from '../../../components/Link/Link';
 import { EmptyState } from '../../../components/EmptyState/EmptyState';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { nodeDef, statusDef } from '../lib/catalog';
 import {
   DURATIONS, channelFunnel, dailySeries, formatRange, inRange, nodeStats, overview, rangeFor,
@@ -154,7 +154,7 @@ export function AutomationAnalytics({ id }) {
           <h1 className={styles.title}>{automation.name}</h1>
           <Badge tone={status.tone} size="sm" label={status.label} />
           <div className={styles.headerActions}>
-            <Toggle items={VIEW_ITEMS} value={tab} onValueChange={k => openAutomationAnalytics(id, k)} />
+            <SegmentedControl items={VIEW_ITEMS} value={tab} onValueChange={k => openAutomationAnalytics(id, k)} />
             <span className={styles.headerDivider} aria-hidden />
             <Button variant="outline" leadingIcon="solar:pen-linear" onClick={() => openAutomationBuilder(id)}>Edit automation</Button>
           </div>

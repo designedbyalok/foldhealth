@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../../components/Icon/Icon';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { NODE_LIST } from './nodes/nodeConfig';
 import styles from './NodePanel.module.css';
 
@@ -89,7 +89,7 @@ export function NodePanel({ onDragStart }) {
   return (
     <aside className={styles.panel}>
       <div className={styles.toggleWrap}>
-        <Toggle items={['Node', 'Components']} value={activeTab} onValueChange={setActiveTab} fullWidth />
+        <SegmentedControl items={['Node', 'Components']} value={activeTab} onValueChange={setActiveTab} fullWidth />
       </div>
 
       <div className={styles.list}>

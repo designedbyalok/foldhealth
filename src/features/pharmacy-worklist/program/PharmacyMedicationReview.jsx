@@ -10,7 +10,7 @@ import { RadioOptionGroup } from '../../../components/RadioOptionGroup/RadioOpti
 import { Textarea } from '../../../components/Textarea/Textarea';
 import { Select } from '../../../components/Select/Select';
 import { Drawer } from '../../../components/Drawer/Drawer';
-import { TabStrip } from '../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../components/Tabs/Tabs';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { MedicationClaims } from './MedicationClaims';
 import { DatePicker } from '../../../components/DatePicker/DatePicker';
@@ -155,16 +155,16 @@ export function MedicationDetail({ med, memberRowId, plan, initialTab, flushTabs
 
   return (
     <div className={styles.detail}>
-      {!openClaimId && <TabStrip
+      {!openClaimId && <Tabs
         items={[
           { key: 'details', label: 'Details' },
           { key: 'claims', label: `Claim History (${claimCount})` },
           { key: 'refills', label: `Refill History (${fills.length})` },
         ]}
-        activeKey={tab}
-        onChange={setTab}
+        value={tab}
+        onValueChange={setTab}
         fullWidth={false}
-        size="S"
+        size="sm"
         className={flushTabs ? styles.tabsFlush : undefined}
       />}
       {tab === 'claims' ? <MedicationClaims med={med} plan={plan} memberMeds={memberMeds} selectedId={openClaimId} onSelect={setClaimId} flush={flushTabs} /> : tab === 'refills' ? (

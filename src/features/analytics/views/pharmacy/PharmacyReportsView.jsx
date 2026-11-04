@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '../../../../store/useAppStore';
 import { Badge } from '../../../../components/Badge/Badge';
 import { FilterChip } from '../../../../components/FilterChip/FilterChip';
-import { TabStrip } from '../../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../../components/Tabs/Tabs';
 import { Card, EmptyState, KpiCard, KpiSkeleton, ProgressBar, TableSkeleton } from '../shared';
 import { MEASURE_NAMES, MEASURE_ORDER } from '../../../pharmacy-worklist/pharmacyWorklist.utils';
 import {
@@ -236,7 +236,7 @@ export function PharmacyReportsView() {
         )}
       </div>
       <div className={local.tabs}>
-        <TabStrip items={TABS} activeKey={tab} onChange={setTab} fullWidth={false} size="S" />
+        <Tabs items={TABS} value={tab} onValueChange={setTab} fullWidth={false} size="sm" />
       </div>
       {tab === 'outcomes' && <p className={local.note}>A gap closes only on a matched Part D claim. Projected fills show as Pending Claim until their claim arrives.</p>}
 

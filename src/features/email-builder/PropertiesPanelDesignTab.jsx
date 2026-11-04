@@ -4,7 +4,7 @@ import { renderEmailHtml } from './patchEmailHtml';
 import { useAppStore } from '../../store/useAppStore';
 import { Icon } from '../../components/Icon/Icon';
 import { CloseButton } from '../../components/CloseButton/CloseButton';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { Input } from '../../components/Input/Input';
 import { Textarea } from '../../components/Textarea/Textarea';
 import { Select as SharedSelect } from '../../components/Select/Select';
@@ -98,7 +98,7 @@ export function ColumnDesignTab({ block, updateBlock, id, columnIdx }) {
         <Row2>
           <div className={styles.fieldCol}>
             <span className={styles.fieldLabel}>Horizontal</span>
-            <Toggle
+            <SegmentedControl
               fullWidth
               size="sm"
               items={[
@@ -112,7 +112,7 @@ export function ColumnDesignTab({ block, updateBlock, id, columnIdx }) {
           </div>
           <div className={styles.fieldCol}>
             <span className={styles.fieldLabel}>Vertical</span>
-            <Toggle
+            <SegmentedControl
               fullWidth
               size="sm"
               items={[
@@ -128,7 +128,7 @@ export function ColumnDesignTab({ block, updateBlock, id, columnIdx }) {
 
         <div className={styles.fieldCol}>
           <span className={styles.fieldLabel}>Height</span>
-          <Toggle
+          <SegmentedControl
             fullWidth
             size="sm"
             items={[
@@ -306,7 +306,7 @@ export function BulkDesignTab({ doc, bulkIds, updateBlock }) {
             <Row2>
               <div className={styles.fieldCol}>
                 <span className={styles.fieldLabelStrong}>Alignment</span>
-                <Toggle
+                <SegmentedControl
                   fullWidth
                   items={[
                     { key: 'left',    label: '', icon: <AlignLeftIcon /> },

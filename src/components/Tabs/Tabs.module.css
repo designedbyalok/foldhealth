@@ -146,3 +146,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* The tabs sit in their own tablist box without changing the row's layout. */
+.tabList { display: contents; }

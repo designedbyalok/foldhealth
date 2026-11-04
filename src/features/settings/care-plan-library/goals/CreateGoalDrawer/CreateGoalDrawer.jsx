@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Drawer } from '../../../../../components/Drawer/Drawer';
 import { Button } from '../../../../../components/Button/Button';
-import { Toggle } from '../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../components/SegmentedControl/SegmentedControl';
 import { Badge } from '../../../../../components/Badge/Badge';
 import { Icon } from '../../../../../components/Icon/Icon';
 import { Select } from '../../../../../components/Select/Select';
@@ -411,7 +411,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
   return (
     <Drawer title={goal ? 'Edit Goal' : 'Create New Goals'} onClose={onClose} headerRight={headerRight} noCloseDivider>
       <div className={styles.body}>
-        <Toggle
+        <SegmentedControl
           size="sm"
           className={styles.categoryToggle}
           items={GOAL_CATEGORIES}

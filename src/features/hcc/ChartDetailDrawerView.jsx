@@ -26,7 +26,7 @@ import {
   InsufficientDosDialog,
 } from './ChartDetailDrawerParts';
 import { CommentsTab, ActivityTab, FilterRow, computeFilterOptions } from './DiagPanel/LeftWorkspace';
-import { TabStrip } from '../../components/TabStrip/TabStrip';
+import { Tabs } from '../../components/Tabs/Tabs';
 import { useAppStore } from '../../store/useAppStore';
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { ACTIVITY, getActivityFromDb } from './data/activity';
@@ -137,13 +137,13 @@ export function ChartDetailDrawerView(props) {
                   re-selects the first doc so the right-hand card
                   highlight comes back. */}
               <div className={styles.paneTabsHeader}>
-                <TabStrip
+                <Tabs
                   items={[
                     { key: 'comments', label: commentsCountForMember > 0 ? `Comments(${commentsCountForMember})` : 'Comments' },
                     { key: 'activity', label: 'Timeline' },
                   ]}
-                  activeKey={leftPanel}
-                  onChange={(k) => setLeftPanel(k)}
+                  value={leftPanel}
+                  onValueChange={(k) => setLeftPanel(k)}
                   embedded
                 />
                 <CloseButton

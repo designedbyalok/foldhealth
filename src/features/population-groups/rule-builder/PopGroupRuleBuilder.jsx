@@ -6,7 +6,7 @@ import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { Icon } from '../../../components/Icon/Icon';
 import { Badge } from '../../../components/Badge/Badge';
-import { TabStrip } from '../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../components/Tabs/Tabs';
 import { Drawer } from '../../../components/Drawer/Drawer';
 import { ActivityLog } from '../../../components/ActivityLog/ActivityLog';
 import { toActivityLogEntries } from '../../hedis-worklist/CareGapDetailDrawer.utils';
@@ -245,7 +245,7 @@ function RuleNode({ rule, readOnly, combinator, onOpenEditor, onJoin, onRemove, 
  *  - create: from the Create Group drawer: bare canvas + Cancel/Next
  *    sub-bar (Figma 1:3915 / 9:44005).
  *  - view: clicking a saved Dynamic group: read-only detail screen with
- *    the summary rail, TabStrip (Qualified Members / Rule Design) and no
+ *    the summary rail, Tabs (Qualified Members / Rule Design) and no
  *    actionable rule triggers (Figma 1:13951).
  *  - edit: the Edit pencil (rail or table row): same editable canvas as
  *    create; Next saves and drops back to view, Cancel reverts.
@@ -587,15 +587,15 @@ export function PopGroupRuleBuilder() {
         )}
         <div className={styles.tabPane}>
           {isView && (
-            <TabStrip
+            <Tabs
               fullWidth={false}
               items={[
                 { key: 'members', label: 'Qualified Members', count: membersLoading ? '…' : count },
                 { key: 'design', label: 'Rule Design' },
                 { key: 'triggers', label: 'Triggers' },
               ]}
-              activeKey={activeTab}
-              onChange={setActiveTab}
+              value={activeTab}
+              onValueChange={setActiveTab}
             />
           )}
           {isView && activeTab === 'members' ? (

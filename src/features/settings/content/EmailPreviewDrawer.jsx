@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { Drawer } from '../../../components/Drawer/Drawer';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { Button } from '../../../components/Button/Button';
 import { EmailIframe, MacBookPro, IPhone17Pro } from '../../email-builder/DevicePreview';
 import { renderPreviewHtml } from '../../email-builder/renderEmail';
@@ -17,7 +17,7 @@ const VIEW_ITEMS = [
 /**
  * EmailPreviewDrawer: read-only preview of a campaign's email template.
  *
- * Three views, switched via the shared Toggle:
+ * Three views, switched via the shared SegmentedControl:
  *   • Email: bare iframe, full-bleed of the drawer body
  *   • Web: same MacBookPro mockup used in the email builder
  *   • Mobile: same iPhone 17 Pro mockup used in the email builder
@@ -96,7 +96,7 @@ export function EmailPreviewDrawer({ campaign, onClose, onEdit }) {
   return (
     <Drawer title={title} onClose={onClose} headerRight={headerRight} bodyClassName={styles.body} noCloseDivider>
       <div className={styles.toggleBar}>
-        <Toggle
+        <SegmentedControl
           size="sm"
           items={VIEW_ITEMS}
           value={view}

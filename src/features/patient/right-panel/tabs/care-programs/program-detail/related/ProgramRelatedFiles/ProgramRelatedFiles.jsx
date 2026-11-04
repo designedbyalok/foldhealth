@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
-import { Toggle } from '../../../../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../../../../components/SegmentedControl/SegmentedControl';
 import { SearchBar } from '../../../../../../../../components/SearchBar/SearchBar';
 import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
 import { DocumentUploader } from '../../../../../../../../components/DocumentUploader/DocumentUploader';
@@ -156,11 +156,11 @@ export function ProgramRelatedFiles({ programCode, patientId }) {
           <>
             <ActionButton icon="solar:magnifer-linear" size="sm" tooltip="Search" onClick={() => setSearchOpen(true)} />
             <span className={styles.tabDivider} />
-            <Toggle size="sm" items={SUB_TABS} value={activeTab} onValueChange={setActiveTab} />
+            <SegmentedControl size="sm" items={SUB_TABS} value={activeTab} onValueChange={setActiveTab} />
             <div className={styles.spacer} />
           </>
         )}
-        <Toggle size="sm" items={VIEW_ITEMS} value={view} onValueChange={setView} />
+        <SegmentedControl size="sm" items={VIEW_ITEMS} value={view} onValueChange={setView} />
         <Button
           variant="soft"
           leadingIcon="solar:upload-minimalistic-linear"

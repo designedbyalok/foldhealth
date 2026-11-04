@@ -1,4 +1,4 @@
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { TopBar } from '../../components/TopBar/TopBar';
 import { SectionTitleBar } from '../../components/SectionTitleBar/SectionTitleBar';
 import { FilterBar } from '../../components/FilterBar/FilterBar';
@@ -49,7 +49,7 @@ export function TasksView() {
         onTabChange={view.setTasksTab}
         rightExtras={
           <>
-            <Toggle
+            <SegmentedControl
               items={VIEW_TOGGLE_ITEMS}
               value={view.tasksViewMode}
               onValueChange={view.setTasksViewMode}
