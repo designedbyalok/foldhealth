@@ -1548,11 +1548,12 @@ export function CarePlanView({ patientId, program }) {
         ))}
       </div>
 
-      {/* Barriers (resolved ones collapse into their own footer) */}
+      {/* Barriers (resolved ones collapse into their own footer). Social needs
+          are barriers too, so they're listed here as well as under Social Needs. */}
       <div className={styles.section}>
         <GbiSectionHead
           title="Barriers"
-          count={plainBarriers.length}
+          count={filteredBarriers.length}
           open={openSections.barriers}
           onToggle={() => toggleSection('barriers')}
           rightAccessory={renderDuplicateBadge('barrier')}
@@ -1564,7 +1565,7 @@ export function CarePlanView({ patientId, program }) {
         />
         {openSections.barriers && (carePlanLoading ? (
           <SimpleTableSkeleton rows={3} cols={3} />
-        ) : plainBarriers.length === 0 && (viewData.barriers || []).filter(b => !isSdohBarrier(b)).length === 0 ? (
+        ) : filteredBarriers.length === 0 && (viewData.barriers || []).length === 0 ? (
           <SectionEmptyState
             icon="solar:signpost-2-linear"
             label="No Barriers Created for Selected Problem"
@@ -1572,11 +1573,11 @@ export function CarePlanView({ patientId, program }) {
           />
         ) : (
           <CarePlanBarriersTable
-            rows={plainBarriers}
+            rows={filteredBarriers}
             canEdit={canEdit}
             bulkMode={bulkMode}
             selectedIds={[...selected.barrier]}
-            onSelectAll={(checked) => selectAllKind('barrier', plainBarriers, checked)}
+            onSelectAll={(checked) => selectAllKind('barrier', filteredBarriers, checked)}
             onToggleSelect={(id) => toggleSelect('barrier', id)}
             onStatusMenu={setStatusMenu}
             onPriorityMenu={setPriorityMenu}
@@ -1586,7 +1587,7 @@ export function CarePlanView({ patientId, program }) {
             onTitleChange={renameBarrier}
             hasNote={(b) => noteLookup('barrier', b.id)}
             linked={linkedForChildRow}
-            emptyState={plainBarriers.length === 0 ? <div className={styles.emptyRow}>No barriers match the search or filters.</div> : null}
+            emptyState={filteredBarriers.length === 0 ? <div className={styles.emptyRow}>No barriers match the search or filters.</div> : null}
           />
         ))}
       </div>
