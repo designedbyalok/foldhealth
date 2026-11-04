@@ -244,20 +244,30 @@ out.
 The boundary rule is enforced now for new and changed lines. The items below
 are existing debt, fixed in later phases rather than blocking anyone today.
 
-### Library components that still import the app
+### How the library gets app data
 
-| Component | Layer | Imports | Fix |
-|---|---|---|---|
-| `Avatar` | primitive | store, `features/ooo` | Already takes `ooo`; move the `userId` lookup into a `StaffAvatar` wrapper in `features/ooo` |
-| `Pagination` | primitive | store (about 20 fields) | Take `page`, `pageSize`, `total`, `onPageChange`; worklists pass them |
-| `HoverCard` | primitive | the hover-intent hook from `PatientHoverCard` | Move the generic hook into `HoverCard`; `PatientHoverCard` imports it from there |
-| `ActivityLog` | pattern | store (tasks, clinical notes, referrals, current user) | Keep the timeline generic with a `renderEntry` slot; task, note and referral entries move to features |
-| `BulkBar` | pattern | store | Take selection and actions as props |
-| `CommentComposer` | pattern | store, `features/hcc` | Take the mention list and current user as props |
-| `EmailComposer` | pattern | `UnityAIBar` (domain) | Accept an `assistant` slot |
-| `FilterBar` | pattern | store, `features/hcc` | Take active filters, saved views and their dialogs as props or slots (it already accepts most as overrides) |
-| `ProductTour` | pattern | `lib/supabase` | Take `onComplete` to persist progress |
-| `WorklistColumns` | pattern | store | Take `hidden` and `onHiddenChange` |
+No primitive or pattern imports the store, features, layouts or the network.
+Where a component used to reach for app data, it now takes props, or reads a
+small context the library defines with an empty default, and the app fills
+it in. `src/features/AppProviders.jsx` mounts every one of them around the app
+and around each Storybook story.
+
+| Component | Gets | From |
+|---|---|---|
+| `Avatar` | Out of Office record for `userName` / `userId` | `AvatarOooLookup` (`features/ooo/AvatarOooProvider`) |
+| `BulkBar` | Selection and the standard worklist actions when the caller passes none | `BulkBarDefaults` (`features/worklists/BulkBarDefaultsProvider`) |
+| `Pagination` | The user's page size (auto or fixed, saved) | `PageSizePreference` (`features/worklists/PageSizePreferenceProvider`); page state is props |
+| `ActivityLog` | Note, task, appointment and referral entries; the viewer's name | `ActivityLogRenderers` (`features/activity`) |
+| `CommentComposer` | Default @-mention roster | `MentionRoster` (`features/activity/MentionRosterProvider`) |
+| `ProductTour` | Whether a tour was seen | `store` prop; the app's `features/tours/ProductTour` passes the synced one |
+| `WorklistShell` | Saved column order and hidden set | `columnPrefs` prop; `features/worklists/WorklistShell` takes a `worklistKey` |
+| `FilterBar` | The worklist filters, options and saved views when not passed | `features/worklists/FilterBar` |
+| `EmailComposer` | Drafting help | `assistant` slot (e.g. a `UnityAIBar`) |
+| `HoverCard` | Hover intent | its own `useHoverIntent` (`PatientHoverCard` reuses it) |
+
+Still to move: `FilterBar`'s `filterBarUtils` holds the TOC worklist's filter
+definitions (data, not an import), and `components/WorklistColumns/useWorklistColumns`
+is a forwarder kept for open branches.
 
 ### Overlays not yet on Popover
 

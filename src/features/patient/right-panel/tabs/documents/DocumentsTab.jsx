@@ -4,7 +4,7 @@ import { ConfirmDialog } from '../../../../../components/ConfirmDialog/ConfirmDi
 import { ActionButton } from '../../../../../components/ActionButton/ActionButton';
 import { Button } from '../../../../../components/Button/Button';
 import { EmptyState } from '../../../../../components/EmptyState/EmptyState';
-import { FilterBar } from '../../../../../components/FilterBar/FilterBar';
+import { FilterBar } from '../../../../worklists/FilterBar';
 import { Input } from '../../../../../components/Input/Input';
 import { SimpleTableSkeleton } from '../../../../../components/SimpleTableSkeleton/SimpleTableSkeleton';
 import { openSafeUrl } from '../../../../../lib/openSafeUrl';

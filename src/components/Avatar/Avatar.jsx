@@ -1,7 +1,8 @@
+import { useContext } from 'react';
 import { Tooltip } from '../Tooltip/Tooltip';
-import { useAppStore } from '../../store/useAppStore';
 import { OooIcon } from '../Icon/OooIcon';
-import { activeOooFor, formatDateTime } from '../../features/ooo/oooUtils';
+import { formatDateTime } from '../../lib/dateFormat';
+import { AvatarOooLookup } from './AvatarOooLookup';
 import { AvatarBase } from './AvatarBase';
 import styles from './Avatar.module.css';
 
@@ -39,12 +40,13 @@ function OooWrapper({ record, size, children }) {
 /**
  * Avatar, plus the Out of Office badge. Pass `userName` (and `userId`, so
  * two staff with the same name aren't confused) and the badge shows whenever
- * that user is out of office now; or pass `ooo` (a record, or null) to
- * decide it yourself.
+ * that user is out of office now (the app supplies the lookup through
+ * AvatarOooLookup); or pass `ooo` (a record, or null) to decide it yourself.
  */
 export function Avatar({ userName, userId, ooo, ...props }) {
-  const found = useAppStore(s => (ooo !== undefined || !userName ? null
-    : activeOooFor(s.oooRecords, userId ? { id: userId, name: userName } : userName)));
+  const lookup = useContext(AvatarOooLookup);
+  const found = ooo !== undefined || !userName || !lookup ? null
+    : lookup(userId ? { id: userId, name: userName } : userName);
   const record = ooo !== undefined ? ooo : found;
   const el = <AvatarBase {...props} />;
   return record ? <OooWrapper record={record} size={props.size}>{el}</OooWrapper> : el;

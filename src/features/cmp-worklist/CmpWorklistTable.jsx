@@ -3,7 +3,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { WorklistShell } from '../worklists/WorklistShell';
 import { SectionTitleBar } from '../../components/SectionTitleBar/SectionTitleBar';
 import { SubnavToggle } from '../../components/SubnavToggle/SubnavToggle';
-import { FilterBar } from '../../components/FilterBar/FilterBar';
+import { FilterBar } from '../worklists/FilterBar';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
 import { DobFilter } from '../../components/DobFilter/DobFilter';
 import { dobInRange } from '../../components/DateRangePopover/yearSpan';

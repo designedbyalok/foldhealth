@@ -15,7 +15,7 @@ import { ColumnsHeaderButton } from '../../components/WorklistColumns/ColumnsHea
 import { useWorklistColumns } from '../worklists/useWorklistColumns';
 import { FilterChipBar } from '../hcc/FilterChipBar';
 import { SavedFiltersChip } from '../hcc/SavedFiltersChip';
-import { FilterNameDialog } from '../hcc/FilterNameDialog';
+import { FilterNameDialog } from '../../components/FilterBar/FilterNameDialog';
 import { BulkBar } from '../../components/BulkBar/BulkBar';
 import { BulkChangeHedisAssigneeDialog } from './BulkChangeHedisAssigneeDialog';
 import { SortPopover } from '../../components/SortPopover/SortPopover';

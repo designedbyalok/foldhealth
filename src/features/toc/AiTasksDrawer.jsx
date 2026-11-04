@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Drawer } from '../../components/Drawer/Drawer';
 import { PatientBanner } from '../../components/PatientBanner/PatientBanner';
 import { SectionTitleBar } from '../../components/SectionTitleBar/SectionTitleBar';
-import { FilterBar } from '../../components/FilterBar/FilterBar';
+import { FilterBar } from '../worklists/FilterBar';
 import { useAppStore } from '../../store/useAppStore';
 import { TasksTab } from '../patient/left-panel/tabs/tasks/TasksTab/TasksTab';
 import { AddTaskDrawer } from '../patient/left-panel/tabs/outreach/AddTaskDrawer/AddTaskDrawer';

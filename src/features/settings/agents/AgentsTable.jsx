@@ -8,7 +8,7 @@ import { Button } from '../../../components/Button/Button';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { SectionTitleBar } from '../../../components/SectionTitleBar/SectionTitleBar';
 import { WorklistShell } from '../../../components/WorklistShell/WorklistShell';
-import { FilterBar } from '../../../components/FilterBar/FilterBar';
+import { FilterBar } from '../../worklists/FilterBar';
 import { Switch } from '../../../components/Switch/Switch';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
 import { BulkSelectToggle } from '../../../components/BulkSelect/BulkSelectToggle';

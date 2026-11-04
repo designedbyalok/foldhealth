@@ -17,7 +17,7 @@ import { PharmacyWorklistRow } from './PharmacyWorklistRow';
 import { PharmacyGapDetailDrawer } from './PharmacyGapDetailDrawer';
 import { SavedFiltersChip } from '../hcc/SavedFiltersChip';
 import { FilterChipBar } from '../hcc/FilterChipBar';
-import { FilterNameDialog } from '../hcc/FilterNameDialog';
+import { FilterNameDialog } from '../../components/FilterBar/FilterNameDialog';
 import { CareGapDetailDrawer } from '../hedis-worklist/CareGapDetailDrawer';
 import { PHARMACY_MIDDLE_COLUMNS, PHARMACY_HIDDEN_BY_DEFAULT } from './pharmacyColumns';
 import { enrichPharmacyMember, measureDrugs, normMemberId } from './pharmacyWorklist.utils';

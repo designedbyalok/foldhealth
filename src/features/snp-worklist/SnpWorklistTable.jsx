@@ -5,7 +5,7 @@ import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { SectionTitleBar } from '../../components/SectionTitleBar/SectionTitleBar';
 import { SubnavToggle } from '../../components/SubnavToggle/SubnavToggle';
-import { FilterBar } from '../../components/FilterBar/FilterBar';
+import { FilterBar } from '../worklists/FilterBar';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
 import { DobFilter } from '../../components/DobFilter/DobFilter';
 import { dobInRange } from '../../components/DateRangePopover/yearSpan';

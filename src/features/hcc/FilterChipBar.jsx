@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
-import { FilterBar } from '../../components/FilterBar/FilterBar';
+import { FilterBar } from '../worklists/FilterBar';
 import { RangeSliderPopover } from '../../components/RangeSliderPopover/RangeSliderPopover';
 import { DateRangePopover } from '../../components/DateRangePopover/DateRangePopover';
 import { dobRangeSummary } from '../../components/DateRangePopover/yearSpan';

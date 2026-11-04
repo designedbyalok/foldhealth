@@ -1,5 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
-import { useAppStore } from '../../store/useAppStore';
+import { useContext, useState, useRef, useEffect } from 'react';
 import { Icon } from '../Icon/Icon';
 import { Badge } from '../Badge/Badge';
 import { Button } from '../Button/Button';
@@ -7,127 +6,45 @@ import { Input } from '../Input/Input';
 import { MenuPopover } from '../MenuPopover/MenuPopover';
 import { EnterIcon } from '../Icon/EnterIcon';
 import { useAutoPageSize } from './useAutoPageSize';
+import { PageSizePreference } from './PageSizePreference';
 import styles from './Pagination.module.css';
 
 /**
  * Pagination: page navigator + per-page selector + go-to input.
  *
- * Two usage modes:
+ * Controlled with `currentPage` + `onPageChange` (and `perPage` +
+ * `onPerPageChange`), or left to keep its own page. `totalItems` is the
+ * number of rows being paged.
  *
- * 1. Store-driven (default): used by the TCM Worklist + HCC worklist.
- *    Reads currentPage / perPage / searchQuery / etc. from useAppStore
- *    and derives the total item count from the active subnav.
- *
- * 2. Controlled: pass currentPage / perPage / totalItems / onPageChange /
- *    onPerPageChange. The store reads are skipped and the caller owns state.
- *    Used by APCM Billing (and any future feature that paginates from
- *    local state).
+ * Page size follows the user's preference (PageSizePreference): fit to the
+ * viewport, or a size they picked, which the app saves per user.
  *
  * Record count: once a filter or search narrows the table, a badge at the
  * far left reads "x of y records found". Pass `totalCount` (rows before
  * filtering) and `filtered` (a filter or search is active). `filtered`
  * defaults to the count differing from `totalCount`; `filteredCount`
  * overrides x when `totalItems` also counts rows that aren't records.
- * Store-driven mode works both out from the store.
  */
 export function Pagination({
-  totalItems: totalItemsProp,
+  totalItems = 0,
   currentPage: currentPageProp,
   perPage: perPageProp,
   onPageChange,
   onPerPageChange,
-  totalCount: totalCountProp,
+  totalCount,
   filtered: filteredProp,
   filteredCount,
 } = {}) {
-  // True when the caller drives state. In this mode all the worklist-specific
-  // derivations (queue early-return, viewBy short-circuit, etc.) are skipped.
-  const controlled = currentPageProp != null && onPageChange != null;
+  const pref = useContext(PageSizePreference);
+  const [ownPage, setOwnPage] = useState(1);
+  const [ownPerPage, setOwnPerPage] = useState(pref.size || 10);
+  const currentPage = currentPageProp ?? ownPage;
+  const perPage = perPageProp ?? ownPerPage;
+  const setCurrentPage = onPageChange ?? setOwnPage;
+  const setPerPage = onPerPageChange ?? setOwnPerPage;
 
-  const storeCurrentPage = useAppStore(s => s.currentPage);
-  const storePerPage = useAppStore(s => s.perPage);
-  const patients = useAppStore(s => s.patients);
-  const hccMembers = useAppStore(s => s.hccMembers);
-  const activeSubnavList = useAppStore(s => s.activeSubnavList);
-  const searchQuery = useAppStore(s => s.searchQuery);
-  const activeTab = useAppStore(s => s.activeTab);
-  const activeFilters = useAppStore(s => s.activeFilters);
-  const viewBy = useAppStore(s => s.viewBy);
-  const storeSetCurrentPage = useAppStore(s => s.setCurrentPage);
-  const storeSetPerPage = useAppStore(s => s.setPerPage);
-
-  const currentPage = controlled ? currentPageProp : storeCurrentPage;
-  const perPage = perPageProp ?? storePerPage;
-  const setCurrentPage = onPageChange ?? storeSetCurrentPage;
-  const setPerPage = onPerPageChange ?? storeSetPerPage;
-
-  const isHcc = activeSubnavList === 'HCC';
-  const isAllPatients = activeSubnavList === 'All Patients';
-  const allPatients = useAppStore(s => s.allPatients);
-
-  // Derive the total count based on what's actually being shown. If the caller
-  // passed `totalItems`, use it as-is, they know better than this generic
-  // pipeline what's currently rendered.
-  const totalItemsComputed = useMemo(() => {
-    if (isAllPatients) {
-      const base = allPatients.length > 0 ? allPatients : [...patients, ...hccMembers];
-      if (!searchQuery.trim()) return base.length;
-      const q = searchQuery.toLowerCase().trim();
-      return base.filter(r =>
-        r.name?.toLowerCase().includes(q) ||
-        r.memberId?.toString().toLowerCase().includes(q) ||
-        r.pcp?.toLowerCase().includes(q)
-      ).length;
-    }
-    // HCC list: just search-filter against hccMembers
-    if (isHcc) {
-      if (!searchQuery.trim()) return hccMembers.length;
-      const q = searchQuery.toLowerCase().trim();
-      return hccMembers.filter(m =>
-        m.name?.toLowerCase().includes(q) ||
-        m.in?.toLowerCase().includes(q) ||
-        m.id?.toLowerCase().includes(q)
-      ).length;
-    }
-
-    let result = patients;
-
-    // For queue tab, only count patients with agents assigned
-    if (activeTab === 'toc-queue') {
-      result = result.filter(p => p.agentAssigned);
-      return result.length;
-    }
-
-    // For worklist tab, apply search + filters
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      result = result.filter(p =>
-        p.name.toLowerCase().includes(q) ||
-        p.memberId?.toLowerCase().includes(q) ||
-        p.initials?.toLowerCase().includes(q)
-      );
-    }
-
-    // Apply active filters
-    for (const [key, value] of Object.entries(activeFilters)) {
-      if (value) {
-        result = result.filter(p => p[key] === value);
-      }
-    }
-
-    return result.length;
-  }, [isHcc, isAllPatients, allPatients, hccMembers, patients, searchQuery, activeTab, activeFilters]);
-
-  const totalItems = totalItemsProp != null ? totalItemsProp : totalItemsComputed;
-
-  let totalCount = totalCountProp;
-  if (totalCount == null && !controlled && activeTab !== 'toc-queue') {
-    if (isAllPatients) totalCount = (allPatients.length > 0 ? allPatients : [...patients, ...hccMembers]).length;
-    else totalCount = isHcc ? hccMembers.length : patients.length;
-  }
-  const storeFiltered = !!searchQuery.trim() || Object.values(activeFilters).some(Boolean);
   const matched = filteredCount ?? totalItems;
-  const isFiltered = filteredProp ?? (controlled ? matched !== totalCount : storeFiltered);
+  const isFiltered = filteredProp ?? matched !== totalCount;
   const showCount = isFiltered && totalCount != null;
   const [goToInput, setGoToInput] = useState('');
   const perPageBtnRef = useRef(null);
@@ -137,11 +54,7 @@ export function Pagination({
   // so a tall screen fills with rows instead of white space. The choice is
   // a per-user preference persisted in Supabase, not view-local state, so
   // it holds across tables, reloads, and devices.
-  const autoPageSize = useAppStore(s => s.autoPageSize);
-  const manualPageSize = useAppStore(s => s.manualPageSize);
-  const pageSizePrefLoaded = useAppStore(s => s.pageSizePrefLoaded);
-  const fetchPageSizePref = useAppStore(s => s.fetchPageSizePref);
-  const savePageSizePref = useAppStore(s => s.savePageSizePref);
+  const { auto: autoPageSize, size: manualPageSize, loaded: pageSizePrefLoaded, load: fetchPageSizePref, save: savePageSizePref } = pref;
 
   useEffect(() => { fetchPageSizePref(); }, [fetchPageSizePref]);
 
@@ -212,11 +125,6 @@ export function Pagination({
     return pages;
   };
 
-  // Worklist-specific early returns: only apply in store-driven mode.
-  // Don't show pagination for queue with empty state.
-  if (!controlled && activeTab === 'toc-queue' && totalItems === 0) return null;
-  // Don't show pagination for outreach status grouped view (uses collapsible sections).
-  if (!controlled && activeTab === 'toc-worklist' && viewBy === 'status') return null;
   // Everything that matches already fits on one page: nothing to page through.
   if (totalItems <= perPage) return null;
 
