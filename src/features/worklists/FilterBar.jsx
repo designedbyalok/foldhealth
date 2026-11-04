@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { FilterBar as BaseFilterBar } from './FilterBar';
+import { FilterBar as BaseFilterBar } from '../../components/FilterBar/FilterBar';
 import { filterDefsForList, resolveOptions } from '../../components/FilterBar/filterBarUtils';
 import { useAppStore } from '../../store/useAppStore';
 import { FILTER_DOMAINS } from '../hcc/filterDomains';
