@@ -18,14 +18,9 @@
   background: none; text-align: left; cursor: pointer;
 }
 .row:hover, .row:focus-visible { background: var(--neutral-50); outline: none; }
-.rowActive { background: var(--primary-50); }
-.text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .name { font-size: var(--font-base); color: var(--neutral-500); }
-.role { font-size: var(--font-sm); color: var(--neutral-300); }
-.empty { padding: var(--space-3) var(--space-2); font-size: var(--font-sm); color: var(--neutral-300); text-align: center; }
 /* Multi-select rows: checkbox, avatar, name over role (Figma 16978:128250). */
 .check { flex-shrink: 0; pointer-events: none; }
-.rowMulti { gap: var(--space-2); }
 .bulk {
   display: flex; align-items: center; justify-content: space-between;
   padding: var(--space-1) var(--space-2) var(--space-2);
@@ -42,13 +37,3 @@
 }
 .clearAll:hover:not(:disabled) { text-decoration: underline; }
 .clearAll:disabled { color: var(--neutral-150); cursor: default; }
-/* Pinned group (assigned or recently assigned users), then everyone else:
-   section headers styled like the filter popover's (CheckboxListPopover). */
-.groupLabel {
-  display: block;
-  padding: var(--space-2) var(--space-2) var(--space-1);
-  font-size: var(--font-xs); font-weight: 500;
-  color: var(--neutral-200);
-  text-transform: uppercase; letter-spacing: .06em;
-}
-.groupNext { margin-top: var(--space-1); padding-top: var(--space-1); border-top: 0.5px solid var(--neutral-100); }

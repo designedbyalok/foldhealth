@@ -166,7 +166,6 @@
 }
 .chevronOpen { transform: rotate(180deg); }
 
-
 .menu {
   position: absolute;
   top: calc(100% + 4px);
@@ -224,97 +223,6 @@
   min-width: 100%;
 }
 
-/* Searchable variant: sticky filter input pinned to the top of the menu. */
-.emptyOption {
-  padding: 10px 12px;
-  font-size: var(--font-md);
-  color: var(--neutral-300);
-  text-align: center;
-}
-
-/* An option's tooltip covers the whole row, not just its text. */
-.itemTip { flex: 1; min-width: 0; }
-.item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: var(--font-md);
-  color: var(--neutral-400);
-  line-height: 1.3;
-  outline: none;
-  white-space: nowrap;
-}
-/* 4px between rows, so neighbouring selected (tinted, outlined) rows read
-   as separate items instead of one block. */
-.item + .item { margin-top: var(--space-1); }
-/* An option with an icon: icon and label together, filling the row. */
-.itemLabel {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 0;
-}
-
-/* With a trailing action the label truncates rather than running under it. */
-.itemText {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-/* An option's trailing action (e.g. preview): pushed to the row's end. */
-.itemAction {
-  flex-shrink: 0;
-  margin-left: auto;
-}
-
-/* Non-interactive section header: pinned inside the menu to label a
-   group of options that follow it. Callers pass options of shape
-   `{ type: 'header', label, value }` to render this variant. */
-.groupHeader {
-  padding: 8px 10px 4px;
-  margin-top: 4px;
-  font-size: var(--font-xs);
-  font-weight: 500;
-  color: var(--neutral-300);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  border-top: 0.5px solid var(--neutral-100);
-  cursor: default;
-  user-select: none;
-}
-.groupHeader:first-child {
-  margin-top: 0;
-  border-top: none;
-}
-
-.item:hover,
-.item:focus { background: var(--primary-50); color: var(--primary-400, #5020A0); }
-
-.itemActive {
-  background: var(--primary-50);
-  color: var(--primary-400, #5020A0);
-  /* Hairline stroke on the current pick so the selected row is
-     legible even when the menu opens on the same primary-50 tint the
-     hover state uses; inset so the border doesn't shift the row's
-     padding. */
-  box-shadow: inset 0 0 0 0.5px var(--primary-200);
-}
-
-.itemDisabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.itemDisabled:hover { background: transparent; }
-
-/* Checkbox rows lead with the control, so the label must sit next to it,
-   `.item`'s default `space-between` (built for label → trailing check) would
-   push every label to the right edge. */
 /* Badge summary in the trigger: one line only; anything past the edge is
    collapsed into a "+N" badge by the measuring effect. */
 .triggerBadges {
@@ -346,16 +254,6 @@
   visibility: hidden;
   pointer-events: none;
   white-space: nowrap;
-}
-
-.itemWithCheckbox {
-  justify-content: flex-start;
-}
-/* Row checkbox for `multiple` + `checkboxes`, purely a state indicator; the
-   row handles the click, so it must not swallow pointer events. */
-.itemCheckbox {
-  pointer-events: none;
-  flex-shrink: 0;
 }
 
 /* Open multi-pick with chips: one line, the chip row (with its "+N") takes
