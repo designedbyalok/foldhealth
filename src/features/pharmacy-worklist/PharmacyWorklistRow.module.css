@@ -5,8 +5,6 @@
   composes: row from '../../components/WorklistShell/WorklistRow.module.css';
   cursor: pointer;
 }
-/* A claim reversal reopened a gap: a red bar down the row's left edge. */
-.rowReopened > td:first-child { box-shadow: inset 3px 0 0 var(--status-error); }
 /* Rows open the gap drawer from the keyboard too (Enter / Space). */
 .row:focus-visible { outline: 2px solid var(--primary-200); outline-offset: -2px; }
 
@@ -207,21 +205,3 @@
 .chevron { flex-shrink: 0; transition: transform 0.15s ease; }
 .chevronRight { transform: rotate(-90deg); }
 .chevronUp { transform: rotate(180deg); }
-
-/* Call menu: who to call, with their number (and drugs / last fill) below. */
-.callOption {
-  display: flex;
-  flex-direction: column;
-  gap: calc(var(--space-1) / 2);
-  min-width: 0;
-}
-.callName {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.callMeta {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: var(--font-sm);
-  color: var(--neutral-200);
-}

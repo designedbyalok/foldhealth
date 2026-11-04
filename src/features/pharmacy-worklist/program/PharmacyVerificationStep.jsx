@@ -256,8 +256,8 @@ export function PharmacyVerificationStep({ program, member: memberProp, onLocked
     setNote('');
     onLocked?.();
     showToast?.(createdCount === followUps.length
-      ? `Verification call saved · ${createdCount} follow-up task${createdCount === 1 ? '' : 's'} created`
-      : `Verification call saved · could not create ${followUps.length - createdCount} follow-up task${followUps.length - createdCount === 1 ? '' : 's'}`);
+      ? `Assessment saved · ${createdCount} follow-up task${createdCount === 1 ? '' : 's'} created`
+      : `Assessment saved · could not create ${followUps.length - createdCount} follow-up task${followUps.length - createdCount === 1 ? '' : 's'}`);
   };
 
   // The header button calls the latest handler, with this render's answers.
@@ -359,8 +359,8 @@ export function PharmacyVerificationStep({ program, member: memberProp, onLocked
       {!readOnly && (
         // No card around it: a titled timeline, like the drawer's Activity tab.
         <section className={styles.history}>
-          <h3 className={styles.historyTitle}>Verification History</h3>
-          <ActivityLog entries={history} relaxed flushTop emptyLabel="No verification calls logged yet." />
+          <h3 className={styles.historyTitle}>Assessment History</h3>
+          <ActivityLog entries={history} relaxed flushTop emptyLabel="No assessments logged yet." />
         </section>
       )}
     </div>

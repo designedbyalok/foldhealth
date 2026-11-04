@@ -190,13 +190,5 @@
 .chevronRight { transform: rotate(-90deg); }
 .chevronUp { transform: rotate(180deg); }
 
-/* PDC in a gap's details: value with its pencil, where it comes from below,
-   and the inline edit (number, Save, Cancel). */
+/* PDC in a gap's details: value with its pencil, where it comes from below. */
 .pdcLine { display: inline-flex; align-items: center; gap: var(--space-1); }
-.pdcEdit { display: inline-flex; align-items: center; gap: var(--space-1); }
-.pdcEdit input { width: 4.5rem; }
-.linkBtn {
-  border: none; background: none; padding: 0; cursor: pointer; text-align: left;
-  font-size: var(--font-sm); color: var(--primary-300);
-}
-.linkBtn:hover { text-decoration: underline; }

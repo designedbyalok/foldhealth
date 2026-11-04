@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, it, vi } from 'vitest';
 import {
-  addDaysMdy, annotateClaims, claimRecordStatus, effectivePdc, enrichPharmacyMember, gapBadge, matchFill, measureStatus, medicationStatus, pdcSource, pharmaciesUsed, planGapStatus, prescribersOf,
-  activeBarriers, memberPriority, needsVerification, nextFillDueSource, outreachSummary, planTimers, reconcileMeasure, savability, setPlanTimers, todayMdy,
+  addDaysMdy, annotateClaims, claimRecordStatus, contactCallTarget, effectivePdc, enrichPharmacyMember, gapBadge, matchFill, measureStatus, medicationStatus, pdcSource, pharmaciesUsed, planGapStatus, prescribersOf,
+  activeBarriers, memberPriority, nextFillDueSource, outreachSummary, planTimers, reconcileMeasure, savability, setPlanTimers, todayMdy,
 } from './pharmacyWorklist.utils.js';
 
 // The fixtures are relative to today, and the code takes the measure year
@@ -441,20 +441,6 @@ describe('outreachSummary: the hover card\'s recent attempts', () => {
   });
 });
 
-describe('needsVerification', () => {
-  const open = fillMeasure({ filledDaysAgo: 40, supply: 30 });
-  const verified = (daysAgoN) => ({ kind: 'pharmacy-verification', locked: true, date: daysAgo(daysAgoN), measures: ['MAD'] });
-
-  it('asks for an open gap with no verification call since its last fill', () => {
-    expect(needsVerification(open, { callHistory: [] })).toBe(true);
-    expect(needsVerification(open, { callHistory: [verified(50)] })).toBe(true);
-  });
-
-  it('is done once a verification call covers the gap this fill cycle', () => {
-    expect(needsVerification(open, { callHistory: [verified(5)] })).toBe(false);
-  });
-});
-
 describe('activeBarriers', () => {
   const med = (o) => ({ id: 'a', status: 'Active', nonAdherenceReason: null, ...o });
   it("joins each gap's newest record, its drugs' lists and drug reasons", () => {
@@ -475,8 +461,8 @@ describe('activeBarriers', () => {
 });
 
 describe('reopened gaps', () => {
-  it('reads Reopened, loud for a claim reversal and soft for a new fill due', () => {
-    expect(gapBadge({ gap: 'Reopened', reopenReason: 'Claim reversal' })).toEqual({ tone: 'danger', variant: 'solid', label: 'Reopened' });
+  it('reads Reopened in amber for either reason', () => {
+    expect(gapBadge({ gap: 'Reopened', reopenReason: 'Claim reversal' })).toEqual({ tone: 'warning', label: 'Reopened' });
     expect(gapBadge({ gap: 'Reopened', reopenReason: 'New fill due' })).toMatchObject({ tone: 'warning', label: 'Reopened' });
     expect(gapBadge({ gap: 'Closed' })).toMatchObject({ tone: 'success', label: 'Closed' });
   });
@@ -552,5 +538,27 @@ describe('who to call', () => {
       measures: [{ code: 'MAD', medications: [rx({ refills: [{ date: daysAgo(5), pharmacy: 'CVS' }] })] }],
     };
     expect(pharmaciesUsed(member).map(p => [p.name, p.fills])).toEqual([['CVS', 1], ['Gap Pharmacy', 0]]);
+  });
+});
+
+describe('contactCallTarget', () => {
+  const rite = { name: 'Rite Aid', phone: '(562) 555-0101', phones: [{ number: '(562) 555-0109', label: 'Pharmacist direct' }, { number: '(562) 555-0101' }] };
+  const dial = (note, lineId) => ({ t: 'call', title: 'Dialed Rite Aid', note, lineId });
+
+  it('lists the main number first, then the others, once each', () => {
+    expect(contactCallTarget({}, rite, 'Pharmacy').numbers.map(n => [n.number, n.label])).toEqual([['(562) 555-0101', 'Main'], ['(562) 555-0109', 'Pharmacist direct']]);
+  });
+
+  it('marks the last number and line dialed, and the most used number', () => {
+    const member = { activityLog: [dial('(562) 555-0109', 'clinical'), dial('(562) 555-0101', 'support'), dial('(562) 555-0101')] };
+    const t = contactCallTarget(member, rite, 'Pharmacy');
+    expect(t.numbers.map(n => [n.uses, n.lastUsed, n.mostUsed])).toEqual([[2, false, true], [1, true, false]]);
+    expect(t.lastLineId).toBe('clinical');
+  });
+
+  it('marks nothing before the first call', () => {
+    const t = contactCallTarget({ activityLog: [] }, rite, 'Pharmacy');
+    expect(t.numbers.every(n => !n.lastUsed && !n.mostUsed && n.uses === 0)).toBe(true);
+    expect(t.lastLineId).toBeNull();
   });
 });
