@@ -90,15 +90,15 @@ export function AttestationSignatoryForm({
             </span>
             <Toggle
               items={SIGNATURE_MODES}
-              active={signatureMode}
-              onChange={onSignatureModeChange}
-              size="S"
+              value={signatureMode}
+              onValueChange={onSignatureModeChange}
+              size="sm"
             />
           </div>
 
           {signatureMode === 'type' ? (
             <Input
-              variant={errors.signature ? 'error' : 'default'}
+              invalid={errors.signature}
               placeholder="Type your full name as your digital signature"
               value={signature}
               onChange={onSignatureChange}

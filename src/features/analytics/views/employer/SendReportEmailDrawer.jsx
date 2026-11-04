@@ -127,7 +127,7 @@ export function SendReportEmailDrawer({ buildPdf, filename, title, employerName,
           portal
           options={[{ value: 'default', label: `Default (${me?.email || 'you'})` }]}
           value="default"
-          onChange={() => {}}
+          onValueChange={() => {}}
         />
         <RecipientInput
           label="To"

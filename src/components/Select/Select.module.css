@@ -377,3 +377,9 @@
   min-width: 0;
   width: 6rem;
 }
+
+/* size="sm": 28px, for filter rows and dense toolbars (matches Toggle sm). */
+.triggerSm {
+  height: 28px;
+  font-size: var(--font-md);
+}

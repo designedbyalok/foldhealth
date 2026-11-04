@@ -33,7 +33,7 @@ export function LookbackWindowInput({ lookback, onChange }) {
           <Select
             options={LOOKBACK_UNITS.map(u => ({ value: u.value, label: u.label }))}
             value={lookback.unit || 'months'}
-            onChange={v => onChange({ ...lookback, unit: v })}
+            onValueChange={v => onChange({ ...lookback, unit: v })}
             style={{ width: 120 }}
           />
         </div>

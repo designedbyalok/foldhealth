@@ -101,7 +101,7 @@ export function PublishVersionDrawer({ template, content, onClose, onPublished }
             <Input label="Effective date" required type="date" value={effectiveDate} onChange={e => setEffectiveDate(e.target.value)} />
           </div>
           {future && <Alert tone="info" message={`Version ${current.versionNumber} stays in effect until ${usDate(effectiveDate)}. New plans apply it until then.`} />}
-          <Textarea title="What changed" value={note} onChange={text => setNote(text)} placeholder="e.g. Adds a quarterly foot exam; drops the weekly weigh-in" rows={2} />
+          <Textarea title="What changed" value={note} onValueChange={text => setNote(text)} placeholder="e.g. Adds a quarterly foot exam; drops the weekly weigh-in" rows={2} />
         </section>
 
         <section className={styles.section}>

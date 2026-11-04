@@ -88,7 +88,7 @@ function NewDocumentCard({ patientId, onSaved, onCancel }) {
       />
       {file && (
         <div className={styles.docFields}>
-          <Select label="Document Type" disabled options={[{ value: LEGAL_AUTHORITY_TYPE, label: LEGAL_AUTHORITY_TYPE }]} value={LEGAL_AUTHORITY_TYPE} onChange={() => {}} />
+          <Select label="Document Type" disabled options={[{ value: LEGAL_AUTHORITY_TYPE, label: LEGAL_AUTHORITY_TYPE }]} value={LEGAL_AUTHORITY_TYPE} onValueChange={() => {}} />
           <Input label="Caption" required value={caption} onChange={e => setCaption(e.target.value)} maxLength={80} />
         </div>
       )}
@@ -181,7 +181,7 @@ export function AddFamilyDrawer({ patient, onClose }) {
               searchable
               options={memberOptions}
               value=""
-              onChange={(id) => set({ mode: 'member', relatedPatientId: id })}
+              onValueChange={(id) => set({ mode: 'member', relatedPatientId: id })}
               placeholder="Search members"
               searchPlaceholder="Search by name or member ID"
               emptyText={() => (
@@ -202,7 +202,7 @@ export function AddFamilyDrawer({ patient, onClose }) {
                 {isNew
                   ? <Input label="Name" required value={form.name} onChange={e => set({ name: e.target.value })} placeholder="Enter name" maxLength={80} />
                   : <Input label="Name" required value={name} disabled />}
-                <Select label="Relationship" required options={RELATIONSHIPS.map(r => ({ value: r, label: r }))} value={form.relationship} onChange={v => set({ relationship: v })} placeholder="Select relationship" />
+                <Select label="Relationship" required options={RELATIONSHIPS.map(r => ({ value: r, label: r }))} value={form.relationship} onValueChange={v => set({ relationship: v })} placeholder="Select relationship" />
                 {isNew && <Input label="Email" type="email" value={form.email} onChange={e => set({ email: e.target.value })} placeholder="Enter email" />}
                 {isNew && <Input label="Phone Number" type="tel" value={form.phone} onChange={e => set({ phone: e.target.value })} placeholder="Enter phone number" />}
               </div>

@@ -29,7 +29,7 @@ export function InviteUserFormStep({ onClose, form, set, showAdditional, setShow
         <div className={styles.formGrid}>
           <div className={styles.formField}>
             <label className={styles.formLabel} htmlFor={`${uid}-first-name`}>First Name <span className={styles.required}>*</span></label>
-            <Input id={`${uid}-first-name`} value={form.first_name} onChange={e => set('first_name', e.target.value)} placeholder="First Name" variant={form.first_name && !isCapitalizedName(form.first_name) ? 'error' : 'default'} />
+            <Input id={`${uid}-first-name`} value={form.first_name} onChange={e => set('first_name', e.target.value)} placeholder="First Name" invalid={form.first_name && !isCapitalizedName(form.first_name)} />
             {form.first_name && !isCapitalizedName(form.first_name) && <span className={styles.fieldError}>Must start with a capital letter</span>}
           </div>
           <div className={styles.formField}>
@@ -38,7 +38,7 @@ export function InviteUserFormStep({ onClose, form, set, showAdditional, setShow
           </div>
           <div className={styles.formField}>
             <label className={styles.formLabel} htmlFor={`${uid}-last-name`}>Last Name <span className={styles.required}>*</span></label>
-            <Input id={`${uid}-last-name`} value={form.last_name} onChange={e => set('last_name', e.target.value)} placeholder="Last Name" variant={form.last_name && !isCapitalizedName(form.last_name) ? 'error' : 'default'} />
+            <Input id={`${uid}-last-name`} value={form.last_name} onChange={e => set('last_name', e.target.value)} placeholder="Last Name" invalid={form.last_name && !isCapitalizedName(form.last_name)} />
             {form.last_name && !isCapitalizedName(form.last_name) && <span className={styles.fieldError}>Must start with a capital letter</span>}
           </div>
           <div className={styles.formField}>
@@ -76,7 +76,7 @@ export function InviteUserFormStep({ onClose, form, set, showAdditional, setShow
               </div>
               <div className={styles.formField}>
                 <label className={styles.formLabel} htmlFor={`${uid}-gender`}>Gender <span className={styles.required}>*</span></label>
-                <Select id={`${uid}-gender`} options={GENDER_OPTIONS.map(g => ({ value: g, label: g }))} value={form.gender || undefined} onChange={v => set('gender', v)} placeholder="Select gender" />
+                <Select id={`${uid}-gender`} options={GENDER_OPTIONS.map(g => ({ value: g, label: g }))} value={form.gender || undefined} onValueChange={v => set('gender', v)} placeholder="Select gender" />
               </div>
             </div>
 

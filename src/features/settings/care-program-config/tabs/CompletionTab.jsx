@@ -111,7 +111,7 @@ export function CompletionTab({ draft, patch }) {
                 portal
                 options={COMPLETION_STATUSES.map(v => ({ value: v, label: v }))}
                 value={c.completionStatus}
-                onChange={completionStatus => set({ completionStatus })}
+                onValueChange={completionStatus => set({ completionStatus })}
               />
             </span>
           </div>

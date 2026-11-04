@@ -120,7 +120,7 @@ export function CloneFromUserDrawer({ users, exclude, imported = [], target, onI
               searchText: [u.name, u.email, u.role].filter(Boolean).join(' '),
             }))}
             value={names}
-            onChange={choose}
+            onValueChange={choose}
             placeholder="Select users"
             // Only users with active or upcoming slots are offered; say so when a search finds none.
             emptyText={(q) => (q ? 'No users match searched keyword.' : 'No other users have availability defined.')}

@@ -68,7 +68,7 @@ export function AddInterventionDrawer({ intervention, onClose, onSave }) {
         </div>
         <div className={styles.drawerField}>
           <span className={styles.drawerLabel}>Status</span>
-          <Select options={STATUS_OPTIONS} value={status} onChange={setStatus} />
+          <Select options={STATUS_OPTIONS} value={status} onValueChange={setStatus} />
         </div>
       </div>
     </Drawer>

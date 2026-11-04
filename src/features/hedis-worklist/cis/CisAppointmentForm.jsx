@@ -48,7 +48,7 @@ export function CisAppointmentForm({ form, result, appointments = [] }) {
           label="Time"
           options={TIME_SLOTS.map(t => ({ value: t, label: t }))}
           value={values.time}
-          onChange={set('time')}
+          onValueChange={set('time')}
           placeholder="Select Time"
         />
       </div>
@@ -98,7 +98,7 @@ export function CisAppointmentForm({ form, result, appointments = [] }) {
         title="Note"
         rows={3}
         value={values.note}
-        onChange={set('note')}
+        onValueChange={set('note')}
         placeholder="Add details for this appointment"
       />
     </div>

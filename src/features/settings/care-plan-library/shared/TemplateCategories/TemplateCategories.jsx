@@ -27,7 +27,7 @@ export function TemplateCategoryBar({ categories, active, onSelect, onAdd, count
   ];
   return (
     <div className={styles.bar}>
-      <SubTabs size="S" tabs={tabs} activeKey={active} onChange={onSelect} />
+      <SubTabs size="sm" tabs={tabs} value={active} onValueChange={onSelect} />
       <Button variant="ghost" size="sm" leadingIconElement={<AddIconMinimalist size={14} />} onClick={onAdd}>
         Add Category
       </Button>
@@ -71,7 +71,7 @@ export function CategoryCriteriaCard({ category, index, total, onChange, onRemov
 
       <div className={styles.matchRow}>
         <span className={styles.matchLabel}>Patients who match</span>
-        <Toggle size="S" items={MATCH_ITEMS} active={category.match === 'any' ? 'any' : 'all'} onChange={k => onChange({ match: k })} />
+        <Toggle size="sm" items={MATCH_ITEMS} value={category.match === 'any' ? 'any' : 'all'} onValueChange={k => onChange({ match: k })} />
         <span className={styles.matchLabel}>of these:</span>
       </div>
 
@@ -82,13 +82,13 @@ export function CategoryCriteriaCard({ category, index, total, onChange, onRemov
             <Select
               options={TYPE_OPTIONS}
               value={c.type}
-              onChange={t => onChange({ criteria: criteria.map((x, j) => (j === i ? CATEGORY_DEFAULT_CRITERION[t]() : x)) })}
+              onValueChange={t => onChange({ criteria: criteria.map((x, j) => (j === i ? CATEGORY_DEFAULT_CRITERION[t]() : x)) })}
               className={styles.typeSelect}
             />
             {c.type === 'lab' ? (
               <>
-                <Select options={LAB_OPTIONS} value={c.lab} onChange={v => setAt(i, { lab: v })} className={styles.labSelect} />
-                <Select options={OP_OPTIONS} value={c.op} onChange={v => setAt(i, { op: v })} className={styles.opSelect} />
+                <Select options={LAB_OPTIONS} value={c.lab} onValueChange={v => setAt(i, { lab: v })} className={styles.labSelect} />
+                <Select options={OP_OPTIONS} value={c.op} onValueChange={v => setAt(i, { op: v })} className={styles.opSelect} />
                 <span className={styles.numberInput}>
                   <Input type="number" value={c.value ?? ''} onChange={e => setAt(i, { value: number(e.target.value) })} placeholder="Value" aria-label="Value" />
                 </span>

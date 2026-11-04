@@ -25,7 +25,7 @@ export function ConditionEditor({ def, config, onChange }) {
           <Select
             options={CHANNELS.map(c => ({ value: c.key, label: c.label }))}
             value={config.channels || []}
-            onChange={v => onChange({ channels: v || [] })}
+            onValueChange={v => onChange({ channels: v || [] })}
             multiple
             checkboxes
             badges
@@ -63,7 +63,7 @@ function RuleRows({ def, rules, onChange }) {
           <PanelRow key={f.key} label={f.label}>
             <div className={styles.ruleControls}>
               {f.ops.length > 1 ? (
-                <Select options={toOpts(f.ops)} value={r.op || f.ops[0]} onChange={v => set(f.key, { op: v })} className={styles.opSelect} />
+                <Select options={toOpts(f.ops)} value={r.op || f.ops[0]} onValueChange={v => set(f.key, { op: v })} className={styles.opSelect} />
               ) : (
                 <span className={styles.opText}>{f.ops[0]}</span>
               )}
@@ -78,14 +78,14 @@ function RuleRows({ def, rules, onChange }) {
                     wrapperClassName={styles.numberInput}
                     aria-label={`${f.label} value`}
                   />
-                  <Select options={f.units} value={r.unit || f.units[0].value} onChange={v => set(f.key, { unit: v })} className={styles.unitSelect} />
+                  <Select options={f.units} value={r.unit || f.units[0].value} onValueChange={v => set(f.key, { unit: v })} className={styles.unitSelect} />
                   {f.suffix && <span className={styles.opText}>{f.suffix}</span>}
                 </>
               ) : (
                 <Select
                   options={options}
                   value={f.input === 'multi' || f.input === 'channels' ? (r.value || []) : (r.value ?? '')}
-                  onChange={v => set(f.key, { value: v })}
+                  onValueChange={v => set(f.key, { value: v })}
                   multiple={f.input === 'multi' || f.input === 'channels'}
                   checkboxes={f.input === 'multi'}
                   badges={f.input === 'multi'}
@@ -140,9 +140,9 @@ function ClinicalCriteriaEditor({ config, onChange }) {
           <Select
             options={opt(isLab ? LAB_CATALOG : SCORE_CATALOG)}
             value={isLab ? c.lab : c.score}
-            onChange={v => setAt(i, isLab ? { lab: v } : { score: v })}
+            onValueChange={v => setAt(i, isLab ? { lab: v } : { score: v })}
           />
-          <Select options={OPS(NUMERIC_OPS)} value={c.op} onChange={v => setAt(i, { op: v })} className={styles.opSelect} />
+          <Select options={OPS(NUMERIC_OPS)} value={c.op} onValueChange={v => setAt(i, { op: v })} className={styles.opSelect} />
           <Input type="number" value={c.value ?? ''} onChange={e => setAt(i, { value: e.target.value === '' ? '' : Number(e.target.value) })} placeholder="Value" wrapperClassName={styles.numberInput} aria-label="Value" />
           <Input type="number" value={c.withinDays ?? ''} onChange={e => setAt(i, { withinDays: e.target.value === '' ? null : Number(e.target.value) })} placeholder="Days" trailingText="days" wrapperClassName={styles.numberInput} aria-label="Within days" />
         </div>
@@ -151,10 +151,10 @@ function ClinicalCriteriaEditor({ config, onChange }) {
     if (c.type === 'assessment') {
       return (
         <div className={styles.ruleColumn}>
-          <Select options={[{ value: '', label: 'Any form' }, ...forms.map(f => ({ value: f.id, label: f.name }))]} value={c.formId || ''} onChange={v => setAt(i, { formId: v })} searchable />
+          <Select options={[{ value: '', label: 'Any form' }, ...forms.map(f => ({ value: f.id, label: f.name }))]} value={c.formId || ''} onValueChange={v => setAt(i, { formId: v })} searchable />
           <div className={styles.ruleControls}>
             <Input value={c.question} onChange={e => setAt(i, { question: e.target.value })} placeholder="Question key" aria-label="Question" />
-            <Select options={OPS(ANSWER_OPS)} value={c.op} onChange={v => setAt(i, { op: v })} className={styles.opSelect} />
+            <Select options={OPS(ANSWER_OPS)} value={c.op} onValueChange={v => setAt(i, { op: v })} className={styles.opSelect} />
             <Input value={c.value ?? ''} onChange={e => setAt(i, { value: e.target.value })} placeholder="Answer" aria-label="Answer" />
           </div>
         </div>
@@ -162,7 +162,7 @@ function ClinicalCriteriaEditor({ config, onChange }) {
     }
     return (
       <div className={styles.ruleControls}>
-        <Select options={opt(EVENT_CATALOG)} value={c.event} onChange={v => setAt(i, { event: v })} />
+        <Select options={opt(EVENT_CATALOG)} value={c.event} onValueChange={v => setAt(i, { event: v })} />
         <Input type="number" value={c.withinDays ?? ''} onChange={e => setAt(i, { withinDays: e.target.value === '' ? null : Number(e.target.value) })} trailingText="days" wrapperClassName={styles.numberInput} aria-label="Within days" />
       </div>
     );
@@ -172,11 +172,11 @@ function ClinicalCriteriaEditor({ config, onChange }) {
     <PanelSection
       title="Patient matches"
       action={(
-        <Toggle size="S" items={[{ key: 'all', label: 'All' }, { key: 'any', label: 'Any' }]} active={config.match === 'any' ? 'any' : 'all'} onChange={k => onChange({ match: k, criteria })} />
+        <Toggle size="sm" items={[{ key: 'all', label: 'All' }, { key: 'any', label: 'Any' }]} value={config.match === 'any' ? 'any' : 'all'} onValueChange={k => onChange({ match: k, criteria })} />
       )}
     >
       {criteria.map((c, i) => (
-        <PanelRow key={i} label={<Select options={opt(CONDITION_TYPES)} value={c.type} onChange={v => setAt(i, CRITERIA_DEFAULTS[v]())} />}>
+        <PanelRow key={i} label={<Select options={opt(CONDITION_TYPES)} value={c.type} onValueChange={v => setAt(i, CRITERIA_DEFAULTS[v]())} />}>
           <div className={styles.ruleControls}>
             {fields(c, i)}
             <ActionButton size="sm" icon="solar:trash-bin-trash-linear" tooltip="Remove" disabled={criteria.length === 1} onClick={() => onChange({ criteria: criteria.filter((_, j) => j !== i) })} />

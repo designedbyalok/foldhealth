@@ -90,7 +90,7 @@ export function FontSubstitutionDialog() {
                 <Select
                   options={fontOptions}
                   value={mappings[font] || 'Inter'}
-                  onChange={v => setMappings(m => ({ ...m, [font]: v }))}
+                  onValueChange={v => setMappings(m => ({ ...m, [font]: v }))}
                 />
               </div>
             </div>

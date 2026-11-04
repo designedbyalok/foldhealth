@@ -78,7 +78,7 @@ export function FeatureReviewForm({ parentId: initialParentId = null, onClose, o
           label="Type"
           options={[{ value: 'feature', label: 'Feature' }, { value: 'fix', label: 'Bug fix' }]}
           value={kind}
-          onChange={setKind}
+          onValueChange={setKind}
         />
         <Select
           label="Reviewers"
@@ -90,7 +90,7 @@ export function FeatureReviewForm({ parentId: initialParentId = null, onClose, o
           placeholder="Select who signs off"
           options={options}
           value={reviewerEmails}
-          onChange={setReviewerEmails}
+          onValueChange={setReviewerEmails}
           errorText={showErrors && !reviewerEmails.length ? 'Assign at least one reviewer' : undefined}
         />
         <Select
@@ -98,7 +98,7 @@ export function FeatureReviewForm({ parentId: initialParentId = null, onClose, o
           searchable
           options={parentOptions}
           value={parentId}
-          onChange={setParentId}
+          onValueChange={setParentId}
         />
         <Input
           label="Area"
@@ -119,7 +119,7 @@ export function FeatureReviewForm({ parentId: initialParentId = null, onClose, o
           rows={4}
           placeholder="What the reviewer should check"
           value={description}
-          onChange={text => setDescription(text)}
+          onValueChange={text => setDescription(text)}
         />
       </div>
     </Drawer>

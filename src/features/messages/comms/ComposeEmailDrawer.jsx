@@ -351,7 +351,7 @@ export function ComposeEmailDrawer({ initial = {}, onClose, onSent }) {
             required
             options={[{ value: 'default', label: `Default (${sender.email || FROM_ADDRESS})` }]}
             value="default"
-            onChange={() => {}}
+            onValueChange={() => {}}
           />
           {!forPatient && (<>
             {/* Cc / Bcc sit on the last recipient field's label row: Send To
@@ -370,7 +370,7 @@ export function ComposeEmailDrawer({ initial = {}, onClose, onSent }) {
                 searchable
                 options={patientOptions}
                 value={patientId}
-                onChange={pickPatient}
+                onValueChange={pickPatient}
                 placeholder="Search patient"
                 searchPlaceholder="Search by name"
                 emptyText="No matching patients."
@@ -391,7 +391,7 @@ export function ComposeEmailDrawer({ initial = {}, onClose, onSent }) {
                   badgeTooltip: <PersonTip name={o.label} initials={o.initials} email={o.email} tag={o.type} />,
                 }))}
                 value={picked}
-                onChange={updatePicked}
+                onValueChange={updatePicked}
                 placeholder={SEND_TO_PLACEHOLDER}
               >
                 <VerifyIdReveal show={withOthers}>{verifyCard}</VerifyIdReveal>
@@ -452,10 +452,10 @@ export function ComposeEmailDrawer({ initial = {}, onClose, onSent }) {
           />)}
           {/* Cc / Bcc: Fold users only when sending for a patient (the ticket); any address from Comms. */}
           {showCc && (forPatient
-            ? <Select label="Cc" multiple checkboxes badges searchable options={staffOptions} value={cc} onChange={touch(setCc)} placeholder="Search Fold users" />
+            ? <Select label="Cc" multiple checkboxes badges searchable options={staffOptions} value={cc} onValueChange={touch(setCc)} placeholder="Search Fold users" />
             : <RecipientInput label="Cc" value={cc} onChange={touch(setCc)} />)}
           {showBcc && (forPatient
-            ? <Select label="Bcc" multiple checkboxes badges searchable options={staffOptions} value={bcc} onChange={touch(setBcc)} placeholder="Search Fold users" />
+            ? <Select label="Bcc" multiple checkboxes badges searchable options={staffOptions} value={bcc} onValueChange={touch(setBcc)} placeholder="Search Fold users" />
             : <RecipientInput label="Bcc" value={bcc} onChange={touch(setBcc)} />)}
           <Input
             label="Subject"
@@ -473,7 +473,7 @@ export function ComposeEmailDrawer({ initial = {}, onClose, onSent }) {
                 required
                 options={categories.map(c => ({ value: c, label: c }))}
                 value={template.category}
-                onChange={(c) => {
+                onValueChange={(c) => {
                   const first = templates.find(t => t.category === c);
                   if (!first) return;
                   setDirty(true);
@@ -485,7 +485,7 @@ export function ComposeEmailDrawer({ initial = {}, onClose, onSent }) {
                 label="Template List"
                 options={templates.filter(t => t.category === template.category).map(t => ({ value: t.id, label: t.name }))}
                 value={template.id}
-                onChange={(id) => {
+                onValueChange={(id) => {
                   const t = templates.find(x => x.id === id);
                   setDirty(true);
                   setTemplateId(id);

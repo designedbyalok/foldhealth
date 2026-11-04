@@ -396,7 +396,7 @@ export function CarePlanCreateView({ onClose, onSave }) {
                   })),
                 ]}
                 value={protocolId}
-                onChange={pickProtocol}
+                onValueChange={pickProtocol}
                 helperText={sourceProtocol
                   ? 'UnityAI follows its thresholds, cadence and titration, and the template is saved as based on it.'
                   : 'Optional. Pick an approved protocol, or upload one to review and approve.'}
@@ -415,7 +415,7 @@ export function CarePlanCreateView({ onClose, onSave }) {
                   })),
                 ]}
                 value={referenceTemplateId}
-                onChange={setReferenceTemplateId}
+                onValueChange={setReferenceTemplateId}
                 helperText={referenceTemplate
                   ? 'UnityAI starts from its goals, interventions and barriers, then adapts them to your description.'
                   : 'Optional. Pick an existing template for UnityAI to start from.'}

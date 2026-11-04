@@ -48,7 +48,7 @@ export function SdohReferralDialog({ partner, barrier, zip, onCancel, onSubmit }
             onChange={e => setProgram(e.target.value.slice(0, 120))}
             placeholder="e.g. Eastside Community Food Bank"
           />
-          <Select label="Referral status" options={STATUS_OPTIONS} value={status} onChange={setStatus} />
+          <Select label="Referral status" options={STATUS_OPTIONS} value={status} onValueChange={setStatus} />
           <Textarea
             value={note}
             onChange={e => setNote(e.target.value)}

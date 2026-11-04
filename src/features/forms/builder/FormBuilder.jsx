@@ -372,7 +372,7 @@ function RatingProperties({ field, onPatch }) {
           aria-labelledby={`${uid}-description`}
           placeholder="Description for this field."
           value={field.description || ''}
-          onChange={(html) => onPatch({ description: html })}
+          onValueChange={(html) => onPatch({ description: html })}
         />
 
         <label className={styles.propLabel} htmlFor={`${uid}-element`}>Rating Elements</label>
@@ -382,7 +382,7 @@ function RatingProperties({ field, onPatch }) {
           options={RATING_ELEMENT_OPTIONS}
           value={element.key}
           leadingIcon={element.icon}
-          onChange={(key) => {
+          onValueChange={(key) => {
             // NPS is a fixed instrument: 0–10, likelihood labels, and the
             // standard question unless the author already wrote their own.
             const next = ratingElement(key);
@@ -415,7 +415,7 @@ function RatingProperties({ field, onPatch }) {
               id={`${uid}-scale`}
               options={RATING_SCALE_OPTIONS}
               value={String(scale)}
-              onChange={(v) => {
+              onValueChange={(v) => {
                 const n = Number(v);
                 onPatch({ ratingScale: n, options: ratingOptions(n) });
               }}
@@ -429,7 +429,7 @@ function RatingProperties({ field, onPatch }) {
           id={`${uid}-labels`}
           options={RATING_LABEL_OPTIONS}
           value={labelsKey}
-          onChange={(key) => onPatch({ ratingLabels: key })}
+          onValueChange={(key) => onPatch({ ratingLabels: key })}
         />
         {labelsKey === 'custom' && (
           <>
@@ -968,9 +968,8 @@ export function FormBuilder() {
 
         <Toggle
           items={[{ key: 'edit', label: 'Edit Form' }, { key: 'logic', label: 'Logic' }, { key: 'score', label: 'Score' }, { key: 'care-plan', label: 'Care Plan' }, { key: 'preview', label: 'Preview' }, { key: 'analytics', label: 'Analytics' }]}
-          active={mode}
-          onChange={setMode}
-          size="M"
+          value={mode}
+          onValueChange={setMode}
         />
 
         <div className={styles.headerRight}>

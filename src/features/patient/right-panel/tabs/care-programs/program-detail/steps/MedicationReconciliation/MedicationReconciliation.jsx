@@ -962,7 +962,7 @@ export function MedicationReconciliation({ programCode } = {}) {
           <Select
             options={STATUS_OPTIONS}
             value={draft.status}
-            onChange={v => setDraft(d => ({ ...d, status: v }))}
+            onValueChange={v => setDraft(d => ({ ...d, status: v }))}
           />
         </div>
         <div className={styles.formField}>
@@ -986,7 +986,7 @@ export function MedicationReconciliation({ programCode } = {}) {
               <Select
                 options={STOP_REASON_OPTIONS}
                 value={draft.stopReason}
-                onChange={v => setDraft(d => ({ ...d, stopReason: v }))}
+                onValueChange={v => setDraft(d => ({ ...d, stopReason: v }))}
                 placeholder="Select Reason"
               />
             </div>
@@ -1043,7 +1043,7 @@ export function MedicationReconciliation({ programCode } = {}) {
           <span className={styles.medHeaderTitle}>Member's Medications</span>
         </div>
         <div className={styles.medHeaderRight}>
-          <Toggle size="S" items={MED_VIEW_ITEMS} active={medView} onChange={setMedView} />
+          <Toggle size="sm" items={MED_VIEW_ITEMS} value={medView} onValueChange={setMedView} />
           <Button
             variant="soft"
             menuItems={ADD_NEW_MENU_ITEMS}
@@ -1378,7 +1378,7 @@ export function MedicationReconciliation({ programCode } = {}) {
                     <Select
                       options={STATUS_OPTIONS}
                       value={cellDraft}
-                      onChange={v => commitCell(m, 'status', v)}
+                      onValueChange={v => commitCell(m, 'status', v)}
                       portal
                     />
                   </span>

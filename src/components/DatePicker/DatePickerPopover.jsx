@@ -220,7 +220,7 @@ export function DatePickerPopover({
           <Select
             options={yearOptions}
             value={String(viewYear)}
-            onChange={(v) => setViewYear(Number(v))}
+            onValueChange={(v) => setViewYear(Number(v))}
             menuAlign="left"
             searchable
             searchPlaceholder="Year"
@@ -233,7 +233,7 @@ export function DatePickerPopover({
           <Select
             options={rightYearOptions}
             value={String(rightMonthYear)}
-            onChange={(v) => setViewYear(Number(v) - (rightMonthValue < viewMonth ? 1 : 0))}
+            onValueChange={(v) => setViewYear(Number(v) - (rightMonthValue < viewMonth ? 1 : 0))}
             menuAlign="left"
             searchable
             searchPlaceholder="Year"
@@ -257,7 +257,7 @@ export function DatePickerPopover({
           <Select
             options={yearOptions}
             value={String(viewYear)}
-            onChange={(v) => setViewYear(Number(v))}
+            onValueChange={(v) => setViewYear(Number(v))}
             menuAlign="left"
             searchable
             searchPlaceholder="Year"

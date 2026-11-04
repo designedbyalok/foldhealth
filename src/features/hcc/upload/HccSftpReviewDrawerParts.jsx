@@ -375,7 +375,7 @@ export function SftpRow({ enc, hccMembers, onPatch, onRemove, showToast, checked
       </td>
       <td className={styles.tdField}>
         <Input
-          variant={errors.has('dos') ? 'error' : 'default'}
+          invalid={errors.has('dos')}
           value={enc.dos || ''}
           placeholder="Enter DOS"
           onChange={(e) => onPatch({ dos: e.target.value })}
@@ -385,7 +385,7 @@ export function SftpRow({ enc, hccMembers, onPatch, onRemove, showToast, checked
       </td>
       <td className={styles.tdField}>
         <Input
-          variant={errors.has('provider') ? 'error' : 'default'}
+          invalid={errors.has('provider')}
           value={enc.provider || ''}
           placeholder="Provider"
           onChange={(e) => onPatch({ provider: e.target.value })}
@@ -395,7 +395,7 @@ export function SftpRow({ enc, hccMembers, onPatch, onRemove, showToast, checked
       </td>
       <td className={styles.tdField}>
         <Input
-          variant={errors.has('pos') ? 'error' : 'default'}
+          invalid={errors.has('pos')}
           value={enc.pos || ''}
           placeholder="POS"
           onChange={(e) => onPatch({ pos: e.target.value, posDesc: POS_LABEL[e.target.value] || '' })}
@@ -736,7 +736,7 @@ export function EncounterBlock({ enc, status, isFirst, onPatch, onDelete, onCite
               <Input
                 value={enc.dos || ''}
                 placeholder="MM/DD/YYYY"
-                variant={errors.has('dos') ? 'error' : 'default'}
+                invalid={errors.has('dos')}
                 onChange={(e) => onPatch({ dos: e.target.value })}
               />
             </PctFieldBlock>
@@ -750,7 +750,7 @@ export function EncounterBlock({ enc, status, isFirst, onPatch, onDelete, onCite
               <Input
                 value={enc.provider || ''}
                 placeholder="Provider"
-                variant={errors.has('provider') ? 'error' : 'default'}
+                invalid={errors.has('provider')}
                 onChange={(e) => onPatch({ provider: e.target.value })}
               />
             </PctFieldBlock>
@@ -764,7 +764,7 @@ export function EncounterBlock({ enc, status, isFirst, onPatch, onDelete, onCite
               <Input
                 value={enc.pos ? `${enc.pos} - ${POS_LABEL[enc.pos] || ''}` : ''}
                 placeholder="POS"
-                variant={errors.has('pos') ? 'error' : 'default'}
+                invalid={errors.has('pos')}
                 onChange={(e) => {
                   const code = e.target.value.split(' ')[0];
                   onPatch({ pos: code, posDesc: POS_LABEL[code] || '' });
@@ -782,8 +782,8 @@ export function EncounterBlock({ enc, status, isFirst, onPatch, onDelete, onCite
               <Select
                 value={enc.docType || ''}
                 placeholder="Select Document Type"
-                variant={docTypeMissing ? 'error' : 'default'}
-                onChange={(v) => onPatch({ docType: v })}
+                invalid={docTypeMissing}
+                onValueChange={(v) => onPatch({ docType: v })}
                 options={[
                   { value: 'AWV Note',      label: 'AWV Note' },
                   { value: 'Progress Note', label: 'Progress Note' },

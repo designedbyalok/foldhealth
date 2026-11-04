@@ -138,7 +138,7 @@ export function HomeView() {
         <Select
           options={VIEW_OPTIONS}
           value={view}
-          onChange={changeView}
+          onValueChange={changeView}
           variant="ghost"
           leadingIcon={view === 'today' ? 'solar:sun-linear' : 'solar:chart-linear'}
           style={{ width: 148 }}

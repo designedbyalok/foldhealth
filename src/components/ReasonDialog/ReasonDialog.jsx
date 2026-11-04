@@ -101,7 +101,7 @@ export function ReasonDialog({
               required={required && !notes}
               options={options}
               value={code}
-              onChange={(v) => setChoice(v === '__other__' ? '' : v)}
+              onValueChange={(v) => setChoice(v === '__other__' ? '' : v)}
               placeholder="Select a reason…"
             />
           )}

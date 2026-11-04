@@ -16,6 +16,7 @@ import {
 } from './mentions';
 import styles from './Textarea.module.css';
 import { sanitizeRichText } from '../../lib/sanitizeHtml';
+import { resolveFieldLook, warnDeprecated } from '../../lib/legacyProps';
 import { exitEmptyListItem, applyListShortcut, numberListItems, nestListItem, outdentListItem, unlistItem, textToListHtml } from './richTextLists';
 
 /**
@@ -39,11 +40,16 @@ import { exitEmptyListItem, applyListShortcut, numberListItems, nestListItem, ou
  * States (Figma 25:78337):
  *   • default (placeholder) / hover / focus
  *   • filled
- *   • error   → red border + light-red fill (see `variant='error'`)
+ *   • invalid → red border + light-red fill (the `invalid` prop)
  *   • disabled
+ *
+ * Value: `onChange` is the native change event (plain and labelled
+ * textareas); `onValueChange(value)` gets the text. Rich text has no
+ * native event, so it reports through `onValueChange(html, plain)` only.
  */
 export const Textarea = forwardRef(function Textarea({
-  variant = 'default',
+  variant,
+  invalid,
   className,
   rows = 3,
   disabled,
@@ -90,11 +96,13 @@ export const Textarea = forwardRef(function Textarea({
   // unchanged). MessageComposer uses the same layer (LinkHighlightTextarea).
   highlightLinks = false,
   onChange,
+  onValueChange,
   value,
   defaultValue,
   placeholder = 'Enter Task Title',
   ...rest
 }, ref) {
+  const look = resolveFieldLook('Textarea', { variant, invalid });
   // Resolve string-or-boolean toggles → the string that actually renders.
   const titleText = title === true ? 'Title' : (title || null);
   const supportingTextText = supportingText === true
@@ -115,12 +123,15 @@ export const Textarea = forwardRef(function Textarea({
                      maxLength);
 
   if (!enhanced) {
-    // Legacy plain textarea: untouched contract.
     const cls = [
       styles.textarea,
-      variant === 'error' ? styles.textareaError : '',
+      look.invalid ? styles.textareaError : '',
       className || '',
     ].filter(Boolean).join(' ');
+    const handlePlainChange = (onChange || onValueChange) ? (e) => {
+      onChange?.(e);
+      onValueChange?.(e.target.value);
+    } : undefined;
     if (highlightLinks) {
       return (
         <LinkHighlightTextarea
@@ -130,8 +141,9 @@ export const Textarea = forwardRef(function Textarea({
           disabled={disabled}
           placeholder={placeholder}
           value={value}
-          onChange={onChange}
+          onChange={handlePlainChange}
           maxLength={maxLength}
+          aria-invalid={look.invalid || undefined}
           {...rest}
         />
       );
@@ -145,8 +157,9 @@ export const Textarea = forwardRef(function Textarea({
         placeholder={placeholder}
         value={value}
         defaultValue={defaultValue}
-        onChange={onChange}
+        onChange={handlePlainChange}
         maxLength={maxLength}
+        aria-invalid={look.invalid || undefined}
         {...rest}
       />
     );
@@ -155,7 +168,7 @@ export const Textarea = forwardRef(function Textarea({
   return (
     <EnhancedTextarea
       ref={ref}
-      variant={variant}
+      invalid={look.invalid}
       className={className}
       rows={rows}
       disabled={disabled}
@@ -178,6 +191,7 @@ export const Textarea = forwardRef(function Textarea({
       links={links}
       onLinksChange={onLinksChange}
       onChange={onChange}
+      onValueChange={onValueChange}
       value={value}
       defaultValue={defaultValue}
       placeholder={placeholder}
@@ -259,7 +273,7 @@ const RICH_TOOLBAR = [
 
 // eslint-disable-next-line no-unused-vars: split out purely for readability
 const EnhancedTextarea = forwardRef(function EnhancedTextarea({
-  variant,
+  invalid,
   className,
   rows,
   disabled,
@@ -282,6 +296,7 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
   links,
   onLinksChange,
   onChange,
+  onValueChange,
   value,
   defaultValue,
   placeholder,
@@ -330,7 +345,8 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
 
   const handleTextareaChange = (e) => {
     if (!isControlled) setText(e.target.value);
-    onChange?.(e.target.value, e);
+    onChange?.(e);
+    onValueChange?.(e.target.value);
   };
 
   // ── Mention state (richText only) ──────────────────────────────────
@@ -376,7 +392,11 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
     }
     if (!isControlled) setText(html);
     emittedRef.current = html;
-    onChange?.(html, plain);
+    onValueChange?.(html, plain);
+    if (onChange) {
+      warnDeprecated('Textarea', 'onChange', true, 'onValueChange(html, plain) in richText mode');
+      onChange(html, plain);
+    }
     if (triggersOn) setMentionCtx(detectTrigger(el));
     if (mentionsOn) onMentionsChange?.(collectMentions(el));
     if (linksOn) onLinksChange?.(collectLinks(el));
@@ -530,7 +550,7 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
 
   const wrapClass = [
     styles.enhWrap,
-    variant === 'error' ? styles.enhError : '',
+    invalid ? styles.enhError : '',
     disabled ? styles.enhDisabled : '',
     focused ? styles.enhFocused : '',
     className || '',
@@ -581,6 +601,7 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
               role="textbox"
               aria-multiline="true"
               aria-label={title || placeholder}
+              aria-invalid={invalid || undefined}
               contentEditable={!disabled}
               suppressContentEditableWarning
               className={styles.enhEditor}
@@ -612,6 +633,7 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
               defaultValue={isControlled ? undefined : defaultValue}
               onChange={handleTextareaChange}
               maxLength={maxLength}
+              aria-invalid={invalid || undefined}
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
               {...rest}
@@ -710,7 +732,7 @@ const EnhancedTextarea = forwardRef(function EnhancedTextarea({
         <span
           className={[
             styles.enhSupporting,
-            variant === 'error' ? styles.enhSupportingError : '',
+            invalid ? styles.enhSupportingError : '',
           ].filter(Boolean).join(' ')}
         >
           {supportingText}

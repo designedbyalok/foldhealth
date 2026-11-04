@@ -214,7 +214,7 @@ export function SuspectCard({ icd, dosList = EMPTY_DOS_LIST, member, reviewLocke
             };
           })}
           value={dos}
-          onChange={(v) => setDos(v)}
+          onValueChange={(v) => setDos(v)}
           placeholder="Select DOS"
           disabled={!!action || singleDos || !roleAllowsIcdActions || reviewLocked}
         />
@@ -343,7 +343,7 @@ function IcdCombobox({ code, desc, onSelect, disabled = false }) {
       className={styles.icdSelectWrap}
       options={options}
       value={code}
-      onChange={(v) => {
+      onValueChange={(v) => {
         const picked = list.find(r => r.code === v);
         if (picked) onSelect(picked);
       }}

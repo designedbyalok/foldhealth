@@ -354,7 +354,7 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
             <Select
               options={BARRIER_STATUSES.map(s => ({ value: s, label: s, icon: gbiStatusMeta(s).icon }))}
               value={status}
-              onChange={setStatus}
+              onValueChange={setStatus}
               disabled={readOnly}
               portal
               className={styles.statusSelect}

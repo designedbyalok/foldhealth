@@ -824,7 +824,7 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
                     <Textarea
                       richText
                       value={notes[section.id]?.html || ''}
-                      onChange={(html, plain) => editNote(section.id, html, plain)}
+                      onValueChange={(html, plain) => editNote(section.id, html, plain)}
                       placeholder="Add a note for this section (optional)"
                       aria-label={`Note for ${sectionTitle}`}
                       rows={2}
@@ -965,7 +965,7 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
                 <Textarea
                   title="Report Introduction"
                   value={coverDescription}
-                  onChange={value => setCoverDescription(value)}
+                  onValueChange={value => setCoverDescription(value)}
                   placeholder="A short introduction for the cover (optional)"
                   maxLength={COVER_DESCRIPTION_MAX}
                   rows={3}
@@ -973,7 +973,7 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
                 <div className={styles.fieldGroup}>
                   <div className={styles.groupHead}>
                     <span className={styles.groupTitle}>Cover Background</span>
-                    <Toggle size="S" items={BACKGROUND_TYPES} active={bgType} onChange={setBgType} />
+                    <Toggle size="sm" items={BACKGROUND_TYPES} value={bgType} onValueChange={setBgType} />
                   </div>
                   {bgType === 'color' && (
                     <CoverSwatches ariaLabel="Cover colour">
@@ -1059,7 +1059,7 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
                     portal
                     options={headerComponents.map(h => ({ value: String(h.id), label: h.label }))}
                     value={String(headerComponent?.id ?? '')}
-                    onChange={setPickedHeaderId}
+                    onValueChange={setPickedHeaderId}
                   />
                 </>
               )}
@@ -1077,7 +1077,7 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
                     portal
                     options={footerComponents.map(f => ({ value: String(f.id), label: f.label }))}
                     value={String(footerComponent?.id ?? '')}
-                    onChange={setPickedFooterId}
+                    onValueChange={setPickedFooterId}
                   />
                 </>
               )}

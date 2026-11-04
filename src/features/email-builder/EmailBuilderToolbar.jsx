@@ -49,9 +49,9 @@ export function EmailBuilderToolbar({
             { key: 'desktop', label: 'Desktop', icon: 'solar:monitor-linear' },
             { key: 'mobile', label: 'Mobile', icon: 'solar:smartphone-linear' },
           ]}
-          active={viewMode}
-          onChange={setViewMode}
-          size="S"
+          value={viewMode}
+          onValueChange={setViewMode}
+          size="sm"
         />
       </div>
       <div className={styles.topRight} style={{ position: 'relative' }}>
@@ -76,7 +76,7 @@ export function EmailBuilderToolbar({
               aria-label="Component type"
               options={COMPONENT_TYPES}
               value={component.role}
-              onChange={(role) => setComponent({ role })}
+              onValueChange={(role) => setComponent({ role })}
               style={{ width: 160 }}
             />
             <label className={styles.defaultToggle}>

@@ -167,7 +167,7 @@ function SatisfactionBody({ widget, model, onForm, hidden, onToggle, height }) {
           portal
           options={model.forms.map(f => ({ value: f, label: f }))}
           value={model.form}
-          onChange={onForm}
+          onValueChange={onForm}
         />
         <div className={styles.satBox}>
           <span className={styles.statLabel}>Average Score</span>
@@ -573,8 +573,8 @@ export function EmployerImpactView({ snapshot = null } = {}) {
           {!readOnly && (
             <Toggle
               items={SCOPE_OPTIONS}
-              active={scope}
-              onChange={(k) => { setScope(k); setLocation(null); }}
+              value={scope}
+              onValueChange={(k) => { setScope(k); setLocation(null); }}
             />
           )}
         </div>
@@ -616,8 +616,8 @@ export function EmployerImpactView({ snapshot = null } = {}) {
         <nav className={styles.quickJump} aria-label="Report sections">
           <SubTabs
             tabs={sectionsInOrder.map(sec => ({ key: sec.id, label: sec.title }))}
-            activeKey={activeSection}
-            onChange={jumpTo}
+            value={activeSection}
+            onValueChange={jumpTo}
           />
         </nav>
       )}

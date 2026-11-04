@@ -187,10 +187,10 @@ export function VaccineCalendarDialog({ member, immunizations, savedNotes, measu
           <div className={styles.toolbar}>
             <span className={styles.toolbarStart}>
               <Toggle
-                size="S"
+                size="sm"
                 items={[{ key: 'timeline', label: 'Timeline' }, { key: 'table', label: 'Table' }]}
-                active={view}
-                onChange={setView}
+                value={view}
+                onValueChange={setView}
               />
               <span className={styles.toolbarCount}>
                 {statusFilter.length ? `${shownDoses} of ${totalDoses} doses` : `${totalDoses} doses across ${result.antigens.length} vaccines`}

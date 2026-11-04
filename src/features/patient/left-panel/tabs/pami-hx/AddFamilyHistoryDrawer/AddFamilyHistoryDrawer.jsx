@@ -237,7 +237,7 @@ export function AddFamilyHistoryDrawer({ patientId, onClose }) {
                           placeholder="Select Relation"
                           options={relationOptionsFor(group.relation)}
                           value={group.relation}
-                          onChange={relation => setPendingRelation(group.id, relation)}
+                          onValueChange={relation => setPendingRelation(group.id, relation)}
                         />
                       </td>
                       <td className={`${historyCellClass} ${styles.historyCellTop}`}>

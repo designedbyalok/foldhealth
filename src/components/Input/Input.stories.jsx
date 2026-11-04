@@ -17,9 +17,13 @@ export default {
   argTypes: {
     variant: {
       control: 'select',
-      options: ['default', 'error'],
-      description: 'Legacy visual state. Prefer `errorText` for message + state in one prop.',
+      options: ['outline', 'ghost'],
+      description: '`outline` is the bordered field; `ghost` shows its border only on hover / focus (inline-editable table cells).',
+      table: { defaultValue: { summary: 'outline' } },
     },
+    invalid: { control: 'boolean', description: 'Red chrome and `aria-invalid`. `errorText` implies it and adds the message.' },
+    size: { control: 'select', options: ['sm', 'md'], description: 'md 32px, sm 28px', table: { defaultValue: { summary: 'md' } } },
+    onValueChange: { action: 'onValueChange', description: '(value) => void, alongside the native `onChange(event)`.' },
     type: {
       control: 'select',
       options: ['text', 'email', 'password', 'number', 'tel', 'url', 'search', 'date', 'time', 'datetime-local'],
@@ -98,7 +102,9 @@ function InputFromArgs({
 // ── Playground ──
 export const Playground = {
   args: {
-    variant: 'default',
+    variant: 'outline',
+    invalid: false,
+    size: 'md',
     type: 'text',
     // Label row
     showLabel: true,
@@ -182,6 +188,29 @@ export const AllStates = {
   parameters: {
     docs: { description: { story: 'Every state from the Figma "Text Input Web" component set, rendered in order.' } },
   },
+};
+
+// ── variant × size, with invalid ──
+export const LookMatrix = {
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 200px)', gap: 'var(--space-3)', alignItems: 'center' }}>
+      {['outline', 'ghost'].flatMap(variant => ['md', 'sm'].map(size => (
+        [false, true].map(invalid => (
+          <Input
+            key={`${variant}-${size}-${invalid}`}
+            variant={variant}
+            size={size}
+            invalid={invalid}
+            aria-label={`${variant} ${size}${invalid ? ' invalid' : ''}`}
+            defaultValue={`${variant} ${size}${invalid ? ' invalid' : ''}`}
+          />
+        )).concat(
+          <Input key={`${variant}-${size}-icon`} variant={variant} size={size} leadingIcon="solar:magnifer-linear" aria-label="With icon" placeholder="With icon" />,
+        )
+      )))}
+    </div>
+  ),
 };
 
 // ── Native input types ──

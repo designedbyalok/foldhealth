@@ -60,7 +60,7 @@ export function CompleteReviewPopover({ elapsedMs, discussed, note, onNoteChange
           title="Call note"
           placeholder="What was discussed, what's next"
           value={note}
-          onChange={(v) => onNoteChange(typeof v === 'string' ? v : (v?.target?.value ?? ''))}
+          onValueChange={(v) => onNoteChange(typeof v === 'string' ? v : (v?.target?.value ?? ''))}
           rows={3}
         />
         <div className={styles.completeActions}>

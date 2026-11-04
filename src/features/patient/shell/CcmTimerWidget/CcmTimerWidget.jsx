@@ -658,7 +658,7 @@ export function CcmTimerWidget({ patient }) {
             label="Activity"
             options={CCM_ACTIVITY_TYPES.map(t => ({ value: t, label: t }))}
             value={activityType}
-            onChange={setActivityType}
+            onValueChange={setActivityType}
           />
           <Textarea
             placeholder="What did you work on?"

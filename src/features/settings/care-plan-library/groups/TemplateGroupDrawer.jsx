@@ -78,7 +78,7 @@ export function TemplateGroupDrawer({ group, readOnly = false, onClose }) {
     >
       <div className={styles.drawerBody}>
         <Input label="Group name" required value={name} onChange={e => setName(e.target.value.slice(0, 120))} placeholder="e.g. Diabetes with HTN order-set" disabled={readOnly} />
-        <Textarea title="What it's for" value={description} onChange={text => setDescription(text)} placeholder="Optional, e.g. Adults with type 2 diabetes and hypertension" rows={2} maxLength={300} disabled={readOnly} />
+        <Textarea title="What it's for" value={description} onValueChange={text => setDescription(text)} placeholder="Optional, e.g. Adults with type 2 diabetes and hypertension" rows={2} maxLength={300} disabled={readOnly} />
 
         <div className={styles.field}>
           <span className={styles.fieldLabel}>Templates, in the order they're applied</span>
@@ -89,7 +89,7 @@ export function TemplateGroupDrawer({ group, readOnly = false, onClose }) {
               placeholder="Add a template"
               options={options}
               value=""
-              onChange={id => id && setMemberIds(prev => [...prev, id])}
+              onValueChange={id => id && setMemberIds(prev => [...prev, id])}
             />
           )}
           {memberIds.length === 0 ? (

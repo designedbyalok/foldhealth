@@ -139,7 +139,7 @@ export function FieldInput({ field, value, onChange, interactive = false, idPref
             value={value ?? ''}
             disabled={disabled}
             options={opts.map((o) => ({ value: o.value, label: o.label || o.value }))}
-            onChange={set}
+            onValueChange={set}
           />
         );
       }

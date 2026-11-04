@@ -44,10 +44,10 @@ export function OverviewTab({ draft, patch, onTab }) {
             portal
             options={PROGRAM_STATUSES.map(s => ({ value: s.value, label: s.label }))}
             value={draft.status}
-            onChange={status => patch({ status })}
+            onValueChange={status => patch({ status })}
           />
           <div className={styles.fieldFull}>
-            <Textarea title="Description" value={draft.description} onChange={description => patch({ description })} rows={3} maxLength={300} placeholder="What this program is for" />
+            <Textarea title="Description" value={draft.description} onValueChange={description => patch({ description })} rows={3} maxLength={300} placeholder="What this program is for" />
           </div>
         </div>
       </section>

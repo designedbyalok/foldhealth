@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { resolveSize, warnDeprecated } from '../../lib/legacyProps';
 import styles from './SubTabs.module.css';
 
 /**
@@ -10,17 +12,32 @@ import styles from './SubTabs.module.css';
  *  - tabs      (string | {key,label,count})[]: tab definitions. A bare string
  *                                          is both the key and the label; `count`
  *                                          shows a small bordered number badge.
- *  - activeKey string: the selected tab's key.
- *  - onChange  (key) => void: called with a tab's key on click.
+ *  - value     string: the selected tab's key (controlled).
+ *  - defaultValue string: the initially selected key (uncontrolled).
+ *  - onValueChange (key) => void: called with a tab's key on click.
+ *                                          (`activeKey` / `onChange` are the old names)
  *  - leading   ReactNode: optional content rendered before the
  *                                          tabs (e.g. a search toggle + divider).
- *  - size      'M' | 'S', S: 24px tall, 13px text, for a switch
+ *  - size      'md' | 'sm', sm: 24px tall, 13px text, for a switch
  *                                          inside a drawer tab
  *  - className string
+ *  - ...rest   spread on the row
  */
-export function SubTabs({ tabs, activeKey, onChange, leading, size = 'M', className }) {
+export function SubTabs({
+  tabs, value, defaultValue, onValueChange, activeKey, onChange,
+  leading, size = 'md', className, ...rest
+}) {
+  if (activeKey !== undefined) warnDeprecated('SubTabs', 'activeKey', true, 'value');
+  if (onChange && !onValueChange) warnDeprecated('SubTabs', 'onChange', true, 'onValueChange');
+  const [uncontrolled, setUncontrolled] = useState(defaultValue);
+  const controlledValue = value !== undefined ? value : activeKey;
+  const current = controlledValue !== undefined ? controlledValue : uncontrolled;
+  const select = (key) => {
+    if (controlledValue === undefined) setUncontrolled(key);
+    (onValueChange ?? onChange)?.(key);
+  };
   return (
-    <div className={[styles.subTabs, size === 'S' ? styles.sizeS : '', className].filter(Boolean).join(' ')}>
+    <div {...rest} className={[styles.subTabs, resolveSize('SubTabs', size) === 'sm' ? styles.sizeS : '', className].filter(Boolean).join(' ')}>
       {leading}
       {tabs.map((t) => {
         const key = typeof t === 'string' ? t : t.key;
@@ -30,8 +47,9 @@ export function SubTabs({ tabs, activeKey, onChange, leading, size = 'M', classN
           <button
             key={key}
             type="button"
-            className={`${styles.subTab} ${activeKey === key ? styles.subTabActive : ''}`}
-            onClick={() => onChange(key)}
+            className={`${styles.subTab} ${current === key ? styles.subTabActive : ''}`}
+            aria-pressed={current === key}
+            onClick={() => select(key)}
           >
             {label}
             {count != null && <span className={styles.count}>{count}</span>}

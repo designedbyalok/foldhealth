@@ -65,9 +65,9 @@ function ProblemDraft({ title, eyebrow, initial, onSave, onCancel }) {
       </div>
       <div className={styles.draftFields}>
         <Input label="Since" type="date" value={since} onChange={e => setSince(e.target.value)} />
-        <Select portal label="Status" options={STATUS_OPTIONS} value={status} onChange={setStatus} />
-        <Select portal label="Severity" options={SEVERITY_OPTIONS} value={severity} onChange={setSeverity} />
-        <Select portal label="Type" options={TYPE_OPTIONS} value={type} onChange={setType} />
+        <Select portal label="Status" options={STATUS_OPTIONS} value={status} onValueChange={setStatus} />
+        <Select portal label="Severity" options={SEVERITY_OPTIONS} value={severity} onValueChange={setSeverity} />
+        <Select portal label="Type" options={TYPE_OPTIONS} value={type} onValueChange={setType} />
       </div>
       {!noteOpen && (
         <Link className={styles.draftAddNote} onClick={() => setNoteOpen(true)}>
@@ -129,7 +129,7 @@ function ProblemRow({ problem, onStatusChange, onEdit, dimmed }) {
         portal
         options={STATUS_OPTIONS}
         value={problem.status || 'Active'}
-        onChange={v => onStatusChange(problem, v)}
+        onValueChange={v => onStatusChange(problem, v)}
         className={styles.statusSelect}
       />
       <span className={styles.rowDivider} aria-hidden="true" />

@@ -89,7 +89,7 @@ export function NodePanel({ onDragStart }) {
   return (
     <aside className={styles.panel}>
       <div className={styles.toggleWrap}>
-        <Toggle items={['Node', 'Components']} active={activeTab} onChange={setActiveTab} fullWidth />
+        <Toggle items={['Node', 'Components']} value={activeTab} onValueChange={setActiveTab} fullWidth />
       </div>
 
       <div className={styles.list}>

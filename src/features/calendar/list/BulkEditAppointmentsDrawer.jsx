@@ -178,7 +178,7 @@ export function BulkEditAppointmentsDrawer({ provider, appointments, onDone, onC
                 placeholder="Select Location"
                 options={locationOptions.map(l => ({ value: l, label: l }))}
                 value={values.location || undefined}
-                onChange={set('location')}
+                onValueChange={set('location')}
                 searchable
                 portal
               />
@@ -193,13 +193,13 @@ export function BulkEditAppointmentsDrawer({ provider, appointments, onDone, onC
               title="Instructions for Patients"
               placeholder="Add Instructions for Patients"
               value={values.member_instruction}
-              onChange={set('member_instruction')}
+              onValueChange={set('member_instruction')}
             />
             <Textarea
               title="Instructions for Staff"
               placeholder="Add Instructions for Staff"
               value={values.staff_instruction}
-              onChange={set('staff_instruction')}
+              onValueChange={set('staff_instruction')}
             />
             {appliesCard(listOpen, setListOpen)}
           </div>

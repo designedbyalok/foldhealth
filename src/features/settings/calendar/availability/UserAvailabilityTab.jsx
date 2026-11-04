@@ -271,7 +271,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
 
   const tools = (
     <>
-      <Toggle size="S" items={[{ key: 'list', label: 'List' }, { key: 'week', label: 'Week' }]} active={layout} onChange={setLayout} />
+      <Toggle size="sm" items={[{ key: 'list', label: 'List' }, { key: 'week', label: 'Week' }]} value={layout} onValueChange={setLayout} />
       <span className={styles.toolDivider} aria-hidden="true" />
       {searchOpen ? (
         <SearchBar

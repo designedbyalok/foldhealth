@@ -422,7 +422,7 @@ export function InterventionDrawer({
               required
               options={formOptions}
               value={form}
-              onChange={setForm}
+              onValueChange={setForm}
               placeholder="Search Form"
               searchable
               searchPlaceholder="Search Form"
@@ -444,7 +444,7 @@ export function InterventionDrawer({
               badges
               options={contentOptions}
               value={content}
-              onChange={setContent}
+              onValueChange={setContent}
               placeholder="Select articles"
               searchable
               searchPlaceholder="Search articles"
@@ -462,7 +462,7 @@ export function InterventionDrawer({
               required
               options={vitalOptionsWithUnits(VITAL_OPTIONS)}
               value={vital}
-              onChange={setVital}
+              onValueChange={setVital}
               placeholder="Search Vital"
               searchable
               searchPlaceholder="Search Vital"
@@ -481,7 +481,7 @@ export function InterventionDrawer({
             placeholder="Add a description..."
             value={description}
             rows={3}
-            onChange={(html) => setDescription(typeof html === 'string' ? html : (html?.target?.value ?? ''))}
+            onValueChange={(html) => setDescription(typeof html === 'string' ? html : (html?.target?.value ?? ''))}
           />
         )}
 

@@ -75,7 +75,7 @@ export function GoalReadingEntry({ goal, onSave }) {
       <Select
         options={spec.options.map(o => ({ value: o, label: o }))}
         value={single}
-        onChange={setSingle}
+        onValueChange={setSingle}
         placeholder="Select value"
         portal
       />

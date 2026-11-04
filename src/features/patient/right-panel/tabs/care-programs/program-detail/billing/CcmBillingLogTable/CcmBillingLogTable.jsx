@@ -110,7 +110,7 @@ function LogTableRow({
             className={styles.selectCompact}
             options={CATEGORY_OPTIONS}
             value={row.activityType}
-            onChange={(v) => onPatch({ activityType: v })}
+            onValueChange={(v) => onPatch({ activityType: v })}
             placeholder="Select"
           />
         </div>
@@ -120,7 +120,7 @@ function LogTableRow({
             className={styles.selectCompact}
             options={DATE_OPTIONS}
             value={row.date}
-            onChange={(v) => onPatch({ date: v })}
+            onValueChange={(v) => onPatch({ date: v })}
           />
         </div>
 

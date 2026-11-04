@@ -45,7 +45,7 @@ export function TimeFilterPopover({
           <Select
             options={[{ value: ALL_USERS, label: ALL_USERS }, ...userOptions.map(u => ({ value: u, label: u }))]}
             value={filter.user || ALL_USERS}
-            onChange={setUser}
+            onValueChange={setUser}
           />
         </div>
         <div className={styles.list}>

@@ -88,7 +88,7 @@ export function ScheduleDrawerViewMode({
               style={{ width: 120 }}
               options={APPOINTMENT_STATUSES.map(s => ({ value: s, label: s }))}
               value={apptStatus}
-              onChange={handleStatusChange}
+              onValueChange={handleStatusChange}
               disabled={isPastAppointment}
             />
           </div>

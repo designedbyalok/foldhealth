@@ -53,11 +53,11 @@ export function UnityPromptField({
           </span>
         )}
         value={value}
-        onChange={text => onChange?.(text.slice(0, maxLength))}
+        onValueChange={text => onChange?.(text.slice(0, maxLength))}
         placeholder={placeholder}
         rows={rows}
         maxLength={maxLength}
-        variant={error ? 'error' : 'default'}
+        invalid={error}
         supportingText={error || hint}
         disabled={generating}
         onKeyDown={(e) => {

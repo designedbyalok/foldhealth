@@ -1008,7 +1008,7 @@ function SingleDosCard({ block, providerOptions, patient, onPatch, onRemove, sho
               placeholder="Select Rendering Provider"
               searchable
               searchPlaceholder="Search providers…"
-              onChange={(v) => onPatch({ provider: v })}
+              onValueChange={(v) => onPatch({ provider: v })}
             />
           </div>
           <div className={styles.singleField}>
@@ -1022,7 +1022,7 @@ function SingleDosCard({ block, providerOptions, patient, onPatch, onRemove, sho
               placeholder="Select Place of Service"
               searchable
               searchPlaceholder="Search POS code or name…"
-              onChange={(v) => onPatch({ pos: v })}
+              onValueChange={(v) => onPatch({ pos: v })}
             />
           </div>
           <div className={styles.singleField}>
@@ -1034,7 +1034,7 @@ function SingleDosCard({ block, providerOptions, patient, onPatch, onRemove, sho
               options={DOC_TYPE_OPTIONS}
               value={block.docType}
               placeholder="Select Document Type"
-              onChange={(v) => onPatch({ docType: v })}
+              onValueChange={(v) => onPatch({ docType: v })}
             />
           </div>
         </div>
@@ -1546,7 +1546,7 @@ function TableRow({ enc, hccMembers, onPatch, onRemove, checked, onToggle, sourc
       {/* DOS: date input + per-field AI confidence chip. */}
       <td className={styles.tdField}>
         <Input
-          variant={errors.has('dos') ? 'error' : 'default'}
+          invalid={errors.has('dos')}
           value={enc.dos || ''}
           placeholder="Enter DOS"
           onChange={(e) => onPatch({ dos: e.target.value })}
@@ -1628,7 +1628,7 @@ function CellInput({ value, onChange, error, placeholder, narrow }) {
   return (
     <td className={narrow ? styles.tdNarrow : ''}>
       <Input
-        variant={error ? 'error' : 'default'}
+        invalid={error}
         value={value || ''}
         placeholder={placeholder || ''}
         onChange={(e) => onChange(e.target.value)}
@@ -1774,10 +1774,10 @@ function ProviderSelect({ value, onChange, error }) {
   return (
     <Select
       value={value}
-      onChange={onChange}
+      onValueChange={onChange}
       options={items.map(o => ({ value: o, label: o }))}
       placeholder="Select provider"
-      variant={error ? 'error' : 'default'}
+      invalid={error}
     />
   );
 }
@@ -1794,10 +1794,10 @@ function PosSelect({ value, onChange, error }) {
   return (
     <Select
       value={value}
-      onChange={onChange}
+      onValueChange={onChange}
       options={options}
       placeholder="Select POS"
-      variant={error ? 'error' : 'default'}
+      invalid={error}
     />
   );
 }
@@ -2158,7 +2158,7 @@ function Field({ label, value, onChange, error, required, placeholder, hint }) {
         {required && <span className={styles.fieldRequired}>*</span>}
       </span>
       <Input
-        variant={error ? 'error' : 'default'}
+        invalid={error}
         value={value || ''}
         placeholder={placeholder || ''}
         onChange={(e) => onChange(e.target.value)}

@@ -227,7 +227,7 @@ export function RecordsRequestDialog({ onCancel, onConfirm, lastAssignees, suppo
           placeholder={fixedToSupport ? 'Select Support user' : 'Select assignee'}
           options={assigneeOptions}
           value={assigneeId}
-          onChange={setAssigneeId}
+          onValueChange={setAssigneeId}
           searchable
           searchPlaceholder="Search users…"
           wrapperClassName={styles.assigneeSelectWrapper}
@@ -245,7 +245,7 @@ export function RecordsRequestDialog({ onCancel, onConfirm, lastAssignees, suppo
           mentions
           mentionUsers={mentionUsers}
           placeholder="Add a Comment"
-          onChange={(_html, plain) => setComment(plain ?? '')}
+          onValueChange={(_html, plain) => setComment(plain ?? '')}
           onMentionsChange={(m) => { mentionsRef.current = m; }}
           onAttachmentFiles={(files) => {
             attachmentsRef.current = [...attachmentsRef.current, ...Array.from(files)];

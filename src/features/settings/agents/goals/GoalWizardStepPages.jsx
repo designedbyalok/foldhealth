@@ -106,12 +106,12 @@ export function GoalWizardConfigureStep({ active, isEdit, name, setName, nameErr
           <Select
             options={PROGRAMS.map(p => ({ value: p, label: p }))}
             value={program}
-            onChange={setProgram}
+            onValueChange={setProgram}
           />
         </div>
         <div className={s.formGroup} style={{ flex: 1 }}>
           <div className={s.formLabel}>Completion Mode</div>
-          <Select options={MODES} value={mode} onChange={setMode} />
+          <Select options={MODES} value={mode} onValueChange={setMode} />
         </div>
       </div>
       <div className={s.formGroup}>

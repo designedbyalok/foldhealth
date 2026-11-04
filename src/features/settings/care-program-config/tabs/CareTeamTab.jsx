@@ -60,16 +60,16 @@ export function CareTeamTab({ draft, patch }) {
             portal
             options={CARE_TEAM_ROLES.map(role => ({ value: role, label: role, disabled: role !== r.role && usedRoles.has(role) }))}
             value={r.role}
-            onChange={role => update(r.id, { role })}
+            onValueChange={role => update(r.id, { role })}
           />
-          <Select portal options={teamOptions} value={r.teamId || NONE} onChange={v => update(r.id, { teamId: v === NONE ? null : v })} />
+          <Select portal options={teamOptions} value={r.teamId || NONE} onValueChange={v => update(r.id, { teamId: v === NONE ? null : v })} />
           <Select
             portal
             searchable
             placeholder="No default"
             options={[{ value: NONE, label: 'No default' }, ...userOptions]}
             value={r.defaultAssigneeId || NONE}
-            onChange={v => update(r.id, { defaultAssigneeId: v === NONE ? null : v })}
+            onValueChange={v => update(r.id, { defaultAssigneeId: v === NONE ? null : v })}
           />
           <Select
             portal
@@ -78,7 +78,7 @@ export function CareTeamTab({ draft, patch }) {
             placeholder="No steps"
             options={stepOptions}
             value={r.stepIds}
-            onChange={stepIds => update(r.id, { stepIds })}
+            onValueChange={stepIds => update(r.id, { stepIds })}
           />
           <ActionButton icon="solar:trash-bin-trash-linear" size="sm" tooltip="Remove role" onClick={() => patch({ careTeam: rows.filter(x => x.id !== r.id) })} />
         </div>

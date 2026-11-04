@@ -106,7 +106,7 @@ export function CareGapReferralsTab({ referrals = [], providers = [], onOpen, on
     <div className={styles.wrap}>
       <div className={styles.toolbar}>
         <Toggle
-          size="S"
+          size="sm"
           items={FOLDERS.map(f => ({
             key: f.key,
             label: (
@@ -117,8 +117,8 @@ export function CareGapReferralsTab({ referrals = [], providers = [], onOpen, on
               </span>
             ),
           }))}
-          active={folder}
-          onChange={setFolder}
+          value={folder}
+          onValueChange={setFolder}
         />
         <div className={styles.toolbarActions}>
           {searchOpen ? (

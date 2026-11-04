@@ -63,7 +63,7 @@ export function UpdateDashboardDrawer({ layouts, scope, onSubmit, onClose }) {
       bodyClassName={styles.body}
     >
       <div className={styles.scope}>
-        <Toggle size="S" items={SCOPE_OPTIONS} active={draftScope} onChange={setDraftScope} />
+        <Toggle size="sm" items={SCOPE_OPTIONS} value={draftScope} onValueChange={setDraftScope} />
       </div>
 
       <div className={styles.sections}>

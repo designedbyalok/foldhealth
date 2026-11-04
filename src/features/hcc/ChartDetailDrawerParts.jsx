@@ -194,7 +194,7 @@ export function EditDocInline({ doc, onCancel, onSave }) {
               className={styles.editSelectTrigger}
               options={DOC_TYPES.map(t => ({ value: t, label: t }))}
               value={docType}
-              onChange={setDocType}
+              onValueChange={setDocType}
               placeholder="Select a type"
             />
           </div>
@@ -204,7 +204,7 @@ export function EditDocInline({ doc, onCancel, onSave }) {
               className={styles.editSelectTrigger}
               options={VISIT_TYPES.map(vt => ({ value: vt, label: vt }))}
               value={visitType}
-              onChange={setVisitType}
+              onValueChange={setVisitType}
               placeholder="Select Visit Type"
             />
           </div>

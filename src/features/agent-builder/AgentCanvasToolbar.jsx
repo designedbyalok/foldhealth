@@ -32,7 +32,7 @@ export function AgentCanvasToolbar({
       </div>
 
       <div className={styles.toolbarCenter}>
-        <Toggle items={BUILDER_TABS} active={activeTab} onChange={onTabChange} />
+        <Toggle items={BUILDER_TABS} value={activeTab} onValueChange={onTabChange} />
       </div>
 
       <div className={styles.toolbarRight}>

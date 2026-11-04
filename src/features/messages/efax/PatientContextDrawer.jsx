@@ -114,7 +114,7 @@ export function PatientContextDrawer({ suggestions = NONE, patients = NONE, curr
           searchPlaceholder="Search patients"
           options={options}
           value={pickedId}
-          onChange={setPickedId}
+          onValueChange={setPickedId}
         />
         {/* Nothing picked: the suggestions sit under the field. Picked:
             Link Referral (the suggestions stay in the dropdown). */}

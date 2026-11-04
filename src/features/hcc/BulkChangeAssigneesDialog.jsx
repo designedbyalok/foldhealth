@@ -226,7 +226,7 @@ export function BulkChangeAssigneesDialog({ open, selectedIds, onClose, onApplie
           <Select
             options={roleOptions}
             value={role}
-            onChange={(v) => { setRole(v); setPickedId(null); }}
+            onValueChange={(v) => { setRole(v); setPickedId(null); }}
           />
         </div>
 

@@ -80,7 +80,7 @@ function AllergyRow({ allergy, onStatusChange, onEdit, dimmed }) {
           portal
           options={STATUS_OPTIONS}
           value={allergy.status || 'Active'}
-          onChange={v => onStatusChange(allergy, v)}
+          onValueChange={v => onStatusChange(allergy, v)}
           className={styles.statusSelect}
         />
         <span className={styles.rowDivider} aria-hidden="true" />
@@ -171,8 +171,8 @@ function AllergyDraft({ title, eyebrow, initial, onSave, onCancel }) {
       </div>
       <div className={[styles.draftFields, styles.draftFieldsTriple].join(' ')}>
         <Input label="Since Date" required type="date" value={since} onChange={e => setSince(e.target.value)} />
-        <Select portal label="Reaction Type" required options={REACTION_TYPE_OPTIONS} value={reactionType} onChange={setReactionType} />
-        <Select portal label="Criticality" required options={CRITICALITY_OPTIONS} value={criticality} onChange={setCriticality} />
+        <Select portal label="Reaction Type" required options={REACTION_TYPE_OPTIONS} value={reactionType} onValueChange={setReactionType} />
+        <Select portal label="Criticality" required options={CRITICALITY_OPTIONS} value={criticality} onValueChange={setCriticality} />
       </div>
 
       <div className={styles.draftDividerRow} aria-hidden="true" />
@@ -186,7 +186,7 @@ function AllergyDraft({ title, eyebrow, initial, onSave, onCancel }) {
               searchable
               options={REACTION_OPTIONS.filter(o => o.value === r.code || !takenCodes.has(o.value))}
               value={r.code}
-              onChange={(code) => patchReaction(i, {
+              onValueChange={(code) => patchReaction(i, {
                 code,
                 display: ALLERGY_REACTIONS.find(x => x.code === code)?.display || '',
               })}
@@ -198,7 +198,7 @@ function AllergyDraft({ title, eyebrow, initial, onSave, onCancel }) {
               portal
               options={REACTION_SEVERITY_OPTIONS}
               value={r.severity}
-              onChange={v => patchReaction(i, { severity: v })}
+              onValueChange={v => patchReaction(i, { severity: v })}
               className={styles.reactionSeverity}
             />
             <ActionButton size="sm" tooltip="Remove" aria-label={`Remove reaction ${i + 1}`} onClick={() => removeReaction(i)}>

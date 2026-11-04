@@ -64,7 +64,7 @@ export function ReviewNoteCard({ note, canEdit, onSave }) {
           <Textarea
             richText={rich}
             value={text}
-            onChange={(v) => setText(typeof v === 'string' ? v : (v?.target?.value ?? ''))}
+            onValueChange={(v) => setText(typeof v === 'string' ? v : (v?.target?.value ?? ''))}
             rows={3}
           />
           <div className={styles.completeActions}>

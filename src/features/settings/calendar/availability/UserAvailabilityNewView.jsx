@@ -103,7 +103,7 @@ export function UserAvailabilityNewView({ users, loading, filtersOpen, onAdd, on
     <div className={styles.root}>
       {!fixedView && (
         <div className={styles.toolbar}>
-          <Toggle size="S" items={VIEWS} active={view} onChange={setView} />
+          <Toggle size="sm" items={VIEWS} value={view} onValueChange={setView} />
         </div>
       )}
       <Collapse open={!!filtersOpen}>

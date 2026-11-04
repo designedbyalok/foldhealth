@@ -50,7 +50,7 @@ export function StickyNoteAuditDrawer({ patientId, note, profileOptions, onClose
             id="sticky-note-profile"
             options={profiles.map(p => ({ value: p, label: p }))}
             value={selectedProfile}
-            onChange={setSelectedProfile}
+            onValueChange={setSelectedProfile}
           />
         </div>
 

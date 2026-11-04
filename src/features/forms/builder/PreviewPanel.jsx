@@ -80,7 +80,7 @@ export function PreviewPanel({ fields, scoring, formName, settings }) {
     <div className={styles.previewWrap}>
       <div className={styles.previewStage} ref={stageRef}>
         <div className={styles.deviceToolbar}>
-          <Toggle size="S" items={DEVICES} active={device} onChange={setDevice} />
+          <Toggle size="sm" items={DEVICES} value={device} onValueChange={setDevice} />
         </div>
         {device === 'form' ? (
           <div className={styles.plainArea}>

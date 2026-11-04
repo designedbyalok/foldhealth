@@ -68,7 +68,7 @@ export function TagDrawer({ tag, onClose }) {
           title="Tag Description"
           mandatory
           value={description}
-          onChange={e => setDescription(e.target.value)}
+          onValueChange={setDescription}
           placeholder="What is this tag for?"
           rows={4}
         />

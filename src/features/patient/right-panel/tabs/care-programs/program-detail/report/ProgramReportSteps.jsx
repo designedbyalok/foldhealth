@@ -45,7 +45,7 @@ export function ProgramReportSteps({
           portal
           options={RANGE_PRESETS.map(p => ({ ...p, triggerLabel: p.value === 'custom' && customRange.length === 2 ? `Custom: ${rangeLabel}` : p.label }))}
           value={rangePreset}
-          onChange={(v) => { onRangePreset(v); if (v === 'custom') openCustom(); }}
+          onValueChange={(v) => { onRangePreset(v); if (v === 'custom') openCustom(); }}
         />
         <span className={styles.coverHint}>
           {rangeLabel}. Steps print what happened in this range.

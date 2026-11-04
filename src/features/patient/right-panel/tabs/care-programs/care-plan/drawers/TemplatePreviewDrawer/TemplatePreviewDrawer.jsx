@@ -104,10 +104,10 @@ export function TemplatePreviewDrawer({ template, onClose }) {
         {categories.length > 0 && (
           <div className={styles.categories}>
             <SubTabs
-              size="S"
+              size="sm"
               tabs={[{ key: 'common', label: 'Common' }, ...categories.map(c => ({ key: c.id, label: c.name }))]}
-              activeKey={section}
-              onChange={setSection}
+              value={section}
+              onValueChange={setSection}
             />
             <span className={styles.categoryNote}>
               {category

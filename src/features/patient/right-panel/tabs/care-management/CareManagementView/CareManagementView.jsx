@@ -540,7 +540,7 @@ export function CareManagementView() {
 
   // The sub-tab switch is a controlled element owned here, handed to each pane
   // so it renders inline in that pane's shared toolbar row.
-  const subTabBar = <SubTabs tabs={cmTabs} activeKey={subTab} onChange={setSubTab} />;
+  const subTabBar = <SubTabs tabs={cmTabs} value={subTab} onValueChange={setSubTab} />;
 
   // Keep all three panes mounted and toggle visibility, so switching only
   // shows/hides a pane instead of unmounting + remounting it, no re-fetch,

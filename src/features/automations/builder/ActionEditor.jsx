@@ -30,11 +30,11 @@ function MessageField({ label, value, onChange, error, max }) {
   return (
     <PanelRow label={label} required error={error}>
       <div className={styles.ruleColumn}>
-        <Textarea value={value || ''} onChange={text => onChange(text)} rows={4} maxLength={max} variant={error ? 'error' : 'default'} />
+        <Textarea value={value || ''} onValueChange={text => onChange(text)} rows={4} maxLength={max} invalid={error} />
         <Select
           options={TOKEN_OPTIONS}
           value=""
-          onChange={k => onChange(`${value || ''}{{${k}}}`)}
+          onValueChange={k => onChange(`${value || ''}{{${k}}}`)}
           placeholder="Insert merge tag"
           className={styles.tokenPicker}
         />
@@ -59,7 +59,7 @@ export function ActionEditor({ type, config, onChange, errors = {}, onEditTempla
         <>
           <PanelSection title="Education info">
             <PanelRow label="Content" required error={errors.contentTitle}>
-              <Input value={config.contentTitle || ''} onChange={e => set({ contentTitle: e.target.value })} placeholder="e.g. How to connect your wearable" variant={errors.contentTitle ? 'error' : undefined} />
+              <Input value={config.contentTitle || ''} onChange={e => set({ contentTitle: e.target.value })} placeholder="e.g. How to connect your wearable" invalid={errors.contentTitle} />
             </PanelRow>
           </PanelSection>
           <EmailTemplateField config={config} onChange={set} errors={errors} onEditTemplate={onEditTemplate} />
@@ -70,7 +70,7 @@ export function ActionEditor({ type, config, onChange, errors = {}, onEditTempla
         <>
           <PanelSection title="Booking info">
             <PanelRow label="Book">
-              <Select options={APPOINTMENT_TYPES} value={config.appointmentType || ''} onChange={v => set({ appointmentType: v })} placeholder="Select a visit type" />
+              <Select options={APPOINTMENT_TYPES} value={config.appointmentType || ''} onValueChange={v => set({ appointmentType: v })} placeholder="Select a visit type" />
             </PanelRow>
           </PanelSection>
           <EmailTemplateField config={config} onChange={set} errors={errors} onEditTemplate={onEditTemplate} />
@@ -95,7 +95,7 @@ export function ActionEditor({ type, config, onChange, errors = {}, onEditTempla
       return (
         <PanelSection title="Order">
           <PanelRow label="Lab test" required error={errors.labTest}>
-            <Select options={LAB_TESTS} value={config.labTest || ''} onChange={v => set({ labTest: v })} searchable placeholder="Select a lab test" variant={errors.labTest ? 'error' : 'default'} />
+            <Select options={LAB_TESTS} value={config.labTest || ''} onValueChange={v => set({ labTest: v })} searchable placeholder="Select a lab test" invalid={errors.labTest} />
           </PanelRow>
         </PanelSection>
       );
@@ -142,20 +142,20 @@ function FormFields({ config, onChange, errors, onEditTemplate }) {
           <Select
             options={options}
             value={config.formIds || []}
-            onChange={v => onChange({ formIds: v || [], formNames: (v || []).map(id => options.find(o => o.value === id)?.label || id) })}
+            onValueChange={v => onChange({ formIds: v || [], formNames: (v || []).map(id => options.find(o => o.value === id)?.label || id) })}
             multiple
             checkboxes
             badges
             searchable
             placeholder="Select forms"
-            variant={errors.formIds ? 'error' : 'default'}
+            invalid={errors.formIds}
           />
         </PanelRow>
         <PanelRow label="Via"><span className={styles.opText}>Email</span></PanelRow>
         <PanelRow label="Ask again">
           <div className={styles.ruleControls}>
             <Input type="number" min={0} value={config.repeatEvery ?? ''} onChange={e => onChange({ repeatEvery: e.target.value === '' ? null : Number(e.target.value) })} placeholder="0" wrapperClassName={styles.numberInput} aria-label="Ask again every" />
-            <Select options={DELAY_UNITS.filter(u => u.value !== 'minutes')} value={config.repeatUnit || 'days'} onChange={v => onChange({ repeatUnit: v })} className={styles.unitSelect} />
+            <Select options={DELAY_UNITS.filter(u => u.value !== 'minutes')} value={config.repeatUnit || 'days'} onValueChange={v => onChange({ repeatUnit: v })} className={styles.unitSelect} />
           </div>
         </PanelRow>
         <label className={styles.checkRow}>
@@ -186,32 +186,32 @@ function TaskFields({ config, onChange, errors }) {
   return (
     <PanelSection title="Task info">
       <PanelRow label="Title" required error={errors.title}>
-        <Input value={config.title || ''} onChange={e => onChange({ title: e.target.value })} variant={errors.title ? 'error' : undefined} />
+        <Input value={config.title || ''} onChange={e => onChange({ title: e.target.value })} invalid={errors.title} />
       </PanelRow>
       <PanelRow label="Description" required error={errors.description}>
-        <Textarea value={config.description || ''} onChange={e => onChange({ description: e.target.value })} rows={3} variant={errors.description ? 'error' : 'default'} />
+        <Textarea value={config.description || ''} onChange={e => onChange({ description: e.target.value })} rows={3} invalid={errors.description} />
       </PanelRow>
       <PanelRow label="Assigned to" required error={errors.assignee}>
         <Select
           options={userOptions}
           value={config.assignee?.name || ''}
-          onChange={v => {
+          onValueChange={v => {
             const u = (users || []).find(x => x.name === v);
             onChange({ assignee: { id: u?.id || null, name: v } });
           }}
           searchable
           placeholder="Select"
-          variant={errors.assignee ? 'error' : 'default'}
+          invalid={errors.assignee}
         />
       </PanelRow>
       <PanelRow label="Task pool">
-        <Select options={poolOptions} value={config.pool || 'Automation Tasks'} onChange={v => onChange({ pool: v })} />
+        <Select options={poolOptions} value={config.pool || 'Automation Tasks'} onValueChange={v => onChange({ pool: v })} />
       </PanelRow>
       <PanelRow label="Due">
-        <Select options={DUE} value={config.dueInDays == null ? '' : String(config.dueInDays)} onChange={v => onChange({ dueInDays: v === '' ? null : Number(v) })} />
+        <Select options={DUE} value={config.dueInDays == null ? '' : String(config.dueInDays)} onValueChange={v => onChange({ dueInDays: v === '' ? null : Number(v) })} />
       </PanelRow>
       <PanelRow label="Priority" required error={errors.priority}>
-        <Select options={PRIORITIES} value={config.priority || ''} onChange={v => onChange({ priority: v })} variant={errors.priority ? 'error' : 'default'} />
+        <Select options={PRIORITIES} value={config.priority || ''} onValueChange={v => onChange({ priority: v })} invalid={errors.priority} />
       </PanelRow>
     </PanelSection>
   );
@@ -232,20 +232,20 @@ function CarePlanFields({ config, onChange, errors }) {
         <Select
           options={options}
           value={config.templateIds || []}
-          onChange={v => onChange({ templateIds: v || [], templateNames: (v || []).map(id => options.find(o => o.value === id)?.label).filter(Boolean) })}
+          onValueChange={v => onChange({ templateIds: v || [], templateNames: (v || []).map(id => options.find(o => o.value === id)?.label).filter(Boolean) })}
           multiple
           checkboxes
           badges
           searchable
           placeholder="Pick care plan templates"
-          variant={errors.templateIds ? 'error' : 'default'}
+          invalid={errors.templateIds}
         />
       </PanelRow>
       <PanelRow label="Review task goes to">
         <Select
           options={[{ value: '', label: 'Program assignee, else the Care Management pool' }, ...(users || []).map(u => ({ value: u.name, label: u.name }))]}
           value={config.reviewer?.name || ''}
-          onChange={v => {
+          onValueChange={v => {
             const u = (users || []).find(x => x.name === v);
             onChange({ reviewer: u ? { id: u.id || null, name: u.name } : null });
           }}
@@ -268,7 +268,7 @@ function GbiStatusFields({ config, onChange, errors }) {
         <Select
           options={KIND_OPTIONS}
           value={config.kinds?.length ? config.kinds : GBI_KINDS.map(k => k.key)}
-          onChange={v => onChange({ kinds: v?.length ? v : GBI_KINDS.map(k => k.key) })}
+          onValueChange={v => onChange({ kinds: v?.length ? v : GBI_KINDS.map(k => k.key) })}
           multiple
           checkboxes
           badges
@@ -278,9 +278,9 @@ function GbiStatusFields({ config, onChange, errors }) {
         <Select
           options={GBI_STATUS_OPTIONS}
           value={config.toStatus || ''}
-          onChange={v => onChange({ toStatus: v })}
+          onValueChange={v => onChange({ toStatus: v })}
           placeholder="Pick a status"
-          variant={errors.toStatus ? 'error' : 'default'}
+          invalid={errors.toStatus}
         />
       </PanelRow>
       <PanelRow label="Reason">

@@ -68,7 +68,7 @@ export function CreateSnpProgramDrawer({ patientId, onCreate, onClose }) {
           placeholder="Select Member Info"
           options={memberOptions}
           value={member}
-          onChange={setMemberInfo}
+          onValueChange={setMemberInfo}
           emptyText="No member ids found"
         />
         <Select
@@ -79,7 +79,7 @@ export function CreateSnpProgramDrawer({ patientId, onCreate, onClose }) {
           placeholder="Select Trigger Type"
           options={TRIGGER_OPTIONS}
           value={triggerType}
-          onChange={setTriggerType}
+          onValueChange={setTriggerType}
         />
         <DatePicker label="Trigger Date" required value={triggerDate} onSelect={setTriggerDate} />
       </div>

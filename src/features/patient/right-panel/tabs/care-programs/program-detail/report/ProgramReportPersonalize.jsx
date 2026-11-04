@@ -119,7 +119,7 @@ export function ProgramReportPersonalize({
             <Textarea
               title="Report Introduction"
               value={s.coverDescription}
-              onChange={coverDescription => set({ coverDescription })}
+              onValueChange={coverDescription => set({ coverDescription })}
               placeholder="A short introduction for the cover (optional)"
               maxLength={COVER_DESCRIPTION_MAX}
               rows={3}
@@ -127,7 +127,7 @@ export function ProgramReportPersonalize({
             <div className={styles.fieldGroup}>
               <div className={styles.groupHead}>
                 <span className={styles.groupTitle}>Cover Background</span>
-                <Toggle size="S" items={BACKGROUND_TYPES} active={s.bgType} onChange={bgType => set({ bgType })} />
+                <Toggle size="sm" items={BACKGROUND_TYPES} value={s.bgType} onValueChange={bgType => set({ bgType })} />
               </div>
               {s.bgType === 'color' && (
                 <CoverSwatches ariaLabel="Cover colour">
@@ -210,7 +210,7 @@ export function ProgramReportPersonalize({
               portal
               options={headerComponents.map(h => ({ value: String(h.id), label: h.label }))}
               value={String(headerId ?? '')}
-              onChange={id => set({ headerId: id })}
+              onValueChange={id => set({ headerId: id })}
             />
           )}
         </section>
@@ -224,7 +224,7 @@ export function ProgramReportPersonalize({
               portal
               options={footerComponents.map(f => ({ value: String(f.id), label: f.label }))}
               value={String(footerId ?? '')}
-              onChange={id => set({ footerId: id })}
+              onValueChange={id => set({ footerId: id })}
             />
           )}
         </section>

@@ -14,9 +14,9 @@ export function TaskDetailDrawerActivity({
           <div className={styles.activityHeader}>
             <Toggle
               items={['Activity', 'Automations']}
-              active={activityToggle}
-              onChange={setActivityToggle}
-              size="S"
+              value={activityToggle}
+              onValueChange={setActivityToggle}
+              size="sm"
             />
           </div>
           {/* Sticky tab strip: pins the All/Comments/History row to the

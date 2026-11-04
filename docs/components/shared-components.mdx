@@ -56,9 +56,10 @@ Animated segmented control with sliding pill indicator.
 | Prop | Type | Description |
 |------|------|-------------|
 | `items` | array | `string[]` or `{key, label, icon}[]` |
-| `active` | string | Currently active item |
-| `onChange` | function | Selection callback |
-| `size` | string | `S`, `M` |
+| `value` | string | Selected key (controlled) |
+| `defaultValue` | string | Initially selected key (uncontrolled) |
+| `onValueChange` | function | Called with the picked key |
+| `size` | string | `md` (default, 32px), `sm` (28px) |
 
 ### Switch
 
@@ -83,11 +84,15 @@ Toggle control (32x19px track, 16x16px knob).
 src/components/Input/Input.jsx
 ```
 
-Text input (32px height, 6px radius, primary-300 focus ring). Accepts all standard HTML input props.
+Text input (32px height, 4px radius, primary-300 focus ring). Accepts all standard HTML input props.
 
 | Prop | Type | Description |
 |------|------|-------------|
-| `variant` | string | `default`, `error` |
+| `variant` | string | `outline` (default), `ghost` (border only on hover / focus) |
+| `invalid` | boolean | Red chrome and `aria-invalid`; `errorText` implies it |
+| `size` | string | `md` (default, 32px), `sm` (28px) |
+| `onChange` | function | Native change event |
+| `onValueChange` | function | Called with the value |
 
 ### Select
 
@@ -101,9 +106,14 @@ Single-select dropdown matching Input height and radius.
 |------|------|-------------|
 | `options` | array | `[{value, label, disabled?}]` |
 | `value` | string | Current value |
-| `onChange` | function | Change callback |
+| `onValueChange` | function | Called with the picked value |
 | `placeholder` | string | Placeholder text |
+| `variant` | string | `outline` (default), `ghost` |
+| `invalid` | boolean | Red chrome and `aria-invalid`; `errorText` implies it |
+| `size` | string | `md` (default, 32px), `sm` (28px) |
 | `menuAlign` | string | `left`, `right` |
+
+`ref`, `aria-label` and any other props reach the trigger.
 
 ### Textarea
 
@@ -111,7 +121,7 @@ Single-select dropdown matching Input height and radius.
 src/components/Textarea/Textarea.jsx
 ```
 
-Multiline input matching Input design. Supports `variant` (`default`, `error`).
+Multiline input matching Input design. `invalid` for the error look; `onChange` is the native event and `onValueChange` gets the text (`(html, plain)` in `richText` mode, which has no native event).
 
 ## Display
 

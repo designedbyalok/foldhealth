@@ -419,7 +419,7 @@ export function EditPatientDrawer({
                 <Select
                   options={SNP_TYPE_OPTIONS}
                   value={form.insurance_snp_type}
-                  onChange={(v) => set('insurance_snp_type', v)}
+                  onValueChange={(v) => set('insurance_snp_type', v)}
                   placeholder="Select SNP type"
                 />
               </Field>
@@ -427,7 +427,7 @@ export function EditPatientDrawer({
                 <Select
                   options={LOB_OPTIONS}
                   value={form.insurance_lob}
-                  onChange={(v) => set('insurance_lob', v)}
+                  onValueChange={(v) => set('insurance_lob', v)}
                   placeholder="Select line of business"
                   searchable
                 />
@@ -436,7 +436,7 @@ export function EditPatientDrawer({
                 <Select
                   options={EMPLOYMENT_STATUS_OPTIONS}
                   value={form.insurance_employment_status}
-                  onChange={(v) => set('insurance_employment_status', v)}
+                  onValueChange={(v) => set('insurance_employment_status', v)}
                   placeholder="Select status"
                 />
               </Field>
@@ -471,7 +471,7 @@ export function EditPatientDrawer({
                 <Select
                   options={BENEFITS_TERMED_OPTIONS}
                   value={form.insurance_benefits_termed}
-                  onChange={(v) => set('insurance_benefits_termed', v)}
+                  onValueChange={(v) => set('insurance_benefits_termed', v)}
                   placeholder="Select"
                 />
               </Field>
@@ -498,7 +498,7 @@ export function EditPatientDrawer({
                 <Select
                   options={RELATIONSHIP_OPTIONS}
                   value={form.ph_relationship}
-                  onChange={(v) => set('ph_relationship', v)}
+                  onValueChange={(v) => set('ph_relationship', v)}
                   placeholder="Select relationship"
                 />
               </Field>
@@ -533,7 +533,7 @@ export function EditPatientDrawer({
                 <Select
                   options={SEX_AT_BIRTH_OPTIONS}
                   value={form.ph_sex_at_birth}
-                  onChange={(v) => set('ph_sex_at_birth', v)}
+                  onValueChange={(v) => set('ph_sex_at_birth', v)}
                   placeholder="Select"
                 />
               </Field>
@@ -567,22 +567,22 @@ export function EditPatientDrawer({
               </Field>
               <Input label="Age" value={form.age} readOnly placeholder="Calculated from date of birth" />
               <Field label="Gender">
-                <Select options={GENDER_OPTIONS} value={form.gender_identity} onChange={(v) => set('gender_identity', v)} placeholder="Select gender" />
+                <Select options={GENDER_OPTIONS} value={form.gender_identity} onValueChange={(v) => set('gender_identity', v)} placeholder="Select gender" />
               </Field>
               <Field label="Pronouns">
-                <Select options={PRONOUN_OPTIONS} value={form.pronoun} onChange={(v) => set('pronoun', v)} placeholder="Select pronoun" />
+                <Select options={PRONOUN_OPTIONS} value={form.pronoun} onValueChange={(v) => set('pronoun', v)} placeholder="Select pronoun" />
               </Field>
               <Field label="Sex at Birth">
-                <Select options={SEX_AT_BIRTH_OPTIONS} value={form.sex_at_birth} onChange={(v) => set('sex_at_birth', v)} placeholder="Select" />
+                <Select options={SEX_AT_BIRTH_OPTIONS} value={form.sex_at_birth} onValueChange={(v) => set('sex_at_birth', v)} placeholder="Select" />
               </Field>
               <Field label="Sexual Orientation">
-                <Select options={ORIENTATION_OPTIONS} value={form.sexual_orientation} onChange={(v) => set('sexual_orientation', v)} placeholder="Select" />
+                <Select options={ORIENTATION_OPTIONS} value={form.sexual_orientation} onValueChange={(v) => set('sexual_orientation', v)} placeholder="Select" />
               </Field>
               <Field label="Primary Language">
-                <Select options={LANGUAGE_OPTIONS} value={form.primary_language} onChange={(v) => set('primary_language', v)} placeholder="Select language" searchable />
+                <Select options={LANGUAGE_OPTIONS} value={form.primary_language} onValueChange={(v) => set('primary_language', v)} placeholder="Select language" searchable />
               </Field>
               <Field label="Secondary Language">
-                <Select options={LANGUAGE_OPTIONS} value={form.secondary_language} onChange={(v) => set('secondary_language', v)} placeholder="Select language" searchable />
+                <Select options={LANGUAGE_OPTIONS} value={form.secondary_language} onValueChange={(v) => set('secondary_language', v)} placeholder="Select language" searchable />
               </Field>
             </div>
             {form.extra_languages.length > 0 && (
@@ -593,7 +593,7 @@ export function EditPatientDrawer({
                       <Select
                         options={LANGUAGE_OPTIONS}
                         value={lang}
-                        onChange={(v) => editLanguage(idx, v)}
+                        onValueChange={(v) => editLanguage(idx, v)}
                         placeholder="Select language"
                         searchable
                       />
@@ -608,21 +608,21 @@ export function EditPatientDrawer({
             <div className={styles.linkRow}>{linkBtn('Add Languages', addLanguage)}</div>
             <div className={styles.grid}>
               <Field label="Blood Group">
-                <Select options={BLOOD_GROUP_OPTIONS} value={form.blood_group} onChange={(v) => set('blood_group', v)} placeholder="Select" />
+                <Select options={BLOOD_GROUP_OPTIONS} value={form.blood_group} onValueChange={(v) => set('blood_group', v)} placeholder="Select" />
               </Field>
               <Field label="Marital Status">
-                <Select options={MARITAL_OPTIONS} value={form.marital_status} onChange={(v) => set('marital_status', v)} placeholder="Select" />
+                <Select options={MARITAL_OPTIONS} value={form.marital_status} onValueChange={(v) => set('marital_status', v)} placeholder="Select" />
               </Field>
               <Field label="Race">
-                <Select options={RACE_OPTIONS} value={form.race} onChange={(v) => set('race', v)} placeholder="Select" />
+                <Select options={RACE_OPTIONS} value={form.race} onValueChange={(v) => set('race', v)} placeholder="Select" />
               </Field>
               <Field label="Ethnicity">
-                <Select options={ETHNICITY_OPTIONS} value={form.ethnicity} onChange={(v) => set('ethnicity', v)} placeholder="Select" />
+                <Select options={ETHNICITY_OPTIONS} value={form.ethnicity} onValueChange={(v) => set('ethnicity', v)} placeholder="Select" />
               </Field>
             </div>
             <div className={styles.gridFull}>
               <Field label="IPA">
-                <Select options={IPA_OPTIONS} value={form.ipa} onChange={(v) => set('ipa', v)} placeholder="Select IPA" searchable />
+                <Select options={IPA_OPTIONS} value={form.ipa} onValueChange={(v) => set('ipa', v)} placeholder="Select IPA" searchable />
               </Field>
             </div>
           </section>
@@ -672,10 +672,10 @@ export function EditPatientDrawer({
             </div>
             <div className={styles.grid}>
               <Field label="City">
-                <Select options={CITY_OPTIONS} value={form.city} onChange={(v) => set('city', v)} placeholder="Select city" searchable />
+                <Select options={CITY_OPTIONS} value={form.city} onValueChange={(v) => set('city', v)} placeholder="Select city" searchable />
               </Field>
               <Field label="State">
-                <Select options={US_STATES} value={form.state} onChange={(v) => set('state', v)} placeholder="Select state" searchable />
+                <Select options={US_STATES} value={form.state} onValueChange={(v) => set('state', v)} placeholder="Select state" searchable />
               </Field>
             </div>
             <div className={styles.gridFull}>
@@ -719,7 +719,7 @@ export function EditPatientDrawer({
                   multiple
                   options={TAGS_OPTIONS}
                   value={form.tags}
-                  onChange={(v) => set('tags', v)}
+                  onValueChange={(v) => set('tags', v)}
                   placeholder="Select tags"
                   searchable
                 />
@@ -727,10 +727,10 @@ export function EditPatientDrawer({
             </div>
             <div className={styles.grid}>
               <Field label="Employer">
-                <Select options={EMPLOYER_OPTIONS} value={form.employer} onChange={(v) => set('employer', v)} placeholder="Select employer" searchable />
+                <Select options={EMPLOYER_OPTIONS} value={form.employer} onValueChange={(v) => set('employer', v)} placeholder="Select employer" searchable />
               </Field>
               <Field label="Practice Location">
-                <Select options={PRACTICE_OPTIONS} value={form.practice_location} onChange={(v) => set('practice_location', v)} placeholder="Select practice location" searchable />
+                <Select options={PRACTICE_OPTIONS} value={form.practice_location} onValueChange={(v) => set('practice_location', v)} placeholder="Select practice location" searchable />
               </Field>
             </div>
             <div className={styles.gridFull}>

@@ -131,10 +131,10 @@ export function NodeSettingsTransitions({
                   <div className={styles.equationHeader}>
                     <div className={styles.toggleWrap}>
                       <Toggle
-                        size="S"
+                        size="sm"
                         items={[{ key: 'all', label: 'All' }, { key: 'any', label: 'Any' }]}
-                        active={t.matchMode || 'all'}
-                        onChange={(key) => onUpdateTransition(i, 'matchMode', key)}
+                        value={t.matchMode || 'all'}
+                        onValueChange={(key) => onUpdateTransition(i, 'matchMode', key)}
                       />
                     </div>
                     <button className={styles.addRuleBtn} onClick={() => onAddRule(i)}>Add Rule</button>
@@ -192,7 +192,7 @@ export function NodeSettingsTransitions({
                   value={t.target || ''}
                   options={nodeOptions}
                   placeholder="Select Transfer Node"
-                  onChange={val => onUpdateTransition(i, 'target', val)}
+                  onValueChange={val => onUpdateTransition(i, 'target', val)}
                 />
               </div>
             </div>

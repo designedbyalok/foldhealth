@@ -8,7 +8,7 @@ export function DoseNoteInput({ saved, label, onSave }) {
   const commit = () => { if (text.trim() !== saved) onSave(text); };
   return (
     <Input
-      variant="quiet"
+      variant="ghost"
       value={text}
       onChange={(e) => setText(e.target.value)}
       onBlur={commit}

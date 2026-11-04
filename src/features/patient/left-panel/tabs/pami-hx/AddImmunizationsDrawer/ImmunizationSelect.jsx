@@ -52,7 +52,7 @@ export function ImmunizationSelect({ value, onChange, leadingIcon }) {
     <Select
       options={options}
       value={value}
-      onChange={handleChange}
+      onValueChange={handleChange}
       placeholder="Search And Add Immunizations"
       leadingIcon={leadingIcon}
       searchable

@@ -1088,10 +1088,10 @@ export function CarePlanSummaryView({
                   </button>
                   {withNotes.length > 1 ? (
                     <Toggle
-                      size="S"
+                      size="sm"
                       items={withNotes.map(r => ({ key: r.id, label: r.code }))}
-                      active={shown.id}
-                      onChange={(id) => {
+                      value={shown.id}
+                      onValueChange={(id) => {
                         setNoteProgramId(id);
                         if (!openSections.careNotes) toggleSection('careNotes');
                       }}

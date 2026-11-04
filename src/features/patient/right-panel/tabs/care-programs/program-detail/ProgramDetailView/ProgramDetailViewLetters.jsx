@@ -66,7 +66,7 @@ export function ProgramDetailViewLetters({
             <>
               <ActionButton icon="solar:magnifer-linear" size="sm" tooltip="Search" onClick={() => setLetterSearchOpen(true)} />
               <span className={styles.tabDivider} />
-              <Toggle size="S" items={LETTER_SUB_TABS} active={activeLetterTab} onChange={setActiveLetterTab} />
+              <Toggle size="sm" items={LETTER_SUB_TABS} value={activeLetterTab} onValueChange={setActiveLetterTab} />
               <div style={{ flex: 1 }} />
             </>
           )}

@@ -99,9 +99,9 @@ export function DesignTabLayout({ ctx }) {
                   { key: 'hug', label: 'Hug' },
                   { key: 'fixed', label: 'Fixed' },
                 ]}
-                active={props.heightMode || 'hug'}
-                size="S"
-                onChange={v => {
+                value={props.heightMode || 'hug'}
+                size="sm"
+                onValueChange={v => {
                   update(['data', 'props', 'heightMode'], v);
                   if (v === 'hug') update(['data', 'props', 'height'], null);
                 }}
@@ -140,28 +140,28 @@ export function DesignTabLayout({ ctx }) {
               <span className={styles.fieldLabel}>Horizontal</span>
               <Toggle
                 fullWidth
-                size="S"
+                size="sm"
                 items={[
                   { key: 'left',   label: '', icon: <AlignLeftIcon /> },
                   { key: 'center', label: '', icon: <AlignCenterIcon /> },
                   { key: 'right',  label: '', icon: <AlignRightIcon /> },
                 ]}
-                active={props.contentAlignH || 'left'}
-                onChange={v => update(['data', 'props', 'contentAlignH'], v)}
+                value={props.contentAlignH || 'left'}
+                onValueChange={v => update(['data', 'props', 'contentAlignH'], v)}
               />
             </div>
             <div className={styles.fieldCol}>
               <span className={styles.fieldLabel}>Vertical</span>
               <Toggle
                 fullWidth
-                size="S"
+                size="sm"
                 items={[
                   { key: 'top',    label: '', icon: <AlignTopIcon /> },
                   { key: 'middle', label: '', icon: <AlignMiddleIcon /> },
                   { key: 'bottom', label: '', icon: <AlignBottomIcon /> },
                 ]}
-                active={props.contentAlign || 'top'}
-                onChange={v => update(['data', 'props', 'contentAlign'], v)}
+                value={props.contentAlign || 'top'}
+                onValueChange={v => update(['data', 'props', 'contentAlign'], v)}
               />
             </div>
           </Row2>
@@ -190,9 +190,9 @@ export function DesignTabLayout({ ctx }) {
                 { key: 'center', label: '', icon: <AlignCenterIcon /> },
                 { key: 'right',  label: '', icon: <AlignRightIcon /> },
               ]}
-              active={style.blockAlign || 'left'}
-              size="S"
-              onChange={v => update(['data', 'style', 'blockAlign'], v)}
+              value={style.blockAlign || 'left'}
+              size="sm"
+              onValueChange={v => update(['data', 'style', 'blockAlign'], v)}
             />
           </div>
         )}

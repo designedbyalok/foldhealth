@@ -140,14 +140,14 @@ function StepIdentity({ data, onChange }) {
             <Select
               options={COMPONENT_CATEGORIES.map(c => ({ value: c, label: c }))}
               value={data.category}
-              onChange={v => onChange({ category: v })}
+              onValueChange={v => onChange({ category: v })}
             />
           </FormField>
           <FormField label="Visible to">
             <Select
               options={VISIBILITY_OPTIONS.map(v => ({ value: v, label: v }))}
               value={data.visibleTo}
-              onChange={v => onChange({ visibleTo: v })}
+              onValueChange={v => onChange({ visibleTo: v })}
             />
           </FormField>
         </div>
@@ -158,7 +158,7 @@ function StepIdentity({ data, onChange }) {
           <Select
             options={ACTIVATION_OPTIONS.map(a => ({ value: a.value, label: a.label }))}
             value={data.activation}
-            onChange={v => onChange({ activation: v })}
+            onValueChange={v => onChange({ activation: v })}
           />
         </FormField>
       </div>
@@ -171,7 +171,7 @@ function StepIdentity({ data, onChange }) {
             <Select
               options={CONDITION_OPTIONS.map(c => ({ value: c, label: c }))}
               value={data.condition}
-              onChange={v => onChange({ condition: v })}
+              onValueChange={v => onChange({ condition: v })}
             />
           </FormField>
         </div>
@@ -365,21 +365,21 @@ function StepSurfaces({ data, onChange }) {
                   <Select
                     options={['Action menu item only', 'Nav tab + action menu', 'Inline button (e.g. in gap list)'].map(o => ({ value: o, label: o }))}
                     value={data.opensVia}
-                    onChange={v => onChange({ opensVia: v })}
+                    onValueChange={v => onChange({ opensVia: v })}
                   />
                 </FormField>
                 <FormField label="Show in tab context">
                   <Select
                     options={['All patient tabs', 'Gaps tab only', 'Orders tab only', 'Care Programs tab'].map(o => ({ value: o, label: o }))}
                     value={data.tabContext}
-                    onChange={v => onChange({ tabContext: v })}
+                    onValueChange={v => onChange({ tabContext: v })}
                   />
                 </FormField>
                 <FormField label="Background behavior">
                   <Select
                     options={['Dim patient chart', 'No dim'].map(o => ({ value: o, label: o }))}
                     value={data.background}
-                    onChange={v => onChange({ background: v })}
+                    onValueChange={v => onChange({ background: v })}
                   />
                 </FormField>
               </div>
@@ -399,14 +399,14 @@ function StepSurfaces({ data, onChange }) {
                     <Select
                       options={DRAWER_TAB_OPTIONS.map(t => ({ value: t, label: t }))}
                       value={data.drawerTab}
-                      onChange={v => onChange({ drawerTab: v, widgetOrder: null })}
+                      onValueChange={v => onChange({ drawerTab: v, widgetOrder: null })}
                     />
                   </FormField>
                   <FormField label="Widget height">
                     <Select
                       options={['Auto (up to 280px)', 'Fixed 200px', 'Fixed 300px'].map(o => ({ value: o, label: o }))}
                       value={data.widgetHeight}
-                      onChange={v => onChange({ widgetHeight: v })}
+                      onValueChange={v => onChange({ widgetHeight: v })}
                     />
                   </FormField>
                 </div>
@@ -470,7 +470,7 @@ function StepSurfaces({ data, onChange }) {
                   <Select
                     options={['Opens a drawer on the right', 'Opens full-screen view'].map(o => ({ value: o, label: o }))}
                     value={data.actionTrigger}
-                    onChange={v => onChange({ actionTrigger: v })}
+                    onValueChange={v => onChange({ actionTrigger: v })}
                   />
                 </FormField>
               </div>
@@ -535,7 +535,7 @@ function StepSurfaces({ data, onChange }) {
                     <Select
                       options={DRAWER_TAB_OPTIONS.map(t => ({ value: t, label: t }))}
                       value={data.sidecarWidgetTab}
-                      onChange={v => onChange({ sidecarWidgetTab: v })}
+                      onValueChange={v => onChange({ sidecarWidgetTab: v })}
                     />
                   </FormField>
                 )}
@@ -547,7 +547,7 @@ function StepSurfaces({ data, onChange }) {
                   <Select
                     options={SIDECAR_GLOBAL_PLACEMENTS.map(p => ({ value: p, label: p }))}
                     value={data.sidecarGlobalPlacement}
-                    onChange={v => onChange({ sidecarGlobalPlacement: v })}
+                    onValueChange={v => onChange({ sidecarGlobalPlacement: v })}
                   />
                 </FormField>
               </>
@@ -613,7 +613,7 @@ function StepContext({ data, onChange }) {
           <Select
             options={activeDomains.map(d => ({ value: String(d.id), label: d.domain }))}
             value={String(data.domainId)}
-            onChange={v => onChange({ domainId: Number(v) })}
+            onValueChange={v => onChange({ domainId: Number(v) })}
           />
         </FormField>
         <FormField label="Path *" hint={fullUrl ? `Full URL: ${fullUrl}` : undefined}>
@@ -626,7 +626,7 @@ function StepContext({ data, onChange }) {
           <Select
             options={TOKEN_LIFETIME_OPTIONS.map(t => ({ value: String(t.value), label: t.label }))}
             value={String(data.tokenLifetime)}
-            onChange={v => onChange({ tokenLifetime: Number(v) })}
+            onValueChange={v => onChange({ tokenLifetime: Number(v) })}
           />
         </FormField>
       </div>
@@ -709,7 +709,7 @@ function StepConfigure({ data, onChange, embedDomains }) {
           <Select
             options={activeDomains.map(d => ({ value: String(d.id), label: d.domain }))}
             value={String(data.domainId)}
-            onChange={v => onChange({ domainId: Number(v) })}
+            onValueChange={v => onChange({ domainId: Number(v) })}
           />
         </FormField>
         <FormField label="Path *" hint={fullUrl ? `${fullUrl}` : undefined}>
@@ -723,14 +723,14 @@ function StepConfigure({ data, onChange, embedDomains }) {
           <Select
             options={COMPONENT_CATEGORIES.map(c => ({ value: c, label: c }))}
             value={data.category}
-            onChange={v => onChange({ category: v })}
+            onValueChange={v => onChange({ category: v })}
           />
         </FormField>
         <FormField label="Visible to">
           <Select
             options={VISIBILITY_OPTIONS.map(v => ({ value: v, label: v }))}
             value={data.visibleTo}
-            onChange={v => onChange({ visibleTo: v })}
+            onValueChange={v => onChange({ visibleTo: v })}
           />
         </FormField>
       </div>
@@ -758,7 +758,7 @@ function StepConfigure({ data, onChange, embedDomains }) {
               <Select
                 options={ACTIVATION_OPTIONS.map(a => ({ value: a.value, label: a.label }))}
                 value={data.activation}
-                onChange={v => onChange({ activation: v })}
+                onValueChange={v => onChange({ activation: v })}
               />
             </FormField>
             {data.activation === 'conditional' && (
@@ -766,7 +766,7 @@ function StepConfigure({ data, onChange, embedDomains }) {
                 <Select
                   options={CONDITION_OPTIONS.map(c => ({ value: c, label: c }))}
                   value={data.condition}
-                  onChange={v => onChange({ condition: v })}
+                  onValueChange={v => onChange({ condition: v })}
                 />
               </FormField>
             )}
@@ -776,7 +776,7 @@ function StepConfigure({ data, onChange, embedDomains }) {
               <Select
                 options={TOKEN_LIFETIME_OPTIONS.map(t => ({ value: String(t.value), label: t.label }))}
                 value={String(data.tokenLifetime)}
-                onChange={v => onChange({ tokenLifetime: Number(v) })}
+                onValueChange={v => onChange({ tokenLifetime: Number(v) })}
               />
             </FormField>
 

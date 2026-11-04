@@ -73,29 +73,29 @@ export function SavePanel({ state, graph, problems, onSave, onClose, onShowProbl
           title="Description"
           mandatory
           value={description}
-          onChange={text => setDescription(text)}
+          onValueChange={text => setDescription(text)}
           rows={3}
           placeholder="Tell your team what this automation does"
           maxLength={DESC_MAX}
-          variant={tried && errors.description ? 'error' : 'default'}
+          invalid={tried && errors.description}
         />
-        <Select label="Associated population group" options={groupOptions} value={groupId || (state.populationGroupName && !state.populationGroupId ? '__saved' : '')} onChange={setGroupId} searchable />
+        <Select label="Associated population group" options={groupOptions} value={groupId || (state.populationGroupName && !state.populationGroupId ? '__saved' : '')} onValueChange={setGroupId} searchable />
         <Select
           label="Run automation"
           required
           options={RUN_SCHEDULES.map(s => ({ value: s.value, label: s.value === 'onTrigger' && trig ? `When “${trig.label.toLowerCase()}”` : s.label }))}
           value={schedule}
-          onChange={setSchedule}
+          onValueChange={setSchedule}
           leadingIcon="solar:clock-circle-linear"
         />
-        {scheduled && <Select label="At" options={TIMES} value={runTime} onChange={setRunTime} />}
+        {scheduled && <Select label="At" options={TIMES} value={runTime} onValueChange={setRunTime} />}
         <div className={styles.saveStatus}>
           <span className={styles.panelSectionTitle}>After saving</span>
           <Toggle
-            size="S"
+            size="sm"
             items={[{ key: 'draft', label: 'Keep as draft' }, { key: 'active', label: 'Publish (Active)' }, { key: 'inactive', label: 'Inactive' }]}
-            active={goLive}
-            onChange={setGoLive}
+            value={goLive}
+            onValueChange={setGoLive}
           />
         </div>
         {goLive === 'active' && problems.length > 0 && (

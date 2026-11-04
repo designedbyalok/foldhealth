@@ -96,9 +96,9 @@ export function InviteUserBulkReviewStep({
                     {bulkColumns.map(col => (
                       <td key={col} style={{ background: highlightCol === col ? 'var(--primary-25)' : undefined, transition: 'background .5s' }}>
                         {col === 'admin_role' ? (
-                          <Select className={styles.bulkSelectTrigger} options={ADMIN_ROLES.map(r => ({ value: r, label: r }))} value={row[col] || undefined} onChange={v => onUpdateRow(row._id, col, v)} placeholder="Select Admin R..." />
+                          <Select className={styles.bulkSelectTrigger} options={ADMIN_ROLES.map(r => ({ value: r, label: r }))} value={row[col] || undefined} onValueChange={v => onUpdateRow(row._id, col, v)} placeholder="Select Admin R..." />
                         ) : col === 'gender' ? (
-                          <Select className={styles.bulkSelectTrigger} options={GENDER_OPTIONS.map(g => ({ value: g, label: g }))} value={row[col] || undefined} onChange={v => onUpdateRow(row._id, col, v)} placeholder="Select..." />
+                          <Select className={styles.bulkSelectTrigger} options={GENDER_OPTIONS.map(g => ({ value: g, label: g }))} value={row[col] || undefined} onValueChange={v => onUpdateRow(row._id, col, v)} placeholder="Select..." />
                         ) : (
                           <input className={styles.bulkInput} value={row[col] || ''} onChange={e => onUpdateRow(row._id, col, e.target.value)} placeholder={BULK_COL_LABELS[col] || ''} />
                         )}

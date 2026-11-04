@@ -155,7 +155,7 @@ function Question({ question, answers, onSave }) {
       label={question.label}
       options={asOptions(question.options)}
       value={multiple ? (Array.isArray(value) ? value : []) : (value || '')}
-      onChange={save}
+      onValueChange={save}
       multiple={multiple}
       checkboxes={multiple}
       badges={multiple}

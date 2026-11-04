@@ -66,7 +66,7 @@ function LogicEditor({ type, config, onChange, errors }) {
         <PanelRow label="Wait for" required error={errors.amount}>
           <div className={styles.ruleControls}>
             <Input type="number" min={1} value={config.amount ?? ''} onChange={e => onChange({ amount: e.target.value === '' ? '' : Number(e.target.value) })} wrapperClassName={styles.numberInput} aria-label="Wait for" />
-            <Select options={DELAY_UNITS} value={config.unit || 'days'} onChange={v => onChange({ unit: v })} className={styles.unitSelect} />
+            <Select options={DELAY_UNITS} value={config.unit || 'days'} onValueChange={v => onChange({ unit: v })} className={styles.unitSelect} />
           </div>
         </PanelRow>
         <p className={styles.panelHint}>Members wait here before the next step. A test run skips the wait.</p>
@@ -79,7 +79,7 @@ function LogicEditor({ type, config, onChange, errors }) {
         <PanelRow label="Every" required error={errors.every}>
           <div className={styles.ruleControls}>
             <Input type="number" min={1} value={config.every ?? ''} onChange={e => onChange({ every: e.target.value === '' ? '' : Number(e.target.value) })} wrapperClassName={styles.numberInput} aria-label="Repeat every" />
-            <Select options={DELAY_UNITS.filter(u => u.value !== 'minutes')} value={config.unit || 'days'} onChange={v => onChange({ unit: v })} className={styles.unitSelect} />
+            <Select options={DELAY_UNITS.filter(u => u.value !== 'minutes')} value={config.unit || 'days'} onValueChange={v => onChange({ unit: v })} className={styles.unitSelect} />
           </div>
         </PanelRow>
         <PanelRow label="Up to" required error={errors.times}>

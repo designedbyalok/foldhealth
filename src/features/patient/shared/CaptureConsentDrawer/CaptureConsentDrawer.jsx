@@ -175,7 +175,7 @@ export function CaptureConsentDrawer({ patientId, scopeType: initialType, scope:
           {!presetScope && (
             <section className={styles.step}>
               <span className={styles.stepTitle}>Consent for</span>
-              <Select options={SCOPE_OPTIONS} value={scopeKey} onChange={pickScope} aria-label="Consent for" />
+              <Select options={SCOPE_OPTIONS} value={scopeKey} onValueChange={pickScope} aria-label="Consent for" />
             </section>
           )}
 

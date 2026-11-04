@@ -5,6 +5,7 @@ import { CalendarIcon } from '../Icon/CalendarIcon';
 import { CloseIcon } from '../Icon/CloseIcon';
 import { Button } from '../Button/Button';
 import { DatePickerPopover } from '../DatePicker/DatePickerPopover';
+import { resolveFieldLook } from '../../lib/legacyProps';
 import styles from './Input.module.css';
 
 // ── MM/DD/YYYY ↔ YYYY-MM-DD helpers ──────────────────────────────────
@@ -78,9 +79,17 @@ const TYPE_DEFAULTS = {
  *                      the cap. Uses `value.length`
  *                      when controlled, otherwise tracks length internally.
  *
- *   Variant
- *     - variant        'error' (red chrome) or 'quiet' (no border until
+ *   Look
+ *     - variant        'outline' (default) or 'ghost' (no border until
  *                      hover / focus; for inline-editable table cells).
+ *     - invalid        Red chrome and `aria-invalid`, without a message.
+ *                      `errorText` implies it.
+ *     - size           'md' (32px, default) or 'sm' (28px).
+ *
+ *   Value
+ *     - onChange       The native change event.
+ *     - onValueChange  (value) => void, the same change as a string
+ *                      (ISO for `type="date"`, '' when a search is cleared).
  *
  *   Below the field
  *     - helperText     Muted text below the input, hidden while an error shows.
@@ -105,6 +114,8 @@ const TYPE_DEFAULTS = {
 export const Input = forwardRef(function Input(
   {
     variant,
+    invalid,
+    size,
     type = 'text',
     // Label row
     label,
@@ -149,6 +160,7 @@ export const Input = forwardRef(function Input(
     defaultValue,
     onBlur,
     onChange,
+    onValueChange,
     id,
     ...props
   },
@@ -165,11 +177,13 @@ export const Input = forwardRef(function Input(
   const autoId = useId();
   const inputId = id || (label ? autoId : undefined);
 
-  // Explicit errorText (or legacy variant='error') wins over internal
-  // validation output. Internal state only kicks in when the caller
-  // hasn't spoken.
+  // Explicit errorText wins over internal validation output. Internal
+  // state only kicks in when the caller hasn't spoken.
+  const look = resolveFieldLook('Input', { variant, invalid, size });
   const activeError = errorText != null ? errorText : internalError;
-  const isError = variant === 'error' || Boolean(activeError);
+  const isError = look.invalid || Boolean(activeError);
+  const isGhost = look.variant === 'ghost' && !isError;
+  const sizeCls = look.size === 'sm' ? styles.sizeSm : '';
 
   const runValidate = useCallback((el) => {
     if (!el) return;
@@ -201,7 +215,8 @@ export const Input = forwardRef(function Input(
       setUncontrolledLen(e.currentTarget.value.length);
     }
     onChange?.(e);
-  }, [validateOn, runValidate, internalError, onChange, characterLimit, value]);
+    onValueChange?.(e.currentTarget.value);
+  }, [validateOn, runValidate, internalError, onChange, onValueChange, characterLimit, value]);
 
   const typeDefaults = TYPE_DEFAULTS[type] || TYPE_DEFAULTS.text;
   const inputMode = inputModeProp ?? typeDefaults.inputMode;
@@ -244,7 +259,8 @@ export const Input = forwardRef(function Input(
     // that read `e.target.value`, the rest of the app expects that
     // contract from anything named "onChange".
     onChange?.({ target: { value: iso || '' }, currentTarget: { value: iso || '' } });
-  }, [onChange]);
+    onValueChange?.(iso || '');
+  }, [onChange, onValueChange]);
 
   // Merge the caller's forwarded ref with a local one so the picker-icon
   // handler can call `showPicker()` regardless of ref shape.
@@ -300,7 +316,8 @@ export const Input = forwardRef(function Input(
   if (!needsWrapper) {
     const inputCls = [
       styles.input,
-      variant === 'quiet' && !isError ? styles.inputQuiet : '',
+      sizeCls,
+      isGhost ? styles.inputGhost : '',
       isError ? styles.inputError : '',
       className || '',
     ].filter(Boolean).join(' ');
@@ -321,6 +338,7 @@ export const Input = forwardRef(function Input(
         onBlur={handleBlur}
         onChange={handleChange}
         aria-invalid={isError || undefined}
+        data-invalid={isError || undefined}
         {...props}
         onWheel={handleWheel}
       />
@@ -429,6 +447,7 @@ export const Input = forwardRef(function Input(
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             onChange?.({ target: { value: '' }, currentTarget: { value: '' } });
+            onValueChange?.('');
             localInputRef.current?.focus();
           }}
           tabIndex={-1}
@@ -534,14 +553,15 @@ export const Input = forwardRef(function Input(
 
   const shellCls = [
     styles.shell,
-    variant === 'quiet' && !isError ? styles.shellQuiet : '',
+    sizeCls,
+    isGhost ? styles.shellGhost : '',
     isError ? styles.shellError : '',
     props.disabled ? styles.shellDisabled : '',
     props.readOnly ? styles.shellReadonly : '',
   ].filter(Boolean).join(' ');
 
   return (
-    <div className={[styles.field, wrapperClassName || ''].filter(Boolean).join(' ')}>
+    <div className={[styles.field, wrapperClassName || ''].filter(Boolean).join(' ')} data-invalid={isError || undefined}>
       {label && (
         <label className={styles.label} htmlFor={inputId}>
           <span className={styles.labelText}>{label}</span>

@@ -412,11 +412,11 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
     <Drawer title={goal ? 'Edit Goal' : 'Create New Goals'} onClose={onClose} headerRight={headerRight} noCloseDivider>
       <div className={styles.body}>
         <Toggle
-          size="S"
+          size="sm"
           className={styles.categoryToggle}
           items={GOAL_CATEGORIES}
-          active={category}
-          onChange={(next) => { setCategory(next); setMeasure(''); }}
+          value={category}
+          onValueChange={(next) => { setCategory(next); setMeasure(''); }}
         />
 
         {!isOther && (
@@ -424,7 +424,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
           <Select
             options={asOptions(measureCfg.options)}
             value={measure}
-            onChange={setMeasure}
+            onValueChange={setMeasure}
             placeholder={measureCfg.label}
             className={`${styles.measureSelect} ${WIDE_MEASURE_CATEGORIES.includes(category) ? styles.measureSelectWide : ''}`}
             searchable
@@ -537,7 +537,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
                 <Select
                   options={asOptions(cfg.options)}
                   value={initialValue}
-                  onChange={setInitialValue}
+                  onValueChange={setInitialValue}
                   placeholder="Select Value"
                   className={styles.valueSelect}
                 />
@@ -573,14 +573,14 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
               <Select
                 options={asOptions(COMPARATORS)}
                 value={comparator}
-                onChange={setComparator}
+                onValueChange={setComparator}
                 className={twoValues ? styles.comparatorCompact : styles.comparator}
               />
               {cfg.kind === 'select' ? (
                 <Select
                   options={asOptions(cfg.options)}
                   value={targetValue}
-                  onChange={setTargetValue}
+                  onValueChange={setTargetValue}
                   placeholder="Select Value"
                   className={styles.valueSelect}
                 />
@@ -634,14 +634,14 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
             <Select
               options={asOptions(COMPARATORS)}
               value={comparator}
-              onChange={setComparator}
+              onValueChange={setComparator}
               className={styles.comparator}
             />
             {cfg.kind === 'select' ? (
               <Select
                 options={asOptions(cfg.options)}
                 value={targetValue}
-                onChange={setTargetValue}
+                onValueChange={setTargetValue}
                 placeholder="Select Value"
                 className={styles.valueSelect}
               />
@@ -747,7 +747,7 @@ export function CreateGoalDrawer({ onClose, onSave, goal }) {
               required
               options={asOptions(FREQUENCIES)}
               value={frequency}
-              onChange={setFrequency}
+              onValueChange={setFrequency}
             />
           </div>
         </div>

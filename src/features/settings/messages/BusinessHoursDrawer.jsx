@@ -73,7 +73,7 @@ export function BusinessHoursDrawer() {
         <Select
           options={TIMEZONES}
           value={timezone}
-          onChange={setTimezone}
+          onValueChange={setTimezone}
           style={{ width: '100%' }}
         />
       </div>

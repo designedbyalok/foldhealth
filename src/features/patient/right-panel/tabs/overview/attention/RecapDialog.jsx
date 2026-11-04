@@ -635,10 +635,10 @@ export function RecapButton({ patient, overview, attention, run, review, onOpenT
         subtitle={subtitle}
         headerExtra={(
           <Toggle
-            size="S"
+            size="sm"
             items={RECAP_PERIODS.map(p => ({ key: p.key, label: p.label }))}
-            active={period}
-            onChange={setPeriod}
+            value={period}
+            onValueChange={setPeriod}
           />
         )}
         steps={steps}

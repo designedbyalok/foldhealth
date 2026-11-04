@@ -408,8 +408,8 @@ export function GapEvidencePane({ v }) {
           disabled
           options={[{ value: gap.code, label: `${gap.code} Evidence` }]}
           value={gap.code}
-          onChange={() => {}}
-          ariaLabel={`${gap.code} evidence type`}
+          onValueChange={() => {}}
+          aria-label={`${gap.code} evidence type`}
         />
         <Input
           aria-label="Evidence label"
@@ -716,9 +716,9 @@ function EedEvidenceForm({ v, data, submitted }) {
           <Select
             options={EED_EXAM_TYPES}
             value={data.examType}
-            onChange={(v2) => onUpdate({ examType: v2 })}
+            onValueChange={(v2) => onUpdate({ examType: v2 })}
             placeholder="Select Exam Type"
-            variant={err('examType') ? 'error' : 'default'}
+            invalid={err('examType')}
           />
           {err('examType') && <FieldError>Exam type is required</FieldError>}
         </FieldStack>
@@ -740,7 +740,7 @@ function EedEvidenceForm({ v, data, submitted }) {
             value={data.examiningProvider}
             onChange={(e) => onUpdate({ examiningProvider: e.target.value })}
             placeholder="Enter Provider Name"
-            variant={err('examiningProvider') ? 'error' : undefined}
+            invalid={err('examiningProvider')}
           />
           {err('examiningProvider') && <FieldError>Provider is required</FieldError>}
         </FieldStack>
@@ -780,7 +780,7 @@ function EedEvidenceForm({ v, data, submitted }) {
               { value: 'right', label: 'Right eye' },
             ]}
             value={data.laterality}
-            onChange={(v2) => onUpdate({ laterality: v2 })}
+            onValueChange={(v2) => onUpdate({ laterality: v2 })}
             placeholder="Select Laterality"
           />
         </FieldStack>
@@ -794,9 +794,9 @@ function EedEvidenceForm({ v, data, submitted }) {
               { value: 'E11.9',   label: 'E11.9' },
             ]}
             value={data.icd10}
-            onChange={(v2) => onUpdate({ icd10: v2 })}
+            onValueChange={(v2) => onUpdate({ icd10: v2 })}
             placeholder="Select ICD"
-            variant={err('icd10') ? 'error' : 'default'}
+            invalid={err('icd10')}
           />
           {err('icd10') && <FieldError>ICD-10 is required</FieldError>}
         </FieldStack>
@@ -830,9 +830,9 @@ function EedEvidenceForm({ v, data, submitted }) {
               { value: 'lifestyle',         label: 'Lifestyle & glycemic control' },
             ]}
             value={data.patientCounseledOn}
-            onChange={(v2) => onUpdate({ patientCounseledOn: v2 })}
+            onValueChange={(v2) => onUpdate({ patientCounseledOn: v2 })}
             placeholder="Select"
-            variant={err('patientCounseledOn') ? 'error' : 'default'}
+            invalid={err('patientCounseledOn')}
           />
           {err('patientCounseledOn') && <FieldError>This field is required</FieldError>}
         </FieldStack>
@@ -1074,11 +1074,11 @@ function GenericField({ field, data, onUpdate, err, users }) {
           required={required}
           options={userSelectOptions(field, users)}
           value={value}
-          onChange={(v2) => onUpdate({ [key]: v2 })}
+          onValueChange={(v2) => onUpdate({ [key]: v2 })}
           placeholder={placeholder || `Select ${label}`}
           searchable
           searchPlaceholder="Search…"
-          variant={hasError ? 'error' : 'default'}
+          invalid={hasError}
         />
         {hasError && <FieldError>{errorText}</FieldError>}
       </FieldStack>
@@ -1132,9 +1132,9 @@ function GenericField({ field, data, onUpdate, err, users }) {
           required={required}
           options={options}
           value={value}
-          onChange={(v2) => onUpdate({ [key]: v2 })}
+          onValueChange={(v2) => onUpdate({ [key]: v2 })}
           placeholder={placeholder || `Select ${label}`}
-          variant={hasError ? 'error' : 'default'}
+          invalid={hasError}
         />
         {hasError && <FieldError>{errorText}</FieldError>}
       </FieldStack>
@@ -1169,7 +1169,7 @@ function GenericField({ field, data, onUpdate, err, users }) {
         onChange={(e) => onUpdate({ [key]: e.target.value })}
         placeholder={placeholder}
         trailingText={field.unit}
-        variant={hasError ? 'error' : undefined}
+        invalid={hasError}
       />
       {hasError && <FieldError>{errorText}</FieldError>}
     </FieldStack>
@@ -1213,8 +1213,8 @@ export function ClinicalNoteWorkspaceBody({ v }) {
           disabled
           options={[{ value: gap.code, label: `${gap.code} Evidence` }]}
           value={gap.code}
-          onChange={() => {}}
-          ariaLabel={`${gap.code} evidence type`}
+          onValueChange={() => {}}
+          aria-label={`${gap.code} evidence type`}
         />
         <Input
           aria-label="Evidence label"

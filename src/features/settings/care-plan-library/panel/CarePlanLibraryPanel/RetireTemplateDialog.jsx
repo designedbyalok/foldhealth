@@ -102,7 +102,7 @@ export function RetireTemplateDialog({ template, templates, onCancel, onConfirm 
                   placeholder="Select a template"
                   options={options.map(t => ({ value: t.id, label: t.name }))}
                   value={replacementId}
-                  onChange={setReplacementId}
+                  onValueChange={setReplacementId}
                 />
               ),
             },
@@ -116,7 +116,7 @@ export function RetireTemplateDialog({ template, templates, onCancel, onConfirm 
         <Textarea
           title="Reason"
           value={reason}
-          onChange={text => setReason(text)}
+          onValueChange={text => setReason(text)}
           placeholder="Optional, e.g. Superseded by the 2027 ADA update"
           rows={2}
           maxLength={300}

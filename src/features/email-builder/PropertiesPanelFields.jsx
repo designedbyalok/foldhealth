@@ -474,7 +474,7 @@ export function SelectInput({ label, value, options, onChange }) {
         id={controlId}
         options={options}
         value={value ?? ''}
-        onChange={onChange}
+        onValueChange={onChange}
       />
     </div>
   );
@@ -735,10 +735,10 @@ export function TextStyleChips({ block, updateBlock, id }) {
   return (
     <Toggle
       fullWidth
-      size="S"
+      size="sm"
       items={TEXT_STYLE_PRESETS.map(p => ({ key: p.key, label: p.label }))}
-      active={active || ''}
-      onChange={(key) => {
+      value={active || ''}
+      onValueChange={(key) => {
         const preset = TEXT_STYLE_PRESETS.find(p => p.key === key);
         if (preset) apply(preset);
       }}
@@ -816,14 +816,14 @@ export function PaddingControl({ padding, onChangeSide, onChangeAll }) {
       <div className={styles.paddingLabelRow}>
         <span className={styles.fieldLabelStrong}>Padding</span>
         <Toggle
-          size="S"
+          size="sm"
           items={[
             { key: 'uniform',   label: '', icon: <PadUniformIcon /> },
             { key: 'symmetric', label: '', icon: <PadSymmetricIcon /> },
             { key: 'per-side',  label: '', icon: <PadPerSideIcon /> },
           ]}
-          active={mode}
-          onChange={(v) => {
+          value={mode}
+          onValueChange={(v) => {
             setMode(v);
             if (v === 'uniform') onChangeAll(padding.top);
             else if (v === 'symmetric') setSymmetric(padding.top, padding.left);
@@ -959,13 +959,13 @@ export function BorderControl({ style, onUpdate }) {
           <div className={styles.fieldCol}>
             <Toggle
               fullWidth
-              size="S"
+              size="sm"
               items={[
                 { key: 'uniform',  label: 'All sides' },
                 { key: 'per-side', label: 'Per side' },
               ]}
-              active={mode}
-              onChange={switchMode}
+              value={mode}
+              onValueChange={switchMode}
             />
           </div>
           {mode === 'uniform' ? (
@@ -986,14 +986,14 @@ export function BorderControl({ style, onUpdate }) {
                 <span className={styles.fieldLabel}>Style</span>
                 <Toggle
                   fullWidth
-                  size="S"
+                  size="sm"
                   items={[
                     { key: 'solid',  label: 'Solid' },
                     { key: 'dashed', label: 'Dashed' },
                     { key: 'dotted', label: 'Dotted' },
                   ]}
-                  active={style.borderStyle || 'solid'}
-                  onChange={v => onUpdate('borderStyle', v)}
+                  value={style.borderStyle || 'solid'}
+                  onValueChange={v => onUpdate('borderStyle', v)}
                 />
               </div>
             </>

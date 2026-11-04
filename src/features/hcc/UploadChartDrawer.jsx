@@ -283,7 +283,7 @@ export function UploadChartDrawer() {
                   className={styles.select}
                   options={DOC_TYPES.map((t) => ({ value: t, label: t }))}
                   value={docType}
-                  onChange={setDocType}
+                  onValueChange={setDocType}
                   placeholder="Select Type"
                 />
               </div>
@@ -294,7 +294,7 @@ export function UploadChartDrawer() {
                   className={styles.select}
                   options={VISIT_TYPES.map((vt) => ({ value: vt, label: vt }))}
                   value={visitType}
-                  onChange={setVisitType}
+                  onValueChange={setVisitType}
                   placeholder="Select Visit Type"
                 />
               </div>

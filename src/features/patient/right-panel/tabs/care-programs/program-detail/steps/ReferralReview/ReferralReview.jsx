@@ -44,7 +44,7 @@ export function ReferralReview() {
       <div className={styles.toolbar}>
         <ActionButton icon="solar:magnifer-linear" size="sm" tooltip="Search" />
         <span className={styles.tabDivider} />
-        <Toggle size="S" items={SUB_TABS} active={activeTab} onChange={setActiveTab} />
+        <Toggle size="sm" items={SUB_TABS} value={activeTab} onValueChange={setActiveTab} />
         <div className={styles.spacer} />
         <Button variant="soft" size="sm" leadingIconElement={<AddIconMinimalist size={14} />} trailingIconElement={<DownChevronIcon size={14} />}>
           New Order

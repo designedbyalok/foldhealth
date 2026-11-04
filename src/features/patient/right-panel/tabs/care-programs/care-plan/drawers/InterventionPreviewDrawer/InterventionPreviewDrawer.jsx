@@ -315,7 +315,7 @@ export function InterventionPreviewDrawer({ intervention, patientId, program, on
           <Select
             options={GBI_STATUSES.map(s => ({ value: s, label: s, icon: gbiStatusMeta(s).icon }))}
             value={live.status}
-            onChange={changeStatus}
+            onValueChange={changeStatus}
             disabled={!canDocument}
             portal
             className={styles.statusSelect}

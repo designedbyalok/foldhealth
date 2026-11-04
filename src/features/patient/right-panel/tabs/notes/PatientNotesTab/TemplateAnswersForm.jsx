@@ -89,7 +89,7 @@ function Field({ field, answers, onSet, submitted, users }) {
         <Select
           options={userSelectOptions(field, users)}
           value={value || ''}
-          onChange={(v) => onSet(key, v)}
+          onValueChange={(v) => onSet(key, v)}
           placeholder={placeholder || 'Choose an option'}
           searchable
         />
@@ -143,7 +143,7 @@ function Field({ field, answers, onSet, submitted, users }) {
         <Select
           options={(options || []).map(o => ({ value: o.value, label: o.label }))}
           value={value || ''}
-          onChange={(v) => onSet(key, v)}
+          onValueChange={(v) => onSet(key, v)}
           placeholder={placeholder || 'Choose an option'}
         />
         {description && <span className={styles.help}>{description}</span>}
@@ -194,7 +194,7 @@ function Field({ field, answers, onSet, submitted, users }) {
         onChange={(e) => onSet(key, e.target.value)}
         placeholder={placeholder}
         trailingText={field.unit}
-        variant={hasError ? 'error' : 'default'}
+        invalid={hasError}
       />
       {description && <span className={styles.help}>{description}</span>}
       {errorText && <span className={styles.error}>{errorText}</span>}

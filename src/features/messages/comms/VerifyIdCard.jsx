@@ -49,7 +49,7 @@ function VerifySettings({ value: v, onChange }) {
           badges
           options={VERIFICATION_METHODS.map(m => ({ value: m.value, label: m.label }))}
           value={v.methods}
-          onChange={(next) => set({ methods: next, minimum: Math.min(v.minimum, Math.max(1, next.length)) })}
+          onValueChange={(next) => set({ methods: next, minimum: Math.min(v.minimum, Math.max(1, next.length)) })}
           placeholder="Select methods"
           errorText={!v.methods.length ? 'Choose at least one method.' : undefined}
         />
@@ -69,7 +69,7 @@ function VerifySettings({ value: v, onChange }) {
         <Select
           options={INVALID_ATTEMPT_POLICIES.map(p => ({ value: p, label: p }))}
           value={v.action}
-          onChange={(action) => set({ action })}
+          onValueChange={(action) => set({ action })}
         />
       ), 'What happens once the recipient reaches the failed attempts allowed per session.')}
       {usesTimeLock(v.action) && (<>

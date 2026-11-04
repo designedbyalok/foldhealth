@@ -138,7 +138,7 @@ export function CarePlanPrintPersonalize({
               ...presets.map(p => ({ value: p.id, label: `${p.name}${p.isDefault ? ' (default)' : ''}` })),
             ]}
             value={presetId || NO_PRESET}
-            onChange={v => onPickPreset(v === NO_PRESET ? null : v)}
+            onValueChange={v => onPickPreset(v === NO_PRESET ? null : v)}
           />
           {preset && <Badge size="sm" tone={TEMPLATE_SCOPES[preset.scope].tone} icon={TEMPLATE_SCOPES[preset.scope].icon} label={TEMPLATE_SCOPES[preset.scope].badge} />}
           <Button
@@ -224,7 +224,7 @@ export function CarePlanPrintPersonalize({
               aria-label="Header"
               options={headerComponents.map(h => ({ value: String(h.id), label: h.label }))}
               value={String(settings.headerId ?? headerComponents[0]?.id ?? '')}
-              onChange={headerId => set({ headerId })}
+              onValueChange={headerId => set({ headerId })}
             />
           )}
         </section>
@@ -242,7 +242,7 @@ export function CarePlanPrintPersonalize({
                 ...footerComponents.map(f => ({ value: String(f.id), label: f.label })),
               ]}
               value={settings.footerId == null ? STANDARD_FOOTER : String(settings.footerId)}
-              onChange={v => set({ footerId: v === STANDARD_FOOTER ? null : v })}
+              onValueChange={v => set({ footerId: v === STANDARD_FOOTER ? null : v })}
             />
           )}
         </section>

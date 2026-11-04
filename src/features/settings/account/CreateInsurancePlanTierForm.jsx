@@ -116,7 +116,7 @@ export function TierForm({ tier, index, expanded, isActive, onToggle, onUpdate, 
                 <Select
                   options={COVERAGE_TYPE_OPTIONS}
                   value={tier.coverageType || undefined}
-                  onChange={setTierVal('coverageType')}
+                  onValueChange={setTierVal('coverageType')}
                   placeholder="Select Coverage Type"
                 />
               </div>

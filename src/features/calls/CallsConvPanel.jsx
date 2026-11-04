@@ -61,7 +61,7 @@ export function CallsConvPanel({
             className={styles.callLineTrigger}
             options={callLines.map(line => ({ value: line.id, label: line.label }))}
             value={callLine}
-            onChange={onCallLineChange}
+            onValueChange={onCallLineChange}
           />
         )}
       </div>
@@ -90,9 +90,9 @@ export function CallsConvPanel({
             { key: 'incoming', label: 'Incoming' },
             { key: 'outgoing', label: 'Outgoing' },
           ]}
-          active={listFilter}
-          onChange={onListFilterChange}
-          size="S"
+          value={listFilter}
+          onValueChange={onListFilterChange}
+          size="sm"
           fullWidth
         />
       </div>
@@ -121,7 +121,7 @@ export function CallsConvPanel({
               { value: 'in', label: '🇮🇳 +91' },
             ]}
             value={dialCountry}
-            onChange={onDialCountryChange}
+            onValueChange={onDialCountryChange}
           />
           <div className={styles.dialInputWrap}>
             <Input

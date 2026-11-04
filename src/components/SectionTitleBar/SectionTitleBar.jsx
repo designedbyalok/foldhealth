@@ -445,7 +445,7 @@ function TitleToggleSection({ title, items, active, onChange }) {
     <div className={styles.titleRow}>
       <span className={styles.title}>{title}</span>
       {hasToggle && (
-        <Toggle items={items} active={active} onChange={onChange} size="S" />
+        <Toggle items={items} value={active} onValueChange={onChange} size="sm" />
       )}
     </div>
   );

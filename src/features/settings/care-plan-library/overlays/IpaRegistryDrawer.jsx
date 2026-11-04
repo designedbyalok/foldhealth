@@ -114,7 +114,7 @@ export function IpaRegistryDrawer({ onClose, canEdit }) {
                         portal
                         options={ipas.map(i => ({ value: i.id, label: i.name }))}
                         value={aliasTarget[u.value] || ''}
-                        onChange={v => setAliasTarget(t => ({ ...t, [u.value]: v }))}
+                        onValueChange={v => setAliasTarget(t => ({ ...t, [u.value]: v }))}
                         placeholder="Spelling of…"
                       />
                       <Button variant="outline" size="sm" disabled={!aliasTarget[u.value]} onClick={() => {

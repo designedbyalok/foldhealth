@@ -206,7 +206,7 @@ export function AddGoalsDrawer({
     <Drawer title="Add Goals" onClose={onClose} headerRight={headerRight} noCloseDivider>
       <div className={styles.body}>
         <div className={styles.filterRow}>
-          <Toggle size="S" items={categories} active={category} onChange={setCategory} />
+          <Toggle size="sm" items={categories} value={category} onValueChange={setCategory} />
           <Link className={styles.createLink} onClick={() => setCreateOpen(true)}>
             <AddIconMinimalist size={14} color="currentColor" />
             Create New Goal

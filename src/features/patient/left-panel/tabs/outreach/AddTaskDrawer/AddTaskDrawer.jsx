@@ -70,7 +70,7 @@ export function AddTaskDrawer({ onClose, onSave }) {
         </label>
         <label className={styles.field}>
           <span className={styles.label}>Priority</span>
-          <Select options={PRIORITY_OPTIONS} value={priority} onChange={setPriority} />
+          <Select options={PRIORITY_OPTIONS} value={priority} onValueChange={setPriority} />
         </label>
         <label className={styles.field}>
           <span className={styles.label}>Due Date</span>

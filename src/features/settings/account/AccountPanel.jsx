@@ -698,7 +698,7 @@ export function EditUserDrawer({ user, onClose, onSave }) {
               multiple checkboxes searchable
               options={toOptions(roleOptions)}
               value={form.clinical_roles}
-              onChange={v => { set('clinical_roles', v); if (v.length > 0) set('role', v[0]); }}
+              onValueChange={v => { set('clinical_roles', v); if (v.length > 0) set('role', v[0]); }}
               placeholder="Select..."
             />
           </div>
@@ -710,7 +710,7 @@ export function EditUserDrawer({ user, onClose, onSave }) {
               multiple checkboxes searchable
               options={toOptions(locationNames)}
               value={form.locations}
-              onChange={v => set('locations', v)}
+              onValueChange={v => set('locations', v)}
               placeholder="Select..."
             />
             <Select
@@ -719,7 +719,7 @@ export function EditUserDrawer({ user, onClose, onSave }) {
               searchPlaceholder="Search specialty"
               options={toOptions(MEDICAL_SPECIALTIES)}
               value={isPhysician ? form.specialties : []}
-              onChange={v => set('specialties', v)}
+              onValueChange={v => set('specialties', v)}
               placeholder={isPhysician ? 'Select specialty' : 'Select Physician/Doctor role first'}
               disabled={!isPhysician}
             />
@@ -731,14 +731,14 @@ export function EditUserDrawer({ user, onClose, onSave }) {
               label="EHR System"
               options={EHR_SYSTEMS.map(s => ({ value: s, label: s }))}
               value={form.ehr_mapping || undefined}
-              onChange={v => set('ehr_mapping', v)}
+              onValueChange={v => set('ehr_mapping', v)}
               placeholder="Select EHR system"
             />
             <Select
               label="EHR User"
               options={[`${form.first_name} ${form.last_name} (${form.ehr_mapping || 'EHR'})`, 'Amy Brenneman (Athena Health)', 'John Doe (Epic)', 'Jane Smith (Cerner)'].filter(Boolean).map(u => ({ value: u, label: u }))}
               value={form.ehr_user || undefined}
-              onChange={v => set('ehr_user', v)}
+              onValueChange={v => set('ehr_user', v)}
               placeholder="Select EHR user"
             />
           </div>
@@ -749,7 +749,7 @@ export function EditUserDrawer({ user, onClose, onSave }) {
             multiple checkboxes searchable
             options={toOptions(LANGUAGE_OPTIONS)}
             value={form.languages}
-            onChange={v => set('languages', v)}
+            onValueChange={v => set('languages', v)}
             placeholder="Select..."
           />
 
@@ -790,14 +790,14 @@ export function EditUserDrawer({ user, onClose, onSave }) {
                 id={`${uid}-gender`}
                 options={GENDER_OPTIONS.map(g => ({ value: g, label: g }))}
                 value={form.gender || undefined}
-                onChange={v => set('gender', v)}
+                onValueChange={v => set('gender', v)}
                 placeholder="Select gender"
               />
             </div>
           </div>
 
           {/* Profile */}
-          <Textarea title="Profile" id={`${uid}-bio`} rows={5} value={form.bio} onChange={text => set('bio', text)} placeholder="Brief bio or description..." />
+          <Textarea title="Profile" id={`${uid}-bio`} rows={5} value={form.bio} onValueChange={text => set('bio', text)} placeholder="Brief bio or description..." />
 
           {/* Licence State */}
           <Select
@@ -805,7 +805,7 @@ export function EditUserDrawer({ user, onClose, onSave }) {
             multiple checkboxes searchable
             options={toOptions(US_STATES)}
             value={form.licence_states}
-            onChange={v => set('licence_states', v)}
+            onValueChange={v => set('licence_states', v)}
             placeholder="Add state..."
           />
 

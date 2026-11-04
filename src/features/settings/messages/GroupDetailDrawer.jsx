@@ -160,7 +160,7 @@ export function GroupDetailDrawer() {
               { value: 'phoenix', label: 'Phoenix' },
             ]}
             value={location}
-            onChange={setLocation}
+            onValueChange={setLocation}
             placeholder="Choose the location"
           />
         </div>

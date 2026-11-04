@@ -199,15 +199,15 @@ export function TemplateImportDrawer({ onClose, onReviewDrafts }) {
             <Alert tone="info" message="Updates to published templates are saved as draft revisions. The published template stays in use until the revision is approved." />
           )}
           <Toggle
-            size="S"
+            size="sm"
             items={[
               { key: 'all', label: `All ${plan.plans.length}` },
               { key: 'add', label: `Add ${plan.totals.add}` },
               { key: 'update', label: `Update ${plan.totals.update}` },
               { key: 'skip', label: `Skip ${plan.totals.skip}` },
             ]}
-            active={filter}
-            onChange={(k) => { setFilter(k); setLimit(PAGE); }}
+            value={filter}
+            onValueChange={(k) => { setFilter(k); setLimit(PAGE); }}
           />
           <ul className={styles.planList}>
             {visible.slice(0, limit).map(p => <PlanRow key={p.key} plan={p} />)}

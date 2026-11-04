@@ -66,9 +66,9 @@ export function ExecutiveTcocSection({
               { key: 'pmpm', label: 'PMPM' },
               { key: 'total', label: 'Total Cost' },
             ]}
-            active={tcocMode}
-            onChange={onTcocModeChange}
-            size="S"
+            value={tcocMode}
+            onValueChange={onTcocModeChange}
+            size="sm"
           />
           <Toggle
             items={[
@@ -79,9 +79,9 @@ export function ExecutiveTcocSection({
               { key: 'rx', label: 'Pharmacy' },
               { key: 'pac', label: 'PAC' },
             ]}
-            active={tcocTab}
-            onChange={onTcocTabChange}
-            size="S"
+            value={tcocTab}
+            onValueChange={onTcocTabChange}
+            size="sm"
           />
         </div>
       }

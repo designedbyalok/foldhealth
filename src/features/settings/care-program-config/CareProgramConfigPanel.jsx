@@ -56,13 +56,13 @@ function CreateProgramDrawer({ types, onCreate, onClose }) {
           helperText="Short code shown on badges and worklists. It can't be changed later."
           errorText={taken ? 'A program type already uses this code.' : undefined}
         />
-        <Textarea title="Description" value={description} onChange={setDescription} placeholder="What this program is for (optional)" rows={3} maxLength={300} />
+        <Textarea title="Description" value={description} onValueChange={setDescription} placeholder="What this program is for (optional)" rows={3} maxLength={300} />
         <Select
           label="Start from"
           portal
           options={[{ value: BLANK, label: 'No steps (start empty)' }, ...types.map(t => ({ value: t.id, label: `${t.name}'s steps` }))]}
           value={from}
-          onChange={setFrom}
+          onValueChange={setFrom}
           helperText="Copies the other program's steps; you can change them after."
         />
       </div>
