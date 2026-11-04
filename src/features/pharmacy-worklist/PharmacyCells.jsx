@@ -2,7 +2,7 @@ import { Badge } from '../../components/Badge/Badge';
 import { Icon } from '../../components/Icon/Icon';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { HoverCard } from '../../components/HoverCard/HoverCard';
-import { GAP_STATUS_TONE, MEASURE_NAMES, PROGRESS_TONE, RECON_TONE, URGENT_SUB_STATUSES, daysFromToday, isActiveGap, medLabel, pdcTone } from './pharmacyWorklist.utils';
+import { gapBadge, MEASURE_NAMES, PROGRESS_TONE, RECON_TONE, URGENT_SUB_STATUSES, daysFromToday, isActiveGap, medLabel, pdcTone } from './pharmacyWorklist.utils';
 import { useAppStore } from '../../store/useAppStore';
 import { STATUS_BADGE_VARIANT } from '../hedis-worklist/HedisWorklistRow';
 import styles from './PharmacyWorklistRow.module.css';
@@ -282,7 +282,7 @@ export function GapStatus({ status, size = 'sm' }) {
   return (
     <span className={styles.stack}>
       <Tooltip label={status.label ? '' : status.detail} placement="bottom">
-        <span><Badge size={size} tone={GAP_STATUS_TONE[status.gap]} label={status.gap} /></span>
+        <span><Badge size={size} {...gapBadge(status)} /></span>
       </Tooltip>
       <SubStatus label={status.label} />
     </span>

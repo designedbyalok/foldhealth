@@ -3,7 +3,7 @@ import { AssigneeChange } from '../../components/AssigneeChange/AssigneeChange';
 import { Badge } from '../../components/Badge/Badge';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { PriorityIcon } from '../../components/PriorityIcon/PriorityIcon';
-import { GAP_STATUS_TONE, MANUAL_GAP_STATUSES, MEASURE_NAMES, PRIORITY_LEVELS, isActiveGap, daysFromToday } from './pharmacyWorklist.utils';
+import { canSetGapStatus, gapBadge, MEASURE_NAMES, PRIORITY_LEVELS, isActiveGap, daysFromToday } from './pharmacyWorklist.utils';
 import { fillsToStayCompliant } from './fillEvents';
 import { OutreachStatusCell } from '../../components/OutreachStatusCell/OutreachStatusCell';
 import { ClaimReconCell, Dash, DateWithDays, DaysToSaveValue, DrugsCount, FailDateValue, NextFillDueValue, OpenCareGaps, PdcValue, PriorYearPdc, ProgressCell, SavabilityBadge, SubStatus } from './PharmacyCells';
@@ -80,7 +80,7 @@ export const PHARMACY_MIDDLE_COLUMNS = [
     // The status badge alone. The team can only move a gap between Open and
     // In Progress (a menu); every other status is Fold's.
     renderCell: perGap((g, m, ctx) => (
-      MANUAL_GAP_STATUSES.includes(g.status.gap) ? (
+      canSetGapStatus(g.status) ? (
         <button
           type="button"
           className={styles.badgeBtn}
@@ -88,11 +88,20 @@ export const PHARMACY_MIDDLE_COLUMNS = [
           aria-haspopup="menu"
           aria-label={`Change ${g.code} status`}
         >
-          <Badge size="sm" tone={GAP_STATUS_TONE[g.status.gap] || 'neutral'} label={g.status.gap} trailingIconElement={<DownChevronIcon size={12} color="currentColor" />} />
+          <Badge size="sm" {...gapBadge(g.status)} trailingIconElement={<DownChevronIcon size={12} color="currentColor" />} />
         </button>
       ) : (
-        <Badge size="sm" tone={GAP_STATUS_TONE[g.status.gap] || 'neutral'} label={g.status.gap} />
+        <Badge size="sm" {...gapBadge(g.status)} />
       )
+    )),
+  },
+  // The plan's status (Open / Closed) beside Fold's own steps.
+  {
+    key: 'planStatus', label: 'Plan Status', getTdClassName: gapTd(false),
+    renderCell: perGap((g) => (
+      <Tooltip label="From the health plan's gap file" placement="bottom">
+        <span><Badge size="sm" tone={g.planStatus === 'Closed' ? 'success' : 'neutral'} variant="outline" label={g.planStatus} /></span>
+      </Tooltip>
     )),
   },
   {

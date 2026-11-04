@@ -33,7 +33,7 @@ function toLogGroups(callHistory) {
       date: `${mm}/${dd}`,
       time: c.time || '',
       author: c.by,
-      title: verification ? `Pharmacy verification · ${c.contact} (locked)` : (c.title ? `${c.title} · ${c.contact}` : `Outgoing Call · ${c.contact}`),
+      title: verification ? `Verification call · ${c.party || 'Pharmacy'}: ${c.contact} (locked)` : (c.title ? `${c.title} · ${c.contact}` : `Outgoing Call · ${c.contact}`),
       programs: c.measures || [],
       // Stored as "Side effects: Experienced" (outcome matching relies on
       // it); shown as "Side effects: Experienced".

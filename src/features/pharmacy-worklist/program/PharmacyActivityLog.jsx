@@ -8,7 +8,7 @@ import { Link } from '../../../components/Link/Link';
 import { toActivityLogEntries } from '../../hedis-worklist/CareGapDetailDrawer.utils';
 import { usePharmacyProgramMember } from './usePharmacyProgramMember';
 import { barrierHistoryEntries } from './barrierHistory';
-import { withBullets, withVerificationDetails } from './verificationHistory';
+import { VERIFICATION_TITLE, withBullets, withVerificationDetails } from './verificationHistory';
 import styles from './PharmacyActivityLog.module.css';
 
 // Barrier & intervention changes come from the barrier log, in the History
@@ -21,7 +21,7 @@ const GAP_CODES = /\b(MAD|MAH|MAC)\b/g;
 function activityType(e) {
   if (e.line) return 'Barrier & intervention';
   const title = e.title || '';
-  if (/^Pharmacy verification/.test(title)) return 'Verification';
+  if (VERIFICATION_TITLE.test(title)) return 'Verification';
   if (e.t === 'outreach') return 'Outreach';
   if (e.t === 'call') return 'Call';
   if (e.t === 'comment') return 'Comment';

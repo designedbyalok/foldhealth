@@ -4,7 +4,8 @@ import { toActivityLogEntries } from '../../hedis-worklist/CareGapDetailDrawer.u
 // (•) the meta line above them uses.
 export const withBullets = (text) => (typeof text === 'string' ? text.replaceAll(' · ', ' • ') : text);
 
-const VERIFICATION_TITLE = /^Pharmacy verification/;
+// Calls saved before any party could be picked were all to the pharmacy.
+export const VERIFICATION_TITLE = /^(Pharmacy verification|Verification call)/;
 const VERIFICATION_ANSWER = /^(MAD|MAH|MAC) · (.+?): (.+)$/;
 
 // A verification call saves its answers as "MAD · Drug: steps" lines ahead of
