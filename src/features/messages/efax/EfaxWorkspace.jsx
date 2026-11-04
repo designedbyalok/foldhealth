@@ -80,7 +80,7 @@ export function EfaxWorkspace({ navCollapsed, onToggleNav }) {
           onSearch={() => { setSearchOpen(v => !v); setQuery(''); }}
         />
         <div className={listStyles.convTabs}>
-          <Toggle items={TABS} active={tab} onChange={setTab} size="S" />
+          <Toggle items={TABS} value={tab} onValueChange={setTab} size="sm" />
         </div>
         {searchOpen && (
           <div className={styles.listSearch}>

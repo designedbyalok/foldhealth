@@ -132,7 +132,7 @@ export function StepConfigDrawer({ step, isNew = false, sectionId = null, sectio
                 placeholder="Pick a form"
                 options={formOptions}
                 value={form?.id || ''}
-                onChange={(id) => {
+                onValueChange={(id) => {
                   const picked = formOptions.find(o => o.value === id);
                   setForm(picked ? { id, name: picked.label } : null);
                   if (!name.trim() && picked) setName(picked.label);
@@ -149,7 +149,7 @@ export function StepConfigDrawer({ step, isNew = false, sectionId = null, sectio
                 placeholder="Pick a screen"
                 options={STEP_SCREENS.map(sc => ({ value: sc, label: sc }))}
                 value={screen}
-                onChange={setScreen}
+                onValueChange={setScreen}
               />
             )}
             {sections.length > 0 && (
@@ -158,7 +158,7 @@ export function StepConfigDrawer({ step, isNew = false, sectionId = null, sectio
                 portal
                 options={[{ value: TOP_LEVEL, label: 'None (top level)' }, ...sections.map(sec => ({ value: sec.id, label: sec.name }))]}
                 value={placement}
-                onChange={setPlacement}
+                onValueChange={setPlacement}
                 helperText="Steps in a section are listed under it in the program."
               />
             )}

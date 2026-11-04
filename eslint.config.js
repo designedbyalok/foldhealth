@@ -123,6 +123,26 @@ export default defineConfig([globalIgnores([
         message: 'Badge sizes are xs | sm | md | lg. See docs/components/library-contract.mdx.',
       },
       {
+        selector: "JSXOpeningElement[name.name=/^(Input|Select|Textarea)$/] > JSXAttribute[name.name='variant'] Literal[value=/^(error|default|quiet)$/]",
+        message: 'Field looks changed: variant="error" → invalid (invalid={cond} for a condition), "default" → (default outline), "quiet" → variant="ghost". See docs/components/library-contract.mdx.',
+      },
+      {
+        selector: "JSXOpeningElement[name.name='Select'] > JSXAttribute[name.name=/^(onChange|ariaLabel)$/]",
+        message: 'Select reports picks through onValueChange(value), and takes aria-label like any element. See docs/components/library-contract.mdx.',
+      },
+      {
+        selector: "JSXOpeningElement[name.name='Textarea']:has(> JSXAttribute[name.name=/^(title|showInfo|info|mandatory|supportingText|richText|maxLength)$/]) > JSXAttribute[name.name='onChange']",
+        message: 'A labelled or rich Textarea reports its text through onValueChange (onChange is the native event, and rich text has none). See docs/components/library-contract.mdx.',
+      },
+      {
+        selector: "JSXOpeningElement[name.name=/^(Toggle|SubTabs)$/] > JSXAttribute[name.name=/^(active|activeKey|onChange)$/]",
+        message: 'Toggle and SubTabs take value / defaultValue / onValueChange. See docs/components/library-contract.mdx.',
+      },
+      {
+        selector: "JSXOpeningElement[name.name=/^(Toggle|SubTabs|Input|Select)$/] > JSXAttribute[name.name='size'] > Literal[value=/^(S|M)$/]",
+        message: 'Sizes are sm | md (md is the default). See docs/components/library-contract.mdx.',
+      },
+      {
         selector: "JSXOpeningElement[name.name='ActionButton'] > JSXAttribute[name.name='state']",
         message: 'ActionButton has no state prop: use disabled, or tone="danger" for the destructive look. See docs/components/library-contract.mdx.',
       },

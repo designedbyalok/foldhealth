@@ -79,7 +79,7 @@ function MemberField({ memberId, setMemberId, options, locked }) {
       searchable
       options={options}
       value={memberId}
-      onChange={setMemberId}
+      onValueChange={setMemberId}
       placeholder="Search Member"
       searchPlaceholder="Search by name"
       emptyText="No matching patients."
@@ -223,7 +223,7 @@ function SendToField({ people, picked, setPicked, error }) {
         badgeTooltip: <PersonTip name={p.name} initials={p.initials} email={reach(p)} tag={p.type} />,
       }))}
       value={picked}
-      onChange={setPicked}
+      onValueChange={setPicked}
       placeholder={SEND_TO_PLACEHOLDER}
       errorText={error}
     />
@@ -384,7 +384,7 @@ export function SendContentDrawer({ patient, onClose }) {
             searchPlaceholder="Search content"
             options={content.map(c => ({ value: c.id, label: c.title }))}
             value={contentId}
-            onChange={(v) => { setContentId(v); setSmsEdited(false); }}
+            onValueChange={(v) => { setContentId(v); setSmsEdited(false); }}
             placeholder="Search Content"
             errorText={touched && !item ? 'Choose the content to send.' : undefined}
           />
@@ -396,7 +396,7 @@ export function SendContentDrawer({ patient, onClose }) {
           <Input value={taskTitle} onChange={e => setTaskTitle(e.target.value)} placeholder="Enter Task Title" maxLength={150} />
         </Row>
         <Row label="Send Via">
-          <Select options={SEND_VIA} value={via} onChange={setVia} />
+          <Select options={SEND_VIA} value={via} onValueChange={setVia} />
         </Row>
 
         <div className={styles.channel}>
@@ -404,7 +404,7 @@ export function SendContentDrawer({ patient, onClose }) {
           {activeTab === 'email' ? (
             <div className={styles.channelBody}>
               <Row label="Template" required>
-                <Select searchable options={templates} value={templateId} onChange={setTemplateId} placeholder="Search Template" />
+                <Select searchable options={templates} value={templateId} onValueChange={setTemplateId} placeholder="Search Template" />
               </Row>
               <Row label="Subject" required>
                 <Input value={subject} onChange={e => setSubject(e.target.value)} maxLength={200} errorText={touched && !subject.trim() ? 'Add a subject.' : undefined} />
@@ -551,7 +551,7 @@ export function SendAssessmentDrawer({ patient, initialFormIds, onClose }) {
         <VerifyIdReveal show={sendTo.withOthers}>
           <VerifyIdCard value={verifyId} onChange={setVerifyId} blockers={blockers} />
         </VerifyIdReveal>
-        <Select label="Template" searchable options={templates} value={templateId} onChange={setTemplateId} />
+        <Select label="Template" searchable options={templates} value={templateId} onValueChange={setTemplateId} />
         <Select
           label="Form List"
           required
@@ -562,7 +562,7 @@ export function SendAssessmentDrawer({ patient, initialFormIds, onClose }) {
           searchPlaceholder="Search form"
           options={forms.map(f => ({ value: String(f.id), label: f.name }))}
           value={formIds}
-          onChange={setFormIds}
+          onValueChange={setFormIds}
           placeholder="Search Form"
         />
         <div className={styles.preview}>

@@ -8,7 +8,7 @@ import styles from './overviewCards.module.css';
 export function CountToggle({ items, active, onChange }) {
   return (
     <Toggle
-      size="S"
+      size="sm"
       items={items.map(({ key, label, count }) => ({
         key,
         label: (
@@ -18,8 +18,8 @@ export function CountToggle({ items, active, onChange }) {
           </span>
         ),
       }))}
-      active={active}
-      onChange={onChange}
+      value={active}
+      onValueChange={onChange}
     />
   );
 }

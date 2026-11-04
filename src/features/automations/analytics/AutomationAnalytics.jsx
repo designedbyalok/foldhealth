@@ -154,7 +154,7 @@ export function AutomationAnalytics({ id }) {
           <h1 className={styles.title}>{automation.name}</h1>
           <Badge tone={status.tone} size="sm" label={status.label} />
           <div className={styles.headerActions}>
-            <Toggle items={VIEW_ITEMS} active={tab} onChange={k => openAutomationAnalytics(id, k)} />
+            <Toggle items={VIEW_ITEMS} value={tab} onValueChange={k => openAutomationAnalytics(id, k)} />
             <span className={styles.headerDivider} aria-hidden />
             <Button variant="outline" leadingIcon="solar:pen-linear" onClick={() => openAutomationBuilder(id)}>Edit automation</Button>
           </div>

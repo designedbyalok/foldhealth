@@ -217,7 +217,7 @@ export function BulkRescheduleDrawer({ provider, appointments, onDone, onClose }
                         label: timeRangeLabel({ time_start: minutesToTime(s.minutes), time_end: minutesToTime(s.minutes + durationMin(a)) }),
                       })) : []}
                       value={pick.minutes != null ? String(pick.minutes) : undefined}
-                      onChange={(v) => setPick(a.id, { minutes: Number(v) })}
+                      onValueChange={(v) => setPick(a.id, { minutes: Number(v) })}
                       emptyText="No open slots on this day"
                     />
                   </td>

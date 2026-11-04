@@ -53,7 +53,7 @@ export function AllergySelect({ value, onChange, leadingIcon }) {
     <Select
       options={options}
       value={value}
-      onChange={handleChange}
+      onValueChange={handleChange}
       placeholder="Search And Add Allergies"
       leadingIcon={leadingIcon}
       searchable

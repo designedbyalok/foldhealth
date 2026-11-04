@@ -129,7 +129,7 @@ export function CareTeamDrawer({ patient, onClose }) {
             label="Select Role"
             options={CARE_TEAM_ROLES.map(r => ({ value: r, label: r }))}
             value={role}
-            onChange={setRole}
+            onValueChange={setRole}
             placeholder="Select Care Team Role"
           />
           <Select
@@ -139,7 +139,7 @@ export function CareTeamDrawer({ patient, onClose }) {
             disabled={!role}
             options={userOptions}
             value=""
-            onChange={addUser}
+            onValueChange={addUser}
             placeholder="Search & Select Team Members"
             searchPlaceholder="Search by name or role"
             emptyText="No users match"

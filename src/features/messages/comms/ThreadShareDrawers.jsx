@@ -118,7 +118,7 @@ function ThreadLinkDrawer({ conversation, forName, onInsert, onClose, load, item
           disabled
           options={[{ value: 'member', triggerLabel: patient.name, label: patient.name }]}
           value="member"
-          onChange={() => {}}
+          onValueChange={() => {}}
         />
         {hasRoles && (
           <SendToPicker
@@ -133,7 +133,7 @@ function ThreadLinkDrawer({ conversation, forName, onInsert, onClose, load, item
               badgeTooltip: <PersonTip name={o.name} initials={o.initials} email={o.phone ? formatPhone(o.phone) : ''} tag={o.type} />,
             }))}
             value={picked}
-            onChange={pick}
+            onValueChange={pick}
             placeholder={SEND_TO_PLACEHOLDER}
           >
             {/* The item is required, so there's always a link; Protect links
@@ -150,7 +150,7 @@ function ThreadLinkDrawer({ conversation, forName, onInsert, onClose, load, item
           searchPlaceholder={`Search ${itemLabel.toLowerCase()}`}
           options={items.map(i => ({ value: i.id, label: i.name }))}
           value={itemId}
-          onChange={setItemId}
+          onValueChange={setItemId}
           placeholder={`Search ${itemLabel}`}
         />
       </div>

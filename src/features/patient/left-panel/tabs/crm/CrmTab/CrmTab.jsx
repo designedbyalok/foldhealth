@@ -169,7 +169,7 @@ export function CrmTab({ patientId }) {
   return (
     <div className={styles.wrapper}>
       <div className={styles.toolbar}>
-        <SubTabs tabs={FILTER_TABS} activeKey={channel} onChange={setChannel} />
+        <SubTabs tabs={FILTER_TABS} value={channel} onValueChange={setChannel} />
         <ActionButton icon="custom:filter" size="sm" tooltip="Filter" tooltipLeft />
       </div>
       {loading

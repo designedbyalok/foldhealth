@@ -39,7 +39,7 @@ export function CalendarViewTools({ search = '', onSearchChange, placeholder = '
       {onGroupsModeChange && (
         <>
           <span className={styles.listToolsDivider} aria-hidden="true" />
-          <Toggle items={GROUP_MODES} active={groupsMode} onChange={onGroupsModeChange} size="S" />
+          <Toggle items={GROUP_MODES} value={groupsMode} onValueChange={onGroupsModeChange} size="sm" />
         </>
       )}
     </div>

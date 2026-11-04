@@ -159,7 +159,7 @@ export function AddNoteTemplateDrawer({ onClose }) {
                 id="note-tpl-gap"
                 options={gapOptions}
                 value={gapCode}
-                onChange={setGapCode}
+                onValueChange={setGapCode}
                 placeholder="Choose a care gap"
                 searchable
               />

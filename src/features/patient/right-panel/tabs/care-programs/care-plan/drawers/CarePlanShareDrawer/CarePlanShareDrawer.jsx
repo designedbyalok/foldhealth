@@ -642,7 +642,7 @@ export function CarePlanShareDrawer({ patientId, program, data: draftData, patie
             checkboxes
             options={versionOptions}
             value={versionKeysStr.split(',')}
-            onChange={pickVersions}
+            onValueChange={pickVersions}
             placeholder="Select version"
           />
         </div>
@@ -652,7 +652,7 @@ export function CarePlanShareDrawer({ patientId, program, data: draftData, patie
             <Select
               options={rangeOptions}
               value={shareFilters.rangePreset || ''}
-              onChange={(key) => {
+              onValueChange={(key) => {
                 // Custom opens the calendar on this field; the pick lands here.
                 if (key === 'custom') { setRangeAnchor(rangeFieldRef.current?.getBoundingClientRect() ?? null); return; }
                 setShareFilters(f => ({ ...f, rangePreset: key, dateRange: shareDateRangeFor(key) }));

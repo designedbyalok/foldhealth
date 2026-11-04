@@ -88,7 +88,7 @@ function GapRow({ whitelist, parent, history, checked, config, onToggle, onConfi
             {needsReason && (
               <div className={styles.field}>
                 <span className={styles.label}>Reason<span className={styles.req}>•</span></span>
-                <Select options={toOptions(REASONS)} value={config.reason} placeholder="Why add it again?" onChange={(v) => onConfig({ ...config, reason: v })} />
+                <Select options={toOptions(REASONS)} value={config.reason} placeholder="Why add it again?" onValueChange={(v) => onConfig({ ...config, reason: v })} />
               </div>
             )}
           </div>
@@ -316,7 +316,7 @@ export function AddCareGapsDrawer() {
           <div className={styles.grid}>
             <div className={styles.field}>
               <span className={styles.label}>Measure Year<span className={styles.req}>•</span></span>
-              <Select options={yearOptions} value={String(measureYear)} onChange={(v) => setMeasureYear(Number(v))} />
+              <Select options={yearOptions} value={String(measureYear)} onValueChange={(v) => setMeasureYear(Number(v))} />
             </div>
             <div className={styles.field}>
               <span className={styles.label}>IPA</span>

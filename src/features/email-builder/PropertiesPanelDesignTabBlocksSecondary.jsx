@@ -70,9 +70,9 @@ export function DesignTabBlocksSecondary({ ctx }) {
                   { key: 'horizontal', label: 'Horizontal' },
                   { key: 'vertical',   label: 'Vertical' },
                 ]}
-                active={props.orientation || 'horizontal'}
-                size="S"
-                onChange={v => update(['data', 'props', 'orientation'], v)}
+                value={props.orientation || 'horizontal'}
+                size="sm"
+                onValueChange={v => update(['data', 'props', 'orientation'], v)}
               />
             </div>
             <Row2>
@@ -96,9 +96,9 @@ export function DesignTabBlocksSecondary({ ctx }) {
                   { key: 'solid', label: 'Solid' },
                   { key: 'dashed', label: 'Dashed' },
                 ]}
-                active={props.lineStyle || 'solid'}
-                size="S"
-                onChange={v => update(['data', 'props', 'lineStyle'], v)}
+                value={props.lineStyle || 'solid'}
+                size="sm"
+                onValueChange={v => update(['data', 'props', 'lineStyle'], v)}
               />
             </div>
             <Row2>
@@ -111,9 +111,9 @@ export function DesignTabBlocksSecondary({ ctx }) {
                     { key: 'circle', label: '●' },
                     { key: 'arrow', label: '◄' },
                   ]}
-                  active={props.endLeft || 'none'}
-                  size="S"
-                  onChange={v => update(['data', 'props', 'endLeft'], v)}
+                  value={props.endLeft || 'none'}
+                  size="sm"
+                  onValueChange={v => update(['data', 'props', 'endLeft'], v)}
                 />
               </div>
               <div className={styles.fieldCol}>
@@ -125,9 +125,9 @@ export function DesignTabBlocksSecondary({ ctx }) {
                     { key: 'circle', label: '●' },
                     { key: 'arrow', label: '►' },
                   ]}
-                  active={props.endRight || 'none'}
-                  size="S"
-                  onChange={v => update(['data', 'props', 'endRight'], v)}
+                  value={props.endRight || 'none'}
+                  size="sm"
+                  onValueChange={v => update(['data', 'props', 'endRight'], v)}
                 />
               </div>
             </Row2>
@@ -167,9 +167,9 @@ export function DesignTabBlocksSecondary({ ctx }) {
               <Toggle
                 fullWidth
                 items={[{ key: 'on', label: 'On' }, { key: 'off', label: 'Off' }]}
-                active={props.stripedRows ? 'on' : 'off'}
-                size="S"
-                onChange={v => update(['data', 'props', 'stripedRows'], v === 'on')}
+                value={props.stripedRows ? 'on' : 'off'}
+                size="sm"
+                onValueChange={v => update(['data', 'props', 'stripedRows'], v === 'on')}
               />
             </div>
           </Section>
@@ -197,9 +197,9 @@ export function DesignTabBlocksSecondary({ ctx }) {
                   { key: 'center', label: '', icon: <AlignCenterIcon /> },
                   { key: 'right',  label: '', icon: <AlignRightIcon /> },
                 ]}
-                active={props.alignment || 'center'}
-                size="S"
-                onChange={v => update(['data', 'props', 'alignment'], v)}
+                value={props.alignment || 'center'}
+                size="sm"
+                onValueChange={v => update(['data', 'props', 'alignment'], v)}
               />
             </div>
           </Section>
@@ -236,9 +236,9 @@ export function DesignTabBlocksSecondary({ ctx }) {
                   { key: 'center', label: '', icon: <AlignCenterIcon /> },
                   { key: 'right',  label: '', icon: <AlignRightIcon /> },
                 ]}
-                active={props.alignment || 'center'}
-                size="S"
-                onChange={v => update(['data', 'props', 'alignment'], v)}
+                value={props.alignment || 'center'}
+                size="sm"
+                onValueChange={v => update(['data', 'props', 'alignment'], v)}
               />
             </div>
           </Section>
@@ -276,9 +276,9 @@ export function DesignTabBlocksSecondary({ ctx }) {
                     { key: 'row', label: '', icon: <DirectionRowIcon /> },
                     { key: 'column', label: '', icon: <DirectionColIcon /> },
                   ]}
-                  active={props.direction || 'row'}
-                  size="S"
-                  onChange={v => update(['data', 'props', 'direction'], v)}
+                  value={props.direction || 'row'}
+                  size="sm"
+                  onValueChange={v => update(['data', 'props', 'direction'], v)}
                 />
               </div>
             </Row2>
@@ -294,9 +294,9 @@ export function DesignTabBlocksSecondary({ ctx }) {
                   { key: 'nowrap', label: 'No Wrap' },
                   { key: 'wrap', label: 'Wrap' },
                 ]}
-                active={props.flexWrap || 'nowrap'}
-                size="S"
-                onChange={v => update(['data', 'props', 'flexWrap'], v)}
+                value={props.flexWrap || 'nowrap'}
+                size="sm"
+                onValueChange={v => update(['data', 'props', 'flexWrap'], v)}
               />
             </div>
             <div className={styles.fieldCol}>

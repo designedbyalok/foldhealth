@@ -757,10 +757,10 @@ export function CarePlanHistoryView({ patientId, program, lastVisit = null, sinc
   const filterRow = (
     <div className={`${styles.filterRow}${compact ? ` ${styles.filterRowCompact}` : ''}`}>
       <Toggle
-        size="S"
+        size="sm"
         items={[{ key: 'month', label: 'Month' }, { key: 'version', label: 'Versions' }]}
-        active={viewBy}
-        onChange={setViewBy}
+        value={viewBy}
+        onValueChange={setViewBy}
       />
       <span className={styles.filterDivider} aria-hidden="true" />
       <FilterChip

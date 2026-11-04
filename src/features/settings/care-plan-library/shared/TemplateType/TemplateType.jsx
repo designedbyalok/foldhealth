@@ -119,7 +119,7 @@ export function EpisodeSettings({ value, onChange }) {
             label="Runs as program"
             options={EPISODE_PROGRAM_OPTIONS}
             value={programCode || ''}
-            onChange={(code) => set({ programCode: code || null })}
+            onValueChange={(code) => set({ programCode: code || null })}
             placeholder="Pick a program"
             helperText="The patient is enrolled in this program for the episode, and its care plan holds the episode. It closes when the episode ends."
           />
@@ -140,7 +140,7 @@ export function EpisodeSettings({ value, onChange }) {
               multiple
               options={PAUSABLE_PROGRAM_OPTIONS}
               value={supersedes}
-              onChange={(codes) => set({ supersedes: codes })}
+              onValueChange={(codes) => set({ supersedes: codes })}
               placeholder="All of the patient’s other programs"
               helperText="Leave empty to pause every other ongoing plan. Other episodes never pause."
             />

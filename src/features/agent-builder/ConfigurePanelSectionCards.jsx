@@ -53,7 +53,7 @@ export function ConfigureAgentUseCaseSection({ form, expanded, toggleExpanded, u
               id={`${uid}-agent-role`}
               value={form.agentRole}
               options={ROLE_OPTIONS}
-              onChange={v => updateField('agentRole', v)}
+              onValueChange={v => updateField('agentRole', v)}
               placeholder="Select role"
             />
           </div>
@@ -148,7 +148,7 @@ export function ConfigurePersonalizationSection({ form, expanded, toggleExpanded
           id={`${uid}-voice`}
           value={form.voice}
           options={VOICE_OPTIONS}
-          onChange={v => updateField('voice', v)}
+          onValueChange={v => updateField('voice', v)}
           placeholder="Select voice"
         />
       </div>
@@ -290,7 +290,7 @@ export function ConfigureTargetPopulationSection({ form, expanded, toggleExpande
             { value: 'awv', label: 'Annual Wellness Visit' },
             { value: 'chronic', label: 'Chronic Care Management' },
           ]}
-          onChange={v => updateField('selectedWorklist', v)}
+          onValueChange={v => updateField('selectedWorklist', v)}
           placeholder="Select Worklist"
         />
       )}

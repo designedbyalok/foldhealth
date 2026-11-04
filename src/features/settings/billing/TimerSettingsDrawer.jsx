@@ -251,10 +251,10 @@ export function TimerSettingsDrawer({ program, setting, onClose }) {
           {pickerOpen && (
             <div className={styles.dropdown}>
               <Toggle
-                size="S"
+                size="sm"
                 fullWidth
-                active={pickerTab}
-                onChange={setPickerTab}
+                value={pickerTab}
+                onValueChange={setPickerTab}
                 items={[{ key: 'users', label: 'Users' }, { key: 'roles', label: 'Roles' }]}
               />
               <div className={styles.dropdownList}>
@@ -279,10 +279,10 @@ export function TimerSettingsDrawer({ program, setting, onClose }) {
         </div>
 
         <Toggle
-          size="S"
+          size="sm"
           className={styles.pickerToggle}
-          active={tab}
-          onChange={setTab}
+          value={tab}
+          onValueChange={setTab}
           items={[
             { key: 'all', label: <>All{tabCount(teamMembers.length + userNames.length + roles.length)}</> },
             { key: 'team', label: <>Care Program Team{tabCount(teamMembers.length)}</> },

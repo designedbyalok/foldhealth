@@ -166,9 +166,9 @@ export function EmailWorkspace({ onCompose, selectConversationId, onSelectedConv
         <div className={listStyles.convTabs}>
           <Toggle
             items={[{ key: 'inbox', label: 'Inbox' }, { key: 'draft', label: 'Draft' }, { key: 'sent', label: 'Sent' }]}
-            active={folder}
-            onChange={setFolder}
-            size="S"
+            value={folder}
+            onValueChange={setFolder}
+            size="sm"
           />
         </div>
         {filterOpen && (

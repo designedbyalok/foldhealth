@@ -168,13 +168,13 @@ export function DevicePreview({ device }) {
     <div className={styles.stage} ref={stageRef}>
       <div className={styles.themeBar}>
         <Toggle
-          size="S"
+          size="sm"
           items={[
             { key: 'light', label: 'Light', icon: 'solar:sun-linear' },
             { key: 'dark',  label: 'Dark',  icon: 'solar:moon-linear' },
           ]}
-          active={theme}
-          onChange={setTheme}
+          value={theme}
+          onValueChange={setTheme}
         />
       </div>
       <div className={styles.deviceWrap} key={device}>

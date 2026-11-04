@@ -33,7 +33,7 @@ function WorklistDrawer({ worklist, programName, userOptions, onSave, onClose })
     >
       <div className={styles.drawerBody}>
         <Input label="Worklist Name" required value={w.name} maxLength={60} placeholder={`e.g. ${programName} Outreach Queue`} onChange={e => set({ name: e.target.value })} />
-        <Textarea title="Description" value={w.description} onChange={description => set({ description })} rows={2} maxLength={200} placeholder="Who this worklist is for (optional)" />
+        <Textarea title="Description" value={w.description} onValueChange={description => set({ description })} rows={2} maxLength={200} placeholder="Who this worklist is for (optional)" />
         <Select
           label="Patients in this worklist"
           portal
@@ -43,7 +43,7 @@ function WorklistDrawer({ worklist, programName, userOptions, onSave, onClose })
           placeholder="Every enrolled patient"
           options={STATUS_OPTIONS.map(v => ({ value: v, label: v }))}
           value={w.statuses}
-          onChange={statuses => set({ statuses })}
+          onValueChange={statuses => set({ statuses })}
           helperText="Program statuses to include. Leave empty for every status."
         />
         <RadioOptionGroup
@@ -64,7 +64,7 @@ function WorklistDrawer({ worklist, programName, userOptions, onSave, onClose })
             placeholder="Pick who works this worklist"
             options={userOptions}
             value={w.assigneeIds}
-            onChange={assigneeIds => set({ assigneeIds })}
+            onValueChange={assigneeIds => set({ assigneeIds })}
           />
         )}
         <div className={styles.switchRow}>

@@ -379,7 +379,7 @@ function DosBlock({ block, providerOptions, onChange, onRemove }) {
             placeholder="Select Rendering Provider"
             searchable
             searchPlaceholder="Search team members…"
-            onChange={(v) => setField('provider', v)}
+            onValueChange={(v) => setField('provider', v)}
           />
         </FieldRow>
         <FieldRow
@@ -395,7 +395,7 @@ function DosBlock({ block, providerOptions, onChange, onRemove }) {
             placeholder="Select Place of Service"
             searchable
             searchPlaceholder="Search POS code or name…"
-            onChange={(v) => setField('pos', v)}
+            onValueChange={(v) => setField('pos', v)}
           />
         </FieldRow>
         <FieldRow
@@ -407,7 +407,7 @@ function DosBlock({ block, providerOptions, onChange, onRemove }) {
           error={extracted && !block.docType}
           hint={extracted && !block.docType ? extracted.docTypeHint : null}
         >
-          <Select options={DOC_TYPE_OPTIONS} value={block.docType || ''} placeholder="Select Document Type" onChange={(v) => setField('docType', v)} variant={extracted && !block.docType ? 'error' : 'default'} />
+          <Select options={DOC_TYPE_OPTIONS} value={block.docType || ''} placeholder="Select Document Type" onValueChange={(v) => setField('docType', v)} invalid={extracted && !block.docType} />
         </FieldRow>
       </div>
 

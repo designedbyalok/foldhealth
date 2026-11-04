@@ -40,7 +40,7 @@ export function CreateInsurancePlanStepOne({
         <div className={styles.row}>
           <div className={styles.field}>
             <FieldLabel required>Plan Name</FieldLabel>
-            <Input placeholder="Enter Plan Name" value={form.planName} onChange={set('planName')} variant={err('planName') ? 'error' : 'default'} />
+            <Input placeholder="Enter Plan Name" value={form.planName} onChange={set('planName')} invalid={err('planName')} />
             {err('planName') && <span className={styles.errorText}>Plan Name is required</span>}
           </div>
           <div className={styles.field}>
@@ -63,7 +63,7 @@ export function CreateInsurancePlanStepOne({
           </div>
           <div className={styles.field}>
             <FieldLabel required info={FIELD_INFO.groupNumber}>Group Number</FieldLabel>
-            <Input placeholder="Enter Group Number" value={form.groupNumber} onChange={set('groupNumber')} variant={err('groupNumber') ? 'error' : 'default'} />
+            <Input placeholder="Enter Group Number" value={form.groupNumber} onChange={set('groupNumber')} invalid={err('groupNumber')} />
             {err('groupNumber') && <span className={styles.errorText}>Group Number is required</span>}
           </div>
         </div>
@@ -71,12 +71,12 @@ export function CreateInsurancePlanStepOne({
         <div className={styles.row}>
           <div className={styles.field}>
             <FieldLabel required info={FIELD_INFO.externalId}>External ID</FieldLabel>
-            <Input placeholder="Enter External ID" value={form.externalId} onChange={set('externalId')} variant={err('externalId') ? 'error' : 'default'} />
+            <Input placeholder="Enter External ID" value={form.externalId} onChange={set('externalId')} invalid={err('externalId')} />
             {err('externalId') && <span className={styles.errorText}>External ID is required</span>}
           </div>
           <div className={styles.field}>
             <FieldLabel required info={FIELD_INFO.ediPayerId}>EDI Payer ID</FieldLabel>
-            <Input placeholder="Enter EDI Payer ID" value={form.ediPayerId} onChange={set('ediPayerId')} variant={err('ediPayerId') ? 'error' : 'default'} />
+            <Input placeholder="Enter EDI Payer ID" value={form.ediPayerId} onChange={set('ediPayerId')} invalid={err('ediPayerId')} />
             {err('ediPayerId') && <span className={styles.errorText}>EDI Payer ID is required</span>}
           </div>
         </div>
@@ -98,7 +98,7 @@ export function CreateInsurancePlanStepOne({
             <Select
               options={MEDICAL_BENEFITS_OPTIONS}
               value={form.medicalBenefits || undefined}
-              onChange={setVal('medicalBenefits')}
+              onValueChange={setVal('medicalBenefits')}
               placeholder="Select Medical Benefits"
             />
           </div>
@@ -221,12 +221,12 @@ export function CreateInsurancePlanStepOne({
         <div className={styles.row}>
           <div className={styles.field}>
             <FieldLabel required>Member Support Phone Number</FieldLabel>
-            <Input placeholder="Enter Phone Number" value={form.memberSupportPhone} onChange={setPhone('memberSupportPhone')} variant={err('memberSupportPhone') ? 'error' : 'default'} />
+            <Input placeholder="Enter Phone Number" value={form.memberSupportPhone} onChange={setPhone('memberSupportPhone')} invalid={err('memberSupportPhone')} />
             {err('memberSupportPhone') && <span className={styles.errorText}>Member Support Phone Number is required</span>}
           </div>
           <div className={styles.field}>
             <FieldLabel required>Provider Support Phone Number</FieldLabel>
-            <Input placeholder="Enter Phone Number" value={form.providerSupportPhone} onChange={setPhone('providerSupportPhone')} variant={err('providerSupportPhone') ? 'error' : 'default'} />
+            <Input placeholder="Enter Phone Number" value={form.providerSupportPhone} onChange={setPhone('providerSupportPhone')} invalid={err('providerSupportPhone')} />
             {err('providerSupportPhone') && <span className={styles.errorText}>Provider Support Phone Number is required</span>}
           </div>
         </div>
@@ -238,7 +238,7 @@ export function CreateInsurancePlanStepOne({
           <div className={styles.addressStack}>
             <div className={styles.fieldFull}>
               <FieldLabel required>Address Line 1</FieldLabel>
-              <Input placeholder="Address Line 1" value={form.addressLine1} onChange={set('addressLine1')} variant={err('addressLine1') ? 'error' : 'default'} />
+              <Input placeholder="Address Line 1" value={form.addressLine1} onChange={set('addressLine1')} invalid={err('addressLine1')} />
               {err('addressLine1') && <span className={styles.errorText}>Address Line 1 is required</span>}
             </div>
             <div className={styles.fieldFull}>
@@ -248,7 +248,7 @@ export function CreateInsurancePlanStepOne({
             <div className={styles.row}>
               <div className={styles.field}>
                 <FieldLabel required>Zipcode</FieldLabel>
-                <Input placeholder="Enter Zipcode" value={form.zipcode} onChange={handleZipChange} maxLength={5} variant={(zipInvalid || err('zipcode')) ? 'error' : 'default'} />
+                <Input placeholder="Enter Zipcode" value={form.zipcode} onChange={handleZipChange} maxLength={5} invalid={zipInvalid || err('zipcode')} />
                 {zipInvalid
                   ? <span className={styles.errorText}>Please enter valid zipcode</span>
                   : err('zipcode') && <span className={styles.errorText}>Zipcode is required</span>}

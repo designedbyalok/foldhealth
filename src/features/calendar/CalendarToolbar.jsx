@@ -161,7 +161,7 @@ export function CalendarToolbar({
             // Available Slots has a Week and a Day, no Month.
             options={VIEWS.filter(v => layout !== 'availability' || v !== 'month-grid').map(v => ({ value: v, label: VIEW_LABELS[v] }))}
             value={currentView}
-            onChange={onViewChange}
+            onValueChange={onViewChange}
             className={styles.viewSelect}
           />
           <Button variant="outline" onClick={onToday}>Today</Button>
@@ -181,9 +181,9 @@ export function CalendarToolbar({
           {divider}
           <Toggle
             items={LAYOUTS.map(l => ({ key: l.key, icon: l.icon, ariaLabel: l.tip, tooltip: l.tooltip }))}
-            active={layout}
-            onChange={onLayoutChange}
-            size="S"
+            value={layout}
+            onValueChange={onLayoutChange}
+            size="sm"
           />
           {divider}
           <div className={styles.toolGroup}>

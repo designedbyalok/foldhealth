@@ -55,7 +55,7 @@ export function QuickNotePopover({ kind, item, rect, audit, noteRefs, onSave, on
           mentionUsers={noteRefs?.mentionUsers}
           links={noteRefs?.links}
           value={html}
-          onChange={(v, plain) => { setHtml(v); setText(plain || ''); }}
+          onValueChange={(v, plain) => { setHtml(v); setText(plain || ''); }}
           placeholder={latest ? 'Add a newer note…' : 'Add a note…'}
           rows={3}
           autoFocus

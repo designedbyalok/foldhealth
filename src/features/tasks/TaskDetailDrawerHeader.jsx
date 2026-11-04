@@ -21,7 +21,7 @@ export function TaskDetailDrawerHeader({
           style={{ width: 120 }}
           options={STATUS_ORDER.map(s => ({ value: s, label: STATUS_LABELS[s] }))}
           value={task.status}
-          onChange={onStatusChange}
+          onValueChange={onStatusChange}
         />
         <div className={styles.drawerToolbarRight}>
           {task.pool && !task.assigned_to && (

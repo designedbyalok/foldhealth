@@ -1133,7 +1133,7 @@ export function CarePlanLibraryPanel() {
             searchable
             options={ipas.filter(i => i.active && !templateOverlays.some(o => o.templateId === cloneTarget.overlay.templateId && o.ipaId === i.id)).map(i => ({ value: i.id, label: i.name }))}
             value={cloneTarget.ipaIds}
-            onChange={v => setCloneTarget(c => ({ ...c, ipaIds: v || [] }))}
+            onValueChange={v => setCloneTarget(c => ({ ...c, ipaIds: v || [] }))}
             placeholder="Pick IPAs"
           />
         </ConfirmDialog>

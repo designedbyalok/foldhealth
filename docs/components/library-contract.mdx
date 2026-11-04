@@ -115,6 +115,17 @@ the `disabled` prop. The 60-odd feature looks (`toc-enrolled`,
 statuses to a tone in its own table, and `scripts/codemods/badge-tones.mjs`
 did that move.
 
+Text fields follow the same idea. `Input`, `Select` and `Textarea` take
+`invalid` for the error look (it was `variant="error"`), `variant` is
+`outline` (default) or `ghost` (Input's old `quiet`; Input and Select only),
+and Input and Select take `size` `md` (32px) or `sm` (28px). Their change
+callback is `onValueChange(value)`; Input and Textarea keep the native
+`onChange(event)` beside it, and a rich-text Textarea, which has no native
+event, reports `onValueChange(html, plain)`. `Toggle` and `SubTabs` take
+`value` / `defaultValue` / `onValueChange` and `size` `sm` / `md`. Select now
+forwards `ref` and spreads its other props onto the trigger, so `aria-label`
+lands on the control. `scripts/codemods/form-controls.mjs` did the move.
+
 `scripts/codemods/button-variants.mjs` rewrites `Button` and `ActionButton`
 call sites (run it on a branch that predates the change). The old names still
 work at runtime with a one-time warning in development, and the guardrails
@@ -265,7 +276,5 @@ Still positioning themselves:
 | Component | Today | Target |
 |---|---|---|
 | `InfoBar`, `Alert` | Both carry `tone`; `InfoBar` adds a `variant` | One `Banner` with `tone` and `variant` |
-| `Toggle`, `SubTabs` | `size="M"`; `onChange(key)` | `size="md"`; `value`/`defaultValue`/`onValueChange` |
-| `Textarea` | `onChange` is an event in plain mode and `(value, event)` in rich mode | Native `onChange(event)` plus `onValueChange(value)` |
 | `CheckboxTick`, `Switch` | Numeric `size` / `labelGap` | `size` scale; spacing from tokens |
 | `ShadcnCheckbox`, `ShadcnDialog`, `ShadcnSlider` | Implementation in the name | `Checkbox`, `Dialog`, `Slider` |

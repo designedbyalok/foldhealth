@@ -40,8 +40,7 @@ function DraftTextarea({ value, onCommit, ...rest }) {
     <Textarea
       {...rest}
       value={draft}
-      // A labelled Textarea passes the text; a plain one, the event.
-      onChange={v => setDraft(typeof v === 'string' ? v : v.target.value)}
+      onValueChange={setDraft}
       onBlur={() => { if (draft !== (value || '')) onCommit(draft); }}
     />
   );
@@ -238,7 +237,7 @@ export function MedicationDetail({ med, memberRowId, plan, initialTab, flushTabs
             label="Reason for Non-Adherence"
             options={NON_ADHERENCE_REASONS}
             value={med.nonAdherenceReason || ''}
-            onChange={v => save({ nonAdherenceReason: v })}
+            onValueChange={v => save({ nonAdherenceReason: v })}
             placeholder="Select reason"
           />
         </div>

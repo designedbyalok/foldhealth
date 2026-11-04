@@ -308,7 +308,7 @@ export function CarePlanViewDrawers(d) {
               mentionUsers={noteMentionUsers}
               links={noteLinkItems}
               value={noteText}
-              onChange={(html, plain) => { setNoteText(html); setNotePlain(plain || ''); }}
+              onValueChange={(html, plain) => { setNoteText(html); setNotePlain(plain || ''); }}
               placeholder="e.g. Reviewed with patient; no changes needed. Type @ to tag someone, / to link a goal, intervention or barrier."
             />
             {noteTimelineEntries.length > 0 && (
@@ -429,7 +429,7 @@ export function CarePlanViewDrawers(d) {
                   ...appliedTemplates.map(t => ({ value: t.id, label: t.name })),
                 ]}
                 value={templateSourceId}
-                onChange={pickTemplateSource}
+                onValueChange={pickTemplateSource}
                 searchable={appliedTemplates.length > 6}
                 searchPlaceholder="Search templates"
               />

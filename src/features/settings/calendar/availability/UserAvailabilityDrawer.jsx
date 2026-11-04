@@ -411,14 +411,14 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                     searchable
                     options={locationOptions}
                     value={b.location}
-                    onChange={(v) => {
+                    onValueChange={(v) => {
                       const loc = (locations || []).find(l => l.name === v);
                       update(i, { location: v, ...(loc?.timezone ? { timezone: loc.timezone } : {}) });
                     }}
                     placeholder="Select location"
                     errorText={e.location}
                   />
-                  <Select label="Timezone" required searchable options={tzOptions} value={b.timezone} onChange={(v) => update(i, { timezone: v })} placeholder="Select timezone" errorText={e.timezone} />
+                  <Select label="Timezone" required searchable options={tzOptions} value={b.timezone} onValueChange={(v) => update(i, { timezone: v })} placeholder="Select timezone" errorText={e.timezone} />
                 </div>
 
                 <div className={styles.pair}>
@@ -510,7 +510,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                             options={typeOptions}
                             value={s.appointmentType}
                             placeholder="Appointment type"
-                            onChange={(v) => updateSlot(i, j, { appointmentType: v })}
+                            onValueChange={(v) => updateSlot(i, j, { appointmentType: v })}
                             wrapperClassName={styles.slotType}
                             aria-label="Appointment type"
                           />
@@ -600,7 +600,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
               disabled={!!initialUser}
               options={users.filter(u => u.name !== cloneFrom?.name).map(u => ({ value: u.name, label: u.email ? `${u.name} (${u.email})` : u.name }))}
               value={userName}
-              onChange={pickUser}
+              onValueChange={pickUser}
               placeholder="Select user"
               errorText={touched && !user ? 'Choose a user.' : undefined}
             />

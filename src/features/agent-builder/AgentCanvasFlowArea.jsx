@@ -114,9 +114,9 @@ export function AgentCanvasFlowArea({
             </div>
             <div className={styles.modeTogglePill} title="Tool (V / H)">
               <Toggle
-                size="S"
-                active={canvasMode}
-                onChange={setCanvasMode}
+                size="sm"
+                value={canvasMode}
+                onValueChange={setCanvasMode}
                 items={[
                   { key: 'select', label: 'Select', icon: <SelectCursorIcon size={14} /> },
                   { key: 'pan', label: 'Pan', icon: <PanHandIcon size={14} /> },

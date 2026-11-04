@@ -200,9 +200,9 @@ export function ProfileTab({ patient }) {
       <div className={styles.viewRow}>
         <Toggle
           items={PROFILE_VIEWS}
-          active={view}
-          onChange={setView}
-          size="S"
+          value={view}
+          onValueChange={setView}
+          size="sm"
           className={styles.viewToggle}
         />
         <ActionButton

@@ -98,7 +98,7 @@ export function OnCallScheduleDrawer({ preset, oooRecordId, excludeUser, onClose
               placeholder="Select Phone Tree Type"
               options={PHONE_TREE_TYPES.map(t => ({ value: t, label: t }))}
               value={b.phoneTreeType || undefined}
-              onChange={(v) => edit(b.key, { phoneTreeType: v })}
+              onValueChange={(v) => edit(b.key, { phoneTreeType: v })}
             />
             <div className={styles.dateRow}>
               <DatePicker
@@ -126,7 +126,7 @@ export function OnCallScheduleDrawer({ preset, oooRecordId, excludeUser, onClose
               placeholder="Select user"
               options={userOptions}
               value={b.userName || undefined}
-              onChange={(v) => edit(b.key, { userName: v })}
+              onValueChange={(v) => edit(b.key, { userName: v })}
             />
           </div>
         ))}

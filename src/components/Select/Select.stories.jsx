@@ -24,9 +24,20 @@ export default {
     },
     variant: {
       control: 'select',
-      options: ['default', 'error'],
-      description: 'Visual state: error swaps border/background to the error tokens.',
-      table: { type: { summary: "'default' | 'error'" }, defaultValue: { summary: 'default' } },
+      options: ['outline', 'ghost'],
+      description: '`outline` is the bordered field; `ghost` is borderless with a hover tint.',
+      table: { type: { summary: "'outline' | 'ghost'" }, defaultValue: { summary: 'outline' } },
+    },
+    invalid: {
+      control: 'boolean',
+      description: 'Red chrome and `aria-invalid`. `errorText` implies it and adds the message.',
+      table: { type: { summary: 'boolean' }, defaultValue: { summary: 'false' } },
+    },
+    size: {
+      control: 'select',
+      options: ['sm', 'md'],
+      description: 'md 32px, sm 28px.',
+      table: { type: { summary: "'sm' | 'md'" }, defaultValue: { summary: 'md' } },
     },
     disabled: {
       control: 'boolean',
@@ -110,12 +121,12 @@ function SelectFromArgs({
 
 function SingleWrapper({ initial = '', ...props }) {
   const [value, setValue] = useState(initial);
-  return <SelectFromArgs {...props} value={value} onChange={setValue} />;
+  return <SelectFromArgs {...props} value={value} onValueChange={setValue} />;
 }
 
 function MultiWrapper({ initial = [], ...props }) {
   const [value, setValue] = useState(initial);
-  return <SelectFromArgs {...props} multiple value={value} onChange={setValue} />;
+  return <SelectFromArgs {...props} multiple value={value} onValueChange={setValue} />;
 }
 
 export const Playground = {
@@ -123,7 +134,9 @@ export const Playground = {
   args: {
     options: SAMPLE_OPTIONS,
     placeholder: 'Select status…',
-    variant: 'default',
+    variant: 'outline',
+    invalid: false,
+    size: 'md',
     disabled: false,
     menuAlign: 'left',
     searchable: false,
@@ -172,6 +185,26 @@ export const MultiChipsSearchable = {
           { value: 'rosa', label: 'Rosa Alvarez', triggerLabel: 'Rosa Alvarez · Alternate Decision Maker' },
         ]}
       />
+    </div>
+  ),
+};
+
+/** variant × size, with invalid. */
+export const LookMatrix = {
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 200px)', gap: 'var(--space-3)' }}>
+      {['outline', 'ghost'].flatMap(variant => ['md', 'sm'].flatMap(size => [false, true].map(invalid => (
+        <SingleWrapper
+          key={`${variant}-${size}-${invalid}`}
+          options={SAMPLE_OPTIONS}
+          variant={variant}
+          size={size}
+          invalid={invalid}
+          aria-label={`${variant} ${size}${invalid ? ' invalid' : ''}`}
+          placeholder={`${variant} ${size}${invalid ? ' invalid' : ''}`}
+        />
+      ))))}
     </div>
   ),
 };

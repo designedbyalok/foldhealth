@@ -225,7 +225,7 @@ function SolidPicker({ value, onChange, variables, recentlyUsed, mode, onModeCha
           className={styles.modeSelect}
           options={COLOR_MODES}
           value={mode}
-          onChange={(next) => { setDraft(null); onModeChange(next); }}
+          onValueChange={(next) => { setDraft(null); onModeChange(next); }}
           aria-label="Color mode"
         />
         <input
@@ -360,7 +360,7 @@ function GradientPicker({ value, onChange, variables, mode, onModeChange }) {
             { value: 'radial', label: 'Radial' },
           ]}
           value={grad.type}
-          onChange={(v) => emit({ ...grad, type: v })}
+          onValueChange={(v) => emit({ ...grad, type: v })}
         />
         <ActionButton
           icon="solar:transfer-horizontal-linear"
@@ -560,13 +560,13 @@ export function ColorPicker({ value, onChange, variables = [], recentlyUsed = []
       {allowGradient && !gradientOnly && (
         <Toggle
           fullWidth
-          size="S"
+          size="sm"
           items={[
             { key: 'solid',    label: 'Solid' },
             { key: 'gradient', label: 'Gradient' },
           ]}
-          active={mode}
-          onChange={setModeWithConvert}
+          value={mode}
+          onValueChange={setModeWithConvert}
         />
       )}
       {/* Keyed on mode so the body cross-fades in on every switch instead of

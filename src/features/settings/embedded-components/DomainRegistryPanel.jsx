@@ -93,7 +93,7 @@ function AddDomainDrawer({ onClose, onSave }) {
               id={`${uid}-category`}
               options={DOMAIN_CATEGORIES.map(c => ({ value: c, label: c }))}
               value={form.category}
-              onChange={v => setForm(f => ({ ...f, category: v }))}
+              onValueChange={v => setForm(f => ({ ...f, category: v }))}
             />
           </FormField>
           <FormField label="HIPAA compliance" controlId={`${uid}-hipaa`}>
@@ -101,7 +101,7 @@ function AddDomainDrawer({ onClose, onSave }) {
               id={`${uid}-hipaa`}
               options={HIPAA_OPTIONS.map(h => ({ value: h, label: h }))}
               value={form.hipaa}
-              onChange={v => setForm(f => ({ ...f, hipaa: v }))}
+              onValueChange={v => setForm(f => ({ ...f, hipaa: v }))}
             />
           </FormField>
         </div>
@@ -152,7 +152,7 @@ function EditDomainDrawer({ domain, onClose, onSave }) {
               id={`${uid}-category`}
               options={DOMAIN_CATEGORIES.map(c => ({ value: c, label: c }))}
               value={form.category}
-              onChange={v => setForm(f => ({ ...f, category: v }))}
+              onValueChange={v => setForm(f => ({ ...f, category: v }))}
             />
           </FormField>
           <FormField label="HIPAA compliance" controlId={`${uid}-hipaa`}>
@@ -160,7 +160,7 @@ function EditDomainDrawer({ domain, onClose, onSave }) {
               id={`${uid}-hipaa`}
               options={HIPAA_OPTIONS.map(h => ({ value: h, label: h }))}
               value={form.hipaa}
-              onChange={v => setForm(f => ({ ...f, hipaa: v }))}
+              onValueChange={v => setForm(f => ({ ...f, hipaa: v }))}
             />
           </FormField>
         </div>

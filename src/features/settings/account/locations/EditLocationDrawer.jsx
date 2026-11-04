@@ -142,7 +142,7 @@ export function EditLocationDrawer({ location, allLocations = EMPTY_ALL_LOCATION
               <Select
                 id={`${uid}-ehr-instance`}
                 value={form.ehrInstance}
-                onChange={(v) => set('ehrInstance', v)}
+                onValueChange={(v) => set('ehrInstance', v)}
                 options={EHR_INSTANCES.map(e => ({ value: e, label: e }))}
               />
             </div>
@@ -169,7 +169,7 @@ export function EditLocationDrawer({ location, allLocations = EMPTY_ALL_LOCATION
               </div>
               <div className={styles.section}>
                 <label className={styles.label} htmlFor={`${uid}-timezone`}>Select Timezone<span className={styles.required}>*</span></label>
-                <Select id={`${uid}-timezone`} value={form.timezone} onChange={(v) => set('timezone', v)} options={TIMEZONE_OPTIONS} searchable />
+                <Select id={`${uid}-timezone`} value={form.timezone} onValueChange={(v) => set('timezone', v)} options={TIMEZONE_OPTIONS} searchable />
               </div>
             </div>
 
@@ -222,7 +222,7 @@ export function EditLocationDrawer({ location, allLocations = EMPTY_ALL_LOCATION
                   <div style={{ minWidth: 200 }}>
                     <Select
                       value={slot.timezone}
-                      onChange={(v) => updateSlot(idx, 'timezone', v)}
+                      onValueChange={(v) => updateSlot(idx, 'timezone', v)}
                       options={TIMEZONE_OPTIONS}
                       searchable
                     />
@@ -256,7 +256,7 @@ export function EditLocationDrawer({ location, allLocations = EMPTY_ALL_LOCATION
                     <span className={styles.label}>Location</span>
                     <Select
                       value={slot.locationId}
-                      onChange={(v) => updateSlot(idx, 'locationId', v)}
+                      onValueChange={(v) => updateSlot(idx, 'locationId', v)}
                       options={[{ value: '', label: 'This location' }, ...locationOptions]}
                       placeholder="This location"
                     />

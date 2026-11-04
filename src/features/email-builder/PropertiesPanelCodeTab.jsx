@@ -31,9 +31,9 @@ export function CodeTab({ doc }) {
       <div className={styles.codeToolbar}>
         <Toggle
           items={[{ key: 'json', label: 'JSON' }, { key: 'html', label: 'HTML' }]}
-          active={mode}
-          size="S"
-          onChange={switchMode}
+          value={mode}
+          size="sm"
+          onValueChange={switchMode}
         />
         <div className={styles.codeToolbarRight}>
           <Button variant="outline" size="sm" leadingIcon="solar:magic-stick-3-linear" onClick={reformat} aria-label="Format">

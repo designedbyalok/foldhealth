@@ -105,7 +105,7 @@ export function GroupAppointmentDrawer({ session, members, statusTone, onStatusC
               placeholder="Mixed"
               options={sessionOptions}
               value={sessionStatus}
-              onChange={(next) => onSessionStatusChange(members, next)}
+              onValueChange={(next) => onSessionStatusChange(members, next)}
               leadingIcon="solar:history-linear"
               portal
             />

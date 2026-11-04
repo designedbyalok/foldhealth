@@ -70,7 +70,7 @@ export function ReviewNoteCard({ note, canEdit, noteRefs, onSave }) {
             mentionUsers={noteRefs?.mentionUsers}
             links={noteRefs?.links}
             value={text}
-            onChange={(v, p) => { setText(v); setPlain((p || '').trim()); }}
+            onValueChange={(v, p) => { setText(v); setPlain((p || '').trim()); }}
             rows={3}
           />
           <div className={styles.completeActions}>

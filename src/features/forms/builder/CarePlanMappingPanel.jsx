@@ -38,7 +38,7 @@ function RuleCard({ rule, index, scores, fields, questions, templates, templateO
           className={styles.kind}
           value={rule.kind}
           options={KIND_OPTIONS}
-          onChange={(kind) => onPatch(newMapping(kind, { scores, fields }), true)}
+          onValueChange={(kind) => onPatch(newMapping(kind, { scores, fields }), true)}
         />
         <Button variant="ghost" size="sm" leadingIcon="solar:trash-bin-minimalistic-linear" onClick={onRemove} aria-label="Remove rule" />
       </div>
@@ -51,7 +51,7 @@ function RuleCard({ rule, index, scores, fields, questions, templates, templateO
             placeholder={scores.length ? 'Score' : 'No scores on this form'}
             disabled={!scores.length}
             options={scores.map((s) => ({ value: s.id, label: s.label }))}
-            onChange={(scoreId) => onPatch({ scoreId })}
+            onValueChange={(scoreId) => onPatch({ scoreId })}
           />
           <span className={styles.word}>from</span>
           <Input className={styles.num} type="number" value={rule.min ?? ''} placeholder={score ? String(score.range?.min ?? 'min') : 'min'} onChange={(e) => onPatch({ min: bound(e.target.value) })} aria-label="Minimum score" />
@@ -66,7 +66,7 @@ function RuleCard({ rule, index, scores, fields, questions, templates, templateO
             placeholder={questions.length ? 'Question' : 'No multiple-choice questions on this form'}
             disabled={!questions.length}
             options={questions.map((f) => ({ value: f.linkId, label: f.text || f.linkId }))}
-            onChange={(linkId) => onPatch({ linkId, values: [] })}
+            onValueChange={(linkId) => onPatch({ linkId, values: [] })}
           />
           <Select
             multiple
@@ -76,7 +76,7 @@ function RuleCard({ rule, index, scores, fields, questions, templates, templateO
             placeholder="Answers"
             disabled={!question}
             options={(question?.options || []).map((o) => ({ value: String(o.value), label: String(o.label || o.value) }))}
-            onChange={(values) => onPatch({ values: values || [] })}
+            onValueChange={(values) => onPatch({ values: values || [] })}
           />
         </div>
       )}
@@ -100,7 +100,7 @@ function RuleCard({ rule, index, scores, fields, questions, templates, templateO
           placeholder={loadingTemplates ? 'Loading templates…' : 'Care plan templates'}
           disabled={loadingTemplates}
           options={templateOptions}
-          onChange={(templateIds) => onPatch({ templateIds: templateIds || [] })}
+          onValueChange={(templateIds) => onPatch({ templateIds: templateIds || [] })}
         />
       </div>
 

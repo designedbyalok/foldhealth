@@ -189,7 +189,7 @@ export function CampaignBuilder() {
               required
               options={audienceOptions}
               value={campaign.audienceInclude || []}
-              onChange={v => set({ audienceInclude: v })}
+              onValueChange={v => set({ audienceInclude: v })}
               placeholder="Search or Select Audience"
               searchPlaceholder="Search or Select Audience"
             />
@@ -205,7 +205,7 @@ export function CampaignBuilder() {
                 label="Exclude"
                 options={audienceOptions}
                 value={(campaign.audienceExclude || []).filter(v => v !== '__placeholder__')}
-                onChange={v => set({ audienceExclude: v.length === 0 ? [] : v })}
+                onValueChange={v => set({ audienceExclude: v.length === 0 ? [] : v })}
                 placeholder="Search or Select Audience to exclude"
                 searchPlaceholder="Search or Select Audience to exclude"
               />
@@ -272,9 +272,9 @@ export function CampaignBuilder() {
               { key: 'one_time', label: 'One-Time' },
               { key: 'sequence', label: 'Sequence' },
             ]}
-            active={campaign.campaignType || 'one_time'}
-            size="S"
-            onChange={v => set({ campaignType: v })}
+            value={campaign.campaignType || 'one_time'}
+            size="sm"
+            onValueChange={v => set({ campaignType: v })}
           />
           <div className={styles.topRight} style={{ position: 'relative' }}>
             <Button
@@ -317,7 +317,7 @@ export function CampaignBuilder() {
               required
               options={SENDER_OPTIONS}
               value={campaign.senderName}
-              onChange={v => set({ senderName: v })}
+              onValueChange={v => set({ senderName: v })}
               placeholder="Select the Sender Name"
             />
           </FieldCol>
@@ -327,7 +327,7 @@ export function CampaignBuilder() {
               required
               options={SEND_FROM_OPTIONS}
               value={campaign.sendFrom}
-              onChange={v => set({ sendFrom: v })}
+              onValueChange={v => set({ sendFrom: v })}
               placeholder="Select the Delivery Email Address"
             />
           </FieldCol>

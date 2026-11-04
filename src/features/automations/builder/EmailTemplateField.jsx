@@ -56,13 +56,13 @@ export function EmailTemplateField({ config, onChange, errors = {}, onEditTempla
             <Select
               options={optionList}
               value={id ? String(id) : ''}
-              onChange={v => {
+              onValueChange={v => {
                 const o = options.find(x => x.id === v);
                 onChange({ templateId: v, templateName: o?.name || '', templateKey: undefined, subject: undefined });
               }}
               searchable
               placeholder="Select an email"
-              variant={errors.templateId ? 'error' : 'default'}
+              invalid={errors.templateId}
             />
             <span className={styles.opText}>template</span>
           </div>

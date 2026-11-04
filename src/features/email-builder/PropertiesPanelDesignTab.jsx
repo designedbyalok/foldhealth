@@ -100,28 +100,28 @@ export function ColumnDesignTab({ block, updateBlock, id, columnIdx }) {
             <span className={styles.fieldLabel}>Horizontal</span>
             <Toggle
               fullWidth
-              size="S"
+              size="sm"
               items={[
                 { key: 'left',   label: '', icon: <AlignLeftIcon /> },
                 { key: 'center', label: '', icon: <AlignCenterIcon /> },
                 { key: 'right',  label: '', icon: <AlignRightIcon /> },
               ]}
-              active={col.align || 'left'}
-              onChange={v => updateCol('align', v)}
+              value={col.align || 'left'}
+              onValueChange={v => updateCol('align', v)}
             />
           </div>
           <div className={styles.fieldCol}>
             <span className={styles.fieldLabel}>Vertical</span>
             <Toggle
               fullWidth
-              size="S"
+              size="sm"
               items={[
                 { key: 'top',    label: '', icon: <AlignTopIcon /> },
                 { key: 'middle', label: '', icon: <AlignMiddleIcon /> },
                 { key: 'bottom', label: '', icon: <AlignBottomIcon /> },
               ]}
-              active={col.valign || 'top'}
-              onChange={v => updateCol('valign', v)}
+              value={col.valign || 'top'}
+              onValueChange={v => updateCol('valign', v)}
             />
           </div>
         </Row2>
@@ -130,14 +130,14 @@ export function ColumnDesignTab({ block, updateBlock, id, columnIdx }) {
           <span className={styles.fieldLabel}>Height</span>
           <Toggle
             fullWidth
-            size="S"
+            size="sm"
             items={[
               { key: 'hug',    label: 'Hug' },
               { key: 'fill',   label: 'Fill' },
               { key: 'custom', label: 'Custom' },
             ]}
-            active={col.heightMode || 'hug'}
-            onChange={v => updateCol('heightMode', v)}
+            value={col.heightMode || 'hug'}
+            onValueChange={v => updateCol('heightMode', v)}
           />
         </div>
         {col.heightMode === 'custom' && (
@@ -314,9 +314,9 @@ export function BulkDesignTab({ doc, bulkIds, updateBlock }) {
                     { key: 'right',   label: '', icon: <AlignRightIcon /> },
                     { key: 'justify', label: '', icon: <AlignJustifyIcon /> },
                   ]}
-                  active={getCommonValue(blocks, b => b.data?.style?.textAlign) || 'left'}
-                  size="S"
-                  onChange={v => bulkUpdate(['data', 'style', 'textAlign'], v)}
+                  value={getCommonValue(blocks, b => b.data?.style?.textAlign) || 'left'}
+                  size="sm"
+                  onValueChange={v => bulkUpdate(['data', 'style', 'textAlign'], v)}
                 />
               </div>
             </Row2>

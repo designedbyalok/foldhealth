@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, useMemo } from 'react';
+import { forwardRef, useEffect, useId, useLayoutEffect, useRef, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../Icon/Icon';
 import { Checkbox } from '../ShadcnCheckbox/ShadcnCheckbox';
@@ -7,6 +7,7 @@ import { ActionButton } from '../ActionButton/ActionButton';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { DownChevronIcon } from '../Icon/DownChevronIcon';
 import { CloseIcon } from '../Icon/CloseIcon';
+import { resolveFieldLook, warnDeprecated } from '../../lib/legacyProps';
 import styles from './Select.module.css';
 
 /**
@@ -36,10 +37,14 @@ import styles from './Select.module.css';
  *  - emptyText  (string | (query) => string): shown when nothing matches; a
  *                 function gets what was typed, for "No users match "x" …"
  *  - value      (string)
- *  - onChange   (value) => void
+ *  - onValueChange (value) => void. (`onChange` is the old name.)
  *  - placeholder (string)
  *  - disabled   (boolean)
- *  - variant    'default' | 'error' | 'ghost' (borderless, hover-only bg)
+ *  - variant    'outline' (default) | 'ghost' (borderless, hover-only bg)
+ *  - invalid    (boolean): red chrome and `aria-invalid`; `errorText` implies it
+ *  - size       'md' (32px, default) | 'sm' (28px)
+ *  - ref, ...rest: reach the trigger, so `aria-label` and `data-*` land
+ *                 on the control people focus
  *  - className  (string)
  *  - style      (object): inline style on the outer wrap (e.g. widths)
  *  - id         (string): passes through to the trigger button
@@ -55,13 +60,16 @@ import styles from './Select.module.css';
  *                                 otherwise clip the absolutely-positioned
  *                                 menu. Off by default.
  */
-export function Select({
+export const Select = forwardRef(function Select({
   options = [],
   value,
-  onChange,
+  onValueChange,
+  onChange: legacyOnChange,
   placeholder = 'Select…',
   disabled = false,
-  variant = 'default',
+  variant,
+  invalid,
+  size,
   className,
   wrapperClassName,
   style,
@@ -107,12 +115,16 @@ export function Select({
   badges = false,
   portal = false,
   defaultOpen = false,
-}) {
+  ...rest
+}, ref) {
+  if (legacyOnChange && !onValueChange) warnDeprecated('Select', 'onChange', true, 'onValueChange');
+  const onChange = onValueChange ?? legacyOnChange ?? (() => {});
+  const look = resolveFieldLook('Select', { variant, invalid, size });
   // Ensure a stable label↔trigger association even when `id` isn't set.
   const autoId = useId();
   const triggerId = id || (label ? autoId : undefined);
   const listboxId = `${autoId}-listbox`;
-  const isError = variant === 'error' || Boolean(errorText);
+  const isError = look.invalid || Boolean(errorText);
   const valueArray = multiple ? (Array.isArray(value) ? value : []) : null;
   const valueSet = useMemo(
     () => (multiple ? new Set(Array.isArray(value) ? value : []) : null),
@@ -372,13 +384,17 @@ export function Select({
   const trigger = (
     <div ref={wrapRef} className={[styles.wrap, needsField ? '' : (className || '')].filter(Boolean).join(' ')} style={style}>
       <TriggerTag
+        {...rest}
+        ref={ref}
         data-select-trigger=""
+        data-invalid={isError || undefined}
         {...triggerProps}
         className={[
           styles.trigger,
+          look.size === 'sm' ? styles.triggerSm : '',
           searchable ? styles.triggerSearch : '',
           searchable && disabled ? styles.triggerDisabled : '',
-          variant === 'ghost' ? styles.triggerGhost : '',
+          look.variant === 'ghost' ? styles.triggerGhost : '',
           isError ? styles.triggerError : '',
           (multiple ? selectedMulti.length === 0 : !selected) ? styles.triggerPlaceholder : '',
         ].filter(Boolean).join(' ')}
@@ -607,4 +623,4 @@ export function Select({
       )}
     </div>
   );
-}
+});

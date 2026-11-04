@@ -97,10 +97,10 @@ export function EmailPreviewDrawer({ campaign, onClose, onEdit }) {
     <Drawer title={title} onClose={onClose} headerRight={headerRight} bodyClassName={styles.body} noCloseDivider>
       <div className={styles.toggleBar}>
         <Toggle
-          size="S"
+          size="sm"
           items={VIEW_ITEMS}
-          active={view}
-          onChange={setView}
+          value={view}
+          onValueChange={setView}
         />
       </div>
 

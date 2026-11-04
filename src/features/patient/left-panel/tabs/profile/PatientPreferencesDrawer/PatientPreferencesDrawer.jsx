@@ -67,7 +67,7 @@ export function PatientPreferencesDrawer({ patientId, preferences, programCodes,
                 <Select
                   options={channelOptions}
                   value={channels[code] || NO_PREFERENCE}
-                  onChange={v => setChannels(c => ({ ...c, [code]: v }))}
+                  onValueChange={v => setChannels(c => ({ ...c, [code]: v }))}
                   aria-label={`${code} preferred channel`}
                 />
               </div>
@@ -101,7 +101,7 @@ export function PatientPreferencesDrawer({ patientId, preferences, programCodes,
                 <Select
                   options={CONTACT_STATUS_OPTIONS}
                   value={p.status || 'unverified'}
-                  onChange={v => setStatus(i, v)}
+                  onValueChange={v => setStatus(i, v)}
                   aria-label={`${p.value} status`}
                 />
               </div>

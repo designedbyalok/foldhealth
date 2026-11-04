@@ -203,7 +203,7 @@ function CarePlanOutcomePanel({ title, bullets, outreachNotes, onOutreachNotesCh
         <Textarea
           title="Outreach Notes"
           value={outreachNotes || ''}
-          onChange={(text) => onOutreachNotesChange(text)}
+          onValueChange={(text) => onOutreachNotesChange(text)}
           placeholder="Optional notes from the encounter..."
           rows={3}
         />
@@ -308,11 +308,11 @@ export function DsfaEvidenceForm({ v, data, submitted, onOpenPhq9Gap }) {
         <Select
           options={performedByOptions}
           value={data.performedBy}
-          onChange={(v2) => onUpdate({ performedBy: v2 })}
+          onValueChange={(v2) => onUpdate({ performedBy: v2 })}
           placeholder="Select Provider"
           searchable
           searchPlaceholder="Search users…"
-          variant={err('performedBy') ? 'error' : 'default'}
+          invalid={err('performedBy')}
           disabled={readOnly}
         />
         {err('performedBy') && <FieldError>Provider is required</FieldError>}
@@ -511,11 +511,11 @@ export function DsfbEvidenceForm({ v, data, submitted }) {
             <Select
               options={performedByOptions}
               value={data.performedBy}
-              onChange={(v2) => onUpdate({ performedBy: v2 })}
+              onValueChange={(v2) => onUpdate({ performedBy: v2 })}
               placeholder="Select Provider"
           searchable
           searchPlaceholder="Search users…"
-              variant={err('performedBy') ? 'error' : 'default'}
+              invalid={err('performedBy')}
               disabled={readOnly}
             />
             {err('performedBy') && <FieldError>Provider is required</FieldError>}

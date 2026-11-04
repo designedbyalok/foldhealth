@@ -186,7 +186,7 @@ export function AnalyticsLayout() {
                 className={s.filterSelect}
                 options={ORGANIZATIONS}
                 value={analyticsOrg}
-                onChange={setAnalyticsOrg}
+                onValueChange={setAnalyticsOrg}
               />
             </div>
 
@@ -204,7 +204,7 @@ export function AnalyticsLayout() {
                 className={s.filterSelect}
                 options={QUARTERS}
                 value={analyticsQuarter}
-                onChange={setAnalyticsQuarter}
+                onValueChange={setAnalyticsQuarter}
               />
             </div>
 
@@ -224,7 +224,7 @@ export function AnalyticsLayout() {
                   ),
                 }))}
                 value={analyticsPersona}
-                onChange={setAnalyticsPersona}
+                onValueChange={setAnalyticsPersona}
               />
             </div>
 

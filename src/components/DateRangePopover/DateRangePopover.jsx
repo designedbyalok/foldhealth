@@ -167,15 +167,15 @@ export function DateRangePopover({
         <SubTabs
           className={styles.modeTabs}
           tabs={[{ key: 'years', label: 'Years' }, { key: 'custom', label: 'Custom Dates' }]}
-          activeKey={mode}
-          onChange={setMode}
+          value={mode}
+          onValueChange={setMode}
         />
       )}
 
       {mode === 'years' ? (
         <div className={styles.yearRow}>
-          <Select label="From" searchable placeholder="Year" options={yearOptions} value={fromYear} onChange={setFromYear} />
-          <Select label="To" searchable placeholder="Year" options={yearOptions} value={toYear} onChange={setToYear} />
+          <Select label="From" searchable placeholder="Year" options={yearOptions} value={fromYear} onValueChange={setFromYear} />
+          <Select label="To" searchable placeholder="Year" options={yearOptions} value={toYear} onValueChange={setToYear} />
         </div>
       ) : (
       <div className={styles.calBody}>

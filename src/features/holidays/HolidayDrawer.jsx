@@ -129,7 +129,7 @@ export function HolidayDrawer({ holiday, copyFrom, onClose }) {
           placeholder="Select Locations"
           options={locationOptions.map(l => ({ value: l, label: l }))}
           value={values.locations}
-          onChange={(next) => set({ locations: next })}
+          onValueChange={(next) => set({ locations: next })}
           errorText={err('locations')}
         />
         <label className={styles.field}>
@@ -139,7 +139,7 @@ export function HolidayDrawer({ holiday, copyFrom, onClose }) {
             placeholder="Enter Message"
             value={values.autoReplyMessage}
             maxLength={500}
-            onChange={(value) => set({ autoReplyMessage: value })}
+            onValueChange={(value) => set({ autoReplyMessage: value })}
             aria-label="Auto reply message"
           />
           <span className={styles.helper}>Auto Replies trigger on designated holidays and follow holiday configurations specific to locations.</span>

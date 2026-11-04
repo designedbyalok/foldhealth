@@ -88,7 +88,7 @@ export function AddLetterDrawer({ letters = EMPTY_LETTERS, addedIds, onAdd, onPr
         <FilterChip label="Type" options={typeOptions} selected={typeSel} onChange={setTypeSel} />
         <FilterChip label="Category" options={catOptions} selected={catSel} onChange={setCatSel} />
         <span className={styles.toolbarDivider} />
-        <Toggle items={VIEW_ITEMS} active={view} onChange={setView} size="S" />
+        <Toggle items={VIEW_ITEMS} value={view} onValueChange={setView} size="sm" />
         <span className={styles.toolbarDivider} />
         <div className={styles.searchBox}>
           <Icon name="solar:magnifer-linear" size={16} color="var(--neutral-200)" />

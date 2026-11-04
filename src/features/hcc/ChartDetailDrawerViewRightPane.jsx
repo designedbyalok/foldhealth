@@ -248,7 +248,7 @@ export function ChartDetailDrawerViewRightPane(p) {
                       className={styles.uploadSelect}
                       options={DOC_TYPES.map((t) => ({ value: t, label: t }))}
                       value={upType}
-                      onChange={setUpType}
+                      onValueChange={setUpType}
                       placeholder="Select Type"
                     />
                   </div>
@@ -261,7 +261,7 @@ export function ChartDetailDrawerViewRightPane(p) {
                       className={styles.uploadSelect}
                       options={VISIT_TYPES.map((vt) => ({ value: vt, label: vt }))}
                       value={upVisitType}
-                      onChange={setUpVisitType}
+                      onValueChange={setUpVisitType}
                       placeholder="Select Visit Type"
                     />
                   </div>

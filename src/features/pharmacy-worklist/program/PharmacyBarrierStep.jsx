@@ -50,7 +50,7 @@ export function PharmacyBarrierStep({ member: memberProp, form: hostForm }) {
         options={barrierOptions}
         value={value.barriers}
         placeholder="Add barriers"
-        onChange={v => onChange({ barriers: v })}
+        onValueChange={v => onChange({ barriers: v })}
       />
       <Select
         label={labelled ? 'Interventions' : undefined}
@@ -58,7 +58,7 @@ export function PharmacyBarrierStep({ member: memberProp, form: hostForm }) {
         options={interventionOptions}
         value={value.interventions}
         placeholder="Add interventions"
-        onChange={v => onChange({ interventions: v })}
+        onValueChange={v => onChange({ interventions: v })}
       />
     </>
   );

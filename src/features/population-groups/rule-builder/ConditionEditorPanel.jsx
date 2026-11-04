@@ -68,7 +68,7 @@ export function ConditionEditorPanel({ rule, onSave, onClose }) {
           <Select
             options={field.operators.map(o => ({ value: o.name, label: o.label }))}
             value={draft.operator}
-            onChange={(v) => set('operator', v)}
+            onValueChange={(v) => set('operator', v)}
             style={{ width: '100%' }}
           />
 
@@ -106,7 +106,7 @@ export function ConditionEditorPanel({ rule, onSave, onClose }) {
                   { value: 'date', label: 'Date' },
                 ]}
                 value={draft.asOfMode}
-                onChange={(v) => set('asOfMode', v)}
+                onValueChange={(v) => set('asOfMode', v)}
                 style={{ width: '100%' }}
               />
               {draft.asOfMode === 'today' ? (
@@ -222,7 +222,7 @@ function EventCountEditor({ draft, field, onChange, onPatch }) {
       <Select
         options={EVENT_TYPES.map(e => ({ value: e.value, label: e.label }))}
         value={draft.eventType || ''}
-        onChange={v => onChange('eventType', v)}
+        onValueChange={v => onChange('eventType', v)}
         placeholder="Select event type"
         style={{ width: '100%' }}
       />
@@ -283,7 +283,7 @@ function SelectEditor({ draft, field, onChange }) {
     <Select
       options={field.options.map(o => ({ value: o, label: o }))}
       value={draft.text}
-      onChange={v => onChange('text', v)}
+      onValueChange={v => onChange('text', v)}
       placeholder={`Select ${field.label}`}
       style={{ width: '100%' }}
     />

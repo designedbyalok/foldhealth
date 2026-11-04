@@ -33,14 +33,14 @@ function ItemRow({ kind, item, override, onChange, readOnly }) {
         <span className={styles.muted}>{[cap(base), kind === 'goal' && item.frequency, kind === 'intervention' && item.kind].filter(Boolean).join(' • ')}</span>
       </td>
       <td>
-        <Select portal disabled={hidden || readOnly} options={[{ value: '', label: `Template (${cap(base)})` }, ...PRIORITY_OPTIONS]} value={o.priority || ''} onChange={v => set({ priority: v || undefined })} />
+        <Select portal disabled={hidden || readOnly} options={[{ value: '', label: `Template (${cap(base)})` }, ...PRIORITY_OPTIONS]} value={o.priority || ''} onValueChange={v => set({ priority: v || undefined })} />
       </td>
       <td>
         {kind === 'goal' ? (
           <div className={styles.cadence}>
-            <Select portal disabled={hidden || readOnly} options={[{ value: '', label: item.frequency ? `Template (${item.frequency})` : 'Template' }, ...GOAL_FREQUENCIES.map(f => ({ value: f, label: f }))]} value={o.frequency || ''} onChange={v => set({ frequency: v || undefined })} />
+            <Select portal disabled={hidden || readOnly} options={[{ value: '', label: item.frequency ? `Template (${item.frequency})` : 'Template' }, ...GOAL_FREQUENCIES.map(f => ({ value: f, label: f }))]} value={o.frequency || ''} onValueChange={v => set({ frequency: v || undefined })} />
             <Input type="number" min={1} disabled={hidden || readOnly} value={o.duration || ''} onChange={e => set({ duration: e.target.value || undefined })} placeholder={item.duration || 'For'} aria-label="Duration" wrapperClassName={styles.duration} />
-            <Select portal disabled={hidden || readOnly || !o.duration} options={GOAL_DURATION_UNITS.map(u => ({ value: u, label: `${u}s` }))} value={o.durationUnit || 'Month'} onChange={v => set({ durationUnit: v })} />
+            <Select portal disabled={hidden || readOnly || !o.duration} options={GOAL_DURATION_UNITS.map(u => ({ value: u, label: `${u}s` }))} value={o.durationUnit || 'Month'} onValueChange={v => set({ durationUnit: v })} />
           </div>
         ) : <span className={styles.muted}>-</span>}
       </td>
@@ -129,8 +129,8 @@ export function OverlayEditorDrawer({ overlay, onClose, canEdit }) {
       <div className={styles.stack}>
         {isNew && (
           <div className={styles.pickers}>
-            <Select portal label="Template" required searchable options={templateOptions} value={templateId} onChange={setTemplateId} placeholder="Pick a template" />
-            <Select portal label="IPA" required searchable options={ipaOptions} value={ipaId} onChange={setIpaId} placeholder={templateId ? 'Pick an IPA' : 'Pick a template first'} disabled={!templateId} />
+            <Select portal label="Template" required searchable options={templateOptions} value={templateId} onValueChange={setTemplateId} placeholder="Pick a template" />
+            <Select portal label="IPA" required searchable options={ipaOptions} value={ipaId} onValueChange={setIpaId} placeholder={templateId ? 'Pick an IPA' : 'Pick a template first'} disabled={!templateId} />
           </div>
         )}
         {template && (
@@ -181,15 +181,15 @@ export function OverlayEditorDrawer({ overlay, onClose, canEdit }) {
               </ul>
               {canEdit && (
                 <div className={styles.addRow}>
-                  <Select portal options={KINDS.map(([k]) => ({ value: k, label: cap(k) }))} value={draft.kind} onChange={v => setDraft(d => ({ ...d, kind: v }))} />
+                  <Select portal options={KINDS.map(([k]) => ({ value: k, label: cap(k) }))} value={draft.kind} onValueChange={v => setDraft(d => ({ ...d, kind: v }))} />
                   <Input value={draft.title} onChange={e => setDraft(d => ({ ...d, title: e.target.value }))} placeholder="Title" aria-label="New item title" />
                   {draft.kind === 'intervention' && (
-                    <Select portal options={INTERVENTION_KINDS.map(k => ({ value: k, label: k }))} value={draft.interventionKind} onChange={v => setDraft(d => ({ ...d, interventionKind: v }))} />
+                    <Select portal options={INTERVENTION_KINDS.map(k => ({ value: k, label: k }))} value={draft.interventionKind} onValueChange={v => setDraft(d => ({ ...d, interventionKind: v }))} />
                   )}
                   {draft.kind !== 'goal' && (
-                    <Select portal options={[{ value: '', label: 'No goal' }, ...goalTitles.map(g => ({ value: g, label: g }))]} value={draft.goal} onChange={v => setDraft(d => ({ ...d, goal: v }))} />
+                    <Select portal options={[{ value: '', label: 'No goal' }, ...goalTitles.map(g => ({ value: g, label: g }))]} value={draft.goal} onValueChange={v => setDraft(d => ({ ...d, goal: v }))} />
                   )}
-                  <Select portal options={PRIORITY_OPTIONS} value={draft.priority} onChange={v => setDraft(d => ({ ...d, priority: v }))} />
+                  <Select portal options={PRIORITY_OPTIONS} value={draft.priority} onValueChange={v => setDraft(d => ({ ...d, priority: v }))} />
                   <Button variant="outline" size="sm" disabled={!draft.title.trim()} onClick={addLocal}>Add</Button>
                 </div>
               )}
@@ -208,12 +208,12 @@ export function OverlayEditorDrawer({ overlay, onClose, canEdit }) {
                 ]}
               />
               {signoff.mode === 'roles' && (
-                <Select portal label="Roles" multiple checkboxes badges searchable disabled={readOnly} options={roleOptions} value={signoff.roles} onChange={v => setSignoff({ roles: v || [] })} placeholder="Pick roles" />
+                <Select portal label="Roles" multiple checkboxes badges searchable disabled={readOnly} options={roleOptions} value={signoff.roles} onValueChange={v => setSignoff({ roles: v || [] })} placeholder="Pick roles" />
               )}
               {signoff.mode === 'people' && (
                 <Select portal label="People" multiple checkboxes badges searchable disabled={readOnly} options={peopleOptions}
                   value={signoff.people.map(p => p.id)}
-                  onChange={v => setSignoff({ people: (v || []).map(id => ({ id, name: users.find(u => u.id === id)?.name || '' })) })}
+                  onValueChange={v => setSignoff({ people: (v || []).map(id => ({ id, name: users.find(u => u.id === id)?.name || '' })) })}
                   placeholder="Pick people" />
               )}
             </section>

@@ -166,7 +166,7 @@ export function NonVisitNoteDrawer({ patient, initialTitle = '', onClose }) {
           <Select
             options={templateOptions}
             value={templateId}
-            onChange={(v) => { setTemplateId(v || ''); setSubmitted(false); }}
+            onValueChange={(v) => { setTemplateId(v || ''); setSubmitted(false); }}
             placeholder="Choose a template"
           />
           {template?.description && (

@@ -223,7 +223,7 @@ export function AutomationsList() {
             Get Started
           </Link>
           <span className={styles.divider} />
-          <Toggle items={LAYOUTS} active={layout} onChange={setLayout} size="S" />
+          <Toggle items={LAYOUTS} value={layout} onValueChange={setLayout} size="sm" />
           <span className={styles.divider} />
           <ActionButton icon="solar:add-square-linear" tooltip="New automation" tooltipBelow tooltipLeft onClick={() => openNewAutomation(null)} />
         </div>
@@ -243,8 +243,8 @@ export function AutomationsList() {
         <SubTabs
           leading={searchToggle}
           tabs={STATUS_TABS.map(t => ({ key: t.key, label: t.label, count: loading ? undefined : statusCounts[t.key] }))}
-          activeKey={statusTab}
-          onChange={setStatusTab}
+          value={statusTab}
+          onValueChange={setStatusTab}
         />
         <span className={styles.subRight}>
           {errorCount > 0 && (
@@ -283,8 +283,8 @@ export function AutomationsList() {
       <SubTabs
         leading={searchToggle}
         tabs={categoryTabs.map(t => ({ ...t, count: loading ? undefined : t.count }))}
-        activeKey={category}
-        onChange={setCategory}
+        value={category}
+        onValueChange={setCategory}
       />
     </div>
   );

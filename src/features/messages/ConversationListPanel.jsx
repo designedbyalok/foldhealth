@@ -95,9 +95,9 @@ export function ConversationListPanel({
             { key: 'unread', label: 'Unread' },
             { key: 'pinned', label: 'Pinned' },
           ]}
-          active={filterTab}
-          onChange={onFilterTabChange}
-          size="S"
+          value={filterTab}
+          onValueChange={onFilterTabChange}
+          size="sm"
         />
       </div>
 

@@ -40,8 +40,8 @@ export function AgentCanvasRightPanel({
           <div style={{ padding: '10px 12px 6px', borderBottom: '0.5px solid var(--neutral-150)', flexShrink: 0 }}>
             <Toggle
               items={['Workflow Assistant', 'Global Settings']}
-              active={rightTab}
-              onChange={setRightTab}
+              value={rightTab}
+              onValueChange={setRightTab}
               fullWidth
             />
           </div>

@@ -350,10 +350,20 @@
   color: var(--status-error);
 }
 
-/* variant="quiet": reads as plain text in dense tables (inline-editable
+/* variant="ghost": reads as plain text in dense tables (inline-editable
    cells) and shows the field chrome only on hover / focus. */
-.inputQuiet:not(:hover):not(:focus),
-.shellQuiet:not(:hover):not(:focus-within) {
+.inputGhost:not(:hover):not(:focus),
+.shellGhost:not(:hover):not(:focus-within) {
   border-color: transparent;
   background: transparent;
+}
+
+/* size="sm": 28px, for filter rows and dense toolbars (matches Toggle sm). */
+.input.sizeSm,
+.shell.sizeSm {
+  height: 28px;
+  font-size: var(--font-md);
+}
+.sizeSm .inputBorderless {
+  font-size: var(--font-md);
 }

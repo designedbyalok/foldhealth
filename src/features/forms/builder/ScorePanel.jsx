@@ -121,7 +121,7 @@ export function ScorePanel({ fields, scoring, onChange }) {
               value={selected.aggregation}
               disabled={locked}
               options={AGG_OPTIONS.map((a) => ({ value: a, label: a }))}
-              onChange={setAgg}
+              onValueChange={setAgg}
             />
             <div className={styles.rangePill}>Possible range <strong>{range.min}–{range.max}</strong></div>
             <div className={styles.scoreSourcesRow}>
@@ -153,7 +153,7 @@ export function ScorePanel({ fields, scoring, onChange }) {
                   value={b.severity}
                   disabled={locked}
                   options={SEVERITIES.map((s) => ({ value: s, label: s }))}
-                  onChange={(v) => setBand(i, { severity: v })}
+                  onValueChange={(v) => setBand(i, { severity: v })}
                 />
                 {!locked ? (
                   <CloseButton size={16} onClick={() => removeBand(i)} className={styles.optRemove} label="Remove band" />

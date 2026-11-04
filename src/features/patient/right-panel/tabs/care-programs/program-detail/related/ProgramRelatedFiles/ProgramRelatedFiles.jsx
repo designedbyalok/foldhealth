@@ -156,11 +156,11 @@ export function ProgramRelatedFiles({ programCode, patientId }) {
           <>
             <ActionButton icon="solar:magnifer-linear" size="sm" tooltip="Search" onClick={() => setSearchOpen(true)} />
             <span className={styles.tabDivider} />
-            <Toggle size="S" items={SUB_TABS} active={activeTab} onChange={setActiveTab} />
+            <Toggle size="sm" items={SUB_TABS} value={activeTab} onValueChange={setActiveTab} />
             <div className={styles.spacer} />
           </>
         )}
-        <Toggle size="S" items={VIEW_ITEMS} active={view} onChange={setView} />
+        <Toggle size="sm" items={VIEW_ITEMS} value={view} onValueChange={setView} />
         <Button
           variant="soft"
           leadingIcon="solar:upload-minimalistic-linear"

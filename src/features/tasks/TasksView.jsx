@@ -51,9 +51,9 @@ export function TasksView() {
           <>
             <Toggle
               items={VIEW_TOGGLE_ITEMS}
-              active={view.tasksViewMode}
-              onChange={view.setTasksViewMode}
-              size="S"
+              value={view.tasksViewMode}
+              onValueChange={view.setTasksViewMode}
+              size="sm"
             />
             <span style={{ width: 1, height: 16, background: 'var(--neutral-150)', flexShrink: 0 }} aria-hidden="true" />
           </>

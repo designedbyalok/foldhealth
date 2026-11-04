@@ -14,11 +14,11 @@ export function InterventionKindToggle({ kind, onKindChange }) {
   if (!onKindChange) return null;
   return (
     <Toggle
-      size="S"
+      size="sm"
       className={styles.kindToggle}
       items={LABELS}
-      active={KIND_LABELS[kind]}
-      onChange={label => onKindChange(KIND_BY_LABEL[label])}
+      value={KIND_LABELS[kind]}
+      onValueChange={label => onKindChange(KIND_BY_LABEL[label])}
     />
   );
 }

@@ -195,7 +195,7 @@ export function CarePlanOverview({
 
   return (
     <section className={styles.card} aria-label="Care plan overview">
-      <Toggle items={tabs} active={active} onChange={setTab} variant="ghost" />
+      <Toggle items={tabs} value={active} onValueChange={setTab} variant="ghost" />
 
       {active === 'note' && (
         editing ? (
@@ -214,7 +214,7 @@ export function CarePlanOverview({
               className={styles.noteBox}
               toolbarOnFocus
               value={draft}
-              onChange={(html, plain) => { setDraft(html); setDraftPlain(plain || ''); }}
+              onValueChange={(html, plain) => { setDraft(html); setDraftPlain(plain || ''); }}
               onEnter={saveNote}
               onEscape={stopEditing}
               placeholder="Add Note also you can use “/” for GBI or “@” for user to tag"

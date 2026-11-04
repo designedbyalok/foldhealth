@@ -90,7 +90,7 @@ export function CareGapReferralForm({
           ...(values.channel === 'email' ? [{ value: CUSTOM_SENDER, label: '+ Custom Email' }] : []),
         ]}
         value={values.senderId}
-        onChange={set('senderId')}
+        onValueChange={set('senderId')}
         placeholder={values.channel === 'efax' && !channelSenders.length ? 'No eFax number linked to you' : 'Select'}
         helperText={values.channel === 'efax' && !channelSenders.length
           ? 'Ask an admin to link you to an eFax number in Settings > Messages > eFax.'
@@ -179,7 +179,7 @@ export function CareGapReferralForm({
           mandatory
           rows={3}
           value={values.reason}
-          onChange={set('reason')}
+          onValueChange={set('reason')}
           placeholder="Enter Reason"
         />
         </>
@@ -224,7 +224,7 @@ export function CareGapReferralForm({
           title="Note"
           rows={3}
           value={values.note}
-          onChange={set('note')}
+          onValueChange={set('note')}
           placeholder="Add a note for the provider"
         />
       ) : (

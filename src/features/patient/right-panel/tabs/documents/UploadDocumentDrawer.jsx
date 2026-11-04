@@ -45,7 +45,7 @@ export function UploadDocumentDrawer({ categories, doc, initialCategory, initial
           required
           options={categoryOptions}
           value={category}
-          onChange={setCategory}
+          onValueChange={setCategory}
           placeholder="Select Category"
         />
       </div>

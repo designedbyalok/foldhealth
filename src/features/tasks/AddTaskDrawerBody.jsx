@@ -258,7 +258,7 @@ export function AddTaskDrawerBody({
             style={{ width: 120 }}
             options={STATUS_ORDER.map(s => ({ value: s, label: STATUS_LABELS[s] }))}
             value={status}
-            onChange={setStatus}
+            onValueChange={setStatus}
           />
           <div className={styles.drawerToolbarRight}>
             <ActionButton icon="solar:paperclip-linear" tooltip="Attachments" />
@@ -340,7 +340,7 @@ export function AddTaskDrawerBody({
           placeholder="Add a description..."
           value={description}
           rows={3}
-          onChange={(html) => setDescription(html)}
+          onValueChange={(html) => setDescription(html)}
         />
       )}
 

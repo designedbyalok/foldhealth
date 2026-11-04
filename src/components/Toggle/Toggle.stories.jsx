@@ -14,19 +14,29 @@ export default {
     },
   },
   argTypes: {
-    size: { control: 'select', options: ['S', 'M'], description: 'S = 28px/13px, M = 32px/14px' },
+    size: { control: 'select', options: ['sm', 'md'], description: 'sm = 28px/13px, md = 32px/14px', table: { defaultValue: { summary: 'md' } } },
     variant: { control: 'select', options: ['soft', 'ghost'], description: 'soft: grey track; ghost: no track (on a grey surface), 28px segments, only the selected pill' },
+    onValueChange: { action: 'onValueChange', description: 'Fires with the picked key.' },
     fullWidth: { control: 'boolean', description: 'Flex buttons to fill width' },
   },
 };
 
-function Wrapper(props) {
-  const items = props.items || ['Option A', 'Option B'];
-  const [active, setActive] = useState(typeof items[0] === 'string' ? items[0] : items[0]?.key);
-  return <Toggle {...props} items={items} active={active} onChange={setActive} />;
+export const Playground = {
+  args: { items: ['HCC', 'ICD'], defaultValue: 'HCC', size: 'md', fullWidth: false, 'aria-label': 'Code type' },
+};
+
+function SizesDemo() {
+  const [view, setView] = useState('Workflow');
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', alignItems: 'flex-start' }}>
+      <Toggle aria-label="View" items={['Workflow', 'Configure', 'Analytics']} value={view} onValueChange={setView} />
+      <Toggle aria-label="View, small" size="sm" items={['Workflow', 'Configure', 'Analytics']} defaultValue="Configure" />
+    </div>
+  );
 }
 
-export const Playground = {
-  render: (args) => <Wrapper {...args} />,
-  args: { items: ['HCC', 'ICD'], size: 'M', fullWidth: false },
+/** Both sizes; the first is controlled, the second uncontrolled. */
+export const Sizes = {
+  parameters: { controls: { disable: true } },
+  render: () => <SizesDemo />,
 };

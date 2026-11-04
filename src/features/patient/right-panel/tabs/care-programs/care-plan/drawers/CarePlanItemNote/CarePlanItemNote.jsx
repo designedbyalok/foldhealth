@@ -111,7 +111,7 @@ export const CarePlanItemNote = forwardRef(function CarePlanItemNote(
             links={links}
             placeholder="Add a note. Type @ to tag someone, / to link a goal, intervention or barrier."
             value={html}
-            onChange={(value, plain) => { setHtml(value); setNote(plain || ''); }}
+            onValueChange={(value, plain) => { setHtml(value); setNote(plain || ''); }}
             rows={3}
           />
         )}

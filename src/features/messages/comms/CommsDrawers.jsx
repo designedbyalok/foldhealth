@@ -99,7 +99,7 @@ export function NewChatDrawer({ initialType = 'patient', onClose, onCreated, onI
           label="Type"
           options={[{ value: 'patient', label: 'Chat with Patient' }, { value: 'internal', label: 'Internal Chat' }]}
           value={type}
-          onChange={setType}
+          onValueChange={setType}
         />
         {type === 'internal' ? (
           <Select
@@ -108,7 +108,7 @@ export function NewChatDrawer({ initialType = 'patient', onClose, onCreated, onI
             searchable
             options={staffOptions}
             value={staffId}
-            onChange={setStaffId}
+            onValueChange={setStaffId}
             placeholder="Select user"
             errorText={touched && !staffId ? 'Choose who to chat with.' : undefined}
           />
@@ -121,7 +121,7 @@ export function NewChatDrawer({ initialType = 'patient', onClose, onCreated, onI
             searchable
             options={patients.map(p => patientOption(p))}
             value={patientId}
-            onChange={(v) => {
+            onValueChange={(v) => {
               setPatientId(v);
               const p = patients.find(x => String(x.id) === v);
               if (p && !groupName) setGroupName(`Care for ${p.name}`);
@@ -149,7 +149,7 @@ export function NewChatDrawer({ initialType = 'patient', onClose, onCreated, onI
             disabled={!patient}
             options={staffOptions}
             value={members}
-            onChange={setMembers}
+            onValueChange={setMembers}
             placeholder="Select user"
           />
           <Input label="Family Members" disabled placeholder="Search Patient Family Member" />
@@ -303,7 +303,7 @@ export function NewSmsDrawer({ onClose, onSent, initialPatient }) {
     >
       <div className={styles.form}>
         <InfoBar>{PHI_NOTICE}</InfoBar>
-        <Select label="Send Via" required options={[{ ...line, label: `${line.label} (Default)` }]} value="default" onChange={() => {}} />
+        <Select label="Send Via" required options={[{ ...line, label: `${line.label} (Default)` }]} value="default" onValueChange={() => {}} />
         <Select
           label="Patient"
           required
@@ -315,7 +315,7 @@ export function NewSmsDrawer({ onClose, onSent, initialPatient }) {
           onQueryChange={setQuery}
           options={options}
           value={to}
-          onChange={setTo}
+          onValueChange={setTo}
           placeholder="Search Member or Type Number"
           searchPlaceholder="Search Member or Type Number"
           emptyText="No patients with a phone number match"
@@ -334,7 +334,7 @@ export function NewSmsDrawer({ onClose, onSent, initialPatient }) {
               badgeTooltip: <PersonTip name={o.label} initials={o.initials} email={o.phone ? formatPhone(o.phone) : ''} tag={o.type} />,
             }))}
             value={picked}
-            onChange={updatePicked}
+            onValueChange={updatePicked}
             placeholder={SEND_TO_PLACEHOLDER}
             errorText={touched && !targets.length ? 'Choose who to text.' : undefined}
           >
@@ -352,7 +352,7 @@ export function NewSmsDrawer({ onClose, onSent, initialPatient }) {
             helperText={`${firstName(recipient?.name)}'s number is shared by ${members.length} people. Choose who to log this SMS for.`}
             options={members.map(memberOption)}
             value={logFor.id}
-            onChange={setLogForId}
+            onValueChange={setLogForId}
           />
         )}
         <div className={styles.field}>
@@ -422,7 +422,7 @@ export function VoiceCallDrawer({ onClose, initialMode = 'members', initialNumbe
   return (
     <Drawer title="Voice Call" onClose={onClose}>
       <div className={styles.form}>
-        <Select label="Call Via Line" required options={[{ value: 'default', label: `${line.label} • Browser (Default)` }]} value="default" onChange={() => {}} />
+        <Select label="Call Via Line" required options={[{ value: 'default', label: `${line.label} • Browser (Default)` }]} value="default" onValueChange={() => {}} />
         <div className={styles.field}>
           <span className={styles.label}>To <span className={styles.req} aria-hidden="true" /></span>
           <div className={styles.radios}>
@@ -441,7 +441,7 @@ export function VoiceCallDrawer({ onClose, initialMode = 'members', initialNumbe
               searchable
               options={patients.map(p => patientOption(p, p.phone ? formatPhone(p.phone) : ''))}
               value={patientId}
-              onChange={setPatientId}
+              onValueChange={setPatientId}
               disabled={!!initialPatient}
               placeholder="Search Member"
               wrapperClassName={styles.grow}
@@ -454,7 +454,7 @@ export function VoiceCallDrawer({ onClose, initialMode = 'members', initialNumbe
               <Select
                 options={DIAL_COUNTRIES.map(c => ({ value: c.iso, label: `${c.flag} +${c.code} ${c.iso}` }))}
                 value={country}
-                onChange={setCountry}
+                onValueChange={setCountry}
                 searchable
                 searchPlaceholder="Search country or code"
                 wrapperClassName={styles.country}

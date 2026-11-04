@@ -299,7 +299,7 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
             links={noteRefs.links}
             placeholder="General note for this call. Type @ to tag someone, / to link a goal, intervention or barrier."
             value={callNoteValue}
-            onChange={(v) => setCallNote(typeof v === 'string' ? v : (v?.target?.value ?? ''))}
+            onValueChange={(v) => setCallNote(typeof v === 'string' ? v : (v?.target?.value ?? ''))}
             rows={2}
           />
           <div className={styles.composerRow}>
@@ -418,9 +418,9 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
               <strong>{done} of {items.length}</strong> {listTab.noun}s discussed
             </span>
             <Toggle
-              size="S"
-              active={filter}
-              onChange={setFilter}
+              size="sm"
+              value={filter}
+              onValueChange={setFilter}
               items={[
                 { key: 'all', label: 'All' },
                 { key: 'high', label: `High priority ${highCount}` },

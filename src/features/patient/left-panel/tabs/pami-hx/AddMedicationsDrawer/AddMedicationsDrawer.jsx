@@ -80,7 +80,7 @@ function MedicationRow({ med, onStatusChange, onEdit, dimmed }) {
           portal
           options={statusOptions}
           value={med.status || 'Active'}
-          onChange={v => onStatusChange(med, v)}
+          onValueChange={v => onStatusChange(med, v)}
           className={styles.statusSelect}
         />
         <span className={styles.rowDivider} aria-hidden="true" />
@@ -153,7 +153,7 @@ function MedicationDraft({ title, eyebrow, initial, onSave, onCancel }) {
         <span className={styles.draftTitle}>{title}</span>
       </div>
       <div className={[styles.draftFields, styles.draftFieldsPair].join(' ')}>
-        <Select portal label="Status" required options={STATUS_OPTIONS} value={status} onChange={setStatus} />
+        <Select portal label="Status" required options={STATUS_OPTIONS} value={status} onValueChange={setStatus} />
         <Input label="Start Date" required type="date" value={start} onChange={e => setStart(e.target.value)} />
         {stopped && (
           <>
@@ -172,7 +172,7 @@ function MedicationDraft({ title, eyebrow, initial, onSave, onCancel }) {
               required
               options={STOP_REASON_OPTIONS}
               value={stopReason}
-              onChange={setStopReason}
+              onValueChange={setStopReason}
               placeholder="Select a reason"
             />
           </>

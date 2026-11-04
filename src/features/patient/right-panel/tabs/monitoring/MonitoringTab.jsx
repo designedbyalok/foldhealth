@@ -387,10 +387,10 @@ function StorySection({ events }) {
         <SectionLabel>Story</SectionLabel>
         <Toggle
           className={styles.storyFilters}
-          size="S"
+          size="sm"
           items={STORY_FILTERS}
-          active={filter}
-          onChange={setFilter}
+          value={filter}
+          onValueChange={setFilter}
         />
       </div>
 

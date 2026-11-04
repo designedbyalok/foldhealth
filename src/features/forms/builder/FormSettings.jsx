@@ -175,7 +175,7 @@ export function FormSettings({ settings, onChange }) {
             id={`${uid}-font-family`}
             value={s.fontFamily || 'Inter'}
             options={FONT_OPTIONS}
-            onChange={(v) => set({ fontFamily: v })}
+            onValueChange={(v) => set({ fontFamily: v })}
           />
         </div>
       </div>

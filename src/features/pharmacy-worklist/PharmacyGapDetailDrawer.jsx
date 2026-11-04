@@ -350,10 +350,10 @@ function PharmacyGapDrawerBody({ target, row }) {
             member={scoped}
             titleExtra={codes.length > 1 && (
               <Toggle
-                size="S"
+                size="sm"
                 items={[{ key: 'all', label: 'All' }, ...codes.map(c => ({ key: c, label: c }))]}
-                active={scope}
-                onChange={setScope}
+                value={scope}
+                onValueChange={setScope}
               />
             )}
             onSetStatus={(code, status) => setPharmacyGapStatus(m.id, code, status)}

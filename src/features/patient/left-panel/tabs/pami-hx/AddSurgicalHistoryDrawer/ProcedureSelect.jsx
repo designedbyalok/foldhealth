@@ -44,7 +44,7 @@ export function ProcedureSelect({ value, onChange, leadingIcon }) {
     <Select
       options={options}
       value={value}
-      onChange={handleChange}
+      onValueChange={handleChange}
       placeholder="Search And Add Surgical History"
       leadingIcon={leadingIcon}
       searchable

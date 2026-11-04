@@ -177,7 +177,7 @@ export function ReviewItemRow({
               links={noteRefs?.links}
               placeholder={latestNote ? 'Add to the notes' : `What did the patient say about this ${kind}?`}
               value={html}
-              onChange={(v, plain) => { setHtml(v); setText(plain || ''); }}
+              onValueChange={(v, plain) => { setHtml(v); setText(plain || ''); }}
               rows={2}
             />
             <div className={styles.composeBar}>

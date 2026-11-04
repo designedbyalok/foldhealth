@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback, useLayoutEffect } from 'react';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
+import { resolveSize, warnDeprecated } from '../../lib/legacyProps';
 import styles from './Toggle.module.css';
 
 /**
@@ -12,22 +13,38 @@ import styles from './Toggle.module.css';
  * at the first-measured size and visibly fall behind its button.
  *
  * Props:
- *  - items      (string[] | {key, label, icon?, leadingIcon?, notif?, ariaLabel?, tooltip?}[])
- *                            ariaLabel names an icon-only segment; leadingIcon
- *                            (Solar name or node) sits before the label;
- *                            notif adds TabStrip's pulsing dot (something new);
- *                            tooltip shows on hover
- *  - active     (string)     Currently selected key
- *  - onChange   (function)   Called with the key of the clicked segment
- *  - className  (string)     Extra class on the outer container
- *  - size       ('S'|'M')    S=28px height/13px font, M=32px height/14px font
- *  - variant    ('soft'|'ghost') soft (default) sits the segments on a grey
- *                            track; ghost drops the track (for a toggle on a
- *                            grey surface): 28px segments, 14px text, only
- *                            the selected segment's white pill shows
- *  - fullWidth  (boolean)    Stretch to parent and let buttons flex equally
+ *  - items         (string[] | {key, label, icon?, leadingIcon?, notif?, ariaLabel?, tooltip?}[])
+ *                               ariaLabel names an icon-only segment; leadingIcon
+ *                               (Solar name or node) sits before the label;
+ *                               notif adds TabStrip's pulsing dot (something new);
+ *                               tooltip shows on hover
+ *  - value         (string)     Selected key (controlled)
+ *  - defaultValue  (string)     Initially selected key (uncontrolled)
+ *  - onValueChange (function)   Called with the key of the clicked segment
+ *                               (`active` / `onChange` are the old names)
+ *  - className     (string)     Extra class on the outer container
+ *  - size          ('sm'|'md')  sm=28px height/13px font, md=32px height/14px font
+ *  - variant       ('soft'|'ghost') soft (default) sits the segments on a grey
+ *                               track; ghost drops the track (for a toggle on a
+ *                               grey surface): 28px segments, 14px text, only
+ *                               the selected segment's white pill shows
+ *  - fullWidth     (boolean)    Stretch to parent and let buttons flex equally
+ *  - ...rest       Spread on the radiogroup (e.g. `aria-label`)
  */
-export function Toggle({ items = [], active, onChange, className, size = 'M', variant = 'soft', fullWidth = false }) {
+export function Toggle({
+  items = [], value, defaultValue, onValueChange, active, onChange,
+  className, size = 'md', variant = 'soft', fullWidth = false, ...rest
+}) {
+  if (active !== undefined) warnDeprecated('Toggle', 'active', true, 'value');
+  if (onChange && !onValueChange) warnDeprecated('Toggle', 'onChange', true, 'onValueChange');
+  const [uncontrolled, setUncontrolled] = useState(defaultValue);
+  const controlledValue = value !== undefined ? value : active;
+  const current = controlledValue !== undefined ? controlledValue : uncontrolled;
+  const select = (key) => {
+    if (controlledValue === undefined) setUncontrolled(key);
+    (onValueChange ?? onChange)?.(key);
+  };
+
   const containerRef = useRef(null);
   const [sliderStyle, setSliderStyle] = useState({ left: 0, width: 0, opacity: 0 });
 
@@ -50,7 +67,7 @@ export function Toggle({ items = [], active, onChange, className, size = 'M', va
 
   // Use layout effect so the slider is positioned before paint, avoids the
   // visible "snap" from 0,0 to its actual spot on first render.
-  useLayoutEffect(() => { updateSlider(); }, [active, updateSlider, items.length]);
+  useLayoutEffect(() => { updateSlider(); }, [current, updateSlider, items.length]);
 
   // Re-measure when the container or any button resizes. Catches:
   //  - Icon SVGs hydrating after mount (Iconify lazy-loads SVGs)
@@ -65,7 +82,7 @@ export function Toggle({ items = [], active, onChange, className, size = 'M', va
     return () => ro.disconnect();
   }, [items.length, updateSlider]);
 
-  const sizeClass = size === 'S' ? styles.sizeS : styles.sizeM;
+  const sizeClass = resolveSize('Toggle', size) === 'sm' ? styles.sizeS : styles.sizeM;
 
   return (
     <div
@@ -79,6 +96,7 @@ export function Toggle({ items = [], active, onChange, className, size = 'M', va
         className || '',
       ].filter(Boolean).join(' ')}
       role="radiogroup"
+      {...rest}
     >
       <div className={styles.slider} style={sliderStyle} />
       {normalized.map(({ key, label, icon, leadingIcon, notif, ariaLabel, tooltip }) => {
@@ -87,11 +105,11 @@ export function Toggle({ items = [], active, onChange, className, size = 'M', va
           key={key}
           type="button"
           role="radio"
-          aria-checked={active === key}
+          aria-checked={current === key}
           aria-label={ariaLabel}
-          data-active={active === key}
-          className={`${styles.btn} ${active === key ? styles.btnActive : ''}`}
-          onClick={() => onChange(key)}
+          data-active={current === key}
+          className={`${styles.btn} ${current === key ? styles.btnActive : ''}`}
+          onClick={() => select(key)}
         >
           {icon ? (typeof icon === 'string' ? <Icon name={icon} size={16} /> : icon) : leadingIcon ? (
             <span className={styles.withIcon}>

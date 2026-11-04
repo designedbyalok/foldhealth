@@ -57,7 +57,7 @@ export function NewOrderDrawer({ patientId, type, onClose }) {
       )}
     >
       <div className={styles.form}>
-        <Select label={config.fieldLabel} required searchable options={options} value={values.pick} onChange={set('pick')} placeholder={`Select ${noun}`} />
+        <Select label={config.fieldLabel} required searchable options={options} value={values.pick} onValueChange={set('pick')} placeholder={`Select ${noun}`} />
         {values.pick === OTHER && (
           <Input label={`${config.fieldLabel} Name`} required placeholder={`Enter ${noun} name`} value={values.other} onChange={e => set('other')(e.target.value)} autoFocus />
         )}
@@ -65,13 +65,13 @@ export function NewOrderDrawer({ patientId, type, onClose }) {
           <span className={styles.label}>Diagnosis</span>
           <IcdSearch onSelect={addDiagnosis} placeholder="Search ICD code or description" />
         </div>
-        <Textarea title="Diagnosis / Reason" mandatory rows={3} value={values.reason} onChange={set('reason')} placeholder="Enter reason, or add a diagnosis above" />
+        <Textarea title="Diagnosis / Reason" mandatory rows={3} value={values.reason} onValueChange={set('reason')} placeholder="Enter reason, or add a diagnosis above" />
         <PriorityField name={`${type}-priority`} value={values.priority} onChange={set('priority')} />
         <div className={styles.row}>
           <Input label="Ordered By" value={values.orderedBy} onChange={e => set('orderedBy')(e.target.value)} />
           <DatePicker label="Scheduled / Due Date" value={values.dueDate} onSelect={set('dueDate')} />
         </div>
-        <Textarea title="Notes" rows={3} value={values.notes} onChange={set('notes')} placeholder="Add notes" />
+        <Textarea title="Notes" rows={3} value={values.notes} onValueChange={set('notes')} placeholder="Add notes" />
       </div>
     </Drawer>
   );

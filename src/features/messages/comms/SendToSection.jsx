@@ -40,7 +40,7 @@ export function SendToSection({ value, onChange, contact, need, error, labelEnd,
         <Select
           options={RECIPIENT_TYPES.map(t => ({ value: t, label: t }))}
           value={value.type}
-          onChange={(type) => onChange({ ...value, type })}
+          onValueChange={(type) => onChange({ ...value, type })}
         />
         {error ? (
           <span className={styles.error} role="alert">
@@ -76,7 +76,7 @@ export function SendToSection({ value, onChange, contact, need, error, labelEnd,
             badges
             options={VERIFICATION_METHODS.map(m => ({ value: m.value, label: m.label }))}
             value={p.methods}
-            onChange={(next) => setP({ methods: next, required: Math.min(p.required, Math.max(1, next.length)) })}
+            onValueChange={(next) => setP({ methods: next, required: Math.min(p.required, Math.max(1, next.length)) })}
             placeholder="Select methods"
           />
           <div className={styles.grid}>
@@ -85,13 +85,13 @@ export function SendToSection({ value, onChange, contact, need, error, labelEnd,
               required
               options={confirmOptions}
               value={String(Math.min(p.required, Math.max(1, p.methods.length)))}
-              onChange={(v) => setP({ required: Number(v) })}
+              onValueChange={(v) => setP({ required: Number(v) })}
             />
             <Select
               label="Invalid Attempt Policy"
               options={INVALID_ATTEMPT_POLICIES.map(v => ({ value: v, label: v }))}
               value={p.policy}
-              onChange={(v) => setP({ policy: v })}
+              onValueChange={(v) => setP({ policy: v })}
             />
           </div>
           <Input

@@ -280,13 +280,13 @@ export function PharmacyVerificationStep({ program, member: memberProp, onLocked
           <span className={styles.partyText}>Called: {record.party || 'Pharmacy'} · {record.contact}</span>
         ) : (
           <span className={styles.partyPick}>
-            <Toggle size="S" items={['Pharmacy', 'Physician', 'Member']} active={party} onChange={(p) => { setParty(p); setContactName(null); }} />
+            <Toggle size="sm" items={['Pharmacy', 'Physician', 'Member']} value={party} onValueChange={(p) => { setParty(p); setContactName(null); }} />
             {contactsFor(party).length > 1 && (
               <Select
                 portal
                 options={contactsFor(party).map(c => ({ value: c.name, label: c.name }))}
                 value={contact}
-                onChange={setContactName}
+                onValueChange={setContactName}
                 aria-label={`Which ${party.toLowerCase()}`}
               />
             )}

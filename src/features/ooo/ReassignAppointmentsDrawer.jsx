@@ -173,7 +173,7 @@ export function ReassignAppointmentsDrawer({ users, initialUser, initialRecordId
             placeholder="Select a provider"
             options={fromOptions}
             value={from || undefined}
-            onChange={(key) => { setFrom(key); setRecordId(latestFor(people.find(u => personKey(u) === key))); }}
+            onValueChange={(key) => { setFrom(key); setRecordId(latestFor(people.find(u => personKey(u) === key))); }}
             disabled={bulk}
           />
 
@@ -192,7 +192,7 @@ export function ReassignAppointmentsDrawer({ users, initialUser, initialRecordId
                     placeholder="Select Out of Office Period"
                     options={recordOptions}
                     value={recordId || undefined}
-                    onChange={setRecordId}
+                    onValueChange={setRecordId}
                     disabled={!from}
                     // A provider with nothing to pick opens to this
                     // (Figma Mar-Present 3961:41376), which adds one.

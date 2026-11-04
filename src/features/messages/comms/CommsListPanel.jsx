@@ -102,7 +102,7 @@ export function CommsListPanel({
       />
 
       <div className={listStyles.convTabs}>
-        <Toggle items={tabs} active={tab} onChange={setTab} size="S" />
+        <Toggle items={tabs} value={tab} onValueChange={setTab} size="sm" />
       </div>
 
       {filterOpen && (

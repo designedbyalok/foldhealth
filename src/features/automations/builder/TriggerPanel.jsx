@@ -60,7 +60,7 @@ export function TriggerPanel({ graph, current, onSave, onClose }) {
               label="Moves to"
               options={STATUS_OPTIONS}
               value={programStatuses}
-              onChange={v => setProgramStatuses(v || [])}
+              onValueChange={v => setProgramStatuses(v || [])}
               multiple
               checkboxes
               badges
@@ -72,7 +72,7 @@ export function TriggerPanel({ graph, current, onSave, onClose }) {
               label="Programs"
               options={PROGRAM_OPTIONS}
               value={programCodes}
-              onChange={v => setProgramCodes(v || [])}
+              onValueChange={v => setProgramCodes(v || [])}
               multiple
               checkboxes
               badges

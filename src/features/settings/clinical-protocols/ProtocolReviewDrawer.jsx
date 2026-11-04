@@ -39,12 +39,12 @@ function ItemEditor({ section, item, onSave, onCancel }) {
     <div className={styles.editor}>
       {section.fields.filter(f => !f.showWhen || f.showWhen(value)).map((f) => {
         if (f.type === 'select') {
-          return <Select key={f.key} label={f.label} portal options={f.options} value={value[f.key]} onChange={v => set(f.key, v)} />;
+          return <Select key={f.key} label={f.label} portal options={f.options} value={value[f.key]} onValueChange={v => set(f.key, v)} />;
         }
         if (f.type === 'textarea') {
           return (
             <div key={f.key} className={styles.editorFull}>
-              <Textarea title={f.label} value={value[f.key] || ''} onChange={v => set(f.key, v)} rows={2} />
+              <Textarea title={f.label} value={value[f.key] || ''} onValueChange={v => set(f.key, v)} rows={2} />
             </div>
           );
         }
@@ -384,7 +384,7 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
           disabled={!editable}
           options={programOptions}
           value={draft.programCodes || []}
-          onChange={v => set('programCodes', v)}
+          onValueChange={v => set('programCodes', v)}
           placeholder="Programs this protocol applies to"
         />
       </div>

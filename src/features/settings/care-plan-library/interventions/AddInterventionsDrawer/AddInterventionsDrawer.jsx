@@ -99,7 +99,7 @@ export function AddInterventionsDrawer({ onClose, onAdd, primaryLabel = 'Add' })
     <Drawer title="Add Interventions" onClose={onClose} headerRight={headerRight} noCloseDivider>
       <div className={styles.body}>
         <div className={styles.filterRow}>
-          <Toggle size="S" items={tabs} active={tab} onChange={setTab} />
+          <Toggle size="sm" items={tabs} value={tab} onValueChange={setTab} />
           <Button
             variant="soft"
             size="sm"

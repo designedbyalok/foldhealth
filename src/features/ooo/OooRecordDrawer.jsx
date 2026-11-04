@@ -220,7 +220,7 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], onClo
             options={pickable}
             value={values.userName ? personKey({ id: values.userId, name: values.userName }) : undefined}
             errorText={touched && !values.userName ? 'Pick a provider.' : undefined}
-            onChange={(key) => {
+            onValueChange={(key) => {
               const u = users.find(x => personKey(x) === key);
               if (u) set({ userName: u.name, userEmail: u.email || '', userRole: u.role || '', userId: u.id || null });
             }}
@@ -339,7 +339,7 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], onClo
                 rows={3}
                 value={values.autoReplyMessage}
                 maxLength={500}
-                onChange={(value) => set({ autoReplyMessage: value })}
+                onValueChange={(value) => set({ autoReplyMessage: value })}
                 aria-label="Auto reply message"
               />
               {err('autoReplyMessage') && <span className={styles.fieldError}>{err('autoReplyMessage')}</span>}

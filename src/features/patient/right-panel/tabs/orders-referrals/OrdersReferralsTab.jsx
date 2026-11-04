@@ -120,8 +120,8 @@ export function OrdersReferralsTab({ patient }) {
           <SubTabs
             className={styles.views}
             tabs={VIEW_TABS}
-            activeKey={view}
-            onChange={switchView}
+            value={view}
+            onValueChange={switchView}
             leading={(
               <>
                 <ActionButton icon="solar:magnifer-linear" tooltip="Search" aria-label={`Search ${noun}`} onClick={() => setSearchOpen(true)} />

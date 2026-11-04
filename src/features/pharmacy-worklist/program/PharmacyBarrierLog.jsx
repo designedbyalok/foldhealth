@@ -153,9 +153,9 @@ export function PharmacyBarrierLog({ member, onEdit }) {
       <div className={styles.toolbar}>
         <SubTabs
           tabs={[{ key: 'active', label: 'Active' }, { key: 'history', label: 'History' }]}
-          activeKey={view}
-          onChange={setView}
-          size="S"
+          value={view}
+          onValueChange={setView}
+          size="sm"
         />
         {onEdit && view === 'active' && <Button variant="ghost" size="sm" leadingIcon="solar:pen-linear" onClick={onEdit}>Edit</Button>}
       </div>
@@ -260,8 +260,8 @@ function DrugBarrierAdd({ member, x, d, onDone }) {
   };
   return (
     <div className={styles.addForm}>
-      <Select label="Barriers" multiple badges searchable portal options={BARRIER_OPTIONS} value={add.barriers} placeholder="Add barriers" onChange={v => setAdd(a => ({ ...a, barriers: v }))} />
-      <Select label="Interventions" multiple badges searchable portal options={INTERVENTION_OPTIONS} value={add.interventions} placeholder="Add interventions" onChange={v => setAdd(a => ({ ...a, interventions: v }))} />
+      <Select label="Barriers" multiple badges searchable portal options={BARRIER_OPTIONS} value={add.barriers} placeholder="Add barriers" onValueChange={v => setAdd(a => ({ ...a, barriers: v }))} />
+      <Select label="Interventions" multiple badges searchable portal options={INTERVENTION_OPTIONS} value={add.interventions} placeholder="Add interventions" onValueChange={v => setAdd(a => ({ ...a, interventions: v }))} />
       <Textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Add a note" aria-label="Note" />
       <div className={styles.addActions}>
         <Button variant="outline" onClick={onDone}>Cancel</Button>

@@ -388,7 +388,7 @@ export function ApplyTemplatesDrawer({
           options={t.categories.map(c => ({ value: c.id, label: [c.name, describeCriteria(c)].filter(Boolean).join(' · ') }))}
           value={picked || ''}
           placeholder="Pick a category"
-          onChange={v => setCategoryOverrides(prev => ({ ...prev, [t.id]: v }))}
+          onValueChange={v => setCategoryOverrides(prev => ({ ...prev, [t.id]: v }))}
           wrapperClassName={styles.categorySelect}
         />
         <span className={matchedId && picked === matchedId ? styles.categoryMatched : styles.categoryNote}>{status}</span>

@@ -217,10 +217,10 @@ export function CisImmunizationsTab({ member, immunizations, savedNotes, loading
         <section className={styles.vaccines} aria-label="Combination 10 vaccines">
           <div className={styles.listBar}>
             <Toggle
-              size="S"
+              size="sm"
               items={[{ key: 'vaccine', label: 'Vaccine' }, { key: 'age', label: 'Age' }]}
-              active={viewBy}
-              onChange={setViewBy}
+              value={viewBy}
+              onValueChange={setViewBy}
             />
             {listToolbar}
           </div>

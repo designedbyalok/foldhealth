@@ -29,7 +29,7 @@ export function IcdCardBody({
                 id={`${uid}-dos`}
                 options={effectiveDosOptions}
                 value={card.dosList.map(d => d.value)}
-                onChange={handleDosSelect}
+                onValueChange={handleDosSelect}
                 placeholder="Select Date of Service"
               />
             </div>
@@ -41,7 +41,7 @@ export function IcdCardBody({
                 options={providerOptions.length ? providerOptions : providerAll}
                 id={`${uid}-provider`}
                 value={card.provider}
-                onChange={(v) => onUpdate({ provider: v })}
+                onValueChange={(v) => onUpdate({ provider: v })}
                 placeholder="Select Rendering Provider"
                 searchable
               />
@@ -54,7 +54,7 @@ export function IcdCardBody({
                 options={posOptions}
                 id={`${uid}-pos`}
                 value={card.pos}
-                onChange={(v) => onUpdate({ pos: v })}
+                onValueChange={(v) => onUpdate({ pos: v })}
                 placeholder="Select Place of Service"
               />
             </div>
@@ -68,7 +68,7 @@ export function IcdCardBody({
                     id={`${uid}-doc-type`}
                     options={docTypeOptions}
                     value={card.docType}
-                    onChange={(v) => onUpdate({ docType: v })}
+                    onValueChange={(v) => onUpdate({ docType: v })}
                     placeholder="Select Document Type"
                   />
                 </>
@@ -81,7 +81,7 @@ export function IcdCardBody({
                     id={`${uid}-visit-type`}
                     options={vtOptions}
                     value={card.visitType}
-                    onChange={handleVtChange}
+                    onValueChange={handleVtChange}
                     placeholder="Select Visit Type"
                   />
                 </>

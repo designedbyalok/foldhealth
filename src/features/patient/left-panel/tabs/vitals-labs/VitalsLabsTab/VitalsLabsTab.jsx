@@ -368,7 +368,7 @@ function GraphView({ sections, history, pinned, onClose, onAdd, widgets }) {
               <span className={styles.graphSectionTitle}>{section.title}</span>
               {i === 0 && (
                 <>
-                  <Toggle items={RANGE_KEYS} active={range} onChange={setRange} size="S" />
+                  <Toggle items={RANGE_KEYS} value={range} onValueChange={setRange} size="sm" />
                   <button className={styles.listIconBtn} onClick={onClose} title="Back to list">
                     <ListIcon />
                   </button>

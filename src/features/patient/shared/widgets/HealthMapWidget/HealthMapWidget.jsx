@@ -153,13 +153,13 @@ export function HealthMapWidget({ compact = false }) {
         <>
           {!isLoading && (
             <Toggle
-              size="S"
-              active={activeToggle}
+              size="sm"
+              value={activeToggle}
               items={[
                 { key: 'clinic', icon: <span className={styles.toggleItem}><Icon name="solar:stethoscope-linear" size={14} color="currentColor" />Clinic</span> },
                 { key: 'patient', icon: <span className={styles.toggleItem}><Icon name="solar:user-linear" size={14} color="currentColor" />Patient</span> },
               ]}
-              onChange={(key) => {
+              onValueChange={(key) => {
                 setActiveToggle(key);
                 if (key === 'patient') setView('patientGenerated');
                 else if (view !== 'generated' && view !== 'open') setView('generated');

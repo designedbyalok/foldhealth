@@ -66,7 +66,7 @@ function ImmunizationRow({ immunization, onStatusChange, onEdit, dimmed }) {
           portal
           options={STATUS_OPTIONS}
           value={immunization.status || 'Active'}
-          onChange={v => onStatusChange(immunization, v)}
+          onValueChange={v => onStatusChange(immunization, v)}
           className={styles.statusSelect}
         />
         <span className={styles.rowDivider} aria-hidden="true" />
@@ -138,7 +138,7 @@ function ImmunizationDraft({ title, eyebrow, initial, onSave, onCancel }) {
           onChange={e => setAdministered(e.target.value)}
           errorText={administeredInFuture ? 'Date administered cannot be in the future' : undefined}
         />
-        <Select portal label="Status" required options={STATUS_OPTIONS} value={status} onChange={setStatus} />
+        <Select portal label="Status" required options={STATUS_OPTIONS} value={status} onValueChange={setStatus} />
         <Input
           label="Dose Quantity"
           value={doseQuantity}

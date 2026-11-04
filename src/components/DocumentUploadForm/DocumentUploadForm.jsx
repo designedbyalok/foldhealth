@@ -28,7 +28,7 @@ export function DocumentUploadForm({ form, docTypes = [], initialFile = null }) 
         required
         options={docTypes.map(t => ({ value: t, label: t }))}
         value={form.docType}
-        onChange={form.setDocType}
+        onValueChange={form.setDocType}
         placeholder="Select Type"
       />
       <Input
