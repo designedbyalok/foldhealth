@@ -5,7 +5,7 @@ import { Link } from '../../../../../../components/Link/Link';
 import { ActionButton } from '../../../../../../components/ActionButton/ActionButton';
 import { Avatar } from '../../../../../../components/Avatar/Avatar';
 import { Icon } from '../../../../../../components/Icon/Icon';
-import { SubTabs } from '../../../../../../components/SubTabs/SubTabs';
+import { Tabs } from '../../../../../../components/Tabs/Tabs';
 import { TimelineSkeleton } from '../../../../../../components/TimelineSkeleton/TimelineSkeleton';
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { CRM_CHANNELS, CRM_STATUS_COLOR } from '../../../../data/crmActivity';
@@ -169,7 +169,7 @@ export function CrmTab({ patientId }) {
   return (
     <div className={styles.wrapper}>
       <div className={styles.toolbar}>
-        <SubTabs tabs={FILTER_TABS} value={channel} onValueChange={setChannel} />
+        <Tabs variant="pill" items={FILTER_TABS} value={channel} onValueChange={setChannel} />
         <ActionButton icon="custom:filter" size="sm" tooltip="Filter" tooltipLeft />
       </div>
       {loading

@@ -7,7 +7,7 @@ import { AuditDetailCard } from '../../../../../../../../components/AuditDetailC
 import { Avatar } from '../../../../../../../../components/Avatar/Avatar';
 import { Badge } from '../../../../../../../../components/Badge/Badge';
 import { FilterChip } from '../../../../../../../../components/FilterChip/FilterChip';
-import { Toggle } from '../../../../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../../../../components/SegmentedControl/SegmentedControl';
 import { RadioListPopover } from '../../../../../../../../components/RadioListPopover/RadioListPopover';
 import { DateRangePopover } from '../../../../../../../../components/DateRangePopover/DateRangePopover';
 import { parseLocalDate } from '../../../../../../../../lib/localDate';
@@ -756,7 +756,7 @@ export function CarePlanHistoryView({ patientId, program, lastVisit = null, sinc
 
   const filterRow = (
     <div className={`${styles.filterRow}${compact ? ` ${styles.filterRowCompact}` : ''}`}>
-      <Toggle
+      <SegmentedControl
         size="sm"
         items={[{ key: 'month', label: 'Month' }, { key: 'version', label: 'Versions' }]}
         value={viewBy}

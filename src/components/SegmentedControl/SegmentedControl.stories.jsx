@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { Toggle } from './Toggle';
+import { SegmentedControl } from './SegmentedControl';
 
 export default {
-  title: 'Core/Toggle',
-  component: Toggle,
+  title: 'Core/SegmentedControl',
+  component: SegmentedControl,
   tags: ['autodocs'],
   parameters: {
     docs: {
       description: {
         component:
-          'A segmented on/off control: two to four short labels with a sliding pill that animates to the active option. Use it for view switches (HCC / ICD, Workflow / Configure / Analytics) where the choices are always visible and mutually exclusive. For binary on/off preferences prefer `Switch`; for longer option lists prefer `Select` or `RadioButton`.',
+          'Pick one of two to four short options, side by side, with a sliding pill that animates to the selected one (HCC / ICD, PMPM / Total Cost). The choices are always visible and mutually exclusive. Was `Toggle`. To switch what is shown below, use `Tabs`; for on/off use `Switch`; for longer lists use `Select` or `RadioButton`.',
       },
     },
   },
@@ -29,8 +29,8 @@ function SizesDemo() {
   const [view, setView] = useState('Workflow');
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', alignItems: 'flex-start' }}>
-      <Toggle aria-label="View" items={['Workflow', 'Configure', 'Analytics']} value={view} onValueChange={setView} />
-      <Toggle aria-label="View, small" size="sm" items={['Workflow', 'Configure', 'Analytics']} defaultValue="Configure" />
+      <SegmentedControl aria-label="View" items={['Workflow', 'Configure', 'Analytics']} value={view} onValueChange={setView} />
+      <SegmentedControl aria-label="View, small" size="sm" items={['Workflow', 'Configure', 'Analytics']} defaultValue="Configure" />
     </div>
   );
 }

@@ -1,11 +1,11 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useAppStore } from '../../../store/useAppStore';
 import { SectionTitleBar } from '../../../components/SectionTitleBar/SectionTitleBar';
-import { SubTabs } from '../../../components/SubTabs/SubTabs';
+import { Tabs } from '../../../components/Tabs/Tabs';
 import { Input } from '../../../components/Input/Input';
 import { Link } from '../../../components/Link/Link';
 import { Icon } from '../../../components/Icon/Icon';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Button } from '../../../components/Button/Button';
 import { FilterChip } from '../../../components/FilterChip/FilterChip';
@@ -223,7 +223,7 @@ export function AutomationsList() {
             Get Started
           </Link>
           <span className={styles.divider} />
-          <Toggle items={LAYOUTS} value={layout} onValueChange={setLayout} size="sm" />
+          <SegmentedControl items={LAYOUTS} value={layout} onValueChange={setLayout} size="sm" />
           <span className={styles.divider} />
           <ActionButton icon="solar:add-square-linear" tooltip="New automation" tooltipBelow tooltipLeft onClick={() => openNewAutomation(null)} />
         </div>
@@ -240,9 +240,10 @@ export function AutomationsList() {
   const mineSubBar = (
     <>
       <div className={styles.subRow}>
-        <SubTabs
+        <Tabs
+          variant="pill"
           leading={searchToggle}
-          tabs={STATUS_TABS.map(t => ({ key: t.key, label: t.label, count: loading ? undefined : statusCounts[t.key] }))}
+          items={STATUS_TABS.map(t => ({ key: t.key, label: t.label, count: loading ? undefined : statusCounts[t.key] }))}
           value={statusTab}
           onValueChange={setStatusTab}
         />
@@ -280,9 +281,10 @@ export function AutomationsList() {
 
   const templatesSubBar = (
     <div className={styles.subRow}>
-      <SubTabs
+      <Tabs
+        variant="pill"
         leading={searchToggle}
-        tabs={categoryTabs.map(t => ({ ...t, count: loading ? undefined : t.count }))}
+        items={categoryTabs.map(t => ({ ...t, count: loading ? undefined : t.count }))}
         value={category}
         onValueChange={setCategory}
       />

@@ -14,7 +14,7 @@ import { DownChevronIcon } from '../Icon/DownChevronIcon';
 import { Input } from '../Input/Input';
 import { Textarea } from '../Textarea/Textarea';
 import { UserPickerPopover } from '../UserPickerPopover/UserPickerPopover';
-import { TabStrip } from '../TabStrip/TabStrip';
+import { Tabs } from '../Tabs/Tabs';
 import { CollapsibleContent } from '../Collapsible/Collapsible';
 import { CardSkeleton } from '../CardSkeleton/CardSkeleton';
 import { ImagePreviewOverlay } from '../ImagePreviewOverlay/ImagePreviewOverlay';
@@ -288,10 +288,10 @@ export function FeatureReviewsDrawer({ onClose, focusId = null }) {
       >
       {/* Tabs and column headers stay pinned under the drawer header. */}
       <div className={styles.stickyTop}>
-        <TabStrip
+        <Tabs
           fullWidth={false}
-          activeKey={activeTab}
-          onChange={setTab}
+          value={activeTab}
+          onValueChange={setTab}
           items={[
             { key: 'mine', label: 'To sign', count: counts.mine },
             { key: 'pending', label: 'Pending', count: counts.pending },

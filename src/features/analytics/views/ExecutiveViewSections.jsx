@@ -1,5 +1,5 @@
 import { Button } from '../../../components/Button/Button';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { KpiCard, InsightBanner, Card, ProgressBar, EmptyState, KpiSkeleton, TableSkeleton, ChartSkeleton, ProgressBarSkeleton } from './shared';
 import { safeTableRows, safeBarItems } from './shared.utils';
 import { TcocLineChart, SavingsAreaChart } from './charts';
@@ -61,7 +61,7 @@ export function ExecutiveTcocSection({
       sub={periodLabel}
       actions={
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <Toggle
+          <SegmentedControl
             items={[
               { key: 'pmpm', label: 'PMPM' },
               { key: 'total', label: 'Total Cost' },
@@ -70,7 +70,7 @@ export function ExecutiveTcocSection({
             onValueChange={onTcocModeChange}
             size="sm"
           />
-          <Toggle
+          <SegmentedControl
             items={[
               { key: 'all', label: 'All' },
               { key: 'ip', label: 'Inpatient' },

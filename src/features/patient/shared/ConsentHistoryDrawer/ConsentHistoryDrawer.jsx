@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Drawer } from '../../../../components/Drawer/Drawer';
-import { TabStrip } from '../../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../../components/Tabs/Tabs';
 import { Input } from '../../../../components/Input/Input';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
 import { FilterChip } from '../../../../components/FilterChip/FilterChip';
@@ -47,7 +47,7 @@ export function ConsentHistoryDrawer({ patientId, onClose }) {
 
   return (
     <Drawer title="Consent History" onClose={onClose} bodyClassName={styles.body}>
-      <TabStrip items={TABS} activeKey={tab} onChange={setTab} fullWidth={false} />
+      <Tabs items={TABS} value={tab} onValueChange={setTab} fullWidth={false} />
       <div className={styles.content}>
         <div className={styles.toolbar}>
           <div className={styles.search}>

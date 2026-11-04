@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { SearchBar } from '../../components/SearchBar/SearchBar';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { ListCollapseIcon, ListExpandIcon } from '../../components/Icon/ListCollapseIcon';
 import styles from './CalendarView.module.css';
 
@@ -39,7 +39,7 @@ export function CalendarViewTools({ search = '', onSearchChange, placeholder = '
       {onGroupsModeChange && (
         <>
           <span className={styles.listToolsDivider} aria-hidden="true" />
-          <Toggle items={GROUP_MODES} value={groupsMode} onValueChange={onGroupsModeChange} size="sm" />
+          <SegmentedControl items={GROUP_MODES} value={groupsMode} onValueChange={onGroupsModeChange} size="sm" />
         </>
       )}
     </div>

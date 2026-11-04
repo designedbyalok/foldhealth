@@ -1,4 +1,4 @@
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { NodeSettings } from './NodeSettings';
 import { ChatPanel } from './ChatPanel';
 import { GlobalSettings } from './GlobalSettings';
@@ -38,7 +38,7 @@ export function AgentCanvasRightPanel({
       ) : (
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
           <div style={{ padding: '10px 12px 6px', borderBottom: '0.5px solid var(--neutral-150)', flexShrink: 0 }}>
-            <Toggle
+            <SegmentedControl
               items={['Workflow Assistant', 'Global Settings']}
               value={rightTab}
               onValueChange={setRightTab}

@@ -5,7 +5,7 @@ import { FilterBar } from '../../../../../components/FilterBar/FilterBar';
 import { Input } from '../../../../../components/Input/Input';
 import { SimpleTableSkeleton } from '../../../../../components/SimpleTableSkeleton/SimpleTableSkeleton';
 import { EmptyState } from '../../../../../components/EmptyState/EmptyState';
-import { SubTabs } from '../../../../../components/SubTabs/SubTabs';
+import { Tabs } from '../../../../../components/Tabs/Tabs';
 import { resolvePatientStoreId } from '../../../../../lib/resolvePatientStoreId';
 import { useAppStore } from '../../../../../store/useAppStore';
 import { AssessmentDetail } from './AssessmentDetail';
@@ -95,9 +95,10 @@ export function AssessmentsTab({ patient }) {
           </div>
         ) : (
           <div className={styles.toolbar}>
-            <SubTabs
+            <Tabs
+              variant="pill"
               className={styles.views}
-              tabs={VIEW_TABS}
+              items={VIEW_TABS}
               value={view}
               onValueChange={setView}
               leading={(

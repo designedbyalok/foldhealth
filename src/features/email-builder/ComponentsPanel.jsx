@@ -4,7 +4,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import { Icon } from '../../components/Icon/Icon';
 import { DownChevronIcon } from '../../components/Icon/DownChevronIcon';
-import { TabStrip } from '../../components/TabStrip/TabStrip';
+import { Tabs } from '../../components/Tabs/Tabs';
 import { useAppStore } from '../../store/useAppStore';
 import { HEADER_PRESETS, FOOTER_PRESETS } from './headerFooterLibrary';
 import { buildParentMap, computeDropPosition } from './blockHelpers';
@@ -208,10 +208,10 @@ export function ComponentsPanel() {
   return (
     <div ref={panelRef} className={styles.leftPanel} style={{ width: panelWidth }}>
       <div className={styles.panelTabBar}>
-        <TabStrip
+        <Tabs
           items={LEFT_PANEL_TABS}
-          activeKey={tab}
-          onChange={setTab}
+          value={tab}
+          onValueChange={setTab}
           embedded
           fullWidth={false}
           balanceTabs

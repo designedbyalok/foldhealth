@@ -8,7 +8,7 @@ import { DashboardCard } from '../../../components/DashboardCard/DashboardCard';
 import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { DownChevronIcon } from '../../../components/Icon/DownChevronIcon';
 import { Select } from '../../../components/Select/Select';
-import { SubTabs } from '../../../components/SubTabs/SubTabs';
+import { Tabs } from '../../../components/Tabs/Tabs';
 import { Textarea } from '../../../components/Textarea/Textarea';
 import { useAppStore } from '../../../store/useAppStore';
 import { toast } from '../../../components/Toast/sonnerToast';
@@ -151,8 +151,9 @@ export function PharmacyBarrierLog({ member, onEdit }) {
   return (
     <div className={styles.wrap}>
       <div className={styles.toolbar}>
-        <SubTabs
-          tabs={[{ key: 'active', label: 'Active' }, { key: 'history', label: 'History' }]}
+        <Tabs
+          variant="pill"
+          items={[{ key: 'active', label: 'Active' }, { key: 'history', label: 'History' }]}
           value={view}
           onValueChange={setView}
           size="sm"

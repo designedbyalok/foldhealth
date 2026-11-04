@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Icon } from '../../../components/Icon/Icon';
 import { Button } from '../../../components/Button/Button';
 import { Textarea } from '../../../components/Textarea/Textarea';
-import { TabStrip } from '../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../components/Tabs/Tabs';
 import { fetchRuleFromNaturalLanguage } from './fetchRuleFromNaturalLanguage';
 import styles from './ruleBuilder.module.css';
 
@@ -152,10 +152,10 @@ export function QualifiedPreviewPanel({
       </div>
 
       <div className={styles.previewPanelTabBar}>
-        <TabStrip
+        <Tabs
           embedded
           embeddedBaseline
-          size="S"
+          size="sm"
           fullWidth={false}
           items={[
             { key: 'ai', label: 'Build with AI', icon: 'custom:ai' },
@@ -166,8 +166,8 @@ export function QualifiedPreviewPanel({
               count: memberCount,
             },
           ]}
-          activeKey={activeTab}
-          onChange={setActiveTab}
+          value={activeTab}
+          onValueChange={setActiveTab}
         />
       </div>
 

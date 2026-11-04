@@ -3,7 +3,7 @@ import { Drawer } from '../../../../../../../components/Drawer/Drawer';
 import { SplitDrawerLayout } from '../../../../../../../components/Drawer/SplitDrawerLayout';
 import { Button } from '../../../../../../../components/Button/Button';
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
-import { TabStrip } from '../../../../../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../../../../../components/Tabs/Tabs';
 import { PdfPreview } from '../../../../../../../components/PdfPreview/PdfPreview';
 import { PreviewLoader } from '../../../../../../../components/PreviewLoader/PreviewLoader';
 import { useAppStore } from '../../../../../../../store/useAppStore';
@@ -262,7 +262,7 @@ export function ProgramReportDrawer({ program, stepList, stepCtx, progress, acti
   const editor = (
     <div className={styles.editorScroll}>
       <div className={styles.tabBar}>
-        <TabStrip items={EDITOR_TABS} activeKey={editorTab} onChange={setEditorTab} fullWidth={false} />
+        <Tabs items={EDITOR_TABS} value={editorTab} onValueChange={setEditorTab} fullWidth={false} />
       </div>
       <div className={styles.body}>
         {editorTab === 'steps' ? (

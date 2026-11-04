@@ -5,7 +5,7 @@ import { Button } from '../../../../components/Button/Button';
 import { Badge } from '../../../../components/Badge/Badge';
 import { Banner } from '../../../../components/Banner/Banner';
 import { Icon } from '../../../../components/Icon/Icon';
-import { Toggle } from '../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../components/SegmentedControl/SegmentedControl';
 import { EmptyState } from '../../../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../../../store/useAppStore';
 import { CSV_COLUMNS, MAX_IMPORT_TEMPLATES, SAMPLE_CSV, SAMPLE_JSON, parseImportFile, planTemplateImport } from '../lib/templateImport';
@@ -198,7 +198,7 @@ export function TemplateImportDrawer({ onClose, onReviewDrafts }) {
           {plan.totals.update > 0 && (
             <Banner variant="outline" tone="info">Updates to published templates are saved as draft revisions. The published template stays in use until the revision is approved.</Banner>
           )}
-          <Toggle
+          <SegmentedControl
             size="sm"
             items={[
               { key: 'all', label: `All ${plan.plans.length}` },

@@ -1,4 +1,4 @@
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { CloseButton } from '../../components/CloseButton/CloseButton';
 import { Button } from '../../components/Button/Button';
@@ -32,7 +32,7 @@ export function AgentCanvasToolbar({
       </div>
 
       <div className={styles.toolbarCenter}>
-        <Toggle items={BUILDER_TABS} value={activeTab} onValueChange={onTabChange} />
+        <SegmentedControl items={BUILDER_TABS} value={activeTab} onValueChange={onTabChange} />
       </div>
 
       <div className={styles.toolbarRight}>

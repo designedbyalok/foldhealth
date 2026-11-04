@@ -11,7 +11,7 @@ import { Switch } from '../../../components/Switch/Switch';
 import { timelineStatusIcon } from '../StatusIcon';
 import { recordMentionRoster } from '../recordParticipants';
 import { FilterChip as SharedFilterChip } from '../../../components/FilterChip/FilterChip';
-import { TabStrip } from '../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../components/Tabs/Tabs';
 import {
   commentsForMember,
   mentionsUser,
@@ -299,7 +299,7 @@ export function LeftWorkspace({
           className={styles.collapseBtn}
         />
         <span className={styles.tabBarDivider} />
-        <TabStrip
+        <Tabs
           items={tabs.map((t) => {
             const count = countForTab(t);
             return {
@@ -307,8 +307,8 @@ export function LeftWorkspace({
               label: typeof count === 'number' ? `${t.label}(${count})` : t.label,
             };
           })}
-          activeKey={active}
-          onChange={onChange}
+          value={active}
+          onValueChange={onChange}
           embedded
         />
       </div>

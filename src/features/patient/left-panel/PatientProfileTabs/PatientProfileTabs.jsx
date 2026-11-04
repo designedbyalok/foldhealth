@@ -1,7 +1,7 @@
 import { Fragment, useState, useRef, useEffect, useMemo } from 'react';
 import { DownChevronIcon } from '../../../../components/Icon/DownChevronIcon';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
-import { OverflowTabStrip } from '../../../../components/TabStrip/OverflowTabStrip';
+import { OverflowTabs } from '../../../../components/Tabs/OverflowTabs';
 import { StickyNote } from '../../../../components/StickyNote/StickyNote';
 import { StickyNoteAuditDrawer } from '../../../../components/StickyNoteAuditDrawer/StickyNoteAuditDrawer';
 import { useAppStore } from '../../../../store/useAppStore';
@@ -45,7 +45,7 @@ export function PatientProfileTabs({
   // via `renderExtraTab(key)`; pass a stable array.
   extraTabs,
   renderExtraTab,
-  // Trailing action on hosted tabs in the More dropdown (OverflowTabStrip
+  // Trailing action on hosted tabs in the More dropdown (OverflowTabs
   // `itemAction` shape, minus `appliesTo`, which is scoped to extraTabs here).
   extraTabAction,
 }) {
@@ -291,10 +291,10 @@ export function PatientProfileTabs({
       ) : (
         <div className={styles.tabRow}>
           <div className={styles.tabsArea}>
-            <OverflowTabStrip
+            <OverflowTabs
               items={tabItems}
-              activeKey={extraActive ? activeTab : currentTab}
-              onChange={setActiveTab}
+              value={extraActive ? activeTab : currentTab}
+              onValueChange={setActiveTab}
               itemAction={itemAction}
               moreActions={moreActions}
             />

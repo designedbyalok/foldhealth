@@ -59,6 +59,7 @@
     "SearchBar",
     "SearchIconButton",
     "SearchListPopover",
+    "SegmentedControl",
     "Select",
     "SignaturePad",
     "SimpleTableSkeleton",
@@ -69,15 +70,13 @@
     "Sparkline",
     "Spinner",
     "StatTile",
-    "SubTabs",
     "Switch",
-    "TabStrip",
     "TableSkeleton",
+    "Tabs",
     "Textarea",
     "TimePicker",
     "TimelineSkeleton",
     "Toast",
-    "Toggle",
     "Tooltip",
     "TruncatedText",
     "UnityIcon",
@@ -205,6 +204,9 @@
     "Alert": "Banner (variant=\"outline\")",
     "InfoBar": "Banner",
     "RingEmptyState": "EmptyState",
-    "ErrorState": "EmptyState (tone=\"danger\")"
+    "ErrorState": "EmptyState (tone=\"danger\")",
+    "TabStrip": "Tabs",
+    "SubTabs": "Tabs (variant=\"pill\")",
+    "Toggle": "SegmentedControl"
   }
 }

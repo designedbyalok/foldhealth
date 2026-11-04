@@ -15,7 +15,7 @@ import {
 } from '../pharmacyWorklist.utils';
 import { Select } from '../../../components/Select/Select';
 import { Switch } from '../../../components/Switch/Switch';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { verificationTimeline } from './verificationHistory';
 import { usePharmacyProgramMember } from './usePharmacyProgramMember';
 import { MeasureCode } from '../PharmacyCells';
@@ -280,7 +280,7 @@ export function PharmacyVerificationStep({ program, member: memberProp, onLocked
           <span className={styles.partyText}>Called: {record.party || 'Pharmacy'} · {record.contact}</span>
         ) : (
           <span className={styles.partyPick}>
-            <Toggle size="sm" items={['Pharmacy', 'Physician', 'Member']} value={party} onValueChange={(p) => { setParty(p); setContactName(null); }} />
+            <SegmentedControl size="sm" items={['Pharmacy', 'Physician', 'Member']} value={party} onValueChange={(p) => { setParty(p); setContactName(null); }} />
             {contactsFor(party).length > 1 && (
               <Select
                 portal

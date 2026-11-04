@@ -27,7 +27,7 @@ import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Icon } from '../../components/Icon/Icon';
 import { SearchBar } from '../../components/SearchBar/SearchBar';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
-import { TabStrip } from '../../components/TabStrip/TabStrip';
+import { Tabs } from '../../components/Tabs/Tabs';
 import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
 import { ActivityLog } from '../../components/ActivityLog/ActivityLog';
 import { CardSkeleton } from '../../components/CardSkeleton/CardSkeleton';
@@ -1904,23 +1904,23 @@ function CareGapDetailDrawerContent({ member, gapCode, instanceNo = null, year, 
             goPrev={goPrev} goNext={goNext} canPrev={canPrev} canNext={canNext}
           />
 
-          {/* Shared TabStrip: same underline motion the HCC drawer uses.
+          {/* Shared Tabs: same underline motion the HCC drawer uses.
               Counts are baked into `label` as "(N)" so we skip the Badge
               default that `count` renders. `fullWidth={false}` because
               this drawer's `.drawerBody` already has `padding: 0`, the
               default bleed would apply a -24px margin and push the row
               past the drawer's own edges. */}
-          <TabStrip
+          <Tabs
             items={visibleTabs.map((tab) => ({
               key: tab.key,
               label: tabCounts[tab.key] != null
                 ? `${tab.label} (${tabCounts[tab.key]})`
                 : tab.label,
             }))}
-            activeKey={shownTab}
-            onChange={setActiveTab}
+            value={shownTab}
+            onValueChange={setActiveTab}
             fullWidth={false}
-            size="S"
+            size="sm"
           />
 
           <div className={`${styles.tabContentWrap} ${(shownTab === 'Tasks' || shownTab === 'Outreaches') ? styles.tabContentWrapFlush : ''}`}>

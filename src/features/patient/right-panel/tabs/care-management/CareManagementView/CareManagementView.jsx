@@ -7,7 +7,7 @@ import { Textarea } from '../../../../../../components/Textarea/Textarea';
 import { RadioOptionGroup } from '../../../../../../components/RadioOptionGroup/RadioOptionGroup';
 import { isProgramClosed } from '../../../../data/programStatus';
 import { FilterChip } from '../../../../../../components/FilterChip/FilterChip';
-import { SubTabs } from '../../../../../../components/SubTabs/SubTabs';
+import { Tabs } from '../../../../../../components/Tabs/Tabs';
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { CareProgramsTab } from '../../care-programs/CareProgramsTab/CareProgramsTab';
 import { CarePlanSummaryView } from '../../care-programs/care-plan/summary/CarePlanSummaryView/CarePlanSummaryView.jsx';
@@ -540,7 +540,7 @@ export function CareManagementView() {
 
   // The sub-tab switch is a controlled element owned here, handed to each pane
   // so it renders inline in that pane's shared toolbar row.
-  const subTabBar = <SubTabs tabs={cmTabs} value={subTab} onValueChange={setSubTab} />;
+  const subTabBar = <Tabs variant="pill" items={cmTabs} value={subTab} onValueChange={setSubTab} />;
 
   // Keep all three panes mounted and toggle visibility, so switching only
   // shows/hides a pane instead of unmounting + remounting it, no re-fetch,

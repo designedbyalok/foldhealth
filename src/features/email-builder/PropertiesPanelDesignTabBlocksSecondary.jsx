@@ -4,7 +4,7 @@ import { renderEmailHtml } from './patchEmailHtml';
 import { useAppStore } from '../../store/useAppStore';
 import { Icon } from '../../components/Icon/Icon';
 import { CloseButton } from '../../components/CloseButton/CloseButton';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { Input } from '../../components/Input/Input';
 import { Textarea } from '../../components/Textarea/Textarea';
 import { Select as SharedSelect } from '../../components/Select/Select';
@@ -64,7 +64,7 @@ export function DesignTabBlocksSecondary({ ctx }) {
           <Section>
             <div className={styles.fieldCol}>
               <span className={styles.fieldLabel}>Orientation</span>
-              <Toggle
+              <SegmentedControl
                 fullWidth
                 items={[
                   { key: 'horizontal', label: 'Horizontal' },
@@ -90,7 +90,7 @@ export function DesignTabBlocksSecondary({ ctx }) {
             )}
             <div className={styles.fieldCol}>
               <span className={styles.fieldLabel}>Style</span>
-              <Toggle
+              <SegmentedControl
                 fullWidth
                 items={[
                   { key: 'solid', label: 'Solid' },
@@ -104,7 +104,7 @@ export function DesignTabBlocksSecondary({ ctx }) {
             <Row2>
               <div className={styles.fieldCol}>
                 <span className={styles.fieldLabel}>Left End</span>
-                <Toggle
+                <SegmentedControl
                   fullWidth
                   items={[
                     { key: 'none', label: '-' },
@@ -118,7 +118,7 @@ export function DesignTabBlocksSecondary({ ctx }) {
               </div>
               <div className={styles.fieldCol}>
                 <span className={styles.fieldLabel}>Right End</span>
-                <Toggle
+                <SegmentedControl
                   fullWidth
                   items={[
                     { key: 'none', label: '-' },
@@ -164,7 +164,7 @@ export function DesignTabBlocksSecondary({ ctx }) {
             </Row2>
             <div className={styles.fieldCol}>
               <span className={styles.fieldLabel}>Striped Rows</span>
-              <Toggle
+              <SegmentedControl
                 fullWidth
                 items={[{ key: 'on', label: 'On' }, { key: 'off', label: 'Off' }]}
                 value={props.stripedRows ? 'on' : 'off'}
@@ -190,7 +190,7 @@ export function DesignTabBlocksSecondary({ ctx }) {
             </Row2>
             <div className={styles.fieldCol}>
               <span className={styles.fieldLabel}>Alignment</span>
-              <Toggle
+              <SegmentedControl
                 fullWidth
                 items={[
                   { key: 'left',   label: '', icon: <AlignLeftIcon /> },
@@ -229,7 +229,7 @@ export function DesignTabBlocksSecondary({ ctx }) {
             </Row2>
             <div className={styles.fieldCol}>
               <span className={styles.fieldLabel}>Alignment</span>
-              <Toggle
+              <SegmentedControl
                 fullWidth
                 items={[
                   { key: 'left',   label: '', icon: <AlignLeftIcon /> },
@@ -270,7 +270,7 @@ export function DesignTabBlocksSecondary({ ctx }) {
               />
               <div className={styles.fieldCol}>
                 <span className={styles.fieldLabel}>Direction</span>
-                <Toggle
+                <SegmentedControl
                   fullWidth
                   items={[
                     { key: 'row', label: '', icon: <DirectionRowIcon /> },
@@ -288,7 +288,7 @@ export function DesignTabBlocksSecondary({ ctx }) {
             </Row2>
             <div className={styles.fieldCol}>
               <span className={styles.fieldLabel}>Wrap</span>
-              <Toggle
+              <SegmentedControl
                 fullWidth
                 items={[
                   { key: 'nowrap', label: 'No Wrap' },

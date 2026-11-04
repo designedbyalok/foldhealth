@@ -14,7 +14,7 @@ import { Slider } from '../../../../../../../../components/Slider/Slider';
 import { PriorityIcon } from '../../../../../../../../components/PriorityIcon/PriorityIcon';
 import { DetailDropdown } from '../../../../../../../tasks/TasksViewDropdowns';
 import { PRIORITY_OPTIONS } from '../../../../../../../tasks/TasksView.utils';
-import { TabStrip } from '../../../../../../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../../../../../../components/Tabs/Tabs';
 import { ActivityLog } from '../../../../../../../../components/ActivityLog/ActivityLog';
 import { useCarePlanItemActivity } from '../../lib/useCarePlanItemActivity';
 import { CarePlanItemNote } from '../CarePlanItemNote/CarePlanItemNote';
@@ -1265,12 +1265,12 @@ export function GoalPreviewDrawer({ goal, patientId, program, onClose, onOpenInt
         )}
 
         <div className={styles.activityBlock}>
-          <TabStrip
+          <Tabs
             items={ACTIVITY_TABS}
-          activeKey={activityTab}
-          onChange={setActivityTab}
+          value={activityTab}
+          onValueChange={setActivityTab}
           fullWidth={false}
-          size="S"
+          size="sm"
           trailing={(
             <ActionButton
               ref={filterBtnRef}

@@ -5,7 +5,7 @@ import { Button } from '../../../../../../components/Button/Button';
 import { Icon } from '../../../../../../components/Icon/Icon';
 import { AiInsightIcon } from '../../../../../../components/Icon/AiInsightIcon';
 import { SlideshowDialog } from '../../../../../../components/SlideshowDialog/SlideshowDialog';
-import { Toggle } from '../../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../../components/SegmentedControl/SegmentedControl';
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { kindMeta } from '../../timeline/streamKinds';
 import { VitalTile } from '../cards/VitalsCard';
@@ -634,7 +634,7 @@ export function RecapButton({ patient, overview, attention, run, review, onOpenT
         title={patient?.name || 'Patient recap'}
         subtitle={subtitle}
         headerExtra={(
-          <Toggle
+          <SegmentedControl
             size="sm"
             items={RECAP_PERIODS.map(p => ({ key: p.key, label: p.label }))}
             value={period}

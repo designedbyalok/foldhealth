@@ -5,7 +5,7 @@ import { Avatar } from '../../../../../components/Avatar/Avatar';
 import { FilterBar } from '../../../../../components/FilterBar/FilterBar';
 import { Icon } from '../../../../../components/Icon/Icon';
 import { Input } from '../../../../../components/Input/Input';
-import { SubTabs } from '../../../../../components/SubTabs/SubTabs';
+import { Tabs } from '../../../../../components/Tabs/Tabs';
 import { TimelineSkeleton } from '../../../../../components/TimelineSkeleton/TimelineSkeleton';
 import { useAppStore } from '../../../../../store/useAppStore';
 import { usePatientStream } from '../../../hooks/usePatientStream';
@@ -177,9 +177,10 @@ export function TimelineTab() {
         </div>
       ) : (
       <div className={styles.toolbar}>
-        <SubTabs
+        <Tabs
+          variant="pill"
           className={styles.views}
-          tabs={VIEW_TABS}
+          items={VIEW_TABS}
           value={view}
           onValueChange={setView}
           leading={(

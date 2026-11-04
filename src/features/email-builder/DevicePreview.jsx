@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { renderPreviewHtml } from './renderEmail';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import styles from './DevicePreview.module.css';
 
 export function EmailIframe({ html, renderWidth, theme = 'light' }) {
@@ -167,7 +167,7 @@ export function DevicePreview({ device }) {
   return (
     <div className={styles.stage} ref={stageRef}>
       <div className={styles.themeBar}>
-        <Toggle
+        <SegmentedControl
           size="sm"
           items={[
             { key: 'light', label: 'Light', icon: 'solar:sun-linear' },

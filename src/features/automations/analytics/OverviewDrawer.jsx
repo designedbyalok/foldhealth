@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Drawer } from '../../../components/Drawer/Drawer';
-import { TabStrip } from '../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../components/Tabs/Tabs';
 import { useTableSort } from '../../../components/HeaderCell/useTableSort';
 import { formatRange } from '../lib/analytics';
 import { MEMBER_STATUSES, fmtDate, stepLabel, stoppedStep } from './analyticsUi';
@@ -63,10 +63,10 @@ export function OverviewDrawer({ automation, graphOf, members, range, tab, onTab
         <span className={styles.drawerRange}>{formatRange(range)}</span>
       </div>
       <div className={styles.drawerTabs}>
-        <TabStrip
+        <Tabs
           items={MEMBER_STATUSES.map(s => ({ key: s.key, label: s.label, count: counts[s.key] }))}
-          activeKey={tab}
-          onChange={k => { onTab(k); setPage(1); }}
+          value={tab}
+          onValueChange={k => { onTab(k); setPage(1); }}
         />
       </div>
       <MemberTable

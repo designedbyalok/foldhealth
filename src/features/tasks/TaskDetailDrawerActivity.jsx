@@ -1,6 +1,6 @@
 import { CommentComposer } from '../../components/CommentComposer/CommentComposer';
-import { Toggle } from '../../components/Toggle/Toggle';
-import { TabStrip } from '../../components/TabStrip/TabStrip';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
+import { Tabs } from '../../components/Tabs/Tabs';
 import { ActivityLog } from '../../components/ActivityLog/ActivityLog';
 import styles from './TasksView.module.css';
 
@@ -12,7 +12,7 @@ export function TaskDetailDrawerActivity({
         {/* Activity */}
         <div className={styles.drawerSection}>
           <div className={styles.activityHeader}>
-            <Toggle
+            <SegmentedControl
               items={['Activity', 'Automations']}
               value={activityToggle}
               onValueChange={setActivityToggle}
@@ -26,14 +26,14 @@ export function TaskDetailDrawerActivity({
               min-height + 16px horizontal padding so the row reads with
               the same rhythm as the page-level tab bar. */}
           <div className={styles.activityStickyHead}>
-            <TabStrip
+            <Tabs
               items={[
                 { key: 'All', label: 'All' },
                 { key: 'Comments', label: 'Comments' },
                 { key: 'History', label: 'History' },
               ]}
-              activeKey={activityTab}
-              onChange={setActivityTab}
+              value={activityTab}
+              onValueChange={setActivityTab}
               embedded
             />
           </div>

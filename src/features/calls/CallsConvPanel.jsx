@@ -1,7 +1,7 @@
 import { Icon } from '../../components/Icon/Icon';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Input } from '../../components/Input/Input';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { Select } from '../../components/Select/Select';
 import { CallListItem, CallListSkeleton } from './CallsViewHelpers';
 import styles from './CallsView.module.css';
@@ -84,7 +84,7 @@ export function CallsConvPanel({
       )}
 
       <div className={styles.convTabs}>
-        <Toggle
+        <SegmentedControl
           items={[
             { key: 'all',      label: 'All' },
             { key: 'incoming', label: 'Incoming' },

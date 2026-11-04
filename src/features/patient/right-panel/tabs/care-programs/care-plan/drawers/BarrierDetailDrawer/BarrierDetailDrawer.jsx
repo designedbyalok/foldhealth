@@ -617,7 +617,7 @@ export function BarrierDetailDrawer({ barrier, patientId, program, onClose, onOp
             program={program}
           />}
 
-          {/* Activity Log: shared block with TabStrip (All / Since
+          {/* Activity Log: shared block with Tabs (All / Since
               Last Visit) + Filter chip, matches the Goal preview
               drawer 1:1. Status changes, edits, goal link / unlink,
               template link / unlink, and notes all render through the

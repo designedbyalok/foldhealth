@@ -6,8 +6,8 @@ import { Textarea } from '../../../../components/Textarea/Textarea';
 import { Switch } from '../../../../components/Switch/Switch';
 import { Select } from '../../../../components/Select/Select';
 import { Input } from '../../../../components/Input/Input';
-import { Toggle } from '../../../../components/Toggle/Toggle';
-import { TabStrip } from '../../../../components/TabStrip/TabStrip';
+import { SegmentedControl } from '../../../../components/SegmentedControl/SegmentedControl';
+import { Tabs } from '../../../../components/Tabs/Tabs';
 import { EditableText } from '../../../../components/EditableText/EditableText';
 import { useAppStore } from '../../../../store/useAppStore';
 import { ImageTileGallery } from '../../../../components/ImageTileGallery/ImageTileGallery';
@@ -862,10 +862,10 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
         {/* The filter button sits over the tab row rather than in TabStrip's
             trailing slot: the row scrolls sideways, which would clip its tooltip. */}
         <div className={styles.tabs}>
-          <TabStrip
+          <Tabs
             items={EDITOR_TABS}
-            activeKey={editorTab}
-            onChange={setEditorTab}
+            value={editorTab}
+            onValueChange={setEditorTab}
             fullWidth={false}
           />
           {editorTab === 'widgets' && (
@@ -973,7 +973,7 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
                 <div className={styles.fieldGroup}>
                   <div className={styles.groupHead}>
                     <span className={styles.groupTitle}>Cover Background</span>
-                    <Toggle size="sm" items={BACKGROUND_TYPES} value={bgType} onValueChange={setBgType} />
+                    <SegmentedControl size="sm" items={BACKGROUND_TYPES} value={bgType} onValueChange={setBgType} />
                   </div>
                   {bgType === 'color' && (
                     <CoverSwatches ariaLabel="Cover colour">

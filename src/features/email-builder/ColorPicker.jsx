@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { Select as SharedSelect } from '../../components/Select/Select';
 import { Slider } from '../../components/Slider/Slider';
 import {
@@ -558,7 +558,7 @@ export function ColorPicker({ value, onChange, variables = [], recentlyUsed = []
       </button>
       {/* gradientOnly: the host already chose gradient (e.g. a Gradient tab), so no switch. */}
       {allowGradient && !gradientOnly && (
-        <Toggle
+        <SegmentedControl
           fullWidth
           size="sm"
           items={[

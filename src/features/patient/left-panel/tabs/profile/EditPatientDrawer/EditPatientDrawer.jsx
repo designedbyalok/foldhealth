@@ -4,7 +4,7 @@ import { Button } from '../../../../../../components/Button/Button';
 import { Input } from '../../../../../../components/Input/Input';
 import { Select } from '../../../../../../components/Select/Select';
 import { Textarea } from '../../../../../../components/Textarea/Textarea';
-import { TabStrip } from '../../../../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../../../../components/Tabs/Tabs';
 import { DatePicker } from '../../../../../../components/DatePicker/DatePicker';
 import { Icon } from '../../../../../../components/Icon/Icon';
 import { useAppStore } from '../../../../../../store/useAppStore';
@@ -349,10 +349,10 @@ export function EditPatientDrawer({
         </Button>
       }
       banner={
-        <TabStrip
+        <Tabs
           items={tabs}
-          activeKey={tab}
-          onChange={setTab}
+          value={tab}
+          onValueChange={setTab}
           fullWidth={false}
         />
       }

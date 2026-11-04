@@ -6,7 +6,7 @@ import { FilterChip } from '../../../components/FilterChip/FilterChip';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { Banner } from '../../../components/Banner/Banner';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { CIS_ANTIGEN_STATUS, CIS_DOSE_STATUS, evaluateCis } from './cisRules';
 import { isoToMdy } from './useCisTracker';
 import { CisStatusBadge } from './CisStatus';
@@ -186,7 +186,7 @@ export function VaccineCalendarDialog({ member, immunizations, savedNotes, measu
 
           <div className={styles.toolbar}>
             <span className={styles.toolbarStart}>
-              <Toggle
+              <SegmentedControl
                 size="sm"
                 items={[{ key: 'timeline', label: 'Timeline' }, { key: 'table', label: 'Table' }]}
                 value={view}

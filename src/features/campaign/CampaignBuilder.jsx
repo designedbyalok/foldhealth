@@ -9,7 +9,7 @@ import { SendTestPopover } from '../email-builder/SendTestPopover';
 import { Input } from '../../components/Input/Input';
 import { Textarea } from '../../components/Textarea/Textarea';
 import { Select } from '../../components/Select/Select';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { RadioButton } from '../../components/RadioButton/RadioButton';
 import { makeInitialDocument } from '../email-builder/initialDocument';
 import styles from './CampaignBuilder.module.css';
@@ -267,7 +267,7 @@ export function CampaignBuilder() {
       {/* ── Right pane: email config + preview ─────────────────── */}
       <div className={styles.rightPane}>
         <div className={styles.topBar}>
-          <Toggle
+          <SegmentedControl
             items={[
               { key: 'one_time', label: 'One-Time' },
               { key: 'sequence', label: 'Sequence' },

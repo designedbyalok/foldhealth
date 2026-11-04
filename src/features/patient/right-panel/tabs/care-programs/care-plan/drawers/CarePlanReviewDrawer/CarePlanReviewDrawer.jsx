@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Drawer } from '../../../../../../../../components/Drawer/Drawer';
-import { TabStrip } from '../../../../../../../../components/TabStrip/TabStrip';
-import { Toggle } from '../../../../../../../../components/Toggle/Toggle';
+import { Tabs } from '../../../../../../../../components/Tabs/Tabs';
+import { SegmentedControl } from '../../../../../../../../components/SegmentedControl/SegmentedControl';
 import { Badge } from '../../../../../../../../components/Badge/Badge';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
@@ -354,10 +354,10 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
 
       {!historyOpen && (
         <div className={styles.tabs}>
-          <TabStrip
+          <Tabs
             fullWidth={false}
-            activeKey={tab}
-            onChange={(k) => { setTab(k); setFilter('all'); setExpanded(null); endSelecting(); }}
+            value={tab}
+            onValueChange={(k) => { setTab(k); setFilter('all'); setExpanded(null); endSelecting(); }}
             items={[
               { key: 'goals', label: 'Goals', count: loaded ? lists.goals.length : undefined },
               { key: 'interventions', label: 'Interventions', count: loaded ? lists.interventions.length : undefined },
@@ -417,7 +417,7 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
             <span className={styles.progressText}>
               <strong>{done} of {items.length}</strong> {listTab.noun}s discussed
             </span>
-            <Toggle
+            <SegmentedControl
               size="sm"
               value={filter}
               onValueChange={setFilter}

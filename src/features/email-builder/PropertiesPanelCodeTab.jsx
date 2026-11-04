@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Icon } from '../../components/Icon/Icon';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { Button } from '../../components/Button/Button';
 import { OverlayVerticalScroll, highlightJson, highlightHtml } from './PropertiesPanel.utils.jsx';
 import { CodeTabHtmlOverrideBanner, CodeTabCustomHtmlBanner } from './PropertiesPanelCodeTabBanners.jsx';
@@ -29,7 +29,7 @@ export function CodeTab({ doc }) {
   return (
     <div className={styles.codeScroll}>
       <div className={styles.codeToolbar}>
-        <Toggle
+        <SegmentedControl
           items={[{ key: 'json', label: 'JSON' }, { key: 'html', label: 'HTML' }]}
           value={mode}
           size="sm"
