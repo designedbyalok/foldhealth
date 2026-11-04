@@ -186,6 +186,7 @@ export function FilterChip({
             onChange={(next) => { onChange(next); setRect(null); }}
             onClose={() => setRect(null)}
             showClear={!noClear}
+            searchable={searchable}
           />
         ) : (
           <CheckboxListPopover

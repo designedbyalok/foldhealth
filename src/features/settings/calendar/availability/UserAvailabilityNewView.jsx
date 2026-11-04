@@ -121,7 +121,7 @@ export function UserAvailabilityNewView({ users, loading, filtersOpen, onAdd, on
       {loading ? (
         <div className={styles.loading}>Loading availability…</div>
       ) : shown.length === 0 ? (
-        <div className={styles.empty}><RingEmptyState icon="solar:calendar-linear" label="No availability matches these filters" /></div>
+        <div className={styles.empty}><RingEmptyState icon="solar:clock-circle-linear" label="No availability matches applied filters" /></div>
       ) : view === 'week' ? (
         <WeekGrid people={shown} holidays={holidays || []} offset={weekOffset} onOffset={setWeekOffset} hideNav={!!weekOf} onlyDay={onlyDay} renderActions={renderActions} onEdit={onEdit} onAdd={onAdd} />
       ) : (
@@ -446,9 +446,8 @@ function WeekGrid({ people, holidays, offset, onOffset, hideNav = false, onlyDay
                     <span key={key} className={styles.dayRange} onClick={(e) => { e.stopPropagation(); onEdit?.(u, s.id); }}>
                       <span className={styles.dayHead}>
                         <span className={styles.dayTime}>{slotText(sl)}</span>
-                        {s.timezone && <span className={styles.dayZone}>{timezoneAbbr(s.timezone, d)}</span>}
+                        {s.timezone && <span className={styles.dayZone}>({timezoneAbbr(s.timezone, d)})</span>}
                       </span>
-                      <span className={styles.dayRule} aria-hidden="true" />
                       <span className={styles.dayLoc}>{s.location}</span>
                       <span className={styles.dayType}>{sl.appointmentType || ALL_TYPES}</span>
                     </span>

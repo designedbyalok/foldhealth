@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback, useLayoutEffect } from 'react';
 import { Icon } from '../Icon/Icon';
+import { Tooltip } from '../Tooltip/Tooltip';
 import styles from './Toggle.module.css';
 
 /**
@@ -11,10 +12,11 @@ import styles from './Toggle.module.css';
  * at the first-measured size and visibly fall behind its button.
  *
  * Props:
- *  - items      (string[] | {key, label, icon?, leadingIcon?, notif?, ariaLabel?}[])
+ *  - items      (string[] | {key, label, icon?, leadingIcon?, notif?, ariaLabel?, tooltip?}[])
  *                            ariaLabel names an icon-only segment; leadingIcon
  *                            (Solar name or node) sits before the label;
- *                            notif adds TabStrip's pulsing dot (something new)
+ *                            notif adds TabStrip's pulsing dot (something new);
+ *                            tooltip shows on hover
  *  - active     (string)     Currently selected key
  *  - onChange   (function)   Called with the key of the clicked segment
  *  - className  (string)     Extra class on the outer container
@@ -79,7 +81,8 @@ export function Toggle({ items = [], active, onChange, className, size = 'M', va
       role="radiogroup"
     >
       <div className={styles.slider} style={sliderStyle} />
-      {normalized.map(({ key, label, icon, leadingIcon, notif, ariaLabel }) => (
+      {normalized.map(({ key, label, icon, leadingIcon, notif, ariaLabel, tooltip }) => {
+        const btn = (
         <button
           key={key}
           type="button"
@@ -100,7 +103,11 @@ export function Toggle({ items = [], active, onChange, className, size = 'M', va
           ) : label}
           {notif && <span className={styles.notifDot} aria-label="Something to review" />}
         </button>
-      ))}
+        );
+        return tooltip ? (
+          <Tooltip key={key} label={tooltip} placement="bottom" className={fullWidth ? styles.tipFull : undefined}>{btn}</Tooltip>
+        ) : btn;
+      })}
     </div>
   );
 }

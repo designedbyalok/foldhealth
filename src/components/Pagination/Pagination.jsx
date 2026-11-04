@@ -217,6 +217,8 @@ export function Pagination({
   if (!controlled && activeTab === 'toc-queue' && totalItems === 0) return null;
   // Don't show pagination for outreach status grouped view (uses collapsible sections).
   if (!controlled && activeTab === 'toc-worklist' && viewBy === 'status') return null;
+  // Everything that matches already fits on one page: nothing to page through.
+  if (totalItems <= perPage) return null;
 
   const perPageOptions = [
     { key: 'auto', label: autoPageSize ? `Auto (${perPage})` : 'Auto' },

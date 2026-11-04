@@ -76,7 +76,7 @@ const LSC_PHLEBOTOMISTS = [
 ];
 import { PRACTICE_LOCATIONS } from '../src/features/settings/account/locations/data/mock.js';
 import { CANCEL_REASONS, RETIRED_CANCEL_REASON_IDS, cancelReasonToRow } from '../src/features/calendar/list/cancelReasons.js';
-import { sampleListAppointments } from '../src/features/calendar/list/listSeed.js';
+import { sampleGroupAppointments, sampleListAppointments } from '../src/features/calendar/list/listSeed.js';
 import { DEFAULT_TAGS, tagToRow } from '../src/features/settings/member-leads/tags/contactTags.js';
 
 // Care-program letters library. Metadata mirrors PROGRAM_LETTERS_MOCK; the PDF
@@ -1299,6 +1299,33 @@ async function main() {
         ({ error } = await supabase.from('appointments').insert(rows.map(({ primary_user_id: _skip, ...a }) => a)));
       }
       if (error) { console.error('  ✗', error.message); } else { console.log(`  ✓ ${rows.length} appointments for ${providers.length} providers`); }
+    }
+  }
+
+  // Calendar List view: group sessions this week (one row per member at the
+  // same provider, date and time) for the first 4 providers. Re-running
+  // skips members already booked in that session.
+  console.log('Seeding group appointments...');
+  {
+    const { data: staff, error: pe } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .not('full_name', 'is', null)
+      .order('full_name')
+      .limit(4);
+    const { data: booked } = await supabase.from('appointments').select('primary_user, primary_user_id, date, time_start, patient_name');
+    if (pe) {
+      console.error('  ✗ profiles:', pe.message);
+    } else {
+      const seeded = new Set((booked || []).map(a => `${a.primary_user_id || a.primary_user} ${a.date} ${a.time_start} ${a.patient_name}`));
+      const providers = (staff || []).map(p => ({ id: p.id, name: p.full_name.trim() })).filter(p => p.name);
+      const rows = sampleGroupAppointments(providers)
+        .filter(a => !seeded.has(`${a.primary_user_id || a.primary_user} ${a.date} ${a.time_start} ${a.patient_name}`));
+      let { error } = rows.length ? await supabase.from('appointments').insert(rows) : { error: null };
+      if (error && /primary_user_id/.test(error.message || '')) {
+        ({ error } = await supabase.from('appointments').insert(rows.map(({ primary_user_id: _skip, ...a }) => a)));
+      }
+      if (error) { console.error('  ✗', error.message); } else { console.log(`  ✓ ${rows.length} group appointment rows for ${providers.length} providers`); }
     }
   }
 

@@ -16,19 +16,23 @@ import { CalendarRefreshIcon } from '../../../components/Icon/CalendarRefreshIco
 import { BulkBar } from '../../../components/BulkBar/BulkBar';
 import { Pagination } from '../../../components/Pagination/Pagination';
 import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { TruncatedText } from '../../../components/TruncatedText/TruncatedText';
 import { useAppStore } from '../../../store/useAppStore';
 import { apptPerson, describeRange, initialsOf, OOO_ICON, recordsFor } from '../../ooo/oooUtils';
 import { apptSpan } from '../../ooo/reassignUtils';
 import { ReassignAppointmentsDrawer } from '../../ooo/ReassignAppointmentsDrawer';
 import {
-  dateLabel, groupByProvider, inPeriod, lockedReason, periodRange, sortAppointments, STATUS_OPTIONS, statusBlockedReason, statusLabel, timeRangeLabel,
+  dateLabel, groupByProvider, inPeriod, lockedReason, periodRange, sortAppointments, sessionRows, STATUS_OPTIONS, statusBlockedReason, statusLabel, statusValue, timeRangeLabel,
 } from './appointmentList';
 import { BulkRescheduleDrawer } from './BulkRescheduleDrawer';
 import { BulkEditAppointmentsDrawer } from './BulkEditAppointmentsDrawer';
 import { CancelAppointmentsDrawer } from './CancelAppointmentsDrawer';
+import { GroupAppointmentDrawer } from './GroupAppointmentDrawer';
 import styles from './AppointmentListView.module.css';
 
-const STATUS_TONE = { Scheduled: 'grey', 'Checked In': 'success', 'Checked Out': 'success', Cancelled: 'error', 'No Show': 'grey' };
+const STATUS_TONE = {
+  Proposed: 'info', Pending: 'warning', Booked: 'neutral', Cancelled: 'danger', 'No Show': 'neutral', 'Checked In': 'success', 'Checked Out': 'success', Declined: 'danger',
+};
 
 const COLUMNS = [
   { key: 'check', showCheckbox: true, width: 36 },
@@ -79,6 +83,8 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
   const [selection, setSelection] = useState(() => new Set());
   const [action, setAction] = useState(null); // { kind: 'reschedule'|'reassign'|'edit'|'cancel', appts, provider }
   const [menu, setMenu] = useState(null); // { appt, anchor }
+  // The group session whose details are open (its row id); members come from the live rows.
+  const [openSession, setOpenSession] = useState(null);
   const menuAnchor = useRef(null);
   const openQuickView = useAppStore(s => s.openQuickView);
   const oooRecords = useAppStore(s => s.oooRecords);
@@ -108,7 +114,7 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
     if (next === 'Cancelled') { setAction({ kind: 'cancel', appts: [a] }); return; }
     const blocked = statusBlockedReason(a, next);
     if (blocked) { toast.error(blocked); return; }
-    const ok = await updateAppointment(a.id, { status: next });
+    const ok = await updateAppointment(a.id, { status: statusValue(next) });
     if (ok) toast.success('Status Updated Successfully');
     else toast.error('Status could not be updated. Try again.');
   };
@@ -130,9 +136,10 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
     });
   }
 
-  const pageRows = rows.slice((page - 1) * perPage, page * perPage);
-  const groups = groupByProvider(pageRows);
+  // Pages hold whole providers, so a provider is never split across pages
+  // and their count always matches the rows under them.
   const allGroups = useMemo(() => groupByProvider(rows), [rows]);
+  const groups = allGroups.slice((page - 1) * perPage, page * perPage);
   const selected = rows.filter(a => selection.has(a.id));
   const selectedGroups = allGroups.filter(g => g.appointments.some(a => selection.has(a.id)));
   const selectedGroup = selectedGroups.length === 1 ? selectedGroups[0] : null;
@@ -160,15 +167,81 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
     </Tooltip>
   );
 
+  // A group session's status, for every member at once; cancelling asks for a reason.
+  const changeSessionStatus = async (members, next) => {
+    if (next === 'Cancelled') { setAction({ kind: 'cancel', appts: members }); return; }
+    const ok = await setAppointmentsStatus(members, statusValue(next));
+    if (ok) toast.success('Status Updated Successfully');
+    else toast.error('Status could not be updated. Try again.');
+  };
+
+  // A click anywhere on a row opens it, unless it landed on one of its own
+  // controls (checkbox, member link, status, menu) or in a menu they opened.
+  const rowClick = (open) => (e) => {
+    if (e.target.closest('button, a, input, [role="button"], [role="checkbox"], [role="menu"], [data-check-cell]')) return;
+    open();
+  };
+
+  // A group session: one row for everyone booked into it. The checkbox picks
+  // all its members; the members link (and the row) opens its details.
+  const renderSessionRow = (session) => {
+    const ids = session.members.filter(a => !lockedReason(a)).map(a => a.id);
+    const picked = ids.filter(id => selection.has(id)).length;
+    const state = picked && picked === ids.length ? true : picked ? 'indeterminate' : false;
+    const tip = ids.length ? '' : 'Nothing here can be rescheduled, reassigned or cancelled';
+    const statuses = [...new Set(session.members.map(statusLabel))];
+    const status = statuses.length === 1 ? statuses[0] : 'Mixed';
+    const n = session.members.length;
+    const open = () => setOpenSession(session.id);
+    return (
+      <tr key={session.id} className={`${profileRowClass} ${styles.row} ${state === true ? styles.rowPicked : ''}`} onClick={rowClick(open)}>
+        <td className={`${profileCellClass} ${styles.checkCell}`} data-check-cell>
+          {pick(tip, (
+            <Checkbox
+              checked={state}
+              disabled={!!tip}
+              onCheckedChange={() => toggle(ids, picked !== ids.length)}
+              aria-label={`Select everyone in ${session.appointment_type_name}`}
+            />
+          ))}
+        </td>
+        <td className={profileCellClass}><TruncatedText text={session.appointment_type_name} /></td>
+        <td className={profileCellClass}>
+          <span className={styles.memberLine}>
+            <Link variant="secondary" className={styles.memberLink} role="button" tabIndex={0} onClick={open} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } }}>
+              <Icon name="solar:users-group-rounded-linear" size={16} />
+              <span className={styles.memberLinkText}>{n} {n === 1 ? 'Member' : 'Members'}</span>
+            </Link>
+          </span>
+        </td>
+        <td className={profileCellClass}>
+          <Tooltip label={status === 'Mixed' ? 'Members have different statuses; open the appointment to see each' : ''} maxWidth={240} align="left">
+            <Badge size="sm" tone={STATUS_TONE[status] || 'neutral'} label={status} />
+          </Tooltip>
+        </td>
+        <td className={profileCellClass}>{session.location ? <TruncatedText text={session.location} /> : null}</td>
+        <td className={profileCellClass}><span className={styles.cellText}>{dateLabel(session.date)}, {timeRangeLabel(session)}</span></td>
+        <td className={profileCellClass}>{session.reason_for_visit ? <TruncatedText text={session.reason_for_visit} /> : null}</td>
+        <td className={`${profileCellClass} ${styles.actionCell}`} />
+      </tr>
+    );
+  };
+
   const renderRow = (group, a) => {
+    if (a.isGroup) return renderSessionRow(a);
     const tip = lockedReason(a);
     const checked = selection.has(a.id);
     const status = statusLabel(a);
     const ooo = oooDuring(a);
-    const cell = (content, extra = '') => <td className={`${profileCellClass} ${extra}`}><span className={styles.cellText}>{content}</span></td>;
+    // Text cut off with "…" shows in full in a tooltip on hover.
+    const cell = (content, extra = '') => (
+      <td className={`${profileCellClass} ${extra}`}>
+        {typeof content === 'string' ? <TruncatedText text={content} /> : <span className={styles.cellText}>{content}</span>}
+      </td>
+    );
     return (
-      <tr key={a.id} className={`${profileRowClass} ${styles.row} ${checked ? styles.rowPicked : ''} ${highlightIds?.has(a.id) ? styles.rowHighlight : ''}`}>
-        <td className={`${profileCellClass} ${styles.checkCell}`}>
+      <tr key={a.id} className={`${profileRowClass} ${styles.row} ${checked ? styles.rowPicked : ''} ${highlightIds?.has(a.id) ? styles.rowHighlight : ''}`} onClick={rowClick(() => onViewDetails?.(a))}>
+        <td className={`${profileCellClass} ${styles.checkCell}`} data-check-cell>
           {pick(tip, (
             <Checkbox
               checked={checked}
@@ -198,9 +271,13 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
         <td className={profileCellClass}>
           <BadgeSelect
             value={status}
-            options={STATUS_OPTIONS}
+            // A status this appointment can't take yet is greyed out, with why.
+            options={STATUS_OPTIONS.map((s) => {
+              const why = s === status ? null : statusBlockedReason(a, s);
+              return why ? { value: s, disabled: true, tooltip: why } : s;
+            })}
             onChange={(next) => changeStatus(a, next)}
-            tone={STATUS_TONE[status] || 'grey'}
+            tone={STATUS_TONE[status] || 'neutral'}
             size="S"
             align="left"
             // Bulk actions own the rows while anything is selected, so the
@@ -242,17 +319,17 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
       <div className={styles.scroller}>
         {!rows.length && (
           <div className={styles.empty}>
-            <RingEmptyState icon="solar:calendar-linear" label="No appointments match this period and these filters" />
+            <RingEmptyState icon="solar:calendar-mark-linear" label="No appointments match this period and these filters" />
           </div>
         )}
         {groups.map((group) => {
-          const full = allGroups.find(g => g.key === group.key) || group;
-          const pickable = full.appointments.filter(a => !lockedReason(a)).map(a => a.id);
+          const pickable = group.appointments.filter(a => !lockedReason(a)).map(a => a.id);
           const picked = pickable.filter(id => selection.has(id)).length;
           const blocked = !pickable.length ? 'Nothing here can be rescheduled, reassigned or cancelled' : '';
           const allState = picked && picked === pickable.length ? true : picked ? 'indeterminate' : false;
           const open = isOpen(group.key);
-          const n = full.appointments.length;
+          // A group session counts once, as it's one row.
+          const n = sessionRows(group.appointments).length;
           return (
             // Each provider is a section, as Tasks groups by status
             // (Figma Tasks 866:7982), over the standard worklist table.
@@ -274,7 +351,7 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
                   onClick={() => setFlipped((c) => { const next = new Set(c); if (next.has(group.key)) next.delete(group.key); else next.add(group.key); return next; })}
                 >
                   {group.person.name}
-                  <span className={styles.groupCount}><Badge size="sm" label={`${n} ${n === 1 ? 'Appointment' : 'Appointments'}`} /></span>
+                  <span className={styles.groupCount}><Badge size="sm" label={String(n)} className={styles.countSquare} /></span>
                   <Icon name="solar:alt-arrow-down-linear" size={12} className={open ? styles.caretOpen : styles.caret} />
                 </button>
               </div>
@@ -290,9 +367,11 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
                   sortKey={sort.key}
                   sortDir={sort.dir}
                   onSort={onSort}
-                  rows={group.appointments}
+                  rows={sessionRows(group.appointments)}
                   renderRow={(a) => renderRow(group, a)}
-                  selectedIds={group.appointments.filter(a => selection.has(a.id)).map(a => a.id)}
+                  selectedIds={sessionRows(group.appointments)
+                    .filter(r => (r.isGroup ? r.members.every(m => selection.has(m.id)) : selection.has(r.id)))
+                    .map(r => r.id)}
                   selectAll={{ checked: allState, disabled: !!blocked, tooltip: blocked }}
                   onSelectAll={() => toggle(pickable, picked !== pickable.length)}
                 />
@@ -306,7 +385,7 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
         <Pagination
           currentPage={page}
           perPage={perPage}
-          totalItems={rows.length}
+          totalItems={allGroups.length}
           onPageChange={setPage}
           onPerPageChange={(n) => { setPerPage(n); setPage(1); }}
         />
@@ -348,6 +427,19 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
         />
       )}
 
+      {openSession && (() => {
+        const session = sessionRows(rows).find(r => r.id === openSession);
+        return session ? (
+          <GroupAppointmentDrawer
+            session={session}
+            members={session.members}
+            statusTone={STATUS_TONE}
+            onStatusChange={changeStatus}
+            onSessionStatusChange={changeSessionStatus}
+            onClose={() => setOpenSession(null)}
+          />
+        ) : null;
+      })()}
       {action?.kind === 'cancel' && (
         <CancelAppointmentsDrawer appointments={action.appts} onDone={clear} onClose={() => setAction(null)} />
       )}

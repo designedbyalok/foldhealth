@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { DEFAULT_CALENDARS, apptToEvent } from './calendarUtils';
+import { WeekGridDate } from './WeekGridDate';
+
+// Kept at module level: the wrapper re-registers whenever this object changes.
+const CUSTOM_COMPONENTS = { weekGridDate: WeekGridDate };
 
 export function CalendarContent({ onSlotClick, onEventClick, onRangeUpdate, calendarRef, eventsPluginRef, dbAppointments }) {
   const [calendarApp, setCalendarApp] = useState(null);
@@ -139,5 +143,5 @@ export function CalendarContent({ onSlotClick, onEventClick, onRangeUpdate, cale
   if (error) return <div style={{ padding: 32, color: 'var(--status-error)', fontFamily: 'Inter' }}>Calendar error: {error}</div>;
   if (!calendarApp || !SXCalendar) return <div style={{ padding: 32, color: 'var(--neutral-300)', textAlign: 'center', fontFamily: 'Inter' }}>Loading calendar...</div>;
 
-  return <SXCalendar calendarApp={calendarApp} />;
+  return <SXCalendar calendarApp={calendarApp} customComponents={CUSTOM_COMPONENTS} />;
 }
