@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Popover } from '../Popover/Popover';
+import { Listbox } from '../Listbox/Listbox';
 import { Icon } from '../Icon/Icon';
 import styles from './SearchListPopover.module.css';
 
@@ -34,12 +35,6 @@ export function SearchListPopover({
 }) {
   const [query, setQuery] = useState('');
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return options;
-    return options.filter(o => (o.searchText != null ? o.searchText : o.label).toLowerCase().includes(q));
-  }, [options, query]);
-
   if (!anchorRect) return null;
 
   return (
@@ -64,24 +59,15 @@ export function SearchListPopover({
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
-      <div className={styles.list}>
-        {filtered.length === 0 ? (
-          <div className={styles.empty}>{emptyText}</div>
-        ) : (
-          filtered.map(o => (
-            <button
-              key={o.value}
-              type="button"
-              disabled={o.disabled}
-              aria-current={o.value === selected ? 'true' : undefined}
-              className={[styles.row, o.disabled ? styles.rowDisabled : '', o.value === selected ? styles.rowSelected : ''].filter(Boolean).join(' ')}
-              onClick={() => { if (o.disabled) return; onSelect?.(o.value); onClose?.(); }}
-            >
-              <span className={styles.label}>{o.label}</span>
-            </button>
-          ))
-        )}
-      </div>
+      <Listbox
+        aria-label="Results"
+        options={options}
+        value={selected ?? null}
+        onSelect={(o) => { onSelect?.(o.value); onClose?.(); }}
+        query={query}
+        emptyText={emptyText}
+        className={styles.list}
+      />
     </Popover>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Popover } from '../Popover/Popover';
+import { Listbox } from '../Listbox/Listbox';
 import styles from './RadioListPopover.module.css';
 
 /**
@@ -36,8 +37,6 @@ export function RadioListPopover({
   const current = selected[0] ?? null;
   const disabledSet = new Set(disabledOptions);
   const [query, setQuery] = useState('');
-  const q = query.trim().toLowerCase();
-  const visible = searchable && q ? options.filter(o => String(o).toLowerCase().includes(q)) : options;
 
   if (!anchorRect) return null;
 
@@ -64,27 +63,14 @@ export function RadioListPopover({
           onChange={(e) => setQuery(e.target.value)}
         />
       )}
-      <div className={styles.list}>
-        {visible.length === 0 && <div className={styles.empty}>No matches</div>}
-        {visible.map((opt) => {
-          const active = current === opt;
-          const disabled = disabledSet.has(opt);
-          return (
-            <button
-              key={opt}
-              type="button"
-              className={[styles.row, disabled ? styles.rowDisabled : ''].join(' ')}
-              disabled={disabled}
-              onClick={() => onChange?.([opt])}
-            >
-              <span className={[styles.radio, active ? styles.radioActive : ''].join(' ')}>
-                {active && <span className={styles.dot} />}
-              </span>
-              <span className={styles.label}>{opt}</span>
-            </button>
-          );
-        })}
-      </div>
+      <Listbox
+        aria-label={label}
+        indicator="radio"
+        options={options.map(o => ({ value: o, label: o, disabled: disabledSet.has(o) }))}
+        value={current}
+        onValueChange={(v) => onChange?.([v])}
+        query={searchable ? query : ''}
+      />
       {showClear && (
         <button
           type="button"

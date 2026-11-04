@@ -1,9 +1,8 @@
 import { forwardRef, useEffect, useId, useLayoutEffect, useRef, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../Icon/Icon';
-import { Checkbox } from '../Checkbox/Checkbox';
+import { Listbox } from '../Listbox/Listbox';
 import { Badge } from '../Badge/Badge';
-import { ActionButton } from '../ActionButton/ActionButton';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { DownChevronIcon } from '../Icon/DownChevronIcon';
 import { CloseIcon } from '../Icon/CloseIcon';
@@ -130,7 +129,6 @@ export const Select = forwardRef(function Select({
     () => (multiple ? new Set(Array.isArray(value) ? value : []) : null),
     [multiple, value],
   );
-  const isSelected = (v) => multiple ? valueSet.has(v) : v === value;
   const [open, setOpen] = useState(defaultOpen);
   // 'bottom' by default; flipped to 'top' when the trigger sits too close
   // to the bottom of the viewport for the 240px menu to fit downward.
@@ -461,10 +459,24 @@ export const Select = forwardRef(function Select({
         />
       </TriggerTag>
       {open && renderMenu(
-        <ul
+        <Listbox
           ref={menuRef}
           id={listboxId}
-          role="listbox"
+          variant="menu"
+          multiple={multiple}
+          indicator={multiple && checkboxes ? 'checkbox' : 'none'}
+          options={shownOptions}
+          value={multiple ? valueArray : (value ?? null)}
+          emptyText={searchLoading ? 'Searching…' : ((typeof emptyText === 'function' ? emptyText(query) : emptyText) || 'No matches')}
+          onSelect={(opt) => {
+            if (multiple && !opt.singleAction) {
+              // Toggle this option in the value array; keep menu open.
+              onChange(valueSet.has(opt.value) ? valueArray.filter(v => v !== opt.value) : [...valueArray, opt.value]);
+              return;
+            }
+            onChange(opt.value);
+            setOpen(false);
+          }}
           className={[
             styles.menu,
             portal ? styles.menuPortal : '',
@@ -490,97 +502,7 @@ export const Select = forwardRef(function Select({
               ? { bottom: window.innerHeight - anchorRect.top + 4 }
               : { top: anchorRect.bottom + 4 }),
           } : undefined}
-        >
-          {shownOptions.length === 0 && (
-            <li className={styles.emptyOption} aria-disabled>
-              {searchLoading ? 'Searching…' : ((typeof emptyText === 'function' ? emptyText(query) : emptyText) || 'No matches')}
-            </li>
-          )}
-          {shownOptions.map((opt, i) => {
-            // Non-interactive section header: used by callers that want to
-            // group options under a label (e.g. cross-row DOSs by Created
-            // date). Pass `{ type: 'header', label, value }` and any value
-            // works so long as it's unique among options.
-            if (opt.type === 'header') {
-              return (
-                <li
-                  key={`h-${i}-${opt.value}`}
-                  role="presentation"
-                  className={styles.groupHeader}
-                >
-                  {opt.label}
-                </li>
-              );
-            }
-            const isActive = isSelected(opt.value);
-            const isSingleAction = !!opt.singleAction;
-            return (
-              <li
-                key={opt.value}
-                role="option"
-                aria-selected={isActive}
-                aria-disabled={opt.disabled || undefined}
-                tabIndex={opt.disabled ? -1 : 0}
-                className={[
-                  styles.item,
-                  multiple && checkboxes ? styles.itemWithCheckbox : '',
-                  isActive ? styles.itemActive : '',
-                  opt.disabled ? styles.itemDisabled : '',
-                ].filter(Boolean).join(' ')}
-                style={opt.style}
-                onClick={() => {
-                  if (opt.disabled) return;
-                  if (multiple && !isSingleAction) {
-                    // Toggle this option in the value array; keep menu open.
-                    const next = valueSet.has(opt.value)
-                      ? valueArray.filter(v => v !== opt.value)
-                      : [...valueArray, opt.value];
-                    onChange(next);
-                    return;
-                  }
-                  onChange(opt.value);
-                  setOpen(false);
-                }}
-              >
-                {multiple && checkboxes && (
-                  // Presentational: the row's own onClick owns the toggle, so
-                  // the checkbox must not also handle the click.
-                  <Checkbox
-                    checked={isActive}
-                    className={styles.itemCheckbox}
-                    tabIndex={-1}
-                    aria-hidden="true"
-                  />
-                )}
-                {(() => {
-                  const labelNode = opt.icon ? (
-                    <span className={styles.itemLabel}>
-                      <Icon name={opt.icon} size={14} color="var(--neutral-300)" />
-                      {opt.label}
-                    </span>
-                  ) : opt.action ? <span className={styles.itemText}>{opt.label}</span> : opt.label;
-                  return opt.tooltip
-                    ? <Tooltip label={opt.tooltip} placement="right" maxWidth={240} raised className={styles.itemTip}>{labelNode}</Tooltip>
-                    : labelNode;
-                })()}
-                {opt.action && (
-                  <ActionButton
-                    size="sm"
-                    icon={opt.action.icon}
-                    tooltip={opt.action.label}
-                    tooltipLeft
-                    className={styles.itemAction}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOpen(false);
-                      opt.action.onClick(opt.value);
-                    }}
-                  />
-                )}
-              </li>
-            );
-          })}
-        </ul>
+        />
       )}
     </div>
   );
