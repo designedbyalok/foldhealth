@@ -9,7 +9,7 @@ import {
   getUserId,
   markDbTourSeen,
   markLocalTourSeen,
-} from '../../../../components/ProductTour/ProductTour.utils';
+} from '../../../tours/tourStore';
 import styles from './SidebarCollapseHint.module.css';
 
 const TOUR_ID = 'patient-profile-sidebar-collapse';

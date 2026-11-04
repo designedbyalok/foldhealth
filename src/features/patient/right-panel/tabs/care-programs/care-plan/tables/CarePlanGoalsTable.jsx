@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
-import { WorklistShell } from '../../../../../../../components/WorklistShell/WorklistShell';
+import { WorklistShell } from '../../../../../../worklists/WorklistShell';
 import { PriorityIcon } from '../../../../../../../components/PriorityIcon/PriorityIcon';
 import { Icon } from '../../../../../../../components/Icon/Icon';
 import { Tooltip } from '../../../../../../../components/Tooltip/Tooltip';

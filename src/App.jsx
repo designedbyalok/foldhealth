@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 const Analytics = lazy(() => import('@vercel/analytics/react').then(m => ({ default: m.Analytics })).catch(() => ({ default: () => null })));
 const SpeedInsights = lazy(() => import('@vercel/speed-insights/react').then(m => ({ default: m.SpeedInsights })).catch(() => ({ default: () => null })));
 import { AppLayout } from './layouts/AppLayout';
+import { AppProviders } from './features/AppProviders';
 import { Toaster } from './components/Toast/Toast';
 import { UpdateAvailableCard } from './components/UpdateCard/UpdateCard';
 import { LoginPage } from './features/auth/LoginPage';
@@ -309,7 +310,9 @@ function App() {
   return (
     <Suspense fallback={null}>
       <UpdateAvailableCard />
-      <AppLayout />
+      <AppProviders>
+        <AppLayout />
+      </AppProviders>
       {/* Their scripts report the full URL; keep tokens and prefill params out. */}
       <Analytics beforeSend={scrubAnalyticsEvent} />
       <SpeedInsights beforeSend={scrubAnalyticsEvent} />

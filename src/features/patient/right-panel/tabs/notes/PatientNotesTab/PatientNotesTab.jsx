@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { ActionButton } from '../../../../../../components/ActionButton/ActionButton';
 import { Button } from '../../../../../../components/Button/Button';
-import { FilterBar } from '../../../../../../components/FilterBar/FilterBar';
+import { FilterBar } from '../../../../../worklists/FilterBar';
 import { Input } from '../../../../../../components/Input/Input';
 import { SimpleTableSkeleton } from '../../../../../../components/SimpleTableSkeleton/SimpleTableSkeleton';
 import { Tabs } from '../../../../../../components/Tabs/Tabs';

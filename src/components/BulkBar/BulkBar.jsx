@@ -1,12 +1,13 @@
-import { useState, useRef, useEffect } from 'react';
+import { useContext, useState, useRef, useEffect } from 'react';
 import { Icon } from '../Icon/Icon';
 import { CloseIcon } from '../Icon/CloseIcon';
-import { BotIcon } from '../Icon/BotIcon';
 import { Button } from '../Button/Button';
 import { ActionButton } from '../ActionButton/ActionButton';
 import { Checkbox } from '../Checkbox/Checkbox';
-import { useAppStore } from '../../store/useAppStore';
+import { BulkBarDefaults } from './BulkBarDefaults';
 import styles from './BulkBar.module.css';
+
+const EMPTY = [];
 
 /**
  * BulkBar: floating action bar that appears when one or more rows are
@@ -25,14 +26,16 @@ import styles from './BulkBar.module.css';
  * omitted, BulkBar renders the default worklist actions, preserving
  * backward compatibility for every existing caller.
  */
-export function BulkBar({ selectedIds: selectedIdsProp, onClear, onChangeAssignee, actions, iconActions, moreActions, className, noun } = {}) {
-  const storeSelectedIds = useAppStore(s => s.selectedIds);
-  const storeClearSelected = useAppStore(s => s.clearSelected);
-  const setShowInvokeModal = useAppStore(s => s.setShowInvokeModal);
-  const showToast = useAppStore(s => s.showToast);
-
-  const selectedIds = selectedIdsProp ?? storeSelectedIds;
-  const clearSelected = onClear ?? storeClearSelected;
+export function BulkBar({ selectedIds: selectedIdsProp, onClear, onChangeAssignee, actions: actionsProp, iconActions, moreActions: moreActionsProp, className, noun } = {}) {
+  const defaults = useContext(BulkBarDefaults);
+  const selectedIds = selectedIdsProp ?? defaults.selectedIds ?? EMPTY;
+  const clearSelected = onClear ?? defaults.onClear ?? (() => {});
+  // No actions from the caller: offer the app's defaults, if it has any.
+  const fallback = !(actionsProp && actionsProp.length) && defaults.actions
+    ? defaults.actions({ selectedIds, onChangeAssignee })
+    : null;
+  const actions = fallback ? fallback.actions : actionsProp;
+  const moreActions = fallback ? fallback.moreActions : moreActionsProp;
   const [showMore, setShowMore] = useState(false);
   const [visible, setVisible] = useState(false);
   const moreRef = useRef(null);
@@ -123,7 +126,7 @@ export function BulkBar({ selectedIds: selectedIdsProp, onClear, onChangeAssigne
               {showMore && (
                 <div className={styles.moreDropdown}>
                   <div className={styles.moreTitle}>More Actions</div>
-                  {moreActions.map((item, i) => (
+                  {moreActions.map((item, i) => (item.divider ? <div key={`divider-${i}`} className={styles.moreDivider} /> : (
                     <button
                       key={item.label || i}
                       className={[styles.moreItem, item.variant === 'destructive' ? styles.danger : ''].filter(Boolean).join(' ')}
@@ -132,66 +135,15 @@ export function BulkBar({ selectedIds: selectedIdsProp, onClear, onChangeAssigne
                       {/* A destructive item's icon is red like its label. */}
                       {item.iconElement || (item.icon && <Icon name={item.icon} size={16} color={item.variant === 'destructive' ? 'currentColor' : 'var(--neutral-400)'} />)}
                       {item.label}
+                      {item.trailing && <span className={styles.moreTrailing}>{item.trailing}</span>}
                     </button>
-                  ))}
+                  )))}
                 </div>
               )}
             </div>
           )}
         </>
-      ) : (
-        <>
-          <Button
-            variant="outline"
-            size="sm"
-            leadingIcon="solar:user-check-rounded-linear"
-            onClick={() => onChangeAssignee ? onChangeAssignee(selectedIds) : showToast('Change Assignee – coming soon')}
-          >
-            Change Assignee
-          </Button>
-          <Button variant="outline" size="sm" leadingIcon="solar:bolt-linear" onClick={() => showToast('Run Automation – coming soon')}>
-            Run Automation
-          </Button>
-          <div className={styles.moreWrap} ref={moreRef}>
-            <ActionButton
-              icon="solar:menu-dots-linear"
-              tooltip="More actions"
-              onClick={(e) => { e.stopPropagation(); setShowMore(v => !v); }}
-            />
-            {showMore && (
-              <div className={styles.moreDropdown}>
-                <div className={styles.moreTitle}>More Actions</div>
-                {[
-                  { icon: 'solar:letter-opened-linear', label: 'Run Campaign' },
-                  { icon: 'solar:letter-linear', label: 'Send Email' },
-                  { icon: 'solar:chat-line-linear', label: 'Send SMS' },
-                  { icon: 'solar:calendar-minimalistic-linear', label: 'Schedule Appointment' },
-                  { icon: 'solar:hand-pills-linear', label: 'Medical Reconciliation' },
-                  { icon: 'solar:clipboard-add-linear', label: 'Send Assessment' },
-                  { icon: 'solar:book-linear', label: 'Send Education' },
-                  { icon: 'solar:checklist-minimalistic-linear', label: 'Create Task' },
-                  { icon: 'solar:tag-horizontal-linear', label: 'Set Tag' },
-                ].map(item => (
-                  <button key={item.label} className={styles.moreItem} onClick={() => showToast(`${item.label} – coming soon`)}>
-                    <Icon name={item.icon} size={16} color="var(--neutral-400)" />
-                    {item.label}
-                  </button>
-                ))}
-                <button className={styles.moreItem} onClick={() => { setShowMore(false); setShowInvokeModal(true); }}>
-                  <BotIcon size={16} color="var(--neutral-400)" />
-                  <span style={{ flex: 1 }}>Invoke Agent</span>
-                  <Icon name="solar:alt-arrow-right-linear" size={16} color="var(--neutral-300)" />
-                </button>
-                <div className={styles.moreDivider} />
-                <button className={`${styles.moreItem} ${styles.danger}`} onClick={() => showToast('Removed from list')}>
-                  <Icon name="solar:trash-bin-2-linear" size={16} />
-                  Remove from List
-                </button>
-              </div>
-            )}
-          </div>
-        </>
-      )}
+      ) : null}
       <div className={styles.divider} />
       <button className={styles.closeBtn} title="Close" onClick={handleDismiss}>
         <CloseIcon size={20} color="var(--neutral-300)" />

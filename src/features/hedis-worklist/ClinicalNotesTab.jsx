@@ -1,5 +1,5 @@
 import { Icon } from '../../components/Icon/Icon';
-import { ClinicalNoteCardActions } from '../../components/ActivityLog/ActivityLog';
+import { ClinicalNoteCardActions } from '../activity/ActivityEntries';
 import activityStyles from '../../components/ActivityLog/ActivityLog.module.css';
 import styles from './ClinicalNotesTab.module.css';
 

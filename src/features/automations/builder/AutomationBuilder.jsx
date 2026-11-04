@@ -5,7 +5,7 @@ import { Button } from '../../../components/Button/Button';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
 import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { Icon } from '../../../components/Icon/Icon';
-import { ProductTour } from '../../../components/ProductTour/ProductTour';
+import { ProductTour } from '../../tours/ProductTour';
 import { AutomationCanvas } from '../canvas/AutomationCanvas';
 import { nodeDef } from '../lib/catalog';
 import { allowedAt, getNode, whyNotAllowed } from '../lib/graph';

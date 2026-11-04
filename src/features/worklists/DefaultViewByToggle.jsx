@@ -1,7 +1,8 @@
-import { Icon } from '../Icon/Icon';
+import { Icon } from '../../components/Icon/Icon';
 import { useAppStore } from '../../store/useAppStore';
-import styles from './FilterBar.module.css';
+import styles from '../../components/FilterBar/FilterBar.module.css';
 
+/** The TOC worklist's Outreach Window / Outreach Status switch, shown in its FilterBar. */
 export function DefaultViewByToggle() {
   const viewBy = useAppStore(s => s.viewBy);
   const setViewBy = useAppStore(s => s.setViewBy);

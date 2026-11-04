@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { resolveCurrentAssignee } from './HccWorklistRow.utils';
 import { useTableSort } from '../../components/HeaderCell/useTableSort';
-import { useWorklistColumns } from '../../components/WorklistColumns/useWorklistColumns';
+import { useWorklistColumns } from '../worklists/useWorklistColumns';
 import { HCC_COLUMNS } from './columns';
 import { memberMatchesFilters, countActiveFilters } from './filters';
 import { getChartDocs } from './data/chartDocs';

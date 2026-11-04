@@ -1,61 +1,36 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Joyride, STATUS, ACTIONS } from 'react-joyride';
 import { TourTooltip } from './TourTooltip';
-import {
-  getLocalSeenTours,
-  markLocalTourSeen,
-  getUserId,
-  getDbSeenTours,
-  markDbTourSeen,
-} from './ProductTour.utils';
+import { localTourStore } from './ProductTour.utils';
 
 /**
- * ProductTour: wraps React Joyride with Fold Health design system.
- * Tour state is persisted to Supabase (cross-device) with localStorage fallback.
+ * ProductTour: wraps React Joyride with Fold Health design system. Shows a
+ * tour once: `store` answers whether this user has seen it and records that
+ * they have. The default remembers it in this browser; the app passes one
+ * that also syncs across devices (features/tours).
+ *
+ * @param {{ hasSeen: (tourId) => boolean|Promise<boolean>, markSeen: (tourId) => void }} [props.store]
  */
-export function ProductTour({ tourId, steps, run = true, onFinish, continuous = true }) {
+export function ProductTour({ tourId, steps, run = true, onFinish, continuous = true, store = localTourStore }) {
   const [running, setRunning] = useState(false);
   const [checked, setChecked] = useState(false);
 
-  // Check both local and DB on mount
+  // Show the tour only if this user hasn't seen it.
   useEffect(() => {
     if (!run) { setChecked(true); return; }
-
-    // Quick local check first (instant, no flicker)
-    const localSeen = getLocalSeenTours();
-    if (localSeen[tourId]) { setChecked(true); return; }
-
-    // Then check DB for cross-device persistence
     let cancelled = false;
-    (async () => {
-      const userId = await getUserId();
+    Promise.resolve(store.hasSeen(tourId)).then((seen) => {
       if (cancelled) return;
-      if (userId) {
-        const dbSeen = await getDbSeenTours(userId);
-        if (cancelled) return;
-        if (dbSeen[tourId]) {
-          // Sync to local so next check is instant
-          markLocalTourSeen(tourId);
-          setChecked(true);
-          return;
-        }
-      }
-      // Not seen anywhere: show the tour
-      setRunning(true);
+      if (!seen) setRunning(true);
       setChecked(true);
-    })();
+    });
     return () => { cancelled = true; };
-  }, [tourId, run]);
+  }, [tourId, run, store]);
 
-  // Mark as seen immediately when tour starts (both local + DB)
+  // Recorded as seen as soon as it starts, so a reload mid-tour doesn't replay it.
   useEffect(() => {
-    if (!running) return;
-    markLocalTourSeen(tourId);
-    (async () => {
-      const userId = await getUserId();
-      if (userId) markDbTourSeen(userId, tourId);
-    })();
-  }, [running, tourId]);
+    if (running) store.markSeen(tourId);
+  }, [running, tourId, store]);
 
   const handleCallback = useCallback((data) => {
     const { status, action } = data;
