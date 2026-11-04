@@ -16348,17 +16348,20 @@ export const useAppStore = create((set, get) => ({
     const { localEmployerImpactFilters } = await import('../features/analytics/views/employer/employerImpactLocal');
     set({ employerImpactFilters: localEmployerImpactFilters(), employerImpactFiltersLoaded: true, employerImpactLocal: true });
   },
-  fetchEmployerImpact: async ({ from, to, employer = null, scope = 'patient', location = null }) => {
-    const key = [from, to, employer || '*', scope, location || '*'].join('|');
+  // `weekly` reads the weekly table (Month and Quarter charts) instead of
+  // the monthly one. A weekly read resolves null when that table's function
+  // isn't there yet (migration not run), so the report can fall back to months.
+  fetchEmployerImpact: async ({ from, to, employer = null, scope = 'patient', location = null, weekly = false }) => {
+    const key = [weekly ? 'w' : 'm', from, to, employer || '*', scope, location || '*'].join('|');
     const cached = get().employerImpactRollups[key];
     if (cached) return cached;
     if (get().employerImpactLocal) {
-      const { localEmployerImpactRollup } = await import('../features/analytics/views/employer/employerImpactLocal');
-      const rows = localEmployerImpactRollup({ from, to, employer, scope, location });
+      const { localEmployerImpactRollup, localEmployerImpactWeeklyRollup } = await import('../features/analytics/views/employer/employerImpactLocal');
+      const rows = (weekly ? localEmployerImpactWeeklyRollup : localEmployerImpactRollup)({ from, to, employer, scope, location });
       set(s => ({ employerImpactRollups: { ...s.employerImpactRollups, [key]: rows } }));
       return rows;
     }
-    const { data, error } = await supabase.rpc('employer_impact_rollup', {
+    const { data, error } = await supabase.rpc(weekly ? 'employer_impact_weekly_rollup' : 'employer_impact_rollup', {
       p_from: `${from}-01`,
       p_to: `${to}-01`,
       p_employer: employer,
@@ -16367,7 +16370,7 @@ export const useAppStore = create((set, get) => ({
     });
     if (error) {
       console.warn('fetchEmployerImpact:', error.message);
-      return [];
+      return weekly ? null : [];
     }
     const rows = Array.isArray(data) ? data : [];
     set(s => ({ employerImpactRollups: { ...s.employerImpactRollups, [key]: rows } }));

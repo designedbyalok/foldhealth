@@ -475,6 +475,20 @@ function xTitle(doc, frame) {
   if (frame.xLabel) text(doc, frame.xLabel, frame.plotX + frame.plotW / 2, frame.titleY, { size: LABEL, color: C.muted, align: 'center', baseline: 'bottom' });
 }
 
+/**
+ * A line through `pts`, with a dot on each. A null point (a period with no
+ * data yet) breaks the line instead of dropping it to zero.
+ */
+function polyline(doc, pts, color) {
+  stroke(doc, color);
+  doc.setLineWidth(0.8);
+  for (let i = 1; i < pts.length; i += 1) {
+    if (pts[i - 1] && pts[i]) doc.line(pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1]);
+  }
+  fill(doc, color);
+  pts.forEach(p => p && doc.circle(p[0], p[1], 1.3, 'F'));
+}
+
 function barChart(doc, { data, series, line, format, yLabel, xLabel }, palette, x, y, w, h) {
   const legendItems = series.map((s, i) => ({ label: s.label, color: palette[i % palette.length] }));
   if (line) legendItems.push({ label: line.label, color: C.line, line: true });
@@ -501,12 +515,8 @@ function barChart(doc, { data, series, line, format, yLabel, xLabel }, palette, 
     });
   });
   if (line) {
-    stroke(doc, C.line);
-    doc.setLineWidth(0.8);
-    const pts = data.map((r, i) => [f.plotX + slot * i + slot / 2, f.top + f.h - ((r[line.key] || 0) / top) * f.h]);
-    for (let i = 1; i < pts.length; i += 1) doc.line(pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1]);
-    fill(doc, C.line);
-    pts.forEach(([px, py]) => doc.circle(px, py, 1.3, 'F'));
+    polyline(doc, data.map((r, i) => (r[line.key] == null ? null
+      : [f.plotX + slot * i + slot / 2, f.top + f.h - (r[line.key] / top) * f.h])), C.line);
   }
   xLabels(doc, data.map(r => r.x), f.plotX, slot, f.top + f.h + 8);
   xTitle(doc, f);
@@ -523,13 +533,8 @@ function lineChart(doc, { data, series, format, yLabel, xLabel }, palette, x, y,
   const top = ticks[ticks.length - 1] || 1;
   const slot = f.plotW / Math.max(1, data.length);
   series.forEach((s, si) => {
-    const color = palette[si % palette.length];
-    stroke(doc, color);
-    doc.setLineWidth(0.8);
-    const pts = data.map((r, i) => [f.plotX + slot * i + slot / 2, f.top + f.h - ((r[s.key] || 0) / top) * f.h]);
-    for (let i = 1; i < pts.length; i += 1) doc.line(pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1]);
-    fill(doc, color);
-    pts.forEach(([px, py]) => doc.circle(px, py, 1.3, 'F'));
+    polyline(doc, data.map((r, i) => (r[s.key] == null ? null
+      : [f.plotX + slot * i + slot / 2, f.top + f.h - (r[s.key] / top) * f.h])), palette[si % palette.length]);
   });
   xLabels(doc, data.map(r => r.x), f.plotX, slot, f.top + f.h + 8);
   xTitle(doc, f);
@@ -696,7 +701,7 @@ function satisfaction(doc, model, widget, palette, x, y, w, h) {
     series: [{ key: 'responded', label: 'Responded' }, { key: 'not_responded', label: 'Not Responded' }],
     format: 'percent',
     yLabel: widget.yLabel,
-    xLabel: widget.xLabel,
+    xLabel: model.xLabel ?? widget.xLabel,
   }, palette, x + colW + 6, y, w - colW - 6, h);
 }
 
@@ -704,7 +709,7 @@ function satisfaction(doc, model, widget, palette, x, y, w, h) {
 function widgetBody(doc, item, palette, x, y, w, h) {
   const { widget, model } = item;
   if (!model.hasData) { emptyState(doc, x, y, w, h); return; }
-  const axes = { yLabel: widget.yLabel, xLabel: widget.xLabel, format: widget.format };
+  const axes = { yLabel: widget.yLabel, xLabel: model.xLabel ?? widget.xLabel, format: widget.format };
   switch (widget.type) {
     case 'stats': statStack(doc, model.stats, x, y, w, h); return;
     case 'duration': hbarChart(doc, { data: model.data, seriesKey: 'in_person', seriesLabel: widget.series?.[0]?.label, format: 'minutes', xLabel: widget.xLabel }, palette, x, y, w, h); return;
@@ -1206,7 +1211,7 @@ export function coverPage(doc, {
 
 /** A logo's size fitted inside a box, keeping its proportions. */
 function fitLogo(logo, boxW, boxH) {
-  const ratio = logo.width && logo.height ? logo.width / logo.height : 190 / 150;
+  const ratio = logo.width && logo.height ? logo.width / logo.height : 170 / 150;
   return ratio > boxW / boxH ? { w: boxW, h: boxW / ratio } : { w: boxH * ratio, h: boxH };
 }
 

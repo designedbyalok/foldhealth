@@ -85,7 +85,7 @@ const IMAGE_MAX_MB = 5;
 const COVER_ACCEPT = '.png,.jpg,.jpeg,.svg';
 const COVER_MIME = ['image/png', 'image/jpeg', 'image/svg+xml'];
 const DEFAULT_COVER = { kind: 'preset', id: PRESET_COVERS[0].id };
-const TRAILHEAD_SIZE = { width: 190, height: 150, format: 'PNG' };
+const TRAILHEAD_SIZE = { width: 170, height: 150, format: 'PNG' };
 // Send Report menu (hidden for now; kept for when it returns).
 const SEND_OPTIONS = [
   { key: 'email', label: 'Send via Email', icon: 'solar:letter-linear' },
@@ -287,8 +287,8 @@ export function PrintReportDrawer({ range, employerName, filename, sections, fil
   useEffect(() => {
     let live = true;
     Promise.all([
-      loadPng(clientLogoUrl, 190, 150),
-      loadPng(clientLogoWhiteUrl, 190, 150),
+      loadPng(clientLogoUrl, 510, 450),
+      loadPng(clientLogoWhiteUrl, 510, 450),
       loadInter(),
       // Each employer logo in dark (headers, light covers) and white (dark covers).
       // Trimmed to their visible pixels so the cover centres what shows.
