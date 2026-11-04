@@ -3,7 +3,7 @@ import { Drawer } from '../../../../../../../../components/Drawer/Drawer';
 import { SplitDrawerLayout } from '../../../../../../../../components/Drawer/SplitDrawerLayout';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { Textarea } from '../../../../../../../../components/Textarea/Textarea';
-import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { DownChevronIcon } from '../../../../../../../../components/Icon/DownChevronIcon';
 import { Badge } from '../../../../../../../../components/Badge/Badge';

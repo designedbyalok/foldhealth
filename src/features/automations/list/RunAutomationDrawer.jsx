@@ -6,7 +6,7 @@ import { Icon } from '../../../components/Icon/Icon';
 import { Input } from '../../../components/Input/Input';
 import { RadioButton } from '../../../components/RadioButton/RadioButton';
 import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { InfoBar } from '../../../components/InfoBar/InfoBar';
 import { plural } from './listUtils';
 import styles from './RunAutomationDrawer.module.css';

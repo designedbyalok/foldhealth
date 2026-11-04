@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '../../../../../components/Button/Button';
 import { Input } from '../../../../../components/Input/Input';
-import { Dialog, DialogContent, DialogTitle } from '../../../../../components/ShadcnDialog/ShadcnDialog';
+import { Dialog, DialogContent, DialogTitle } from '../../../../../components/Dialog/Dialog';
 import styles from './DocumentsTab.module.css';
 
 /** Add Category: name a new document folder. `taken` holds names already in use. */

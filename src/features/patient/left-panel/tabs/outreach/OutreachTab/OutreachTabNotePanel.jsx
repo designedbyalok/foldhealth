@@ -3,7 +3,7 @@ import { Icon } from '../../../../../../components/Icon/Icon';
 import { DownChevronIcon } from '../../../../../../components/Icon/DownChevronIcon';
 import { Switch } from '../../../../../../components/Switch/Switch';
 import { Textarea } from '../../../../../../components/Textarea/Textarea';
-import { Collapse } from '../../../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../../../components/Collapsible/Collapsible';
 import { MenuPopover } from '../../../../../../components/MenuPopover/MenuPopover';
 import { CheckboxListPopover } from '../../../../../../components/CheckboxListPopover/CheckboxListPopover';
 import { Tooltip } from '../../../../../../components/Tooltip/Tooltip';
@@ -107,7 +107,7 @@ export function NotePanel({ title, expanded, outcomes, note, syncText, outcomeOp
         </div>
       </div>
 
-      <Collapse open={expanded}>
+      <CollapsibleContent open={expanded}>
         <div className={styles.notePanelBody}>
           {outcomes.length > 0 && (
             <div className={styles.outcomeRow}>
@@ -128,7 +128,7 @@ export function NotePanel({ title, expanded, outcomes, note, syncText, outcomeOp
             onChange={e => onNoteChange(e.target.value)}
           />
         </div>
-      </Collapse>
+      </CollapsibleContent>
     </div>
   );
 }

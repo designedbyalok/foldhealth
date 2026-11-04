@@ -6,8 +6,8 @@ import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { RadioOptionGroup } from '../../../components/RadioOptionGroup/RadioOptionGroup';
 import { Input } from '../../../components/Input/Input';
 import { Toggle } from '../../../components/Toggle/Toggle';
-import { Collapse } from '../../../components/Collapse/Collapse';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { CollapsibleContent } from '../../../components/Collapsible/Collapsible';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { Badge } from '../../../components/Badge/Badge';
 import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
@@ -234,7 +234,7 @@ export function TimerSettingsDrawer({ program, setting, onClose }) {
   // The roles/users picker, under the option cards; eases open when
   // "+ Additional Roles/Users" is picked.
   const pickerContent = (
-    <Collapse open={plus}>
+    <CollapsibleContent open={plus}>
       <div className={styles.picker}>
         <span className={styles.pickerHeading}>Add additional roles/users who can log billable time for this program</span>
 
@@ -322,7 +322,7 @@ export function TimerSettingsDrawer({ program, setting, onClose }) {
           ))}
         </div>
       </div>
-    </Collapse>
+    </CollapsibleContent>
   );
   const accessOptions = Object.entries(TIMER_ACCESS).map(([value, label]) => ({
     value,
@@ -360,11 +360,11 @@ export function TimerSettingsDrawer({ program, setting, onClose }) {
         </p>
         <RadioOptionGroup name="timer-access" variant="card" options={accessOptions} value={access} onChange={setAccess} />
         {/* One slot under the options: at most one of these is open, so the
-            gap above stays 24px whichever it is (a closed Collapse still
+            gap above stays 24px whichever it is (a closed CollapsibleContent still
             takes a flex gap). */}
         <div>
           {/* "Care Program Team only": who that is, read-only. */}
-          <Collapse open={access === 'team' && hasTeam}>
+          <CollapsibleContent open={access === 'team' && hasTeam}>
             <div className={styles.picker}>
               <span className={styles.pickerHeading}>Care program team</span>
               <div className={styles.list}>
@@ -373,7 +373,7 @@ export function TimerSettingsDrawer({ program, setting, onClose }) {
                 ))}
               </div>
             </div>
-          </Collapse>
+          </CollapsibleContent>
           {pickerContent}
         </div>
 

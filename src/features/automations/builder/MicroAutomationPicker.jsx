@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../../../components/ShadcnDialog/ShadcnDialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../../../components/Dialog/Dialog';
 import { Input } from '../../../components/Input/Input';
 import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
 import { useAppStore } from '../../../store/useAppStore';

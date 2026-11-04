@@ -3,7 +3,7 @@ import { Drawer } from '../../../../../components/Drawer/Drawer';
 import { Button } from '../../../../../components/Button/Button';
 import { Toggle } from '../../../../../components/Toggle/Toggle';
 import { Input } from '../../../../../components/Input/Input';
-import { Checkbox } from '../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../components/Checkbox/Checkbox';
 import { Badge } from '../../../../../components/Badge/Badge';
 import { Link } from '../../../../../components/Link/Link';
 import { Icon } from '../../../../../components/Icon/Icon';

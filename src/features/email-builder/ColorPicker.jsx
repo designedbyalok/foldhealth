@@ -3,7 +3,7 @@ import { Icon } from '../../components/Icon/Icon';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Toggle } from '../../components/Toggle/Toggle';
 import { Select as SharedSelect } from '../../components/Select/Select';
-import { Slider } from '../../components/ShadcnSlider/ShadcnSlider';
+import { Slider } from '../../components/Slider/Slider';
 import {
   isGradient, parseGradient, formatGradient,
   hexToHsv, hsvToHex, normalizeHex,

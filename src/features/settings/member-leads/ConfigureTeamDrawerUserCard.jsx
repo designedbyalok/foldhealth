@@ -1,7 +1,7 @@
 import { Icon } from '../../../components/Icon/Icon';
 import { CloseButton } from '../../../components/CloseButton/CloseButton';
 import { Avatar } from '../../../components/Avatar/Avatar';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { ASSIGN_TO_DIMENSIONS } from './teamTypeConfig';
 import { HoverCard } from './HoverCard';
 import hoverStyles from './HoverCard.module.css';

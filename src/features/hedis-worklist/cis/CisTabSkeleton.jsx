@@ -1,8 +1,8 @@
-import bone from '../../../components/TableSkeleton/TableSkeleton.module.css';
+import { Skeleton } from '../../../components/Skeleton/Skeleton';
 import tab from './CisImmunizationsTab.module.css';
 import styles from './CisTabSkeleton.module.css';
 
-const B = ({ className }) => <span className={`${bone.bone} ${className}`} />;
+const B = ({ className }) => <Skeleton className={className} />;
 const DOSE_BLOCKS = 25;
 const LEGEND = 5;
 

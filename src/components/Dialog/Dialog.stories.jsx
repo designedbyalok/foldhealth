@@ -8,11 +8,11 @@ import {
   DialogTitle,
   DialogDescription,
   DialogClose,
-} from './ShadcnDialog';
+} from './Dialog';
 import { Button } from '../Button/Button';
 
 export default {
-  title: 'shadcn/Dialog',
+  title: 'Core/Dialog',
   tags: ['autodocs'],
   parameters: {
     layout: 'fullscreen',

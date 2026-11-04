@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Drawer } from '../../../components/Drawer/Drawer';
 import { Avatar } from '../../../components/Avatar/Avatar';
-import { Collapse } from '../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../components/Collapsible/Collapsible';
 import { Icon } from '../../../components/Icon/Icon';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Button } from '../../../components/Button/Button';
@@ -94,9 +94,9 @@ export function BulkEditAppointmentsDrawer({ provider, appointments, onDone, onC
         <span className={styles.countBadge}>{n}</span>
         <Icon name="solar:alt-arrow-right-linear" size={12} color="var(--neutral-300)" className={open ? `${styles.chevron} ${styles.chevronOpen}` : styles.chevron} />
       </button>
-      <Collapse open={open}>
+      <CollapsibleContent open={open}>
         <div className={styles.appliesBody}>{applyList}</div>
-      </Collapse>
+      </CollapsibleContent>
     </div>
   );
 

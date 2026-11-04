@@ -1,4 +1,4 @@
-import styles from '../TableSkeleton/TableSkeleton.module.css';
+import { Skeleton } from '../Skeleton/Skeleton';
 
 function SkeletonCard() {
   return (
@@ -8,33 +8,33 @@ function SkeletonCard() {
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', gap: 6 }}>
-          <div className={styles.bone} style={{ width: 50, height: 20, borderRadius: 4 }} />
-          <div className={styles.bone} style={{ width: 60, height: 20, borderRadius: 4 }} />
+          <Skeleton style={{ width: 50, height: 20, borderRadius: 4 }} />
+          <Skeleton style={{ width: 60, height: 20, borderRadius: 4 }} />
         </div>
-        <div className={styles.bone} style={{ width: 50, height: 20, borderRadius: 4 }} />
+        <Skeleton style={{ width: 50, height: 20, borderRadius: 4 }} />
       </div>
-      <div className={styles.bone} style={{ width: '75%', height: 14 }} />
-      <div className={styles.bone} style={{ width: '100%', height: 10 }} />
-      <div className={styles.bone} style={{ width: '60%', height: 10 }} />
+      <Skeleton style={{ width: '75%', height: 14 }} />
+      <Skeleton style={{ width: '100%', height: 10 }} />
+      <Skeleton style={{ width: '60%', height: 10 }} />
       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-        <div className={styles.bone} style={{ width: 80, height: 18, borderRadius: 10 }} />
-        <div className={styles.bone} style={{ width: 100, height: 18, borderRadius: 10 }} />
-        <div className={styles.bone} style={{ width: 70, height: 18, borderRadius: 10 }} />
+        <Skeleton style={{ width: 80, height: 18, borderRadius: 10 }} />
+        <Skeleton style={{ width: 100, height: 18, borderRadius: 10 }} />
+        <Skeleton style={{ width: 70, height: 18, borderRadius: 10 }} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, borderTop: '0.5px solid var(--neutral-100)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
-          <div className={styles.bone} style={{ width: 36, height: 16 }} />
-          <div className={styles.bone} style={{ width: 50, height: 8 }} />
+          <Skeleton style={{ width: 36, height: 16 }} />
+          <Skeleton style={{ width: 50, height: 8 }} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
-          <div className={styles.bone} style={{ width: 36, height: 16 }} />
-          <div className={styles.bone} style={{ width: 30, height: 8 }} />
+          <Skeleton style={{ width: 36, height: 16 }} />
+          <Skeleton style={{ width: 30, height: 8 }} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
-          <div className={styles.bone} style={{ width: 36, height: 16 }} />
-          <div className={styles.bone} style={{ width: 40, height: 8 }} />
+          <Skeleton style={{ width: 36, height: 16 }} />
+          <Skeleton style={{ width: 40, height: 8 }} />
         </div>
-        <div className={styles.bone} style={{ width: 40, height: 26, borderRadius: 6 }} />
+        <Skeleton style={{ width: 40, height: 26, borderRadius: 6 }} />
       </div>
     </div>
   );

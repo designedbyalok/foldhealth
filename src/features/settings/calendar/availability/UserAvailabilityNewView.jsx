@@ -8,7 +8,7 @@ import { Toggle } from '../../../../components/Toggle/Toggle';
 import { Tooltip } from '../../../../components/Tooltip/Tooltip';
 import { Icon } from '../../../../components/Icon/Icon';
 import { Link } from '../../../../components/Link/Link';
-import { Collapse } from '../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../components/Collapsible/Collapsible';
 import { RingEmptyState } from '../../../../components/RingEmptyState/RingEmptyState';
 import { WorklistShell } from '../../../../components/WorklistShell/WorklistShell';
 import { DatePickerPopover } from '../../../../components/DatePicker/DatePickerPopover';
@@ -106,7 +106,7 @@ export function UserAvailabilityNewView({ users, loading, filtersOpen, onAdd, on
           <Toggle size="sm" items={VIEWS} value={view} onValueChange={setView} />
         </div>
       )}
-      <Collapse open={!!filtersOpen}>
+      <CollapsibleContent open={!!filtersOpen}>
         <div className={styles.filterBar}>
           <FilterChip label="Provider" searchable options={people.filter(u => u.blocks.length).map(u => u.name)} selected={providers} onChange={setProviders} />
           <FilterChip label="Location" searchable options={allLocations} selected={locations} onChange={setLocations} />
@@ -116,7 +116,7 @@ export function UserAvailabilityNewView({ users, loading, filtersOpen, onAdd, on
           <FilterChip label="Show" options={SHOW_FILTER} selected={show} onChange={setShow} />
           {filtersOn ? <Link variant="secondary" onClick={clearAll}>Clear all</Link> : null}
         </div>
-      </Collapse>
+      </CollapsibleContent>
 
       {loading ? (
         <div className={styles.loading}>Loading availability…</div>

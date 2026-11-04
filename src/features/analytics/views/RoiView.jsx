@@ -3,7 +3,7 @@ import { useAppStore } from '../../../store/useAppStore';
 import { Card } from './shared';
 import { safeConfigData } from './shared.utils';
 import { SavingsAreaChart } from './charts';
-import { Slider } from '../../../components/ShadcnSlider/ShadcnSlider';
+import { Slider } from '../../../components/Slider/Slider';
 import { EditableGrid } from './EditableGrid';
 import s from '../AnalyticsLayout.module.css';
 

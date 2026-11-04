@@ -6,7 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '../../../components/ShadcnDialog/ShadcnDialog';
+} from '../../../components/Dialog/Dialog';
 
 export function CreateInsurancePlanDialogs({
   showDiscardDialog,

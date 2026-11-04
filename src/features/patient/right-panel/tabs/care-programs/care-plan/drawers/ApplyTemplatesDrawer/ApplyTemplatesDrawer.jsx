@@ -8,7 +8,7 @@ import { Select } from '../../../../../../../../components/Select/Select';
 import { FilterChip } from '../../../../../../../../components/FilterChip/FilterChip';
 import { EpisodeBadge, RetiringBadge, TemplateScopeBadge } from '../../../../../../../settings/care-plan-library/shared';
 import { availableForPatient, inLibrary, matchesScopeFilter, scopeFilterOptions } from '../../lib/templateScope';
-import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
 import { PriorityIcon } from '../../../../../../../../components/PriorityIcon/PriorityIcon';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
 import { useAppStore } from '../../../../../../../../store/useAppStore';

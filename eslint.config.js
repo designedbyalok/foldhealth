@@ -17,12 +17,19 @@ const APP_CODE = {
   regex: '(^|/)(store|features|layouts)/|(^|/)lib/(supabase|apiFetch)$',
   message: 'Library components (primitives, patterns) must not import the store, features, layouts or the network. Take the data as props; put the connected wrapper in the feature. See docs/components/library-contract.mdx.',
 }
+// Renamed or merged components: the old folder only re-exports the new one.
+const DEPRECATED = Object.entries(LAYERS.$deprecated || {})
+  .filter(([old]) => !old.startsWith('$'))
+  .map(([old, next]) => ({
+    regex: `(^|/)${old}/${old}$`,
+    message: `${old} is now ${next}: import it from src/components/${next.split(' ')[0]}. See docs/components/library-contract.mdx.`,
+  }))
 const layerImports = (owner, banned) => ({
   files: LAYERS[owner].map(d => `src/components/${d}/**/*.{js,jsx}`),
   ignores: ['**/*.stories.jsx'],
   rules: {
     'no-restricted-imports': ['warn', {
-      patterns: [APP_CODE, {
+      patterns: [APP_CODE, ...DEPRECATED, {
         regex: `^(\\.\\./)+(${banned.flatMap(l => LAYERS[l]).join('|')})/`,
         message: `A ${owner === 'primitives' ? 'primitive' : 'pattern'} must not import ${banned.join(' or ')} components (src/components/layers.json). Pass it in as a prop or slot instead.`,
       }],
@@ -175,6 +182,11 @@ export default defineConfig([globalIgnores([
       }],
     }],
   },
+}, {
+  // Layer blocks below repeat DEPRECATED: a later block's rule options replace
+  // this one's for the files they cover.
+  files: ['src/**/*.{js,jsx}'],
+  rules: { 'no-restricted-imports': ['warn', { patterns: DEPRECATED }] },
 },
   layerImports('primitives', ['patterns', 'app', 'domain']),
   layerImports('patterns', ['app', 'domain']),

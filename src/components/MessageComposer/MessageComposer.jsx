@@ -3,7 +3,7 @@ import { MenuPopover } from '../MenuPopover/MenuPopover';
 import { Switch } from '../Switch/Switch';
 import { ActionButton } from '../ActionButton/ActionButton';
 import { Icon } from '../Icon/Icon';
-import { Checkbox } from '../ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../Checkbox/Checkbox';
 import { Link } from '../Link/Link';
 import { LinkHighlightTextarea } from '../Textarea/Textarea';
 import styles from './MessageComposer.module.css';

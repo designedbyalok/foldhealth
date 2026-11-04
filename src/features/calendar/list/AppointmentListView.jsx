@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { Link } from '../../../components/Link/Link';
 import { WorklistShell } from '../../../components/WorklistShell/WorklistShell';

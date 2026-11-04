@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Popover } from '../Popover/Popover';
 import { Avatar } from '../Avatar/Avatar';
 import { Icon } from '../Icon/Icon';
-import { Checkbox } from '../ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../Checkbox/Checkbox';
 import styles from './UserPickerPopover.module.css';
 
 const initialsOf = (name) => String(name || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase();

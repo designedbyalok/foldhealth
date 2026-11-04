@@ -1,4 +1,4 @@
-import { Checkbox } from '../ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../Checkbox/Checkbox';
 import styles from './BulkCheckboxCell.module.css';
 
 /**

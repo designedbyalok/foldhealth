@@ -1,7 +1,7 @@
 import { Select } from '../../../components/Select/Select';
 import { Input } from '../../../components/Input/Input';
 import { Switch } from '../../../components/Switch/Switch';
-import { Collapse } from '../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../components/Collapsible/Collapsible';
 import { Icon } from '../../../components/Icon/Icon';
 import { RECIPIENT_TYPES, VERIFICATION_METHODS, INVALID_ATTEMPT_POLICIES } from './sendTo';
 import styles from './SendToSection.module.css';
@@ -66,7 +66,7 @@ export function SendToSection({ value, onChange, contact, need, error, labelEnd,
 
       <Switch checked={p.on} onChange={(on) => setP({ on })} label="Protect Link" />
 
-      <Collapse open={p.on}>
+      <CollapsibleContent open={p.on}>
         <div className={styles.protection}>
           <Select
             label="Verification Methods"
@@ -102,7 +102,7 @@ export function SendToSection({ value, onChange, contact, need, error, labelEnd,
             onChange={(e) => setP({ maxAttempts: Math.max(1, Number(e.target.value) || 1) })}
           />
         </div>
-      </Collapse>
+      </CollapsibleContent>
     </div>
   );
 }

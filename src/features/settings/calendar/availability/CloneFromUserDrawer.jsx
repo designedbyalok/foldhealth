@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Drawer } from '../../../../components/Drawer/Drawer';
 import { Button } from '../../../../components/Button/Button';
 import { Select } from '../../../../components/Select/Select';
-import { Checkbox } from '../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../components/Checkbox/Checkbox';
 import { RingEmptyState } from '../../../../components/RingEmptyState/RingEmptyState';
 import { WorklistShell } from '../../../../components/WorklistShell/WorklistShell';
 import { Badge } from '../../../../components/Badge/Badge';

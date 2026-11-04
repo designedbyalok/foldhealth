@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { FoldIdTag } from '../../components/FoldIdTag/FoldIdTag';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { useAppStore } from '../../store/useAppStore';

@@ -1,0 +1,14 @@
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+/* :where() keeps this at zero specificity, so a caller's class (a 50% radius
+   for an avatar, a width) wins whichever stylesheet loads last. */
+:where(.bone) {
+  display: block;
+  background: linear-gradient(90deg, var(--neutral-100) 25%, var(--neutral-50) 50%, var(--neutral-100) 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 4px;
+}

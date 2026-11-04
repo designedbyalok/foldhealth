@@ -8,7 +8,7 @@ import { Button } from '../../../components/Button/Button';
 import { SectionTitleBar } from '../../../components/SectionTitleBar/SectionTitleBar';
 import { WorklistShell } from '../../../components/WorklistShell/WorklistShell';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { CloseIcon } from '../../../components/Icon/CloseIcon';
 import { useAppStore } from '../../../store/useAppStore';
 import { EmailPreviewDrawer } from './EmailPreviewDrawer';

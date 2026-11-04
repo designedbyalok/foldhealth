@@ -4,7 +4,7 @@ import { PanelSectionItem } from '../../../../../../components/PanelSection/Pane
 import { CappedRows } from './CappedRows';
 import { CountToggle } from './CountToggle';
 import { PriorityIcon } from '../../../../../../components/PriorityIcon/PriorityIcon';
-import { Checkbox } from '../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../components/Checkbox/Checkbox';
 import { Button } from '../../../../../../components/Button/Button';
 import { FilterChip } from '../../../../../../components/FilterChip/FilterChip';
 import { useAppStore } from '../../../../../../store/useAppStore';

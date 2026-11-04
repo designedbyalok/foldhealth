@@ -5,7 +5,7 @@ import { Button } from '../../../../../../../components/Button/Button';
 import { SearchBar } from '../../../../../../../components/SearchBar/SearchBar';
 import { Toggle } from '../../../../../../../components/Toggle/Toggle';
 import { FilterChip } from '../../../../../../../components/FilterChip/FilterChip';
-import { Checkbox } from '../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../../components/Checkbox/Checkbox';
 import { RingEmptyState } from '../../../../../../../components/RingEmptyState/RingEmptyState';
 import { WorklistShell } from '../../../../../../../components/WorklistShell/WorklistShell';
 import { LETTER_SUB_TABS } from './ProgramDetailView.utils';

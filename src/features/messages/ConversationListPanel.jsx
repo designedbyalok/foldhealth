@@ -3,12 +3,12 @@ import { Icon } from '../../components/Icon/Icon';
 import { Input } from '../../components/Input/Input';
 import { Toggle } from '../../components/Toggle/Toggle';
 import { getInitials, getDisplayName, formatTime } from './messageUtils';
-import boneStyles from '../../components/TableSkeleton/TableSkeleton.module.css';
+import { Skeleton } from '../../components/Skeleton/Skeleton';
 import { CommsListEmpty } from './comms/CommsEmptyState';
 import { CommsListHeader } from './comms/CommsListHeader';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
 import { BulkBar } from '../../components/BulkBar/BulkBar';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import commsStyles from './comms/Comms.module.css';
 
 const ACTIVITY_FILTER = { Today: 1, 'Last 7 days': 7, 'Last 30 days': 30 };
@@ -16,18 +16,17 @@ import styles from './MessagesView.module.css';
 
 /**
  * Placeholder rows shaped like `.convItem`, avatar circle, name line,
- * preview line. Reuses the shared `.bone` shimmer rather than defining
- * another one.
+ * preview line, built from `Skeleton`.
  */
 function ConversationSkeleton({ count = 6 }) {
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className={styles.convItem} style={{ cursor: 'default' }} aria-hidden>
-          <span className={boneStyles.bone} style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0 }} />
+          <Skeleton style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0 }} />
           <div className={styles.convInfo}>
-            <span className={boneStyles.bone} style={{ width: '55%', height: 12, display: 'block' }} />
-            <span className={boneStyles.bone} style={{ width: '80%', height: 10, display: 'block', marginTop: 6 }} />
+            <Skeleton style={{ width: '55%', height: 12, display: 'block' }} />
+            <Skeleton style={{ width: '80%', height: 10, display: 'block', marginTop: 6 }} />
           </div>
         </div>
       ))}

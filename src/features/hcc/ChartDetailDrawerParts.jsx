@@ -4,7 +4,7 @@ import { Icon } from '../../components/Icon/Icon';
 import { CloseButton } from '../../components/CloseButton/CloseButton';
 import { Button } from '../../components/Button/Button';
 import { Select } from '../../components/Select/Select';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { Textarea } from '../../components/Textarea/Textarea';
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription } from '../../components/ConfirmDialog/AlertDialogPrimitives';
 import { DOC_TYPES } from './data/chartDocs';

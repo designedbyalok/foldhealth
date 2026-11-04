@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { PatientAvatarHover } from '../../components/PatientHoverCard/PatientAvatarHover';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
 import { buildPatientRowMenuItems } from '../../components/MenuPopover/patientRowMenuItems';
 import { FoldIdTag } from '../../components/FoldIdTag/FoldIdTag';

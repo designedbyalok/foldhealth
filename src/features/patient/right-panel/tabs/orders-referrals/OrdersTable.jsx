@@ -1,6 +1,6 @@
 import { ProfileTable } from '../../../../../components/ProfileTable/ProfileTable';
 import { profileCellClass, profileRowClass } from '../../../../../components/ProfileTable/profileTableClasses';
-import { Checkbox } from '../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../components/Checkbox/Checkbox';
 import { toneOf } from './ordersViews';
 import styles from './OrdersReferralsTab.module.css';
 

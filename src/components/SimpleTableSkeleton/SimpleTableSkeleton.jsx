@@ -1,10 +1,10 @@
-import styles from '../TableSkeleton/TableSkeleton.module.css';
+import { Skeleton } from '../Skeleton/Skeleton';
 
 function SimpleRow({ cols = 6 }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid var(--neutral-100)', gap: 16 }}>
       {Array.from({ length: cols }).map((_, i) => (
-        <div key={i} className={styles.bone} style={{ height: 12, width: i === 0 ? 160 : 80, flex: i === 0 ? 'none' : 1 }} />
+        <Skeleton key={i} style={{ height: 12, width: i === 0 ? 160 : 80, flex: i === 0 ? 'none' : 1 }} />
       ))}
     </div>
   );

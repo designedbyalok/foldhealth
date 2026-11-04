@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import { Badge } from '../../components/Badge/Badge';
-import bones from '../../components/TableSkeleton/TableSkeleton.module.css';
+import { Skeleton } from '../../components/Skeleton/Skeleton';
 import { useAppStore } from '../../store/useAppStore';
 import { CARE_PROGRAM_CATALOG } from '../patient/data/careProgramCatalog';
 import { HomeWidgetEmpty } from './HomeWidgetEmpty';
@@ -88,12 +88,12 @@ export function TeamProgramsCard({ dragHandleClassName, codes }) {
           <div className={styles.teamList} aria-busy="true">
             {[0, 1, 2].map(i => (
               <div key={i} className={styles.teamRow}>
-                <span className={bones.bone} style={{ width: 36, height: 20 }} />
+                <Skeleton style={{ width: 36, height: 20 }} />
                 <span className={styles.teamMain}>
-                  <span className={bones.bone} style={{ width: '55%', height: 12 }} />
-                  <span className={bones.bone} style={{ width: '80%', height: 10 }} />
+                  <Skeleton style={{ width: '55%', height: 12 }} />
+                  <Skeleton style={{ width: '80%', height: 10 }} />
                 </span>
-                <span className={bones.bone} style={{ width: 96, height: 20 }} />
+                <Skeleton style={{ width: 96, height: 20 }} />
               </div>
             ))}
           </div>

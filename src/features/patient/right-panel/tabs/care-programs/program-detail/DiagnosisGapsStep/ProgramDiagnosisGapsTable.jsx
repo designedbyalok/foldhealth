@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
 import { DownChevronIcon } from '../../../../../../../components/Icon/DownChevronIcon';
-import { Collapse } from '../../../../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../../../../components/Collapsible/Collapsible';
 import { FilterChip } from '../../../../../../../components/FilterChip/FilterChip';
 import { DateRangePopover } from '../../../../../../../components/DateRangePopover/DateRangePopover';
 import { getOpenIcdsForMember } from '../../../../../../hcc/data/icds';
@@ -103,7 +103,7 @@ function DiagnosisGapRow({ item }) {
         </div>
       </div>
       {item.icds.length > 0 && (
-        <Collapse open={expanded}>
+        <CollapsibleContent open={expanded}>
           <div className={styles.icdList} role="table" aria-label={`ICDs linked to ${item.raw}`}>
             <div className={styles.icdHeaderRow} role="row">
               <span className={styles.icdHeaderCell} role="columnheader">ICD Code</span>
@@ -116,7 +116,7 @@ function DiagnosisGapRow({ item }) {
               </div>
             ))}
           </div>
-        </Collapse>
+        </CollapsibleContent>
       )}
     </div>
   );

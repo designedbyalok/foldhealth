@@ -4,7 +4,7 @@ import { Badge } from '../../../../../components/Badge/Badge';
 import { Button } from '../../../../../components/Button/Button';
 import { Icon } from '../../../../../components/Icon/Icon';
 import { DownChevronIcon } from '../../../../../components/Icon/DownChevronIcon';
-import { Collapse } from '../../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../../components/Collapsible/Collapsible';
 import { Link } from '../../../../../components/Link/Link';
 import { Toggle } from '../../../../../components/Toggle/Toggle';
 import { Alert } from '../../../../../components/Alert/Alert';
@@ -91,7 +91,7 @@ function ProgramCard({ program, defaultExpanded, onAction }) {
         />
       </button>
       {hasSteps && (
-        <Collapse open={expanded}>
+        <CollapsibleContent open={expanded}>
           <div className={styles.steps}>
             {program.steps.map((s, i) => (
               <div key={i} className={[styles.step, styles[`step_${s.status}`]].filter(Boolean).join(' ')}>
@@ -110,7 +110,7 @@ function ProgramCard({ program, defaultExpanded, onAction }) {
               </div>
             ))}
           </div>
-        </Collapse>
+        </CollapsibleContent>
       )}
     </div>
   );
@@ -436,9 +436,9 @@ function StorySection({ events }) {
                     </button>
                   </div>
                   {event.body && (
-                    <Collapse open={!isCollapsed}>
+                    <CollapsibleContent open={!isCollapsed}>
                       <p className={styles.storyCardBody}>{event.body}</p>
-                    </Collapse>
+                    </CollapsibleContent>
                   )}
                 </div>
               </div>

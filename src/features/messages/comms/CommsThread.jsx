@@ -10,7 +10,7 @@ import { MessageStatus } from '../../../components/MessageStatus/MessageStatus';
 import { ChatBubble, MissedCallMarker } from '../../../components/ChatBubble/ChatBubble';
 import { Link } from '../../../components/Link/Link';
 import { CloseButton } from '../../../components/CloseButton/CloseButton';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { MenuPopover } from '../../../components/MenuPopover/MenuPopover';
 import { RenamePopover } from '../../../components/RenamePopover/RenamePopover';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';

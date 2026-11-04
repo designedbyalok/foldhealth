@@ -32,7 +32,7 @@ import { ReviewNoteCard } from './ReviewNoteCard';
 import { ReviewDrawerSkeleton } from './ReviewDrawerSkeleton';
 import { ReviewTimer } from './ReviewTimer';
 import { CompleteReviewPopover } from './CompleteReviewPopover';
-import bones from '../../../../../../../../components/TableSkeleton/TableSkeleton.module.css';
+import { Skeleton } from '../../../../../../../../components/Skeleton/Skeleton';
 import styles from './CarePlanReviewDrawer.module.css';
 import { confirmStatusChange, statusReasonPatch } from '../../lib/confirmStatusChange';
 
@@ -337,7 +337,7 @@ export function CarePlanReviewDrawer({ patientId, patientName, patient, program,
         <div className={styles.reviewedStrip}>
           <Icon name="solar:history-linear" size={14} color="var(--neutral-300)" />
           {!review ? (
-            <span className={`${bones.bone} ${styles.skStrip}`} />
+            <Skeleton className={styles.skStrip} />
           ) : lastReview ? (
             <span>
               Last reviewed on <strong>{fmtDay(lastReview.at)}</strong>

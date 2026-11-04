@@ -15,7 +15,7 @@ import { Input } from '../Input/Input';
 import { Textarea } from '../Textarea/Textarea';
 import { UserPickerPopover } from '../UserPickerPopover/UserPickerPopover';
 import { TabStrip } from '../TabStrip/TabStrip';
-import { Collapse } from '../Collapse/Collapse';
+import { CollapsibleContent } from '../Collapsible/Collapsible';
 import { CardSkeleton } from '../CardSkeleton/CardSkeleton';
 import { ImagePreviewOverlay } from '../ImagePreviewOverlay/ImagePreviewOverlay';
 import { sanitizeRichText } from '../../lib/sanitizeHtml';
@@ -636,7 +636,7 @@ function ReviewRow({
           </div>
         )}
       </div>
-      <Collapse open={expanded}>
+      <CollapsibleContent open={expanded}>
         <ReviewDetail
           item={item}
           child={child}
@@ -646,7 +646,7 @@ function ReviewRow({
           onCommentDone={() => setCommenting(false)}
           onAddSubItem={onAddSubItem}
         />
-      </Collapse>
+      </CollapsibleContent>
       {confirmAll && (
         <ConfirmDialog
           variant="primary"

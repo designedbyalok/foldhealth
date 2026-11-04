@@ -4,7 +4,7 @@ import { ActivityLog } from '../../../components/ActivityLog/ActivityLog';
 import { Badge } from '../../../components/Badge/Badge';
 import { Button } from '../../../components/Button/Button';
 import { DashboardCardShell } from '../../../components/DashboardCard/DashboardCard';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { Icon } from '../../../components/Icon/Icon';
 import { Input } from '../../../components/Input/Input';
 import { RadioButton } from '../../../components/RadioButton/RadioButton';

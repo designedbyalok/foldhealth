@@ -5,7 +5,7 @@ import { BulkBar } from '../../../components/BulkBar/BulkBar';
 import { TableSkeleton } from '../../../components/TableSkeleton/TableSkeleton';
 import { ErrorState } from '../../../components/ErrorState/ErrorState';
 import { Icon } from '../../../components/Icon/Icon';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { HeaderCell } from '../../../components/HeaderCell/HeaderCell';
 import { ColumnsHeaderButton } from '../../../components/WorklistColumns/ColumnsHeaderButton';
 import { useWorklistColumns } from '../../../components/WorklistColumns/useWorklistColumns';

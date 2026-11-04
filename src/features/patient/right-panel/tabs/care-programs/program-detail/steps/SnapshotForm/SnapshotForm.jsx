@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import { DownChevronIcon } from '../../../../../../../../components/Icon/DownChevronIcon';
 import { toast } from '../../../../../../../../components/Toast/sonnerToast';
-import { Collapse } from '../../../../../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../../../../../components/Collapsible/Collapsible';
 import { FieldInput } from '../../../../../../../forms/builder/FieldInput';
 import { SNP_SNAPSHOT_FORM, snapshotFormName } from '../../../../../../../forms/templates/snpSnapshotForm';
 import { preVisitForProgram } from '../../../../../../data/programActivityMock';
@@ -60,7 +60,7 @@ function FormSection({ group, answers, onAnswer }) {
         <DownChevronIcon size={16} color="var(--neutral-300)" className={`${styles.chevron} ${open ? '' : styles.closed}`} />
         <span className={styles.sectionTitle}>{group.text}</span>
       </button>
-      <Collapse open={open}>
+      <CollapsibleContent open={open}>
         <div className={styles.grid} style={{ '--snapshot-columns': group.columns || 3 }}>
           {fields.map(field => (
             <div key={field.linkId} className={styles.field}>
@@ -75,7 +75,7 @@ function FormSection({ group, answers, onAnswer }) {
             </div>
           ))}
         </div>
-      </Collapse>
+      </CollapsibleContent>
     </div>
   );
 }

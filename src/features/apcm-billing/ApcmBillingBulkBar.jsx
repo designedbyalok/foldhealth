@@ -1,4 +1,4 @@
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { Button } from '../../components/Button/Button';
 import { CloseButton } from '../../components/CloseButton/CloseButton';
 import { ActionButton } from '../../components/ActionButton/ActionButton';

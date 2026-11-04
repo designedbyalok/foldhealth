@@ -23,7 +23,7 @@ import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Input } from '../../../components/Input/Input';
 import { Textarea } from '../../../components/Textarea/Textarea';
 import { Switch } from '../../../components/Switch/Switch';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { Toggle } from '../../../components/Toggle/Toggle';
 import { CloseButton } from '../../../components/CloseButton/CloseButton';
 import { Select } from '../../../components/Select/Select';

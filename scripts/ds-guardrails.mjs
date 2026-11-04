@@ -137,6 +137,7 @@ function unclassifiedComponents() {
   const root = 'src/components';
   const layers = JSON.parse(readFileSync(path.join(root, 'layers.json'), 'utf8'));
   const known = new Set(Object.entries(layers).filter(([k]) => !k.startsWith('$')).flatMap(([, v]) => v));
+  for (const old of Object.keys(layers.$deprecated || {})) if (!old.startsWith('$')) known.add(old);
   return readdirSync(root, { withFileTypes: true })
     .filter(d => d.isDirectory() && !known.has(d.name))
     .map(d => d.name);

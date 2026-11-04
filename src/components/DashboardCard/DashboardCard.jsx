@@ -1,4 +1,5 @@
 import { Icon } from '../Icon/Icon';
+import { Skeleton } from '../Skeleton/Skeleton';
 import styles from './DashboardCard.module.css';
 
 /**
@@ -57,8 +58,8 @@ export function DashboardCardSkeleton({ icon, title, rows = 3 }) {
       <div className={styles.skeleton} aria-busy="true" aria-label={`Loading ${title}`}>
         {Array.from({ length: rows }).map((_, i) => (
           <div key={i} className={styles.skeletonRow}>
-            <span className={`${styles.bone} ${styles.boneTitle}`} />
-            <span className={`${styles.bone} ${styles.boneMeta}`} />
+            <Skeleton className={styles.boneTitle} />
+            <Skeleton className={styles.boneMeta} />
           </div>
         ))}
       </div>

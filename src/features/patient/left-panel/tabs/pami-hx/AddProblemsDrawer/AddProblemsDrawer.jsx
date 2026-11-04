@@ -16,7 +16,7 @@ import { RingEmptyState } from '../../../../../../components/RingEmptyState/Ring
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { toast } from '../../../../../../components/Toast/sonnerToast';
 import { todayIso, toIsoDate, formatClinicalDate } from '../../../../../../lib/clinicalDates';
-import { Collapse } from '../../../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../../../components/Collapsible/Collapsible';
 import styles from './AddProblemsDrawer.module.css';
 
 // Controlled is still a live problem, so only Resolved closes one out and the
@@ -142,9 +142,9 @@ function ProblemRow({ problem, onStatusChange, onEdit, dimmed }) {
       />
       </div>
       {problem.note && (
-        <Collapse open={noteOpen}>
+        <CollapsibleContent open={noteOpen}>
           <p className={styles.rowNote}><span className={styles.rowNoteLabel}>Note:</span> {problem.note}</p>
-        </Collapse>
+        </CollapsibleContent>
       )}
     </div>
   );
