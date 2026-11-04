@@ -1,4 +1,4 @@
-import { createContext, forwardRef, useContext, useId, useState } from 'react';
+import { createContext, forwardRef, useCallback, useContext, useId, useMemo, useState } from 'react';
 import styles from './Collapsible.module.css';
 
 const CollapsibleContext = createContext(null);
@@ -30,12 +30,14 @@ export const Collapsible = forwardRef(function Collapsible(
   const [uncontrolled, setUncontrolled] = useState(defaultOpen);
   const open = openProp ?? uncontrolled;
   const contentId = useId();
-  const setOpen = (next) => {
-    if (openProp === undefined) setUncontrolled(next);
+  const controlled = openProp !== undefined;
+  const setOpen = useCallback((next) => {
+    if (!controlled) setUncontrolled(next);
     onOpenChange?.(next);
-  };
+  }, [controlled, onOpenChange]);
+  const ctx = useMemo(() => ({ open, setOpen, disabled, contentId }), [open, setOpen, disabled, contentId]);
   return (
-    <CollapsibleContext.Provider value={{ open, setOpen, disabled, contentId }}>
+    <CollapsibleContext.Provider value={ctx}>
       <div ref={ref} data-state={open ? 'open' : 'closed'} data-disabled={disabled || undefined} {...rest}>
         {children}
       </div>
