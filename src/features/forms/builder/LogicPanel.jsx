@@ -14,7 +14,7 @@ import { Icon } from '../../../components/Icon/Icon';
 import { Select } from '../../../components/Select/Select';
 import { Input } from '../../../components/Input/Input';
 import { Button } from '../../../components/Button/Button';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { OPERATOR } from '../scoring/types';
 import { endingsOf } from '../render/flow';
 import { fieldIcon } from '../analytics/formAnalyticsUi';
@@ -97,7 +97,7 @@ function ConditionList({ conditions, behavior, triggers, fields, onConditions, o
       {conditions.length > 1 && (
         <div className={styles.behaviorRow}>
           <span className={styles.behaviorLabel}>Match</span>
-          <Toggle size="sm" items={[{ key: 'all', label: 'All' }, { key: 'any', label: 'Any' }]} value={behavior} onValueChange={onBehavior} />
+          <SegmentedControl size="sm" items={[{ key: 'all', label: 'All' }, { key: 'any', label: 'Any' }]} value={behavior} onValueChange={onBehavior} />
           <span className={styles.behaviorLabel}>of these</span>
         </div>
       )}
@@ -196,7 +196,7 @@ function RuleEditor({ field, fields, endings, onApply }) {
 
       <div className={styles.sectionLabel}>Visibility</div>
       <div className={styles.visToggle}>
-        <Toggle
+        <SegmentedControl
           size="sm"
           items={[{ key: 'always', label: 'Always show' }, { key: 'cond', label: 'Show when…' }]}
           value={conditional ? 'cond' : 'always'}

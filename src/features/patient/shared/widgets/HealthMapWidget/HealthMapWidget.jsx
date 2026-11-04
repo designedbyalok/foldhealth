@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip,
 } from '../../../../../components/LazyRecharts/LazyRecharts';
-import { Toggle } from '../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../components/SegmentedControl/SegmentedControl';
 import { ActionButton } from '../../../../../components/ActionButton/ActionButton';
 import { Button } from '../../../../../components/Button/Button';
 import { Icon } from '../../../../../components/Icon/Icon';
@@ -152,7 +152,7 @@ export function HealthMapWidget({ compact = false }) {
       actions={(
         <>
           {!isLoading && (
-            <Toggle
+            <SegmentedControl
               size="sm"
               value={activeToggle}
               items={[

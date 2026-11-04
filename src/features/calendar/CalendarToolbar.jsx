@@ -4,7 +4,7 @@ import { DatePickerPopover } from '../../components/DatePicker/DatePickerPopover
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Button } from '../../components/Button/Button';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { Select } from '../../components/Select/Select';
 // Locations and statuses come from the ScheduleDrawer constants, the booking
 // form is what writes these values, so sourcing the filter options from the
@@ -179,7 +179,7 @@ export function CalendarToolbar({
             Schedule
           </Button>
           {divider}
-          <Toggle
+          <SegmentedControl
             items={LAYOUTS.map(l => ({ key: l.key, icon: l.icon, ariaLabel: l.tip, tooltip: l.tooltip }))}
             value={layout}
             onValueChange={onLayoutChange}

@@ -3,7 +3,7 @@ import {
   ComposedChart, Bar, Line,
   XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip as ChartTooltip,
 } from '../../../../../../components/LazyRecharts/LazyRecharts';
-import { Toggle } from '../../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../../components/SegmentedControl/SegmentedControl';
 import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
 import { ActionButton } from '../../../../../../components/ActionButton/ActionButton';
 import { ProfileTable } from '../../../../../../components/ProfileTable/ProfileTable';
@@ -368,7 +368,7 @@ function GraphView({ sections, history, pinned, onClose, onAdd, widgets }) {
               <span className={styles.graphSectionTitle}>{section.title}</span>
               {i === 0 && (
                 <>
-                  <Toggle items={RANGE_KEYS} value={range} onValueChange={setRange} size="sm" />
+                  <SegmentedControl items={RANGE_KEYS} value={range} onValueChange={setRange} size="sm" />
                   <button className={styles.listIconBtn} onClick={onClose} title="Back to list">
                     <ListIcon />
                   </button>

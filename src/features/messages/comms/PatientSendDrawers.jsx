@@ -9,7 +9,7 @@ import { DownChevronIcon } from '../../../components/Icon/DownChevronIcon';
 import { Select } from '../../../components/Select/Select';
 import { Input } from '../../../components/Input/Input';
 import { Textarea } from '../../../components/Textarea/Textarea';
-import { TabStrip } from '../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../components/Tabs/Tabs';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { toast } from '../../../components/Toast/sonnerToast';
 import { supabase } from '../../../lib/supabase';
@@ -400,7 +400,7 @@ export function SendContentDrawer({ patient, onClose }) {
         </Row>
 
         <div className={styles.channel}>
-          <TabStrip items={tabs} activeKey={activeTab} onChange={setTab} fullWidth={false} />
+          <Tabs items={tabs} value={activeTab} onValueChange={setTab} fullWidth={false} />
           {activeTab === 'email' ? (
             <div className={styles.channelBody}>
               <Row label="Template" required>

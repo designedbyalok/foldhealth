@@ -44,8 +44,8 @@
   position: relative;
 }
 
-/* Tab item, sliding underline, and notif dot now live in TabStrip.module.css
- * and are consumed via <TabStrip embedded> so a single source of truth owns
+/* Tab item, sliding underline, and notif dot now live in Tabs/Tabs.module.css
+ * and are consumed via <Tabs embedded> so a single source of truth owns
  * the tab paint. This module only keeps the wrappers unique to the
  * SectionTitleBar context (row layout, "More ▾" chip, dropdown). */
 

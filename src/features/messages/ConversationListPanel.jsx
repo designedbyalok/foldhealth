@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import { Input } from '../../components/Input/Input';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { getInitials, getDisplayName, formatTime } from './messageUtils';
 import { Skeleton } from '../../components/Skeleton/Skeleton';
 import { CommsListEmpty } from './comms/CommsEmptyState';
@@ -88,7 +88,7 @@ export function ConversationListPanel({
       />
 
       <div className={styles.convTabs}>
-        <Toggle
+        <SegmentedControl
           items={[
             { key: 'all', label: 'All' },
             { key: 'unread', label: 'Unread' },

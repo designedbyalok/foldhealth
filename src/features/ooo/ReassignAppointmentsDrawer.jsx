@@ -4,7 +4,7 @@ import { Avatar } from '../../components/Avatar/Avatar';
 import { Badge } from '../../components/Badge/Badge';
 import { Button } from '../../components/Button/Button';
 import { Select } from '../../components/Select/Select';
-import { TabStrip } from '../../components/TabStrip/TabStrip';
+import { Tabs } from '../../components/Tabs/Tabs';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { Link } from '../../components/Link/Link';
 import { AddIconMinimalist } from '../../components/Icon/AddIconMinimalist';
@@ -158,7 +158,7 @@ export function ReassignAppointmentsDrawer({ users, initialUser, initialRecordId
       headerRight={headerRight}
       noCloseDivider
       // The banner slot is already full-bleed, so the strip mustn't bleed again.
-      banner={<TabStrip items={TABS} activeKey={tab} onChange={setTab} fullWidth={false} trailing={tab === 'history' ? history.tools : undefined} />}
+      banner={<Tabs items={TABS} value={tab} onValueChange={setTab} fullWidth={false} trailing={tab === 'history' ? history.tools : undefined} />}
       footer={tab === 'reassign' ? <OooReassignFooter {...tally} /> : undefined}
     >
       {tab === 'history' ? (

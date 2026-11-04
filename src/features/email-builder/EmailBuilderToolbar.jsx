@@ -3,7 +3,7 @@ import { Icon } from '../../components/Icon/Icon';
 import { Button } from '../../components/Button/Button';
 import { Input } from '../../components/Input/Input';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { CloseButton } from '../../components/CloseButton/CloseButton';
 import { Select } from '../../components/Select/Select';
 import { Checkbox } from '../../components/Checkbox/Checkbox';
@@ -43,7 +43,7 @@ export function EmailBuilderToolbar({
         />
       </div>
       <div className={styles.topCenter}>
-        <Toggle
+        <SegmentedControl
           items={[
             { key: 'builder', label: 'Builder', icon: 'solar:pen-new-square-linear' },
             { key: 'desktop', label: 'Desktop', icon: 'solar:monitor-linear' },

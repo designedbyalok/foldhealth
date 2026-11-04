@@ -19,7 +19,7 @@ import { ActionButton } from '../../../../../../../../components/ActionButton/Ac
 import { Tooltip } from '../../../../../../../../components/Tooltip/Tooltip';
 import { Link } from '../../../../../../../../components/Link/Link';
 import { DownChevronIcon } from '../../../../../../../../components/Icon/DownChevronIcon';
-import { Toggle } from '../../../../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../../../../components/SegmentedControl/SegmentedControl';
 import { TableIcon } from '../../../../../../../../components/Icon/TableIcon';
 import { ConfirmDialog } from '../../../../../../../../components/ConfirmDialog/ConfirmDialog';
 import { Badge } from '../../../../../../../../components/Badge/Badge';
@@ -1043,7 +1043,7 @@ export function MedicationReconciliation({ programCode } = {}) {
           <span className={styles.medHeaderTitle}>Member's Medications</span>
         </div>
         <div className={styles.medHeaderRight}>
-          <Toggle size="sm" items={MED_VIEW_ITEMS} value={medView} onValueChange={setMedView} />
+          <SegmentedControl size="sm" items={MED_VIEW_ITEMS} value={medView} onValueChange={setMedView} />
           <Button
             variant="soft"
             menuItems={ADD_NEW_MENU_ITEMS}

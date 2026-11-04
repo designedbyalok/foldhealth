@@ -1,9 +1,9 @@
-import { SubTabs } from '../../../../../components/SubTabs/SubTabs';
+import { Tabs } from '../../../../../components/Tabs/Tabs';
 import { Button } from '../../../../../components/Button/Button';
 import { ActionButton } from '../../../../../components/ActionButton/ActionButton';
 import { Input } from '../../../../../components/Input/Input';
 import { Select } from '../../../../../components/Select/Select';
-import { Toggle } from '../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../components/SegmentedControl/SegmentedControl';
 import { AddIconMinimalist } from '../../../../../components/Icon/AddIconMinimalist';
 import {
   CATEGORY_CRITERION_TYPES, CATEGORY_DEFAULT_CRITERION, LAB_CATALOG, NUMERIC_OPS,
@@ -27,7 +27,7 @@ export function TemplateCategoryBar({ categories, active, onSelect, onAdd, count
   ];
   return (
     <div className={styles.bar}>
-      <SubTabs size="sm" tabs={tabs} value={active} onValueChange={onSelect} />
+      <Tabs variant="pill" size="sm" items={tabs} value={active} onValueChange={onSelect} />
       <Button variant="ghost" size="sm" leadingIconElement={<AddIconMinimalist size={14} />} onClick={onAdd}>
         Add Category
       </Button>
@@ -71,7 +71,7 @@ export function CategoryCriteriaCard({ category, index, total, onChange, onRemov
 
       <div className={styles.matchRow}>
         <span className={styles.matchLabel}>Patients who match</span>
-        <Toggle size="sm" items={MATCH_ITEMS} value={category.match === 'any' ? 'any' : 'all'} onValueChange={k => onChange({ match: k })} />
+        <SegmentedControl size="sm" items={MATCH_ITEMS} value={category.match === 'any' ? 'any' : 'all'} onValueChange={k => onChange({ match: k })} />
         <span className={styles.matchLabel}>of these:</span>
       </div>
 

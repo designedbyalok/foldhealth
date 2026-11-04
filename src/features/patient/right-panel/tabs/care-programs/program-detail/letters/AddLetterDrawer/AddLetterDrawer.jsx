@@ -3,7 +3,7 @@ import { Drawer } from '../../../../../../../../components/Drawer/Drawer';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { Avatar } from '../../../../../../../../components/Avatar/Avatar';
 import { Button } from '../../../../../../../../components/Button/Button';
-import { Toggle } from '../../../../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../../../../components/SegmentedControl/SegmentedControl';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
 import { FilterChip } from '../../../../../../../../components/FilterChip/FilterChip';
 import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
@@ -88,7 +88,7 @@ export function AddLetterDrawer({ letters = EMPTY_LETTERS, addedIds, onAdd, onPr
         <FilterChip label="Type" options={typeOptions} selected={typeSel} onChange={setTypeSel} />
         <FilterChip label="Category" options={catOptions} selected={catSel} onChange={setCatSel} />
         <span className={styles.toolbarDivider} />
-        <Toggle items={VIEW_ITEMS} value={view} onValueChange={setView} size="sm" />
+        <SegmentedControl items={VIEW_ITEMS} value={view} onValueChange={setView} size="sm" />
         <span className={styles.toolbarDivider} />
         <div className={styles.searchBox}>
           <Icon name="solar:magnifer-linear" size={16} color="var(--neutral-200)" />

@@ -45,13 +45,14 @@ Square icon-only toolbar button with optional tooltip, badge, dot, and chevron.
 | `count` | number | Badge count |
 | `chevron` | boolean | Show dropdown chevron |
 
-### Toggle
+### SegmentedControl
 
 ```
-src/components/Toggle/Toggle.jsx
+src/components/SegmentedControl/SegmentedControl.jsx
 ```
 
-Animated segmented control with sliding pill indicator.
+Pick one of two to four short options, with a sliding pill under the selected
+one. Was `Toggle`. To switch what is shown below, use `Tabs`.
 
 | Prop | Type | Description |
 |------|------|-------------|
@@ -60,6 +61,27 @@ Animated segmented control with sliding pill indicator.
 | `defaultValue` | string | Initially selected key (uncontrolled) |
 | `onValueChange` | function | Called with the picked key |
 | `size` | string | `md` (default, 32px), `sm` (28px) |
+
+### Tabs
+
+```
+src/components/Tabs/Tabs.jsx
+```
+
+A row of tabs that switches what is shown below it. One tab stop; Left /
+Right / Home / End move and select.
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `items` | array | `string[]` or `{key, label, icon?, count?, notif?}[]` |
+| `value` / `defaultValue` / `onValueChange` | | Selected key |
+| `variant` | string | `underline` (default, the app tab bar), `pill` (a switch inside a tab) |
+| `size` | string | `md` (default), `sm` |
+| `leading` / `trailing` | node | Content before the tabs (pill) or pinned right (underline) |
+| `fullWidth`, `embedded`, `embeddedBaseline`, `balanceTabs` | boolean | Underline bar layout |
+
+Replaces `TabStrip` (underline) and `SubTabs` (pill). `OverflowTabs`
+(was `OverflowTabStrip`) folds tabs that do not fit into More.
 
 ### Switch
 

@@ -5,7 +5,7 @@ import { Button } from '../Button/Button';
 import { Select } from '../Select/Select';
 import { Badge } from '../Badge/Badge';
 import { SearchListPopover } from '../SearchListPopover/SearchListPopover';
-import { SubTabs } from '../SubTabs/SubTabs';
+import { Tabs } from '../Tabs/Tabs';
 import styles from './DateRangePopover.module.css';
 import { parseLocalDate } from '../../lib/localDate';
 import { yearSpan } from './yearSpan';
@@ -164,9 +164,10 @@ export function DateRangePopover({
       <div className={styles.heading}>Select {label}</div>
 
       {years && (
-        <SubTabs
+        <Tabs
+          variant="pill"
           className={styles.modeTabs}
-          tabs={[{ key: 'years', label: 'Years' }, { key: 'custom', label: 'Custom Dates' }]}
+          items={[{ key: 'years', label: 'Years' }, { key: 'custom', label: 'Custom Dates' }]}
           value={mode}
           onValueChange={setMode}
         />

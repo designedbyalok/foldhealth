@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Drawer } from '../../../../../components/Drawer/Drawer';
 import { Button } from '../../../../../components/Button/Button';
-import { Toggle } from '../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../components/SegmentedControl/SegmentedControl';
 import { Input } from '../../../../../components/Input/Input';
 import { Checkbox } from '../../../../../components/Checkbox/Checkbox';
 import { Badge } from '../../../../../components/Badge/Badge';
@@ -99,7 +99,7 @@ export function AddInterventionsDrawer({ onClose, onAdd, primaryLabel = 'Add' })
     <Drawer title="Add Interventions" onClose={onClose} headerRight={headerRight} noCloseDivider>
       <div className={styles.body}>
         <div className={styles.filterRow}>
-          <Toggle size="sm" items={tabs} value={tab} onValueChange={setTab} />
+          <SegmentedControl size="sm" items={tabs} value={tab} onValueChange={setTab} />
           <Button
             variant="soft"
             size="sm"

@@ -21,7 +21,7 @@ const APP_CODE = {
 const DEPRECATED = Object.entries(LAYERS.$deprecated || {})
   .filter(([old]) => !old.startsWith('$'))
   .map(([old, next]) => ({
-    regex: `(^|/)${old}/${old}$`,
+    regex: `(^|/)${old}/[A-Za-z]+$`,
     message: `${old} is now ${next}: import it from src/components/${next.split(' ')[0]}. See docs/components/library-contract.mdx.`,
   }))
 const layerImports = (owner, banned) => ({
@@ -142,11 +142,11 @@ export default defineConfig([globalIgnores([
         message: 'A labelled or rich Textarea reports its text through onValueChange (onChange is the native event, and rich text has none). See docs/components/library-contract.mdx.',
       },
       {
-        selector: "JSXOpeningElement[name.name=/^(Toggle|SubTabs)$/] > JSXAttribute[name.name=/^(active|activeKey|onChange)$/]",
-        message: 'Toggle and SubTabs take value / defaultValue / onValueChange. See docs/components/library-contract.mdx.',
+        selector: "JSXOpeningElement[name.name=/^(Toggle|SubTabs|SegmentedControl|Tabs|OverflowTabs)$/] > JSXAttribute[name.name=/^(active|activeKey|onChange)$/]",
+        message: 'Tabs and SegmentedControl take value / defaultValue / onValueChange. See docs/components/library-contract.mdx.',
       },
       {
-        selector: "JSXOpeningElement[name.name=/^(Toggle|SubTabs|Input|Select)$/] > JSXAttribute[name.name='size'] > Literal[value=/^(S|M)$/]",
+        selector: "JSXOpeningElement[name.name=/^(Toggle|SubTabs|SegmentedControl|Tabs|Input|Select)$/] > JSXAttribute[name.name='size'] > Literal[value=/^(S|M)$/]",
         message: 'Sizes are sm | md (md is the default). See docs/components/library-contract.mdx.',
       },
       {

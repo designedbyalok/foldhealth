@@ -13,7 +13,7 @@ import { MenuPopover } from '../../../components/MenuPopover/MenuPopover';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
 import { ChronicConditionSelect } from '../care-plan-library/shared/ChronicConditionSelect';
 import { UnityIcon } from '../../../components/UnityIcon/UnityIcon';
-import { TabStrip } from '../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../components/Tabs/Tabs';
 import { useAppStore } from '../../../store/useAppStore';
 import { protocolCounts, protocolStatus } from './lib/protocolSchema';
 import { isFoldProtocol } from './lib/foldProtocols';
@@ -566,10 +566,10 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
             />
           )}
           <div className={styles.rightPane}>
-            <TabStrip
+            <Tabs
               fullWidth={false}
-              activeKey={tab}
-              onChange={setTab}
+              value={tab}
+              onValueChange={setTab}
               items={[
                 { key: 'scope', label: 'Scope' },
                 { key: 'details', label: 'Details' },

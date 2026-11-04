@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../Icon/Icon';
-import { TabStrip } from './TabStrip';
-import tabStripStyles from './TabStrip.module.css';
-import styles from './OverflowTabStrip.module.css';
+import { Tabs } from './Tabs';
+import tabStripStyles from './Tabs.module.css';
+import styles from './OverflowTabs.module.css';
 
 const MORE_RESERVE_PX = 72;
 
 /**
- * TabStrip with responsive overflow: tabs that don't fit collapse into a
+ * Underline Tabs with responsive overflow: tabs that don't fit collapse into a
  * "More ▾" dropdown. Active tab is always kept visible by swapping it into
  * the last visible slot when needed. Same behavior as SectionTitleBar tabs.
  *
@@ -21,7 +21,7 @@ const MORE_RESERVE_PX = 72;
  * divider: `[{ key, label, icon, onSelect }]` (e.g. "Customize"). With
  * actions, More always shows, even when every tab fits.
  */
-export function OverflowTabStrip({ items, activeKey, onChange, itemAction, moreActions }) {
+export function OverflowTabs({ items, value: activeKey, onValueChange: onChange, itemAction, moreActions }) {
   const alwaysMore = !!moreActions?.length;
   const rowRef = useRef(null);
   const measurerRef = useRef(null);
@@ -127,10 +127,10 @@ export function OverflowTabStrip({ items, activeKey, onChange, itemAction, moreA
         </div>
       </div>
 
-      <TabStrip
+      <Tabs
         items={visible}
-        activeKey={activeKey}
-        onChange={onChange}
+        value={activeKey}
+        onValueChange={onChange}
         embedded
         fullWidth={false}
         className={styles.strip}

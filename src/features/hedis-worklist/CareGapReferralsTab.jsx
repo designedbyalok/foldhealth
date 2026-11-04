@@ -5,7 +5,7 @@ import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { SearchBar } from '../../components/SearchBar/SearchBar';
 import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { HeaderCell } from '../../components/HeaderCell/HeaderCell';
 import { useTableSort } from '../../components/HeaderCell/useTableSort';
 import { REFERRAL_CHANNELS, REFERRAL_STATUS } from './useCareGapReferralForm';
@@ -105,7 +105,7 @@ export function CareGapReferralsTab({ referrals = [], providers = [], onOpen, on
   return (
     <div className={styles.wrap}>
       <div className={styles.toolbar}>
-        <Toggle
+        <SegmentedControl
           size="sm"
           items={FOLDERS.map(f => ({
             key: f.key,

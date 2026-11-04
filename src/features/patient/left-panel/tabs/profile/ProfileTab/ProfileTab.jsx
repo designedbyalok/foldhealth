@@ -4,7 +4,7 @@ import { DownChevronIcon } from '../../../../../../components/Icon/DownChevronIc
 import { ActionButton } from '../../../../../../components/ActionButton/ActionButton';
 import { Badge } from '../../../../../../components/Badge/Badge';
 import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
-import { Toggle } from '../../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../../components/SegmentedControl/SegmentedControl';
 import { CollapsibleContent } from '../../../../../../components/Collapsible/Collapsible';
 import { PatientAppActiveIndicator } from '../../../../../../components/PatientAppActiveIndicator/PatientAppActiveIndicator';
 import { resolvePatientDisplay } from '../../../../../../lib/patientDisplay';
@@ -198,7 +198,7 @@ export function ProfileTab({ patient }) {
           starting section for the active view (basic for Demographics,
           insurance for Insurance). */}
       <div className={styles.viewRow}>
-        <Toggle
+        <SegmentedControl
           items={PROFILE_VIEWS}
           value={view}
           onValueChange={setView}

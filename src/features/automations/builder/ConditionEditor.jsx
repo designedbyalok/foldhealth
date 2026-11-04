@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '../../../components/Button/Button';
 import { Input } from '../../../components/Input/Input';
 import { Select } from '../../../components/Select/Select';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { AddIconMinimalist } from '../../../components/Icon/AddIconMinimalist';
 import { useAppStore } from '../../../store/useAppStore';
@@ -172,7 +172,7 @@ function ClinicalCriteriaEditor({ config, onChange }) {
     <PanelSection
       title="Patient matches"
       action={(
-        <Toggle size="sm" items={[{ key: 'all', label: 'All' }, { key: 'any', label: 'Any' }]} value={config.match === 'any' ? 'any' : 'all'} onValueChange={k => onChange({ match: k, criteria })} />
+        <SegmentedControl size="sm" items={[{ key: 'all', label: 'All' }, { key: 'any', label: 'Any' }]} value={config.match === 'any' ? 'any' : 'all'} onValueChange={k => onChange({ match: k, criteria })} />
       )}
     >
       {criteria.map((c, i) => (

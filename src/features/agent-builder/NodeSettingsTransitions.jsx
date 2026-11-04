@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useId } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import { Button } from '../../components/Button/Button';
 import { Select } from '../../components/Select/Select';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { Input } from '../../components/Input/Input';
 import styles from './NodeSettings.module.css';
 
@@ -130,7 +130,7 @@ export function NodeSettingsTransitions({
                 <div className={styles.equationBox}>
                   <div className={styles.equationHeader}>
                     <div className={styles.toggleWrap}>
-                      <Toggle
+                      <SegmentedControl
                         size="sm"
                         items={[{ key: 'all', label: 'All' }, { key: 'any', label: 'Any' }]}
                         value={t.matchMode || 'all'}

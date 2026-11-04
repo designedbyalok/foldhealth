@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Drawer } from '../../../../components/Drawer/Drawer';
 import { Button } from '../../../../components/Button/Button';
-import { Toggle } from '../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../components/SegmentedControl/SegmentedControl';
 import { Switch } from '../../../../components/Switch/Switch';
 import { SECTIONS, WIDGETS, SAVINGS_CATEGORIES, SCOPE_OPTIONS } from './employerImpactConfig';
 import { defaultLayout, savingsKey } from './employerImpactLayout';
@@ -63,7 +63,7 @@ export function UpdateDashboardDrawer({ layouts, scope, onSubmit, onClose }) {
       bodyClassName={styles.body}
     >
       <div className={styles.scope}>
-        <Toggle size="sm" items={SCOPE_OPTIONS} value={draftScope} onValueChange={setDraftScope} />
+        <SegmentedControl size="sm" items={SCOPE_OPTIONS} value={draftScope} onValueChange={setDraftScope} />
       </div>
 
       <div className={styles.sections}>

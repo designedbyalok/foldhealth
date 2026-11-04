@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Drawer } from '../../../../../../../../components/Drawer/Drawer';
 import { Badge } from '../../../../../../../../components/Badge/Badge';
-import { SubTabs } from '../../../../../../../../components/SubTabs/SubTabs';
+import { Tabs } from '../../../../../../../../components/Tabs/Tabs';
 import { categoriesOf, describeCriteria, withCategory } from '../../../../../../../settings/care-plan-library/lib/templateCategories';
 import { CarePlanSections } from '../../../../../../../settings/care-plan-library/shared';
 import { goalCategoryIcon } from '../../../../../../../settings/care-plan-library/lib';
@@ -103,9 +103,10 @@ export function TemplatePreviewDrawer({ template, onClose }) {
 
         {categories.length > 0 && (
           <div className={styles.categories}>
-            <SubTabs
+            <Tabs
+              variant="pill"
               size="sm"
-              tabs={[{ key: 'common', label: 'Common' }, ...categories.map(c => ({ key: c.id, label: c.name }))]}
+              items={[{ key: 'common', label: 'Common' }, ...categories.map(c => ({ key: c.id, label: c.name }))]}
               value={section}
               onValueChange={setSection}
             />

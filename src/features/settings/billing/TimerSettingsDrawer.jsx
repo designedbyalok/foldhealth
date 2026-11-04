@@ -5,7 +5,7 @@ import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { RadioOptionGroup } from '../../../components/RadioOptionGroup/RadioOptionGroup';
 import { Input } from '../../../components/Input/Input';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { CollapsibleContent } from '../../../components/Collapsible/Collapsible';
 import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { Avatar } from '../../../components/Avatar/Avatar';
@@ -250,7 +250,7 @@ export function TimerSettingsDrawer({ program, setting, onClose }) {
           />
           {pickerOpen && (
             <div className={styles.dropdown}>
-              <Toggle
+              <SegmentedControl
                 size="sm"
                 fullWidth
                 value={pickerTab}
@@ -278,7 +278,7 @@ export function TimerSettingsDrawer({ program, setting, onClose }) {
           )}
         </div>
 
-        <Toggle
+        <SegmentedControl
           size="sm"
           className={styles.pickerToggle}
           value={tab}

@@ -6,7 +6,7 @@ import { Badge } from '../../../components/Badge/Badge';
 import { Icon } from '../../../components/Icon/Icon';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
-import { TabStrip } from '../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../components/Tabs/Tabs';
 import { Link } from '../../../components/Link/Link';
 import { WorklistShell } from '../../../components/WorklistShell/WorklistShell';
 import { FoldIdTag } from '../../../components/FoldIdTag/FoldIdTag';
@@ -341,7 +341,7 @@ export function TodayView() {
 
       {/* Program lens: full-width tab strip, flush to the table below */}
       <div className={styles.tabBar}>
-        <TabStrip items={LENS_TABS} activeKey={lens} onChange={setLens} fullWidth={false} />
+        <Tabs items={LENS_TABS} value={lens} onValueChange={setLens} fullWidth={false} />
       </div>
 
       {/* Scrolling table: Member | Programs | Next Best Action | Status | Actions */}

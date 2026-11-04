@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Drawer } from '../../components/Drawer/Drawer';
 import { Icon } from '../../components/Icon/Icon';
-import { TabStrip } from '../../components/TabStrip/TabStrip';
+import { Tabs } from '../../components/Tabs/Tabs';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
 import { useAppStore } from '../../store/useAppStore';
 import { EVENTS } from './activityLog';
@@ -320,13 +320,13 @@ export function HccHistoryDrawer() {
       {/* Tab toggle: Activity timeline vs Documents (one card per upload).
           Uses the shared TabStrip primitive so tab styling matches the app's
           top-level TabBar. Bleeds edge-to-edge inside the drawer body. */}
-      <TabStrip
+      <Tabs
         items={[
           { key: 'activity',  label: 'Activity',  icon: 'solar:history-linear' },
           { key: 'documents', label: 'Documents', icon: 'solar:document-text-linear' },
         ]}
-        activeKey={tab}
-        onChange={setTab}
+        value={tab}
+        onValueChange={setTab}
       />
       {tab === 'documents' ? (
         <DocumentsTab

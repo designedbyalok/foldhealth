@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppStore } from '../../../../store/useAppStore';
-import { Toggle } from '../../../../components/Toggle/Toggle';
-import { SubTabs } from '../../../../components/SubTabs/SubTabs';
+import { SegmentedControl } from '../../../../components/SegmentedControl/SegmentedControl';
+import { Tabs } from '../../../../components/Tabs/Tabs';
 import { Button } from '../../../../components/Button/Button';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
 import { FilterChip } from '../../../../components/FilterChip/FilterChip';
@@ -589,7 +589,7 @@ export function EmployerImpactView({ snapshot = null } = {}) {
         <div className={styles.titleRow}>
           <div className={layout.viewTitle}>{VIEW_TITLES.employer.title}</div>
           {!readOnly && (
-            <Toggle
+            <SegmentedControl
               items={SCOPE_OPTIONS}
               value={scope}
               onValueChange={(k) => { setScope(k); setLocation(null); }}
@@ -632,8 +632,9 @@ export function EmployerImpactView({ snapshot = null } = {}) {
           has a single section, so it has none. */}
       {scope !== 'visit' && (
         <nav className={styles.quickJump} aria-label="Report sections">
-          <SubTabs
-            tabs={sectionsInOrder.map(sec => ({ key: sec.id, label: sec.title }))}
+          <Tabs
+            variant="pill"
+            items={sectionsInOrder.map(sec => ({ key: sec.id, label: sec.title }))}
             value={activeSection}
             onValueChange={jumpTo}
           />

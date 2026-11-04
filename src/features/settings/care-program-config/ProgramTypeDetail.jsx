@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '../../../components/Button/Button';
 import { Badge } from '../../../components/Badge/Badge';
-import { TabStrip } from '../../../components/TabStrip/TabStrip';
+import { Tabs } from '../../../components/Tabs/Tabs';
 import { useAppStore } from '../../../store/useAppStore';
 import { PROGRAM_STATUSES, stepCounts } from './careProgramConfigModel';
 import { OverviewTab } from './tabs/OverviewTab';
@@ -71,7 +71,7 @@ export function ProgramTypeDetail({ type, tab, onTab, onDirtyChange }) {
           </div>
         </div>
         <div className={styles.detailTabs}>
-          <TabStrip items={TABS} activeKey={activeTab} onChange={onTab} fullWidth={false} />
+          <Tabs items={TABS} value={activeTab} onValueChange={onTab} fullWidth={false} />
         </div>
       </div>
       <div className={styles.detailBody}>

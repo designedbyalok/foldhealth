@@ -1,4 +1,4 @@
-import { Toggle } from '../../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../../components/SegmentedControl/SegmentedControl';
 import styles from './overviewCards.module.css';
 
 /**
@@ -7,7 +7,7 @@ import styles from './overviewCards.module.css';
  */
 export function CountToggle({ items, active, onChange }) {
   return (
-    <Toggle
+    <SegmentedControl
       size="sm"
       items={items.map(({ key, label, count }) => ({
         key,

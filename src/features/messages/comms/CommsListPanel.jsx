@@ -6,7 +6,7 @@ import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
 import { toast } from '../../../components/Toast/sonnerToast';
 import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { Avatar } from '../../../components/Avatar/Avatar';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { SearchBar } from '../../../components/SearchBar/SearchBar';
 import { Skeleton } from '../../../components/Skeleton/Skeleton';
 import listStyles from '../MessagesView.module.css';
@@ -102,7 +102,7 @@ export function CommsListPanel({
       />
 
       <div className={listStyles.convTabs}>
-        <Toggle items={tabs} value={tab} onValueChange={setTab} size="sm" />
+        <SegmentedControl items={tabs} value={tab} onValueChange={setTab} size="sm" />
       </div>
 
       {filterOpen && (

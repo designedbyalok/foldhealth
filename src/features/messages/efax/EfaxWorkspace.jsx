@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Icon } from '../../../components/Icon/Icon';
 import { Button } from '../../../components/Button/Button';
-import { Toggle } from '../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../components/SegmentedControl/SegmentedControl';
 import { SearchBar } from '../../../components/SearchBar/SearchBar';
 import { Skeleton } from '../../../components/Skeleton/Skeleton';
 import { useAppStore } from '../../../store/useAppStore';
@@ -80,7 +80,7 @@ export function EfaxWorkspace({ navCollapsed, onToggleNav }) {
           onSearch={() => { setSearchOpen(v => !v); setQuery(''); }}
         />
         <div className={listStyles.convTabs}>
-          <Toggle items={TABS} value={tab} onValueChange={setTab} size="sm" />
+          <SegmentedControl items={TABS} value={tab} onValueChange={setTab} size="sm" />
         </div>
         {searchOpen && (
           <div className={styles.listSearch}>

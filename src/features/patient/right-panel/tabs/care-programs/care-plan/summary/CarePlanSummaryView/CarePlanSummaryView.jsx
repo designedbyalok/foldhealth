@@ -49,7 +49,7 @@ import { useSignedCarePlans } from '../../lib/useSignedCarePlans';
 import { isProgramClosed } from '../../../../../../data/programStatus';
 import { isEmptyDash } from '../../../../../../../../lib/emptyDash';
 import { latestPlanNote } from '../../lib/carePlanNotes';
-import { Toggle } from '../../../../../../../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../../../../../../../components/SegmentedControl/SegmentedControl';
 import { confirmStatusChange, statusReasonPatch } from '../../lib/confirmStatusChange';
 
 const PRIORITIES = ['high', 'medium', 'low'];
@@ -1087,7 +1087,7 @@ export function CarePlanSummaryView({
                     <span className={styles.sectionTitle}>Care Notes</span>
                   </button>
                   {withNotes.length > 1 ? (
-                    <Toggle
+                    <SegmentedControl
                       size="sm"
                       items={withNotes.map(r => ({ key: r.id, label: r.code }))}
                       value={shown.id}

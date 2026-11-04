@@ -3,10 +3,10 @@ import { renderEmailHtml } from './patchEmailHtml';
 import { useAppStore } from '../../store/useAppStore';
 import { Icon } from '../../components/Icon/Icon';
 import { CloseButton } from '../../components/CloseButton/CloseButton';
-import { Toggle } from '../../components/Toggle/Toggle';
+import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { Button } from '../../components/Button/Button';
 import { Input } from '../../components/Input/Input';
-import { TabStrip } from '../../components/TabStrip/TabStrip';
+import { Tabs } from '../../components/Tabs/Tabs';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { ConfirmDialog } from '../../components/ConfirmDialog/ConfirmDialog';
 import { Textarea } from '../../components/Textarea/Textarea';
@@ -99,10 +99,10 @@ export function PropertiesPanel() {
       </div>
 
       <div className={styles.panelTabBar}>
-        <TabStrip
+        <Tabs
           items={TABS.map((t) => ({ key: t.id, label: t.label, icon: t.icon }))}
-          activeKey={tab}
-          onChange={setTab}
+          value={tab}
+          onValueChange={setTab}
           embedded
           fullWidth={false}
           balanceTabs
