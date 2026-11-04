@@ -1,0 +1,49 @@
+name: Build Checks
+
+# Two breakages that every other gate passed, both shipped to production on
+# 2026-11-04:
+#
+# - Self imports: #774's features/worklists/FilterBar imported './FilterBar',
+#   its own file, so it rendered itself inside itself forever and froze every
+#   worklist, Tasks, Campaign and Settings with nothing in the console. A
+#   self-import builds, lints and tests clean. See scripts/check-self-imports.mjs.
+# - Patient app build: #780 deleted component re-exports the patient app
+#   (patient/, vite.patient.config.js) still imported. No PR check built the
+#   patient app, so it failed only at the production deploy.
+
+on:
+  pull_request:
+    branches: [main, preview]
+  push:
+    branches: [main]
+
+concurrency:
+  group: build-checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  self-imports:
+    name: Self imports
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for modules that import themselves
+        run: node scripts/check-self-imports.mjs
+
+  patient-build:
+    name: Patient app build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          # Same Bun as no-undef.yml and design-system.yml.
+          bun-version: 1.4.2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build the patient app
+        run: bun run build:patient
