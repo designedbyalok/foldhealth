@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Checkbox } from './ShadcnCheckbox';
+import { Checkbox } from './Checkbox';
 
 export default {
-  title: 'shadcn/Checkbox',
+  title: 'Core/Checkbox',
   component: Checkbox,
   tags: ['autodocs'],
   parameters: {

@@ -5,7 +5,7 @@ import { ActionButton } from '../../../../../../components/ActionButton/ActionBu
 import { Badge } from '../../../../../../components/Badge/Badge';
 import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
 import { Toggle } from '../../../../../../components/Toggle/Toggle';
-import { Collapse } from '../../../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../../../components/Collapsible/Collapsible';
 import { PatientAppActiveIndicator } from '../../../../../../components/PatientAppActiveIndicator/PatientAppActiveIndicator';
 import { resolvePatientDisplay } from '../../../../../../lib/patientDisplay';
 import { usePatientConsent } from '../../../../hooks/usePatientConsent';
@@ -48,9 +48,9 @@ function Section({ title, actionIcon = 'solar:pen-linear', onEdit, children }) {
           <ActionButton icon={actionIcon} size="sm" tooltip={`Edit ${title.toLowerCase()}`} onClick={onEdit} />
         )}
       </div>
-      <Collapse open={!collapsed}>
+      <CollapsibleContent open={!collapsed}>
         <div className={styles.grid}>{children}</div>
-      </Collapse>
+      </CollapsibleContent>
     </div>
   );
 }

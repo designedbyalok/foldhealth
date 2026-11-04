@@ -1,6 +1,6 @@
 import { HccWorklistRow, HccEmptyPatientRow } from './HccWorklistRow';
 import { HeaderCell } from '../../components/HeaderCell/HeaderCell';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { Icon } from '../../components/Icon/Icon';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Button } from '../../components/Button/Button';

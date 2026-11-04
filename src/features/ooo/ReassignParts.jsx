@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Icon } from '../../components/Icon/Icon';
-import { Collapse } from '../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../components/Collapsible/Collapsible';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
 import { DateRangePopover } from '../../components/DateRangePopover/DateRangePopover';
 import { initialsOf } from './oooUtils';
@@ -63,7 +63,7 @@ export function DeptGroup({ title, count, detail, lead, controls, items, renderI
         </span>
         {controls}
       </div>
-      <Collapse open={open}>
+      <CollapsibleContent open={open}>
         <div className={styles.deptList}>
           {shown.map(renderItem)}
           {items.length > 0 && (
@@ -74,7 +74,7 @@ export function DeptGroup({ title, count, detail, lead, controls, items, renderI
             </div>
           )}
         </div>
-      </Collapse>
+      </CollapsibleContent>
     </div>
   );
 }

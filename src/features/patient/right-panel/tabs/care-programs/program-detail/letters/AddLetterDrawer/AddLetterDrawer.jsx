@@ -6,7 +6,7 @@ import { Button } from '../../../../../../../../components/Button/Button';
 import { Toggle } from '../../../../../../../../components/Toggle/Toggle';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
 import { FilterChip } from '../../../../../../../../components/FilterChip/FilterChip';
-import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
 import { WorklistShell } from '../../../../../../../../components/WorklistShell/WorklistShell';
 import styles from './AddLetterDrawer.module.css';
 

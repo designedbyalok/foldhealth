@@ -1,27 +1,28 @@
 import styles from './TableSkeleton.module.css';
+import { Skeleton } from '../Skeleton/Skeleton';
 
 function SkeletonRow() {
   return (
     <div className={styles.row}>
-      <div className={`${styles.bone} ${styles.checkbox}`} />
-      <div className={`${styles.bone} ${styles.avatar}`} />
+      <Skeleton className={styles.checkbox} />
+      <Skeleton className={styles.avatar} />
       <div className={styles.memberInfo}>
-        <div className={`${styles.bone} ${styles.nameLine}`} />
-        <div className={`${styles.bone} ${styles.idLine}`} />
+        <Skeleton className={styles.nameLine} />
+        <Skeleton className={styles.idLine} />
       </div>
-      <div className={`${styles.bone} ${styles.cell} ${styles.cellSm}`} />
-      <div className={`${styles.bone} ${styles.cell} ${styles.cellLg}`} />
-      <div className={`${styles.bone} ${styles.cell} ${styles.cellMd}`} />
-      <div className={`${styles.bone} ${styles.cell} ${styles.cellXl}`} />
-      <div className={`${styles.bone} ${styles.cell} ${styles.cellLg}`} />
-      <div className={`${styles.bone} ${styles.cell} ${styles.cellLg}`} />
-      <div className={`${styles.bone} ${styles.cell} ${styles.cellLg}`} />
-      <div className={`${styles.bone} ${styles.cell} ${styles.cellLg}`} />
-      <div className={`${styles.bone} ${styles.cell} ${styles.cellMd}`} />
+      <Skeleton className={`${styles.cell} ${styles.cellSm}`} />
+      <Skeleton className={`${styles.cell} ${styles.cellLg}`} />
+      <Skeleton className={`${styles.cell} ${styles.cellMd}`} />
+      <Skeleton className={`${styles.cell} ${styles.cellXl}`} />
+      <Skeleton className={`${styles.cell} ${styles.cellLg}`} />
+      <Skeleton className={`${styles.cell} ${styles.cellLg}`} />
+      <Skeleton className={`${styles.cell} ${styles.cellLg}`} />
+      <Skeleton className={`${styles.cell} ${styles.cellLg}`} />
+      <Skeleton className={`${styles.cell} ${styles.cellMd}`} />
       <div className={styles.actionsCell}>
-        <div className={`${styles.bone} ${styles.actionDot}`} />
-        <div className={`${styles.bone} ${styles.actionDot}`} />
-        <div className={`${styles.bone} ${styles.actionDot}`} />
+        <Skeleton className={styles.actionDot} />
+        <Skeleton className={styles.actionDot} />
+        <Skeleton className={styles.actionDot} />
       </div>
     </div>
   );

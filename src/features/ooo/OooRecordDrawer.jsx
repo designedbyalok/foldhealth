@@ -5,7 +5,7 @@ import { Input } from '../../components/Input/Input';
 import { DateTimePicker } from '../../components/DateTimePicker/DateTimePicker';
 import { Select } from '../../components/Select/Select';
 import { Switch } from '../../components/Switch/Switch';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { Icon } from '../../components/Icon/Icon';
 import { Textarea } from '../../components/Textarea/Textarea';
 import { InfoBar } from '../../components/InfoBar/InfoBar';

@@ -12,7 +12,7 @@ import { UploadDropField } from '../../components/UploadDropField/UploadDropFiel
 import { Select } from '../../components/Select/Select';
 import { ConfirmDialog } from '../../components/ConfirmDialog/ConfirmDialog';
 import { ReviewProgressPopover, ProgressRing } from './DiagPanel/ReviewProgressPopover';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import {
   StatusIcon,
   FailReasonInline,

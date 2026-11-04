@@ -5,7 +5,7 @@ import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { Icon } from '../../../components/Icon/Icon';
 import { CheckIcon } from '../../../components/Icon/CheckIcon';
 import { CloseIcon } from '../../../components/Icon/CloseIcon';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { Badge } from '../../../components/Badge/Badge';
 import { IcdCommentIcon } from './IcdCommentIcon';
 import { useIcdComments } from './icdComments';

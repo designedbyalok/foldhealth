@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Input } from '../../../components/Input/Input';
 import { Select } from '../../../components/Select/Select';
 import { Textarea } from '../../../components/Textarea/Textarea';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { useAppStore } from '../../../store/useAppStore';
 import { MERGE_TOKENS } from '../../email-builder/mergeTags';
 import { LAB_CATALOG } from '../lib/clinicalCriteria';

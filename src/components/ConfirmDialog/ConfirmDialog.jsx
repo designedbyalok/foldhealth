@@ -8,7 +8,7 @@ import {
 } from './AlertDialogPrimitives';
 import { Icon } from '../Icon/Icon';
 import { Button } from '../Button/Button';
-import { Checkbox } from '../ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../Checkbox/Checkbox';
 
 const VARIANT_DEFAULTS = {
   warning: { icon: 'solar:danger-triangle-linear', iconColor: 'var(--status-error)', button: { variant: 'soft', tone: 'danger' } },

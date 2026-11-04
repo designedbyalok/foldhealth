@@ -5,7 +5,7 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from '../../../../../../../../components/ShadcnDialog/ShadcnDialog';
+} from '../../../../../../../../components/Dialog/Dialog';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { goalCascadeQuestion } from '../../lib/carePlanGoalCascade';
 

@@ -5,7 +5,7 @@ import { Input as FoldInput } from '../../components/Input/Input';
 import { Textarea } from '../../components/Textarea/Textarea';
 import { Icon } from '../../components/Icon/Icon';
 import { CloseIcon } from '../../components/Icon/CloseIcon';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { FOLD_DB, FOLD_DB_MAP } from './data/fold-db.js';
 import { fmtAge } from './data/formatters.js';
 import { TableIcon } from './components/icons.jsx';

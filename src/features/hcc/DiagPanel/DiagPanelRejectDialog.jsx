@@ -3,7 +3,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescripti
 import { CloseButton } from '../../../components/CloseButton/CloseButton';
 import { Textarea } from '../../../components/Textarea/Textarea';
 import { Button } from '../../../components/Button/Button';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import styles from './DiagPanel.module.css';
 // Record-level Reject reasons. Multi-select; a comment is ALWAYS required
 // (no "optional" branch, unlike Insufficient), reject is terminal and

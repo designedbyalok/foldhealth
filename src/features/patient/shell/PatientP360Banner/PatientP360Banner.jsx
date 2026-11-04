@@ -3,7 +3,7 @@ import { Avatar } from '../../../../components/Avatar/Avatar';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
 import { Icon } from '../../../../components/Icon/Icon';
 import { MenuPopover } from '../../../../components/MenuPopover/MenuPopover';
-import { Collapse } from '../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../components/Collapsible/Collapsible';
 import { useAppStore } from '../../../../store/useAppStore';
 import { formatFoldId } from '../../../../lib/foldId';
 import { usePatientDisplay } from '../../hooks/usePatientDisplay';
@@ -263,7 +263,7 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
         <div ref={dockRef} className={styles.timerDockSlot} data-ccm-timer-dock />
       </div>
 
-      <Collapse open={expanded}>
+      <CollapsibleContent open={expanded}>
         {bannerSize === 'wide' ? (
           <div className={styles.expandedGrid}>
             <ExpandedDemographics p={p} />
@@ -274,7 +274,7 @@ export function PatientP360Banner({ patient, variant = 'full' }) {
         ) : (
           <QuickViewExpanded p={p} patientId={patient.id} visible={expanded} programCodes={programCodes} onManageFamily={() => setFamilyOpen(true)} onManageCareTeam={() => setCareTeamOpen(true)} />
         )}
-      </Collapse>
+      </CollapsibleContent>
       {consentPos && <PatientConsentPopover patientId={patient.id} pos={consentPos} onClose={closeConsent} />}
     </div>
   );

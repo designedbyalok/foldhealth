@@ -5,7 +5,7 @@ import { Input } from '../../components/Input/Input';
 import { Badge } from '../../components/Badge/Badge';
 import { Icon } from '../../components/Icon/Icon';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { CardSkeleton } from '../../components/CardSkeleton/CardSkeleton';
 import { RingEmptyState } from '../../components/RingEmptyState/RingEmptyState';
 import { useAppStore } from '../../store/useAppStore';

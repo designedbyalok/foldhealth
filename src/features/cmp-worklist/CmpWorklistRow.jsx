@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { PatientAvatarHover } from '../../components/PatientHoverCard/PatientAvatarHover';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Icon } from '../../components/Icon/Icon';
 import { Tooltip } from '../../components/Tooltip/Tooltip';

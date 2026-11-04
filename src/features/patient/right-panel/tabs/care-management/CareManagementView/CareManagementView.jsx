@@ -30,7 +30,7 @@ import { BarrierDetailDrawer } from '../../care-programs/care-plan/drawers/Barri
 import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
 import { RingEmptyState } from '../../../../../../components/RingEmptyState/RingEmptyState';
 import { DownChevronIcon } from '../../../../../../components/Icon/DownChevronIcon';
-import { Collapse } from '../../../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../../../components/Collapsible/Collapsible';
 import { resolvePatientStoreId } from '../../../../../../lib/resolvePatientStoreId';
 import styles from './CareManagementView.module.css';
 
@@ -440,11 +440,11 @@ function ProgramActivityLog({ header, programs = [], active = false }) {
                     className={`${styles.monthChevron} ${collapsed ? styles.monthChevronClosed : ''}`}
                   />
                 </button>
-                <Collapse open={!collapsed}>
+                <CollapsibleContent open={!collapsed}>
                   {month.days.map(day => (
                     <ProgramActivityDay key={day.key} day={day} onOpenVersion={openCarePlanVersion} versionGlance={versionGlance} onOpenItem={openPlanItem} />
                   ))}
-                </Collapse>
+                </CollapsibleContent>
               </div>
             );
           })

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { MetaLine } from '../../../components/ActivityLog/ActivityLog';
 import { Link } from '../../../components/Link/Link';
-import { Collapse } from '../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../components/Collapsible/Collapsible';
 import { historyTimelineStyles as ht } from '../../../components/HistoryTimeline/HistoryTimeline';
 import { Badge } from '../../../components/Badge/Badge';
 import { Icon } from '../../../components/Icon/Icon';
@@ -124,9 +124,9 @@ export function TimerHistoryBody({ entry }) {
       )}
       {/* Eases open and shut under the badges. */}
       {badges.length > 0 && (
-        <Collapse open={open}>
+        <CollapsibleContent open={open}>
           <ChangesTable rows={rows} />
-        </Collapse>
+        </CollapsibleContent>
       )}
     </div>
   );

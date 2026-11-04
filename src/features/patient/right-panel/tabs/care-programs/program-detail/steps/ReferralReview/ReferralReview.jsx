@@ -5,7 +5,7 @@ import { DownChevronIcon } from '../../../../../../../../components/Icon/DownChe
 import { Button } from '../../../../../../../../components/Button/Button';
 import { Toggle } from '../../../../../../../../components/Toggle/Toggle';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
-import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
 import { WorklistShell } from '../../../../../../../../components/WorklistShell/WorklistShell';
 import { REFERRAL_REVIEW_MOCK } from '../../../../../../data/referralReviewMock';
 import styles from './ReferralReview.module.css';

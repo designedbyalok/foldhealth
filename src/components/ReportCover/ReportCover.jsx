@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { CloseIcon } from '../Icon/CloseIcon';
-import { Slider } from '../ShadcnSlider/ShadcnSlider';
+import { Slider } from '../Slider/Slider';
 import { AlignmentPicker } from '../AlignmentPicker/AlignmentPicker';
 // The form and email builders' colour field: swatch + hex, opening the full picker.
 import { ColorInput } from '../../features/email-builder/ColorInput';

@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { Icon } from '../Icon/Icon';
 import { useAppStore } from '../../store/useAppStore';
 import { browserNotificationPermission, canAskBrowserNotifications, requestBrowserNotifications } from '../../lib/browserNotifications';
-import boneStyles from '../TableSkeleton/TableSkeleton.module.css';
+import { Skeleton } from '../Skeleton/Skeleton';
 import styles from './NotificationsPopover.module.css';
 
 /**
  * Cold-load placeholder. Shaped like `.entry` (icon square + title line +
- * sub line) so the list doesn't jump when real rows replace it. Reuses the
- * shared `.bone` shimmer rather than defining another one.
+ * sub line) so the list doesn't jump when real rows replace it. Built from
+ * `Skeleton`.
  */
 function NotificationSkeleton({ count = 3 }) {
   return (
@@ -16,11 +16,11 @@ function NotificationSkeleton({ count = 3 }) {
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className={styles.entry} style={{ cursor: 'default' }}>
           <span className={styles.entryIcon}>
-            <span className={boneStyles.bone} style={{ width: 16, height: 16, borderRadius: 4 }} />
+            <Skeleton style={{ width: 16, height: 16, borderRadius: 4 }} />
           </span>
           <span className={styles.entryBody}>
-            <span className={boneStyles.bone} style={{ width: '70%', height: 12 }} />
-            <span className={boneStyles.bone} style={{ width: '45%', height: 10 }} />
+            <Skeleton style={{ width: '70%', height: 12 }} />
+            <Skeleton style={{ width: '45%', height: 10 }} />
           </span>
         </div>
       ))}

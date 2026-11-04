@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { FilterIcon } from '../../components/Icon/FilterIcon';
-import { Collapse } from '../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../components/Collapsible/Collapsible';
 import { CollapseAllIcon } from '../../components/Icon/CollapseAllIcon';
 import { ExpandAllIcon } from '../../components/Icon/ExpandAllIcon';
 import { AssigneeChange } from '../../components/AssigneeChange/AssigneeChange';
@@ -15,7 +15,7 @@ import { InfoBar } from '../../components/InfoBar/InfoBar';
 import { Link } from '../../components/Link/Link';
 import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
 import { RingEmptyState } from '../../components/RingEmptyState/RingEmptyState';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { UserPickerPopover } from '../../components/UserPickerPopover/UserPickerPopover';
 import { useAppStore } from '../../store/useAppStore';
 import { initialsOf, samePerson } from './oooUtils';
@@ -297,12 +297,12 @@ export function ReassignPlanner({ appointments, awayUser, timeWindow, plan, onPl
                   </button>
                   {allCancelled(uncoveredIds) ? cancelledTag(uncoveredIds) : markLink(uncoveredIds, 'Mark to Cancel All')}
                 </div>
-                <Collapse open={noUsersOpen}>
+                <CollapsibleContent open={noUsersOpen}>
                   <div className={styles.noUsersBody}>
                     <label className={styles.selectAll}>{box(uncoveredIds, 'Select all without covering providers')}Select All</label>
                     {uncoveredGroups.map(g => deptCard(g, false))}
                   </div>
-                </Collapse>
+                </CollapsibleContent>
               </div>
             )}
           </div>

@@ -5,7 +5,7 @@ import { PatientAvatarHover } from '../../components/PatientHoverCard/PatientAva
 import { AssigneeChange } from '../../components/AssigneeChange/AssigneeChange';
 import { Badge } from '../../components/Badge/Badge';
 import { laceTone } from '../../lib/riskTone';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { formatDobDisplay, deriveDob } from '../../lib/patientDob';
 import { MenuPopover } from '../../components/MenuPopover/MenuPopover';

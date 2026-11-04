@@ -4,7 +4,7 @@ import { Button } from '../../../components/Button/Button';
 import { MenuPopover } from '../../../components/MenuPopover/MenuPopover';
 import { Coachmark } from '../../../components/Coachmark/Coachmark';
 import { UserAccountsIcon } from '../../../components/Icon/UserAccountsIcon';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../../../components/ShadcnDialog/ShadcnDialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../../../components/Dialog/Dialog';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { memberMeta, sharedBy } from './smsMembers';
 import styles from './SmsAttribution.module.css';

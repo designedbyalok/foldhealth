@@ -11,7 +11,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog/ConfirmDialog';
 import { goalCascade } from '../lib/carePlanGoalCascade';
 import { RemoveGoalDialog } from '../drawers/RemoveGoalDialog';
 import { ChronicConditionSelect } from '../../../../../../settings/care-plan-library/shared';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ShadcnDialog/ShadcnDialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/Dialog/Dialog';
 import { AddGoalsDrawer } from '../../../../../../settings/care-plan-library/goals/AddGoalsDrawer/AddGoalsDrawer';
 import { AddBarriersDrawer } from '../../../../../../settings/care-plan-library/barriers/AddBarriersDrawer/AddBarriersDrawer';
 import { BarrierDrawer } from '../../../../../../settings/care-plan-library/barriers/BarrierDrawer/BarrierDrawer';

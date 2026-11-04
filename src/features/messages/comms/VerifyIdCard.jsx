@@ -1,12 +1,12 @@
 import { useId, useState } from 'react';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { RadioButton } from '../../../components/RadioButton/RadioButton';
 import { Select } from '../../../components/Select/Select';
 import { Input } from '../../../components/Input/Input';
 import { Button } from '../../../components/Button/Button';
 import { Link } from '../../../components/Link/Link';
 import { Icon } from '../../../components/Icon/Icon';
-import { Collapse } from '../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../components/Collapsible/Collapsible';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import {
   VERIFICATION_METHODS, INVALID_ATTEMPT_POLICIES, verifySummary, usesTimeLock, usesMaxTotal,
@@ -248,8 +248,8 @@ export function VerifyIdStack({ children }) {
  */
 export function VerifyIdReveal({ show, children }) {
   return (
-    <Collapse open={show} className={[styles.reveal, show ? styles.revealOpen : ''].filter(Boolean).join(' ')}>
+    <CollapsibleContent open={show} className={[styles.reveal, show ? styles.revealOpen : ''].filter(Boolean).join(' ')}>
       <div className={styles.revealInner}>{children}</div>
-    </Collapse>
+    </CollapsibleContent>
   );
 }

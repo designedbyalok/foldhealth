@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../../components/Icon/Icon';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { MORE_FILTER_ITEMS as HCC_MORE_FILTER_ITEMS } from './filters';
 import { FILTER_DOMAINS } from './filterDomains';
 import styles from './MoreFiltersPopover.module.css';

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Avatar } from '../Avatar/Avatar';
 import { Badge } from '../Badge/Badge';
 import { Icon } from '../Icon/Icon';
-import bone from '../TableSkeleton/TableSkeleton.module.css';
+import { Skeleton } from '../Skeleton/Skeleton';
 import styles from './PatientHoverCard.module.css';
 
 const CARD_W = 350;
@@ -76,7 +76,7 @@ export function PatientHoverCard({ anchorRect, stage, patient, snapshot, cardPro
         <div className={styles.detailsInner}>
         {!s ? (
           <div className={styles.loading}>
-            {[70, 90, 60, 80, 50].map((w, i) => <span key={i} className={bone.bone} style={{ width: `${w}%`, height: 12 }} />)}
+            {[70, 90, 60, 80, 50].map((w, i) => <Skeleton key={i} style={{ width: `${w}%`, height: 12 }} />)}
           </div>
         ) : (
           <>

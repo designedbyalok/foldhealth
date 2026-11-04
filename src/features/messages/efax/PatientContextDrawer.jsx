@@ -3,7 +3,7 @@ import { Drawer } from '../../../components/Drawer/Drawer';
 import { Button } from '../../../components/Button/Button';
 import { Select } from '../../../components/Select/Select';
 import { Icon } from '../../../components/Icon/Icon';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { AiTooltipLabel } from '../../../components/Tooltip/AiTooltipLabel';
 import { ConfidenceBadge, SuggestedPatients } from '../../../components/SuggestedPatients/SuggestedPatients';

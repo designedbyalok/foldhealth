@@ -10,7 +10,7 @@ import { Textarea } from '../../../components/Textarea/Textarea';
 import { Select } from '../../../components/Select/Select';
 import { DatePicker } from '../../../components/DatePicker/DatePicker';
 import { RadioButton } from '../../../components/RadioButton/RadioButton';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { RatingInput } from '../../../components/RatingInput/RatingInput';
 import { toggleMultiChoice } from './multiChoice';
 import { ratingElement, ratingAnchors, npsGroup, NPS_TONE, DEFAULT_RATING_FILL } from './rating';

@@ -1,5 +1,5 @@
 import { useAppStore } from '../../../store/useAppStore';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../../../components/ShadcnDialog/ShadcnDialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../../../components/Dialog/Dialog';
 import { Button } from '../../../components/Button/Button';
 import styles from './GetStartedModal.module.css';
 

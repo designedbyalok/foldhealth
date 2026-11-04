@@ -1,8 +1,8 @@
-import bone from '../../../../../../../../components/TableSkeleton/TableSkeleton.module.css';
+import { Skeleton } from '../../../../../../../../components/Skeleton/Skeleton';
 import styles from './ProgramDetailSkeleton.module.css';
 
 const Bone = ({ w, h, r = 4, style }) => (
-  <div className={bone.bone} style={{ width: w, height: h, borderRadius: r, flexShrink: 0, ...style }} />
+  <Skeleton style={{ width: w, height: h, borderRadius: r, flexShrink: 0, ...style }} />
 );
 
 /**

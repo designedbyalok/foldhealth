@@ -1,12 +1,8 @@
-import bone from '../../../../../../../../components/TableSkeleton/TableSkeleton.module.css';
+import { Skeleton } from '../../../../../../../../components/Skeleton/Skeleton';
 import styles from './AssessmentFormView.module.css';
 
 const Bone = ({ w, h = 12, r = 4, style, className }) => (
-  <div
-    className={[bone.bone, className].filter(Boolean).join(' ')}
-    style={{ width: w, height: h, borderRadius: r, flexShrink: 0, ...style }}
-    aria-hidden="true"
-  />
+  <Skeleton width={w} height={h} radius={r} className={className} style={{ flexShrink: 0, ...style }} />
 );
 
 /** Mirrors AssessmentFormView: stats strip + intro + numbered questions. */

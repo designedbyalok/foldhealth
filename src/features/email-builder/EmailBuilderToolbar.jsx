@@ -6,7 +6,7 @@ import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Toggle } from '../../components/Toggle/Toggle';
 import { CloseButton } from '../../components/CloseButton/CloseButton';
 import { Select } from '../../components/Select/Select';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { SendTestPopover } from './SendTestPopover';
 import { TokenPicker } from './TokenPicker';
 import { ShortcutsHelpButton } from './EmailBuilderShortcuts';

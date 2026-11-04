@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { Icon } from '../../components/Icon/Icon';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
 import { FilterBar } from '../../components/FilterBar/FilterBar';
 import { useSavedFilterActions } from '../hcc/useSavedFilterActions';

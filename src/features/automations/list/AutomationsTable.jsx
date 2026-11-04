@@ -5,7 +5,7 @@ import { Button } from '../../../components/Button/Button';
 import { Icon } from '../../../components/Icon/Icon';
 import { Switch } from '../../../components/Switch/Switch';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { WorklistShell } from '../../../components/WorklistShell/WorklistShell';
 import { FlowIcons } from '../shared/FlowIcons';
 import { categoryLabel, executionTypeOf } from '../lib/catalog';

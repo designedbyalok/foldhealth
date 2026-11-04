@@ -18,7 +18,7 @@ import { CommsListHeader } from '../comms/CommsListHeader';
 import { markConversationRead, updateConversation } from '../comms/commsRepo';
 import { FilterChip } from '../../../components/FilterChip/FilterChip';
 import { BulkBar } from '../../../components/BulkBar/BulkBar';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import commsStyles from '../comms/Comms.module.css';
 
 const ACTIVITY_FILTER = { Today: 1, 'Last 7 days': 7, 'Last 30 days': 30 };

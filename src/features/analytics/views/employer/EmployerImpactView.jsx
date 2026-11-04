@@ -7,7 +7,7 @@ import { ActionButton } from '../../../../components/ActionButton/ActionButton';
 import { FilterChip } from '../../../../components/FilterChip/FilterChip';
 import { MonthPickerPopover } from '../../../../components/MonthPickerPopover/MonthPickerPopover';
 import { Select } from '../../../../components/Select/Select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../../components/ShadcnDialog/ShadcnDialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../../components/Dialog/Dialog';
 import { ChartSkeleton, KpiSkeleton } from '../shared';
 import { ChartContainer } from '../../../../components/ChartContainer/ChartContainer';
 import { StackedBars, Lines, HBars, Donut, ChartLegend, CostComparisonBars } from './EmployerCharts';

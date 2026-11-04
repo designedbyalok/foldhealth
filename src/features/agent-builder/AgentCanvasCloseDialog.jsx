@@ -1,5 +1,5 @@
 import { Button } from '../../components/Button/Button';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../../components/ShadcnDialog/ShadcnDialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../../components/Dialog/Dialog';
 
 export function AgentCanvasCloseDialog({ open, onOpenChange, onDiscard, onSaveAndClose }) {
   return (

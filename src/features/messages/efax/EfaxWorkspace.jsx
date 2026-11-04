@@ -3,7 +3,7 @@ import { Icon } from '../../../components/Icon/Icon';
 import { Button } from '../../../components/Button/Button';
 import { Toggle } from '../../../components/Toggle/Toggle';
 import { SearchBar } from '../../../components/SearchBar/SearchBar';
-import boneStyles from '../../../components/TableSkeleton/TableSkeleton.module.css';
+import { Skeleton } from '../../../components/Skeleton/Skeleton';
 import { useAppStore } from '../../../store/useAppStore';
 import listStyles from '../MessagesView.module.css';
 import commsStyles from '../comms/Comms.module.css';
@@ -97,10 +97,10 @@ export function EfaxWorkspace({ navCollapsed, onToggleNav }) {
           {loading ? (
             Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className={listStyles.convItem} aria-hidden>
-                <span className={`${boneStyles.bone} ${commsStyles.boneAvatar}`} />
+                <Skeleton className={commsStyles.boneAvatar} />
                 <div className={listStyles.convInfo}>
-                  <span className={`${boneStyles.bone} ${commsStyles.boneLine}`} />
-                  <span className={`${boneStyles.bone} ${commsStyles.boneLineShort}`} />
+                  <Skeleton className={commsStyles.boneLine} />
+                  <Skeleton className={commsStyles.boneLineShort} />
                 </div>
               </div>
             ))

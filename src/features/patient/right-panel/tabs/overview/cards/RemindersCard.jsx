@@ -5,7 +5,7 @@ import { ActionButton } from '../../../../../../components/ActionButton/ActionBu
 import { Button } from '../../../../../../components/Button/Button';
 import { Input } from '../../../../../../components/Input/Input';
 import { DateTimePicker } from '../../../../../../components/DateTimePicker/DateTimePicker';
-import { Checkbox } from '../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../components/Checkbox/Checkbox';
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { defaultRemindAt, groupReminders, isoToPicker, pickerToIso, reminderWhen, snoozeOneDay } from './reminders';
 import styles from './overviewCards.module.css';

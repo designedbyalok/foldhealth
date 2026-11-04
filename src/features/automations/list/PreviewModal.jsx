@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../../../components/ShadcnDialog/ShadcnDialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../../../components/Dialog/Dialog';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { AutomationCanvas } from '../canvas/AutomationCanvas';
 import styles from './PreviewModal.module.css';

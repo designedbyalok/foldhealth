@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Switch } from '../../../../components/Switch/Switch';
-import { Checkbox } from '../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../components/Checkbox/Checkbox';
 import { Icon } from '../../../../components/Icon/Icon';
 import { DownChevronIcon } from '../../../../components/Icon/DownChevronIcon';
 import { Link } from '../../../../components/Link/Link';

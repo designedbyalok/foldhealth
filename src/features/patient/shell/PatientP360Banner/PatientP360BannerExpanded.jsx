@@ -9,7 +9,7 @@ import { InfoBar } from '../../../../components/InfoBar/InfoBar';
 import { RingEmptyState } from '../../../../components/RingEmptyState/RingEmptyState';
 import { usePatientFamily } from '../../family/usePatientFamily';
 import { usePatientCareTeam } from '../../care-team/usePatientCareTeam';
-import skeleton from '../../../../components/TableSkeleton/TableSkeleton.module.css';
+import { Skeleton } from '../../../../components/Skeleton/Skeleton';
 import styles from './PatientP360Banner.module.css';
 
 // Enrolled care-program badges: first MAX_VISIBLE codes, then a "+N"
@@ -171,10 +171,10 @@ function ViewAll({ onClick }) {
 function PersonRowSkeleton() {
   return (
     <div className={styles.personRow} aria-hidden="true">
-      <span className={`${skeleton.bone} ${styles.boneAvatar}`} />
+      <Skeleton className={styles.boneAvatar} />
       <span className={styles.personText}>
-        <span className={`${skeleton.bone} ${styles.boneName}`} />
-        <span className={`${skeleton.bone} ${styles.boneSub}`} />
+        <Skeleton className={styles.boneName} />
+        <Skeleton className={styles.boneSub} />
       </span>
     </div>
   );
