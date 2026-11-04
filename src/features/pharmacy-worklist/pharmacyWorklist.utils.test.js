@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, it, vi } from 'vitest';
 import {
-  addDaysMdy, annotateClaims, claimRecordStatus, enrichPharmacyMember, matchFill, measureStatus, medicationStatus,
+  addDaysMdy, annotateClaims, claimRecordStatus, effectivePdc, enrichPharmacyMember, gapBadge, matchFill, measureStatus, medicationStatus, pdcSource, pharmaciesUsed, planGapStatus, prescribersOf,
   activeBarriers, memberPriority, needsVerification, nextFillDueSource, outreachSummary, planTimers, reconcileMeasure, savability, setPlanTimers, todayMdy,
 } from './pharmacyWorklist.utils.js';
 
@@ -153,20 +153,20 @@ describe('gap status transitions', () => {
     expect(reconcileMeasure(x)).toMatchObject({ status: 'Non–Part D claim', rework: true });
   });
 
-  it('Closed → Open: a reversal arrives for the counted claim', () => {
+  it('Closed → Reopened (Claim reversal): a reversal arrives for the counted claim', () => {
     const x = claimMeasure({ claims: [paid(20, { claimId: 'A' }), reversalOf('A', 5)], nextDueIn: 10 });
-    expect(measureStatus(x, NO_CALLS)).toMatchObject({ gap: 'Open', label: 'Claim reversed', medId: 'm1' });
+    expect(measureStatus(x, NO_CALLS)).toMatchObject({ gap: 'Reopened', reopenReason: 'Claim reversal', label: 'Claim reversed', medId: 'm1', done: false });
     expect(reconcileMeasure(x)).toMatchObject({ status: 'Claim reversed', rework: true });
   });
 
   it('reopens a closed projected fill when its matched claim is reversed', () => {
     const x = fillMeasure({ filledDaysAgo: 10, supply: 30, claims: [paid(10, { claimId: 'A' }), reversalOf('A', 2)] });
-    expect(measureStatus(x, NO_CALLS)).toMatchObject({ gap: 'Open', label: 'Claim reversed' });
+    expect(measureStatus(x, NO_CALLS)).toMatchObject({ gap: 'Reopened', reopenReason: 'Claim reversal', label: 'Claim reversed' });
   });
 
   it('counts outreach toward In Progress only once it follows the reversal', () => {
     const x = claimMeasure({ claims: [paid(20, { claimId: 'A' }), reversalOf('A', 5)], nextDueIn: 10 });
-    expect(measureStatus(x, outreach(8)).gap).toBe('Open');
+    expect(measureStatus(x, outreach(8)).gap).toBe('Reopened');
     expect(measureStatus(x, outreach(1)).gap).toBe('In Progress');
   });
 
@@ -180,9 +180,9 @@ describe('gap status transitions', () => {
       .toMatchObject({ gap: 'Closed', label: 'On track' });
   });
 
-  it('Closed → Open: Next Fill Due enters the outreach window', () => {
+  it('Closed → Reopened (New fill due): Next Fill Due enters the outreach window', () => {
     expect(measureStatus(claimMeasure({ claims: [paid(20)], nextDueIn: 10 }), NO_CALLS))
-      .toMatchObject({ gap: 'Open', label: 'Refill due soon' });
+      .toMatchObject({ gap: 'Reopened', reopenReason: 'New fill due', label: 'Refill due soon' });
   });
 
   it('→ Met for Year: the payer sends Already adherent or one fill left', () => {
@@ -227,7 +227,7 @@ describe('gap sub-status', () => {
 
   it('shows Refill overdue past Next Fill Due', () => {
     expect(measureStatus(claimMeasure({ claims: [paid(40)], nextDueIn: -10 }), NO_CALLS))
-      .toMatchObject({ gap: 'Open', label: 'Refill overdue' });
+      .toMatchObject({ gap: 'Reopened', label: 'Refill overdue' });
   });
 });
 
@@ -471,5 +471,86 @@ describe('activeBarriers', () => {
       ],
     };
     expect(activeBarriers(m).toSorted()).toEqual(['Cost Issue', 'Forgetfulness', 'Transportation']);
+  });
+});
+
+describe('reopened gaps', () => {
+  it('reads Reopened, loud for a claim reversal and soft for a new fill due', () => {
+    expect(gapBadge({ gap: 'Reopened', reopenReason: 'Claim reversal' })).toEqual({ tone: 'danger', variant: 'solid', label: 'Reopened' });
+    expect(gapBadge({ gap: 'Reopened', reopenReason: 'New fill due' })).toMatchObject({ tone: 'warning', label: 'Reopened' });
+    expect(gapBadge({ gap: 'Closed' })).toMatchObject({ tone: 'success', label: 'Closed' });
+  });
+
+  it('pins a member whose gap a claim reversal reopened', () => {
+    const reversed = claimMeasure({ claims: [paid(20, { claimId: 'A' }), reversalOf('A', 5)], nextDueIn: 10 });
+    const m = enrichPharmacyMember({ id: '1', name: 'A', callHistory: [], measures: [reversed] });
+    expect(m.reopenedByReversal).toBe(true);
+    expect(enrichPharmacyMember({ id: '2', name: 'B', callHistory: [], measures: [claimMeasure({ claims: [paid(20)], nextDueIn: 10 })] }).reopenedByReversal).toBe(false);
+  });
+
+  it('lets the team take a reopened gap by hand', () => {
+    const x = { ...claimMeasure({ claims: [paid(20, { claimId: 'A' }), reversalOf('A', 5)], nextDueIn: 10 }), status: 'In Progress', statusManual: true };
+    expect(measureStatus(x, NO_CALLS)).toMatchObject({ gap: 'In Progress', manual: true });
+  });
+});
+
+describe('plan status', () => {
+  it('is Open unless the plan file closes the gap', () => {
+    expect(planGapStatus({})).toBe('Open');
+    expect(planGapStatus({ planStatus: 'Closed' })).toBe('Closed');
+    expect(planGapStatus({ planStatus: 'Something else' })).toBe('Open');
+    expect(planGapStatus({ projectedStatus: 'Already adherent' })).toBe('Closed');
+  });
+});
+
+describe('PDC to act on', () => {
+  // A 120-day-old gap at 90% PDC on a report 30 days ago, no fill since.
+  const reported = { startDate: daysAgo(120), pdc: 90, pdcAsOf: daysAgo(30) };
+
+  it('drops with each missed day since the plan report', () => {
+    const x = claimMeasure(reported);
+    expect(effectivePdc(x)).toBe(68);
+    expect(pdcSource(x)).toBe('To date');
+  });
+
+  it('counts fills since the report as covered days', () => {
+    const x = claimMeasure({ ...reported, claims: [paid(30)] });
+    expect(effectivePdc(x)).toBe(93);
+  });
+
+  it('keeps the plan number when the report date is unknown', () => {
+    const x = claimMeasure({ startDate: daysAgo(120), pdc: 90 });
+    expect(effectivePdc(x)).toBe(90);
+    expect(pdcSource(x)).toBe('Plan');
+  });
+
+  it('works it out from the fills on record with no plan PDC', () => {
+    expect(effectivePdc(claimMeasure({ claims: [paid(60)], pdc: null }))).toBe(50);
+  });
+
+  it('uses the team override first, and the calculation again once cleared', () => {
+    const x = claimMeasure(reported);
+    expect(effectivePdc({ ...x, pdcManual: 78 })).toBe(78);
+    expect(pdcSource({ ...x, pdcManual: 78 })).toBe('Manual');
+    expect(effectivePdc({ ...x, pdcManual: null })).toBe(68);
+  });
+});
+
+describe('who to call', () => {
+  const rx = (o) => ({ id: 'd1', name: 'Metformin', strength: '500', unit: 'MG', refills: [], ...o });
+  it('lists prescribers from the gap report and the claims, merged by name', () => {
+    const member = {
+      prescriber: { name: 'Dr. Gap', phone: '(111) 111-1111' },
+      measures: [{ code: 'MAD', medications: [rx({ prescriber: { name: 'Dr. Drug', phone: '(222) 222-2222' }, refills: [{ date: daysAgo(5), prescriber: 'Dr. Claim' }, { date: daysAgo(40), prescriber: 'Dr. Drug' }] })] }],
+    };
+    expect(prescribersOf(member).map(p => [p.name, p.phone || null])).toEqual([['Dr. Gap', '(111) 111-1111'], ['Dr. Drug', '(222) 222-2222'], ['Dr. Claim', null]]);
+  });
+
+  it('lists pharmacies with fills first, then ones only the gap report names', () => {
+    const member = {
+      pharmacy: { name: 'Gap Pharmacy', phone: '(333) 333-3333' },
+      measures: [{ code: 'MAD', medications: [rx({ refills: [{ date: daysAgo(5), pharmacy: 'CVS' }] })] }],
+    };
+    expect(pharmaciesUsed(member).map(p => [p.name, p.fills])).toEqual([['CVS', 1], ['Gap Pharmacy', 0]]);
   });
 });

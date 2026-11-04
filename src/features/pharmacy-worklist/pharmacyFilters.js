@@ -1,7 +1,7 @@
 import { parseLocalDate } from '../../lib/localDate';
 import { fillsToStayCompliant } from './fillEvents';
 import {
-  GAP_STATUSES, MEASURE_ORDER, MEDICATION_STATUSES, RECON_STATUSES, SAVABILITY, SUB_STATUSES, PROGRESS_LEVELS,
+  GAP_STATUSES, MEASURE_ORDER, PLAN_STATUSES, MEDICATION_STATUSES, RECON_STATUSES, SAVABILITY, SUB_STATUSES, PROGRESS_LEVELS,
   daysFromToday, daysLeftBucket, isActiveGap, medicationStatus, pharmaciesUsed, planTimers, prescribersOf,
 } from './pharmacyWorklist.utils';
 import { escalation, inOutreachQueue } from './pharmacyRules';
@@ -22,6 +22,7 @@ export const MORE_FILTER_ITEMS = [
   { k: 'priority', label: 'Priority', primary: true },
   { k: 'gap', label: 'Pharmacy Gap', primary: true },
   { k: 'gapStatus', label: 'Gap Status', primary: true },
+  { k: 'planStatus', label: 'Plan Status', group: 'Pharmacy Gaps' },
   { k: 'progress', label: 'Progress', primary: true },
   { k: 'daysLeft', label: 'Days Left', primary: true },
   { k: 'overdue', label: 'Overdue', primary: true },
@@ -110,12 +111,13 @@ const dynamic = (k, extra) => ({ type: 'multi', dynamic: k, opts: [], ...extra }
 const toggle = { type: 'radio', opts: YES };
 const range = (lo, hi) => ({ type: 'range', opts: [String(lo), String(hi)] });
 const date = { type: 'date' };
-const SOURCE_OPTS = ['Plan-provided', 'Fold-calculated'];
+const SOURCE_OPTS = ['Plan-provided', 'Fold-calculated', 'Manual'];
 
 const DEFS = {
   priority: multi(['P1', 'P2', 'P3']),
   gap: multi(MEASURE_ORDER),
   gapStatus: multi(GAP_STATUSES),
+  planStatus: multi(PLAN_STATUSES),
   progress: multi(PROGRESS_LEVELS),
   daysLeft: multi(['0–7 days', '8–14 days', '15–30 days', 'Over 30 days', 'Past fail date']),
   overdue: multi(['Refill overdue', 'Claim not matched', 'Claim overdue', 'Follow-up overdue', 'Not overdue']),
@@ -201,7 +203,7 @@ export const drugClass = (d) => d.drugClass || DRUG_CLASS[(d.generic || '').toLo
 
 const yes = (cond) => (cond ? YES : []);
 const nums = (list) => list.filter(n => n != null && !Number.isNaN(n));
-const sourceLabel = (s) => (!s ? null : s === 'Plan' ? 'Plan-provided' : 'Fold-calculated');
+const sourceLabel = (s) => (!s ? null : s === 'Plan' ? 'Plan-provided' : s === 'Manual' ? 'Manual' : 'Fold-calculated');
 const activeMeds = (g) => g.medications.filter(d => d.status !== 'Discontinued');
 const openGaps = (m) => m.gaps.filter(g => isActiveGap(g.status));
 const isPast = (mdy) => { const d = daysFromToday(mdy); return d != null && d < 0; };
@@ -235,6 +237,7 @@ const VALUES = {
   priority: (m) => [m.priority],
   gap: (m) => m.measureCodes,
   gapStatus: (m) => m.gaps.map(g => g.status.gap),
+  planStatus: (m) => m.gaps.map(g => g.planStatus),
   progress: (m) => [m.progress.label],
   daysLeft: (m) => openGaps(m).map(g => daysLeftBucket(g.failDate)),
   overdue: overdueTags,

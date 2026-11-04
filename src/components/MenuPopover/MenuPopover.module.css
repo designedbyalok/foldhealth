@@ -121,3 +121,7 @@
   color: var(--neutral-300);
   text-align: center;
 }
+
+/* A row's tooltip wrapper spans the menu's width, like the row itself. */
+.rowTip { display: flex; }
+.rowTip > .row { flex: 1; }

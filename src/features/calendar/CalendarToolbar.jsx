@@ -6,25 +6,22 @@ import { Button } from '../../components/Button/Button';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
 import { Toggle } from '../../components/Toggle/Toggle';
 import { Select } from '../../components/Select/Select';
-import { SearchBar } from '../../components/SearchBar/SearchBar';
 // Locations and statuses come from the ScheduleDrawer constants, the booking
 // form is what writes these values, so sourcing the filter options from the
 // same place keeps every chip option matchable against real rows.
-import { APPOINTMENT_STATUSES } from '../../components/ScheduleDrawer/scheduleDrawerConstants';
 import { useLocationOptions } from '../../components/ScheduleDrawer/useLocationOptions';
 import { MONTH_NAMES, VIEW_LABELS, VIEWS } from './calendarUtils';
 import { MONTH_NAMES as FULL_MONTH_NAMES } from '../../components/ScheduleDrawer/scheduleDrawerConstants';
-import { periodRange } from './list/appointmentList';
+import { periodRange, STATUS_OPTIONS } from './list/appointmentList';
 import { OOO_ICON, peopleOptions, personKey } from '../ooo/oooUtils';
 import { HolidayIcon } from '../../components/Icon/HolidayIcon';
 import { CalendarRulesIcon } from '../../components/Icon/CalendarRulesIcon';
-import { ListCollapseIcon, ListExpandIcon } from '../../components/Icon/ListCollapseIcon';
 import styles from './CalendarView.module.css';
 
 const LAYOUTS = [
-  { key: 'calendar', icon: 'solar:calendar-minimalistic-linear', tip: 'Calendar' },
-  { key: 'list', icon: 'solar:list-linear', tip: 'List' },
-  { key: 'availability', icon: 'solar:clock-circle-linear', tip: 'Available Slots' },
+  { key: 'calendar', icon: 'solar:calendar-minimalistic-linear', tip: 'Calendar', tooltip: 'View Calendar' },
+  { key: 'list', icon: 'solar:list-linear', tip: 'List', tooltip: 'View Appointment List' },
+  { key: 'availability', icon: 'solar:clock-circle-linear', tip: 'Available Slots', tooltip: 'View Availability' },
 ];
 
 // The less-used tools, behind •••. Calendar Rules, Automations and Settings
@@ -38,11 +35,6 @@ const MORE_MENU = [
 ];
 
 // List view: every provider group collapsed or expanded (Figma 3016:573561).
-const GROUP_MODES = [
-  { key: 'collapsed', icon: <ListCollapseIcon />, ariaLabel: 'Collapse all' },
-  { key: 'expanded', icon: <ListExpandIcon />, ariaLabel: 'Expand all' },
-];
-
 const PICKER_W = 282; // DatePickerPopover's single-month width
 
 const SCHEDULE_MENU = [
@@ -76,8 +68,6 @@ export function CalendarToolbar({
   onViewChange,
   layout = 'calendar',
   onLayoutChange,
-  listGroups = 'expanded',
-  onListGroupsChange,
   onToday,
   onPickDate,
   onPrev,
@@ -96,16 +86,8 @@ export function CalendarToolbar({
   onOpenOoo,
   onOpenHolidays,
   onRefresh,
-  search = '',
-  onSearchChange,
+  filterRowEnd,
 }) {
-  const [searchOpen, setSearchOpen] = useState(false);
-  // Closing plays the search box shrinking back into the icon, then swaps.
-  const [searchClosing, setSearchClosing] = useState(false);
-  const closeSearch = () => {
-    setSearchClosing(true);
-    setTimeout(() => { setSearchOpen(false); setSearchClosing(false); onSearchChange?.(''); }, 200);
-  };
   // People by id; the chip speaks labels (a name, plus email when shared).
   const userOptions = useMemo(() => peopleOptions(users), [users]);
   const labelOf = useMemo(() => new Map(userOptions.map(o => [o.value, o.label])), [userOptions]);
@@ -117,8 +99,10 @@ export function CalendarToolbar({
   const userNames = filterUser.map(k => (users || []).find(u => personKey(u) === k)?.name || labelOf.get(k) || k);
   const usersSummary = userNames.length > 2 ? `${userNames[0]} +${userNames.length - 1}` : userNames.join(', ');
   // Week on the grid shows one user's calendar: pick one, and it always has
-  // one. The List view takes any number.
-  const oneUser = currentView === 'week' && layout !== 'list';
+  // one. The List view and Available Slots take any number.
+  const oneUser = currentView === 'week' && layout === 'calendar';
+  // Appointment statuses don't apply to availability.
+  const showStatus = layout !== 'availability';
   const period = selectedDate ? periodRange(currentView, selectedDate) : null;
   // The date opens a calendar to jump anywhere, as in the availability week view.
   const [pickerRect, setPickerRect] = useState(null);
@@ -139,7 +123,7 @@ export function CalendarToolbar({
   // counts the filters still applied (Week's one user is the view itself,
   // so it doesn't count).
   const [showFilters, setShowFilters] = useState(true);
-  const filtersSet = [filterLocation, filterType, filterStatus, oneUser ? [] : filterUser].filter(f => f.length > 0).length;
+  const filtersSet = [filterLocation, filterType, showStatus ? filterStatus : [], oneUser ? [] : filterUser].filter(f => f.length > 0).length;
   const divider = <span className={styles.actionDivider} aria-hidden="true" />;
   const [moreOpen, setMoreOpen] = useState(false);
   const moreAnchor = useRef(null);
@@ -196,32 +180,13 @@ export function CalendarToolbar({
           </Button>
           {divider}
           <Toggle
-            items={LAYOUTS.map(l => ({ key: l.key, icon: l.icon, ariaLabel: l.tip }))}
+            items={LAYOUTS.map(l => ({ key: l.key, icon: l.icon, ariaLabel: l.tip, tooltip: l.tooltip }))}
             value={layout}
             onValueChange={onLayoutChange}
             size="sm"
           />
-          {layout === 'list' && (
-            <>
-              {divider}
-              <Toggle items={GROUP_MODES} value={listGroups} onValueChange={onListGroupsChange} size="sm" />
-            </>
-          )}
           {divider}
           <div className={styles.toolGroup}>
-            {/* Search narrows the List view; the grids don't search yet. */}
-            {layout === 'list' && searchOpen ? (
-              <SearchBar
-                className={`${styles.listSearch} ${searchClosing ? styles.listSearchClosing : ''}`}
-                placeholder="Search appointments"
-                value={search}
-                onChange={e => onSearchChange?.(e.target.value)}
-                onClose={closeSearch}
-              />
-            ) : (
-              <ActionButton icon="solar:magnifer-linear" tooltip="Search" onClick={layout === 'list' ? () => setSearchOpen(true) : undefined} />
-            )}
-            {divider}
             <ActionButton
               icon="custom:filter"
               tooltip={showFilters ? 'Hide filters' : 'Show filters'}
@@ -265,6 +230,7 @@ export function CalendarToolbar({
             options={locationOptions}
             selected={filterLocation}
             onChange={onFilterLocationChange}
+            searchable
           />
           {/* `filterUser` holds people's ids; the chip shows their names, and
               two people with the same name are told apart by email. */}
@@ -288,13 +254,16 @@ export function CalendarToolbar({
             onChange={onFilterTypeChange}
             searchable
           />
-          <FilterChip
-            label={chipLabel('Status', filterStatus)}
-            popoverLabel="Status"
-            options={APPOINTMENT_STATUSES}
-            selected={filterStatus}
-            onChange={onFilterStatusChange}
-          />
+          {showStatus && (
+            <FilterChip
+              label={chipLabel('Status', filterStatus)}
+              popoverLabel="Status"
+              options={STATUS_OPTIONS}
+              selected={filterStatus}
+              onChange={onFilterStatusChange}
+            />
+          )}
+          {filterRowEnd && <div className={styles.filterRowEnd}>{filterRowEnd}</div>}
         </div>
       )}
     </div>

@@ -44,10 +44,17 @@ const LOCKED = {
 /** Why an appointment can't be selected for a bulk action, or null. */
 export const lockedReason = (a) => LOCKED[a?.status] || null;
 
-export const statusLabel = (a) => displayAppointmentStatus(a?.status);
+// The List view calls a scheduled (or older "Booked") appointment Booked.
+export const statusLabel = (a) => {
+  const label = displayAppointmentStatus(a?.status);
+  return label === 'Scheduled' ? 'Booked' : label;
+};
 
-// What an appointment's status can be changed to, and what each saves as.
-export const STATUS_OPTIONS = ['Scheduled', 'No Show', 'Checked In', 'Checked Out', 'Cancelled'];
+// What an appointment's status can be changed to, in the legacy order.
+export const STATUS_OPTIONS = ['Proposed', 'Pending', 'Booked', 'Cancelled', 'No Show', 'Checked In', 'Checked Out', 'Declined'];
+
+// What a picked status saves as: Booked is stored as "Scheduled", like new bookings.
+export const statusValue = (label) => (label === 'Booked' ? 'Scheduled' : label);
 
 // Why an appointment can't take `status` yet, or null. A patient can check
 // in from the morning of the visit; No Show and Checked Out need it started.
@@ -102,3 +109,29 @@ export function timeRangeLabel(a) {
 }
 // "10-02-2026" → "10/02/2026".
 export const dateLabel = (d) => String(d || '').replace(/-/g, '/');
+
+// A group session's type says so ("Group Diabetes Education"), as the
+// calendar's month counts already read it.
+export const isGroupAppointment = (a) => /group/i.test(a?.appointment_type_name || '');
+
+/**
+ * One provider's rows for the List view: each group session (same date, start
+ * and type) folds into one row carrying its `members` (the appointments, one
+ * per member); every other appointment stays its own row. Order is kept.
+ */
+export function sessionRows(appts) {
+  const out = [];
+  const sessions = new Map();
+  appts.forEach((a) => {
+    if (!isGroupAppointment(a)) { out.push(a); return; }
+    const key = `${a.primary_user_id || a.primary_user}|${a.date}|${a.time_start}|${a.appointment_type_name}`;
+    let row = sessions.get(key);
+    if (!row) {
+      row = { ...a, id: `group:${key}`, isGroup: true, members: [] };
+      sessions.set(key, row);
+      out.push(row);
+    }
+    row.members.push(a);
+  });
+  return out;
+}

@@ -91,7 +91,8 @@ export const BOOKED_STATUS_ALIASES = ['Booked', 'Scheduled'];
 
 export function appointmentMatchesStatuses(appt, selectedStatuses) {
   const status = appt.status;
-  return selectedStatuses.some(s => (s === 'Scheduled'
+  // "Booked" (the List view's name for it) and "Scheduled" are the same status.
+  return selectedStatuses.some(s => (s === 'Scheduled' || s === 'Booked'
     ? !status || BOOKED_STATUS_ALIASES.includes(status)
     : s === status));
 }

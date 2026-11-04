@@ -64,12 +64,17 @@ function toUtc(mdy) {
   return Date.UTC(y, m - 1, d);
 }
 
+// The gap report date the sample data is as of.
+const AS_OF = '10/22/2026';
+
 function measure(o, meds, member) {
   const medications = meds.map(m => rx(m, member));
   const nextFillDue = medications
     .map(m => m.nextFill)
     .reduce((min, d) => (!min || toUtc(d) < toUtc(min) ? d : min), null);
-  return { ...o, nextFillDue, medications };
+  // The plan's PDC is as of the gap report it came in, so Fold can move it
+  // by the days covered or missed since (pdcToDate).
+  return { ...o, pdcAsOf: o.pdc != null ? AS_OF : undefined, nextFillDue, medications };
 }
 
 // Seed activity log: the member's past calls and barrier logs, newest first.
@@ -445,7 +450,6 @@ const TEMPLATES = {
     { name: 'Pravastatin', generic: 'pravastatin', strength: '40', sig: 'Take 1 tablet by mouth at bedtime', condition: 'Hyperlipidemia' },
   ],
 };
-const AS_OF = '10/22/2026';
 const PDCS = [84, 76, 91, 79, 86, 73, 88, 81, 90, 77];
 
 // A template drug for member `i`, its `k`th added drug: fill dates and day

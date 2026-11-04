@@ -16,7 +16,7 @@ import { MedicationClaims } from './MedicationClaims';
 import { DatePicker } from '../../../components/DatePicker/DatePicker';
 import { BulkBar } from '../../../components/BulkBar/BulkBar';
 import { DatePickerPopover } from '../../../components/DatePicker/DatePickerPopover';
-import { GAP_STATUS_TONE, MEASURE_NAMES, MEASURE_ORDER, annotateClaims, isActiveGap, effectivePdc, fillDueTone, latestConfirmedFill, matchFill, measureStatus, medicationStatus, pdcTone, medFills, todayMdy, gapActiveBarriers } from '../pharmacyWorklist.utils';
+import { gapBadge, MEASURE_NAMES, MEASURE_ORDER, annotateClaims, isActiveGap, effectivePdc, fillDueTone, latestConfirmedFill, matchFill, measureStatus, medicationStatus, pdcTone, medFills, todayMdy, gapActiveBarriers } from '../pharmacyWorklist.utils';
 import { MeasureCode, Sep, SubStatus } from '../PharmacyCells';
 import { BARRIERS, BARRIER_ICON } from '../adherencePicklists';
 import { usePharmacyProgramMember } from './usePharmacyProgramMember';
@@ -603,7 +603,7 @@ export function PharmacyMedicationReview({ member: memberProp, onOpenMed, compac
                 <span className={styles.groupMeta}>{x.medications.length} medication{x.medications.length === 1 ? '' : 's'}</span>
               </span>
               {!compact && <span className={styles.gapCardMeta}>
-                <Badge size="sm" tone={GAP_STATUS_TONE[x.st.gap]} label={x.st.gap} />
+                <Badge size="sm" {...gapBadge(x.st)} />
                 <SubStatus label={x.st.label} />
                 <span className={styles.groupMeta}>{x.pdcProjected != null ? 'Projected PDC' : 'PDC'} <b className={riskClass(x.code, pdcTone(effectivePdc(x)))}>{effectivePdc(x) == null ? '-' : `${effectivePdc(x)}%`}</b></span>
                 <span className={styles.groupMeta}>Next due <b className={riskClass(x.code, fillDueTone(x.nextFillDue))}>{x.nextFillDue || '-'}</b></span>

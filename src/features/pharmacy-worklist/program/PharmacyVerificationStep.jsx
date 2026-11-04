@@ -11,9 +11,11 @@ import { RadioButton } from '../../../components/RadioButton/RadioButton';
 import { Textarea } from '../../../components/Textarea/Textarea';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import {
-  MEASURE_NAMES, MEASURE_ORDER, isActiveGap, addDaysMdy, measureStatus, medLabel, todayMdy,
+  MEASURE_NAMES, MEASURE_ORDER, isActiveGap, addDaysMdy, measureStatus, medLabel, pharmaciesUsed, prescribersOf, todayMdy,
 } from '../pharmacyWorklist.utils';
+import { Select } from '../../../components/Select/Select';
 import { Switch } from '../../../components/Switch/Switch';
+import { Toggle } from '../../../components/Toggle/Toggle';
 import { verificationTimeline } from './verificationHistory';
 import { usePharmacyProgramMember } from './usePharmacyProgramMember';
 import { MeasureCode } from '../PharmacyCells';
@@ -146,6 +148,17 @@ export function PharmacyVerificationStep({ program, member: memberProp, onLocked
   const [answers, setAnswers] = useState(() => record?.answers || {});
   const [sameForAll, setSameForAll] = useState(false);
   const [note, setNote] = useState(() => record?.note || '');
+  // Who the call is with: the same questions work for the pharmacy, the
+  // prescribing physician or the member. Pharmacy and physician pick a name
+  // from the gap report and the claims.
+  const pharmacies = useMemo(() => pharmaciesUsed(member), [member]);
+  const physicians = useMemo(() => prescribersOf(member), [member]);
+  const [party, setParty] = useState(() => record?.party || 'Pharmacy');
+  const [contactName, setContactName] = useState(() => record?.contact || null);
+  const contactsFor = (p) => (p === 'Pharmacy' ? pharmacies : p === 'Physician' ? physicians : []);
+  const contact = party === 'Member'
+    ? (member?.name || 'Member')
+    : (contactsFor(party).find(c => c.name === contactName) || contactsFor(party)[0])?.name || party;
   // A new call starts from the refill count the last call recorded, when every
   // drug in the gap agrees on it; the coordinator confirms or corrects it.
   const blankFor = useMemo(() => Object.fromEntries(gaps.map(g => {
@@ -192,7 +205,8 @@ export function PharmacyVerificationStep({ program, member: memberProp, onLocked
       date: today,
       mode: 'Phone',
       direction: 'Outbound',
-      contact: member.pharmacy?.name || 'Pharmacy',
+      party,
+      contact,
       outcome,
       result: pickedAll ? 'success' : 'failed',
       by,
@@ -260,12 +274,29 @@ export function PharmacyVerificationStep({ program, member: memberProp, onLocked
 
   return (
     <div className={styles.wrap}>
-      {/* The pane names the step; only the sync switch sits above the form. */}
-      {gaps.length > 1 && !readOnly && (
-        <div className={styles.syncRow}>
+      {/* Who was called, then the sync switch, above the form. */}
+      <div className={styles.syncRow}>
+        {readOnly ? (
+          <span className={styles.partyText}>Called: {record.party || 'Pharmacy'} · {record.contact}</span>
+        ) : (
+          <span className={styles.partyPick}>
+            <Toggle size="sm" items={['Pharmacy', 'Physician', 'Member']} value={party} onValueChange={(p) => { setParty(p); setContactName(null); }} />
+            {contactsFor(party).length > 1 && (
+              <Select
+                portal
+                options={contactsFor(party).map(c => ({ value: c.name, label: c.name }))}
+                value={contact}
+                onValueChange={setContactName}
+                aria-label={`Which ${party.toLowerCase()}`}
+              />
+            )}
+            {contactsFor(party).length <= 1 && <span className={styles.partyText}>{contact}</span>}
+          </span>
+        )}
+        {gaps.length > 1 && !readOnly && (
           <Switch checked={sameForAll} onChange={toggleSame} label="Same answer for all gaps" />
-        </div>
-      )}
+        )}
+      </div>
       <DashboardCardShell flush>
         <div className={styles.assessment}>
           <div className={styles.tableScroll}>

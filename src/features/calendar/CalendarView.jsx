@@ -11,6 +11,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { CalendarOooLayer } from '../ooo/CalendarOooLayer';
 import { UserAvailabilityTab } from '../settings/calendar/availability/UserAvailabilityTab';
 import { AppointmentListView } from './list/AppointmentListView';
+import { CalendarViewTools } from './CalendarViewTools';
 import { OooAllRecordsDrawer } from '../ooo/OooRecordsDrawers';
 import { apptPerson, personKey, recordPerson, recordsOnDate, samePerson } from '../ooo/oooUtils';
 import { useOooRecordActions } from '../ooo/useOooRecordActions';
@@ -54,6 +55,8 @@ export function CalendarView() {
   const [showHolidays, setShowHolidays] = useState(false);
   // List view search: member, appointment type, reason, location or provider.
   const [listQuery, setListQuery] = useState('');
+  // Available Slots search: a user's name or email.
+  const [availabilityQuery, setAvailabilityQuery] = useState('');
   const listAppointments = useMemo(() => {
     const q = listQuery.trim().toLowerCase();
     if (!q) return calendar.filteredAppointments;
@@ -121,6 +124,12 @@ export function CalendarView() {
     return people.length ? people : [calendar.users.find(u => u.name === calendar.meName)].filter(Boolean);
   }, [isDay, calendar.filterUser, calendar.viewPeople, calendar.selectedDate, calendar.filteredAppointments, calendar.users, oooRecords, calendar.meName, personFor]);
 
+  // Week shows the signed-in user when no one is picked; leaving it keeps
+  // that user picked, so every view shows the same Users filter.
+  const keepWeekUser = () => {
+    if (isWeek && !calendar.filterUser.length && calendar.viewUsers[0]) calendar.setFilterUser([calendar.viewUsers[0]]);
+  };
+
   return (
     <div className={styles.wrapper}>
       <CalendarToolbar
@@ -128,15 +137,14 @@ export function CalendarView() {
         onToday={calendar.handleToday}
         onPickDate={calendar.goToDate}
         currentView={calendar.currentView}
-        onViewChange={calendar.handleViewChange}
+        onViewChange={(view) => { keepWeekUser(); calendar.handleViewChange(view); }}
         layout={calendar.layout}
         onLayoutChange={(next) => {
+          keepWeekUser();
           // Available Slots has a Week and a Day; from Month it opens on the week.
           if (next === 'availability' && calendar.currentView === 'month-grid') calendar.handleViewChange('week');
           calendar.setLayout(next);
         }}
-        listGroups={listGroups}
-        onListGroupsChange={setListGroups}
         onPrev={calendar.handlePrev}
         onNext={calendar.handleNext}
         users={calendar.users}
@@ -152,8 +160,11 @@ export function CalendarView() {
         onOpenOoo={() => setOooAll({})}
         onOpenHolidays={() => setShowHolidays(true)}
         onRefresh={() => calendar.fetchAppointments({ force: true })}
-        search={listQuery}
-        onSearchChange={setListQuery}
+        filterRowEnd={isList ? (
+          <CalendarViewTools key="list" search={listQuery} onSearchChange={setListQuery} placeholder="Search appointments" groupsMode={listGroups} onGroupsModeChange={setListGroups} />
+        ) : isAvailability ? (
+          <CalendarViewTools key="availability" search={availabilityQuery} onSearchChange={setAvailabilityQuery} placeholder="Search users" />
+        ) : null}
         onScheduleSelect={(key) => {
           if (key === 'appointment') {
             setDayProvider(null);
@@ -195,7 +206,17 @@ export function CalendarView() {
           onBlocked={showToast}
         />
       )}
-      {isAvailability && <UserAvailabilityTab embedded weekOf={calendar.selectedDate} onlyDay={calendar.currentView === 'day' ? calendar.selectedDate : undefined} />}
+      {isAvailability && (
+        <UserAvailabilityTab
+          embedded
+          weekOf={calendar.selectedDate}
+          onlyDay={calendar.currentView === 'day' ? calendar.selectedDate : undefined}
+          filterUsers={calendar.viewPeople.map(p => p.name).filter(Boolean)}
+          filterLocations={calendar.filterLocation}
+          filterTypes={calendar.filterType}
+          searchQuery={availabilityQuery}
+        />
+      )}
       {isList && (
         <AppointmentListView
           appointments={listAppointments}

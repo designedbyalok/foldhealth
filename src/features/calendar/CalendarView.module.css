@@ -55,6 +55,42 @@
   padding: var(--space-2) var(--space-4);
   border-bottom: 0.5px solid var(--neutral-150);
 }
+/* A view's own tools (the List view's search and collapse), pushed right. */
+.filterRowEnd { margin-left: auto; }
+
+/* A view's tools at the end of the filter row (CalendarViewTools). */
+.listTools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.listToolsDivider {
+  width: 0.5px;
+  height: 16px;
+  background: var(--neutral-150);
+}
+
+/* The search grows out of the icon's spot and shrinks back into it on close. */
+.listSearch {
+  width: 240px;
+  overflow: hidden;
+  animation: listSearchIn var(--duration-base) var(--ease-out);
+}
+/* As tall as the filter chips (and the icon it replaces), so opening it
+   doesn't grow the filter row. */
+.listTools .listSearch { height: 32px; }
+.listSearchClosing { animation: listSearchOut var(--duration-base) var(--ease-out) forwards; }
+@keyframes listSearchIn {
+  from { width: 28px; opacity: 0; }
+  to { width: 240px; opacity: 1; }
+}
+@keyframes listSearchOut {
+  from { width: 240px; opacity: 1; }
+  to { width: 28px; opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .listSearch, .listSearchClosing { animation: none; }
+}
 
 /* The arrows hug the date, so the three read as one control. */
 .dateNav {
@@ -139,45 +175,36 @@
   box-shadow: none !important;
 }
 
-/* Week header, as the legacy week view: one line per day ("SUN•27") in
-   bordered cells; past days grey, today tinted with a primary top bar. */
+/* Week header, as in User Availability: "Friday" over "Nov 20", left-aligned
+   in bordered cells (WeekGridDate). Past days grey, as they can't be booked;
+   today tinted with a 3px primary bar along the top. */
 .calendarWrap :global(.sx__week-grid__date) {
-  flex-direction: row !important;
-  align-items: center;
+  flex-direction: column !important;
+  align-items: flex-start;
   justify-content: center;
   gap: 0;
-  padding: var(--space-3) 0 !important;
+  padding: var(--space-3) !important;
   border-left: 0.5px solid var(--neutral-150);
-  border-top: 4px solid transparent;
+  border-top: 3px solid transparent;
   background: var(--neutral-0);
 }
 .calendarWrap :global(.sx__week-grid__date[data-past]) { background: var(--neutral-50); }
-.calendarWrap :global(.sx__week-grid__day-name),
-.calendarWrap :global(.sx__week-grid__date-number) {
-  font-size: var(--font-base) !important;
-  font-weight: 500 !important;
+.weekHead {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  font-size: var(--font-sm);
+  font-weight: 500;
   line-height: 1.2;
-  text-transform: uppercase;
-  letter-spacing: 0;
-  color: var(--neutral-500) !important;
+  color: var(--neutral-300);
+  white-space: nowrap;
 }
-.calendarWrap :global(.sx__week-grid__day-name)::after { content: '•'; }
-
+.weekHeadDate { font-weight: 400; }
 .calendarWrap :global(.sx__week-grid__date--is-today) {
-  background: var(--primary-50);
+  background: var(--primary-25);
   border-top-color: var(--primary-300);
 }
-.calendarWrap :global(.sx__week-grid__date--is-today .sx__week-grid__day-name),
-.calendarWrap :global(.sx__week-grid__date--is-today .sx__week-grid__date-number) {
-  color: var(--primary-300) !important;
-  font-weight: 400 !important;
-  /* schedule-x draws a filled circle behind today's number; the top bar
-     and tint mark today instead. */
-  background: transparent !important;
-  width: auto !important;
-  height: auto !important;
-  border-radius: 0 !important;
-}
+.calendarWrap :global(.sx__week-grid__date--is-today) .weekHead { color: var(--primary-300); }
 
 /* The selected user's name, above the week's day cells. */
 .weekUserRow {
@@ -447,23 +474,3 @@
 
 /* Day view draws its own per-user columns; schedule-x stays mounted underneath. */
 .calendarHidden { display: none; }
-
-/* The List view's search, opened from the toolbar's search icon: it grows
-   out of the icon's spot and shrinks back into it on close. */
-.listSearch {
-  width: 240px;
-  overflow: hidden;
-  animation: listSearchIn var(--duration-base) var(--ease-out);
-}
-.listSearchClosing { animation: listSearchOut var(--duration-base) var(--ease-out) forwards; }
-@keyframes listSearchIn {
-  from { width: 28px; opacity: 0; }
-  to { width: 240px; opacity: 1; }
-}
-@keyframes listSearchOut {
-  from { width: 240px; opacity: 1; }
-  to { width: 28px; opacity: 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .listSearch, .listSearchClosing { animation: none; }
-}

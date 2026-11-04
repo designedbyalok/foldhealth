@@ -304,6 +304,20 @@ export function createPharmacyWorklistSlice(set, get) {
       });
     },
 
+    // A PDC typed by the team wins until cleared; Fold keeps calculating it
+    // underneath (`value` null goes back to the calculated PDC).
+    setPharmacyPdcOverride: (id, code, value) => {
+      const by = get().currentUserProfile?.name || 'You';
+      update(id, m => ({
+        ...m,
+        measures: m.measures.map(x => (x.code !== code ? x
+          : value == null ? { ...x, pdcManual: null, pdcManualOn: null, pdcManualBy: null }
+          : { ...x, pdcManual: value, pdcManualOn: todayMdy(), pdcManualBy: by })),
+      }), ['measures'], {
+        t: 'note', title: value == null ? `${code} PDC override cleared` : `${code} PDC set to ${value}%`,
+      });
+    },
+
     // A fill whose claim did not match (none inside the plan's window), was
     // reversed, or was billed outside Part D needs rework.
     // Create that follow-up task once per fill; the marker on the measure
@@ -495,7 +509,7 @@ export function createPharmacyWorklistSlice(set, get) {
         const followUpDue = pendingCodes.length ? withPickupFollowUp(m, entry.date, changes) : m.followUpDue;
         return { ...m, status: status || m.status, measures, followUpDue, callHistory: [entry, ...(m.callHistory || [])], _changes: changes };
       }, ['status', 'call_history', 'measures', 'follow_up_due'], (changes) => ({
-        t: 'call', title: `Pharmacy verification · ${entry.contact} (locked)`,
+        t: 'call', title: `Verification call · ${entry.party || 'Pharmacy'}: ${entry.contact} (locked)`,
         verificationId: entry.id,
         outcome: entry.outcome, outcomeColor: entry.result === 'failed' ? 'var(--status-warning)' : 'var(--status-success)',
         // What was answered for each drug, then the call note and what changed.

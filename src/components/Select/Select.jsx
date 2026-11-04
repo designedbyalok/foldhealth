@@ -21,6 +21,8 @@ import styles from './Select.module.css';
  *                 Options may also carry `action` ({ icon, label, onClick }): an icon
  *                 button at the row's end that does something else with the option
  *                 (e.g. preview it) instead of picking it, and closes the menu.
+ *                 Options may also carry `tooltip` (node): shown on hovering the row,
+ *                 e.g. why a disabled option can't be picked.
  *                 Options may also carry `badgeTooltip` (node): shown on hovering the
  *                 option's chip when `multiple` + `badges`; and `triggerLabel`, the
  *                 name shown for the pick (chip text, or the open field's hint) when
@@ -550,12 +552,17 @@ export const Select = forwardRef(function Select({
                     aria-hidden="true"
                   />
                 )}
-                {opt.icon ? (
-                  <span className={styles.itemLabel}>
-                    <Icon name={opt.icon} size={14} color="var(--neutral-300)" />
-                    {opt.label}
-                  </span>
-                ) : opt.action ? <span className={styles.itemText}>{opt.label}</span> : opt.label}
+                {(() => {
+                  const labelNode = opt.icon ? (
+                    <span className={styles.itemLabel}>
+                      <Icon name={opt.icon} size={14} color="var(--neutral-300)" />
+                      {opt.label}
+                    </span>
+                  ) : opt.action ? <span className={styles.itemText}>{opt.label}</span> : opt.label;
+                  return opt.tooltip
+                    ? <Tooltip label={opt.tooltip} placement="right" maxWidth={240} raised className={styles.itemTip}>{labelNode}</Tooltip>
+                    : labelNode;
+                })()}
                 {opt.action && (
                   <ActionButton
                     size="sm"

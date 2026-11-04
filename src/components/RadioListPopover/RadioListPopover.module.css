@@ -12,6 +12,27 @@
   flex-shrink: 0;
 }
 
+.search {
+  height: 32px;
+  border: 0.5px solid var(--neutral-200);
+  border-radius: 6px;
+  padding: 0 var(--space-2);
+  font-size: var(--font-base);
+  color: var(--neutral-500);
+  background: var(--neutral-0);
+  outline: none;
+  flex-shrink: 0;
+}
+.search::placeholder { color: var(--neutral-200); }
+.search:focus { border-color: var(--primary-300); }
+
+.empty {
+  padding: var(--space-3) var(--space-2);
+  text-align: center;
+  font-size: var(--font-md);
+  color: var(--neutral-200);
+}
+
 .list {
   display: flex;
   flex-direction: column;

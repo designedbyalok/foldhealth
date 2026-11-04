@@ -105,6 +105,33 @@ export function daysMissed(x) {
   return (today - c.start) / DAY - covered;
 }
 
+// PDC to date, so it keeps dropping on days the member goes without (a
+// monthly or biweekly gap report would leave it frozen at its last number).
+// With the plan's PDC and the report date (`pdcAsOf`): the plan's covered
+// days at the report, plus the days covered since by claims and fills on
+// record, over the days from the gap's start to today. Without a report date
+// the plan's number stands (null here). With no plan PDC: the fills on
+// record from the first fill of the year.
+export function pdcToDate(x) {
+  const c = yearCoverage(x);
+  const today = Math.min(todayUtc(), (c?.yearEnd ?? Infinity) + DAY);
+  if (x.pdc != null) {
+    const asOf = parseMdy(x.pdcAsOf);
+    const start = parseMdy(x.startDate) ?? c?.start;
+    if (asOf == null || start == null || asOf <= start || today <= asOf) return null;
+    let since = 0;
+    if (c) for (const t of c.covered) if (t >= asOf && t < today) since += 1;
+    const covered = (x.pdc / 100) * ((asOf - start) / DAY) + since;
+    return Math.min(100, Math.round((covered / ((today - start) / DAY)) * 100));
+  }
+  if (!c) return null;
+  const elapsed = (today - c.start) / DAY;
+  if (elapsed <= 0) return null;
+  let covered = 0;
+  for (const t of c.covered) if (t < today) covered += 1;
+  return Math.round((covered / elapsed) * 100);
+}
+
 // Medication possession ratio to date: days supply dispensed by counted
 // claims since the drug's first fill of the year, over the days since then,
 // capped at 100%. The gap shows its best-covered active drug, since any drug

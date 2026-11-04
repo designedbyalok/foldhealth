@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Popover } from '../Popover/Popover';
 import { Icon } from '../Icon/Icon';
 import { DownChevronIcon } from '../Icon/DownChevronIcon';
+import { Tooltip } from '../Tooltip/Tooltip';
 import styles from './MenuPopover.module.css';
 
 /**
@@ -20,7 +21,9 @@ import styles from './MenuPopover.module.css';
  * @param {object}   props
  * @param {DOMRect}  [props.anchorRect]
  * @param {object}   [props.anchorRef]
- * @param {Array}    props.items          – [{ key, icon, iconElement, label, trailing, danger, disabled, hint, tall }]
+ * @param {Array}    props.items          – [{ key, icon, iconElement, label, trailing, danger, disabled, hint, tall, tooltip }]
+ *                                          `tooltip` shows on hovering the row, e.g. why a
+ *                                          disabled item can't be picked.
  *                                          `tall` lets a row grow past 32px for a two-line label
  *                                          (e.g. a person row with a meta line).
  *                                          `iconElement` renders a custom node in the icon slot,
@@ -114,12 +117,15 @@ export function MenuPopover({
         if (item.divider) {
           return <div key={`divider-${idx}`} className={styles.divider} />;
         }
-        return (
+        const row = (
         <button
           key={item.key || item.label}
           type="button"
           role="menuitem"
-          disabled={!!item.disabled}
+          // A disabled button gets no hover, so one with a tooltip stays
+          // focusable and is only marked disabled (the click is ignored below).
+          disabled={!!item.disabled && !item.tooltip}
+          aria-disabled={item.disabled || undefined}
           title={item.hint}
           className={[
             styles.row,
@@ -144,6 +150,9 @@ export function MenuPopover({
           )}
         </button>
         );
+        return item.tooltip ? (
+          <Tooltip key={item.key || item.label} label={item.tooltip} placement="right" maxWidth={240} raised className={styles.rowTip}>{row}</Tooltip>
+        ) : row;
       })}
     </Popover>
   );

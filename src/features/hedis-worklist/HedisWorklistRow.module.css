@@ -296,13 +296,9 @@
    the code. */
 .gapItemPrevious { background: var(--neutral-25); }
 .gapItemPrevious > * { opacity: 0.6; }
+/* Plain grey text beside the code, not a chip. */
 .previousTag {
-  padding: 0 var(--space-1);
-  border: 0.5px solid var(--neutral-150);
-  border-radius: 4px;
-  background: var(--neutral-50);
-  font-size: var(--font-2xs);
-  line-height: 1.6;
+  font-size: var(--font-sm);
   color: var(--neutral-300);
   white-space: nowrap;
 }

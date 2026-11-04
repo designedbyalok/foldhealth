@@ -11,7 +11,8 @@ import styles from './BadgeSelect.module.css';
  * @param {object}   props
  * @param {string}   [props.label]           – prefix on the badge ("View By"); omit to show the value alone
  * @param {string}   props.value
- * @param {string[]} props.options
+ * @param {(string|{ value: string, label?: string, disabled?: boolean, tooltip?: string })[]} props.options
+ *                                           – an option can be disabled, with a tooltip saying why
  * @param {function} props.onChange          – (value) => void
  * @param {'left'|'right'} [props.align='right'] – which edge of the menu meets the badge
  * @param {string}   [props.tone='neutral']  – Badge tone, e.g. a status colour
@@ -43,7 +44,10 @@ export function BadgeSelect({ label, value, options, onChange, align = 'right', 
           align={align}
           width="auto"
           ariaLabel={label || 'Options'}
-          items={options.map(o => ({ key: o, label: o, selected: o === value }))}
+          items={options.map((o) => {
+            const opt = typeof o === 'string' ? { value: o } : o;
+            return { key: opt.value, label: opt.label || opt.value, selected: opt.value === value, disabled: opt.disabled, tooltip: opt.tooltip };
+          })}
           onSelect={(key) => { onChange(key); setOpen(false); }}
           onClose={() => setOpen(false)}
         />

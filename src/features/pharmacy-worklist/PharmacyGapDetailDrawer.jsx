@@ -110,9 +110,13 @@ function PharmacyGapDrawerBody({ target, row }) {
   // the prescribers of their drugs, through the same call popover as Contacts.
   const openNumberCallPopover = useAppStore(st => st.openNumberCallPopover);
   const logPharmacyDial = useAppStore(st => st.logPharmacyDial);
-  const pharmacyContact = useMemo(() => pharmaciesUsed(row).find(p => p.phone) || null, [row]);
+  // Every pharmacy and prescriber with a phone, from the gap report and the
+  // claims; with more than one, the menu asks who to call.
+  const pharmacyContacts = useMemo(() => pharmaciesUsed(row).filter(p => p.phone), [row]);
   const prescriberContacts = useMemo(() => prescribersOf(row).filter(p => p.phone), [row]);
+  const [callPick, setCallPick] = useState(null); // { title, contacts }
   const callContact = (c) => openNumberCallPopover({ number: c.phone, label: c.name, onDial: () => logPharmacyDial?.(row.id, c.name, c.phone) }, moreBtnRef);
+  const callOneOf = (title, contacts) => (contacts.length === 1 ? callContact(contacts[0]) : setCallPick({ title, contacts }));
   const moreBtnRef = useRef(null);
 
   // One outreach state backs the side-workspace form and the Outreach tab
@@ -301,7 +305,7 @@ function PharmacyGapDrawerBody({ target, row }) {
                   anchorRect={moreRect}
                   items={[
                     { key: 'verify', label: 'Verify Pharmacy', icon: 'solar:clipboard-check-linear', disabled: !toVerify.measures.length, hint: toVerify.measures.length ? undefined : 'Nothing left to verify' },
-                    { key: 'callPharmacy', label: 'Call Pharmacist', icon: 'solar:phone-linear', disabled: !pharmacyContact, hint: pharmacyContact ? pharmacyContact.name : 'No pharmacy phone on file' },
+                    { key: 'callPharmacy', label: 'Call Pharmacist', icon: 'solar:phone-linear', disabled: !pharmacyContacts.length, hint: pharmacyContacts.length === 1 ? pharmacyContacts[0].name : pharmacyContacts.length ? `${pharmacyContacts.length} pharmacies` : 'No pharmacy phone on file' },
                     { key: 'callPrescriber', label: 'Call Prescriber', icon: 'solar:phone-linear', disabled: !prescriberContacts.length, hint: prescriberContacts.length === 1 ? prescriberContacts[0].name : prescriberContacts.length ? `${prescriberContacts.length} prescribers` : 'No prescriber phone on file' },
                     { key: 'outreach', label: 'Log Outreach', icon: 'solar:phone-calling-linear', disabled: !picked.length },
                     { key: 'barriers', label: 'Add Barrier', icon: BARRIER_ICON },
@@ -309,15 +313,30 @@ function PharmacyGapDrawerBody({ target, row }) {
                   onSelect={(key) => {
                     setMoreRect(null);
                     if (key === 'verify') setWorkspace('verify');
-                    else if (key === 'callPharmacy') callContact(pharmacyContact);
-                    // Several prescribers: Contacts has the card that asks which one.
-                    else if (key === 'callPrescriber') (prescriberContacts.length === 1 ? callContact(prescriberContacts[0]) : setTab('contacts'));
+                    else if (key === 'callPharmacy') callOneOf('Call which pharmacy?', pharmacyContacts);
+                    else if (key === 'callPrescriber') callOneOf('Call which prescriber?', prescriberContacts);
                     else if (key === 'outreach') openOutreach();
                     else if (key === 'barriers') setWorkspace('barriers');
                   }}
                   onClose={() => setMoreRect(null)}
                   width={220}
                   ariaLabel="More actions"
+                />
+              )}
+              {callPick && (
+                <MenuPopover
+                  anchorRef={moreBtnRef}
+                  items={[
+                    { section: callPick.title },
+                    ...callPick.contacts.map(c => ({
+                      key: c.name, label: c.name, icon: 'solar:phone-linear', tall: true,
+                      hint: [c.phone, c.lastFill ? `Last fill ${c.lastFill}` : null, c.drugs?.length ? c.drugs.join(', ') : null].filter(Boolean).join(' • '),
+                    })),
+                  ]}
+                  onSelect={(key) => { const c = callPick.contacts.find(x => x.name === key); setCallPick(null); if (c) callContact(c); }}
+                  onClose={() => setCallPick(null)}
+                  width={300}
+                  ariaLabel={callPick.title}
                 />
               )}
             </div>

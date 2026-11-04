@@ -26,6 +26,8 @@
   display: flex;
   width: 100%;
 }
+.fullWidth .tipFull { flex: 1 1 0; min-width: 0; }
+.fullWidth .tipFull .btn { width: 100%; }
 .fullWidth .btn {
   flex: 1 1 0;
   min-width: 0;

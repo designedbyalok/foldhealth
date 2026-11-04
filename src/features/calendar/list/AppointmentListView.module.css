@@ -13,9 +13,8 @@
 /* The empty state, centred in the list. */
 .empty {
   display: flex;
-  align-items: center;
   justify-content: center;
-  min-height: 100%;
+  padding-top: calc(var(--space-10) * 2);
 }
 
 .scroller {
@@ -60,6 +59,11 @@
   display: inline-flex;
   margin-left: var(--space-1);
 }
+/* A count alone: at least as wide as it is tall, the number centered. */
+.countSquare {
+  min-width: 20px;
+  justify-content: center;
+}
 
 .caret { transform: rotate(-90deg); transition: transform var(--duration-base) var(--ease-out); }
 .caretOpen { composes: caret; transform: rotate(0deg); }
@@ -77,8 +81,10 @@
    details, Provider OOO) is no taller than one without. */
 .row { height: 52px; }
 
+/* An open provider's appointments sit on a light tint under the white
+   provider row; picked and highlighted rows below override it. */
+.row td { background: var(--primary-25); transition: background-color var(--duration-base) var(--ease-out); }
 /* Just reassigned to me (from the notification), for 3 seconds. */
-.row td { transition: background-color var(--duration-base) var(--ease-out); }
 .rowHighlight td { background: var(--primary-50); }
 
 .rowPicked td { background: var(--primary-50); }
@@ -368,3 +374,67 @@
   border-radius: var(--space-1);
 }
 .appliesBody .applyRow:last-child { border-bottom: 0; }
+
+/* ── Group appointment: the session row and its drawer ── */
+.row { cursor: pointer; }
+/* Two panels: the session's details, then its members beside them. */
+.groupDrawer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: var(--space-6);
+  align-items: start;
+  min-height: 100%;
+}
+/* Tracking (the legacy members panel): grey, full height, its own search. */
+.trackingPanel {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  margin: calc(var(--space-4) * -1) calc(var(--space-4) * -1) calc(var(--space-4) * -1) 0;
+  background: var(--neutral-50);
+  border-left: 0.5px solid var(--neutral-150);
+}
+.trackingHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+.trackingTitle { margin: 0; font-size: var(--font-lg); font-weight: 500; color: var(--neutral-500); }
+.trackingList { display: flex; flex-direction: column; padding: 0 var(--space-4); }
+.trackingRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+.trackingInfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(var(--space-1) / 2); }
+.trackingSub { font-size: var(--font-sm); color: var(--neutral-300); overflow-wrap: anywhere; }
+.trackingStatus { display: inline-flex; margin-top: var(--space-1); }
+.sessionMeta { display: flex; flex-direction: column; gap: var(--space-4); }
+.sessionHead { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.sessionTitle { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.sessionName { font-size: var(--font-xl); font-weight: 500; line-height: 1.2; color: var(--neutral-500); }
+.copyLink { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--font-sm); }
+.totalMembers {
+  padding: var(--space-3);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-500);
+}
+.sessionMetaRow { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.sessionMetaLabel { font-size: var(--font-sm); color: var(--neutral-300); }
+.sessionMetaValue {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+}
+.memberActions { display: inline-flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
+.membersEmpty { padding: var(--space-3); font-size: var(--font-sm); color: var(--neutral-300); }
