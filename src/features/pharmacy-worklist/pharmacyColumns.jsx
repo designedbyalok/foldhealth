@@ -3,10 +3,11 @@ import { AssigneeChange } from '../../components/AssigneeChange/AssigneeChange';
 import { Badge } from '../../components/Badge/Badge';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { PriorityIcon } from '../../components/PriorityIcon/PriorityIcon';
-import { canSetGapStatus, gapBadge, MEASURE_NAMES, PRIORITY_LEVELS, isActiveGap, daysFromToday } from './pharmacyWorklist.utils';
+import { canSetGapStatus, gapBadge, MEASURE_NAMES, PRIORITY_LEVELS, daysFromToday } from './pharmacyWorklist.utils';
 import { fillsToStayCompliant } from './fillEvents';
 import { OutreachStatusCell } from '../../components/OutreachStatusCell/OutreachStatusCell';
-import { ClaimReconCell, Dash, DateWithDays, DaysToSaveValue, DrugsCount, FailDateValue, NextFillDueValue, OpenCareGaps, PdcValue, PriorYearPdc, ProgressCell, SavabilityBadge, SubStatus } from './PharmacyCells';
+import { ClaimReconCell, Dash, DateWithDays, DaysToSaveValue, DrugsCount, FailDateValue, NextFillDueValue, OpenCareGaps, PriorYearPdc, ProgressCell, SavabilityBadge, SubStatus } from './PharmacyCells';
+import { EditablePdc } from './PdcEditor';
 import styles from './PharmacyWorklistRow.module.css';
 
 
@@ -105,12 +106,24 @@ export const PHARMACY_MIDDLE_COLUMNS = [
     )),
   },
   {
+    key: 'nextFillDue', label: 'Next Fill Due', sortKey: 'nextFillDueSort', sortType: 'date', getTdClassName: gapTd(false),
+    renderCell: perGap((g) => <NextFillDueValue gap={g} />),
+  },
+  {
+    key: 'claimRecon', label: 'Claim Reconciliation', sortKey: 'reconRank', sortType: 'number', getTdClassName: gapTd(false), stopRowClickPropagation: true,
+    renderCell: perGap((g, m, ctx) => (g.recon
+      ? <ClaimReconCell recon={g.recon} followUpTask={g.claimFollowUpTask} onOpenClaims={() => ctx.openClaimRework(g.code, g.recon.medId)} />
+      : <Dash />)),
+  },
+  {
     key: 'startDate', label: 'Start Date', getTdClassName: gapTd(false),
     renderCell: perGap((g) => (g.startDate ? <span className={styles.dateText}>{g.startDate}</span> : <Dash />)),
   },
   {
     key: 'pdc', label: 'PDC', sortKey: 'pdc', sortType: 'number', getTdClassName: gapTd(false),
-    renderCell: perGap((g) => <PdcValue pdc={g.pdc} open={isActiveGap(g.status)} source={g.pdcSource} medications={g.medications} />),
+    stopRowClickPropagation: true,
+    // Click the pencil to set it by hand (Use calculated goes back).
+    renderCell: perGap((g, m) => <EditablePdc gap={g} memberId={m.id} />),
   },
   {
     key: 'failDate', label: 'Fail Date (Absolute)', sortKey: 'failDateSort', sortType: 'date', getTdClassName: gapTd(false),
@@ -121,16 +134,6 @@ export const PHARMACY_MIDDLE_COLUMNS = [
   {
     key: 'daysToSave', label: 'Days to Save', sortKey: 'daysToSaveSort', sortType: 'number', getTdClassName: gapTd(false),
     renderCell: perGap((g) => <DaysToSaveValue gap={g} />),
-  },
-  {
-    key: 'nextFillDue', label: 'Next Fill Due', sortKey: 'nextFillDueSort', sortType: 'date', getTdClassName: gapTd(false),
-    renderCell: perGap((g) => <NextFillDueValue gap={g} />),
-  },
-  {
-    key: 'claimRecon', label: 'Claim Reconciliation', sortKey: 'reconRank', sortType: 'number', getTdClassName: gapTd(false), stopRowClickPropagation: true,
-    renderCell: perGap((g, m, ctx) => (g.recon
-      ? <ClaimReconCell recon={g.recon} followUpTask={g.claimFollowUpTask} onOpenClaims={() => ctx.openClaimRework(g.code, g.recon.medId)} />
-      : <Dash />)),
   },
   // Proposed (Richard), to confirm with Monique: hidden until then.
   {

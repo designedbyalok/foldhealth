@@ -110,6 +110,9 @@
 }
 
 .viaLink {
+  border: none;
+  background: none;
+  padding: 0;
   font-size: var(--font-md);
   font-weight: 500;
   color: var(--primary-300);

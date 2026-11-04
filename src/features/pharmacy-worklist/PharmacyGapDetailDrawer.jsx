@@ -14,7 +14,7 @@ import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
 import { Tabs } from '../../components/Tabs/Tabs';
 import { SegmentedControl } from '../../components/SegmentedControl/SegmentedControl';
 import { clinicalRolesPickerLabel } from '../../lib/worklistAssignee';
-import { MEASURE_ORDER, PROGRESS_TONE, enrichPharmacyMember, medLabel, needsVerification, pharmaciesUsed, prescribersOf } from './pharmacyWorklist.utils';
+import { MEASURE_ORDER, PROGRESS_TONE, contactCallTarget, enrichPharmacyMember, medLabel, pharmaciesUsed, prescribersOf } from './pharmacyWorklist.utils';
 import { BARRIER_ICON } from './adherencePicklists';
 import { PharmacyContacts, PharmacyGapsCard } from './program/PharmacySnapshotStep';
 import { MedicationDetail, PharmacyMedicationReview } from './program/PharmacyMedicationReview';
@@ -47,7 +47,7 @@ const TABS = [
 
 const WORKSPACE_TITLE = {
   outreach: 'Add Outreach',
-  verify: 'Pharmacy Verification',
+  verify: 'Assessment',
   barriers: 'Barriers & Interventions',
 };
 
@@ -89,7 +89,6 @@ function PharmacyGapDrawerBody({ target, row }) {
   const scoped = useMemo(() => ({ ...row, measures: row.measures.filter(x => selected.has(x.code)) }), [row, selected]);
   // The picked gaps still to confirm with the pharmacy: Verify with Pharmacy
   // shows while any are left, and its form asks about only those.
-  const toVerify = useMemo(() => ({ ...scoped, measures: scoped.measures.filter(x => needsVerification(x, row)) }), [scoped, row]);
   // Update Barriers' form lives here so its Save sits in the pane header.
   const barrierForm = useBarrierForm(scoped);
   // Pharmacy Verification's Lock & Log Call, also in the pane header.
@@ -100,11 +99,7 @@ function PharmacyGapDrawerBody({ target, row }) {
   const rework = target.view === 'claims' && target.medId;
   // Opened from the Outreach cell's View All: straight to Outreaches.
   const [tab, setTab] = useState(rework || target.view === 'outreach' ? 'outreach' : 'medication');
-  const [openWorkspace, setWorkspace] = useState(rework ? { medId: target.medId, tab: 'claims' } : null); // 'outreach' | 'verify' | 'barriers' | { medId, tab? }
-  // The verify pane shows only while a gap in scope still needs verifying
-  // (switching the gap toggle to verified gaps hides it, rather than an
-  // empty form).
-  const workspace = openWorkspace === 'verify' && !toVerify.measures.length ? null : openWorkspace;
+  const [workspace, setWorkspace] = useState(rework ? { medId: target.medId, tab: 'claims' } : null); // 'outreach' | 'verify' | 'barriers' | { medId, tab? }
   const [moreRect, setMoreRect] = useState(null);
   // The More menu's call actions: the pharmacy the member last filled at and
   // the prescribers of their drugs, through the same call popover as Contacts.
@@ -114,9 +109,12 @@ function PharmacyGapDrawerBody({ target, row }) {
   // claims; with more than one, the menu asks who to call.
   const pharmacyContacts = useMemo(() => pharmaciesUsed(row).filter(p => p.phone), [row]);
   const prescriberContacts = useMemo(() => prescribersOf(row).filter(p => p.phone), [row]);
-  const [callPick, setCallPick] = useState(null); // { title, contacts }
-  const callContact = (c) => openNumberCallPopover({ number: c.phone, label: c.name, onDial: () => logPharmacyDial?.(row.id, c.name, c.phone) }, moreBtnRef);
-  const callOneOf = (title, contacts) => (contacts.length === 1 ? callContact(contacts[0]) : setCallPick({ title, contacts }));
+  const [callPick, setCallPick] = useState(null); // { title, contacts, anchor }
+  // The call popover and the picker open from whichever button was used.
+  const pharmacistBtnRef = useRef(null);
+  const prescriberBtnRef = useRef(null);
+  const callContact = (c, kind, anchor = moreBtnRef) => openNumberCallPopover({ ...contactCallTarget(row, c, kind), onDial: (number, line) => logPharmacyDial?.(row.id, c.name, number, line) }, anchor);
+  const callOneOf = (title, kind, contacts, anchor = moreBtnRef) => (contacts.length === 1 ? callContact(contacts[0], kind, anchor) : setCallPick({ title, kind, contacts, anchor }));
   const moreBtnRef = useRef(null);
 
   // One outreach state backs the side-workspace form and the Outreach tab
@@ -152,7 +150,6 @@ function PharmacyGapDrawerBody({ target, row }) {
   const year = (m.gaps.find(g => g.failDate)?.failDate || '').slice(6) || String(new Date().getFullYear());
   // What the outreach rules ask for next on the picked gaps.
   const prompts = m.gaps.filter(g => selected.has(g.code)).map(g => ({ g, escalate: escalation(g, m) }));
-  const escalating = prompts.filter(p => p.escalate);
   const inSplit = !!workspace;
   const openMed = workspace?.medId
     ? m.gaps.flatMap(g => g.medications.map(d => ({ ...d, measure: g.code }))).find(d => d.id === workspace.medId)
@@ -217,7 +214,7 @@ function PharmacyGapDrawerBody({ target, row }) {
                 <MeasureCode code={openMed.measure} />
               </span>
             ) : workspace?.verification ? (
-              <span className={styles.paneTitle}>{`Pharmacy Verification · ${workspace.verification.date}`}</span>
+              <span className={styles.paneTitle}>{`Assessment · ${workspace.verification.date}`}</span>
             ) : (
               <span className={styles.paneTitle}>
                 {`${WORKSPACE_TITLE[workspace]}${scope === 'all' ? '' : ` · ${scopeLabel}`}`}
@@ -242,14 +239,14 @@ function PharmacyGapDrawerBody({ target, row }) {
                   <span className={styles.headerDivider} />
                 </>
               )}
-              <CloseButton size={18} onClick={closeWorkspace} label={`Close ${openMed ? 'medication' : WORKSPACE_TITLE[workspace] || 'Pharmacy Verification'}`} />
+              <CloseButton size={18} onClick={closeWorkspace} label={`Close ${openMed ? 'medication' : WORKSPACE_TITLE[workspace] || 'Assessment'}`} />
             </div>
           </div>
           <div className={styles.leftPaneBody}>
             {workspace === 'outreach' && (
               <OutreachTabView tab={outreach} hideLogForRow hideActivity hideFormFooter flush taskMember={m.name} />
             )}
-            {workspace === 'verify' && <PharmacyVerificationStep member={toVerify} program={PHARM_PROGRAM} onLocked={() => setWorkspace(null)} onLockAction={setVerifyAction} />}
+            {workspace === 'verify' && <PharmacyVerificationStep member={scoped} program={PHARM_PROGRAM} onLocked={() => setWorkspace(null)} onLockAction={setVerifyAction} />}
             {workspace === 'barriers' && <PharmacyBarrierStep member={scoped} form={barrierForm} />}
             {workspace?.verification && <PharmacyVerificationStep key={workspace.verification.id} record={workspace.verification} program={PHARM_PROGRAM} />}
             {/* A note click remounts the pane so it scrolls to Notes again, even on the drug already open. */}
@@ -304,7 +301,7 @@ function PharmacyGapDrawerBody({ target, row }) {
                 <MenuPopover
                   anchorRect={moreRect}
                   items={[
-                    { key: 'verify', label: 'Verify Pharmacy', icon: 'solar:clipboard-check-linear', disabled: !toVerify.measures.length, hint: toVerify.measures.length ? undefined : 'Nothing left to verify' },
+                    { key: 'verify', label: 'Assessment', icon: 'solar:clipboard-check-linear' },
                     { key: 'callPharmacy', label: 'Call Pharmacist', icon: 'solar:phone-linear', disabled: !pharmacyContacts.length, hint: pharmacyContacts.length === 1 ? pharmacyContacts[0].name : pharmacyContacts.length ? `${pharmacyContacts.length} pharmacies` : 'No pharmacy phone on file' },
                     { key: 'callPrescriber', label: 'Call Prescriber', icon: 'solar:phone-linear', disabled: !prescriberContacts.length, hint: prescriberContacts.length === 1 ? prescriberContacts[0].name : prescriberContacts.length ? `${prescriberContacts.length} prescribers` : 'No prescriber phone on file' },
                     { key: 'outreach', label: 'Log Outreach', icon: 'solar:phone-calling-linear', disabled: !picked.length },
@@ -313,8 +310,8 @@ function PharmacyGapDrawerBody({ target, row }) {
                   onSelect={(key) => {
                     setMoreRect(null);
                     if (key === 'verify') setWorkspace('verify');
-                    else if (key === 'callPharmacy') callOneOf('Call which pharmacy?', pharmacyContacts);
-                    else if (key === 'callPrescriber') callOneOf('Call which prescriber?', prescriberContacts);
+                    else if (key === 'callPharmacy') callOneOf('Call which pharmacy?', 'Pharmacy', pharmacyContacts);
+                    else if (key === 'callPrescriber') callOneOf('Call which prescriber?', 'Prescriber', prescriberContacts);
                     else if (key === 'outreach') openOutreach();
                     else if (key === 'barriers') setWorkspace('barriers');
                   }}
@@ -325,7 +322,7 @@ function PharmacyGapDrawerBody({ target, row }) {
               )}
               {callPick && (
                 <MenuPopover
-                  anchorRef={moreBtnRef}
+                  anchorRef={callPick.anchor}
                   items={[
                     { section: callPick.title },
                     ...callPick.contacts.map(c => ({
@@ -333,7 +330,7 @@ function PharmacyGapDrawerBody({ target, row }) {
                       hint: [c.phone, c.lastFill ? `Last fill ${c.lastFill}` : null, c.drugs?.length ? c.drugs.join(', ') : null].filter(Boolean).join(' • '),
                     })),
                   ]}
-                  onSelect={(key) => { const c = callPick.contacts.find(x => x.name === key); setCallPick(null); if (c) callContact(c); }}
+                  onSelect={(key) => { const c = callPick.contacts.find(x => x.name === key); setCallPick(null); if (c) callContact(c, callPick.kind, callPick.anchor); }}
                   onClose={() => setCallPick(null)}
                   width={300}
                   ariaLabel={callPick.title}
@@ -367,10 +364,13 @@ function PharmacyGapDrawerBody({ target, row }) {
                 <Icon name="custom:ai" size={14} color="var(--primary-300)" /> Suggested Actions
               </div>
               <div className={local.actionRow}>
-                <Button onClick={openOutreach}>Add Outreach</Button>
-                {toVerify.measures.length > 0 && <Button variant="soft" onClick={() => setWorkspace('verify')}>Verify with Pharmacy</Button>}
-                <Button variant="soft" onClick={() => setWorkspace('barriers')}>Update Barriers</Button>
-                {escalating.length > 0 && <Button variant="soft" leadingIcon="solar:stethoscope-linear" onClick={openOutreach}>Call Prescriber</Button>}
+                {/* Calls lead: Call Pharmacist primary, Call Prescriber tertiary,
+                    then the logging actions as secondary. */}
+                <Button ref={pharmacistBtnRef} leadingIcon="solar:phone-linear" disabled={!pharmacyContacts.length} onClick={() => callOneOf('Call which pharmacy?', 'Pharmacy', pharmacyContacts, pharmacistBtnRef)}>Call Pharmacist</Button>
+                <Button ref={prescriberBtnRef} variant="soft" leadingIcon="solar:stethoscope-linear" disabled={!prescriberContacts.length} onClick={() => callOneOf('Call which prescriber?', 'Prescriber', prescriberContacts, prescriberBtnRef)}>Call Prescriber</Button>
+                <Button variant="outline" onClick={openOutreach}>Add Outreach</Button>
+                <Button variant="outline" onClick={() => setWorkspace('verify')}>Assessment</Button>
+                <Button variant="outline" onClick={() => setWorkspace('barriers')}>Update Barriers</Button>
               </div>
             </>
           )}

@@ -21,7 +21,7 @@ const GAP_CODES = /\b(MAD|MAH|MAC)\b/g;
 function activityType(e) {
   if (e.line) return 'Barrier & intervention';
   const title = e.title || '';
-  if (VERIFICATION_TITLE.test(title)) return 'Verification';
+  if (VERIFICATION_TITLE.test(title)) return 'Assessment';
   if (e.t === 'outreach') return 'Outreach';
   if (e.t === 'call') return 'Call';
   if (e.t === 'comment') return 'Comment';

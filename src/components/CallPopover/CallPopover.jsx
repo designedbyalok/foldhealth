@@ -140,8 +140,11 @@ function PatientCall({ p }) {
 }
 
 /**
- * Prescriber / pharmacy call: the number is fixed, so the only choice is
- * which of the organization's call lines to call from.
+ * Prescriber / pharmacy call, laid out like the patient call: the contact's
+ * numbers (Last Used / Most Used from earlier dials), then the line to call
+ * via, with Switch Number to pick another of the organization's lines.
+ * `target`: { label, kind?, number, numbers?: [{ number, label, uses,
+ * lastUsed, mostUsed }], lastLineId?, onDial?(number, { id, name }) }.
  */
 function NumberCall({ target }) {
   const closeCallPopover = useAppStore(s => s.closeCallPopover);
@@ -149,17 +152,21 @@ function NumberCall({ target }) {
   const callLines = useAppStore(s => s.callLines);
   const fetchCallsConfig = useAppStore(s => s.fetchCallsConfig);
   const lines = (callLines || []).filter(l => l.phoneNumber);
-  const [lineId, setLineId] = useState(null);
-  const selected = lines.find(l => l.id === lineId) || lines[0];
+  const numbers = target.numbers?.length ? target.numbers : [{ number: target.number, label: 'Main' }];
+  const [number, setNumber] = useState(() => (numbers.find(n => n.lastUsed) || numbers[0]).number);
+  const [lineId, setLineId] = useState(target.lastLineId);
+  const [switching, setSwitching] = useState(false);
+  const line = lines.find(l => l.id === lineId) || lines[0];
 
   useEffect(() => { if (!callLines?.length) fetchCallsConfig(); }, [callLines, fetchCallsConfig]);
 
+  const usedText = (n) => (n.uses == null ? null : n.uses === 0 ? 'Not called yet' : n.uses === 1 ? 'Used once' : `Used ${n.uses} times`);
   return (
     <>
       <div className={styles.header}>
         <div>
           <div className={styles.title}>Call {target.label || target.number}</div>
-          {target.label && <div className={styles.sub}>{target.number}</div>}
+          {target.kind && <div className={styles.sub}>{target.kind}</div>}
         </div>
         <button
           type="button"
@@ -171,25 +178,59 @@ function NumberCall({ target }) {
         </button>
       </div>
 
-      <div className={styles.sectionLabel}>Call Via</div>
-      {lines.length === 0 && <div className={styles.empty}>No call lines are set up yet.</div>}
-      {lines.map(line => (
-        <label key={line.id} className={`${styles.number} ${line === selected ? styles.numberSelected : ''}`}>
-          <input type="radio" name="callLine" checked={line === selected} onChange={() => setLineId(line.id)} />
+      <div className={styles.sectionLabel}>{target.kind ? `${target.kind} Numbers` : 'Numbers'}</div>
+      {numbers.map(n => (
+        <label key={n.number} className={`${styles.number} ${n.number === number ? styles.numberSelected : ''}`}>
+          <input type="radio" name="callNumber" checked={n.number === number} onChange={() => setNumber(n.number)} />
           <div className={styles.numberInfo}>
-            <div className={styles.numberValue}>{line.phoneNumber}</div>
-            <div className={styles.numberLabel}>{lineName(line)}</div>
+            <div className={styles.numberValue}>{n.number}</div>
+            <div className={styles.numberLabel}>{[n.label, usedText(n)].filter(Boolean).join(' • ')}</div>
           </div>
+          {(n.mostUsed || n.lastUsed) && (
+            <div className={styles.tags}>
+              {n.mostUsed && <span className={`${styles.tag} ${styles.mostUsed}`}>Most Used</span>}
+              {n.lastUsed && <span className={`${styles.tag} ${styles.lastUsed}`}>Last Used</span>}
+            </div>
+          )}
         </label>
       ))}
 
+      <div className={styles.via}>
+        Call Via
+        {lines.length > 1 && (
+          <button type="button" className={styles.viaLink} onClick={() => setSwitching(v => !v)} aria-expanded={switching}>
+            ⇆ {switching ? 'Done' : 'Switch Number'}
+          </button>
+        )}
+      </div>
+      {lines.length === 0 && <div className={styles.empty}>No call lines are set up yet.</div>}
+      {switching ? lines.map(l => (
+        <label key={l.id} className={`${styles.number} ${l === line ? styles.numberSelected : ''}`}>
+          <input type="radio" name="callLine" checked={l === line} onChange={() => { setLineId(l.id); setSwitching(false); }} />
+          <div className={styles.numberInfo}>
+            <div className={styles.numberValue}>{l.phoneNumber}</div>
+            <div className={styles.numberLabel}>{lineName(l)}</div>
+          </div>
+          {l.id === target.lastLineId && <div className={styles.tags}><span className={`${styles.tag} ${styles.lastUsed}`}>Last Used</span></div>}
+        </label>
+      )) : line && (
+        <div className={styles.caller}>
+          <Icon name="solar:phone-linear" size={18} color="var(--neutral-300)" />
+          <div className={styles.callerInfo}>
+            <div className={styles.callerName}>{lineName(line)}</div>
+            <div className={styles.callerPhone}>{line.phoneNumber}</div>
+          </div>
+          {line.id === target.lastLineId && <span className={`${styles.tag} ${styles.lastUsed}`}>Last Used</span>}
+        </div>
+      )}
+
       <button
         className={styles.callBtn}
-        disabled={!selected}
+        disabled={!line || !number}
         onClick={() => {
           closeCallPopover();
-          target.onDial?.();
-          showToast(`Calling ${target.label || target.number} from the ${lineName(selected)} line...`);
+          target.onDial?.(number, { id: line.id, name: lineName(line) });
+          showToast(`Calling ${target.label || number} at ${number} from the ${lineName(line)} line...`);
         }}
       >
         <Icon name="solar:phone-calling-bold" size={18} />

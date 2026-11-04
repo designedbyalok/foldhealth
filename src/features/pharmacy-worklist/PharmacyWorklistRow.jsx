@@ -11,7 +11,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { worklistMemberCallId } from '../../lib/patientCall';
 import { clinicalRolesPickerLabel } from '../../lib/worklistAssignee';
 import { PharmacyActivityDrawer } from './program/PharmacyActivityLog';
-import { MANUAL_GAP_STATUSES, isReversalReopen, pharmaciesUsed, prescribersOf } from './pharmacyWorklist.utils';
+import { MANUAL_GAP_STATUSES, contactCallTarget, isReversalReopen, pharmaciesUsed, prescribersOf } from './pharmacyWorklist.utils';
 import styles from './PharmacyWorklistRow.module.css';
 
 const MAX_INLINE_GAPS = 2;
@@ -78,54 +78,48 @@ export function PharmacyWorklistRow({ member, columns, hiddenSet, isSelected, on
     e.stopPropagation();
     openQuickView?.({ id: m.patientId || m.id, name: m.name, initials: m.initials, gender: m.gender, age: m.age, memberId: m.memberId, language: m.language });
   };
-  // Pharmacy calls can go to the patient, a pharmacy the fills came from,
-  // or a prescriber of the member's drugs; pick who first, then the line.
+  // The call chevron: Call Member, Call Pharmacist or Call Prescriber, each
+  // into the call widget (numbers, Last Used, Switch Number). Several
+  // pharmacies or prescribers ask which one first.
+  const [callPick, setCallPick] = useState(null); // { kind, contacts } while choosing
+  // The menu closes itself after a pick; stepping into "which one?" keeps it.
+  const keepCallMenu = useRef(false);
   const handleCallClick = (e) => {
     e.stopPropagation();
+    setCallPick(null);
     setShowCallMenu(v => !v);
   };
-  const contacts = showCallMenu
-    ? { pharmacies: pharmaciesUsed(m), prescribers: prescribersOf(m) }
-    : { pharmacies: [], prescribers: [] };
-  const callLabel = (name, line) => (
-    <span className={styles.callOption}>
-      <span className={styles.callName}>{name}</span>
-      <span className={styles.callMeta}>{line}</span>
-    </span>
-  );
-  const contactItem = (prefix, c, meta) => {
-    const line = [c.phone || 'No phone on file', meta].filter(Boolean).join(' • ');
-    return {
-      key: `${prefix}:${c.name}`,
-      icon: 'solar:phone-linear',
-      label: callLabel(c.name, line),
-      hint: line,
-      disabled: !c.phone,
-      tall: true,
-      contact: c,
-    };
-  };
-  const callItems = [
-    { section: 'Patient' },
-    { key: 'patient', icon: 'solar:user-linear', label: callLabel(m.name, m.phone || 'Choose a number'), tall: true },
-    { section: 'Pharmacist' },
-    ...(contacts.pharmacies.length
-      ? contacts.pharmacies.map(p => contactItem('pharmacy', p, p.lastFill ? `Last fill ${p.lastFill}` : ''))
-      : [{ key: 'pharmacy:none', label: 'No pharmacy on file', disabled: true }]),
-    { section: 'Prescriber' },
-    ...(contacts.prescribers.length
-      ? contacts.prescribers.map(p => contactItem('prescriber', p, p.drugs.join(', ')))
-      : [{ key: 'prescriber:none', label: 'No prescriber on file', disabled: true }]),
-  ];
-  const handleCallSelect = (key, item) => {
-    setShowCallMenu(false);
-    if (key === 'patient') {
+  const callable = showCallMenu
+    ? { Pharmacy: pharmaciesUsed(m).filter(c => c.phone), Prescriber: prescribersOf(m).filter(c => c.phone) }
+    : { Pharmacy: [], Prescriber: [] };
+  const whoHint = (list, kind) => (list.length === 1 ? list[0].name : list.length ? `${list.length} ${kind === 'Pharmacy' ? 'pharmacies' : 'prescribers'}` : `No ${kind.toLowerCase()} phone on file`);
+  const callContact = (c, kind) => openNumberCallPopover({ ...contactCallTarget(m, c, kind), onDial: (number, line) => logPharmacyDial?.(m.id, c.name, number, line) }, callBtnRef);
+  const callItems = callPick
+    ? [
+        { section: callPick.kind === 'Pharmacy' ? 'Call which pharmacy?' : 'Call which prescriber?' },
+        ...callPick.contacts.map(c => ({ key: c.name, icon: 'solar:phone-linear', label: c.name, hint: c.phone })),
+      ]
+    : [
+        { key: 'member', icon: 'solar:user-linear', label: 'Call Member' },
+        { key: 'Pharmacy', icon: 'solar:phone-linear', label: 'Call Pharmacist', hint: whoHint(callable.Pharmacy, 'Pharmacy'), disabled: !callable.Pharmacy.length },
+        { key: 'Prescriber', icon: 'solar:stethoscope-linear', label: 'Call Prescriber', hint: whoHint(callable.Prescriber, 'Prescriber'), disabled: !callable.Prescriber.length },
+      ];
+  const handleCallSelect = (key) => {
+    if (callPick) {
+      const c = callPick.contacts.find(x => x.name === key);
+      setShowCallMenu(false);
+      setCallPick(null);
+      if (c) callContact(c, callPick.kind);
+      return;
+    }
+    if (key === 'member') {
+      setShowCallMenu(false);
       openCallPopover(worklistMemberCallId(m), callBtnRef);
       return;
     }
-    const c = item?.contact;
-    if (!c?.phone) return;
-    openNumberCallPopover({ number: c.phone, label: c.name, onDial: () => logPharmacyDial?.(m.id, c.name, c.phone) }, callBtnRef);
+    const list = callable[key] || [];
+    if (list.length === 1) { setShowCallMenu(false); callContact(list[0], key); return; }
+    if (list.length > 1) { keepCallMenu.current = true; setCallPick({ kind: key, contacts: list }); }
   };
 
   const menuItems = buildPatientRowMenuItems([
@@ -142,7 +136,7 @@ export function PharmacyWorklistRow({ member, columns, hiddenSet, isSelected, on
 
   return (
     <tr
-      className={`${styles.row} ${visibleGaps.length > 1 ? styles.rowMultiGap : ''} ${m.reopenedByReversal ? styles.rowReopened : ''}`}
+      className={`${styles.row} ${visibleGaps.length > 1 ? styles.rowMultiGap : ''}`}
       tabIndex={0}
       aria-label={`Open ${m.name}'s pharmacy gaps`}
       onClick={openRow}
@@ -200,14 +194,18 @@ export function PharmacyWorklistRow({ member, columns, hiddenSet, isSelected, on
             tooltip="View all gaps"
             onClick={(e) => { e.stopPropagation(); openPharmacyGapDrawer(m.id, null); }}
           />
-          <ActionButton ref={callBtnRef} icon="solar:phone-linear" tooltip="Call" onClick={handleCallClick} />
+          <ActionButton ref={callBtnRef} icon="solar:phone-linear" tooltip="Call" chevron chevronOpen={showCallMenu} onClick={handleCallClick} />
           {showCallMenu && (
             <MenuPopover
               anchorRef={callBtnRef}
               items={callItems}
               onSelect={handleCallSelect}
-              onClose={() => setShowCallMenu(false)}
-              width={280}
+              onClose={() => {
+                if (keepCallMenu.current) { keepCallMenu.current = false; return; }
+                setShowCallMenu(false);
+                setCallPick(null);
+              }}
+              width={240}
               ariaLabel="Who to call"
             />
           )}

@@ -114,7 +114,8 @@ const SHAH = { npi: '1508762391', name: 'Dr. Vikram Shah', phone: '(818) 555-013
 
 const CVS_9921 = { ncpdp: '0598214', name: 'CVS Pharmacy #9921', phone: '(626) 555-0190', address1: '255 W Foothill Blvd', city: 'Claremont', state: 'CA', zip: '91711' };
 const WAG_4410 = { ncpdp: '1462037', name: 'Walgreens #4410', phone: '(213) 555-0120', address1: '1501 W Holt Ave', city: 'Pomona', state: 'CA', zip: '91768' };
-const RITE_5532 = { ncpdp: '0532186', name: 'Rite Aid #5532', phone: '(562) 555-0101', address1: '3901 Atlantic Ave', city: 'Long Beach', state: 'CA', zip: '90807' };
+// A pharmacy with a second number: the pharmacist's direct line.
+const RITE_5532 = { ncpdp: '0532186', name: 'Rite Aid #5532', phone: '(562) 555-0101', phones: [{ number: '(562) 555-0109', label: 'Pharmacist direct' }], address1: '3901 Atlantic Ave', city: 'Long Beach', state: 'CA', zip: '90807' };
 const CVS_3301 = { ncpdp: '0587731', name: 'CVS Pharmacy #3301', phone: '(714) 555-0102', address1: '1501 W Chapman Ave', city: 'Orange', state: 'CA', zip: '92868' };
 const COSTCO_112 = { ncpdp: '0391445', name: 'Costco Pharmacy #112', phone: '(818) 555-0108', address1: '8810 Tampa Ave', city: 'Northridge', state: 'CA', zip: '91324' };
 const WAG_2219 = { ncpdp: '1459912', name: 'Walgreens #2219', phone: '(626) 555-0175', address1: '1 W Duarte Rd', city: 'Arcadia', state: 'CA', zip: '91007' };
