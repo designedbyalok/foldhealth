@@ -198,17 +198,6 @@
     "VoicePreviewPopover"
   ],
   "$deprecated": {
-    "$comment": "Old folder -> what replaced it. The old folder only re-exports the new one, so open branches keep building; eslint blocks new imports of it. Delete the folder once nothing imports it.",
-    "ShadcnCheckbox": "Checkbox",
-    "ShadcnDialog": "Dialog",
-    "ShadcnSlider": "Slider",
-    "Collapse": "Collapsible (CollapsibleContent)",
-    "Alert": "Banner (variant=\"outline\")",
-    "InfoBar": "Banner",
-    "RingEmptyState": "EmptyState",
-    "ErrorState": "EmptyState (tone=\"danger\")",
-    "TabStrip": "Tabs",
-    "SubTabs": "Tabs (variant=\"pill\")",
-    "Toggle": "SegmentedControl"
+    "$comment": "Old folder -> what replaced it. The old folder only re-exports the new one, so open branches keep building; eslint blocks new imports of it. Delete the folder once nothing imports it."
   }
 }

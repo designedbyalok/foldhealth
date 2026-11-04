@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { ColumnConfigPopover } from '../ColumnConfigPopover/ColumnConfigPopover';
-import { toPopoverColumns } from './useWorklistColumns';
+import { toPopoverColumns } from './useColumnLayout';
 import styles from './ColumnsHeaderButton.module.css';
 
 /**
