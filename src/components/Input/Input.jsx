@@ -6,25 +6,8 @@ import { CloseIcon } from '../Icon/CloseIcon';
 import { Button } from '../Button/Button';
 import { DatePickerPopover } from '../DatePicker/DatePickerPopover';
 import { resolveFieldLook } from '../../lib/legacyProps';
+import { isoFromMdy, mdyFromIso } from '../../lib/localDate';
 import styles from './Input.module.css';
-
-// ── MM/DD/YYYY ↔ YYYY-MM-DD helpers ──────────────────────────────────
-// `type="date"` inputs speak ISO at the value boundary (matching native
-// <input type="date">) but display MM/DD/YYYY on-screen so the visible
-// order is locale-independent.
-function mdyFromIso(iso) {
-  if (!iso) return '';
-  const [y, m, d] = String(iso).split('-');
-  return (y && m && d) ? `${m}/${d}/${y}` : '';
-}
-function isoFromMdy(mdy) {
-  const m = /^\s*(\d{1,2})\/(\d{1,2})\/(\d{4})\s*$/.exec(mdy || '');
-  if (!m) return null;
-  const [, mm, dd, yyyy] = m;
-  const month = Number(mm), day = Number(dd);
-  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-  return `${yyyy}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-}
 
 // Sensible inputMode + autoComplete defaults per type. Callers can override
 // by passing `inputMode` / `autoComplete` explicitly: they win.

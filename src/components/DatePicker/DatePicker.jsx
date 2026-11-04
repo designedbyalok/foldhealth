@@ -2,6 +2,7 @@ import { forwardRef, useCallback, useId, useImperativeHandle, useMemo, useRef, u
 import { Input } from '../Input/Input';
 import { CalendarIcon } from '../Icon/CalendarIcon';
 import { DatePickerPopover } from './DatePickerPopover';
+import { mdyFromIso } from '../../lib/localDate';
 import styles from './DatePicker.module.css';
 
 /**
@@ -189,11 +190,3 @@ const RangeStub = forwardRef(function RangeStub(_, ref) {
   }), []);
   return <span aria-hidden="true" style={{ display: 'none' }} />;
 });
-
-// ── MM/DD/YYYY helper ───────────────────────────────────────────────
-
-function mdyFromIso(iso) {
-  if (!iso) return '';
-  const [y, m, d] = String(iso).split('-');
-  return (y && m && d) ? `${m}/${d}/${y}` : '';
-}

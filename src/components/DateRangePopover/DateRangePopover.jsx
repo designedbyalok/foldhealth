@@ -7,7 +7,7 @@ import { Badge } from '../Badge/Badge';
 import { SearchListPopover } from '../SearchListPopover/SearchListPopover';
 import { Tabs } from '../Tabs/Tabs';
 import styles from './DateRangePopover.module.css';
-import { parseLocalDate } from '../../lib/localDate';
+import { daysInMonth, isoFromLocal as toISO, parseLocalDate } from '../../lib/localDate';
 import { yearSpan } from './yearSpan';
 
 const MONTH_NAMES = [
@@ -311,7 +311,6 @@ function MonthGrid({ header, view, isStart, isEnd, inRange, onDay, onHover, hasE
 // How far back the year pickers go (birth years).
 const YEAR_SPAN = 120;
 
-function daysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
 function firstDow(y, m)    { return new Date(y, m, 1).getDay(); }
 
 function stepMonth(v, delta) {
@@ -322,9 +321,4 @@ function stepMonth(v, delta) {
   return { y, m };
 }
 
-function toISO(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
+

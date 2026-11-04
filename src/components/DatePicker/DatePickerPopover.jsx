@@ -7,7 +7,8 @@ import { CalendarPrevIcon } from '../Icon/CalendarPrevIcon';
 import { CalendarNextIcon } from '../Icon/CalendarNextIcon';
 import { CalendarPrevYearIcon } from '../Icon/CalendarPrevYearIcon';
 import { CalendarNextYearIcon } from '../Icon/CalendarNextYearIcon';
-import { Tooltip } from '../Tooltip/Tooltip';
+import { Calendar } from '../Calendar/Calendar';
+import { isoFromLocal, parseLocalDate, todayLocal } from '../../lib/localDate';
 import styles from './DatePickerPopover.module.css';
 
 /**
@@ -84,8 +85,8 @@ export function DatePickerPopover({
     // Seed the pending pair from any committed range so reopening the
     // popover shows the current selection as the working draft.
     if (isRange) {
-      setPendingStart(value?.start ? parseIsoLocal(value.start) : null);
-      setPendingEnd(value?.end ? parseIsoLocal(value.end) : null);
+      setPendingStart(value?.start ? parseLocalDate(value.start) : null);
+      setPendingEnd(value?.end ? parseLocalDate(value.end) : null);
     } else {
       setPendingStart(null);
       setPendingEnd(null);
@@ -93,11 +94,11 @@ export function DatePickerPopover({
     setHoverEnd(null);
   }, [open, value, isRange]);
 
-  const minDate = useMemo(() => (min ? parseIsoLocal(min) : null), [min]);
-  const maxDate = useMemo(() => (max ? parseIsoLocal(max) : null), [max]);
+  const minDate = useMemo(() => (min ? parseLocalDate(min) : null), [min]);
+  const maxDate = useMemo(() => (max ? parseLocalDate(max) : null), [max]);
   const today = todayLocal();
 
-  const selectedSingle = !isRange && value ? parseIsoLocal(value) : null;
+  const selectedSingle = !isRange && value ? parseLocalDate(value) : null;
   // In range mode the popover works entirely off the pending pair,
   // clicking Save is what writes back to the parent. The `value` prop
   // seeds the pair on open (see the effect above).
@@ -180,22 +181,22 @@ export function DatePickerPopover({
   if (!open) return null;
 
   const renderMonth = (year, month) => (
-    <MonthGrid
+    <Calendar
       year={year}
       month={month}
       today={today}
-      minDate={minDate}
-      maxDate={maxDate}
-      selectedSingle={selectedSingle}
+      min={minDate}
+      max={maxDate}
+      mode={isRange ? 'range' : 'single'}
+      selected={selectedSingle}
       rangeStart={rangeStart}
       rangeEnd={rangeEnd}
       pendingStart={pendingStart}
       previewStart={previewStart}
       previewEnd={previewEnd}
-      isRange={isRange}
       onPick={pickDate}
       onHover={(d) => setHoverEnd(d)}
-      highlightedSet={highlightedSet}
+      highlighted={highlightedSet}
       isDayDisabled={isDayDisabled}
     />
   );
@@ -320,148 +321,15 @@ export function DatePickerPopover({
 
 // ── One month grid ───────────────────────────────────────────────────
 
-function MonthGrid({
-  year, month, today, minDate, maxDate,
-  selectedSingle, rangeStart, rangeEnd, pendingStart, previewStart, previewEnd,
-  isRange, onPick, onHover, highlightedSet, isDayDisabled,
-}) {
-  const gridStart = useMemo(() => {
-    const firstOfMonth = new Date(year, month, 1);
-    return addDays(firstOfMonth, -firstOfMonth.getDay());
-  }, [year, month]);
-
-  const cells = useMemo(() => {
-    // Render only as many full weeks as we need to cover the current
-    // month. A month that fits in 5 rows drops the trailing 6th row
-    // of pure next-month spillover so the grid isn't padded with
-    // muted numbers that aren't clickable in context.
-    const firstOfMonth = new Date(year, month, 1);
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const rowsNeeded = Math.ceil((firstOfMonth.getDay() + daysInMonth) / 7);
-    const total = rowsNeeded * 7;
-    const out = [];
-    for (let i = 0; i < total; i++) out.push(addDays(gridStart, i));
-    return out;
-  }, [gridStart, year, month]);
-
-  const rangeMarkers = cells.map((d) => {
-    if (!isRange) return null;
-    const effectiveStart = previewStart || rangeStart;
-    const effectiveEnd = previewEnd || rangeEnd;
-    if (!effectiveStart || !effectiveEnd) return null;
-    const s = stripTime(effectiveStart);
-    const e = stripTime(effectiveEnd);
-    if (sameDay(s, e)) return null;
-    const day = stripTime(d);
-    if (day < s || day > e) return null;
-    if (sameDay(day, s)) return 'start';
-    if (sameDay(day, e)) return 'end';
-    return 'middle';
-  });
-
-  return (
-    <div className={styles.month}>
-      <div className={styles.dow}>
-        {DOW_LETTERS.map((d, i) => (
-          <span key={i} className={styles.dowCell}>{d}</span>
-        ))}
-      </div>
-      <div className={styles.grid}>
-        {cells.map((d, i) => {
-          const inMonth = d.getMonth() === month;
-          const isSelectedSingle = selectedSingle && sameDay(d, selectedSingle);
-          const isRangeStart = rangeStart && sameDay(d, rangeStart);
-          const isRangeEnd = rangeEnd && sameDay(d, rangeEnd);
-          const isPendingStart = isRange && pendingStart && sameDay(d, pendingStart);
-          const isSelected = isSelectedSingle || isRangeStart || isRangeEnd || isPendingStart;
-          const isToday = sameDay(d, today);
-          const blocked = isDayDisabled ? isDayDisabled(isoFromLocal(d)) : false;
-          const disabled = (minDate && d < stripTime(minDate)) || (maxDate && d > stripTime(maxDate)) || !!blocked;
-          const reason = typeof blocked === 'string' ? blocked : '';
-          const marker = rangeMarkers[i];
-          const cellCls = [
-            styles.cell,
-            marker === 'middle' ? styles.rangeMiddle : '',
-            marker === 'start' ? styles.rangeStart : '',
-            marker === 'end' ? styles.rangeEnd : '',
-          ].filter(Boolean).join(' ');
-          const isHighlighted = highlightedSet
-            ? highlightedSet.has(`${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`)
-            : false;
-          const dayCls = [
-            styles.day,
-            !inMonth ? styles.dayMuted : '',
-            isSelected ? styles.daySelected : '',
-            isToday && !isSelected ? styles.dayToday : '',
-            isHighlighted && !isSelected ? styles.dayHighlighted : '',
-            disabled ? styles.dayDisabled : '',
-          ].filter(Boolean).join(' ');
-          return (
-            <div key={d.toDateString()} className={cellCls}>
-              {(() => {
-                const day = (
-                  <button
-                    type="button"
-                    className={dayCls}
-                    disabled={disabled}
-                    onClick={() => onPick(d)}
-                    onMouseEnter={isRange && pendingStart ? () => onHover(d) : undefined}
-                  >
-                    {d.getDate()}
-                  </button>
-                );
-                // A disabled button gets no hover, so its wrapper carries the tooltip.
-                return reason
-                  ? <Tooltip label={reason} maxWidth={220}><span className={styles.dayBlocked}>{day}</span></Tooltip>
-                  : day;
-              })()}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ── Helpers ──────────────────────────────────────────────────────────
-
 const MONTHS_LONG = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
-const DOW_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-function todayLocal() {
-  const d = new Date();
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-}
-function parseIsoLocal(iso) {
-  const [y, m, d] = String(iso).split('-').map(Number);
-  return new Date(y, (m || 1) - 1, d || 1);
-}
-function isoFromLocal(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-function addDays(d, n) {
-  const x = new Date(d);
-  x.setDate(x.getDate() + n);
-  return x;
-}
-function sameDay(a, b) {
-  return a.getFullYear() === b.getFullYear()
-    && a.getMonth() === b.getMonth()
-    && a.getDate() === b.getDate();
-}
-function stripTime(d) {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-}
 function pickInitialFocusDate(value, isRange) {
   if (isRange) {
     const iso = value?.start || value?.end;
-    return iso ? parseIsoLocal(iso) : todayLocal();
+    return iso ? parseLocalDate(iso) : todayLocal();
   }
-  return value ? parseIsoLocal(value) : todayLocal();
+  return value ? parseLocalDate(value) : todayLocal();
 }
