@@ -6,8 +6,9 @@ import { Select } from '../Select/Select';
 import { Badge } from '../Badge/Badge';
 import { SearchListPopover } from '../SearchListPopover/SearchListPopover';
 import { Tabs } from '../Tabs/Tabs';
+import { Calendar } from '../Calendar/Calendar';
 import styles from './DateRangePopover.module.css';
-import { daysInMonth, isoFromLocal as toISO, parseLocalDate } from '../../lib/localDate';
+import { isoFromLocal as toISO, parseLocalDate } from '../../lib/localDate';
 import { yearSpan } from './yearSpan';
 
 const MONTH_NAMES = [
@@ -15,9 +16,7 @@ const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
-const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
-const sameDay = (a, b) => a && b && a.toDateString() === b.toDateString();
 
 /**
  * Fold Health DateRangePopover: dual-month calendar with click-and-click
@@ -79,15 +78,14 @@ export function DateRangePopover({
 
   if (!anchorRect) return null;
 
-  const isStart = (d) => sameDay(d, start);
-  const isEnd   = (d) => sameDay(d, end);
-
-  const inRange = (d) => {
-    const lo = start && end ? (start <= end ? start : end) : start;
-    const hi = start && end ? (start <= end ? end : start) : hover;
-    if (!lo || !hi) return false;
-    return d > lo && d < hi;
-  };
+  // Committed ends draw the range; with only a start, hovering previews it.
+  const calendarRange = end
+    ? { rangeStart: start, rangeEnd: end }
+    : {
+      pendingStart: start,
+      previewStart: start && hover ? (hover < start ? hover : start) : undefined,
+      previewEnd: start && hover ? (hover < start ? start : hover) : undefined,
+    };
 
   const handleDayClick = (d) => {
     if (!start || end) {
@@ -180,43 +178,43 @@ export function DateRangePopover({
         </div>
       ) : (
       <div className={styles.calBody}>
-        <MonthGrid
-          header={(
-            <div className={styles.calHeader}>
-              <button type="button" className={styles.navBtn} onClick={() => stepView(-1)} aria-label="Previous month">
-                <Icon name="solar:alt-arrow-left-linear" size={14} color="var(--neutral-300)" />
-              </button>
-              {title(viewL, setLeftYear)}
-              <span className={styles.navSpacer} />
-            </div>
-          )}
-          view={viewL}
-          isStart={isStart}
-          isEnd={isEnd}
-          inRange={inRange}
-          onDay={handleDayClick}
-          onHover={setHover}
-          hasEnd={!!end}
-        />
+        <div className={styles.month}>
+          <div className={styles.calHeader}>
+            <button type="button" className={styles.navBtn} onClick={() => stepView(-1)} aria-label="Previous month">
+              <Icon name="solar:alt-arrow-left-linear" size={14} color="var(--neutral-300)" />
+            </button>
+            {title(viewL, setLeftYear)}
+            <span className={styles.navSpacer} />
+          </div>
+          <Calendar
+            mode="range"
+            year={viewL.y}
+            month={viewL.m}
+            today={today}
+            {...calendarRange}
+            onPick={handleDayClick}
+            onHover={setHover}
+          />
+        </div>
         <span className={styles.calDivider} />
-        <MonthGrid
-          header={(
-            <div className={styles.calHeader}>
-              <span className={styles.navSpacer} />
-              {title(viewR, setRightYear)}
-              <button type="button" className={styles.navBtn} onClick={() => stepView(1)} aria-label="Next month">
-                <Icon name="solar:alt-arrow-right-linear" size={14} color="var(--neutral-300)" />
-              </button>
-            </div>
-          )}
-          view={viewR}
-          isStart={isStart}
-          isEnd={isEnd}
-          inRange={inRange}
-          onDay={handleDayClick}
-          onHover={setHover}
-          hasEnd={!!end}
-        />
+        <div className={styles.month}>
+          <div className={styles.calHeader}>
+            <span className={styles.navSpacer} />
+            {title(viewR, setRightYear)}
+            <button type="button" className={styles.navBtn} onClick={() => stepView(1)} aria-label="Next month">
+              <Icon name="solar:alt-arrow-right-linear" size={14} color="var(--neutral-300)" />
+            </button>
+          </div>
+          <Calendar
+            mode="range"
+            year={viewR.y}
+            month={viewR.m}
+            today={today}
+            {...calendarRange}
+            onPick={handleDayClick}
+            onHover={setHover}
+          />
+        </div>
       </div>
       )}
 
@@ -263,55 +261,9 @@ function YearBadge({ value, options, onChange }) {
   );
 }
 
-function MonthGrid({ header, view, isStart, isEnd, inRange, onDay, onHover, hasEnd }) {
-  const days = daysInMonth(view.y, view.m);
-  const first = firstDow(view.y, view.m);
-
-  const cells = [];
-  for (let i = 0; i < first; i++) cells.push(<div key={`e${i}`} className={styles.cellEmpty} />);
-
-  for (let d = 1; d <= days; d++) {
-    const dt = new Date(view.y, view.m, d);
-    const sel = isStart(dt) || isEnd(dt);
-    const rng = inRange(dt);
-    const roundLeft  = isStart(dt) || (rng && dt.getDay() === 0);
-    const roundRight = isEnd(dt)   || (rng && dt.getDay() === 6);
-    cells.push(
-      <button
-        key={d}
-        type="button"
-        className={[
-          styles.cell,
-          sel ? styles.cellSelected : '',
-          rng && !sel ? styles.cellInRange : '',
-          sel && roundLeft && roundRight ? styles.cellRoundFull : '',
-          sel && roundLeft && !roundRight ? styles.cellRoundLeft : '',
-          sel && roundRight && !roundLeft ? styles.cellRoundRight : '',
-        ].filter(Boolean).join(' ')}
-        onClick={() => onDay(dt)}
-        onMouseEnter={() => !hasEnd && onHover(dt)}
-        onMouseLeave={() => onHover(null)}
-      >
-        {d}
-      </button>
-    );
-  }
-
-  return (
-    <div className={styles.month}>
-      {header}
-      <div className={styles.dowRow}>
-        {DOW.map((d) => <div key={d} className={styles.dow}>{d}</div>)}
-      </div>
-      <div className={styles.grid}>{cells}</div>
-    </div>
-  );
-}
-
 // How far back the year pickers go (birth years).
 const YEAR_SPAN = 120;
 
-function firstDow(y, m)    { return new Date(y, m, 1).getDay(); }
 
 function stepMonth(v, delta) {
   let m = v.m + delta;
