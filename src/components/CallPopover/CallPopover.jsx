@@ -57,7 +57,7 @@ export function CallPopover() {
       style={pos ? { top: pos.top, left: pos.left } : { top: 0, left: 0, visibility: 'hidden' }}
       onClick={e => e.stopPropagation()}
     >
-      {target ? <NumberCall target={target} /> : <PatientCall p={p} />}
+      {target ? <NumberCall key={`${target.kind || ''}|${target.number}`} target={target} /> : <PatientCall p={p} />}
     </div>
   );
 }
@@ -154,7 +154,9 @@ function NumberCall({ target }) {
   const lines = (callLines || []).filter(l => l.phoneNumber);
   const numbers = target.numbers?.length ? target.numbers : [{ number: target.number, label: 'Main' }];
   const [number, setNumber] = useState(() => (numbers.find(n => n.lastUsed) || numbers[0]).number);
-  const [lineId, setLineId] = useState(target.lastLineId);
+  // Only the line the user picks; until then the contact's last used line.
+  const [pickedLineId, setLineId] = useState(null);
+  const lineId = pickedLineId ?? target.lastLineId;
   const [switching, setSwitching] = useState(false);
   const line = lines.find(l => l.id === lineId) || lines[0];
 
