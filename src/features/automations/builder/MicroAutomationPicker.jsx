@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../../../components/Dialog/Dialog';
 import { Input } from '../../../components/Input/Input';
-import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../../store/useAppStore';
 import { TEMPLATE_CATEGORIES } from '../lib/catalog';
 import { FlowIcons } from '../shared/FlowIcons';
@@ -33,7 +33,7 @@ export function MicroAutomationPicker({ onPick, onClose }) {
         <Input leadingIcon="solar:magnifer-linear" placeholder="Search templates" value={query} onChange={e => setQuery(e.target.value)} aria-label="Search templates" />
         <div className={styles.pickerBody}>
           {sections.length === 0 ? (
-            <RingEmptyState icon="solar:magnifer-linear" label={`No templates match “${query}”`} />
+            <EmptyState icon="solar:magnifer-linear" title={`No templates match “${query}”`} />
           ) : sections.map(s => (
             <div key={s.key} className={styles.pickerSection}>
               <span className={styles.paletteSection}>{s.label}</span>

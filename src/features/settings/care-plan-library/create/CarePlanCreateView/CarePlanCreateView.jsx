@@ -5,7 +5,7 @@ import { Textarea } from '../../../../../components/Textarea/Textarea';
 import { Button } from '../../../../../components/Button/Button';
 import { RadioOptionGroup } from '../../../../../components/RadioOptionGroup/RadioOptionGroup';
 import { CloseButton } from '../../../../../components/CloseButton/CloseButton';
-import { RingEmptyState } from '../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../components/EmptyState/EmptyState';
 import { AddIconMinimalist } from '../../../../../components/Icon/AddIconMinimalist';
 import { AddGoalsDrawer } from '../../goals/AddGoalsDrawer/AddGoalsDrawer';
 import { AddInterventionsDrawer } from '../../interventions/AddInterventionsDrawer';
@@ -540,7 +540,7 @@ export function CarePlanCreateView({ onClose, onSave }) {
             </div>
           ) : goals.length === 0 ? (
             <div className={styles.goalsEmpty}>
-              <RingEmptyState icon="solar:flag-linear" label="No Goals Added" iconSize={31} />
+              <EmptyState icon="solar:flag-linear" title="No Goals Added" iconSize={31} />
               <div className={styles.goalsEmptyActions}>
                 <Button
                   variant="soft"

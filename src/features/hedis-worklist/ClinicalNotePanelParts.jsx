@@ -13,7 +13,7 @@ import { DatePicker } from '../../components/DatePicker/DatePicker';
 import { RadioButton } from '../../components/RadioButton/RadioButton';
 import { CheckboxTick } from '../../components/CheckboxTick/CheckboxTick';
 import { UploadDropField } from '../../components/UploadDropField/UploadDropField';
-import { Alert } from '../../components/Alert/Alert';
+import { Banner } from '../../components/Banner/Banner';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { PatientBanner } from '../../components/PatientBanner/PatientBanner';
 import {
@@ -1036,10 +1036,12 @@ function GenericEvidenceForm({ code, v, data, submitted }) {
         )
       )}
       {consentMissing && submitted && (
-        <Alert
+        <Banner
+          variant="outline"
           tone="warning"
-          message="Verbal telehealth consent required. Tick Audio-only or Audio-video visit in the Date of Service card above."
-        />
+        >
+          Verbal telehealth consent required. Tick Audio-only or Audio-video visit in the Date of Service card above.
+        </Banner>
       )}
       <FieldStack>
         <FieldLabel>Upload Evidence (if available):</FieldLabel>

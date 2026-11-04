@@ -7,7 +7,7 @@ import { DownChevronIcon } from '../../../../../components/Icon/DownChevronIcon'
 import { CollapsibleContent } from '../../../../../components/Collapsible/Collapsible';
 import { Link } from '../../../../../components/Link/Link';
 import { Toggle } from '../../../../../components/Toggle/Toggle';
-import { Alert } from '../../../../../components/Alert/Alert';
+import { Banner } from '../../../../../components/Banner/Banner';
 import { toast } from '../../../../../components/Toast/sonnerToast';
 import { TasksTab } from '../../../left-panel/tabs/tasks/TasksTab/TasksTab';
 import { groupTasksForTab } from '../../../left-panel/tabs/tasks/TasksTab/groupTasksForTab';
@@ -221,7 +221,7 @@ export function MonitoringTab({ patient }) {
         <div className={styles.mainCol}>
           {data.bannerText && (
             <div className={styles.alertSlot}>
-              <Alert tone="error" message={data.bannerText} meta={data.bannerDue} className={styles.bannerAlert} />
+              <Banner variant="outline" tone="danger" meta={data.bannerDue} className={styles.bannerAlert}>{data.bannerText}</Banner>
             </div>
           )}
 

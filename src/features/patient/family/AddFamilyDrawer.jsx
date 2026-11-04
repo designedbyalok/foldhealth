@@ -9,8 +9,8 @@ import { Avatar } from '../../../components/Avatar/Avatar';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { RadioButton } from '../../../components/RadioButton/RadioButton';
-import { InfoBar } from '../../../components/InfoBar/InfoBar';
-import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { Banner } from '../../../components/Banner/Banner';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { UploadDropField } from '../../../components/UploadDropField/UploadDropField';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
 import { AddIconMinimalist } from '../../../components/Icon/AddIconMinimalist';
@@ -186,11 +186,11 @@ export function AddFamilyDrawer({ patient, onClose }) {
               searchPlaceholder="Search by name or member ID"
               emptyText={() => (
                 <span className={styles.notMember}>
-                  <RingEmptyState size="S" icon="solar:user-cross-linear">
+                  <EmptyState size="sm" icon="solar:user-cross-linear">
                     <span className={styles.notMemberText}>
                       Not a Fold Member? <Link onClick={() => set({ mode: 'new' })}>Add Here</Link>
                     </span>
-                  </RingEmptyState>
+                  </EmptyState>
                 </span>
               )}
             />
@@ -247,9 +247,9 @@ export function AddFamilyDrawer({ patient, onClose }) {
                   ))}
                 </div>
                 {holder && (
-                  <InfoBar variant="inline" tone="warning">
+                  <Banner icon="solar:info-circle-linear" size="sm" tone="warning">
                     {resolveMember(holder, patients).name} is the current {form.decisionMaker}. Adding {name || 'this person'} replaces them.
-                  </InfoBar>
+                  </Banner>
                 )}
                 {form.decisionMaker && (
                   <>
@@ -293,7 +293,7 @@ export function AddFamilyDrawer({ patient, onClose }) {
           <h3 className={styles.sectionTitle}>Family & Caregivers</h3>
           {members.length === 0 ? (
             <div className={styles.emptyCard}>
-              <RingEmptyState size="S" icon="solar:user-heart-linear" label="No family or caregivers added" />
+              <EmptyState size="sm" icon="solar:user-heart-linear" title="No family or caregivers added" />
             </div>
           ) : (
             <div className={styles.list}>

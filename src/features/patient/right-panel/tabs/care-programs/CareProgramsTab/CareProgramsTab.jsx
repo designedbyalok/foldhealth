@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { RingEmptyState } from '../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../components/EmptyState/EmptyState';
 import { statusColorFor, isProgramClosed } from '../../../../data/programStatus';
 import { CARE_PROGRAM_CATALOG } from '../../../../data/careProgramCatalog';
 import { CMP_SUB_PROGRAMS } from '../../../../data/cmpSubPrograms';
@@ -55,8 +55,8 @@ function ProgramSection({ title, open, onToggle, children }) {
   );
 }
 
-function EmptyState() {
-  return <RingEmptyState icon="solar:hand-heart-linear" label="No Active Programs" />;
+function NoProgramsEmptyState() {
+  return <EmptyState icon="solar:hand-heart-linear" title="No Active Programs" />;
 }
 
 export function CareProgramsTab({ header }) {
@@ -416,7 +416,7 @@ export function CareProgramsTab({ header }) {
       />
 
       {visible.length === 0 ? (
-        <EmptyState />
+        <NoProgramsEmptyState />
       ) : (
         <div className={styles.programSections}>
           <ProgramSection

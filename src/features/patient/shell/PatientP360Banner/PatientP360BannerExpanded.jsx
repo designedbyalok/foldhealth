@@ -5,8 +5,8 @@ import { Badge } from '../../../../components/Badge/Badge';
 import { Link } from '../../../../components/Link/Link';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
 import { AddIconMinimalist } from '../../../../components/Icon/AddIconMinimalist';
-import { InfoBar } from '../../../../components/InfoBar/InfoBar';
-import { RingEmptyState } from '../../../../components/RingEmptyState/RingEmptyState';
+import { Banner } from '../../../../components/Banner/Banner';
+import { EmptyState } from '../../../../components/EmptyState/EmptyState';
 import { usePatientFamily } from '../../family/usePatientFamily';
 import { usePatientCareTeam } from '../../care-team/usePatientCareTeam';
 import { Skeleton } from '../../../../components/Skeleton/Skeleton';
@@ -199,9 +199,9 @@ export function ExpandedFamily({ p, patientId, visible = true, className, onMana
               : <ActionButton size="sm" tooltip="Add family and caregivers" onClick={onManage}><AddIconMinimalist size={16} color="var(--neutral-300)" /></ActionButton>)}
           </div>
           {familyOf > 0 && (
-            <InfoBar variant="inline">
+            <Banner size="sm">
               Member is identified as family & caregiver for <Link className={styles.noticeLink}>{familyOf} Members</Link>
-            </InfoBar>
+            </Banner>
           )}
           {loading ? (
             <div className={styles.people}><PersonRowSkeleton /><PersonRowSkeleton /></div>
@@ -215,7 +215,7 @@ export function ExpandedFamily({ p, patientId, visible = true, className, onMana
           ) : (
             // Figma P360 Revamp 6111:268485.
             <div className={styles.familyEmpty}>
-              <RingEmptyState size="S" icon="solar:user-heart-linear" label="No Family Added" />
+              <EmptyState size="sm" icon="solar:user-heart-linear" title="No Family Added" />
             </div>
           )}
         </section>
@@ -242,7 +242,7 @@ export function ExpandedFamily({ p, patientId, visible = true, className, onMana
             </>
           ) : (
             <div className={styles.familyEmpty}>
-              <RingEmptyState size="S" icon="solar:users-group-rounded-linear" label="No Care Team Added" />
+              <EmptyState size="sm" icon="solar:users-group-rounded-linear" title="No Care Team Added" />
             </div>
           )}
         </section>

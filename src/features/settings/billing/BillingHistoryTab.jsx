@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { WorklistShell } from '../../../components/WorklistShell/WorklistShell';
 import { Link } from '../../../components/Link/Link';
-import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { BillingReportDrawer } from './BillingReportDrawer';
 import { money, monthLabel } from './careProgramBillingData';
 import styles from './CareProgramBilling.module.css';
@@ -44,7 +44,7 @@ export function BillingHistoryTab({ reports, loading }) {
           onPageChange={setPage}
           emptyState={(
             <div className={styles.empty}>
-              <RingEmptyState icon="solar:bill-list-linear" label="No billing reports yet" />
+              <EmptyState icon="solar:bill-list-linear" title="No billing reports yet" />
             </div>
           )}
           renderRow={(r) => (

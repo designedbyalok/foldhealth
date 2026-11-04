@@ -7,7 +7,7 @@ import { ChartContainer } from '../../../components/ChartContainer/ChartContaine
 import { DashboardCardSkeleton } from '../../../components/DashboardCard/DashboardCard';
 import { FilterChip } from '../../../components/FilterChip/FilterChip';
 import { Link } from '../../../components/Link/Link';
-import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { Toggle } from '../../../components/Toggle/Toggle';
 import { nodeDef, statusDef } from '../lib/catalog';
 import {
@@ -134,9 +134,9 @@ export function AutomationAnalytics({ id }) {
     if (automationsStatus !== 'ready') return <div className={styles.page}><Skeletons /></div>;
     return (
       <div className={`${styles.page} ${styles.centered}`}>
-        <RingEmptyState icon="solar:bolt-linear" label="This automation was not found. It may have been deleted.">
+        <EmptyState icon="solar:bolt-linear" title="This automation was not found. It may have been deleted.">
           <Button variant="outline" leadingIcon="solar:arrow-left-linear" onClick={() => openAutomationsList()}>Back to automations</Button>
-        </RingEmptyState>
+        </EmptyState>
       </div>
     );
   }
@@ -203,7 +203,7 @@ export function AutomationAnalytics({ id }) {
         </div>
       ) : nothing ? (
         <div className={styles.emptyBox}>
-          <RingEmptyState icon="solar:chart-2-linear" label={`No executions between ${formatRange(range)}. Try a longer duration.`} />
+          <EmptyState icon="solar:chart-2-linear" title={`No executions between ${formatRange(range)}. Try a longer duration.`} />
         </div>
       ) : (
         <div className={styles.cards}>

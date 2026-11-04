@@ -4,7 +4,7 @@ import { Drawer } from '../../../../../../components/Drawer/Drawer';
 import { Button } from '../../../../../../components/Button/Button';
 import { Input } from '../../../../../../components/Input/Input';
 import { RadioOptionGroup } from '../../../../../../components/RadioOptionGroup/RadioOptionGroup';
-import { Alert } from '../../../../../../components/Alert/Alert';
+import { Banner } from '../../../../../../components/Banner/Banner';
 import styles from './PatientPortalAccess.module.css';
 
 const RELATIONSHIP_OPTIONS = [
@@ -52,7 +52,7 @@ export function PatientPortalInviteDrawer({ patient, memberId, defaultEmail = ''
           <strong>{patient.name || 'this patient'}</strong> at patients.foldhealth.org. If they already have a patient app account,
           this patient is added to it.
         </p>
-        {error && <Alert tone="error" message={error} />}
+        {error && <Banner variant="outline" tone="danger">{error}</Banner>}
         <Input
           label="Email"
           type="email"

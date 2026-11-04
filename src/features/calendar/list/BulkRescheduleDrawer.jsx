@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Drawer } from '../../../components/Drawer/Drawer';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { Button } from '../../../components/Button/Button';
-import { InfoBar } from '../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../components/Banner/Banner';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { Icon } from '../../../components/Icon/Icon';
 import { DatePicker } from '../../../components/DatePicker/DatePicker';
@@ -148,9 +148,9 @@ export function BulkRescheduleDrawer({ provider, appointments, onDone, onClose }
       )}
     >
       <div className={styles.reschedule}>
-        <InfoBar tone="info" variant="inline">
+        <Banner tone="info" size="sm">
           Only User&apos;s open times are offered. Out of Office, Block Time and already-booked slots are hidden.
-        </InfoBar>
+        </Banner>
 
         {/* A heading with its action on the right, like the Reassign
             drawer's "Select Reassignment Providers". */}

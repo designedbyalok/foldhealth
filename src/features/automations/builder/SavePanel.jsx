@@ -3,7 +3,7 @@ import { Input } from '../../../components/Input/Input';
 import { Select } from '../../../components/Select/Select';
 import { Textarea } from '../../../components/Textarea/Textarea';
 import { Toggle } from '../../../components/Toggle/Toggle';
-import { Alert } from '../../../components/Alert/Alert';
+import { Banner } from '../../../components/Banner/Banner';
 import { useAppStore } from '../../../store/useAppStore';
 import { RUN_SCHEDULES, nodeDef, triggerDef } from '../lib/catalog';
 import { getNode } from '../lib/graph';
@@ -99,7 +99,7 @@ export function SavePanel({ state, graph, problems, onSave, onClose, onShowProbl
           />
         </div>
         {goLive === 'active' && problems.length > 0 && (
-          <Alert tone={tried ? 'error' : 'warning'}>
+          <Banner variant="outline" tone={tried ? 'danger' : 'warning'}>
             <span>Finish these steps before publishing:</span>
             <ul className={styles.problemList}>
               {problems.map(p => {
@@ -113,7 +113,7 @@ export function SavePanel({ state, graph, problems, onSave, onClose, onShowProbl
                 );
               })}
             </ul>
-          </Alert>
+          </Banner>
         )}
       </div>
     </EditPanel>

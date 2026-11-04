@@ -3,12 +3,12 @@ import { Drawer } from '../../../../components/Drawer/Drawer';
 import { Button } from '../../../../components/Button/Button';
 import { Select } from '../../../../components/Select/Select';
 import { Checkbox } from '../../../../components/Checkbox/Checkbox';
-import { RingEmptyState } from '../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../components/EmptyState/EmptyState';
 import { WorklistShell } from '../../../../components/WorklistShell/WorklistShell';
 import { Badge } from '../../../../components/Badge/Badge';
 import { Icon } from '../../../../components/Icon/Icon';
 import { Tooltip } from '../../../../components/Tooltip/Tooltip';
-import { InfoBar } from '../../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../../components/Banner/Banner';
 import { Avatar } from '../../../../components/Avatar/Avatar';
 import { ALL_TYPES, STATUS_LOOK, blockStatus, cadenceText, formatDate, slotTextTz } from './availabilityUtils';
 
@@ -132,14 +132,14 @@ export function CloneFromUserDrawer({ users, exclude, imported = [], target, onI
           <span className={styles.cloneHeading}>Select availability slots</span>
           {!rows.length ? (
             <div className={styles.cloneEmpty}>
-              <RingEmptyState size="S" icon="solar:calendar-minimalistic-linear" label="Slots appear once a user is selected" />
+              <EmptyState size="sm" icon="solar:calendar-minimalistic-linear" title="Slots appear once a user is selected" />
             </div>
           ) : (
             <>
             {rows.some(noAccess) && (
-              <InfoBar variant="inline" className={styles.cloneAccessNote}>
+              <Banner size="sm" className={styles.cloneAccessNote}>
                 If selected, slots at locations you don't have access to will be added for your default location ({defaultLoc}).
-              </InfoBar>
+              </Banner>
             )}
             <div className={styles.cloneTable}>
               <WorklistShell

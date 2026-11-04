@@ -10,7 +10,7 @@ import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { CollapsibleContent } from '../../../../../../../../components/Collapsible/Collapsible';
 import { AIIcon } from '../../../../../../../../components/Icon/AIIcon';
 import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
-import { RingEmptyState } from '../../../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../../../components/EmptyState/EmptyState';
 import { MenuPopover } from '../../../../../../../../components/MenuPopover/MenuPopover';
 import { SearchBar } from '../../../../../../../../components/SearchBar/SearchBar';
 import { DocumentUploader, FileRow } from '../../../../../../../../components/DocumentUploader/DocumentUploader';
@@ -1228,7 +1228,7 @@ export function MedicationReconciliation({ programCode } = {}) {
       {/* Medications: table (columns) or card (Figma 7211:452572) view */}
       {medications.length === 0 ? (
         <div className={styles.empty}>
-          <RingEmptyState icon="solar:pill-linear" label="No Active Medications" />
+          <EmptyState icon="solar:pill-linear" title="No Active Medications" />
         </div>
       ) : medView === 'card' ? (
         <div className={styles.medCardSection}>

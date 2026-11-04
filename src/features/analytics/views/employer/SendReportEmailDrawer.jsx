@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Drawer } from '../../../../components/Drawer/Drawer';
 import { Button } from '../../../../components/Button/Button';
 import { Select } from '../../../../components/Select/Select';
-import { InfoBar } from '../../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../../components/Banner/Banner';
 import { Link } from '../../../../components/Link/Link';
 import { EmailComposer } from '../../../../components/EmailComposer/EmailComposer';
 import { RecipientInput } from '../../../../components/RecipientInput/RecipientInput';
@@ -120,7 +120,7 @@ export function SendReportEmailDrawer({ buildPdf, filename, title, employerName,
   return (
     <Drawer title="Compose Email" width={640} onClose={onClose} headerRight={headerRight} noCloseDivider>
       <div className={styles.body}>
-        <InfoBar tone="info">{PHI_NOTICE}</InfoBar>
+        <Banner tone="info">{PHI_NOTICE}</Banner>
         <Select
           label="From"
           required

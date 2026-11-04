@@ -10,7 +10,7 @@ import { CollapsibleContent } from '../../../components/Collapsible/Collapsible'
 import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { Badge } from '../../../components/Badge/Badge';
-import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { Link } from '../../../components/Link/Link';
 import { Icon } from '../../../components/Icon/Icon';
 import { AddIconMinimalist } from '../../../components/Icon/AddIconMinimalist';
@@ -295,10 +295,10 @@ export function TimerSettingsDrawer({ program, setting, onClose }) {
           {/* Empty: the dashed ring card the PAMI drawers use. */}
           {added.length === 0 && (
             <div className={styles.emptyCard}>
-              <RingEmptyState
+              <EmptyState
                 icon="solar:users-group-rounded-linear"
                 iconSize={31}
-                label={tab === 'roles' ? 'No Additional Roles Added' : tab === 'users' ? 'No Additional Users Added' : tab === 'team' ? 'No Care Program Team Members' : 'No Additional Roles or Users Added'}
+                title={tab === 'roles' ? 'No Additional Roles Added' : tab === 'users' ? 'No Additional Users Added' : tab === 'team' ? 'No Care Program Team Members' : 'No Additional Roles or Users Added'}
               />
             </div>
           )}

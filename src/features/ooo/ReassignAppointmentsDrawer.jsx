@@ -8,7 +8,7 @@ import { TabStrip } from '../../components/TabStrip/TabStrip';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { Link } from '../../components/Link/Link';
 import { AddIconMinimalist } from '../../components/Icon/AddIconMinimalist';
-import { RingEmptyState } from '../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../store/useAppStore';
 import { OooReassignFooter, ReassignmentType, ReassignProviders } from './OooReassignStep';
 import { ReassignPlanner } from './ReassignPlanner';
@@ -198,7 +198,7 @@ export function ReassignAppointmentsDrawer({ users, initialUser, initialRecordId
                     // (Figma Mar-Present 3961:41376), which adds one.
                     emptyText={(
                       <span className={styles.recordEmpty}>
-                        <RingEmptyState size="S" icon={OOO_ICON} label="No out of office records present for this user">
+                        <EmptyState size="sm" icon={OOO_ICON} title="No out of office records present for this user">
                           <Link
                             className={styles.newRecordLink}
                             role="button"
@@ -209,7 +209,7 @@ export function ReassignAppointmentsDrawer({ users, initialUser, initialRecordId
                             <AddIconMinimalist size={12} color="currentColor" />
                             Add New
                           </Link>
-                        </RingEmptyState>
+                        </EmptyState>
                       </span>
                     )}
                   />

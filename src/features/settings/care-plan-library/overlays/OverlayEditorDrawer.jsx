@@ -6,7 +6,7 @@ import { Select } from '../../../../components/Select/Select';
 import { Switch } from '../../../../components/Switch/Switch';
 import { Badge } from '../../../../components/Badge/Badge';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
-import { Alert } from '../../../../components/Alert/Alert';
+import { Banner } from '../../../../components/Banner/Banner';
 import { RadioOptionGroup } from '../../../../components/RadioOptionGroup/RadioOptionGroup';
 import { useAppStore } from '../../../../store/useAppStore';
 import { GOAL_DURATION_UNITS, GOAL_FREQUENCIES, INTERVENTION_KINDS } from '../lib/aiTemplateDraft';
@@ -147,7 +147,7 @@ export function OverlayEditorDrawer({ overlay, onClose, canEdit }) {
               </div>
             )}
             {summary?.orphaned.length > 0 && (
-              <Alert tone="warning" message={`${summary.orphaned.length} override${summary.orphaned.length === 1 ? ' is' : 's are'} for items no longer in the template; they no longer apply.`} />
+              <Banner variant="outline" tone="warning">{`${summary.orphaned.length} override${summary.orphaned.length === 1 ? ' is' : 's are'} for items no longer in the template; they no longer apply.`}</Banner>
             )}
 
             {KINDS.map(([kind, listKey, label]) => (template[listKey] || []).length > 0 && (

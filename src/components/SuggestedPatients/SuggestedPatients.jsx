@@ -6,7 +6,7 @@ import { Avatar } from '../Avatar/Avatar';
 import { Link } from '../Link/Link';
 import { Skeleton } from '../Skeleton/Skeleton';
 import { CollapsibleContent } from '../Collapsible/Collapsible';
-import { RingEmptyState } from '../RingEmptyState/RingEmptyState';
+import { EmptyState } from '../EmptyState/EmptyState';
 import { initialsOf } from './patientMatch';
 import { PatientMeta } from './PatientMeta';
 import styles from './SuggestedPatients.module.css';
@@ -111,7 +111,7 @@ export function SuggestedPatients({ items, onAdd, title = 'Suggested Members', m
           </div>
         ) : items.length === 0 ? (
           <div className={styles.empty}>
-            <RingEmptyState size="XS" icon="solar:users-group-rounded-linear" />
+            <EmptyState size="xs" icon="solar:users-group-rounded-linear" />
             <span className={styles.emptyText}>
               <span className={styles.emptyTitle}>No Matches Found</span>
               {emptyHint && <span className={styles.emptyHint}>{emptyHint}</span>}

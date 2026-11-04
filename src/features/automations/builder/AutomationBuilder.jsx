@@ -41,7 +41,12 @@ export function AutomationBuilder({ id }) {
   if (automationsStatus !== 'ready') return <div className={styles.loading}><span className={styles.spinner} />Loading automation…</div>;
   return (
     <div className={styles.loading}>
-      <EmptyState icon="solar:bolt-linear" title="Automation not found" description="It may have been deleted." actionLabel="Back to automations" onAction={() => openAutomationsList()} />
+      <EmptyState
+        icon="solar:bolt-linear"
+        title="Automation not found"
+        description="It may have been deleted."
+        action={<Button variant="soft" leadingIcon="solar:arrow-left-linear" onClick={() => openAutomationsList()}>Back to automations</Button>}
+      />
     </div>
   );
 }

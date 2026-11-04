@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { Drawer } from '../../../../../../../../components/Drawer/Drawer';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { Badge } from '../../../../../../../../components/Badge/Badge';
-import { RingEmptyState } from '../../../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import styles from './CarePlanLinkDrawer.module.css';
 import { parseLocalDate } from '../../../../../../../../lib/localDate';
@@ -110,7 +110,7 @@ export function CarePlanLinkDrawer({ patientId, program, patientName, owner, onC
         </div>
 
         {patientTasks.length === 0 && patientAppointments.length === 0 && (
-          <RingEmptyState icon="solar:link-linear" label="Nothing to link yet" />
+          <EmptyState icon="solar:link-linear" title="Nothing to link yet" />
         )}
       </div>
     </Drawer>

@@ -12,7 +12,7 @@ import { CommsListEmpty } from '../../../../../messages/comms/CommsEmptyState';
 import { isMissedCall } from '../../../../../messages/comms/commsUtils';
 import { formatTime } from '../../../../../messages/messageUtils';
 import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
-import { RingEmptyState } from '../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../components/EmptyState/EmptyState';
 import { Button } from '../../../../../../components/Button/Button';
 import msgStyles from '../../../../../messages/MessagesView.module.css';
 import styles from './CommsTab.module.css';
@@ -58,9 +58,9 @@ export function CommsTab({ patient }) {
   if (failed) {
     return (
       <div className={styles.state}>
-        <RingEmptyState icon="solar:chat-round-dots-linear" label="Conversations failed to load">
+        <EmptyState icon="solar:chat-round-dots-linear" title="Conversations failed to load">
           <Button variant="outline" size="sm" onClick={retry}>Try again</Button>
-        </RingEmptyState>
+        </EmptyState>
       </div>
     );
   }

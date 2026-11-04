@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Drawer } from '../../../components/Drawer/Drawer';
-import { InfoBar } from '../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../components/Banner/Banner';
 import { Button } from '../../../components/Button/Button';
 import { Select } from '../../../components/Select/Select';
 import { Input } from '../../../components/Input/Input';
@@ -498,7 +498,7 @@ export function ComposeEmailDrawer({ initial = {}, onClose, onSent }) {
           {/* A template carries the email, so only the PHI notice shows; without
               one, the text area: PHI notice, formatting, message, insert bar. */}
           {useTemplate ? (
-            <InfoBar tone="warning">{PHI_NOTICE}</InfoBar>
+            <Banner icon="solar:info-circle-linear" tone="warning">{PHI_NOTICE}</Banner>
           ) : (
             <EmailEditor
               ref={editorRef}

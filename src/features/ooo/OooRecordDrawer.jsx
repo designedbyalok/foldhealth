@@ -8,7 +8,7 @@ import { Switch } from '../../components/Switch/Switch';
 import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { Icon } from '../../components/Icon/Icon';
 import { Textarea } from '../../components/Textarea/Textarea';
-import { InfoBar } from '../../components/InfoBar/InfoBar';
+import { Banner } from '../../components/Banner/Banner';
 import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { useAppStore } from '../../store/useAppStore';
 import { appointmentsToReassign, capFirst, DEFAULT_AUTO_REPLY, overlapPlan, personKey, fromPickerValue, rangeChange, toPickerValue, validateOoo } from './oooUtils';
@@ -202,10 +202,10 @@ export function OooRecordDrawer({ record: initialRecord, user, users = [], onClo
     >
       <div className={styles.form}>
         {!isEdit && (
-          <InfoBar tone="info" variant="inline">Mark users OOO by selecting date range below. Appointments (if any) will be reassigned next.</InfoBar>
+          <Banner tone="info" size="sm">Mark users OOO by selecting date range below. Appointments (if any) will be reassigned next.</Banner>
         )}
         {isEdit && change.extended && (
-          <InfoBar tone="warning" variant="inline">Appointments on the newly added dates can be reassigned once you save.</InfoBar>
+          <Banner icon="solar:info-circle-linear" tone="warning" size="sm">Appointments on the newly added dates can be reassigned once you save.</Banner>
         )}
 
         {user || isEdit ? (

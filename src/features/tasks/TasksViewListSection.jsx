@@ -4,7 +4,7 @@ import { SectionPagination } from '../../components/SectionPagination/SectionPag
 import { useAppStore } from '../../store/useAppStore';
 import { PROG_TASKS_PER_PAGE, isOverdue } from './TasksView.utils';
 import { TaskTableRow } from './TasksViewRows';
-import { RingEmptyState } from '../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { WorklistShell } from '../../components/WorklistShell/WorklistShell';
 import styles from './TasksView.module.css';
 
@@ -54,7 +54,7 @@ export function ProgramTaskSection({ title, tasks, onToggle, onTaskClick, hideAs
       )}
       {tasks.length === 0 ? (
         <div className={styles.progEmpty}>
-          <RingEmptyState icon="solar:checklist-minimalistic-linear" label={emptyLabel || 'No Tasks Added'} />
+          <EmptyState icon="solar:checklist-minimalistic-linear" title={emptyLabel || 'No Tasks Added'} />
         </div>
       ) : (
         <>
@@ -118,7 +118,7 @@ export function TaskListSection({ tasks = [], onTaskClick, hideAssignedTo = fals
     if (!sections.length) {
       return (
         <div className={styles.progEmpty}>
-          <RingEmptyState icon="solar:checklist-minimalistic-linear" label="No Tasks Added" />
+          <EmptyState icon="solar:checklist-minimalistic-linear" title="No Tasks Added" />
         </div>
       );
     }

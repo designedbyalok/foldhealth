@@ -3,7 +3,7 @@ import { useAppStore } from '../../../store/useAppStore';
 import { Drawer } from '../../../components/Drawer/Drawer';
 import { Badge } from '../../../components/Badge/Badge';
 import { Icon } from '../../../components/Icon/Icon';
-import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { TimelineSkeleton } from '../../../components/TimelineSkeleton/TimelineSkeleton';
 import { historyEntries } from '../lib/analytics';
 import { fmtDate, plural } from './listUtils';
@@ -71,7 +71,7 @@ export function HistoryLogDrawer({ automation, onClose }) {
       {loading && <TimelineSkeleton />}
       {!loading && groups.length === 0 && (
         <div className={styles.empty}>
-          <RingEmptyState icon="solar:history-linear" label="No history yet. Edits and runs will show up here." />
+          <EmptyState icon="solar:history-linear" title="No history yet. Edits and runs will show up here." />
         </div>
       )}
       {!loading && groups.length > 0 && (

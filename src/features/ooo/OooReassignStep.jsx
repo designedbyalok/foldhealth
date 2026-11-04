@@ -1,7 +1,7 @@
 import { DateTimePicker } from '../../components/DateTimePicker/DateTimePicker';
-import { InfoBar } from '../../components/InfoBar/InfoBar';
+import { Banner } from '../../components/Banner/Banner';
 import { RadioButton } from '../../components/RadioButton/RadioButton';
-import { RingEmptyState } from '../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { fromPickerValue, toPickerValue } from './oooUtils';
 import styles from './ooo.module.css';
 
@@ -35,7 +35,7 @@ export function ReassignProviders({ hasProvider = false }) {
     <div className={styles.fieldGroup}>
       <span className={styles.groupTitle}>Select Reassignment Providers</span>
       <div className={styles.providersEmpty}>
-        <RingEmptyState size="S" icon="solar:users-group-rounded-linear" label={hasProvider ? 'Select dates to Reassign Appointments' : 'Select Provider and dates to Reassign Appointments'} />
+        <EmptyState size="sm" icon="solar:users-group-rounded-linear" title={hasProvider ? 'Select dates to Reassign Appointments' : 'Select Provider and dates to Reassign Appointments'} />
       </div>
     </div>
   );
@@ -73,7 +73,7 @@ export function ReassignmentType({ type, onTypeChange, range = { startAt: null, 
       </div>
       {type === 'ooo' && oooField}
       {type === 'permanent' && (
-        <InfoBar tone="warning" variant="inline">All appointments will be reassigned, this is typically done when provider leaves the organization.</InfoBar>
+        <Banner icon="solar:info-circle-linear" tone="warning" size="sm">All appointments will be reassigned, this is typically done when provider leaves the organization.</Banner>
       )}
       {type === 'other' && (
         <div className={styles.dateRow}>

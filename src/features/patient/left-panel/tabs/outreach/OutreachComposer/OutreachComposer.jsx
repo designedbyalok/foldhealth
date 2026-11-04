@@ -11,7 +11,7 @@ import { TypeDropdown, FieldDropdown } from '../OutreachTab/OutreachTabDropdowns
 import { OutreachProgramChip } from './OutreachProgramChip';
 import { LOG_FOR_OPTIONS } from '../OutreachTab/OutreachTab.utils';
 import { RadioButton } from '../../../../../../components/RadioButton/RadioButton';
-import { InfoBar } from '../../../../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../../../../components/Banner/Banner';
 import styles from './OutreachComposer.module.css';
 
 const RELATIVE_TIME_LABEL = (iso) => {
@@ -209,9 +209,9 @@ export function OutreachComposer({
       )}
 
       {expanded && contactWarning && (
-        <InfoBar tone="warning" icon="solar:danger-triangle-linear" variant="inline">
+        <Banner tone="warning" icon="solar:danger-triangle-linear" size="sm">
           {contactWarning}. Log this only if the patient reached out.
-        </InfoBar>
+        </Banner>
       )}
 
       {/* ── Meta row (expanded only): Type · logged-at · chips · Separate notes ── */}

@@ -11,7 +11,7 @@ import { DatePickerPopover } from '../../../components/DatePicker/DatePickerPopo
 import { Icon } from '../../../components/Icon/Icon';
 import { DownChevronIcon } from '../../../components/Icon/DownChevronIcon';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
-import { InfoBar } from '../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../components/Banner/Banner';
 import { CisTabSkeleton } from './CisTabSkeleton';
 import { CIS_ANTIGENS, CIS_ANTIGEN_STATUS, CIS_DOSE_STATUS, CIS_EVALUATION, evaluateCis } from './cisRules';
 import { isoToMdy } from './useCisTracker';
@@ -639,9 +639,9 @@ function DoseRow({ antigen, row, note, onDateChange, onNoteSave, dob, highlight,
       )}
       {notCounted && row.reason && (
         <div className={styles.doseError}>
-          <InfoBar tone="error" variant="inline" icon="solar:danger-triangle-linear" className={styles.doseErrorBar}>
+          <Banner tone="danger" size="sm" icon="solar:danger-triangle-linear" className={styles.doseErrorBar}>
             Does Not Count: {row.reason}.
-          </InfoBar>
+          </Banner>
         </div>
       )}
     </div>

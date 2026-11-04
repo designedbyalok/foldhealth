@@ -6,7 +6,7 @@ import { Input } from '../../../../../components/Input/Input';
 import { Checkbox } from '../../../../../components/Checkbox/Checkbox';
 import { Badge } from '../../../../../components/Badge/Badge';
 import { Link } from '../../../../../components/Link/Link';
-import { RingEmptyState } from '../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../components/EmptyState/EmptyState';
 import { Icon } from '../../../../../components/Icon/Icon';
 import { AddIconMinimalist } from '../../../../../components/Icon/AddIconMinimalist';
 import { toast } from '../../../../../components/Toast/sonnerToast';
@@ -123,10 +123,10 @@ export function AddInterventionsDrawer({ onClose, onAdd, primaryLabel = 'Add' })
           {showRecentLabel && <span className={styles.groupLabel}>Recently Used</span>}
           {rows.length === 0 ? (
             <div className={styles.emptyState}>
-            <RingEmptyState
+            <EmptyState
               icon="solar:clipboard-list-linear"
               iconSize={31}
-              label={items.length === 0
+              title={items.length === 0
                 ? 'No interventions in the library yet'
                 : 'No interventions match searched keyword'}
             >
@@ -136,7 +136,7 @@ export function AddInterventionsDrawer({ onClose, onAdd, primaryLabel = 'Add' })
                 <AddIconMinimalist size={14} color="currentColor" />
                 Create New
               </Link>
-            </RingEmptyState>
+            </EmptyState>
             </div>
           ) : rows.map(i => (
             <div key={i.id} className={styles.rowWrap}>

@@ -4,7 +4,7 @@ import { Badge } from '../../../../components/Badge/Badge';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
 import { ConfirmDialog } from '../../../../components/ConfirmDialog/ConfirmDialog';
 import { TableSkeleton } from '../../../../components/TableSkeleton/TableSkeleton';
-import { RingEmptyState } from '../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../components/EmptyState/EmptyState';
 import { toast } from '../../../../components/Toast/sonnerToast';
 import { useAppStore } from '../../../../store/useAppStore';
 import { tagBadgeStyle } from './contactTags';
@@ -61,7 +61,7 @@ export function TagsTable({ search = '', onEdit }) {
   );
 
   if (loading && !didFetch) return <TableSkeleton rows={8} />;
-  if (!tags.length) return <RingEmptyState icon="solar:tag-linear" label="Create your first tag" />;
+  if (!tags.length) return <EmptyState icon="solar:tag-linear" title="Create your first tag" />;
 
   return (
     <>
@@ -75,7 +75,7 @@ export function TagsTable({ search = '', onEdit }) {
         totalItems={filtered.length}
         onPageChange={setPage}
         onPageSizeChange={(n) => { setPerPage(n); setPage(1); }}
-        emptyState={<RingEmptyState icon="solar:tag-linear" label={`No tags match "${search}"`} />}
+        emptyState={<EmptyState icon="solar:tag-linear" title={`No tags match "${search}"`} />}
         fixedLayout
         minTableWidth={900}
       />

@@ -2,7 +2,6 @@
   "$comment": "Every folder in src/components belongs to exactly one layer. primitives and patterns must not import the store, features, layouts, or a lower-trust layer (see docs/components/library-contract.mdx). scripts/ds-guardrails.mjs fails when a folder is missing here.",
   "primitives": [
     "ActionButton",
-    "Alert",
     "AlignmentPicker",
     "AnchoredPopover",
     "Avatar",
@@ -10,6 +9,7 @@
     "Badge",
     "BadgeRow",
     "BadgeSelect",
+    "Banner",
     "Button",
     "CardSkeleton",
     "Checkbox",
@@ -32,13 +32,11 @@
     "EditableText",
     "EmptyState",
     "ErrorBoundary",
-    "ErrorState",
     "FilterChip",
     "HeaderCell",
     "HorizontalScrollbar",
     "HoverCard",
     "Icon",
-    "InfoBar",
     "InlineEditable",
     "Input",
     "ItemRow",
@@ -58,7 +56,6 @@
     "RangeSliderPopover",
     "RatingInput",
     "RenamePopover",
-    "RingEmptyState",
     "SearchBar",
     "SearchIconButton",
     "SearchListPopover",
@@ -204,6 +201,10 @@
     "ShadcnCheckbox": "Checkbox",
     "ShadcnDialog": "Dialog",
     "ShadcnSlider": "Slider",
-    "Collapse": "Collapsible (CollapsibleContent)"
+    "Collapse": "Collapsible (CollapsibleContent)",
+    "Alert": "Banner (variant=\"outline\")",
+    "InfoBar": "Banner",
+    "RingEmptyState": "EmptyState",
+    "ErrorState": "EmptyState (tone=\"danger\")"
   }
 }

@@ -3,7 +3,7 @@ import { Drawer } from '../../../components/Drawer/Drawer';
 import { Button } from '../../../components/Button/Button';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Badge } from '../../../components/Badge/Badge';
-import { Alert } from '../../../components/Alert/Alert';
+import { Banner } from '../../../components/Banner/Banner';
 import { Input } from '../../../components/Input/Input';
 import { Select } from '../../../components/Select/Select';
 import { Textarea } from '../../../components/Textarea/Textarea';
@@ -336,25 +336,27 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
 
   const alertsEl = (
     <>
-      {isSample && <Alert tone="info" message="Sample protocol. Run supabase/clinical_protocols_migration.sql to upload and review your own." />}
-      {isFold && <Alert tone="info" message="Fold protocol, built from the published guidelines listed below and kept current by Fold. It can't be edited; to follow different rules, upload your organization's protocol." />}
-      {!isSample && !isFold && adminKnown && !isAdmin && <Alert tone="info" message="Only an admin can edit, approve, retire or delete protocols." />}
-      {protocol.status === 'failed' && <Alert tone="error" message={protocol.parseError || 'This file could not be parsed.'} />}
-      {protocol.status === 'processing' && <Alert tone="info" message="Parsing this document. Its items appear here when it finishes." />}
+      {isSample && <Banner variant="outline" tone="info">Sample protocol. Run supabase/clinical_protocols_migration.sql to upload and review your own.</Banner>}
+      {isFold && <Banner variant="outline" tone="info">Fold protocol, built from the published guidelines listed below and kept current by Fold. It can't be edited; to follow different rules, upload your organization's protocol.</Banner>}
+      {!isSample && !isFold && adminKnown && !isAdmin && <Banner variant="outline" tone="info">Only an admin can edit, approve, retire or delete protocols.</Banner>}
+      {protocol.status === 'failed' && <Banner variant="outline" tone="danger">{protocol.parseError || 'This file could not be parsed.'}</Banner>}
+      {protocol.status === 'processing' && <Banner variant="outline" tone="info">Parsing this document. Its items appear here when it finishes.</Banner>}
       {protocol.status === 'draft' && (
-        <Alert
+        <Banner
+          variant="outline"
           tone="warning"
-          message={showScope
+        >
+          {showScope
             ? 'Check the scope and its care plan output against the document before approving. Nothing is created until it is approved.'
             : 'Check every item against its source passage before approving. Nothing in this protocol is used until it is approved.'}
-        />
+        </Banner>
       )}
       {protocol.status === 'active' && protocol.approvedBy && !isFold && (
-        <Alert tone="success" message={`Approved by ${protocol.approvedBy} on ${fmtDate(protocol.approvedAt)}.`} />
+        <Banner variant="outline" tone="success">{`Approved by ${protocol.approvedBy} on ${fmtDate(protocol.approvedAt)}.`}</Banner>
       )}
-      {protocol.status === 'superseded' && <Alert tone="info" message="A newer version replaced this protocol. It is kept for reference." />}
+      {protocol.status === 'superseded' && <Banner variant="outline" tone="info">A newer version replaced this protocol. It is kept for reference.</Banner>}
       {supersede && (
-        <Alert tone="info" message={`Approving replaces the active version${supersede.version ? ` ${supersede.version}` : ''} of this protocol.`} />
+        <Banner variant="outline" tone="info">{`Approving replaces the active version${supersede.version ? ` ${supersede.version}` : ''} of this protocol.`}</Banner>
       )}
     </>
   );
@@ -449,13 +451,12 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
   );
   const warningsEl = (
     warnings.length > 0 && (
-      <Alert tone="warning" message={(
+      <Banner variant="outline" tone="warning">{(
         <>
           <strong>The parser flagged {warnings.length === 1 ? 'one thing' : `${warnings.length} things`} to check</strong>
           <ul className={styles.warnings}>{warnings.map(w => <li key={w}>{w}</li>)}</ul>
         </>
-      )}
-      />
+      )}</Banner>
     )
   );
   const itemChecks = PROTOCOL_SECTIONS.reduce((n, s) => n + (draft.protocol[s.key] || []).filter(i => i.check).length, 0);
@@ -577,7 +578,7 @@ export function ProtocolReviewDrawer({ protocolId, onClose, onApproved }) {
               trailing={<Badge tone={status.tone} size="sm" label={status.label} className={status.tone === 'warning' ? styles.statusWarning : undefined} />}
             />
             <div className={styles.paneScroll}>
-              {protocol.status === 'failed' && <Alert tone="error" message={protocol.parseError || 'This file could not be parsed.'} />}
+              {protocol.status === 'failed' && <Banner variant="outline" tone="danger">{protocol.parseError || 'This file could not be parsed.'}</Banner>}
               {tab === 'scope' && (protocol.status === 'processing'
                 ? <p className={styles.hint}>Parsing this document and building its scope. It appears here when it finishes.</p>
                 : (

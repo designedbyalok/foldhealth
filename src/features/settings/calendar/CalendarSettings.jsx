@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { SectionTitleBar } from '../../../components/SectionTitleBar/SectionTitleBar';
-import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { HolidaysTab } from './HolidaysTab';
 import { OooRecordsTab } from './OooRecordsTab';
 import { UserAvailabilityTab } from './availability/UserAvailabilityTab';
@@ -34,7 +34,7 @@ export function CalendarSettings() {
       />
       <div className={styles.content}>
         <div className={styles.empty}>
-          <RingEmptyState icon="solar:calendar-linear" label={`${TABS.find(t => t.key === tab)?.label} is coming soon`} />
+          <EmptyState icon="solar:calendar-linear" title={`${TABS.find(t => t.key === tab)?.label} is coming soon`} />
         </div>
       </div>
     </div>

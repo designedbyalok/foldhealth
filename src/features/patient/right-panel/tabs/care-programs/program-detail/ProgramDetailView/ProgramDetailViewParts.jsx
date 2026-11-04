@@ -1,7 +1,7 @@
 import { Icon } from '../../../../../../../components/Icon/Icon';
 import { DownChevronIcon } from '../../../../../../../components/Icon/DownChevronIcon';
 import { UnityIcon } from '../../../../../../../components/UnityIcon/UnityIcon';
-import { RingEmptyState } from '../../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../../components/EmptyState/EmptyState';
 import { Button } from '../../../../../../../components/Button/Button';
 import { focusCarePlanPanel, closeCarePlanPanel } from '../../../../../hooks/useProgramPanelSplitActive';
 import { useAppStore } from '../../../../../../../store/useAppStore';
@@ -19,12 +19,12 @@ const EMPTY = [];
 export function CarePlanInPanelNotice() {
   return (
     <div className={styles.stepPlaceholder}>
-      <RingEmptyState icon="solar:sidebar-minimalistic-linear" label="Care plan is open in a separate panel">
+      <EmptyState icon="solar:sidebar-minimalistic-linear" title="Care plan is open in a separate panel">
         <div className={styles.carePlanNoticeActions}>
           <Button variant="outline" size="sm" onClick={closeCarePlanPanel}>Show Here</Button>
           <Button size="sm" onClick={focusCarePlanPanel}>Go to Panel</Button>
         </div>
-      </RingEmptyState>
+      </EmptyState>
     </div>
   );
 }

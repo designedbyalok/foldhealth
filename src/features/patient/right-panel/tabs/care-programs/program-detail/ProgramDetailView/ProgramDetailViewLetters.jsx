@@ -6,7 +6,7 @@ import { SearchBar } from '../../../../../../../components/SearchBar/SearchBar';
 import { Toggle } from '../../../../../../../components/Toggle/Toggle';
 import { FilterChip } from '../../../../../../../components/FilterChip/FilterChip';
 import { Checkbox } from '../../../../../../../components/Checkbox/Checkbox';
-import { RingEmptyState } from '../../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../../components/EmptyState/EmptyState';
 import { WorklistShell } from '../../../../../../../components/WorklistShell/WorklistShell';
 import { LETTER_SUB_TABS } from './ProgramDetailView.utils';
 import styles from './ProgramDetailView.module.css';
@@ -100,7 +100,7 @@ export function ProgramDetailViewLetters({
           selectedIds={[...selectedLetters]}
           onSelectAll={toggleAllLetters}
           onClearSelection={() => setSelectedLetters(new Set())}
-          emptyState={<RingEmptyState icon="solar:letter-linear" label="No Letters" />}
+          emptyState={<EmptyState icon="solar:letter-linear" title="No Letters" />}
           minTableWidth={0}
           renderRow={letter => (
             <tr key={letter.id}

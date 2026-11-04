@@ -1,7 +1,7 @@
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Badge } from '../../../components/Badge/Badge';
 import { Icon } from '../../../components/Icon/Icon';
-import { InfoBar } from '../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../components/Banner/Banner';
 import { PhoneLink } from '../../../components/PhoneLink/PhoneLink';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { annotateClaims, confirmedFills, matchFill, medLabel, parseMdy } from '../pharmacyWorklist.utils';

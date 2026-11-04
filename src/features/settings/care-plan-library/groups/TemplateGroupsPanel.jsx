@@ -4,10 +4,10 @@ import { WorklistShell } from '../../../../components/WorklistShell/WorklistShel
 import { Badge } from '../../../../components/Badge/Badge';
 import { BadgeRow } from '../../../../components/BadgeRow/BadgeRow';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
-import { Alert } from '../../../../components/Alert/Alert';
+import { Banner } from '../../../../components/Banner/Banner';
 import { Icon } from '../../../../components/Icon/Icon';
 import { TableSkeleton } from '../../../../components/TableSkeleton/TableSkeleton';
-import { RingEmptyState } from '../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../components/EmptyState/EmptyState';
 import { ConfirmDialog } from '../../../../components/ConfirmDialog/ConfirmDialog';
 import { useAppStore } from '../../../../store/useAppStore';
 import { useCanManageTemplates } from '../lib/useCanManageTemplates';
@@ -104,13 +104,13 @@ export function TemplateGroupsPanel({ tabs, activeTab, onTabChange }) {
       />
       {missing && (
         <div className={styles.notice}>
-          <Alert tone="info" message="Template groups need supabase/care_plan_template_groups_migration.sql." />
+          <Banner variant="outline" tone="info">Template groups need supabase/care_plan_template_groups_migration.sql.</Banner>
         </div>
       )}
       <div className={styles.content}>
         {loading && !didFetch ? <TableSkeleton rows={6} /> : !missing && (groups || []).length === 0 ? (
           <div className={styles.empty}>
-            <RingEmptyState icon="solar:folder-with-files-linear" label="No Template Groups" />
+            <EmptyState icon="solar:folder-with-files-linear" title="No Template Groups" />
             <p className={styles.emptyHint}>Bundle templates that go together, like Diabetes + Hypertension + SDOH, so a care manager adds them to a plan in one click.</p>
           </div>
         ) : (

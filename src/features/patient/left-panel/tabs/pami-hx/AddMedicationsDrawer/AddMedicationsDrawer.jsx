@@ -13,7 +13,7 @@ import { Tooltip } from '../../../../../../components/Tooltip/Tooltip';
 import { CloseIcon } from '../../../../../../components/Icon/CloseIcon';
 import { AddIconMinimalist } from '../../../../../../components/Icon/AddIconMinimalist';
 import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
-import { RingEmptyState } from '../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { toast } from '../../../../../../components/Toast/sonnerToast';
 import { MedicationSelect } from './MedicationSelect';
@@ -365,7 +365,7 @@ export function AddMedicationsDrawer({ patientId, focus, onClose }) {
             >
               {active.length === 0 ? (
                 <div className={styles.emptyCard}>
-                  <RingEmptyState icon="solar:pill-linear" label="No Active Medications" iconSize={31} />
+                  <EmptyState icon="solar:pill-linear" title="No Active Medications" iconSize={31} />
                 </div>
               ) : active.map(m => renderRow(m))}
             </Section>

@@ -1,5 +1,5 @@
 import { Badge } from '../../../../../components/Badge/Badge';
-import { InfoBar } from '../../../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../../../components/Banner/Banner';
 import { Tooltip } from '../../../../../components/Tooltip/Tooltip';
 import {
   formatRetireDate, retirementSummary, retiringOn, templatesReplacedBy,
@@ -36,12 +36,12 @@ export function TemplateRetirementNote({ template, templates }) {
   return (
     <>
       {summary && (
-        <InfoBar variant="inline" tone="warning" icon="solar:archive-down-linear">{summary}</InfoBar>
+        <Banner size="sm" tone="warning" icon="solar:archive-down-linear">{summary}</Banner>
       )}
       {replaces.length > 0 && (
-        <InfoBar variant="inline" icon="solar:refresh-linear">
+        <Banner size="sm" icon="solar:refresh-linear">
           {`Replaces ${replaces.map(t => (retiringOn(t) ? `${t.name} (retiring on ${formatRetireDate(retiringOn(t))})` : t.name)).join(', ')}.`}
-        </InfoBar>
+        </Banner>
       )}
     </>
   );

@@ -4,10 +4,10 @@ import { WorklistShell } from '../../../../components/WorklistShell/WorklistShel
 import { FilterChip } from '../../../../components/FilterChip/FilterChip';
 import { Badge } from '../../../../components/Badge/Badge';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
-import { Alert } from '../../../../components/Alert/Alert';
+import { Banner } from '../../../../components/Banner/Banner';
 import { Icon } from '../../../../components/Icon/Icon';
 import { TableSkeleton } from '../../../../components/TableSkeleton/TableSkeleton';
-import { RingEmptyState } from '../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../components/EmptyState/EmptyState';
 import { toast } from '../../../../components/Toast/sonnerToast';
 import { useAppStore } from '../../../../store/useAppStore';
 import { useCanManageTemplates } from '../lib/useCanManageTemplates';
@@ -235,12 +235,12 @@ export function TemplateSuggestionsPanel({ tabs, activeTab, onTabChange }) {
       )}
       {missing && (
         <div className={styles.notice}>
-          <Alert tone="info" message="Run supabase/care_plan_template_suggestions_migration.sql to start the nightly template analysis." />
+          <Banner variant="outline" tone="info">Run supabase/care_plan_template_suggestions_migration.sql to start the nightly template analysis.</Banner>
         </div>
       )}
       <div className={styles.content}>
         {showSkeleton ? <TableSkeleton rows={6} /> : !missing && openCount === 0 && statusFilter.join() === 'Open' && !search ? (
-          <RingEmptyState icon="solar:magic-stick-3-linear" label="No suggestions right now. Templates are being used and working well." />
+          <EmptyState icon="solar:magic-stick-3-linear" title="No suggestions right now. Templates are being used and working well." />
         ) : (
           <WorklistShell
             header={null}

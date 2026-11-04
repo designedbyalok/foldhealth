@@ -12,7 +12,7 @@ import { FilterChip } from '../../../components/FilterChip/FilterChip';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { CardSkeleton } from '../../../components/CardSkeleton/CardSkeleton';
 import { TableSkeleton } from '../../../components/TableSkeleton/TableSkeleton';
-import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
 import { TEMPLATE_CATEGORIES, executionTypeOf } from '../lib/catalog';
 import { AutomationCard } from './AutomationCard';
@@ -171,31 +171,31 @@ export function AutomationsList() {
   const mineEmpty = () => {
     if (!automations.length) {
       return (
-        <RingEmptyState icon="solar:bolt-linear" label="No automations yet. Start from a template or build your own.">
+        <EmptyState icon="solar:bolt-linear" title="No automations yet. Start from a template or build your own.">
           <div className={styles.emptyActions}>
             <Button variant="outline" onClick={() => switchTab('templates')}>Browse templates</Button>
             <Button leadingIcon="solar:add-circle-linear" onClick={() => openNewAutomation(null)}>Create an automation</Button>
           </div>
-        </RingEmptyState>
+        </EmptyState>
       );
     }
     if (search || filterCount) {
       return (
-        <RingEmptyState icon="solar:magnifer-linear" label={search ? `No automations match “${search.trim()}”` : 'No automations match these filters'}>
+        <EmptyState icon="solar:magnifer-linear" title={search ? `No automations match “${search.trim()}”` : 'No automations match these filters'}>
           <Button variant="outline" onClick={clearAll}>Clear search and filters</Button>
-        </RingEmptyState>
+        </EmptyState>
       );
     }
     const def = STATUS_TABS.find(t => t.key === statusTab);
-    return <RingEmptyState icon="solar:bolt-linear" label={`${def.empty}. ${def.hint}`} />;
+    return <EmptyState icon="solar:bolt-linear" title={`${def.empty}. ${def.hint}`} />;
   };
   const templatesEmpty = () => (search
     ? (
-      <RingEmptyState icon="solar:magnifer-linear" label={`No templates match “${search.trim()}”`}>
+      <EmptyState icon="solar:magnifer-linear" title={`No templates match “${search.trim()}”`}>
         <Button variant="outline" onClick={() => setSearch('')}>Clear search</Button>
-      </RingEmptyState>
+      </EmptyState>
     )
-    : <RingEmptyState icon="solar:documents-linear" label="No templates in this category yet" />);
+    : <EmptyState icon="solar:documents-linear" title="No templates in this category yet" />);
 
   const header = (
     <SectionTitleBar

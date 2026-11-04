@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { SearchBar } from '../SearchBar/SearchBar';
 import { Button } from '../Button/Button';
 import { CheckboxTick } from '../CheckboxTick/CheckboxTick';
-import { RingEmptyState } from '../RingEmptyState/RingEmptyState';
+import { EmptyState } from '../EmptyState/EmptyState';
 import { apiFetch } from '../../lib/apiFetch';
 import styles from './PhotoSearch.module.css';
 
@@ -82,9 +82,9 @@ export function PhotoSearch({
       </div>
     );
   } else if (current?.source === 'error' || current?.source === 'unconfigured') {
-    body = <RingEmptyState icon="solar:gallery-linear" label="Photo search isn't available right now" iconSize={31} />;
+    body = <EmptyState icon="solar:gallery-linear" title="Photo search isn't available right now" iconSize={31} />;
   } else if (current && !current.photos.length) {
-    body = <RingEmptyState icon="solar:gallery-linear" label={`No photos found for "${current.query}"`} iconSize={31} />;
+    body = <EmptyState icon="solar:gallery-linear" title={`No photos found for "${current.query}"`} iconSize={31} />;
   } else if (current) {
     body = (
       <>

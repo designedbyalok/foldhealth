@@ -8,7 +8,7 @@ import { Input } from '../../../components/Input/Input';
 import { Textarea } from '../../../components/Textarea/Textarea';
 import { Select } from '../../../components/Select/Select';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
-import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../../store/useAppStore';
 import { PROGRAM_STATUSES, blankProgramType, cloneSteps, programTypeId, stepCounts } from './careProgramConfigModel';
 import { ProgramTypeDetail } from './ProgramTypeDetail';
@@ -169,7 +169,7 @@ export function CareProgramConfigPanel() {
           )}
           <div className={styles.programList}>
             {loading && !didFetch ? <CardSkeleton count={6} /> : shown.length === 0 ? (
-              <RingEmptyState icon="solar:health-linear" label={search.trim() ? 'No programs match' : 'No program types yet'} />
+              <EmptyState icon="solar:health-linear" title={search.trim() ? 'No programs match' : 'No program types yet'} />
             ) : shown.map(t => (
               <ProgramCard
                 key={t.id}

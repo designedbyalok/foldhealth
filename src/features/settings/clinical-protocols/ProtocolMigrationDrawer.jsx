@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Drawer } from '../../../components/Drawer/Drawer';
 import { Button } from '../../../components/Button/Button';
-import { Alert } from '../../../components/Alert/Alert';
+import { Banner } from '../../../components/Banner/Banner';
 import { FilterChip } from '../../../components/FilterChip/FilterChip';
 import { RadioOptionGroup } from '../../../components/RadioOptionGroup/RadioOptionGroup';
 import { TableSkeleton } from '../../../components/TableSkeleton/TableSkeleton';
@@ -92,15 +92,17 @@ export function ProtocolMigrationDrawer({ protocolId, onClose }) {
     >
       <div className={styles.stack}>
         {result && (
-          <Alert
+          <Banner
+            variant="outline"
             tone={result.failed ? 'warning' : 'success'}
-            message={[
+          >
+            {[
               result.migrated ? `${plural(result.migrated, 'plan')} moved to ${to}` : '',
               result.deferred ? `${plural(result.deferred, 'plan')} move at their next review` : '',
               result.stayed ? `${plural(result.stayed, 'plan')} stay on the prior version` : '',
               result.failed ? `${plural(result.failed, 'plan')} could not be updated` : '',
             ].filter(Boolean).join('. ').concat('.')}
-          />
+          </Banner>
         )}
 
         <section className={styles.section}>

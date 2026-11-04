@@ -5,7 +5,7 @@ import { FilterBar } from '../../../../../components/FilterBar/FilterBar';
 import { Input } from '../../../../../components/Input/Input';
 import { SubTabs } from '../../../../../components/SubTabs/SubTabs';
 import { TableSkeleton } from '../../../../../components/TableSkeleton/TableSkeleton';
-import { RingEmptyState } from '../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../../../../store/useAppStore';
 import { REFERRAL_STATUSES } from '../../../data/patientReferrals';
 import { AddMedicationsDrawer } from '../../../left-panel/tabs/pami-hx/AddMedicationsDrawer/AddMedicationsDrawer';
@@ -168,7 +168,7 @@ export function OrdersReferralsTab({ patient }) {
       {loading[view]
         ? <TableSkeleton rows={6} />
         : !shown.length
-          ? <div className={styles.empty}><RingEmptyState icon={EMPTY_ICON[view] || 'solar:clipboard-list-linear'} label={emptyLabel} /></div>
+          ? <div className={styles.empty}><EmptyState icon={EMPTY_ICON[view] || 'solar:clipboard-list-linear'} title={emptyLabel} /></div>
           : view === 'referral'
           ? <ReferralsTable {...tableProps} onOpen={setOpenReferral} onPreview={setPreview} />
           : <OrdersTable view={view} {...tableProps} />}

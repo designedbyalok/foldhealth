@@ -11,10 +11,10 @@ import { BulkBar } from '../../components/BulkBar/BulkBar';
 import { ConfirmDialog } from '../../components/ConfirmDialog/ConfirmDialog';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
 import { Icon } from '../../components/Icon/Icon';
-import { InfoBar } from '../../components/InfoBar/InfoBar';
+import { Banner } from '../../components/Banner/Banner';
 import { Link } from '../../components/Link/Link';
 import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
-import { RingEmptyState } from '../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { UserPickerPopover } from '../../components/UserPickerPopover/UserPickerPopover';
 import { useAppStore } from '../../store/useAppStore';
@@ -241,7 +241,7 @@ export function ReassignPlanner({ appointments, awayUser, timeWindow, plan, onPl
       <div className={styles.planner}>
         <span className={styles.plannerTitle}>Select Reassignment Providers</span>
         <div className={ooo.providersEmpty}>
-          <RingEmptyState size="S" icon="solar:calendar-linear" label="No upcoming appointments to reassign for these dates" />
+          <EmptyState size="sm" icon="solar:calendar-linear" title="No upcoming appointments to reassign for these dates" />
         </div>
       </div>
     );
@@ -278,7 +278,7 @@ export function ReassignPlanner({ appointments, awayUser, timeWindow, plan, onPl
           <FilterChip size="S" label="Appointment Type" options={[...new Set(appointments.map(a => a.appointment_type_name).filter(Boolean))].sort()} selected={typeF} onChange={setTypeF} searchable />
         </div>
       )}
-      <InfoBar tone="info" variant="inline">Appointments are cancelled with the original provider and rebooked on the covering provider&apos;s EHR calendar. Double-booking may occur if that slot is already taken.</InfoBar>
+      <Banner tone="info" size="sm">Appointments are cancelled with the original provider and rebooked on the covering provider&apos;s EHR calendar. Double-booking may occur if that slot is already taken.</Banner>
 
       {!shown.length ? (
         <span className={styles.empty}>No appointments match these filters.</span>

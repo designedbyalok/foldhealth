@@ -28,7 +28,7 @@ import { GoalPreviewDrawer } from '../../care-programs/care-plan/drawers/GoalPre
 import { InterventionPreviewDrawer } from '../../care-programs/care-plan/drawers/InterventionPreviewDrawer/InterventionPreviewDrawer';
 import { BarrierDetailDrawer } from '../../care-programs/care-plan/drawers/BarrierDetailDrawer/BarrierDetailDrawer';
 import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
-import { RingEmptyState } from '../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../components/EmptyState/EmptyState';
 import { DownChevronIcon } from '../../../../../../components/Icon/DownChevronIcon';
 import { CollapsibleContent } from '../../../../../../components/Collapsible/Collapsible';
 import { resolvePatientStoreId } from '../../../../../../lib/resolvePatientStoreId';
@@ -421,7 +421,7 @@ function ProgramActivityLog({ header, programs = [], active = false }) {
         {loading ? (
           <CardSkeleton count={4} />
         ) : months.length === 0 ? (
-          <RingEmptyState icon="solar:clipboard-list-linear" label={filtering ? 'No matching activity' : 'No program activity yet'} />
+          <EmptyState icon="solar:clipboard-list-linear" title={filtering ? 'No matching activity' : 'No program activity yet'} />
         ) : (
           months.map(month => {
             const collapsed = !!collapsedMonths[month.key];

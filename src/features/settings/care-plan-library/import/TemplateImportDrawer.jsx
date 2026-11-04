@@ -3,10 +3,10 @@ import { Drawer } from '../../../../components/Drawer/Drawer';
 import { Dropzone } from '../../../../components/Dropzone/Dropzone';
 import { Button } from '../../../../components/Button/Button';
 import { Badge } from '../../../../components/Badge/Badge';
-import { Alert } from '../../../../components/Alert/Alert';
+import { Banner } from '../../../../components/Banner/Banner';
 import { Icon } from '../../../../components/Icon/Icon';
 import { Toggle } from '../../../../components/Toggle/Toggle';
-import { RingEmptyState } from '../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../../../store/useAppStore';
 import { CSV_COLUMNS, MAX_IMPORT_TEMPLATES, SAMPLE_CSV, SAMPLE_JSON, parseImportFile, planTemplateImport } from '../lib/templateImport';
 import styles from './TemplateImportDrawer.module.css';
@@ -132,7 +132,7 @@ export function TemplateImportDrawer({ onClose, onReviewDrafts }) {
         <div className={styles.done}>
           {result.created + result.updated > 0 ? (
             <>
-              <RingEmptyState icon="solar:check-circle-linear" label="Imported to Draft Templates" />
+              <EmptyState icon="solar:check-circle-linear" title="Imported to Draft Templates" />
               <p className={styles.doneText}>
                 {[
                   result.created ? `${plural(result.created, 'template')} added` : null,
@@ -141,9 +141,9 @@ export function TemplateImportDrawer({ onClose, onReviewDrafts }) {
               </p>
             </>
           ) : (
-            <RingEmptyState icon="solar:danger-triangle-linear" label="Nothing was imported" />
+            <EmptyState icon="solar:danger-triangle-linear" title="Nothing was imported" />
           )}
-          {result.failed > 0 && <Alert tone="error" message={`${plural(result.failed, 'template')} could not be saved. Try importing the file again.`} />}
+          {result.failed > 0 && <Banner variant="outline" tone="danger">{`${plural(result.failed, 'template')} could not be saved. Try importing the file again.`}</Banner>}
         </div>
       ) : !file ? (
         <div className={styles.upload}>
@@ -157,7 +157,7 @@ export function TemplateImportDrawer({ onClose, onReviewDrafts }) {
             onPick={pick}
             onReject={() => setRejected('Choose a .csv or .json file.')}
           />
-          {rejected && <Alert tone="error" message={rejected} />}
+          {rejected && <Banner variant="outline" tone="danger">{rejected}</Banner>}
           <section className={styles.format}>
             <h4 className={styles.formatTitle}>CSV format</h4>
             <p className={styles.formatText}>One row per goal, intervention or barrier. Columns: <span className={styles.columns}>{CSV_COLUMNS.join(', ')}</span>.</p>
@@ -176,7 +176,7 @@ export function TemplateImportDrawer({ onClose, onReviewDrafts }) {
       ) : file.parsed.fileErrors.length ? (
         <div className={styles.upload}>
           <p className={styles.fileName}><Icon name="solar:file-text-linear" size={16} /> {file.name}</p>
-          {file.parsed.fileErrors.map(e => <Alert key={e} tone="error" message={e} />)}
+          {file.parsed.fileErrors.map(e => <Banner variant="outline" key={e} tone="danger">{e}</Banner>)}
           <div><Button variant="outline" size="sm" onClick={reset}>Choose another file</Button></div>
         </div>
       ) : (
@@ -194,9 +194,9 @@ export function TemplateImportDrawer({ onClose, onReviewDrafts }) {
               <span className={styles.totalLabel}>with errors</span>
             </div>
           </div>
-          {plan.truncated && <Alert tone="warning" message={`Only the first ${MAX_IMPORT_TEMPLATES} templates are read. Split the file to import the rest.`} />}
+          {plan.truncated && <Banner variant="outline" tone="warning">{`Only the first ${MAX_IMPORT_TEMPLATES} templates are read. Split the file to import the rest.`}</Banner>}
           {plan.totals.update > 0 && (
-            <Alert tone="info" message="Updates to published templates are saved as draft revisions. The published template stays in use until the revision is approved." />
+            <Banner variant="outline" tone="info">Updates to published templates are saved as draft revisions. The published template stays in use until the revision is approved.</Banner>
           )}
           <Toggle
             size="sm"

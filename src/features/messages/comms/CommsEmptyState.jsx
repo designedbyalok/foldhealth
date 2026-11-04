@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Button } from '../../../components/Button/Button';
 import { MenuPopover } from '../../../components/MenuPopover/MenuPopover';
-import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import allArt from '../../../assets/comms/all.svg';
 import chatArt from '../../../assets/comms/chat.svg';
 import emailArt from '../../../assets/comms/email.svg';
@@ -43,7 +43,7 @@ export function CommsListEmpty({ viewKey, label }) {
   // Fills the list's scroll area so the ring sits in its vertical centre.
   return (
     <div className={styles.listEmpty}>
-      <RingEmptyState icon={v.icon} iconSize={30} label={label || v.empty} />
+      <EmptyState icon={v.icon} iconSize={30} title={label || v.empty} />
     </div>
   );
 }
