@@ -3,7 +3,7 @@ import { Icon } from '../../../components/Icon/Icon';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { Badge } from '../../../components/Badge/Badge';
-import { InfoBar } from '../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../components/Banner/Banner';
 import { StickyNote } from '../../../components/StickyNote/StickyNote';
 import { MessageComposer } from '../../../components/MessageComposer/MessageComposer';
 import { MessageStatus } from '../../../components/MessageStatus/MessageStatus';
@@ -612,7 +612,7 @@ export function CommsThread({ conversation, patient, me, focusMessageId, showInt
       {(sessionMember || sentFor) && (
         <div className={styles.sessionBars}>
           {sessionMember && (
-            <InfoBar
+            <Banner
               className={styles.sessionBar}
               action={(
                 <Link
@@ -627,16 +627,16 @@ export function CommsThread({ conversation, patient, me, focusMessageId, showInt
               )}
             >
               Auto-assigning incoming messages to {sessionMember.name}{session.ends === 'manual' ? '' : ' until midnight'}.
-            </InfoBar>
+            </Banner>
           )}
           {sentFor && sessionMember && (
-            <InfoBar
+            <Banner
               className={styles.sessionBar}
               action={<Link onClick={() => { setSmsSession(conversation, sentFor); setLogForId(null); setSentFor(null); }}>Switch to {sentFor.name}</Link>}
               onClose={() => setSentFor(null)}
             >
               Sent for {sentFor.name}. Incoming messages still go to {sessionMember.name}.
-            </InfoBar>
+            </Banner>
           )}
         </div>
       )}

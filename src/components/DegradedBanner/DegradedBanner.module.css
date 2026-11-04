@@ -1,0 +1,7 @@
+/* Edge to edge under the top bar, so square corners and a hairline below. */
+.strip {
+  border-radius: 0;
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 0.5px solid color-mix(in srgb, var(--banner-fg) 20%, transparent);
+}
+.title { font-weight: 500; }

@@ -1,5 +1,5 @@
 import { Icon } from '../../../components/Icon/Icon';
-import { InfoBar } from '../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../components/Banner/Banner';
 import { Input } from '../../../components/Input/Input';
 import { CisStatusBadge } from './CisStatus';
 import { DoseNoteInput } from './DoseNoteInput';
@@ -89,9 +89,9 @@ export function DoseQuickCard({ antigen, row, dob, note = '', booked, onDateChan
       </div>
       {(row.reason || booked?.passed) && (
         <div className={styles.footer}>
-          <InfoBar tone={row.reason && badge.tone === 'error' ? 'error' : 'warning'} variant="inline" icon="solar:info-circle-linear">
+          <Banner tone={row.reason && badge.tone === 'error' ? 'danger' : 'warning'} size="sm" icon="solar:info-circle-linear">
             {row.reason || 'The reminder visit has passed. Confirm the dose was given.'}
-          </InfoBar>
+          </Banner>
         </div>
       )}
     </div>

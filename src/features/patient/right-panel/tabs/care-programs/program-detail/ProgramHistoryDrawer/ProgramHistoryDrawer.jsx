@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { Drawer } from '../../../../../../../components/Drawer/Drawer';
 import { CardSkeleton } from '../../../../../../../components/CardSkeleton/CardSkeleton';
-import { RingEmptyState } from '../../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../../../../../../store/useAppStore';
 import { ProgramActivityDay } from '../../../care-management/ProgramActivityCard/ProgramActivityCard.jsx';
 import { groupProgramActivity } from '../../../care-management/programActivity';
@@ -24,7 +24,7 @@ export function ProgramHistoryDrawer({ program, onClose }) {
       {loading ? (
         <CardSkeleton count={4} />
       ) : months.length === 0 ? (
-        <RingEmptyState icon="solar:history-linear" label="No activity for this program yet" />
+        <EmptyState icon="solar:history-linear" title="No activity for this program yet" />
       ) : (
         months.map(month => (
           <section key={month.key} className={styles.month}>

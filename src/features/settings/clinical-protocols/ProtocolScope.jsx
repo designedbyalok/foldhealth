@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Badge } from '../../../components/Badge/Badge';
 import { Button } from '../../../components/Button/Button';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
-import { Alert } from '../../../components/Alert/Alert';
+import { Banner } from '../../../components/Banner/Banner';
 import { Input } from '../../../components/Input/Input';
 import { Icon } from '../../../components/Icon/Icon';
 import { CloseButton } from '../../../components/CloseButton/CloseButton';
@@ -328,7 +328,7 @@ export function CategoryPanel({ plan, sectionKey, editable, onChange, onClose })
             </span>
           </div>
         )}
-        {plan.edited && <Alert tone="info" message="Refresh the scope to redraft from your edits. Refresh replaces goals, interventions and barriers added or removed by hand." />}
+        {plan.edited && <Banner variant="outline" tone="info">Refresh the scope to redraft from your edits. Refresh replaces goals, interventions and barriers added or removed by hand.</Banner>}
         {section.explanation && <p className={styles.explanation}>{section.explanation}</p>}
         {category && (
           <span className={styles.matchLine}>

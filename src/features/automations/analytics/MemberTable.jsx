@@ -4,7 +4,7 @@ import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { HeaderCell } from '../../../components/HeaderCell/HeaderCell';
 import { MenuPopover } from '../../../components/MenuPopover/MenuPopover';
 import { Pagination } from '../../../components/Pagination/Pagination';
-import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../../store/useAppStore';
 import { initialsOf, fmtDateTime, memberStatusDef, RETRY_HINT } from './analyticsUi';
 import styles from './Analytics.module.css';
@@ -80,7 +80,7 @@ export function MemberTable({ columns, rows, sortKey, sortDir, onSort, onRowClic
   if (!rows.length) {
     return (
       <div className={styles.tableEmpty}>
-        <RingEmptyState icon="solar:users-group-rounded-linear" label={emptyLabel} size="S" />
+        <EmptyState icon="solar:users-group-rounded-linear" title={emptyLabel} size="sm" />
       </div>
     );
   }

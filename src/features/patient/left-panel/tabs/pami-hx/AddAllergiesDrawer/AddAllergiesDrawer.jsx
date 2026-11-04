@@ -12,7 +12,7 @@ import { Icon } from '../../../../../../components/Icon/Icon';
 import { CloseIcon } from '../../../../../../components/Icon/CloseIcon';
 import { AddIconMinimalist } from '../../../../../../components/Icon/AddIconMinimalist';
 import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
-import { RingEmptyState } from '../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { AllergySelect } from './AllergySelect';
 import { ALLERGY_REACTIONS, REACTION_SYSTEM } from '../../../../../../reference-data/allergyReactions';
@@ -384,7 +384,7 @@ export function AddAllergiesDrawer({ patientId, focus, onClose }) {
             >
               {active.length === 0 ? (
                 <div className={styles.emptyCard}>
-                  <RingEmptyState icon="custom:allergy" label="No Active Allergies" iconSize={31} />
+                  <EmptyState icon="custom:allergy" title="No Active Allergies" iconSize={31} />
                 </div>
               ) : active.map(a => renderRow(a))}
             </Section>

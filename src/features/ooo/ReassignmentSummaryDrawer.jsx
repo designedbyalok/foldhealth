@@ -3,7 +3,7 @@ import { Drawer } from '../../components/Drawer/Drawer';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { Icon } from '../../components/Icon/Icon';
 import { TabStrip } from '../../components/TabStrip/TabStrip';
-import { RingEmptyState } from '../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../store/useAppStore';
 import { formatDate, initialsOf } from './oooUtils';
 import { TYPE_LABELS } from './reassignJobs';
@@ -57,7 +57,7 @@ export function ReassignmentSummaryDrawer({ jobId, onClose }) {
   return (
     <Drawer title="Appointment Reassignment Summary" width={640} onClose={onClose}>
       {!job ? (
-        <RingEmptyState icon="solar:history-linear" label="This reassignment summary isn't available" />
+        <EmptyState icon="solar:history-linear" title="This reassignment summary isn't available" />
       ) : (
         <div className={styles.summary}>
           <div className={styles.summaryField}>

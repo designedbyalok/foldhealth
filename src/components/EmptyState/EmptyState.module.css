@@ -50,6 +50,18 @@
   color: var(--neutral-200);
   line-height: 1.2;
 }
+/* With a description under it, the title reads as the heading. */
+.emptyTitle {
+  color: var(--neutral-300);
+  font-weight: 500;
+}
+.emptyDescription {
+  max-width: 20rem;
+  font-size: var(--font-sm);
+  line-height: 1.4;
+  color: var(--neutral-200);
+  text-align: center;
+}
 
 /* Compact: an 80px medallion (Figma Eventus 16898:43570). */
 .sizeS .emptyCard { gap: var(--space-1); }

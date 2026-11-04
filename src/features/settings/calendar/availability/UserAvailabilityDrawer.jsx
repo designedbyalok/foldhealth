@@ -16,7 +16,7 @@ import { Badge } from '../../../../components/Badge/Badge';
 import { Link } from '../../../../components/Link/Link';
 import { TimePicker } from '../../../../components/TimePicker/TimePicker';
 import { Tooltip } from '../../../../components/Tooltip/Tooltip';
-import { InfoBar } from '../../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../../components/Banner/Banner';
 import { RadioOptionGroup } from '../../../../components/RadioOptionGroup/RadioOptionGroup';
 import { recordsFor, oooStatus, formatDate as oooDate } from '../../../ooo/oooUtils';
 import { AddIconMinimalist } from '../../../../components/Icon/AddIconMinimalist';
@@ -363,13 +363,13 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                 </header>
 
                 {!isNew && conflicts[i].length > 0 && (
-                  <InfoBar variant="inline" tone="warning" icon="solar:danger-triangle-linear" className={styles.conflictNote}>
+                  <Banner size="sm" tone="warning" icon="solar:danger-triangle-linear" className={styles.conflictNote}>
                     {conflicts[i].map(c => (
                       <span key={c.index} className={styles.conflictLine}>
                         Overlaps {blockLabel(c.index)}: {conflictText(c)}
                       </span>
                     ))}
-                  </InfoBar>
+                  </Banner>
                 )}
 
                 <CollapsibleContent open={!b.collapsed}>
@@ -377,7 +377,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                 {/* New view: overlaps are allowed; the alert at the top of the slot says where. */}
                 {isNew && conflicts[i].length > 0 && (
                   // A title, then one line per overlapping slot (which days, which hours).
-                  <InfoBar variant="inline" tone="warning" className={styles.conflictNoteNew}>
+                  <Banner icon="solar:info-circle-linear" size="sm" tone="warning" className={styles.conflictNoteNew}>
                     <span className={styles.conflictTitle}>Schedule Conflict</span>
                     {conflicts[i].map((c) => {
                       // The other slot's location whenever it has one; its timezone
@@ -392,7 +392,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                       );
                     })}
                     <span className={styles.conflictLine}>Double booking may occur during overlapping availability.</span>
-                  </InfoBar>
+                  </Banner>
                 )}
                 {isNew && (
                   <RadioOptionGroup
@@ -545,9 +545,9 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                   const out = slotOoo(b);
                   if (!out.length) return null;
                   return (
-                    <InfoBar variant="inline" tone="info">
+                    <Banner size="sm" tone="info">
                       This slot includes the user&apos;s out-of-office days ({out.map(r => `${oooDate(r.startAt)} – ${oooDate(r.endAt)}`).join(', ')}). Availability does not apply to those days.
-                    </InfoBar>
+                    </Banner>
                   );
                 })()}
                 {ruleSummary(b) && (
@@ -586,9 +586,9 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
       >
         <div className={styles.form}>
           {cloneFrom && (
-            <InfoBar variant="inline">
+            <Banner size="sm">
               Copying {cloneFrom.blocks.length} availability block{cloneFrom.blocks.length === 1 ? '' : 's'} from {cloneFrom.name}. Pick who they're for; any availability they already have is kept.
-            </InfoBar>
+            </Banner>
           )}
           {/* User and the blocks heading stay put; only the blocks scroll. */}
           <div className={styles.stickyTop}>

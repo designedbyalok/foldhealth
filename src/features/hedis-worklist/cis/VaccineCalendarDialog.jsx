@@ -4,7 +4,7 @@ import { PatientBanner } from '../../../components/PatientBanner/PatientBanner';
 import { Icon } from '../../../components/Icon/Icon';
 import { FilterChip } from '../../../components/FilterChip/FilterChip';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
-import { InfoBar } from '../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../components/Banner/Banner';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
 import { Toggle } from '../../../components/Toggle/Toggle';
 import { CIS_ANTIGEN_STATUS, CIS_DOSE_STATUS, evaluateCis } from './cisRules';
@@ -34,7 +34,7 @@ const STATUS_ORDER = Object.values(CIS_DOSE_STATUS);
 // Doses whose reason shows as a full-width bar under the row: red when the
 // dose does not count, grey when it counts but was given late.
 const REASON_BAR = {
-  [CIS_DOSE_STATUS.notCounted]: { tone: 'error', icon: 'solar:danger-triangle-linear', quiet: false },
+  [CIS_DOSE_STATUS.notCounted]: { tone: 'danger', icon: 'solar:danger-triangle-linear', quiet: false },
   [CIS_DOSE_STATUS.completedLate]: { tone: 'info', icon: 'solar:history-linear', quiet: true },
 };
 const reasonBarFor = (r) => (r.reason ? REASON_BAR[r.status] : null);
@@ -327,9 +327,9 @@ export function VaccineCalendarDialog({ member, immunizations, savedNotes, measu
                         {bar && (
                           <tr className={styles.reasonBarRow}>
                             <td colSpan={6}>
-                              <InfoBar tone={bar.tone} variant="inline" icon={bar.icon} className={`${styles.reasonBar} ${bar.quiet ? styles.reasonBarQuiet : ''}`}>
+                              <Banner tone={bar.tone} size="sm" icon={bar.icon} className={`${styles.reasonBar} ${bar.quiet ? styles.reasonBarQuiet : ''}`}>
                                 {row.status}: {row.reason}.
-                              </InfoBar>
+                              </Banner>
                             </td>
                           </tr>
                         )}

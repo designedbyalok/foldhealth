@@ -9,7 +9,7 @@ import { ChipSelect } from '../../components/ChipSelect/ChipSelect';
 import { SearchBar } from '../../components/SearchBar/SearchBar';
 import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { Badge } from '../../components/Badge/Badge';
-import { InfoBar } from '../../components/InfoBar/InfoBar';
+import { Banner } from '../../components/Banner/Banner';
 import { Icon } from '../../components/Icon/Icon';
 import { SimpleTableSkeleton } from '../../components/SimpleTableSkeleton/SimpleTableSkeleton';
 import { MEASURE_YEARS } from './data/caregapWhitelistMock';
@@ -306,9 +306,9 @@ export function AddCareGapsDrawer() {
 
       {/* Edge to edge under the patient banner (or the drawer header when
           the Member field names the patient). */}
-      <InfoBar className={styles.billingBar}>
+      <Banner className={styles.billingBar}>
         Only whitelisted gaps are billed. A gap is added to SSD automatically once its clinical note is signed; otherwise close it manually.
-      </InfoBar>
+      </Banner>
 
       <div className={styles.container}>
         {picker && <MemberField key={member.id} members={hedisMembers} value={member} onChange={pickMember} />}

@@ -15,7 +15,7 @@ import { CalendarCrossIcon } from '../../../components/Icon/CalendarCrossIcon';
 import { CalendarRefreshIcon } from '../../../components/Icon/CalendarRefreshIcon';
 import { BulkBar } from '../../../components/BulkBar/BulkBar';
 import { Pagination } from '../../../components/Pagination/Pagination';
-import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { TruncatedText } from '../../../components/TruncatedText/TruncatedText';
 import { useAppStore } from '../../../store/useAppStore';
 import { apptPerson, describeRange, initialsOf, OOO_ICON, recordsFor } from '../../ooo/oooUtils';
@@ -319,7 +319,7 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
       <div className={styles.scroller}>
         {!rows.length && (
           <div className={styles.empty}>
-            <RingEmptyState icon="solar:calendar-mark-linear" label="No appointments match this period and these filters" />
+            <EmptyState icon="solar:calendar-mark-linear" title="No appointments match this period and these filters" />
           </div>
         )}
         {groups.map((group) => {

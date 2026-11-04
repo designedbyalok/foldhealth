@@ -5,7 +5,7 @@ import { Select } from '../../../components/Select/Select';
 import { Input } from '../../../components/Input/Input';
 import { Textarea } from '../../../components/Textarea/Textarea';
 import { RadioButton } from '../../../components/RadioButton/RadioButton';
-import { InfoBar } from '../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../components/Banner/Banner';
 import { Icon } from '../../../components/Icon/Icon';
 import { Link } from '../../../components/Link/Link';
 import { SendToPicker } from './SendToPicker';
@@ -302,7 +302,7 @@ export function NewSmsDrawer({ onClose, onSent, initialPatient }) {
       )}
     >
       <div className={styles.form}>
-        <InfoBar>{PHI_NOTICE}</InfoBar>
+        <Banner>{PHI_NOTICE}</Banner>
         <Select label="Send Via" required options={[{ ...line, label: `${line.label} (Default)` }]} value="default" onValueChange={() => {}} />
         <Select
           label="Patient"

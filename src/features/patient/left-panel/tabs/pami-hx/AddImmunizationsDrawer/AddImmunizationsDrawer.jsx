@@ -11,7 +11,7 @@ import { DownChevronIcon } from '../../../../../../components/Icon/DownChevronIc
 import { CloseIcon } from '../../../../../../components/Icon/CloseIcon';
 import { AddIconMinimalist } from '../../../../../../components/Icon/AddIconMinimalist';
 import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
-import { RingEmptyState } from '../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { toast } from '../../../../../../components/Toast/sonnerToast';
 import { ImmunizationSelect } from './ImmunizationSelect';
@@ -336,7 +336,7 @@ export function AddImmunizationsDrawer({ patientId, focus, onClose }) {
             >
               {active.length === 0 ? (
                 <div className={styles.emptyCard}>
-                  <RingEmptyState icon="solar:syringe-linear" label="No Active Immunizations" iconSize={31} />
+                  <EmptyState icon="solar:syringe-linear" title="No Active Immunizations" iconSize={31} />
                 </div>
               ) : active.map(i => renderRow(i))}
             </Section>

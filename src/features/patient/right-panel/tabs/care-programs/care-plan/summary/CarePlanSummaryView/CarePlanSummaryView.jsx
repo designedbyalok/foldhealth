@@ -10,7 +10,7 @@ import { HeaderCell } from '../../../../../../../../components/HeaderCell/Header
 import { ActivityLog } from '../../../../../../../../components/ActivityLog/ActivityLog';
 import { DownChevronIcon } from '../../../../../../../../components/Icon/DownChevronIcon';
 import { PriorityIcon } from '../../../../../../../../components/PriorityIcon/PriorityIcon';
-import { RingEmptyState } from '../../../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../../../components/EmptyState/EmptyState';
 import { TableSkeleton } from '../../../../../../../../components/TableSkeleton/TableSkeleton';
 import { WorklistShell } from '../../../../../../../../components/WorklistShell/WorklistShell';
 import { MenuPopover } from '../../../../../../../../components/MenuPopover/MenuPopover';
@@ -995,7 +995,7 @@ export function CarePlanSummaryView({
       {loading && !loadedFor ? (
         <TableSkeleton rows={6} />
       ) : isEmpty ? (
-        <RingEmptyState icon="solar:hand-heart-linear" label="No Signed Care Plans Yet" />
+        <EmptyState icon="solar:hand-heart-linear" title="No Signed Care Plans Yet" />
       ) : (
         <div className={styles.body}>
           {/* Shown once Summarize (in the toolbar) is generating or has run. */}

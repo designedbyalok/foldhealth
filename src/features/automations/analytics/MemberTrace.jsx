@@ -4,7 +4,7 @@ import { Badge } from '../../../components/Badge/Badge';
 import { Button } from '../../../components/Button/Button';
 import { CloseButton } from '../../../components/CloseButton/CloseButton';
 import { Icon } from '../../../components/Icon/Icon';
-import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { DashboardCardSkeleton } from '../../../components/DashboardCard/DashboardCard';
 import { nodeStats } from '../lib/analytics';
@@ -65,11 +65,11 @@ export function MemberTrace({ id, runMemberId }) {
   if (!automation || !member) {
     return (
       <div className={`${styles.page} ${styles.centered}`}>
-        <RingEmptyState icon="solar:user-cross-rounded-linear" label="This member’s run is older than 90 days or was removed.">
+        <EmptyState icon="solar:user-cross-rounded-linear" title="This member’s run is older than 90 days or was removed.">
           <Button variant="outline" leadingIcon="solar:arrow-left-linear" onClick={automation ? close : () => openAutomationsList()}>
             {automation ? 'Back to analytics' : 'Back to automations'}
           </Button>
-        </RingEmptyState>
+        </EmptyState>
       </div>
     );
   }

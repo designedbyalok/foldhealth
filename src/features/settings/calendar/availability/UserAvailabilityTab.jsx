@@ -8,10 +8,10 @@ import { ActionButton } from '../../../../components/ActionButton/ActionButton';
 import { MenuPopover } from '../../../../components/MenuPopover/MenuPopover';
 import { SearchBar } from '../../../../components/SearchBar/SearchBar';
 import { SearchIconButton } from '../../../../components/SearchIconButton/SearchIconButton';
-import { RingEmptyState } from '../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../components/EmptyState/EmptyState';
 import { Link } from '../../../../components/Link/Link';
 import { Icon } from '../../../../components/Icon/Icon';
-import { InfoBar } from '../../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../../components/Banner/Banner';
 // Used by the old view's action cell (commented out below).
 // import { Tooltip } from '../../../../components/Tooltip/Tooltip';
 import { AddIconMinimalist } from '../../../../components/Icon/AddIconMinimalist';
@@ -547,9 +547,9 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
       {!embedded && <SectionTitleBar tabs={tabs} activeTab={activeTab} onTabChange={onTabChange} actions={[]} rightExtras={tools} />}
       {showNotice && !embedded && (
         <div className={styles.notice}>
-          <InfoBar variant="inline" onClose={dismissNotice} className={styles.noticeBar}>
+          <Banner size="sm" onClose={dismissNotice} className={styles.noticeBar}>
             Availability updates may take a few minutes to process. You can continue using Fold while processing completes. We'll notify you once the provider's availability has been updated successfully.
-          </InfoBar>
+          </Banner>
         </div>
       )}
       {filtersOpen && (
@@ -634,7 +634,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
           loading={loading}
           emptyState={(
             <div className={styles.empty}>
-              <RingEmptyState icon="solar:clock-circle-linear" label={query ? 'No users match this search' : filtersOn ? 'No availability matches applied filters' : 'No users yet'} />
+              <EmptyState icon="solar:clock-circle-linear" title={query ? 'No users match this search' : filtersOn ? 'No availability matches applied filters' : 'No users yet'} />
             </div>
           )}
           // Sized to fit a 1440px screen; narrower ones scroll sideways.

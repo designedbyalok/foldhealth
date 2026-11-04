@@ -5,7 +5,7 @@ import { Icon } from '@/components/Icon/Icon';
 import { AddIconMinimalist } from '@/components/Icon/AddIconMinimalist';
 import { ActionButton } from '@/components/ActionButton/ActionButton';
 import { Button } from '@/components/Button/Button';
-import { Alert } from '@/components/Alert/Alert';
+import { Banner } from '@/components/Banner/Banner';
 import { PauseCarePlanDialog } from '../drawers/PauseCarePlanDialog/PauseCarePlanDialog';
 import { CarePlanPausedContext } from '../lib/carePlanPausedContext';
 import { isCarePlanPaused, pauseSummary } from '../lib/carePlanPause';
@@ -43,7 +43,7 @@ import { CarePlanBarriersTable } from '../tables/CarePlanBarriersTable';
 import { SdohSection } from '../sdoh/SdohSection';
 import { SdohReferralDialog } from '../sdoh/SdohReferralDialog';
 import { isSdohBarrier, referralInterventionFields, sdohBarrierFields } from '../lib/sdohTaxonomy';
-import { RingEmptyState } from '@/components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '@/components/EmptyState/EmptyState';
 import { SimpleTableSkeleton } from '@/components/SimpleTableSkeleton/SimpleTableSkeleton';
 import { BulkBar } from '@/components/BulkBar/BulkBar';
 import { CarePlanDuplicatePopover } from '../DuplicateFlag/CarePlanDuplicatePopover';
@@ -1180,11 +1180,13 @@ export function CarePlanView({ patientId, program }) {
       )}
       {planPaused && (
         <div className={styles.pausedBanner}>
-          <Alert
+          <Banner
+            variant="outline"
             tone="info"
             icon="solar:pause-circle-linear"
-            message={<><strong>Care plan paused</strong> · {pauseSummary(live.plan.pause)}. No cadence, overdue flags or automated outreach until it resumes.</>}
-          />
+          >
+            {<><strong>Care plan paused</strong> · {pauseSummary(live.plan.pause)}. No cadence, overdue flags or automated outreach until it resumes.</>}
+          </Banner>
           {canEdit && (
             <Button variant="outline" size="sm" leadingIcon="solar:play-circle-linear" onClick={resumePlan}>
               Resume Now
@@ -1197,11 +1199,13 @@ export function CarePlanView({ patientId, program }) {
         const names = newIds.map(id => carePlanTemplates.find(t => String(t.id) === id)?.name).filter(Boolean);
         return (
           <div key={group.id} className={styles.pausedBanner}>
-            <Alert
+            <Banner
+              variant="outline"
               tone="info"
               icon="solar:folder-with-files-linear"
-              message={<><strong>{group.name}</strong>{` was updated to version ${group.versionNumber}: ${names.join(', ')} ${names.length === 1 ? 'was' : 'were'} added.`}</>}
-            />
+            >
+              {<><strong>{group.name}</strong>{` was updated to version ${group.versionNumber}: ${names.join(', ')} ${names.length === 1 ? 'was' : 'were'} added.`}</>}
+            </Banner>
             {canEdit && (
               <>
                 <Button variant="ghost" size="sm" onClick={() => dismissTemplateGroupUpdate(patientId, program, group.id, group.versionNumber)}>Dismiss</Button>
@@ -1224,17 +1228,19 @@ export function CarePlanView({ patientId, program }) {
       ))}
       {!viewedVersion && !viewedRun && retiredOnPlan.map(({ template: t, replacement, replacementOnPlan }) => (
         <div key={t.id} className={styles.pausedBanner}>
-          <Alert
+          <Banner
+            variant="outline"
             tone="info"
             icon="solar:archive-down-linear"
-            message={(
+          >
+            {(
               <>
                 <strong>{t.name}</strong>
                 {` is retired${t.retiredReason ? ` (${t.retiredReason})` : ''}. `}
                 {replacement ? `Use ${replacement.name} instead; this plan keeps its current items until you change them.` : 'This plan keeps it; no replacement was named.'}
               </>
             )}
-          />
+          </Banner>
           {canEdit && replacement && !replacementOnPlan && (
             <Button
               variant="outline"

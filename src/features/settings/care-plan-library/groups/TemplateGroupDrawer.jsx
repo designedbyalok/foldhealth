@@ -6,7 +6,7 @@ import { Textarea } from '../../../../components/Textarea/Textarea';
 import { Select } from '../../../../components/Select/Select';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';
 import { Badge } from '../../../../components/Badge/Badge';
-import { InfoBar } from '../../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../../components/Banner/Banner';
 import { useAppStore } from '../../../../store/useAppStore';
 import { membersChanged } from '../lib/templateGroups';
 import styles from './TemplateGroups.module.css';
@@ -119,9 +119,9 @@ export function TemplateGroupDrawer({ group, readOnly = false, onClose }) {
         </div>
 
         {changed && (
-          <InfoBar variant="inline" icon="solar:history-linear">
+          <Banner size="sm" icon="solar:history-linear">
             {`Saving makes version ${group.versionNumber + 1}. Plans that used an earlier version keep their templates and are offered the ones added.`}
-          </InfoBar>
+          </Banner>
         )}
       </div>
     </Drawer>

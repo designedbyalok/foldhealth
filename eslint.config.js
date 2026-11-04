@@ -150,6 +150,14 @@ export default defineConfig([globalIgnores([
         message: 'Sizes are sm | md (md is the default). See docs/components/library-contract.mdx.',
       },
       {
+        selector: "JSXOpeningElement[name.name=/^(Banner|EmptyState)$/] > JSXAttribute[name.name='tone'] :matches(JSXAttribute > Literal, JSXExpressionContainer > Literal, ConditionalExpression > Literal.consequent, ConditionalExpression > Literal.alternate)[value='error']",
+        message: 'The error tone is called danger: tone="danger". See docs/components/library-contract.mdx.',
+      },
+      {
+        selector: "JSXOpeningElement[name.name='EmptyState'] > JSXAttribute[name.name='size'] > Literal[value=/^(XS|S|M)$/]",
+        message: 'EmptyState sizes are xs | sm | md (md is the default). See docs/components/library-contract.mdx.',
+      },
+      {
         selector: "JSXOpeningElement[name.name='ActionButton'] > JSXAttribute[name.name='state']",
         message: 'ActionButton has no state prop: use disabled, or tone="danger" for the destructive look. See docs/components/library-contract.mdx.',
       },

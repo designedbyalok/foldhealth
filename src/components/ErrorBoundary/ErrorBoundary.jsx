@@ -1,5 +1,6 @@
 import { Component } from 'react';
-import { ErrorState } from '../ErrorState/ErrorState';
+import { EmptyState } from '../EmptyState/EmptyState';
+import { Button } from '../Button/Button';
 import styles from './ErrorBoundary.module.css';
 
 const changed = (a = [], b = []) => a.length !== b.length || a.some((v, i) => !Object.is(v, b[i]));
@@ -14,7 +15,7 @@ const changed = (a = [], b = []) => a.length !== b.length || a.some((v, i) => !O
  *                                        selected patient), the boundary
  *                                        clears and renders children again
  * @param {(error: Error, reset: () => void) => ReactNode} [props.fallback]
- *                                      – custom fallback; defaults to ErrorState
+ *                                      – custom fallback; defaults to EmptyState tone="danger"
  *                                        with Try Again
  * @param {string}    [props.title]     – default fallback heading
  * @param {string}    [props.message]   – default fallback text
@@ -43,11 +44,12 @@ export class ErrorBoundary extends Component {
     if (this.props.fallback) return this.props.fallback(error, this.reset);
     return (
       <div className={styles.fallback} role="alert">
-        <ErrorState
+        <EmptyState
+          tone="danger"
           icon="solar:danger-triangle-linear"
           title={this.props.title || 'Something went wrong'}
-          message={this.props.message || 'This part of the page could not be shown. Try again, or come back in a moment.'}
-          onRetry={this.reset}
+          description={this.props.message || 'This part of the page could not be shown. Try again, or come back in a moment.'}
+          action={<Button variant="soft" leadingIcon="solar:refresh-linear" onClick={this.reset}>Try Again</Button>}
         />
       </div>
     );

@@ -4,7 +4,7 @@ import { Button } from '../../../../components/Button/Button';
 import { Input } from '../../../../components/Input/Input';
 import { Textarea } from '../../../../components/Textarea/Textarea';
 import { Badge } from '../../../../components/Badge/Badge';
-import { Alert } from '../../../../components/Alert/Alert';
+import { Banner } from '../../../../components/Banner/Banner';
 import { FilterChip } from '../../../../components/FilterChip/FilterChip';
 import { RadioOptionGroup } from '../../../../components/RadioOptionGroup/RadioOptionGroup';
 import { TableSkeleton } from '../../../../components/TableSkeleton/TableSkeleton';
@@ -100,7 +100,7 @@ export function PublishVersionDrawer({ template, content, onClose, onPublished }
           <div className={styles.row2}>
             <Input label="Effective date" required type="date" value={effectiveDate} onChange={e => setEffectiveDate(e.target.value)} />
           </div>
-          {future && <Alert tone="info" message={`Version ${current.versionNumber} stays in effect until ${usDate(effectiveDate)}. New plans apply it until then.`} />}
+          {future && <Banner variant="outline" tone="info">{`Version ${current.versionNumber} stays in effect until ${usDate(effectiveDate)}. New plans apply it until then.`}</Banner>}
           <Textarea title="What changed" value={note} onValueChange={text => setNote(text)} placeholder="e.g. Adds a quarterly foot exam; drops the weekly weigh-in" rows={2} />
         </section>
 

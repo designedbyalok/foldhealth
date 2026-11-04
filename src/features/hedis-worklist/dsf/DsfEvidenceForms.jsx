@@ -13,12 +13,11 @@ import { useEffect, useMemo } from 'react';
 // (No side effects here: derived flags like carePlanAcknowledged are
 // computed on the read side inside isMandatoryComplete instead of being
 // mirrored into the payload.)
-import { Alert } from '../../../components/Alert/Alert';
+import { Banner } from '../../../components/Banner/Banner';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { Badge } from '../../../components/Badge/Badge';
 import { Button } from '../../../components/Button/Button';
 import { Icon } from '../../../components/Icon/Icon';
-import { InfoBar } from '../../../components/InfoBar/InfoBar';
 import { RadioButton } from '../../../components/RadioButton/RadioButton';
 import { CheckboxTick } from '../../../components/CheckboxTick/CheckboxTick';
 import { Select } from '../../../components/Select/Select';
@@ -297,10 +296,12 @@ export function DsfaEvidenceForm({ v, data, submitted, onOpenPhq9Gap }) {
       </FieldStack>
 
       {data.location === 'telehealth' && !consentSatisfied && submitted && (
-        <Alert
+        <Banner
+          variant="outline"
           tone="warning"
-          message="Verbal telehealth consent required. Tick Audio-only or Audio-video visit in the Date of Service card above."
-        />
+        >
+          Verbal telehealth consent required. Tick Audio-only or Audio-video visit in the Date of Service card above.
+        </Banner>
       )}
 
       <FieldStack>
@@ -375,20 +376,20 @@ export function DsfaEvidenceForm({ v, data, submitted, onOpenPhq9Gap }) {
           </div>
         )}
         {bothPhq2Answered && positive && !phq2Saved && !readOnly && (
-          <InfoBar className={styles.phq2InfoBarAttached}>
+          <Banner className={styles.phq2InfoBarAttached}>
             Saving this score opens the DSF-B gap for this patient. Once saved, DSF-A cannot be edited.
-          </InfoBar>
+          </Banner>
         )}
         {/* Saving a Positive score promotes straight to the consolidated
             note with DSF-B stacked below, so there is no jump button. */}
         {phq2Saved && !readOnly && (
-          <InfoBar
+          <Banner
             className={styles.phq2InfoBarAttached}
             tone="success"
             icon="solar:check-circle-linear"
           >
             Score saved, DSF-A locked and DSF-B is created.
-          </InfoBar>
+          </Banner>
         )}
       </div>
 
@@ -587,12 +588,12 @@ export function DsfbEvidenceForm({ v, data, submitted }) {
           </div>
         )}
         {canSavePhq9 && !readOnly && (
-          <InfoBar className={styles.phq2InfoBarAttached}>
+          <Banner className={styles.phq2InfoBarAttached}>
             Saving this score commits the PHQ-9 result. Once saved, the assessment cannot be edited.
-          </InfoBar>
+          </Banner>
         )}
         {phq9Saved && !readOnly && (
-          <InfoBar
+          <Banner
             className={styles.phq2InfoBarAttached}
             tone="success"
             icon="solar:check-circle-linear"
@@ -600,7 +601,7 @@ export function DsfbEvidenceForm({ v, data, submitted }) {
             <span className={styles.phq2InfoBarSaved}>
               <span>Score saved, PHQ-9 locked{bandLabel ? ` (${bandLabel})` : ''}.</span>
             </span>
-          </InfoBar>
+          </Banner>
         )}
       </div>
 

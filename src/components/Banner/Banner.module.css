@@ -1,0 +1,69 @@
+/* Banner. Each tone sets three colours; the variants decide where they go.
+   soft is the old InfoBar (tint, neutral text), outline the old Alert
+   (tint, tone border, tone text). */
+.banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-sm);
+  line-height: 1.2;
+  flex-shrink: 0;
+  color: var(--banner-fg);
+  background: var(--banner-bg);
+}
+
+[data-tone='info']    { --banner-fg: var(--status-info);    --banner-bg: var(--status-info-light);    --banner-text: var(--status-info-dark, var(--status-info)); }
+[data-tone='success'] { --banner-fg: var(--status-success); --banner-bg: var(--status-success-light); --banner-text: var(--status-success-dark, var(--status-success)); }
+[data-tone='warning'] { --banner-fg: var(--status-warning); --banner-bg: var(--status-warning-light); --banner-text: var(--status-warning-dark, var(--status-warning)); }
+[data-tone='danger']  { --banner-fg: var(--status-error);   --banner-bg: var(--status-error-light);   --banner-text: var(--status-error-dark); }
+
+.icon { flex-shrink: 0; }
+.body { flex: 1; min-width: 0; }
+
+.meta {
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.action {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.close {
+  display: inline-flex;
+  flex-shrink: 0;
+  padding: 0.125rem;
+  border: none;
+  border-radius: var(--space-1);
+  background: none;
+  color: var(--neutral-300);
+  cursor: pointer;
+}
+.close:hover { color: var(--neutral-400); background: color-mix(in srgb, currentColor 8%, transparent); }
+
+/* soft: neutral text on the tint; the tone shows in the icon. */
+.soft {
+  border-radius: var(--space-1);
+}
+.soft .body { color: var(--neutral-400); }
+
+/* outline: tone border, and the icon and text in the tone's dark shade. */
+.outline {
+  color: var(--banner-text);
+  border: 0.5px solid var(--banner-fg);
+  border-radius: var(--space-2);
+}
+.outline .body { font-weight: 500; }
+.outline .meta {
+  margin-left: var(--space-1);
+  color: var(--banner-fg);
+}
+
+/* sm: the compact in-flow form. */
+.sm {
+  gap: var(--space-1);
+  padding: var(--space-1) calc(var(--space-1) * 1.5);
+  border: 0.5px solid color-mix(in srgb, currentColor 20%, transparent);
+}

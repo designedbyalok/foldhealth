@@ -20,7 +20,7 @@ import { EpisodeBadge, RetiringBadge, TemplateScopeBadge, TemplateScopeChoice } 
 import { episodeOf } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/episodeTemplates';
 import { LIBRARY_SCOPE_CHOICES, TEMPLATE_SCOPES, inLibrary, matchesScopeFilter, scopeFilterOptions, templateScopeOf } from '../../../../patient/right-panel/tabs/care-programs/care-plan/lib/templateScope';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../../../../components/Dialog/Dialog';
-import { RingEmptyState } from '../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../components/EmptyState/EmptyState';
 import { TableSkeleton } from '../../../../../components/TableSkeleton/TableSkeleton';
 import { INTERVENTION_EDITORS, interventionTemplateFromValues, interventionDrawerValues } from '../../interventions';
 import { toast } from '../../../../../components/Toast/sonnerToast';
@@ -844,7 +844,7 @@ export function CarePlanLibraryPanel() {
   // table, since the columns are still meaningful there.
   const emptyPane = (label) => (
     <div className={styles.emptyPane}>
-      <RingEmptyState icon={meta.emptyIcon} label={label} />
+      <EmptyState icon={meta.emptyIcon} title={label} />
       <Button leadingIconElement={<AddIconMinimalist size={16} />} onClick={openCreate}>
         {`New ${meta.entityLabel}`}
       </Button>
@@ -983,7 +983,7 @@ export function CarePlanLibraryPanel() {
             />
           ) : (
             <div className={styles.emptyPane}>
-              <RingEmptyState icon={meta.emptyIcon} label="No Retired Templates" />
+              <EmptyState icon={meta.emptyIcon} title="No Retired Templates" />
               <p className={styles.emptyHint}>Retire a template from its row menu when it shouldn't be used for new care plans. Plans already using it keep it.</p>
             </div>
           )
@@ -991,7 +991,7 @@ export function CarePlanLibraryPanel() {
         {activeTab === 'overlays' && (
           !overlaysLoaded ? <TableSkeleton rows={4} /> : (templateOverlays || []).length === 0 ? (
             <div className={styles.emptyPane}>
-              <RingEmptyState icon="solar:layers-linear" label="No IPA Overlays" />
+              <EmptyState icon="solar:layers-linear" title="No IPA Overlays" />
               <p className={styles.emptyHint}>Customize a template for one IPA: hide or reprioritize items, change goal cadence, reword items for patients, add local items and route sign-off.</p>
               {canManageTemplates && (
                 <Button leadingIconElement={<AddIconMinimalist size={16} />} onClick={openCreate}>New Overlay</Button>

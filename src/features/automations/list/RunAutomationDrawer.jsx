@@ -5,9 +5,9 @@ import { Button } from '../../../components/Button/Button';
 import { Icon } from '../../../components/Icon/Icon';
 import { Input } from '../../../components/Input/Input';
 import { RadioButton } from '../../../components/RadioButton/RadioButton';
-import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { Checkbox } from '../../../components/Checkbox/Checkbox';
-import { InfoBar } from '../../../components/InfoBar/InfoBar';
+import { Banner } from '../../../components/Banner/Banner';
 import { plural } from './listUtils';
 import styles from './RunAutomationDrawer.module.css';
 
@@ -141,7 +141,7 @@ export function RunAutomationDrawer({ automation, onClose }) {
         </div>
 
         {sample && mode !== 'patientGroup' && mode !== 'leadGroup' && (
-          <InfoBar>Sample members: no patient records are loaded in this account, so runs use sample members. Nothing is sent.</InfoBar>
+          <Banner>Sample members: no patient records are loaded in this account, so runs use sample members. Nothing is sent.</Banner>
         )}
 
         <Input type="search" leadingIcon="solar:magnifer-linear" placeholder={modeDef.search} value={query} onChange={e => setQuery(e.target.value)} />
@@ -158,7 +158,7 @@ export function RunAutomationDrawer({ automation, onClose }) {
                 )}
               </div>
               {members.length === 0 ? (
-                <RingEmptyState size="S" icon="solar:user-cross-linear" label={q ? `No members match “${query.trim()}”` : 'No members yet'} />
+                <EmptyState size="sm" icon="solar:user-cross-linear" title={q ? `No members match “${query.trim()}”` : 'No members yet'} />
               ) : (
                 <ul className={styles.list}>
                   {members.slice(0, MEMBER_LIMIT).map(p => {
@@ -186,10 +186,10 @@ export function RunAutomationDrawer({ automation, onClose }) {
 
         {(mode === 'patientGroup' || mode === 'leadGroup') && (
           groups.length === 0 ? (
-            <RingEmptyState
-              size="S"
+            <EmptyState
+              size="sm"
               icon="solar:users-group-rounded-linear"
-              label={q ? `No groups match “${query.trim()}”` : mode === 'leadGroup' ? 'No lead groups yet' : 'No patient groups yet'}
+              title={q ? `No groups match “${query.trim()}”` : mode === 'leadGroup' ? 'No lead groups yet' : 'No patient groups yet'}
             />
           ) : (
             <ul className={styles.list}>
@@ -222,7 +222,7 @@ export function RunAutomationDrawer({ automation, onClose }) {
 
         {mode === 'employer' && (
           employers.length === 0 ? (
-            <RingEmptyState size="S" icon="solar:buildings-2-linear" label={q ? `No employers match “${query.trim()}”` : 'No employers on member records'} />
+            <EmptyState size="sm" icon="solar:buildings-2-linear" title={q ? `No employers match “${query.trim()}”` : 'No employers on member records'} />
           ) : (
             <ul className={styles.list}>
               {employers.map(e => (

@@ -3,7 +3,7 @@ import { useAppStore } from '../../../store/useAppStore';
 import { SectionTitleBar } from '../../../components/SectionTitleBar/SectionTitleBar';
 import { Switch } from '../../../components/Switch/Switch';
 import { TableSkeleton } from '../../../components/TableSkeleton/TableSkeleton';
-import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import calendarStyles from './CalendarSettings.module.css';
 import styles from './AppointmentTypesTab.module.css';
 
@@ -36,7 +36,7 @@ export function AppointmentTypesTab({ tabs, activeTab, onTabChange }) {
         </p>
         {!fetched ? <TableSkeleton rows={5} /> : types.length === 0 ? (
           <div className={calendarStyles.empty}>
-            <RingEmptyState icon="solar:calendar-linear" label="No appointment types yet" />
+            <EmptyState icon="solar:calendar-linear" title="No appointment types yet" />
           </div>
         ) : (
           <div className={styles.scroll}>

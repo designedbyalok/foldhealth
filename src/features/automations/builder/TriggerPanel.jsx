@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Icon } from '../../../components/Icon/Icon';
 import { Select } from '../../../components/Select/Select';
-import { Alert } from '../../../components/Alert/Alert';
+import { Banner } from '../../../components/Banner/Banner';
 import { CARE_PROGRAM_CATALOG } from '../../patient/data/careProgramCatalog';
 import { TRIGGER_GROUPS, TRIGGERS, nodeDef, triggerDef } from '../lib/catalog';
 import { PROGRAM_STATUS_TRIGGERS } from '../lib/programStatusRules';
@@ -34,9 +34,9 @@ export function TriggerPanel({ graph, current, onSave, onClose }) {
       onClose={onClose}
     >
       {stranded.length > 0 && (
-        <Alert tone="warning">
+        <Banner variant="outline" tone="warning">
           {stranded.length} care plan step{stranded.length === 1 ? '' : 's'} only run{stranded.length === 1 ? 's' : ''} with the trigger “{needs}”.
-        </Alert>
+        </Banner>
       )}
       {TRIGGER_GROUPS.map(group => (
         <div key={group} className={styles.panelSection}>

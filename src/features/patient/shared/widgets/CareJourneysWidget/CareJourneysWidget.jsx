@@ -3,7 +3,7 @@ import { ActionButton } from '../../../../../components/ActionButton/ActionButto
 import { Avatar } from '../../../../../components/Avatar/Avatar';
 import { Badge } from '../../../../../components/Badge/Badge';
 import { BadgeSelect } from '../../../../../components/BadgeSelect/BadgeSelect';
-import { RingEmptyState } from '../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../components/EmptyState/EmptyState';
 import { PanelSection, PanelSectionDivider, PanelSectionItem, PanelSectionMore } from '../../../../../components/PanelSection/PanelSection';
 import styles from './CareJourneysWidget.module.css';
 
@@ -84,7 +84,7 @@ export function CareJourneysWidget() {
       )}
     >
       {journeys.length === 0 ? (
-        <RingEmptyState icon="solar:routing-2-linear" label={`No ${view.toLowerCase()} care journeys`} size="S" />
+        <EmptyState icon="solar:routing-2-linear" title={`No ${view.toLowerCase()} care journeys`} size="sm" />
       ) : (
         <>
           {shown.map(j => {

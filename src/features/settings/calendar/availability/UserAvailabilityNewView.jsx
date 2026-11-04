@@ -9,7 +9,7 @@ import { Tooltip } from '../../../../components/Tooltip/Tooltip';
 import { Icon } from '../../../../components/Icon/Icon';
 import { Link } from '../../../../components/Link/Link';
 import { CollapsibleContent } from '../../../../components/Collapsible/Collapsible';
-import { RingEmptyState } from '../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../components/EmptyState/EmptyState';
 import { WorklistShell } from '../../../../components/WorklistShell/WorklistShell';
 import { DatePickerPopover } from '../../../../components/DatePicker/DatePickerPopover';
 import { useAppStore } from '../../../../store/useAppStore';
@@ -121,7 +121,7 @@ export function UserAvailabilityNewView({ users, loading, filtersOpen, onAdd, on
       {loading ? (
         <div className={styles.loading}>Loading availability…</div>
       ) : shown.length === 0 ? (
-        <div className={styles.empty}><RingEmptyState icon="solar:clock-circle-linear" label="No availability matches applied filters" /></div>
+        <div className={styles.empty}><EmptyState icon="solar:clock-circle-linear" title="No availability matches applied filters" /></div>
       ) : view === 'week' ? (
         <WeekGrid people={shown} holidays={holidays || []} offset={weekOffset} onOffset={setWeekOffset} hideNav={!!weekOf} onlyDay={onlyDay} renderActions={renderActions} onEdit={onEdit} onAdd={onAdd} />
       ) : (

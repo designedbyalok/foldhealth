@@ -3,7 +3,7 @@ import { Icon } from '../../../components/Icon/Icon';
 import { Input } from '../../../components/Input/Input';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { DragHandleIcon } from '../../../components/Icon/DragHandleIcon';
-import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { ACTIONS, CONDITIONS, FAMILY, LOGIC, triggerDef } from '../lib/catalog';
 import { DRAG_TYPE } from '../canvas/CanvasNodes';
 import styles from './AutomationBuilder.module.css';
@@ -129,7 +129,7 @@ export function Palette({ triggerType, onPickTrigger, isAllowed, whyNot, onAdd, 
           </div>
         ) : groups.length === 0 ? (
           <div className={styles.paletteEmpty}>
-            <RingEmptyState icon="solar:magnifer-linear" size="S" label={`Nothing matches “${query}”`} />
+            <EmptyState icon="solar:magnifer-linear" size="sm" title={`Nothing matches “${query}”`} />
           </div>
         ) : (
           <div className={styles.paletteGroups}>

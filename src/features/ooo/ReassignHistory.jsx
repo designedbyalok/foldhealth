@@ -7,7 +7,7 @@ import { Icon } from '../../components/Icon/Icon';
 import { UserSwitchIcon } from '../../components/Icon/UserSwitchIcon';
 import { CalendarIcon } from '../../components/Icon/CalendarIcon';
 import { Link } from '../../components/Link/Link';
-import { RingEmptyState } from '../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
 import { Input } from '../../components/Input/Input';
@@ -166,7 +166,7 @@ export function useReassignHistory() {
         </div>
       )}
       {!jobs.length
-        ? <RingEmptyState icon="solar:history-linear" label="No reassignments yet" />
+        ? <EmptyState icon="solar:history-linear" title="No reassignments yet" />
         : <ActivityLog entries={entries} emptyLabel="No reassignments match these filters." />}
     </>
   );

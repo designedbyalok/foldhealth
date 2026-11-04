@@ -7,7 +7,7 @@ import { Icon } from '../../components/Icon/Icon';
 import { FilterChip } from '../../components/FilterChip/FilterChip';
 import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { CardSkeleton } from '../../components/CardSkeleton/CardSkeleton';
-import { RingEmptyState } from '../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../store/useAppStore';
 import styles from './FormsLibraryDrawer.module.css';
 
@@ -82,7 +82,7 @@ export function FormsLibraryDrawer({ title = 'Forms Library', linkedIds = EMPTY,
         </div>
         <div className={styles.list}>
           {loading && forms.length === 0 ? <CardSkeleton count={6} /> : shown.length === 0 ? (
-            <RingEmptyState icon="solar:clipboard-text-linear" label={search.trim() || types.length ? 'No forms match' : 'No forms in the library yet'} />
+            <EmptyState icon="solar:clipboard-text-linear" title={search.trim() || types.length ? 'No forms match' : 'No forms in the library yet'} />
           ) : shown.map((f) => {
             const id = String(f.id);
             const isLinked = linked.has(id);

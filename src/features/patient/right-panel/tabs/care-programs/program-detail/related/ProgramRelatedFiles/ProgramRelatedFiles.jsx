@@ -6,7 +6,7 @@ import { Toggle } from '../../../../../../../../components/Toggle/Toggle';
 import { SearchBar } from '../../../../../../../../components/SearchBar/SearchBar';
 import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
 import { DocumentUploader } from '../../../../../../../../components/DocumentUploader/DocumentUploader';
-import { RingEmptyState } from '../../../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../../../components/EmptyState/EmptyState';
 import { FilterChip } from '../../../../../../../../components/FilterChip/FilterChip';
 import { DateRangePopover } from '../../../../../../../../components/DateRangePopover/DateRangePopover';
 import { ImagePreviewOverlay } from '../../../../../../../../components/ImagePreviewOverlay/ImagePreviewOverlay';
@@ -209,7 +209,7 @@ export function ProgramRelatedFiles({ programCode, patientId }) {
 
       {rows.length === 0 ? (
         <div className={styles.empty}>
-          <RingEmptyState icon="solar:file-text-linear" label={q ? 'No Documents Found' : 'No Documents Added'} />
+          <EmptyState icon="solar:file-text-linear" title={q ? 'No Documents Found' : 'No Documents Added'} />
         </div>
       ) : view === 'grid' ? (
         <div className={styles.grid}>

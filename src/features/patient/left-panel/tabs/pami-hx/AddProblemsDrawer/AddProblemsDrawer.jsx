@@ -12,7 +12,7 @@ import { AddIconMinimalist } from '../../../../../../components/Icon/AddIconMini
 import { DownChevronIcon } from '../../../../../../components/Icon/DownChevronIcon';
 import { ChronicConditionSelect } from '../../../../../settings/care-plan-library/shared/ChronicConditionSelect/ChronicConditionSelect';
 import { CardSkeleton } from '../../../../../../components/CardSkeleton/CardSkeleton';
-import { RingEmptyState } from '../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../components/EmptyState/EmptyState';
 import { useAppStore } from '../../../../../../store/useAppStore';
 import { toast } from '../../../../../../components/Toast/sonnerToast';
 import { todayIso, toIsoDate, formatClinicalDate } from '../../../../../../lib/clinicalDates';
@@ -306,7 +306,7 @@ export function AddProblemsDrawer({ patientId, focus, onClose }) {
             >
               {active.length === 0 ? (
                 <div className={styles.emptyCard}>
-                  <RingEmptyState icon="solar:health-linear" label="No Active Problems" iconSize={31} />
+                  <EmptyState icon="solar:health-linear" title="No Active Problems" iconSize={31} />
                 </div>
               ) : active.map(p => renderRow(p))}
             </Section>

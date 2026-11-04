@@ -28,7 +28,7 @@ export default {
   parameters: {
     docs: {
       description: {
-        component: 'Catches a render error in its children and shows ErrorState with Try Again. Changing any `resetKeys` value clears it.',
+        component: 'Catches a render error in its children and shows an EmptyState (danger tone) with Try Again. Changing any `resetKeys` value clears it.',
       },
     },
   },

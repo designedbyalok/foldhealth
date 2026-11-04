@@ -1,5 +1,5 @@
 import { Button } from '../../components/Button/Button';
-import { RingEmptyState } from '../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { OooRecordsTable } from './OooRecordsTable';
 import { OOO_ICON } from './oooUtils';
 import styles from './ooo.module.css';
@@ -21,7 +21,7 @@ export function RecordsBody({ loading, records, emptyLabel, actions, showUser, o
       pagination={pagination}
       emptyState={(
         <div className={styles.emptyBox}>
-          <RingEmptyState icon={OOO_ICON} label={emptyLabel} />
+          <EmptyState icon={OOO_ICON} title={emptyLabel} />
         </div>
       )}
       onEdit={actions.openEdit}

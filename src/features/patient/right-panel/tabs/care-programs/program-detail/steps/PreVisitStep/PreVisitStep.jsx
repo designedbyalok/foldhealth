@@ -6,7 +6,7 @@ import { Avatar } from '../../../../../../../../components/Avatar/Avatar';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
 import { WorklistShell } from '../../../../../../../../components/WorklistShell/WorklistShell';
 import { RadioButton } from '../../../../../../../../components/RadioButton/RadioButton';
-import { RingEmptyState } from '../../../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../../../components/EmptyState/EmptyState';
 import { CollapsibleContent } from '../../../../../../../../components/Collapsible/Collapsible';
 import { preVisitForProgram } from '../../../../../../data/programActivityMock';
 import { SnapshotForm } from '../SnapshotForm/SnapshotForm';
@@ -207,7 +207,7 @@ function GeneralInfo({ config }) {
 export function PreVisitStep({ programCode }) {
   const config = preVisitForProgram(programCode);
   if (!config.assessment) {
-    return <RingEmptyState icon="solar:clipboard-check-linear" label="No pre-visit assessment for this program" />;
+    return <EmptyState icon="solar:clipboard-check-linear" title="No pre-visit assessment for this program" />;
   }
   return (
     <div className={styles.container}>

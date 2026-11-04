@@ -5,10 +5,10 @@ import { FilterChip } from '../../../components/FilterChip/FilterChip';
 import { Badge } from '../../../components/Badge/Badge';
 import { BadgeRow } from '../../../components/BadgeRow/BadgeRow';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
-import { Alert } from '../../../components/Alert/Alert';
+import { Banner } from '../../../components/Banner/Banner';
 import { Icon } from '../../../components/Icon/Icon';
 import { TableSkeleton } from '../../../components/TableSkeleton/TableSkeleton';
-import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { IntroCard } from '../../../components/IntroCard/IntroCard';
 import { useAppStore } from '../../../store/useAppStore';
 import { protocolCounts, protocolStatus } from './lib/protocolSchema';
@@ -202,12 +202,12 @@ export function ClinicalProtocolsPanel({ tabs, activeTab, onTabChange }) {
       )}
       {isSample && (
         <div className={styles.notice}>
-          <Alert tone="info" message="Showing a sample protocol. Run supabase/clinical_protocols_migration.sql to upload and review your own." />
+          <Banner variant="outline" tone="info">Showing a sample protocol. Run supabase/clinical_protocols_migration.sql to upload and review your own.</Banner>
         </div>
       )}
       <div className={styles.content}>
         {showSkeleton ? <TableSkeleton rows={8} /> : protocols.length === 0 ? (
-          <RingEmptyState icon="solar:document-medicine-linear" label="Upload your first clinical protocol" />
+          <EmptyState icon="solar:document-medicine-linear" title="Upload your first clinical protocol" />
         ) : (
           <WorklistShell
             header={null}

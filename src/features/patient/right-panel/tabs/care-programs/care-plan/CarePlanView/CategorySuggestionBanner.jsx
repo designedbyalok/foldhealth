@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert } from '../../../../../../../components/Alert/Alert';
+import { Banner } from '../../../../../../../components/Banner/Banner';
 import { Button } from '../../../../../../../components/Button/Button';
 import { ConfirmDialog } from '../../../../../../../components/ConfirmDialog/ConfirmDialog';
 import styles from './CarePlanView.module.css';
@@ -26,17 +26,19 @@ export function CategorySuggestionBanner({ suggestion, canEdit, onSwitch, onDism
 
   return (
     <div className={styles.pausedBanner}>
-      <Alert
+      <Banner
+        variant="outline"
         tone="info"
         icon="solar:transfer-horizontal-linear"
-        message={(
+      >
+        {(
           <>
             <strong>{template.name}</strong>
             {` · Latest results match ${to.name} (${reasons.join('; ')}). `}
             {fromName ? `This plan follows ${fromName}.` : 'This plan has the Common items only.'}
           </>
         )}
-      />
+      </Banner>
       {canEdit && (
         <>
           <Button variant="ghost" size="sm" onClick={() => onDismiss(suggestion)}>Dismiss</Button>

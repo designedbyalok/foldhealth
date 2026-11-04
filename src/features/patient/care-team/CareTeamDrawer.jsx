@@ -6,8 +6,8 @@ import { Badge } from '../../../components/Badge/Badge';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { MenuPopover } from '../../../components/MenuPopover/MenuPopover';
-import { InfoBar } from '../../../components/InfoBar/InfoBar';
-import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyState';
+import { Banner } from '../../../components/Banner/Banner';
+import { EmptyState } from '../../../components/EmptyState/EmptyState';
 import { toast } from '../../../components/Toast/sonnerToast';
 import { useAppStore } from '../../../store/useAppStore';
 import { PersonOption } from '../../messages/comms/PersonOption';
@@ -145,9 +145,9 @@ export function CareTeamDrawer({ patient, onClose }) {
             emptyText="No users match"
           />
           {singleHolder && (
-            <InfoBar variant="inline" tone="warning">
+            <Banner icon="solar:info-circle-linear" size="sm" tone="warning">
               {singleHolder.name} is the current {role}. Adding someone else moves them to Historical Care Team Members.
-            </InfoBar>
+            </Banner>
           )}
         </div>
 
@@ -156,7 +156,7 @@ export function CareTeamDrawer({ patient, onClose }) {
           {loading
             ? <div className={styles.empty}><span className={styles.loadingText}>Loading care team…</span></div>
             : current.length === 0
-            ? <div className={styles.empty}><RingEmptyState size="S" icon="solar:users-group-rounded-linear" label="No care team members yet" /></div>
+            ? <div className={styles.empty}><EmptyState size="sm" icon="solar:users-group-rounded-linear" title="No care team members yet" /></div>
             : <div className={styles.list}>{current.map(m => <MemberRow key={keyOf(m)} member={m} onMenu={rect => setMenu({ member: m, historical: false, rect })} />)}</div>}
         </section>
 

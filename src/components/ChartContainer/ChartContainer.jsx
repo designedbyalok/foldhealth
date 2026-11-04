@@ -3,7 +3,7 @@ import { ActionButton } from '../ActionButton/ActionButton';
 import { MenuPopover } from '../MenuPopover/MenuPopover';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { Icon } from '../Icon/Icon';
-import { RingEmptyState } from '../RingEmptyState/RingEmptyState';
+import { EmptyState } from '../EmptyState/EmptyState';
 import styles from './ChartContainer.module.css';
 
 /**
@@ -106,7 +106,7 @@ export function ChartContainer({
       >
         {empty ? (
           <div className={styles.empty}>
-            <RingEmptyState icon="solar:chart-2-linear" label={emptyLabel} iconSize={31} />
+            <EmptyState icon="solar:chart-2-linear" title={emptyLabel} iconSize={31} />
           </div>
         ) : children}
       </div>

@@ -3,7 +3,7 @@ import { ActionButton } from '../../../../components/ActionButton/ActionButton';
 import { AvatarGroup } from '../../../../components/AvatarGroup/AvatarGroup';
 import { Button } from '../../../../components/Button/Button';
 import { ConfirmDialog } from '../../../../components/ConfirmDialog/ConfirmDialog';
-import { RingEmptyState } from '../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../components/EmptyState/EmptyState';
 import { SimpleTableSkeleton } from '../../../../components/SimpleTableSkeleton/SimpleTableSkeleton';
 import { Switch } from '../../../../components/Switch/Switch';
 import { useAppStore } from '../../../../store/useAppStore';
@@ -78,7 +78,7 @@ export function EfaxSettingsPanel({ searchQuery = '', editing, setEditing }) {
   if (!efaxNumbers.length) {
     return (
       <div className={styles.empty}>
-        <RingEmptyState icon="solar:printer-linear" label="No eFax numbers added yet" />
+        <EmptyState icon="solar:printer-linear" title="No eFax numbers added yet" />
         <Button leadingIcon="solar:add-circle-linear" onClick={() => setEditing('new')}>Add eFax</Button>
         {drawer}
       </div>

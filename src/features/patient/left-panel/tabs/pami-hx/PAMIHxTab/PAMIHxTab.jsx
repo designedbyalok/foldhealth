@@ -12,7 +12,7 @@ import { AddFamilyHistoryDrawer } from '../AddFamilyHistoryDrawer';
 import { groupByRelation } from '../../../../../../reference-data/familyRelations';
 import { AddSocialHistoryDrawer } from '../AddSocialHistoryDrawer';
 import { answeredSocialHistory } from '../../../../../../reference-data/socialHistoryQuestionnaire';
-import { RingEmptyState } from '../../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../../components/EmptyState/EmptyState';
 import { MenuPopover } from '../../../../../../components/MenuPopover/MenuPopover';
 import { ConfirmDialog } from '../../../../../../components/ConfirmDialog/ConfirmDialog';
 import { DownChevronIcon } from '../../../../../../components/Icon/DownChevronIcon';
@@ -396,7 +396,7 @@ function RecentClinicalEvents({ updates, loading }) {
       <CollapseWrapper collapsed={collapsed}>
         {!loading && updates.length === 0 ? (
           <div className={styles.emptyCard}>
-            <RingEmptyState icon="solar:bell-linear" label="No Recent Clinical Events" iconSize={31} />
+            <EmptyState icon="solar:bell-linear" title="No Recent Clinical Events" iconSize={31} />
           </div>
         ) : (
           <div className={styles.card}>
@@ -437,7 +437,7 @@ function ProblemsSection({ patientId }) {
       <CollapseWrapper collapsed={collapsed}>
         {!loading && active.length === 0 ? (
           <div className={styles.emptyCard}>
-            <RingEmptyState icon="solar:health-linear" label="No Active Problems" iconSize={31} />
+            <EmptyState icon="solar:health-linear" title="No Active Problems" iconSize={31} />
           </div>
         ) : (
         <div className={styles.card}>
@@ -502,7 +502,7 @@ function AllergiesSection({ patientId }) {
       <CollapseWrapper collapsed={collapsed}>
         {!loading && active.length === 0 ? (
           <div className={styles.emptyCard}>
-            <RingEmptyState icon="custom:allergy" label="No Active Allergies" iconSize={31} />
+            <EmptyState icon="custom:allergy" title="No Active Allergies" iconSize={31} />
           </div>
         ) : (
         <div className={styles.card}>
@@ -567,7 +567,7 @@ function MedicationsSection({ patientId }) {
       <CollapseWrapper collapsed={collapsed}>
         {!loading && active.length === 0 ? (
           <div className={styles.emptyCard}>
-            <RingEmptyState icon="solar:pill-linear" label="No Active Medications" iconSize={31} />
+            <EmptyState icon="solar:pill-linear" title="No Active Medications" iconSize={31} />
           </div>
         ) : (
         <div className={styles.card}>
@@ -632,7 +632,7 @@ function ImmunizationsSection({ patientId }) {
       <CollapseWrapper collapsed={collapsed}>
         {!loading && active.length === 0 ? (
           <div className={styles.emptyCard}>
-            <RingEmptyState icon="solar:syringe-linear" label="No Active Immunizations" iconSize={31} />
+            <EmptyState icon="solar:syringe-linear" title="No Active Immunizations" iconSize={31} />
           </div>
         ) : (
         <div className={styles.card}>
@@ -692,7 +692,7 @@ function ReportsSection({ title, nameLabel, emptyLabel, emptyIcon, reports, load
       <CollapseWrapper collapsed={collapsed}>
         {!loading && reports.length === 0 ? (
           <div className={styles.emptyCard}>
-            <RingEmptyState icon={emptyIcon} label={emptyLabel} iconSize={31} />
+            <EmptyState icon={emptyIcon} title={emptyLabel} iconSize={31} />
           </div>
         ) : (
           <div className={styles.card}>
@@ -720,7 +720,7 @@ function HistoryEntries({ entries, loading, emptyIcon, emptyLabel, render }) {
   if (entries.length === 0) {
     return (
       <div className={styles.emptyCard}>
-        <RingEmptyState icon={emptyIcon} label={emptyLabel} iconSize={31} />
+        <EmptyState icon={emptyIcon} title={emptyLabel} iconSize={31} />
       </div>
     );
   }

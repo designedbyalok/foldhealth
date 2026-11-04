@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { RingEmptyState } from '../RingEmptyState/RingEmptyState';
+import { EmptyState } from '../EmptyState/EmptyState';
 import styles from './PdfPreview.module.css';
 
 // Long enough that moving to the edited page reads as a gentle transition
@@ -214,7 +214,7 @@ export function PdfPreview({ generate, focus, loader, ready = true, empty = fals
     return (
       <div className={styles.empty}>
         {/* The app's ringed empty state (as in an empty chart), with the PDF icon. */}
-        <RingEmptyState icon="custom:pdf-file" iconSize={31} label={empty ? emptyLabel : 'Generating preview…'} />
+        <EmptyState icon="custom:pdf-file" iconSize={31} title={empty ? emptyLabel : 'Generating preview…'} />
       </div>
     );
   }

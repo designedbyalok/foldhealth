@@ -3,7 +3,7 @@ import { Icon } from '../../../../../components/Icon/Icon';
 import { ConfirmDialog } from '../../../../../components/ConfirmDialog/ConfirmDialog';
 import { ActionButton } from '../../../../../components/ActionButton/ActionButton';
 import { Button } from '../../../../../components/Button/Button';
-import { RingEmptyState } from '../../../../../components/RingEmptyState/RingEmptyState';
+import { EmptyState } from '../../../../../components/EmptyState/EmptyState';
 import { FilterBar } from '../../../../../components/FilterBar/FilterBar';
 import { Input } from '../../../../../components/Input/Input';
 import { SimpleTableSkeleton } from '../../../../../components/SimpleTableSkeleton/SimpleTableSkeleton';
@@ -45,7 +45,7 @@ function EmptyDocuments({ narrowed, category, categoryLabel, onUpload, onClearFi
   if (narrowed) {
     return (
       <div className={styles.emptyWrap}>
-        <RingEmptyState icon="solar:filter-linear" label="No matching documents">
+        <EmptyState icon="solar:filter-linear" title="No matching documents">
           <Button
             variant="outline"
             leadingIcon="solar:close-circle-linear"
@@ -53,21 +53,21 @@ function EmptyDocuments({ narrowed, category, categoryLabel, onUpload, onClearFi
           >
             Clear search and filters
           </Button>
-        </RingEmptyState>
+        </EmptyState>
       </div>
     );
   }
   const label = category === ALL_CATEGORY ? 'documents' : categoryLabel.toLowerCase();
   return (
     <div className={styles.emptyWrap}>
-      <RingEmptyState icon="solar:folder-with-files-linear" label={`No ${label} present`}>
+      <EmptyState icon="solar:folder-with-files-linear" title={`No ${label} present`}>
         <Button
           leadingIcon="solar:upload-minimalistic-linear"
           onClick={onUpload}
         >
           Upload File
         </Button>
-      </RingEmptyState>
+      </EmptyState>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { WorklistShell } from '../../../components/WorklistShell/WorklistShell';
 import { EmptyState } from '../../../components/EmptyState/EmptyState';
+import { Button } from '../../../components/Button/Button';
 import { useAppStore } from '../../../store/useAppStore';
 import styles from './ruleBuilder.module.css';
 
@@ -48,11 +49,11 @@ export function QualifiedMembersTable({ members, loading, error, onRetry }) {
   if (!loading && error) {
     return (
       <EmptyState
+        tone="danger"
         icon="solar:danger-triangle-linear"
         title="Could not load members"
         description={`The patient data fetch failed: ${error}. This does NOT mean zero patients qualify, it means we couldn't check.`}
-        actionLabel="Retry"
-        onAction={onRetry}
+        action={<Button variant="soft" leadingIcon="solar:refresh-linear" onClick={onRetry}>Retry</Button>}
       />
     );
   }

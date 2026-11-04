@@ -239,7 +239,42 @@ Bottom pagination bar with page numbers, per-page dropdown, and go-to-page input
 src/components/EmptyState/EmptyState.jsx
 ```
 
-Centered placeholder with icon, heading, description, and optional CTA button.
+The dashed-ring medallion (Figma) for a list, panel or page with nothing to
+show, or that failed to load.
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `icon` | string | Solar linear icon (or an icon component) |
+| `title` | node | The caption under the medallion |
+| `description` | node | A second, explanatory line |
+| `action` | node | A button or link under the text |
+| `tone` | string | `neutral` (default), `danger` (red icon, for a failed load) |
+| `size` | string | `md` (120px, default), `sm` (80px), `xs` (48px) |
+
+Replaces `RingEmptyState` (`label` is now `title`) and `ErrorState`.
+
+## Feedback
+
+### Banner
+
+```
+src/components/Banner/Banner.jsx
+```
+
+A message that stays put in the layout (not a toast).
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `tone` | string | `info` (default), `success`, `warning`, `danger` |
+| `variant` | string | `soft` (default: tint, neutral text), `outline` (tone border and text) |
+| `size` | string | `md` (default), `sm` (compact, in-flow) |
+| `icon` | string | Solar icon; defaults to the tone's |
+| `meta` | node | Short text at the right end |
+| `action` | node | A link or button at the right end |
+| `onClose` | function | Adds a dismiss button |
+
+Replaces `InfoBar` (now `soft`; `variant="inline"` is `size="sm"`) and `Alert`
+(now `variant="outline"`; `tone="error"` is `danger`).
 
 ## Overlays
 
