@@ -265,8 +265,8 @@ and around each Storybook story.
 | `EmailComposer` | Drafting help | `assistant` slot (e.g. a `UnityAIBar`) |
 | `HoverCard` | Hover intent | its own `useHoverIntent` (`PatientHoverCard` reuses it) |
 
-Still to move: `FilterBar`'s `filterBarUtils` holds the TOC worklist's filter
-definitions (data, not an import).
+The TOC worklist's filter definitions live in `features/toc/tocFilters`, which
+the app's `FilterBar` reads; the library's `filterBarUtils` keeps only `mergeRefs`.
 
 ### Overlays not yet on Popover
 
