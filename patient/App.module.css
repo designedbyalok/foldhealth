@@ -10,7 +10,7 @@
   box-sizing: border-box;
 }
 
-/* ErrorState grows to fill its parent; keep it to its own height here. */
+/* EmptyState grows to fill its parent; keep it to its own height here. */
 .crashMessage {
   display: flex;
 }

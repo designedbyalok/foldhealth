@@ -2,7 +2,7 @@ import { useEffect, useId, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { RadioOptionGroup } from '@/components/RadioOptionGroup/RadioOptionGroup';
-import { Checkbox } from '@/components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '@/components/Checkbox/Checkbox';
 import { Button } from '@/components/Button/Button';
 import { CardSkeleton } from '@/components/CardSkeleton/CardSkeleton';
 import styles from './Settings.module.css';

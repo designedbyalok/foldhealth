@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { TabStrip } from '@/components/TabStrip/TabStrip';
+import { Tabs } from '@/components/Tabs/Tabs';
 import { Icon } from '@/components/Icon/Icon';
 import { Badge } from '@/components/Badge/Badge';
 import { Button } from '@/components/Button/Button';
@@ -83,7 +83,7 @@ export function MyPackages({ memberId }) {
   const shown = (packages || []).filter((p) => inTab(tab, p));
   return (
     <div className={styles.stack}>
-      <TabStrip items={TABS} activeKey={tab} onChange={setTab} fullWidth={false} />
+      <Tabs items={TABS} value={tab} onValueChange={setTab} fullWidth={false} />
       {!packages && <CardSkeleton count={3} />}
       {packages && shown.length === 0 && (
         <div className={styles.card}><EmptyState icon="solar:box-linear" title="Nothing here" description={EMPTY[tab]} /></div>

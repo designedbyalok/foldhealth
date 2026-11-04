@@ -9,7 +9,7 @@ import { StaffViewAsGate } from './profiles/StaffViewAsGate';
 import { Toaster } from '@/components/Toast/Toast';
 import { ErrorBoundary } from '@/components/ErrorBoundary/ErrorBoundary';
 import { readInviteToken } from './lib/inviteToken';
-import { ErrorState } from '@/components/ErrorState/ErrorState';
+import { EmptyState } from '@/components/EmptyState/EmptyState';
 import { Button } from '@/components/Button/Button';
 import styles from './App.module.css';
 
@@ -44,10 +44,11 @@ export function App() {
         fallback={() => (
           <main className={styles.crash} role="alert">
             <div className={styles.crashMessage}>
-              <ErrorState
+              <EmptyState
+                tone="danger"
                 icon="solar:danger-triangle-linear"
                 title="Something went wrong"
-                message="The app hit an unexpected problem. Reload to continue; your information is safe."
+                description="The app hit an unexpected problem. Reload to continue; your information is safe."
               />
             </div>
             <div className={styles.crashActions}>
