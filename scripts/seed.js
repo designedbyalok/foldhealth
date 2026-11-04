@@ -45,7 +45,7 @@ import { MONITORING_SEED, monitoringToRow } from '../src/features/patient/right-
 import { OVERVIEW_SEED, overviewToRow } from '../src/features/patient/data/overviewData.js';
 import { CCM_WORKLIST_MEMBERS } from '../src/features/ccm-worklist/data/mock.js';
 import { defaultProgramTypes, programTypeToRow } from '../src/features/settings/care-program-config/careProgramConfigModel.js';
-import { EMPLOYER_IMPACT_EMPLOYERS, employerImpactRows, employerImpactExportRows } from '../src/features/analytics/views/employer/employerImpactSeed.js';
+import { EMPLOYER_IMPACT_EMPLOYERS, employerImpactRows, employerImpactWeeklyRows, employerImpactExportRows } from '../src/features/analytics/views/employer/employerImpactSeed.js';
 import { sampleOooRecords, demoOooForUser, oooToRow } from '../src/features/ooo/oooSeed.js';
 import { sampleOnCallSchedules, onCallToRow } from '../src/features/ooo/onCallSeed.js';
 import { sampleHolidays, holidayToRow } from '../src/features/holidays/holidaySeed.js';
@@ -957,6 +957,7 @@ async function main() {
     console.log('  ✓ patient_crm_activities: created / already exists');
     // Run the migration itself rather than a copy of it, so the two can't drift.
     await db.query(readFileSync(new URL('../supabase/employer_impact_migration.sql', import.meta.url), 'utf8'));
+    await db.query(readFileSync(new URL('../supabase/employer_impact_weekly_migration.sql', import.meta.url), 'utf8'));
     await db.query(readFileSync(new URL('../supabase/email_components_migration.sql', import.meta.url), 'utf8'));
     console.log('  ✓ email_header_footer_presets: is_default / slug / updated_at trigger');
     console.log('  ✓ patient_problems: created / already exists');
@@ -1170,6 +1171,18 @@ async function main() {
       if (error) failed = error;
     }
     if (failed) { console.error('  ✗', failed.message); } else { console.log(`  ✓ ${metricRows.length} rows`); }
+
+    // The same months by week, for the Month and Quarter charts.
+    const weeklyRows = employerImpactWeeklyRows(metricRows);
+    console.log(`Seeding employer_impact_weekly_metrics (${weeklyRows.length} rows)...`);
+    failed = null;
+    for (let i = 0; i < weeklyRows.length && !failed; i += 1000) {
+      const { error } = await supabase
+        .from('employer_impact_weekly_metrics')
+        .upsert(weeklyRows.slice(i, i + 1000), { onConflict: 'id' });
+      if (error) failed = error;
+    }
+    if (failed) { console.error('  ✗', failed.message); } else { console.log(`  ✓ ${weeklyRows.length} rows`); }
   }
 
   console.log('Seeding employer_impact_report_exports (sample export history)...');

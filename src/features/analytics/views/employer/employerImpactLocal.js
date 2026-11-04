@@ -5,9 +5,10 @@
  * `employer_impact_rollup` / `employer_impact_filters` do, so the report
  * looks identical before and after the seed.
  */
-import { EMPLOYER_IMPACT_EMPLOYERS, employerImpactRows } from './employerImpactSeed';
+import { EMPLOYER_IMPACT_EMPLOYERS, employerImpactRows, employerImpactWeeklyRows } from './employerImpactSeed';
 
 let cache = null;
+let weeklyCache = null;
 
 // The seed's year ends this month; so does this.
 function rows() {
@@ -33,12 +34,26 @@ export function localEmployerImpactFilters() {
   };
 }
 
+function weeklyRows() {
+  if (!weeklyCache) weeklyCache = employerImpactWeeklyRows(rows());
+  return weeklyCache;
+}
+
 /** Same shape as `employer_impact_rollup()`: `[{ m, s, b, mo, v }]`. */
-export function localEmployerImpactRollup({ from, to, employer = null, scope = 'patient', location = null }) {
+export function localEmployerImpactRollup(filters) {
+  return rollup(rows(), r => r.month.slice(0, 7), filters);
+}
+
+/** Same shape as `employer_impact_weekly_rollup()`: `mo` is the week's Monday. */
+export function localEmployerImpactWeeklyRollup(filters) {
+  return rollup(weeklyRows(), r => r.week, filters);
+}
+
+function rollup(source, periodOf, { from, to, employer = null, scope = 'patient', location = null }) {
   const groups = new Map();
-  for (const r of rows()) {
-    const mo = r.month.slice(0, 7);
-    if (mo < from || mo > to) continue;
+  for (const r of source) {
+    const mo = periodOf(r);
+    if (mo.slice(0, 7) < from || mo.slice(0, 7) > to) continue;
     if (employer && r.employer_id !== employer) continue;
     if (location && (scope === 'visit' ? r.visit_location : r.patient_location) !== location) continue;
     const key = `${r.metric}\u0000${r.series}\u0000${r.bucket}\u0000${mo}`;
