@@ -12,13 +12,15 @@
 -- stays ACCOUNT_PAUSED at sign-in until a practice admin unlocks it.
 --
 -- Exceptions that still clear the lock on password change (unchanged):
---   • require_reset = true  — the admin already unlocked and the user is
+--   • require_reset = true: the admin already unlocked and the user is
 --     setting a new password from the emailed unlock link (sanctioned path).
---   • the user is a practice admin — so admins can always self-recover and
+--   • the user is a practice admin, so admins can always self-recover and
 --     can't all be stranded locked out.
 --
--- Everything else about the function (password history, sign-out, audit, the
--- "password changed" email) is unchanged from account_unlock_link_migration.sql.
+-- Everything else about the function (password history, sign-out, audit, and
+-- the emails: none while the account is still Pending, "account activated"
+-- after an administrator unlock, otherwise "password changed") is unchanged
+-- from account_email_templates_migration.sql, its latest definition.
 
 create or replace function public.on_auth_password_changed()
 returns trigger
@@ -32,6 +34,7 @@ declare
   keep_lock boolean := false;
   is_invite boolean := coalesce(old.raw_user_meta_data->>'invited', '') = 'true';
   display text;
+  account_status text;
 begin
   if new.encrypted_password is not distinct from old.encrypted_password then
     return new;
@@ -70,16 +73,21 @@ begin
 
   delete from auth.sessions where user_id = new.id;
 
-  select coalesce(nullif(trim(full_name), ''), new.email) into display from public.profiles where id = new.id;
+  select coalesce(nullif(trim(full_name), ''), new.email), status into display, account_status
+    from public.profiles where id = new.id;
   perform public.account_security_audit(new.id, 'Password changed',
     case when keep_lock then 'Password changed, but the account stays locked until a practice administrator unlocks it. Signed out of all sessions.'
          when coalesce(was_waiting, false) then 'New password set after an administrator unlocked the account. Signed out of all sessions.'
          else 'Password changed. Signed out of all sessions.' end,
     coalesce(display, new.email));
 
-  insert into public.security_email_outbox (kind, user_id, to_email, payload)
-  values ('password_changed', new.id, new.email, jsonb_build_object('name', coalesce(display, new.email), 'at', now()));
-  perform public.security_email_kick();
+  if account_status is distinct from 'Pending' then
+    insert into public.security_email_outbox (kind, user_id, to_email, payload)
+    values (case when coalesce(was_waiting, false) then 'account_activated' else 'password_changed' end,
+            new.id, new.email,
+            jsonb_build_object('name', coalesce(display, new.email), 'email', new.email, 'at', now()));
+    perform public.security_email_kick();
+  end if;
   return new;
 exception when others then
   raise warning 'password change bookkeeping skipped: %', sqlerrm;
