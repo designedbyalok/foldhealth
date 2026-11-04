@@ -76,6 +76,9 @@
   overflow: hidden;
   animation: listSearchIn var(--duration-base) var(--ease-out);
 }
+/* As tall as the filter chips (and the icon it replaces), so opening it
+   doesn't grow the filter row. */
+.listTools .listSearch { height: 32px; }
 .listSearchClosing { animation: listSearchOut var(--duration-base) var(--ease-out) forwards; }
 @keyframes listSearchIn {
   from { width: 28px; opacity: 0; }
