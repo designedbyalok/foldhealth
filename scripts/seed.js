@@ -1029,6 +1029,33 @@ async function main() {
     .upsert(CMP_MEMBERS.map(cmpToRow), { onConflict: 'id' });
   if (cmpErr) { console.error('  ✗', cmpErr.message, '(run supabase/cmp_members_migration.sql first)'); } else { console.log(`  ✓ ${CMP_MEMBERS.length} members`); }
 
+  // Each roster row is also the patient's CMP enrollment (Care Programs tab);
+  // the same rows supabase/cmp_members_care_program_sync_migration.sql backfills.
+  console.log('Seeding CMP enrollments (patient_care_programs)...');
+  const today = new Date();
+  const todayStamp = `${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}/${today.getFullYear()}`;
+  const cmpEnrollments = CMP_MEMBERS.filter(m => m.patientId && m.subProgram).map(m => ({
+    id: `pcp-${m.patientId}-CMP-${m.subProgram.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+    patient_id: m.patientId,
+    code: 'CMP',
+    sub_program: m.subProgram,
+    instance: 1,
+    name: `${m.subProgram} (CMP)`,
+    status: 'New',
+    status_color: 'var(--primary-300)',
+    start_date: m.programStartDate || todayStamp,
+    end_date: '-',
+    last_updated: todayStamp,
+    assignee: m.assignee || 'Unassigned',
+    pcp: '-',
+    progress: 0,
+    planned_end_date: m.programDueDate || null,
+  }));
+  const { error: cmpEnrollErr } = await supabase
+    .from('patient_care_programs')
+    .upsert(cmpEnrollments, { onConflict: 'id', ignoreDuplicates: true });
+  if (cmpEnrollErr) { console.error('  ✗', cmpEnrollErr.message, '(run the patient_care_programs sub_program and lifecycle migrations first)'); } else { console.log(`  ✓ ${cmpEnrollments.length} CMP enrollments`); }
+
   // Sample clinical protocol (Settings > Clinical Protocols), with its document text.
   console.log('Seeding clinical_protocols...');
   const protocolText = readFileSync(new URL(`../src/features/settings/clinical-protocols/data/${HARBOR_HYPERTENSION_TEXT_FILE}`, import.meta.url), 'utf8');
