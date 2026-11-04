@@ -23,7 +23,7 @@ import { GoalsPanel } from './goals/GoalsPanel';
 import { AuditLogDrawer } from '../shared/AuditLogDrawer';
 import { CallQueueDrawer } from '../../../components/CallQueueDrawer/CallQueueDrawer';
 import { ViewUserDrawer } from '../account/AccountPanel';
-import { ProductTour } from '../../../components/ProductTour/ProductTour';
+import { ProductTour } from '../../tours/ProductTour';
 import { useTableSort } from '../../../components/HeaderCell/useTableSort';
 import { VoicePreviewPopover } from '../../../components/VoicePreviewPopover/VoicePreviewPopover';
 import styles from './AgentsTable.module.css';

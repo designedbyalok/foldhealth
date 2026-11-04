@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useAppStore } from '../../../store/useAppStore';
 import { Icon } from '../../../components/Icon/Icon';
-import { WorklistShell } from '../../../components/WorklistShell/WorklistShell';
+import { WorklistShell } from '../../worklists/WorklistShell';
 import { useTableSort } from '../../../components/HeaderCell/useTableSort';
 import { QueueRow, getQueueMiddleColumns } from './QueueRow';
 import { QueueEmptyState } from './QueueEmptyState';

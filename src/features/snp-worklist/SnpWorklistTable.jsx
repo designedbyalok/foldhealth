@@ -18,7 +18,7 @@ import { SavedFiltersChip } from '../hcc/SavedFiltersChip';
 import { useSavedFilterActions } from '../hcc/useSavedFilterActions';
 import { SnpWorklistRow, SNP_MIDDLE_COLUMNS } from './SnpWorklistRow';
 import { ColumnsHeaderButton } from '../../components/WorklistColumns/ColumnsHeaderButton';
-import { useWorklistColumns } from '../../components/WorklistColumns/useWorklistColumns';
+import { useWorklistColumns } from '../worklists/useWorklistColumns';
 import { CarePlanReviewDrawer } from '../patient/right-panel/tabs/care-programs/care-plan/drawers/CarePlanReviewDrawer/CarePlanReviewDrawer';
 import styles from './SnpWorklistTable.module.css';
 

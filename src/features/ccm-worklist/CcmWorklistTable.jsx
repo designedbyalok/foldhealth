@@ -13,7 +13,7 @@ import { TableSkeleton } from '../../components/TableSkeleton/TableSkeleton';
 import { BulkBar } from '../../components/BulkBar/BulkBar';
 import { CcmWorklistRow, CCM_MIDDLE_COLUMNS } from './CcmWorklistRow';
 import { ColumnsHeaderButton } from '../../components/WorklistColumns/ColumnsHeaderButton';
-import { useWorklistColumns } from '../../components/WorklistColumns/useWorklistColumns';
+import { useWorklistColumns } from '../worklists/useWorklistColumns';
 import {
   TimeFilterPopover,
 } from './TimeFilterChip';

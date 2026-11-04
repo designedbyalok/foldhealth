@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAppStore } from '../../../store/useAppStore';
 import { Button } from '../../../components/Button/Button';
 import { SectionTitleBar } from '../../../components/SectionTitleBar/SectionTitleBar';
-import { ProductTour } from '../../../components/ProductTour/ProductTour';
+import { ProductTour } from '../../tours/ProductTour';
 import { DomainRegistryPanel } from './DomainRegistryPanel';
 import { ComponentLibraryPanel } from './ComponentLibraryPanel';
 import styles from './EmbeddedComponentsSettings.module.css';

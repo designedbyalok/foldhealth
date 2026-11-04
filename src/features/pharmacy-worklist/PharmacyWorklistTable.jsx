@@ -12,7 +12,7 @@ import { TableSkeleton } from '../../components/TableSkeleton/TableSkeleton';
 import { HeaderCell } from '../../components/HeaderCell/HeaderCell';
 import { useTableSort } from '../../components/HeaderCell/useTableSort';
 import { ColumnsHeaderButton } from '../../components/WorklistColumns/ColumnsHeaderButton';
-import { useWorklistColumns } from '../../components/WorklistColumns/useWorklistColumns';
+import { useWorklistColumns } from '../worklists/useWorklistColumns';
 import { PharmacyWorklistRow } from './PharmacyWorklistRow';
 import { PharmacyGapDetailDrawer } from './PharmacyGapDetailDrawer';
 import { SavedFiltersChip } from '../hcc/SavedFiltersChip';

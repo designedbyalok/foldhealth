@@ -5,7 +5,7 @@ import { TableSkeleton } from '../../components/TableSkeleton/TableSkeleton';
 import { Icon } from '../../components/Icon/Icon';
 import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { ColumnsHeaderButton } from '../../components/WorklistColumns/ColumnsHeaderButton';
-import { useWorklistColumns } from '../../components/WorklistColumns/useWorklistColumns';
+import { useWorklistColumns } from '../worklists/useWorklistColumns';
 
 const CITIES = [
   ['Queens', 'NY'], ['Brooklyn', 'NY'], ['Manhattan', 'NY'], ['Bronx', 'NY'],

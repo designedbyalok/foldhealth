@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
- * Hover intent for a PatientHoverCard. Resting on the trigger for
- * `openDelay` shows the banner; `expandDelay` later the details slide out.
+ * Hover intent for a hover card. Resting on the trigger for `openDelay`
+ * opens it (stage 'banner'); `expandDelay` later it expands (stage 'expanded').
  * Leaving the trigger and the card for `closeDelay` hides it, so the pointer
  * can travel from the avatar into the card.
  *
  * @returns {{ open, stage, anchorRect, triggerProps, cardProps, close }}
  */
-export function usePatientHoverCard({ openDelay = 800, expandDelay = 500, closeDelay = 150 } = {}) {
+export function useHoverIntent({ openDelay = 800, expandDelay = 500, closeDelay = 150 } = {}) {
   const [anchorRect, setAnchorRect] = useState(null);
   const [stage, setStage] = useState('banner');
   const openT = useRef(null);

@@ -12,7 +12,7 @@ import { HeaderCell } from '../../components/HeaderCell/HeaderCell';
 import { useTableSort } from '../../components/HeaderCell/useTableSort';
 import { Pagination } from '../../components/Pagination/Pagination';
 import { ColumnsHeaderButton } from '../../components/WorklistColumns/ColumnsHeaderButton';
-import { useWorklistColumns } from '../../components/WorklistColumns/useWorklistColumns';
+import { useWorklistColumns } from '../worklists/useWorklistColumns';
 import { FilterChipBar } from '../hcc/FilterChipBar';
 import { SavedFiltersChip } from '../hcc/SavedFiltersChip';
 import { FilterNameDialog } from '../hcc/FilterNameDialog';

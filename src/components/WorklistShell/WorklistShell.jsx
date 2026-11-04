@@ -9,7 +9,8 @@ import { Pagination } from '../Pagination/Pagination';
 import { BulkBar } from '../BulkBar/BulkBar';
 import { TableSkeleton } from '../TableSkeleton/TableSkeleton';
 import { ColumnsHeaderButton } from '../WorklistColumns/ColumnsHeaderButton';
-import { useWorklistColumns } from '../WorklistColumns/useWorklistColumns';
+import { warnDeprecated } from '../../lib/legacyProps';
+import { splitWorklistColumns } from './splitWorklistColumns';
 import { ConfirmDialog } from '../ConfirmDialog/ConfirmDialog';
 import { BulkSelectToggle } from '../BulkSelect/BulkSelectToggle';
 import { useBulkSelect } from '../BulkSelect/useBulkSelect';
@@ -160,6 +161,7 @@ export function WorklistShell({
   // Sticky columns (checkbox, sticky-left member, sticky-right actions) are
   // never reordered/hidden: they're locked in the popover.
   worklistKey,
+  columnPrefs,
   // Optional `(ctx) => node` rendered inside <tbody> after the rows, with the
   // same row ctx plus `colSpan`. Lets a caller append a collapsible group
   // (e.g. completed items) that honours the user's hidden/ordered columns.
@@ -245,45 +247,17 @@ export function WorklistShell({
   //   • useWorklistColumns keeps it out of the hidden set.
   const {
     customisableColumns, lockedTop, lockedBottom, lockedKeys,
-  } = useMemo(() => {
-    const top = [];
-    const botSticky = [];
-    const inPlaceLocked = [];
-    const mid = [];
-    for (const c of columns) {
-      if (c.sticky === 'left' && !c.showCheckbox) top.push(c);
-      else if (c.sticky === 'right') botSticky.push(c);
-      else if (c.locked && !c.showCheckbox) {
-        mid.push(c);              // still rendered in-place in the row
-        inPlaceLocked.push(c);    // and tagged for the popover locked band
-      }
-      else if (!c.showCheckbox) mid.push(c);
-    }
-    return {
-      customisableColumns: mid,
-      lockedKeys: new Set(inPlaceLocked.map(c => c.key)),
-      lockedTop: top.map(c => ({ k: c.key, lb: c.popoverLabel || c.label })),
-      lockedBottom: [...inPlaceLocked, ...botSticky].map(c => ({
-        k: c.key, lb: c.popoverLabel || c.label,
-      })),
-    };
-  }, [columns]);
+  } = useMemo(() => splitWorklistColumns(columns), [columns]);
 
-  // `prefs` is only wired when the caller opts in with worklistKey. Otherwise
-  // pass through the raw column list so existing worklists keep working.
-  const hiddenByDefault = useMemo(
-    () => customisableColumns.filter(c => c.defaultHidden).map(c => c.key || c.k),
-    [customisableColumns],
-  );
-  const prefs = useWorklistColumns(
-    worklistKey || '__off__',
-    customisableColumns,
-    { hiddenByDefault },
-  );
+  // Column customisation is on when the caller passes `columnPrefs` (the
+  // connected features/worklists/WorklistShell does, from its worklistKey).
+  // Otherwise the raw column list renders as declared.
+  if (worklistKey && !columnPrefs) warnDeprecated('WorklistShell', 'worklistKey', true, 'features/worklists/WorklistShell, or pass columnPrefs');
+  const prefs = columnPrefs;
   // Locked columns are immune to the hidden set, a stale pref from
   // before a column got flagged `locked` must not keep it hidden any
   // longer. Filter prefs.orderedColumns manually so we can override.
-  const activeCustomisable = worklistKey
+  const activeCustomisable = prefs
     ? prefs.orderedColumns.filter(c => {
         const key = c.key || c.k;
         return lockedKeys.has(key) || !prefs.hiddenSet.has(key);
@@ -291,10 +265,10 @@ export function WorklistShell({
     : customisableColumns;
   // Same immunity for the row-render side: never treat a locked column
   // as hidden, otherwise the header renders but the body td doesn't.
-  const hiddenSet = worklistKey
+  const hiddenSet = prefs
     ? new Set(Array.from(prefs.hiddenSet).filter(k => !lockedKeys.has(k)))
     : null;
-  const orderedColumnsForRow = worklistKey
+  const orderedColumnsForRow = prefs
     ? [
         ...columns.filter(c => c.showCheckbox),
         ...columns.filter(c => c.sticky === 'left' && !c.showCheckbox),
@@ -313,10 +287,10 @@ export function WorklistShell({
   const checkboxCol = columns.find((c) => c.showCheckbox);
 
   const columnsToRender = orderedColumnsForRow;
-  // The last sticky-right column hosts the columns button when worklistKey
-  // is provided. If none, we still let the caller pass one manually via
+  // The last sticky-right column hosts the columns button when column prefs
+  // are on. If none, we still let the caller pass one manually via
   // their header render (existing HCC pattern).
-  const actionsColKey = worklistKey
+  const actionsColKey = prefs
     ? [...columns].reverse().find(c => c.sticky === 'right')?.key
     : null;
   const rowCtx = { visibleColumns: activeCustomisable, hiddenSet, orderedColumns: orderedColumnsForRow, bulk: bulkRowCtx };
@@ -467,7 +441,7 @@ export function WorklistShell({
                   // whenever the caller opted into column prefs. Replaces the
                   // plain label with a { label · button } cluster so every
                   // WorklistShell caller gets the popover for free.
-                  const isColumnsAnchor = worklistKey && col.key === actionsColKey;
+                  const isColumnsAnchor = prefs && col.key === actionsColKey;
                   return (
                     <th
                       key={col.key || idx}
