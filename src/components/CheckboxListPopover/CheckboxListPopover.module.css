@@ -55,46 +55,6 @@
 .search::placeholder { color: var(--neutral-200); }
 .search:focus { border-color: var(--primary-300); }
 
-.empty {
-  padding: 12px 6px;
-  text-align: center;
-  font-size: var(--font-md);
-  color: var(--neutral-200);
-}
-
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  overflow-y: auto;
-  min-height: 0;
-}
-
-/* Group header above a run of options (e.g. a stakeholder). */
-.section {
-  padding: var(--space-2) var(--space-2) var(--space-1);
-  font-size: var(--font-xs);
-  font-weight: 500;
-  color: var(--neutral-200);
-  text-transform: uppercase;
-  letter-spacing: .06em;
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 32px;
-  padding: 4px 6px;
-  border: none;
-  background: none;
-  border-radius: 6px;
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.12s;
-}
-.row:hover { background: var(--neutral-50); }
-
 .label {
   flex: 1;
   font-size: var(--font-base);

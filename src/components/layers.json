@@ -42,6 +42,7 @@
     "ItemRow",
     "Kbd",
     "Link",
+    "Listbox",
     "MenuPopover",
     "MonthPickerPopover",
     "NumberStepper",

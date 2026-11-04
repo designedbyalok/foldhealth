@@ -1,0 +1,147 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* Group header above a run of options. */
+.section {
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-2) var(--space-1);
+  font-size: var(--font-xs);
+  font-weight: 500;
+  color: var(--neutral-200);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.sectionNext {
+  margin-top: var(--space-1);
+  border-top: 0.5px solid var(--neutral-100);
+}
+
+.row {
+  display: flex;
+  flex-shrink: 0; /* the list scrolls; rows keep their height */
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 32px;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--space-1);
+  cursor: pointer;
+  text-align: left;
+  outline: none;
+  transition: background 0.12s;
+}
+.row:hover,
+.row:focus-visible { background: var(--neutral-50); }
+.row:focus-visible { box-shadow: inset 0 0 0 1px var(--primary-200); }
+
+/* With no mark, the picked row itself tints; with a check, it tints too. */
+.rowPicked,
+.rowPicked:hover,
+.rowTinted,
+.rowTinted:hover { background: var(--primary-50); }
+.rowPicked .label { color: var(--primary-300); font-weight: 500; }
+
+.rowDisabled { cursor: not-allowed; }
+.rowDisabled:hover { background: none; }
+.rowDisabled .label { color: var(--neutral-200); }
+.rowDisabled .radio { border-color: var(--neutral-100); background: var(--neutral-100); }
+
+.text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.label {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-base);
+  color: var(--neutral-400);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.description {
+  font-size: var(--font-sm);
+  color: var(--neutral-300);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tip { flex: 1; min-width: 0; }
+
+.checkbox { flex-shrink: 0; pointer-events: none; }
+
+.radio {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--neutral-200);
+  background: var(--neutral-0);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.12s;
+}
+.radioOn { border-color: var(--primary-300); }
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary-300);
+}
+
+.action { flex-shrink: 0; margin-left: auto; }
+
+/* lg: roomier rows for an avatar with a name and a second line. */
+.lg .row { padding: var(--space-2); gap: var(--space-3); }
+.lg .rowWithCheckbox { gap: var(--space-2); }
+
+.empty {
+  padding: var(--space-3) var(--space-2);
+  text-align: center;
+  font-size: var(--font-md);
+  color: var(--neutral-200);
+}
+
+/* menu: Select's menu rows. */
+.menu { gap: var(--space-1); }
+.menu .row {
+  min-height: 0;
+  padding: var(--space-2) 0.625rem;
+  font-size: var(--font-md);
+  line-height: 1.3;
+  color: var(--neutral-400);
+  white-space: nowrap;
+}
+.menu .label { font-size: inherit; color: inherit; }
+.menu .row:hover,
+.menu .row:focus { background: var(--primary-50); color: var(--primary-400); box-shadow: none; }
+/* The pick keeps a hairline so it reads apart from the hover tint. */
+.menu .rowMenuPicked,
+.menu .rowMenuPicked:hover {
+  background: var(--primary-50);
+  color: var(--primary-400);
+  box-shadow: inset 0 0 0 0.5px var(--primary-200);
+}
+.menu .rowDisabled { opacity: 0.5; }
+.menu .rowDisabled:hover { background: transparent; color: var(--neutral-400); }
+.menu .section {
+  padding: var(--space-2) 0.625rem var(--space-1);
+  font-weight: 500;
+  color: var(--neutral-300);
+  letter-spacing: 0.04em;
+  border-top: 0.5px solid var(--neutral-100);
+  cursor: default;
+  user-select: none;
+}
+.menu .section:first-child { border-top: none; }
+.menu .empty {
+  padding: 0.625rem var(--space-3);
+  color: var(--neutral-300);
+}

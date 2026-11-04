@@ -1,5 +1,6 @@
-import { Fragment, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Popover } from '../Popover/Popover';
+import { Listbox } from '../Listbox/Listbox';
 import { Checkbox } from '../Checkbox/Checkbox';
 import styles from './CheckboxListPopover.module.css';
 
@@ -47,13 +48,6 @@ export function CheckboxListPopover({
 }) {
   const sel = useMemo(() => new Set(selected), [selected]);
   const [query, setQuery] = useState('');
-
-  const toggle = (v) => {
-    const next = sel.has(v) ? selected.filter(x => x !== v) : [...selected, v];
-    const nextSet = new Set(next);
-    // Keep the option-order stable
-    onChange?.(options.filter(o => nextSet.has(o)));
-  };
 
   // With an active search query, the Select All / Clear All controls and the
   // header checkbox state operate on the *visible* (filtered) rows: not the
@@ -130,30 +124,14 @@ export function CheckboxListPopover({
         />
       )}
 
-      <div className={styles.list}>
-        {visible.map((opt, i) => {
-          const checked = sel.has(opt);
-          const section = sectionOf?.(opt);
-          return (
-            <Fragment key={opt}>
-            {section && section !== sectionOf(visible[i - 1] ?? null) && <div className={styles.section}>{section}</div>}
-            <div
-              role="checkbox"
-              aria-checked={checked}
-              tabIndex={0}
-              className={styles.row}
-              onClick={() => toggle(opt)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(opt); } }}
-            >
-              <Checkbox checked={checked} tabIndex={-1} aria-hidden className="pointer-events-none" />
-              {renderOptionLeading?.(opt)}
-              <span className={styles.label} title={labelOf(opt)}>{labelOf(opt)}</span>
-            </div>
-            </Fragment>
-          );
-        })}
-        {visible.length === 0 && <div className={styles.empty}>No matches</div>}
-      </div>
+      <Listbox
+        aria-label={label}
+        multiple
+        options={options.map(o => ({ value: o, label: labelOf(o), leading: renderOptionLeading?.(o), section: sectionOf?.(o) }))}
+        value={selected}
+        onValueChange={(next) => { const nextSet = new Set(next); onChange?.(options.filter(o => nextSet.has(o))); }}
+        query={searchable ? query : ''}
+      />
     </Popover>
   );
 }

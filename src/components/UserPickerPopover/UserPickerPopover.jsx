@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Popover } from '../Popover/Popover';
+import { Listbox } from '../Listbox/Listbox';
 import { Avatar } from '../Avatar/Avatar';
 import { Icon } from '../Icon/Icon';
 import { Checkbox } from '../Checkbox/Checkbox';
@@ -60,6 +61,8 @@ export function UserPickerPopover({ anchorRect, users = NO_USERS, selected, onSe
     const next = isPicked(u) ? [...pickedSet].filter(x => x !== k && x !== u.name) : [...pickedSet, k];
     onSelect(next);
   };
+  const ordered = groups ? [...groups.top, ...groups.rest] : shown;
+  const topKeys = new Set(groups ? groups.top.map(keyOf) : []);
   if (!anchorRect) return null;
 
   return (
@@ -69,7 +72,7 @@ export function UserPickerPopover({ anchorRect, users = NO_USERS, selected, onSe
       placement={align === 'right' ? 'bottom-end' : 'bottom-start'}
       width={280}
       listNavigation
-      role="menu"
+      role="dialog"
       aria-label={title}
       className={styles.menu}
     >
@@ -110,39 +113,32 @@ export function UserPickerPopover({ anchorRect, users = NO_USERS, selected, onSe
       })()}
       <div className={styles.list}>
         {onUnassign && !q && (
-          <button type="button" role="menuitem" className={styles.row} onClick={() => { onUnassign(); onClose(); }}>
+          <button type="button" className={styles.row} onClick={() => { onUnassign(); onClose(); }}>
             <Avatar type="icon" variant="others" iconName="solar:user-linear" size="M" />
             <span className={styles.name}>Unassign</span>
           </button>
         )}
-        {shown.length === 0 ? (
-          <span className={styles.empty}>{q ? 'No users match your search.' : emptyText}</span>
-        ) : (groups ? [
-          { key: 'pinned', label: pinned.label, rows: groups.top },
-          { key: 'rest', label: restLabel, rows: groups.rest },
-        ] : [{ key: 'all', rows: shown }]).filter(g => g.rows.length).map((g, gi) => (
-          <div key={g.key} className={gi ? styles.groupNext : undefined} role="group" aria-label={g.label}>
-            {g.label && <span className={styles.groupLabel}>{g.label}</span>}
-            {g.rows.map(u => (
-          <button
-            key={u.id || u.name}
-            type="button"
-            role={multiple ? 'menuitemcheckbox' : 'menuitem'}
-            aria-checked={multiple ? isPicked(u) : undefined}
-            className={[styles.row, multiple ? styles.rowMulti : '', isPicked(u) && !multiple ? styles.rowActive : ''].filter(Boolean).join(' ')}
-            onClick={() => (multiple ? toggle(u) : (onSelect(u), onClose()))}
-          >
-            {multiple && <Checkbox checked={isPicked(u)} tabIndex={-1} aria-hidden="true" className={styles.check} />}
-            <Avatar variant="staff" initials={u.initials || initialsOf(u.name)} size="M" />
-            <span className={styles.text}>
-              <span className={styles.name}>{u.name}</span>
-              {u.role && <span className={styles.role}>{u.role}</span>}
-            </span>
-            {isPicked(u) && !multiple && <Icon name="solar:check-circle-linear" size={16} color="var(--primary-300)" />}
-          </button>
-            ))}
-          </div>
-        ))}
+        <Listbox
+          aria-label={title}
+          size="lg"
+          dividers
+          multiple={multiple}
+          indicator={multiple ? 'checkbox' : 'check'}
+          options={ordered.map(u => ({
+            value: keyOf(u),
+            label: u.name,
+            description: u.role,
+            leading: <Avatar variant="staff" initials={u.initials || initialsOf(u.name)} size="M" />,
+            section: groups ? (topKeys.has(keyOf(u)) ? pinned.label : restLabel) : undefined,
+          }))}
+          value={multiple ? ordered.filter(isPicked).map(keyOf) : (ordered.find(isPicked) ? keyOf(ordered.find(isPicked)) : null)}
+          onSelect={(o) => {
+            const u = ordered.find(x => keyOf(x) === o.value);
+            if (multiple) toggle(u);
+            else { onSelect(u); onClose(); }
+          }}
+          emptyText={q ? 'No users match your search.' : emptyText}
+        />
       </div>
     </Popover>
   );

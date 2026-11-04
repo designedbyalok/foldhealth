@@ -34,38 +34,3 @@
   flex-direction: column;
   gap: 2px;
 }
-
-.row {
-  display: flex;
-  align-items: center;
-  min-height: 32px;
-  padding: 4px 8px;
-  border: none;
-  background: none;
-  border-radius: 4px;
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.12s;
-}
-.row:hover { background: var(--neutral-50); }
-.rowSelected { background: var(--primary-50); }
-.rowSelected .label { color: var(--primary-300); font-weight: 500; }
-.rowDisabled { cursor: not-allowed; }
-.rowDisabled .label { color: var(--neutral-200); }
-.rowDisabled:hover { background: transparent; }
-
-.label {
-  flex: 1;
-  font-size: var(--font-base);
-  color: var(--neutral-400);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.empty {
-  padding: 16px 8px;
-  text-align: center;
-  font-size: var(--font-md);
-  color: var(--neutral-200);
-}
