@@ -137,6 +137,32 @@ Single-select dropdown matching Input height and radius.
 
 `ref`, `aria-label` and any other props reach the trigger.
 
+### Listbox
+
+```
+src/components/Listbox/Listbox.jsx
+```
+
+The list of options inside every picker: `Select`'s menu, `CheckboxListPopover`,
+`RadioListPopover`, `SearchListPopover` and `UserPickerPopover` all render
+their rows through it. It owns the rows, the selection mark, sections,
+filtering and the keyboard; the picker owns its trigger, search box, header
+and footer.
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `options` | array | `{ value, label, description?, leading?, icon?, disabled?, section?, searchText?, tooltip?, action? }`; `{ type: 'header', label }` is a header |
+| `multiple` | boolean | Pick several |
+| `value` / `defaultValue` / `onValueChange` | | The pick, or an array of picks |
+| `onSelect` | function | Every pick, with the option |
+| `indicator` | string | `none` (row tints), `check`, `checkbox`, `radio` |
+| `variant` | string | `plain` (default, the pick lists), `menu` (Select's rows) |
+| `size` | string | `md` (default), `lg` (avatar and two lines) |
+| `query` | string | Filters by label, `searchText` or section |
+
+Keyboard: Up / Down / Home / End move, Enter or Space picks; at either end the
+arrow carries on to the surrounding Popover's search box or footer.
+
 ### Textarea
 
 ```

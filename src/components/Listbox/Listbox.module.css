@@ -8,6 +8,7 @@
 
 /* Group header above a run of options. */
 .section {
+  flex-shrink: 0;
   padding: var(--space-2) var(--space-2) var(--space-1);
   font-size: var(--font-xs);
   font-weight: 500;
@@ -22,6 +23,7 @@
 
 .row {
   display: flex;
+  flex-shrink: 0; /* the list scrolls; rows keep their height */
   align-items: center;
   gap: var(--space-2);
   min-height: 32px;
