@@ -16,7 +16,6 @@ const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
-const MONTH_OPTIONS = MONTH_NAMES.map((name, i) => ({ value: String(i + 1), label: name }));
 
 
 /**
@@ -75,10 +74,23 @@ export function DateRangePopover({
   });
   const [fromYear, setFromYear] = useState(savedYears ? String(savedYears[0]) : '');
   const [toYear, setToYear] = useState(savedYears ? String(savedYears[1]) : '');
-  const [fromMonth, setFromMonth] = useState(savedMonths ? String(savedMonths[0][1]) : '');
-  const [fromMonthYear, setFromMonthYear] = useState(savedMonths ? String(savedMonths[0][0]) : '');
-  const [toMonth, setToMonth] = useState(savedMonths ? String(savedMonths[1][1]) : '');
-  const [toMonthYear, setToMonthYear] = useState(savedMonths ? String(savedMonths[1][0]) : '');
+  // Month & Year values are 'YYYY-MM'. With nothing saved they start on last
+  // month to this month, so Apply works straight away.
+  const [fromYM, setFromYM] = useState(() => (savedMonths ? ymKey(...savedMonths[0]) : defaultMonths(today)[0]));
+  const [toYM, setToYM] = useState(() => (savedMonths ? ymKey(...savedMonths[1]) : defaultMonths(today)[1]));
+  const monthYearOptions = useMemo(() => {
+    const out = [];
+    for (let i = today.getFullYear() * 12 + today.getMonth(); i >= (today.getFullYear() - YEAR_SPAN) * 12; i -= 1) {
+      const y = Math.floor(i / 12);
+      const m = i % 12;
+      out.push({
+        value: ymKey(y, m + 1),
+        label: `${MONTH_NAMES[m]} ${y}`,
+        searchText: `${MONTH_NAMES[m]} ${y} ${MONTH_NAMES[m].slice(0, 3)} ${y} ${pad2(m + 1)}/${y}`,
+      });
+    }
+    return out;
+  }, [today]);
   const yearOptions = useMemo(() => {
     const out = [];
     for (let y = today.getFullYear(); y >= today.getFullYear() - YEAR_SPAN; y -= 1) out.push({ value: String(y), label: String(y) });
@@ -139,7 +151,7 @@ export function DateRangePopover({
   );
 
   const yearsReady = !!fromYear && !!toYear;
-  const monthsReady = !!fromMonth && !!fromMonthYear && !!toMonth && !!toMonthYear;
+  const monthsReady = !!fromYM && !!toYM;
   const canApply = mode === 'years' ? yearsReady : mode === 'months' ? monthsReady : !!(start && end);
 
   const apply = () => {
@@ -152,10 +164,7 @@ export function DateRangePopover({
     }
     if (mode === 'months') {
       if (!monthsReady) return;
-      const [lo, hi] = [
-        [Number(fromMonthYear), Number(fromMonth)],
-        [Number(toMonthYear), Number(toMonth)],
-      ].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+      const [lo, hi] = [fromYM, toYM].sort().map(k => k.split('-').map(Number));
       const lastDay = new Date(hi[0], hi[1], 0).getDate();
       onChange?.([`${lo[0]}-${pad2(lo[1])}-01`, `${hi[0]}-${pad2(hi[1])}-${pad2(lastDay)}`]);
       onClose?.();
@@ -171,10 +180,9 @@ export function DateRangePopover({
     setEnd(null);
     setFromYear('');
     setToYear('');
-    setFromMonth('');
-    setFromMonthYear('');
-    setToMonth('');
-    setToMonthYear('');
+    const [d0, d1] = defaultMonths(today);
+    setFromYM(d0);
+    setToYM(d1);
     onChange?.([]);
   };
 
@@ -210,16 +218,10 @@ export function DateRangePopover({
           <Select label="To" searchable placeholder="Year" options={yearOptions} value={toYear} onValueChange={setToYear} />
         </div>
       ) : mode === 'months' ? (
-        <>
-          <div className={styles.yearRow}>
-            <Select label="From Month" searchable placeholder="Month" options={MONTH_OPTIONS} value={fromMonth} onValueChange={setFromMonth} />
-            <Select label="From Year" searchable placeholder="Year" options={yearOptions} value={fromMonthYear} onValueChange={setFromMonthYear} />
-          </div>
-          <div className={styles.yearRow}>
-            <Select label="To Month" searchable placeholder="Month" options={MONTH_OPTIONS} value={toMonth} onValueChange={setToMonth} />
-            <Select label="To Year" searchable placeholder="Year" options={yearOptions} value={toMonthYear} onValueChange={setToMonthYear} />
-          </div>
-        </>
+        <div className={styles.yearRow}>
+          <Select label="From" searchable searchPlaceholder="e.g. Apr 1958" placeholder="Month & Year" options={monthYearOptions} value={fromYM} onValueChange={setFromYM} />
+          <Select label="To" searchable searchPlaceholder="e.g. Dec 1961" placeholder="Month & Year" options={monthYearOptions} value={toYM} onValueChange={setToYM} />
+        </div>
       ) : (
       <div className={styles.calBody}>
         <div className={styles.month}>
@@ -319,3 +321,11 @@ function stepMonth(v, delta) {
 
 
 function pad2(n) { return String(n).padStart(2, '0'); }
+
+function ymKey(y, m) { return `${y}-${pad2(m)}`; } // m: 1–12
+
+/** Last month and this month, as 'YYYY-MM' (January's last month is last December). */
+function defaultMonths(today) {
+  const prev = stepMonth({ y: today.getFullYear(), m: today.getMonth() }, -1);
+  return [ymKey(prev.y, prev.m + 1), ymKey(today.getFullYear(), today.getMonth() + 1)];
+}

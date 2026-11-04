@@ -56,6 +56,10 @@ export function FilterBar({
   variant = 'page',
   // More Filters' grouped layout: the order of the domain headings.
   groupOrder,
+  // The worklist's filter row is closed: show only the filters that have a
+  // value (still clearable) and Clear All, so the user can see what's
+  // narrowing the list. Nothing renders when no filter is set.
+  collapsed = false,
 } = {}) {
 
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -317,6 +321,26 @@ export function FilterBar({
       onSaveMenuSelect={(key) => (key === 'new' && showInternalSaveDialog ? setSaveDialogOpen(true) : onSaveMenuSelect?.(key))}
     />
   );
+
+  if (collapsed) {
+    if (!hasActive || activeKeys.length === 0) return null;
+    return (
+      <div className={[styles.filterBar, variant === 'inline' ? styles.inline : ''].filter(Boolean).join(' ')}>
+        <div className={styles.filterRow}>
+          {orderKeys(activeKeys).map(k => (
+            <span key={k}>{renderOne(k, false)}</span>
+          ))}
+          <FilterBarTail
+            actions={[]}
+            hasActive
+            onClearAll={() => effectiveOnClearAll()}
+            clearAllLabel={clearAllLabel}
+            clearAllIcon={variant === 'inline'}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={[styles.filterBar, variant === 'inline' ? styles.inline : ''].filter(Boolean).join(' ')}>

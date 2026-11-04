@@ -175,16 +175,15 @@ export function PharmacyWorklistTable() {
         }
       />
 
-      {filterBarOpen && (
-        <FilterChipBar
-          list="Pharmacy"
-          filterDefMap={FILTER_DEF_MAP}
-          moreFilterItems={MORE_FILTER_ITEMS}
-          primaryFilterKeys={PRIMARY_FILTER_KEYS}
-          dynamicOpts={dynamicOpts}
-          onSaveFilter={() => setSaveDialogOpen(true)}
-        />
-      )}
+      <FilterChipBar
+        collapsed={!filterBarOpen}
+        list="Pharmacy"
+        filterDefMap={FILTER_DEF_MAP}
+        moreFilterItems={MORE_FILTER_ITEMS}
+        primaryFilterKeys={PRIMARY_FILTER_KEYS}
+        dynamicOpts={dynamicOpts}
+        onSaveFilter={() => setSaveDialogOpen(true)}
+      />
       <FilterNameDialog
         open={saveDialogOpen}
         title="Save Filter"

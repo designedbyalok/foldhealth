@@ -87,7 +87,7 @@ export function HccWorklistTableView({
         }
       />
 
-      {filterOpen && <FilterChipBar onSaveFilter={() => setSaveDialogOpen(true)} />}
+      <FilterChipBar collapsed={!filterOpen} onSaveFilter={() => setSaveDialogOpen(true)} />
       {/* Saved filters live exclusively in the left SubNav (under HCC).
           Inline chip strip removed per UX; rename/delete handled in-sidebar. */}
 
