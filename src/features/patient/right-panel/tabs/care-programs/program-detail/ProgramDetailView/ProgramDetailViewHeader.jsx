@@ -3,7 +3,7 @@ import { Icon } from '../../../../../../../components/Icon/Icon';
 import { DownChevronIcon } from '../../../../../../../components/Icon/DownChevronIcon';
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
 import { MenuPopover } from '../../../../../../../components/MenuPopover/MenuPopover';
-import { Collapse } from '../../../../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../../../../components/Collapsible/Collapsible';
 import { CloseButton } from '../../../../../../../components/CloseButton/CloseButton';
 import { BannerExpandIcon } from '../../../../../../../components/Icon/BannerExpandIcon';
 import { ProgressRing } from '../../../../../../hcc/DiagPanel/ReviewProgressPopover';
@@ -146,9 +146,9 @@ export function ProgramDetailViewHeader({
         </div>
       )}
 
-      <Collapse open={detailsExpanded} className={styles.expandCollapse}>
+      <CollapsibleContent open={detailsExpanded} className={styles.expandCollapse}>
         <ProgramDetailExpandPanel program={program} />
-      </Collapse>
+      </CollapsibleContent>
     </>
   );
 }

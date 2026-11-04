@@ -18,7 +18,7 @@ import { AllergySelect } from './AllergySelect';
 import { ALLERGY_REACTIONS, REACTION_SYSTEM } from '../../../../../../reference-data/allergyReactions';
 import { toast } from '../../../../../../components/Toast/sonnerToast';
 import { todayIso, toIsoDate, formatClinicalDate } from '../../../../../../lib/clinicalDates';
-import { Collapse } from '../../../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../../../components/Collapsible/Collapsible';
 import styles from '../AddProblemsDrawer/AddProblemsDrawer.module.css';
 
 const STATUS_OPTIONS = ['Active', 'Past'].map(v => ({ value: v, label: v }));
@@ -93,7 +93,7 @@ function AllergyRow({ allergy, onStatusChange, onEdit, dimmed }) {
         />
       </div>
       {hasDetails && (
-        <Collapse open={open}>
+        <CollapsibleContent open={open}>
           <div className={styles.rowDetails}>
             {allergy.reactions?.length > 0 && (
               <p className={`${styles.rowNote} ${styles.rowReactions}`}>
@@ -112,7 +112,7 @@ function AllergyRow({ allergy, onStatusChange, onEdit, dimmed }) {
               </p>
             )}
           </div>
-        </Collapse>
+        </CollapsibleContent>
       )}
     </div>
   );

@@ -3,7 +3,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { AllPatientsRow, buildAllPatientsMiddleColumns } from './AllPatientsRow';
 import { TableSkeleton } from '../../components/TableSkeleton/TableSkeleton';
 import { Icon } from '../../components/Icon/Icon';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { ColumnsHeaderButton } from '../../components/WorklistColumns/ColumnsHeaderButton';
 import { useWorklistColumns } from '../../components/WorklistColumns/useWorklistColumns';
 

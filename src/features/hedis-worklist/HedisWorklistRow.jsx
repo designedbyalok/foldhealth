@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import { AssigneeChange } from '../../components/AssigneeChange/AssigneeChange';
 import { Badge } from '../../components/Badge/Badge';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { useAppStore } from '../../store/useAppStore';
 import { worklistMemberCallId } from '../../lib/patientCall';

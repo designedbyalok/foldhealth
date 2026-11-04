@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Button } from '../../../../components/Button/Button';
 import { Input } from '../../../../components/Input/Input';
-import { Checkbox } from '../../../../components/ShadcnCheckbox/ShadcnCheckbox';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../../../../components/ShadcnDialog/ShadcnDialog';
+import { Checkbox } from '../../../../components/Checkbox/Checkbox';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../../../../components/Dialog/Dialog';
 import styles from './AccessControl.module.css';
 
 /** "Copy Permissions?": pick the roles that get `from`'s permissions. Laid out like ReasonDialog. */

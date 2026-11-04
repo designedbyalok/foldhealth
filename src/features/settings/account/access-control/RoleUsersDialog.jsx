@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Avatar } from '../../../../components/Avatar/Avatar';
 import { SearchBar } from '../../../../components/SearchBar/SearchBar';
 import { Pagination } from '../../../../components/Pagination/Pagination';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../../../components/ShadcnDialog/ShadcnDialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../../../components/Dialog/Dialog';
 import styles from './AccessControl.module.css';
 
 /** Everyone who has the role. Read-only: roles are given in Users. */

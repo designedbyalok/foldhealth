@@ -6,7 +6,7 @@ import { Avatar } from '../../../../../../components/Avatar/Avatar';
 import { AvatarGroup } from '../../../../../../components/AvatarGroup/AvatarGroup';
 import { ActivityLog, MetaLine, ViewMoreButton } from '../../../../../../components/ActivityLog/ActivityLog';
 import { ActionButton } from '../../../../../../components/ActionButton/ActionButton';
-import { Collapse } from '../../../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../../../components/Collapsible/Collapsible';
 import { historyTimelineStyles as htStyles } from '../../../../../../components/HistoryTimeline/HistoryTimeline';
 import { carePlanLogItem } from '../../care-programs/care-plan/lib/carePlanLogItem';
 import { activityIcon, STATUS_COLOR } from '../programActivity';
@@ -70,9 +70,9 @@ export function ProgramActivityDay({ day, onOpenVersion, versionGlance, onOpenIt
                 />
               </span>
             </div>
-            <Collapse open={open}>
+            <CollapsibleContent open={open}>
               {seenVersions.has(item.id) && versionGlance?.(item)}
-            </Collapse>
+            </CollapsibleContent>
           </div>
           <span className={styles.versionRight}>
             {programBadge(programCode)}

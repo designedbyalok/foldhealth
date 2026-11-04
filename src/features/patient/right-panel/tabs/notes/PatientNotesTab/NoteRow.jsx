@@ -4,7 +4,7 @@ import { ActionButton } from '../../../../../../components/ActionButton/ActionBu
 import { ConfirmDialog } from '../../../../../../components/ConfirmDialog/ConfirmDialog';
 import { MenuPopover } from '../../../../../../components/MenuPopover/MenuPopover';
 import { profileCellClass, profileRowClass } from '../../../../../../components/ProfileTable/profileTableClasses';
-import { Checkbox } from '../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../components/Checkbox/Checkbox';
 import { Tooltip } from '../../../../../../components/Tooltip/Tooltip';
 import { KanbanCardContent } from '../../../../../tasks/TasksViewKanban';
 import { openSafeUrl } from '../../../../../../lib/openSafeUrl';

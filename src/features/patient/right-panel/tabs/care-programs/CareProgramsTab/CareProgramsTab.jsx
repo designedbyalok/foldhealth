@@ -30,7 +30,7 @@ import { SearchListPopover } from '../../../../../../components/SearchListPopove
 import { RadioListPopover } from '../../../../../../components/RadioListPopover/RadioListPopover';
 import { CreateSnpProgramDrawer } from './CreateSnpProgramDrawer';
 import { DownChevronIcon } from '../../../../../../components/Icon/DownChevronIcon';
-import { Collapse } from '../../../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../../../components/Collapsible/Collapsible';
 import { CP_FILTERS } from '../../../../data/programActivityMock';
 import styles from './CareProgramsTab.module.css';
 import { nextEnrollment } from '../../../../data/programLifecycle';
@@ -50,7 +50,7 @@ function ProgramSection({ title, open, onToggle, children }) {
           className={`${styles.programSectionChevron} ${open ? '' : styles.programSectionChevronClosed}`}
         />
       </button>
-      <Collapse open={open}>{children}</Collapse>
+      <CollapsibleContent open={open}>{children}</CollapsibleContent>
     </div>
   );
 }

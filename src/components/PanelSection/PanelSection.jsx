@@ -2,7 +2,7 @@ import { Fragment, createContext, useContext, useState } from 'react';
 import { DownChevronIcon } from '../Icon/DownChevronIcon';
 import { Icon } from '../Icon/Icon';
 import { Button } from '../Button/Button';
-import { Collapse } from '../Collapse/Collapse';
+import { CollapsibleContent } from '../Collapsible/Collapsible';
 import styles from './PanelSection.module.css';
 
 // Overview cards reuse Summary-tab sections. Inside a card they drop the
@@ -61,9 +61,9 @@ export function PanelSection({ title, actions, defaultCollapsed = false, plain =
         )}
         {!collapsed && actions && <div className={styles.actions}>{actions}</div>}
       </div>
-      <Collapse open={!collapsed}>
+      <CollapsibleContent open={!collapsed}>
         <div className={styles.body}>{children}</div>
-      </Collapse>
+      </CollapsibleContent>
     </section>
   );
 }

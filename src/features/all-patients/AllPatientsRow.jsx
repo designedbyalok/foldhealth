@@ -4,7 +4,7 @@ import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { PatientAvatarHover } from '../../components/PatientHoverCard/PatientAvatarHover';
 import { Badge } from '../../components/Badge/Badge';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
 import { buildPatientRowMenuItems } from '../../components/MenuPopover/patientRowMenuItems';
 import { useAppStore } from '../../store/useAppStore';

@@ -8,7 +8,7 @@ import { Input } from '../../../../../../../../components/Input/Input';
 import { MenuPopover } from '../../../../../../../../components/MenuPopover/MenuPopover';
 import { ConfirmDialog } from '../../../../../../../../components/ConfirmDialog/ConfirmDialog';
 import { RadioOptionGroup } from '../../../../../../../../components/RadioOptionGroup/RadioOptionGroup';
-import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
 import { TEMPLATE_SCOPES } from '../../lib/templateScope';
 import { CONTENT_TOGGLES, DEMOGRAPHIC_FIELDS, FORMAT_OPTIONS, GROUP_BY_OPTIONS } from '../../lib/carePlanPrintSettings';
 import styles from './CarePlanPrintPersonalize.module.css';

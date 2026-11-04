@@ -3,7 +3,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { HedisWorklistRow, HEDIS_MIDDLE_COLUMNS } from './HedisWorklistRow';
 import { CareGapDetailDrawer } from './CareGapDetailDrawer';
 import { TableSkeleton } from '../../components/TableSkeleton/TableSkeleton';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { Icon } from '../../components/Icon/Icon';
 import { Badge } from '../../components/Badge/Badge';
 import { SectionTitleBar } from '../../components/SectionTitleBar/SectionTitleBar';

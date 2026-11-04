@@ -7,7 +7,7 @@ import { Button } from '../../components/Button/Button';
 import { Select } from '../../components/Select/Select';
 import { ChipSelect } from '../../components/ChipSelect/ChipSelect';
 import { SearchBar } from '../../components/SearchBar/SearchBar';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { Badge } from '../../components/Badge/Badge';
 import { InfoBar } from '../../components/InfoBar/InfoBar';
 import { Icon } from '../../components/Icon/Icon';

@@ -5,7 +5,7 @@ import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { PatientAvatarHover } from '../../components/PatientHoverCard/PatientAvatarHover';
 import { AssigneeChange } from '../../components/AssigneeChange/AssigneeChange';
 import { Badge } from '../../components/Badge/Badge';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { MenuPopover } from '../../components/MenuPopover/MenuPopover';
 import { buildPatientRowMenuItems } from '../../components/MenuPopover/patientRowMenuItems';
 import { useAppStore } from '../../store/useAppStore';

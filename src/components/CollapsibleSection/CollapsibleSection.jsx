@@ -1,11 +1,12 @@
-import { useState } from 'react';
 import { Icon } from '../Icon/Icon';
 import { DownChevronIcon } from '../Icon/DownChevronIcon';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../Collapsible/Collapsible';
 import styles from './CollapsibleSection.module.css';
 
 /**
  * CollapsibleSection: a bordered accordion card: an icon + title header that
- * folds the body away, with the height animating open and shut.
+ * folds the body away. Built on `Collapsible`, so it takes the same
+ * `open` / `defaultOpen` / `onOpenChange`.
  *
  * First built for the Create Insurance Plan form's sections, and moved here so
  * other forms (the PAMI/Hx Social History drawer) share one implementation.
@@ -13,34 +14,22 @@ import styles from './CollapsibleSection.module.css';
  * @param {object}   props
  * @param {string}   [props.icon]           – Icon name, shown in primary-300
  * @param {string}   props.title
+ * @param {boolean}  [props.open]
  * @param {boolean}  [props.defaultOpen=true]
+ * @param {(open: boolean) => void} [props.onOpenChange]
  * @param {node}     props.children         – The section body
  */
-export function CollapsibleSection({ icon, title, defaultOpen = true, children }) {
-  const [collapsed, setCollapsed] = useState(!defaultOpen);
+export function CollapsibleSection({ icon, title, open, defaultOpen = true, onOpenChange, children }) {
   return (
-    <div className={styles.card}>
-      <button
-        type="button"
-        aria-expanded={!collapsed}
-        className={`${styles.header} ${collapsed ? styles.collapsed : ''}`}
-        onClick={() => setCollapsed(v => !v)}
-      >
+    <Collapsible className={styles.card} open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
+      <CollapsibleTrigger className={styles.header}>
         {icon && <Icon name={icon} size={16} color="var(--primary-300)" />}
         <span className={styles.title}>{title}</span>
-        <DownChevronIcon
-          size={12}
-          color="var(--neutral-300)"
-          style={collapsed ? { transform: 'rotate(-90deg)' } : undefined}
-        />
-      </button>
-      <div className={`${styles.collapseOuter} ${collapsed ? styles.collapsed : ''}`}>
-        <div className={styles.collapseInner}>
-          <div className={styles.body}>
-            {children}
-          </div>
-        </div>
-      </div>
-    </div>
+        <DownChevronIcon size={12} color="var(--neutral-300)" className={styles.chevron} />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className={styles.body}>{children}</div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

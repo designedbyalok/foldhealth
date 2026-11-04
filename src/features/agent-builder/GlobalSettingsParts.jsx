@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Icon } from '../../components/Icon/Icon';
 import { Switch } from '../../components/Switch/Switch';
 import { Select } from '../../components/Select/Select';
-import { Slider } from '../../components/ShadcnSlider/ShadcnSlider';
+import { Slider } from '../../components/Slider/Slider';
 import styles from './GlobalSettings.module.css';
 
 /* ── Reusable section primitive ──

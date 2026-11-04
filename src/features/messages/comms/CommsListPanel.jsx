@@ -4,11 +4,11 @@ import { FilterChip } from '../../../components/FilterChip/FilterChip';
 import { BulkBar } from '../../../components/BulkBar/BulkBar';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
 import { toast } from '../../../components/Toast/sonnerToast';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { Avatar } from '../../../components/Avatar/Avatar';
 import { Toggle } from '../../../components/Toggle/Toggle';
 import { SearchBar } from '../../../components/SearchBar/SearchBar';
-import boneStyles from '../../../components/TableSkeleton/TableSkeleton.module.css';
+import { Skeleton } from '../../../components/Skeleton/Skeleton';
 import listStyles from '../MessagesView.module.css';
 import { useAppStore } from '../../../store/useAppStore';
 import { membersForConversation, threadTitle } from './smsMembers';
@@ -127,10 +127,10 @@ export function CommsListPanel({
         {loading ? (
           Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className={listStyles.convItem} aria-hidden>
-              <span className={`${boneStyles.bone} ${styles.boneAvatar}`} />
+              <Skeleton className={styles.boneAvatar} />
               <div className={listStyles.convInfo}>
-                <span className={`${boneStyles.bone} ${styles.boneLine}`} />
-                <span className={`${boneStyles.bone} ${styles.boneLineShort}`} />
+                <Skeleton className={styles.boneLine} />
+                <Skeleton className={styles.boneLineShort} />
               </div>
             </div>
           ))

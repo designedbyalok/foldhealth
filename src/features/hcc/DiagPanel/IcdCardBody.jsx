@@ -3,7 +3,7 @@ import { Icon } from '../../../components/Icon/Icon';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Button } from '../../../components/Button/Button';
 import { Select } from '../../../components/Select/Select';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { DemoPhiStrip } from '../../../components/DemoPhiStrip/DemoPhiStrip';
 import styles from './NewDiagGapPanel.module.css';
 

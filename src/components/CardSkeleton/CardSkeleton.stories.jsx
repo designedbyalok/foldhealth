@@ -1,30 +1,30 @@
 import { CardSkeleton } from './CardSkeleton';
 import { SimpleTableSkeleton } from '../SimpleTableSkeleton/SimpleTableSkeleton';
 import { TableSkeleton as FullTableSkeleton } from '../TableSkeleton/TableSkeleton';
+import { TimelineSkeleton } from '../TimelineSkeleton/TimelineSkeleton';
 
-// The Skeleton directory exports several composed loading-state skeletons
-// (no single "Skeleton" primitive). This story showcases each one.
+// The loading layouts built from the Skeleton primitive, side by side.
 export default {
-  title: 'Feedback/Skeleton',
+  title: 'Feedback/Skeleton Presets',
   tags: ['autodocs'],
   parameters: {
     docs: {
       description: {
         component:
-          'Loading-state placeholders: the directory exports several compositions (`CardSkeleton`, `SimpleTableSkeleton`, `TableSkeleton`) rather than one primitive. Pick the shape closest to the layout you\'re replacing.',
+          'Loading layouts built from `Skeleton`: `TableSkeleton`, `SimpleTableSkeleton`, `CardSkeleton` and `TimelineSkeleton`. Pick the shape closest to the layout you\'re replacing, or arrange `Skeleton` blocks for a new one.',
       },
     },
   },
   argTypes: {
     variant: {
       control: 'select',
-      options: ['FullTableSkeleton', 'SimpleTableSkeleton', 'CardSkeleton'],
+      options: ['FullTableSkeleton', 'SimpleTableSkeleton', 'CardSkeleton', 'TimelineSkeleton'],
       description: 'Which skeleton composition to render.',
-      table: { type: { summary: "'FullTableSkeleton' | 'SimpleTableSkeleton' | 'CardSkeleton'" }, defaultValue: { summary: 'FullTableSkeleton' } },
+      table: { type: { summary: "'FullTableSkeleton' | 'SimpleTableSkeleton' | 'CardSkeleton' | 'TimelineSkeleton'" }, defaultValue: { summary: 'FullTableSkeleton' } },
     },
     rows: {
       control: { type: 'number', min: 1, max: 20 },
-      description: 'Row count (Table/SimpleTable).',
+      description: 'Row count (Table, SimpleTable, Timeline).',
       table: { type: { summary: 'number' }, defaultValue: { summary: '6' } },
     },
     cols: {
@@ -44,6 +44,7 @@ function Wrapper({ variant, rows, cols, count }) {
   if (variant === 'FullTableSkeleton') return <FullTableSkeleton rows={rows} />;
   if (variant === 'SimpleTableSkeleton') return <SimpleTableSkeleton rows={rows} cols={cols} />;
   if (variant === 'CardSkeleton') return <CardSkeleton count={count} />;
+  if (variant === 'TimelineSkeleton') return <TimelineSkeleton rows={rows} />;
   return null;
 }
 

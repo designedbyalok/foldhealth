@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ConfirmDialog } from '@/components/ConfirmDialog/ConfirmDialog';
 import { DatePicker } from '@/components/DatePicker/DatePicker';
-import { Checkbox } from '@/components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '@/components/Checkbox/Checkbox';
 import { useAppStore } from '../../../../../../../store/useAppStore';
 import { isoDay } from '../lib/carePlanPause';
 import { dayAfter, episodeEndsOn, episodeLengthLabel, episodeOf, episodeSupersedes } from '../lib/episodeTemplates';

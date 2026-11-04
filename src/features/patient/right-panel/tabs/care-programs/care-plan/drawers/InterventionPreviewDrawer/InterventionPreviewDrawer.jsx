@@ -9,7 +9,7 @@ import { Input } from '../../../../../../../../components/Input/Input';
 import { Textarea } from '../../../../../../../../components/Textarea/Textarea';
 import { Avatar } from '../../../../../../../../components/Avatar/Avatar';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
-import { Slider } from '../../../../../../../../components/ShadcnSlider/ShadcnSlider';
+import { Slider } from '../../../../../../../../components/Slider/Slider';
 import { PriorityIcon } from '../../../../../../../../components/PriorityIcon/PriorityIcon';
 import { CarePlanActivityBlock } from '../CarePlanActivityBlock/CarePlanActivityBlock';
 import { useCarePlanItemActivity } from '../../lib/useCarePlanItemActivity';

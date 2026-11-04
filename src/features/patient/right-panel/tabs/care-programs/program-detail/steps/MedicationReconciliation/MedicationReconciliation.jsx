@@ -7,9 +7,9 @@ import { Select } from '../../../../../../../../components/Select/Select';
 import { DatePicker } from '../../../../../../../../components/DatePicker/DatePicker';
 import { Textarea } from '../../../../../../../../components/Textarea/Textarea';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
-import { Collapse } from '../../../../../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../../../../../components/Collapsible/Collapsible';
 import { AIIcon } from '../../../../../../../../components/Icon/AIIcon';
-import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
 import { RingEmptyState } from '../../../../../../../../components/RingEmptyState/RingEmptyState';
 import { MenuPopover } from '../../../../../../../../components/MenuPopover/MenuPopover';
 import { SearchBar } from '../../../../../../../../components/SearchBar/SearchBar';
@@ -1192,11 +1192,11 @@ export function MedicationReconciliation({ programCode } = {}) {
                         )}
                       </div>
                       {m.note && (
-                        <Collapse open={!!noteExpanded[m.id]} className={styles.noteCollapse}>
+                        <CollapsibleContent open={!!noteExpanded[m.id]} className={styles.noteCollapse}>
                           <div className={styles.noteLine}>
                             <span className={styles.noteLabel}>Note:</span> {m.note}
                           </div>
-                        </Collapse>
+                        </CollapsibleContent>
                       )}
                     </div>
                     <div className={styles.extractedActions}>

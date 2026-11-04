@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../ShadcnDialog/ShadcnDialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../Dialog/Dialog';
 import { ActionButton } from '../ActionButton/ActionButton';
 import { Icon } from '../Icon/Icon';
 import styles from './SlideshowDialog.module.css';

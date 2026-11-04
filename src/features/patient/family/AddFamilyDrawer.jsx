@@ -14,7 +14,7 @@ import { RingEmptyState } from '../../../components/RingEmptyState/RingEmptyStat
 import { UploadDropField } from '../../../components/UploadDropField/UploadDropField';
 import { ConfirmDialog } from '../../../components/ConfirmDialog/ConfirmDialog';
 import { AddIconMinimalist } from '../../../components/Icon/AddIconMinimalist';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { toast } from '../../../components/Toast/sonnerToast';
 import { useAppStore } from '../../../store/useAppStore';
 import { PersonOption } from '../../messages/comms/PersonOption';

@@ -5,7 +5,7 @@ import { Select } from '../../../../components/Select/Select';
 import { Textarea } from '../../../../components/Textarea/Textarea';
 import { RadioOptionGroup } from '../../../../components/RadioOptionGroup/RadioOptionGroup';
 import { RadioButton } from '../../../../components/RadioButton/RadioButton';
-import { Checkbox } from '../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../components/Checkbox/Checkbox';
 import { Dropzone } from '../../../../components/Dropzone/Dropzone';
 import { FileRow } from '../../../../components/DocumentUploader/DocumentUploader';
 import { ActionButton } from '../../../../components/ActionButton/ActionButton';

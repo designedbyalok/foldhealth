@@ -4,7 +4,7 @@ import { Badge } from '../../../../../components/Badge/Badge';
 import { MenuPopover } from '../../../../../components/MenuPopover/MenuPopover';
 import { ProfileTable } from '../../../../../components/ProfileTable/ProfileTable';
 import { profileCellClass, profileRowClass } from '../../../../../components/ProfileTable/profileTableClasses';
-import { Checkbox } from '../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../components/Checkbox/Checkbox';
 import styles from './DocumentsTab.module.css';
 
 const COLUMNS = [

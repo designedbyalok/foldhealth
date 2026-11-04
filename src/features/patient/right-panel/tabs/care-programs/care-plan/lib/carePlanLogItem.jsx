@@ -3,7 +3,7 @@ import { historyTimelineStyles as htStyles } from '../../../../../../../componen
 import { Avatar } from '../../../../../../../components/Avatar/Avatar';
 import { Badge } from '../../../../../../../components/Badge/Badge';
 import { Icon } from '../../../../../../../components/Icon/Icon';
-import { Collapse } from '../../../../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../../../../components/Collapsible/Collapsible';
 import { adherenceTone, goalProgressTone } from './goalMetrics';
 import { GBI_STATUS_META } from './gbiStatus';
 import styles from './carePlanLogItem.module.css';
@@ -104,7 +104,7 @@ export function carePlanLogItem(e, { meta = {}, noteOpen = false, onToggleNote }
               <ViewMoreButton expanded={noteOpen} onToggle={onToggleNote} label="View Note" leadingDot />
             )}
           </div>
-          <Collapse open={noteOpen}>
+          <CollapsibleContent open={noteOpen}>
             {/* Laid out like an HCC details card: what the note is on, the
                 note itself, then what it replaced. */}
             <div className={htStyles.detailsCard}>
@@ -121,7 +121,7 @@ export function carePlanLogItem(e, { meta = {}, noteOpen = false, onToggleNote }
                 </div>
               </div>
             </div>
-          </Collapse>
+          </CollapsibleContent>
         </>
       ),
     };

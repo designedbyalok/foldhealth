@@ -1,6 +1,6 @@
 import { Fragment, useMemo, useState } from 'react';
 import { Popover } from '../Popover/Popover';
-import { Checkbox } from '../ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../Checkbox/Checkbox';
 import styles from './CheckboxListPopover.module.css';
 
 const EMPTY_SELECTED = [];

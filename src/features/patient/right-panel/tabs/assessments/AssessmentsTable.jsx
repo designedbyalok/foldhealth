@@ -2,7 +2,7 @@ import { Badge } from '../../../../../components/Badge/Badge';
 import { Icon } from '../../../../../components/Icon/Icon';
 import { ProfileTable } from '../../../../../components/ProfileTable/ProfileTable';
 import { profileCellClass, profileRowClass } from '../../../../../components/ProfileTable/profileTableClasses';
-import { Checkbox } from '../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../components/Checkbox/Checkbox';
 import { fmtDateTime } from './assessmentRows';
 import styles from './AssessmentsTab.module.css';
 

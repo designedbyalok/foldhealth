@@ -262,12 +262,39 @@ Confirmation dialog with configurable icon, title, description, and action butto
 
 ## Radix UI primitives
 
-Headless components in `src/components/ui/` wrap Radix UI:
+These wrap Radix UI and are named for their role:
 
-- `alert-dialog.jsx`, AlertDialog
-- `dialog.jsx`, Dialog
-- `checkbox.jsx`, Checkbox
-- `radio-group.jsx`, RadioGroup
-- `select.jsx`, Select (used by Pagination)
-- `slider.jsx`, Slider
-- `tooltip.jsx`, Tooltip
+- `src/components/Checkbox/Checkbox.jsx`, Checkbox (tri-state)
+- `src/components/Dialog/Dialog.jsx`, Dialog and its parts (`DialogContent`, `DialogTitle`, …)
+- `src/components/Slider/Slider.jsx`, Slider (one thumb or a range)
+
+They were `ShadcnCheckbox`, `ShadcnDialog` and `ShadcnSlider`; the old paths
+still re-export them so open branches build, and lint flags new imports.
+
+## Disclosure
+
+### Collapsible
+
+```
+src/components/Collapsible/Collapsible.jsx
+```
+
+A region that folds away, in parts: `Collapsible` (root: `open` /
+`defaultOpen` / `onOpenChange`), `CollapsibleTrigger` (the button, with
+`aria-expanded` / `aria-controls`) and `CollapsibleContent` (eases its height
+and is inert while shut). When the control lives elsewhere, use
+`CollapsibleContent` alone with `open`. `Collapse` is its old name.
+`CollapsibleSection` is the bordered card built on it.
+
+## Loading
+
+### Skeleton
+
+```
+src/components/Skeleton/Skeleton.jsx
+```
+
+One shimmering placeholder block (`width`, `height`, `radius`, or a class).
+`TableSkeleton`, `SimpleTableSkeleton`, `CardSkeleton` and `TimelineSkeleton`
+are layouts built from it; arrange `Skeleton` blocks for anything else, and put
+`aria-busy` on the loading region.

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
 import { PriorityIcon } from '../../../../../../../../components/PriorityIcon/PriorityIcon';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';

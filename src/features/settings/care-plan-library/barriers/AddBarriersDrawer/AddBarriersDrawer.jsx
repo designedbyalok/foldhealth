@@ -4,7 +4,7 @@ import { Button } from '../../../../../components/Button/Button';
 import { Input } from '../../../../../components/Input/Input';
 import { Badge } from '../../../../../components/Badge/Badge';
 import { Icon } from '../../../../../components/Icon/Icon';
-import { Checkbox } from '../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../components/Checkbox/Checkbox';
 import { Link } from '../../../../../components/Link/Link';
 import { AddIconMinimalist } from '../../../../../components/Icon/AddIconMinimalist';
 import { toast } from '../../../../../components/Toast/sonnerToast';

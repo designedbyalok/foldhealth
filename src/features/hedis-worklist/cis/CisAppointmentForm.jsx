@@ -2,7 +2,7 @@ import { useId } from 'react';
 import { Input } from '../../../components/Input/Input';
 import { Select } from '../../../components/Select/Select';
 import { Textarea } from '../../../components/Textarea/Textarea';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { TIME_SLOTS } from '../../../components/ScheduleDrawer/scheduleDrawerConstants';
 import { todayIso } from '../useCareGapReminderForm';
 import { CisStatusBadge } from './CisStatus';

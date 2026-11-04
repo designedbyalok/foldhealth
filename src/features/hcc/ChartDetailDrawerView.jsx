@@ -16,7 +16,7 @@ import { Select } from '../../components/Select/Select';
 import { ConfirmDialog } from '../../components/ConfirmDialog/ConfirmDialog';
 import { DocEvidenceViewer } from './DiagPanel/DocEvidenceViewer';
 import { ReviewProgressPopover } from './DiagPanel/ReviewProgressPopover';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { Textarea } from '../../components/Textarea/Textarea';
 import {
   StatusIcon,

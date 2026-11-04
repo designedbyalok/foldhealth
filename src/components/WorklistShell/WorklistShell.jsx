@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { ActionButton } from '../ActionButton/ActionButton';
 import { SearchIconButton } from '../SearchIconButton/SearchIconButton';
 import { SearchBar } from '../SearchBar/SearchBar';
-import { Checkbox } from '../ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../Checkbox/Checkbox';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { HeaderCell } from '../HeaderCell/HeaderCell';
 import { Pagination } from '../Pagination/Pagination';

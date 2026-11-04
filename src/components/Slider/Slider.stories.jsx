@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Slider } from './ShadcnSlider';
+import { Slider } from './Slider';
 
 export default {
-  title: 'shadcn/Slider',
+  title: 'Core/Slider',
   component: Slider,
   tags: ['autodocs'],
   parameters: {

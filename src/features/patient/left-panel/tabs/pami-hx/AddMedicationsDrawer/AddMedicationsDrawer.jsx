@@ -20,7 +20,7 @@ import { MedicationSelect } from './MedicationSelect';
 import { StopMedicationDialog } from './StopMedicationDialog';
 import { MEDICATION_STOP_REASONS } from './medicationStopReasons';
 import { todayIso, toIsoDate, formatClinicalDate } from '../../../../../../lib/clinicalDates';
-import { Collapse } from '../../../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../../../components/Collapsible/Collapsible';
 import styles from '../AddProblemsDrawer/AddProblemsDrawer.module.css';
 
 // `Stopped` is what Medication Reconciliation writes to this same table, so
@@ -93,9 +93,9 @@ function MedicationRow({ med, onStatusChange, onEdit, dimmed }) {
         />
       </div>
       {med.note && (
-        <Collapse open={noteOpen}>
+        <CollapsibleContent open={noteOpen}>
           <p className={styles.rowNote}><span className={styles.rowNoteLabel}>Note:</span> {med.note}</p>
-        </Collapse>
+        </CollapsibleContent>
       )}
     </div>
   );

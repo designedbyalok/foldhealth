@@ -186,18 +186,13 @@
 .toneMedium { color: var(--status-warning); }
 .toneLow { color: var(--status-error); }
 
-.bone {
+.boneLine {
   flex: 1;
   height: var(--space-3);
-  border-radius: var(--space-1);
-  background: linear-gradient(90deg, var(--neutral-50), var(--neutral-100), var(--neutral-50));
-  background-size: 200% 100%;
-  animation: shimmer 1.2s linear infinite;
 }
 .boneShort { flex: 0 0 30%; }
 .spin { animation: spin 1s linear infinite; }
-@keyframes shimmer { to { background-position: -200% 0; } }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) {
-  .bone, .spin { animation: none; }
+  .spin { animation: none; }
 }

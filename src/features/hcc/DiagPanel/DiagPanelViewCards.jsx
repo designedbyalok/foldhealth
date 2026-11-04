@@ -1,7 +1,7 @@
 import { Icon } from '../../../components/Icon/Icon';
 import { Badge } from '../../../components/Badge/Badge';
 import { Switch } from '../../../components/Switch/Switch';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { IcdCard } from './IcdCard';
 import { IcdDosCard } from './IcdDosCard';
 import { SuspectCard } from './HccSuspectGroup';

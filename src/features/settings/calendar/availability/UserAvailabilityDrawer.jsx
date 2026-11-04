@@ -11,7 +11,7 @@ import { ConfirmDialog } from '../../../../components/ConfirmDialog/ConfirmDialo
 import { Icon } from '../../../../components/Icon/Icon';
 import { CloseIcon } from '../../../../components/Icon/CloseIcon';
 import { DownChevronIcon } from '../../../../components/Icon/DownChevronIcon';
-import { Collapse } from '../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../components/Collapsible/Collapsible';
 import { Badge } from '../../../../components/Badge/Badge';
 import { Link } from '../../../../components/Link/Link';
 import { TimePicker } from '../../../../components/TimePicker/TimePicker';
@@ -372,7 +372,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                   </InfoBar>
                 )}
 
-                <Collapse open={!b.collapsed}>
+                <CollapsibleContent open={!b.collapsed}>
                 <div className={styles.blockBody}>
                 {/* New view: overlaps are allowed; the alert at the top of the slot says where. */}
                 {isNew && conflicts[i].length > 0 && (
@@ -554,7 +554,7 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                   <div className={styles.summary}><BlockMeta block={b} /></div>
                 )}
                 </div>
-                </Collapse>
+                </CollapsibleContent>
               </section>
               </Fragment>
             );
@@ -692,11 +692,11 @@ export function UserAvailabilityDrawer({ user: initialUser, users, addBlock = fa
                 <Badge size="sm" label={String(pastCount)} className={styles.pastCount} />
                 <DownChevronIcon size={12} color="var(--neutral-200)" style={pastOpen ? undefined : { transform: 'rotate(-90deg)' }} />
               </button>
-              <Collapse open={pastOpen}>
+              <CollapsibleContent open={pastOpen}>
                 <div className={styles.pastList}>
                   {blocks.map((b, i) => (!b.arrive && isPast(b) ? renderBlock(b, i) : null))}
                 </div>
-              </Collapse>
+              </CollapsibleContent>
             </section>
           )}
 

@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import { Dialog, DialogContent } from '../ShadcnDialog/ShadcnDialog';
+import { Dialog, DialogContent } from '../Dialog/Dialog';
 import { Select } from '../Select/Select';
 import { RadioOptionGroup } from '../RadioOptionGroup/RadioOptionGroup';
 import { Textarea } from '../Textarea/Textarea';

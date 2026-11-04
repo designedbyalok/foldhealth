@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useId, useLayoutEffect, useRef, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../Icon/Icon';
-import { Checkbox } from '../ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../Checkbox/Checkbox';
 import { Badge } from '../Badge/Badge';
 import { ActionButton } from '../ActionButton/ActionButton';
 import { Tooltip } from '../Tooltip/Tooltip';

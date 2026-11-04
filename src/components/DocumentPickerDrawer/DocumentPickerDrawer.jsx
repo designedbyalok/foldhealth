@@ -5,7 +5,7 @@ import { Icon } from '../Icon/Icon';
 import { ActionButton } from '../ActionButton/ActionButton';
 import { SearchBar } from '../SearchBar/SearchBar';
 import { FilterChip } from '../FilterChip/FilterChip';
-import { Checkbox } from '../ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../Checkbox/Checkbox';
 import { DocumentUploadForm } from '../DocumentUploadForm/DocumentUploadForm';
 import { useDocumentUploadForm } from '../DocumentUploadForm/useDocumentUploadForm';
 import styles from './DocumentPickerDrawer.module.css';

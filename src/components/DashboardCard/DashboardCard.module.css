@@ -111,11 +111,6 @@
 }
 
 /* ── Skeleton ── */
-@keyframes shimmer {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
-}
-
 .skeleton {
   display: flex;
   flex-direction: column;
@@ -129,17 +124,8 @@
   gap: var(--space-1);
 }
 
-.bone {
-  display: block;
-  height: 10px;
-  border-radius: var(--space-1);
-  background: linear-gradient(90deg, var(--neutral-100) 25%, var(--neutral-50) 50%, var(--neutral-100) 75%);
-  background-size: 400px 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
-}
-
 .boneTitle { width: 70%; height: 12px; }
-.boneMeta { width: 45%; }
+.boneMeta { width: 45%; height: 10px; }
 
 @media (prefers-reduced-motion: reduce) {
   .bone { animation: none; }

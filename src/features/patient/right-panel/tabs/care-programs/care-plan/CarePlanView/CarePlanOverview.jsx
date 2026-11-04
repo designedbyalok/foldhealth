@@ -6,7 +6,7 @@ import { Button } from '@/components/Button/Button';
 import { ActionButton } from '@/components/ActionButton/ActionButton';
 import { Toggle } from '@/components/Toggle/Toggle';
 import { Textarea } from '@/components/Textarea/Textarea';
-import { Checkbox } from '@/components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '@/components/Checkbox/Checkbox';
 import { collectLinks, collectMentions } from '@/components/Textarea/mentions';
 import { AiSummarySkeleton } from '../summary/CarePlanAiSummary/CarePlanAiSummary';
 import { actionText, buildSummaryPayload, useCarePlanAiSummary } from '../summary/CarePlanAiSummary/useCarePlanAiSummary';

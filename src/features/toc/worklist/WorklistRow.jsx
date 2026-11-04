@@ -9,7 +9,7 @@ import { Badge } from '../../../components/Badge/Badge';
 import { laceTone } from '../../../lib/riskTone';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import { formatDobDisplay, deriveDob } from '../../../lib/patientDob';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { OutreachPopover } from '../../../components/OutreachPopover/OutreachPopover';
 import { MenuPopover } from '../../../components/MenuPopover/MenuPopover';
 import { buildPatientRowMenuItems } from '../../../components/MenuPopover/patientRowMenuItems';

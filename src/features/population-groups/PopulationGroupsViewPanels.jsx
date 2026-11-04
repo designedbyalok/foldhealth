@@ -7,7 +7,7 @@ import { Tooltip } from '../../components/Tooltip/Tooltip';
 import { Link } from '../../components/Link/Link';
 import { Avatar } from '../../components/Avatar/Avatar';
 import { Badge } from '../../components/Badge/Badge';
-import { Checkbox } from '../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../components/Checkbox/Checkbox';
 import { ActionButton } from '../../components/ActionButton/ActionButton';
 import { TableIcon, MiniCloseIcon, Spinner, ReplaceIcon, FileErrorIllustration } from './components/icons.jsx';
 import SectionAccordion from './components/SectionAccordion.jsx';

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ReasonDialog } from '../../../../components/ReasonDialog/ReasonDialog';
-import { Checkbox } from '../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../components/Checkbox/Checkbox';
 import { UNLOCK_REASONS } from './accountLock';
 import styles from './AccountLockPanel.module.css';
 

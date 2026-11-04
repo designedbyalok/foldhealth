@@ -7,7 +7,7 @@ import { AssigneeChange } from '../../../components/AssigneeChange/AssigneeChang
 import { platformUsersForAssigneePicker } from '../../../lib/worklistAssignee';
 import { Badge } from '../../../components/Badge/Badge';
 import { laceTone } from '../../../lib/riskTone';
-import { Checkbox } from '../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../components/Checkbox/Checkbox';
 import { useAppStore } from '../../../store/useAppStore';
 import { FoldIdTag } from '../../../components/FoldIdTag/FoldIdTag';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';

@@ -181,6 +181,10 @@ keep a native `onChange(event)` in addition, because consumers expect it there.
 
 - Name a component for its role, not its implementation: `Checkbox`, `Dialog`,
   `Slider`, not `ShadcnCheckbox`.
+- When a component is renamed or merged, its old folder keeps a one-line
+  re-export and is listed under `$deprecated` in `layers.json` (old name to
+  new). Open branches keep building, lint flags new imports of the old path,
+  and the folder is deleted once nothing imports it.
 - Name variants for the look, not the screen that first used them: `soft`,
   not `outreachChip`.
 - Popovers that pick a value are named for the value (`DatePicker`,
@@ -277,4 +281,3 @@ Still positioning themselves:
 |---|---|---|
 | `InfoBar`, `Alert` | Both carry `tone`; `InfoBar` adds a `variant` | One `Banner` with `tone` and `variant` |
 | `CheckboxTick`, `Switch` | Numeric `size` / `labelGap` | `size` scale; spacing from tokens |
-| `ShadcnCheckbox`, `ShadcnDialog`, `ShadcnSlider` | Implementation in the name | `Checkbox`, `Dialog`, `Slider` |

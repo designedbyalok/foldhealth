@@ -4,10 +4,10 @@ import { AddIconMinimalist } from '../../../../../../../../components/Icon/AddIc
 import { DownChevronIcon } from '../../../../../../../../components/Icon/DownChevronIcon';
 import { Button } from '../../../../../../../../components/Button/Button';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
-import { Checkbox } from '../../../../../../../../components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '../../../../../../../../components/Checkbox/Checkbox';
 import { ScheduleDrawer } from '../../../../../../../../components/ScheduleDrawer/ScheduleDrawer';
 import { toast } from '../../../../../../../../components/Toast/sonnerToast';
-import { Collapse } from '../../../../../../../../components/Collapse/Collapse';
+import { CollapsibleContent } from '../../../../../../../../components/Collapsible/Collapsible';
 import { WorklistShell } from '../../../../../../../../components/WorklistShell/WorklistShell';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import styles from './AppointmentStep.module.css';
@@ -139,13 +139,13 @@ export function AppointmentStep({ patientId, programCode, stepName = 'Appointmen
             <ActionButton size="sm" tooltip="Add" onClick={() => setScheduleOpen(true)}><AddIconMinimalist size={16} color="var(--neutral-300)" /></ActionButton>
           )}
         </div>
-        <Collapse open={upcomingOpen} className={styles.sectionCollapse}>
+        <CollapsibleContent open={upcomingOpen} className={styles.sectionCollapse}>
           <div className={styles.sectionBody}>
             {all.length > 0
               ? <ApptTable rows={all} />
               : <div className={styles.sectionEmpty}>No upcoming appointments or reminders.</div>}
           </div>
-        </Collapse>
+        </CollapsibleContent>
       </div>
 
       {scheduleOpen && (

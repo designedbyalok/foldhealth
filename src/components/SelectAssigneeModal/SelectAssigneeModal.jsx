@@ -4,7 +4,7 @@ import { Button } from '../Button/Button';
 import { CloseButton } from '../CloseButton/CloseButton';
 import { SearchBar } from '../SearchBar/SearchBar';
 import { useAppStore } from '../../store/useAppStore';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../ShadcnDialog/ShadcnDialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../Dialog/Dialog';
 import styles from './SelectAssigneeModal.module.css';
 
 /**
