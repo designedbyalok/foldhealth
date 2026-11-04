@@ -222,7 +222,6 @@ export function LoginPage({ onBypass, notice = '' }) {
               {logo}
               <PasswordResetFlow
                 initialEmail={email}
-                onDone={(msg) => { clearFailedSignIns(email); setPassword(''); exitForgotMode(msg); }}
                 onBack={() => exitForgotMode()}
               />
             </>
