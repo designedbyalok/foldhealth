@@ -1,9 +1,19 @@
 import { useMemo } from 'react';
 import { FilterBar as BaseFilterBar } from '../../components/FilterBar/FilterBar';
-import { filterDefsForList, resolveOptions } from '../../components/FilterBar/filterBarUtils';
 import { useAppStore } from '../../store/useAppStore';
 import { FILTER_DOMAINS } from '../hcc/filterDomains';
+import { filterDefsForList } from '../toc/tocFilters';
 import { DefaultViewByToggle } from './DefaultViewByToggle';
+
+// A filter's options: its own list, or (optionsFromData) the distinct values
+// of that field across the patients.
+function resolveOptions(filterDef, patients) {
+  if (filterDef.optionsFromData) {
+    const unique = [...new Set((patients || []).flatMap(p => { const v = p[filterDef.key]; return v ? [v] : []; }))];
+    return unique.sort().map(a => ({ value: a, label: a }));
+  }
+  return filterDef.options || [];
+}
 
 /**
  * FilterBar for the app's worklists. Anything the caller doesn't pass falls
