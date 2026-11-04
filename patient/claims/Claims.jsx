@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { SubTabs } from '@/components/SubTabs/SubTabs';
+import { Tabs } from '@/components/Tabs/Tabs';
 import { CardSkeleton } from '@/components/CardSkeleton/CardSkeleton';
 import { CoverageOverview } from './CoverageOverview';
 import { ClaimsLog } from './ClaimsLog';
@@ -31,7 +31,7 @@ export function Claims({ memberId }) {
 
   return (
     <div className={styles.wrap}>
-      <SubTabs tabs={TABS} activeKey={tab} onChange={setTab} />
+      <Tabs variant="pill" items={TABS} value={tab} onValueChange={setTab} />
       {data?.error && <p className={styles.error} role="alert">{data.error}</p>}
       {!data && <CardSkeleton count={3} />}
       {data && tab === 'overview' && <CoverageOverview coverage={data.coverage} />}

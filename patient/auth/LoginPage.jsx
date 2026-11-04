@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { Input } from '@/components/Input/Input';
 import { Button } from '@/components/Button/Button';
 import { Icon } from '@/components/Icon/Icon';
-import { Checkbox } from '@/components/ShadcnCheckbox/ShadcnCheckbox';
+import { Checkbox } from '@/components/Checkbox/Checkbox';
 import { FoldHealthLogo } from '@/components/FoldHealthLogo/FoldHealthLogo';
 import { OAuthButtons } from '@/components/OAuthButtons/OAuthButtons';
 import { parseIdentifier } from '../lib/parseIdentifier';
