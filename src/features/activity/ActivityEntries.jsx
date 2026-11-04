@@ -134,10 +134,10 @@ export function ClinicalNoteCardActions({ dc, draftLock = null, onOpenTask, onOp
   // editable version. Entries logged before noteId was stored fall back to
   // the member's note for the same gap.
   const memberNotes = useAppStore(s => (dc?.memberId ? s.clinicalNotesByMember?.[dc.memberId] : undefined));
-  const entryCodes = dc?.gapCodes?.length ? dc.gapCodes : (dc?.gapCode ? [dc.gapCode] : []);
+  const entryCodes = new Set(dc?.gapCodes?.length ? dc.gapCodes : (dc?.gapCode ? [dc.gapCode] : []));
   const liveNote = dc?.noteId
     ? memberNotes?.find(n => n.id === dc.noteId)
-    : memberNotes?.find(n => (n.gapCodes || []).some(c => entryCodes.includes(c)));
+    : memberNotes?.find(n => (n.gapCodes || []).some(c => entryCodes.has(c)));
   const liveStatus = liveNote?.status;
   const draftLocked = noteStatus === 'Draft' && (!!draftLock || (!!liveStatus && liveStatus !== 'draft'));
   const lockReason = (draftLock === 'signed' || liveStatus === 'signed')

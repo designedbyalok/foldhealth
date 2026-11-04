@@ -69,7 +69,8 @@ export function MoreFiltersPopover({ anchorRect, visibleKeys, onToggle, onClear,
     const match = (x) => !q || x.label.toLowerCase().includes(q);
     const primary = moreFilterItems.filter(x => x.primary && !hiddenKeys.has(x.k) && match(x));
     const items = moreFilterItems.filter(x => !x.primary && match(x));
-    const names = [...groupOrder, ...new Set(items.map(x => x.group || 'Other').filter(g => !groupOrder.includes(g)))];
+    const ordered = new Set(groupOrder);
+    const names = [...groupOrder, ...new Set(items.map(x => x.group || 'Other').filter(g => !ordered.has(g)))];
     return [
       { name: 'Primary', items: primary },
       ...names.map(name => ({ name, items: items.filter(x => (x.group || 'Other') === name) })),
