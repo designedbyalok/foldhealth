@@ -131,9 +131,11 @@ function RowMenu({ onSelect, hasBlocks, items }) {
  *
  * `embedded` shows just the Week view, without the settings title bar, for
  * the Calendar's Available Slots layout, on the week of `weekOf` (ISO day),
- * or just the day `onlyDay`.
+ * or just the day `onlyDay`. There the Calendar's own filter chips apply:
+ * `filterUsers` (names), `filterLocations` and `filterTypes`, and its search,
+ * `searchQuery`.
  */
-export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = false, weekOf, onlyDay }) {
+export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = false, weekOf, onlyDay, filterUsers, filterLocations, filterTypes, searchQuery }) {
   const platformUsers = useAppStore(s => s.platformUsers);
   const taskProfiles = useAppStore(s => s.taskProfiles);
   const usersFetched = useAppStore(s => s.platformUsersDidFetch);
@@ -185,11 +187,11 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
     // The filters apply in both views. In Week, the default Status (Active,
     // Upcoming) isn't applied, so a past week still shows what ran then.
     const listView = layout === 'list';
-    const locs = fLocations;
+    const locs = embedded ? filterLocations || [] : fLocations;
     const stats = listView || !isDefaultStatus(fStatuses) ? fStatuses : [];
-    const types = fTypes;
+    const types = embedded ? filterTypes || [] : fTypes;
     const range = fRange;
-    const people = fUsers;
+    const people = embedded ? filterUsers || [] : fUsers;
     const spans = fSpans;
     const locSet = new Set(locs);
     const typeSet = new Set(types);
@@ -198,7 +200,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
     const emails = Object.fromEntries((taskProfiles || []).map(p => [p.name, p.email]));
     const byName = new Map();
     (blocks || []).forEach(b => { const k = b.userName?.toLowerCase(); if (k) byName.set(k, [...(byName.get(k) || []), b]); });
-    const q = query.trim().toLowerCase();
+    const q = (embedded ? searchQuery || '' : query).trim().toLowerCase();
     return (platformUsers || [])
       .map(u => ({
         ...u,
@@ -220,7 +222,8 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
           // No status picked shows every slot (This Week always does: a past
           // week shows what was available then).
           && (!stats.length || stats.some(k => STATUS_FILTER[k] === b.status))
-          && (!types.length || (b.slots || []).some(sl => typeSet.has(sl.appointmentType || ALL_TYPES)))
+          // In the Calendar a slot open to every type matches any type picked.
+          && (!types.length || (b.slots || []).some(sl => typeSet.has(sl.appointmentType || ALL_TYPES) || (embedded && !sl.appointmentType)))
           && (!spans.length || spanSet.has(b.endDate ? 'Fixed Slot' : 'Rolling Slot'))
           && (range.length !== 2 || (b.startDate <= range[1] && (b.endDate || '9999-12-31') >= range[0]))),
       }))
@@ -235,7 +238,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
         : (b.blocks.length > 0) - (a.blocks.length > 0)
           || (sortDir && a.blocks.length && (sortDir === 'asc' ? 1 : -1) * a.blocks[0].startDate.localeCompare(b.blocks[0].startDate))
           || a.name.localeCompare(b.name)));
-  }, [platformUsers, taskProfiles, blocks, query, layout, fLocations, fStatuses, fTypes, fRange, fUsers, fSpans, sort, sortDir]);
+  }, [platformUsers, taskProfiles, blocks, query, layout, fLocations, fStatuses, fTypes, fRange, fUsers, fSpans, sort, sortDir, embedded, filterUsers, filterLocations, filterTypes, searchQuery]);
   // For the User filter: keyed by name (what fUsers holds), with role for the second line.
   const pickerUsers = useMemo(() => (platformUsers || [])
     .filter(u => u.name)
@@ -631,7 +634,7 @@ export function UserAvailabilityTab({ tabs, activeTab, onTabChange, embedded = f
           loading={loading}
           emptyState={(
             <div className={styles.empty}>
-              <RingEmptyState icon="solar:calendar-linear" label={query ? 'No users match this search' : filtersOn ? 'No availability matches these filters' : 'No users yet'} />
+              <RingEmptyState icon="solar:clock-circle-linear" label={query ? 'No users match this search' : filtersOn ? 'No availability matches applied filters' : 'No users yet'} />
             </div>
           )}
           // Sized to fit a 1440px screen; narrower ones scroll sideways.

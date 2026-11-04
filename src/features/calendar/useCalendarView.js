@@ -123,8 +123,8 @@ export function useCalendarView({ onOooSlot } = {}) {
 
   // People are picked by id (`filterUser` holds personKeys): two staff can
   // share a name. Week shows one user at a time: the picked one, else the
-  // signed-in user, else the first user. Day, Month and the List view take
-  // any number.
+  // signed-in user, else the first user. Day, Month, the List view and
+  // Available Slots take any number.
   const me = useAppStore(s => s.currentUserProfile);
   const meName = me?.name;
   const meUser = users.find(u => samePerson(u, me || {}));
@@ -132,7 +132,7 @@ export function useCalendarView({ onOooSlot } = {}) {
     || (meUser ? personKey(meUser) : users[0] ? personKey(users[0]) : null)
     || null;
   const viewUsers = useMemo(
-    () => (currentView === 'week' && layout !== 'list' ? [weekUser].filter(Boolean) : filterUser),
+    () => (currentView === 'week' && layout === 'calendar' ? [weekUser].filter(Boolean) : filterUser),
     [currentView, layout, weekUser, filterUser],
   );
   // A key back to { id, name, email }; an unknown key is a name (older data).
