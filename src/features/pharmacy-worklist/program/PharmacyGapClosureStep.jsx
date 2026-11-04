@@ -3,7 +3,7 @@ import { Badge } from '../../../components/Badge/Badge';
 import { DashboardCard } from '../../../components/DashboardCard/DashboardCard';
 import { Icon } from '../../../components/Icon/Icon';
 import {
-  FAIL_DATE_HINT, GAP_STATUS_TONE, MEASURE_NAMES, MEASURE_ORDER, isActiveGap, addDaysMdy, daysFromToday, effectiveFailDate, fillDueTone, measureStatus, parseMdy, pdcTone, reconcileMeasure,
+  FAIL_DATE_HINT, gapBadge, MEASURE_NAMES, MEASURE_ORDER, isActiveGap, addDaysMdy, daysFromToday, effectiveFailDate, fillDueTone, measureStatus, parseMdy, pdcTone, reconcileMeasure,
 } from '../pharmacyWorklist.utils';
 import { MeasureCode, SubStatus } from '../PharmacyCells';
 import { usePharmacyProgramMember } from './usePharmacyProgramMember';
@@ -99,7 +99,7 @@ export function PharmacyGapClosureStep() {
           <DashboardCard
             key={x.code}
             title={<span className={styles.measureTitle}><MeasureCode code={x.code} />{MEASURE_NAMES[x.code]}</span>}
-            actions={<Badge size="sm" tone={GAP_STATUS_TONE[st.gap]} label={st.gap} />}
+            actions={<Badge size="sm" {...gapBadge(st)} />}
           >
             <div className={styles.body}>
             <div className={styles.detail}><SubStatus label={st.label} /><span>{st.detail}</span></div>

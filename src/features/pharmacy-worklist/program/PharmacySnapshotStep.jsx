@@ -2,6 +2,8 @@ import { useRef, useState } from 'react';
 import { useAppStore } from '../../../store/useAppStore';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Badge } from '../../../components/Badge/Badge';
+import { Button } from '../../../components/Button/Button';
+import { Input } from '../../../components/Input/Input';
 import { DashboardCard } from '../../../components/DashboardCard/DashboardCard';
 import { Icon } from '../../../components/Icon/Icon';
 import { DownChevronIcon } from '../../../components/Icon/DownChevronIcon';
@@ -9,7 +11,7 @@ import { PhoneLink } from '../../../components/PhoneLink/PhoneLink';
 import { MenuPopover } from '../../../components/MenuPopover/MenuPopover';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import {
-  GAP_STATUS_TONE, MANUAL_GAP_STATUSES, MEASURE_NAMES, daysFromToday, isActiveGap, enrichPharmacyMember, medicationStatus, pdcTone, pharmaciesUsed, prescribersOf,
+  canSetGapStatus, gapBadge, MANUAL_GAP_STATUSES, MEASURE_NAMES, daysFromToday, isActiveGap, enrichPharmacyMember, medicationStatus, pdcTone, pharmaciesUsed, prescribersOf,
 } from '../pharmacyWorklist.utils';
 import { Dash, DrugsCount, DueDate, NamesCount, FailDateValue, MeasureCode, NextFillDueValue, PdcValue, PriorYearPdc, SavabilityBadge, SubStatus } from '../PharmacyCells';
 import { usePharmacyProgramMember } from './usePharmacyProgramMember';
@@ -40,12 +42,50 @@ function ContactLines({ contacts, render }) {
 // What a compact gap row opens to: the gap's details the table leaves out,
 // label above value, three to a row (Figma 5693:49946). Its drugs are in
 // Medication Review.
-function GapDetails({ gap: g }) {
+const PDC_SOURCE_TEXT = { Manual: 'Set by hand', Projected: 'Projected from a confirmed pickup', 'To date': 'Calculated to date', Plan: 'From the plan file', Calculated: 'Calculated' };
+
+// The gap's PDC with where it comes from; the pencil sets it by hand (Fold
+// keeps calculating underneath, and Use calculated goes back to it).
+function PdcField({ gap: g, memberId }) {
+  const setOverride = useAppStore(s => s.setPharmacyPdcOverride);
+  const [draft, setDraft] = useState(null);
+  const manual = g.pdcSource === 'Manual';
+  const save = () => {
+    const n = Math.round(Number(draft));
+    if (draft === '' || !Number.isFinite(n) || n < 0 || n > 100) return;
+    setOverride(memberId, g.code, n);
+    setDraft(null);
+  };
+  if (draft != null) {
+    return (
+      <span className={styles.pdcEdit}>
+        <Input type="number" size="sm" min={0} max={100} value={draft} onChange={e => setDraft(e.target.value)} aria-label={`${g.code} PDC`} autoFocus />
+        <Button size="sm" onClick={save}>Save</Button>
+        <Button size="sm" variant="ghost" onClick={() => setDraft(null)}>Cancel</Button>
+      </span>
+    );
+  }
+  return (
+    <span className={styles.detailLines}>
+      <span className={styles.pdcLine}>
+        {g.pdc == null ? '-' : `${g.pdc}%`}
+        <ActionButton icon="solar:pen-linear" size="sm" tooltip="Set PDC by hand" onClick={() => setDraft(g.pdc == null ? '' : String(g.pdc))} />
+      </span>
+      <span className={styles.muted}>
+        {manual ? `${PDC_SOURCE_TEXT.Manual}${g.pdcManualBy ? ` by ${g.pdcManualBy}` : ''}${g.pdcManualOn ? `, ${g.pdcManualOn}` : ''}` : PDC_SOURCE_TEXT[g.pdcSource] || ''}
+      </span>
+      {manual && <button type="button" className={styles.linkBtn} onClick={() => setOverride(memberId, g.code, null)}>Use calculated</button>}
+    </span>
+  );
+}
+
+function GapDetails({ gap: g, memberId }) {
   const open = isActiveGap(g.status);
   const prescribers = contactsOf(g.medications, 'prescriber');
   const pharmacies = contactsOf(g.medications, 'pharmacy');
   const phone = (c) => (c.phone ? <PhoneLink number={c.phone} label={c.name} /> : '-');
   const items = [
+    ['PDC', <PdcField key="pdc" gap={g} memberId={memberId} />],
     ['Claim', g.recon ? (
       <Tooltip label={g.recon.detail} placement="bottom">
         <span className={g.recon.rework && open ? styles.toneError : ''}>{g.recon.status}</span>
@@ -113,7 +153,7 @@ function NextFill({ gap: g }) {
 // The compact gap table (Pharmacy Gap Details), laid out like the Pharmacy
 // Gap table in Figma (5693:49892): title with the gap toggle beside it, a
 // header row, one line per gap, and a grey detail panel under an open gap.
-function GapList({ gaps, title, titleExtra, onSetStatus }) {
+function GapList({ gaps, memberId, title, titleExtra, onSetStatus }) {
   const [expanded, setExpanded] = useState(() => new Set());
   const [statusMenu, setStatusMenu] = useState(null); // { code, rect }
   const toggle = (code) => setExpanded(prev => {
@@ -140,9 +180,9 @@ function GapList({ gaps, title, titleExtra, onSetStatus }) {
         </div>
         {gaps.map(g => {
           const isOpen = expanded.has(g.code);
-          const workable = onSetStatus && MANUAL_GAP_STATUSES.includes(g.status.gap);
+          const workable = onSetStatus && canSetGapStatus(g.status);
           const badge = (
-            <Badge size="sm" tone={GAP_STATUS_TONE[g.status.gap]} label={g.status.gap}
+            <Badge size="sm" {...gapBadge(g.status)}
               trailingIconElement={workable ? <DownChevronIcon size={12} color="currentColor" /> : undefined} />
           );
           return (
@@ -167,12 +207,14 @@ function GapList({ gaps, title, titleExtra, onSetStatus }) {
                     // this column (it lines up with the buttons above).
                     <span>{badge}</span>
                   )}
+                  {/* A reopen names its reason under the badge. */}
+                  {g.status.gap === 'Reopened' && <SubStatus label={g.status.reopenReason} />}
                 </span>
                 <span className={styles.listCell} role="cell"><Pdc gap={g} /></span>
                 <span className={styles.listCell} role="cell"><FailDate gap={g} /></span>
                 <span className={styles.listCell} role="cell"><NextFill gap={g} /></span>
               </div>
-              {isOpen && <GapDetails gap={g} />}
+              {isOpen && <GapDetails gap={g} memberId={memberId} />}
             </div>
           );
         })}
@@ -208,7 +250,7 @@ export function PharmacyGapsCard({ member, onSetStatus, compact = false, titleEx
   });
   const m = enrichPharmacyMember(member);
   const menuGap = statusMenu && m.gaps.find(g => g.code === statusMenu.code);
-  if (compact) return <GapList gaps={m.gaps} title="Pharmacy Gap" titleExtra={titleExtra} onSetStatus={onSetStatus} />;
+  if (compact) return <GapList gaps={m.gaps} memberId={m.id} title="Pharmacy Gap" titleExtra={titleExtra} onSetStatus={onSetStatus} />;
   const gridClass = styles.gapGrid;
 
   return (
@@ -223,7 +265,7 @@ export function PharmacyGapsCard({ member, onSetStatus, compact = false, titleEx
         const open = isActiveGap(g.status);
         const isOpen = expanded.has(g.code);
         const claimFlagged = !!g.recon?.rework;
-        const workable = onSetStatus && MANUAL_GAP_STATUSES.includes(g.status.gap);
+        const workable = onSetStatus && canSetGapStatus(g.status);
         return (
           <div key={g.code} className={styles.gapItem}>
             <div className={`${gridClass} ${styles.gapRow}`} data-expanded={isOpen}>
@@ -240,14 +282,17 @@ export function PharmacyGapsCard({ member, onSetStatus, compact = false, titleEx
                     aria-haspopup="menu"
                     aria-label={`Change ${g.code} status`}
                   >
-                    <Badge size="sm" tone={GAP_STATUS_TONE[g.status.gap]} label={g.status.gap} trailingIconElement={<DownChevronIcon size={12} color="currentColor" />} />
+                    <Badge size="sm" {...gapBadge(g.status)} trailingIconElement={<DownChevronIcon size={12} color="currentColor" />} />
                   </button>
                 ) : (
                   <Tooltip label={onSetStatus ? `Set by Fold${g.status.label ? '' : `: ${g.status.detail}`}` : ''} placement="bottom">
-                    <span><Badge size="sm" tone={GAP_STATUS_TONE[g.status.gap]} label={g.status.gap} /></span>
+                    <span><Badge size="sm" {...gapBadge(g.status)} /></span>
                   </Tooltip>
                 )}
-                <SubStatus label={g.status.label} />
+                {/* A reopen says why first, then the gap's signal. */}
+                {g.status.gap === 'Reopened'
+                  ? <SubStatus label={g.status.reopenReason} suffix={g.status.label !== 'Claim reversed' ? g.status.label : null} />
+                  : <SubStatus label={g.status.label} />}
               </span>
               <PdcValue pdc={g.pdc} open={open} source={g.pdcSource} medications={g.medications} />
               <FailDateValue gap={g} />

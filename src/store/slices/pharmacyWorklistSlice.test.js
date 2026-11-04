@@ -118,7 +118,7 @@ describe('pharmacy verification lock', () => {
       items: [{ measure: 'MAD', drug: 'Metformin 500 MG', steps: ['Last fill 10/06/2026 confirmed', 'Refilled', 'Picked up'] }],
     }, { pickedUpCodes: [], pendingCodes: [], refillsByMed: {}, status: null });
     const [a] = s.member().activityLog;
-    expect(a.title).toBe('Pharmacy verification · CVS (locked)');
+    expect(a.title).toBe('Verification call · Pharmacy: CVS (locked)');
     expect(a.note.split('\n')).toEqual(['MAD · Metformin 500 MG: Last fill 10/06/2026 confirmed, Refilled, Picked up', 'Spoke with tech']);
   });
 });

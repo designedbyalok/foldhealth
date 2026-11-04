@@ -1,4 +1,4 @@
-import { claimsPdcNoRefill, daysMissed, gapMpr } from './fillEvents';
+import { claimsPdcNoRefill, daysMissed, gapMpr, pdcToDate } from './fillEvents';
 
 const DAY_MS = 86_400_000;
 
@@ -17,16 +17,26 @@ export const MEASURE_NAMES = {
 export const sortMeasures = (measures) => (measures || [])
   .toSorted((a, b) => MEASURE_ORDER.indexOf(a.code) - MEASURE_ORDER.indexOf(b.code));
 
-// PDC to act on: projected with a recent fill once one is confirmed,
-// otherwise the plan's, otherwise ours from claims.
-export const effectivePdc = (x) => x?.pdcProjected ?? x?.pdc ?? x?.calcPdc ?? null;
+// PDC to act on: the team's override, else projected from a confirmed
+// pickup, else today's PDC (the plan's as of its report date, moved by the
+// days covered or missed since: pdcToDate), else the plan's, else ours.
+const isPdc = (v) => v != null && v !== '' && Number.isFinite(Number(v));
+export const effectivePdc = (x) => (isPdc(x?.pdcManual) ? Number(x.pdcManual) : x?.pdcProjected ?? (x ? pdcToDate(x) : null) ?? x?.pdc ?? x?.calcPdc ?? null);
 // Fail date to act on: projected from a fill confirmed in Fold, otherwise the
 // plan's. Either way it is the absolute fail date.
+// The plan's own status for the gap (Astrana file / API): Open or Closed.
+// Fold's Gap Status tracks the steps in between. Until the file sends a
+// status, its own adherence flags close the gap; otherwise it is open.
+export const PLAN_STATUSES = ['Open', 'Closed'];
+export function planGapStatus(x) {
+  if (PLAN_STATUSES.includes(x?.planStatus)) return x.planStatus;
+  return x?.projectedStatus === 'Already adherent' || x?.oneFillToInvincible ? 'Closed' : 'Open';
+}
 export const effectiveFailDate = (x) => x?.failDateProjected ?? x?.failDate ?? null;
 
 // Where each headline number comes from: the plan file, our calculation from
 // claims, or projected from a fill confirmed in Fold (pending its claim).
-export const pdcSource = (x) => (x.pdcProjected != null ? 'Projected' : x.pdc != null ? 'Plan' : x.calcPdc != null ? 'Calculated' : null);
+export const pdcSource = (x) => (isPdc(x.pdcManual) ? 'Manual' : x.pdcProjected != null ? 'Projected' : pdcToDate(x) != null ? 'To date' : x.pdc != null ? 'Plan' : x.calcPdc != null ? 'Calculated' : null);
 export const failDateSource = (x) => (x.failDateProjected != null ? 'Projected' : x.failDate ? 'Plan' : null);
 // Next Fill Due is the plan's until Fold recalculates it from fills
 // (recomputeMeasure marks `nextFillDueCalculated`).
@@ -338,6 +348,9 @@ function worstRecon(measures, plan) {
 
 // ── Gap status ──
 // One per pharmacy gap; it runs once per fill cycle.
+//   Reopened         back to work with no work logged since: a claim was
+//                    reversed (`reopenReason` Claim reversal, the alarm) or a
+//                    closed gap's next fill came due (New fill due)
 //   Open             a fill is due this cycle and no work is logged
 //   In Progress      review or outreach started, or a fill needs rework
 //   Pending Claim    a fill was logged in Fold (manual date or confirmed
@@ -351,12 +364,15 @@ function worstRecon(measures, plan) {
 // Only a matched claim closes a gap; a fill logged in Fold is projected.
 // The team can set only Open and In Progress, and only while the gap is in
 // one of them: every other status is Fold's.
-export const GAP_STATUSES = ['Open', 'In Progress', 'Pending Claim', 'Closed', 'Met for Year', 'Failed for Year', 'Excluded'];
+export const GAP_STATUSES = ['Reopened', 'Open', 'In Progress', 'Pending Claim', 'Closed', 'Met for Year', 'Failed for Year', 'Excluded'];
 // Held in the background, never on the worklist or in its filters: First
 // Fill until a second fill on a different date, Not Eligible once termed.
 export const BACKGROUND_GAP_STATUSES = ['First Fill', 'Not Eligible'];
 export const MANUAL_GAP_STATUSES = ['Open', 'In Progress'];
+// Gaps the team can set by hand (Reopened is still theirs to take).
+export const canSetGapStatus = (st) => MANUAL_GAP_STATUSES.includes(st?.gap) || st?.gap === 'Reopened';
 export const GAP_STATUS_TONE = {
+  'Reopened': 'danger',
   'Open': 'white',
   'In Progress': 'primary',
   'Pending Claim': 'warning',
@@ -367,6 +383,17 @@ export const GAP_STATUS_TONE = {
   'First Fill': 'disabled',
   'Not Eligible': 'disabled',
 };
+// A claim-reversal reopen is the alarm: a solid red badge, the row marked
+// and pinned to the top. A new fill due reopen is the next cycle, in amber.
+export const REOPEN_REASONS = { reversal: 'Claim reversal', newFill: 'New fill due' };
+export const isReversalReopen = (st) => st?.gap === 'Reopened' && st.reopenReason === REOPEN_REASONS.reversal;
+// A gap status badge's look. A reopen reads "Reopened" either way; its
+// color carries the reason (the Next Fill Due and Claim columns say why).
+export function gapBadge(st) {
+  if (st?.gap !== 'Reopened') return { tone: GAP_STATUS_TONE[st?.gap] || 'neutral', label: st?.gap };
+  const reversal = isReversalReopen(st);
+  return { tone: reversal ? 'danger' : 'warning', variant: reversal ? 'solid' : undefined, label: 'Reopened' };
+}
 const CLOSED_GAPS = new Set(['Closed', 'Met for Year']);
 // Gaps that leave the Progress count.
 const UNCOUNTED_GAPS = new Set(['Excluded', ...BACKGROUND_GAP_STATUSES]);
@@ -378,7 +405,8 @@ export const SUB_STATUSES = [
   'Refill due soon', 'Awaiting claim', 'Reversal watch', 'On track',
 ];
 // The only sub-statuses that call for action; the rest read as plain text.
-export const URGENT_SUB_STATUSES = new Set(SUB_STATUSES.slice(0, 5));
+// A claim reversal reopen's reason line reads the same way.
+export const URGENT_SUB_STATUSES = new Set([...SUB_STATUSES.slice(0, 5), REOPEN_REASONS.reversal]);
 
 // Latest pharmacy-verification answers for one measure, if any.
 export function latestVerification(callHistory, code) {
@@ -461,7 +489,7 @@ function yearLevelStatus(x, member) {
 // (`statusManual`, Open or In Progress) wins only over Open or In Progress.
 export function measureStatus(x, member) {
   const auto = autoMeasureStatus(x, member);
-  if (!x.statusManual || !MANUAL_GAP_STATUSES.includes(x.status) || !MANUAL_GAP_STATUSES.includes(auto.gap)) return auto;
+  if (!x.statusManual || !MANUAL_GAP_STATUSES.includes(x.status) || !canSetGapStatus(auto)) return auto;
   // A status set by hand covers the cycle it was set in: a fill, claim or
   // reversal dated after it starts a new story, and Fold's status returns.
   if (x.statusManualSince && latestFillEventAt(x) > parseMdy(x.statusManualSince)) return auto;
@@ -478,20 +506,25 @@ function latestFillEventAt(x) {
 }
 
 function autoMeasureStatus(x, member) {
-  const status = (gap, sub) => ({ gap, ...sub, done: !MANUAL_GAP_STATUSES.includes(gap) });
+  // A reopened gap is work owed, like Open and In Progress.
+  const status = (gap, sub) => ({ gap, ...sub, done: gap !== 'Reopened' && !MANUAL_GAP_STATUSES.includes(gap) });
   const year = yearLevelStatus(x, member);
   if (year) return status(year.gap, { label: null, detail: year.detail });
 
   const timers = planTimers(member?.healthPlan);
   const worst = gapFillEvents(x, member?.healthPlan)?.worst;
   const sub = subStatus(x, worst, timers);
-  const openOrWorked = (since) => (member && workedThisCycle(x, member, since) ? 'In Progress' : 'Open');
-  if (worst?.kind === 'voided') return status(openOrWorked(worst.claim.reversedOn), sub);
+  const worked = (since) => !!member && workedThisCycle(x, member, since);
+  // Reopened until the team logs work on it, then In Progress like any gap.
+  const reopened = (reason, since) => (worked(since) ? status('In Progress', sub) : status('Reopened', { ...sub, reopenReason: reason }));
+  if (worst?.kind === 'voided') return reopened(REOPEN_REASONS.reversal, worst.claim.reversedOn);
   if (worst?.kind === 'no-claim' || worst?.kind === 'other-coverage') return status('In Progress', sub);
   if (worst?.kind === 'pending') return status('Pending Claim', sub);
   const due = daysFromToday(x.nextFillDue);
   if (worst?.kind === 'verified' && due != null && due > timers.refillDueDays) return status('Closed', sub);
-  return status(openOrWorked(), sub);
+  // A matched claim closed the last cycle, so this one is a reopen.
+  if (worst?.kind === 'verified') return reopened(REOPEN_REASONS.newFill);
+  return status(worked() ? 'In Progress' : 'Open', sub);
 }
 
 // ── Medication status (per drug, Medication Review) ──
@@ -554,7 +587,7 @@ export function gapProgress(statuses) {
   // Pending Claim is still waiting for its claim, so it is not closed.
   const closed = gaps.filter(g => CLOSED_GAPS.has(g)).length;
   const label = !gaps.length || closed === gaps.length ? 'Complete'
-    : closed > 0 || gaps.some(g => g !== 'Open') ? 'In progress'
+    : closed > 0 || gaps.some(g => g !== 'Open' && g !== 'Reopened') ? 'In progress'
     : 'Not started';
   return { label, closed, total: gaps.length };
 }
@@ -583,7 +616,7 @@ export function daysLeftBucket(mdy) {
 
 // Member-level gap status rolled up from its measures: the one that most
 // needs the team, worked gaps first.
-const ROLLUP_ORDER = ['In Progress', 'Open', 'Pending Claim', 'Closed', 'Met for Year', 'Failed for Year', 'Excluded', ...BACKGROUND_GAP_STATUSES];
+const ROLLUP_ORDER = ['Reopened', 'In Progress', 'Open', 'Pending Claim', 'Closed', 'Met for Year', 'Failed for Year', 'Excluded', ...BACKGROUND_GAP_STATUSES];
 export function rollupGapStatus(statuses) {
   const gaps = new Set(Object.values(statuses).map(s => s.gap));
   return ROLLUP_ORDER.find(g => gaps.has(g)) || 'Open';
@@ -716,6 +749,7 @@ export function enrichPharmacyMember(m, { hedisGapsByMember } = {}) {
       mpr: gapMpr(x),
       attempts: attemptsThisCycle(x, m),
       recon: reconcileMeasure(x, m.healthPlan),
+      planStatus: planGapStatus(x),
     };
   });
   return {
@@ -737,6 +771,8 @@ export function enrichPharmacyMember(m, { hedisGapsByMember } = {}) {
     nextFillDueSort: parseMdy(urgent?.nextFillDue),
     // Days to Save: the fewest gap days left on a gap that can still be saved,
     // so sorting puts the closest-to-failing work first.
+    // A claim reversal reopened a gap: the row is marked and sits on top.
+    reopenedByReversal: gaps.some(g => isReversalReopen(g.status)),
     daysToSaveSort: (() => {
       const left = gaps.filter(g => g.savability === 'Savable' && g.allowableGapDays != null).map(g => g.allowableGapDays);
       return left.length ? Math.min(...left) : null;
@@ -759,22 +795,31 @@ export function enrichPharmacyMember(m, { hedisGapsByMember } = {}) {
 }
 
 // ── Snapshot: prescribers and pharmacies from the member's medications ──
+// Every prescriber named for the member: the gap report's (member and drug)
+// and the claims', merged by name. Phone and fax come from whichever record
+// has them; `drugs` are the member's drugs each one prescribed.
 export function prescribersOf(member) {
   const byName = new Map();
+  const add = (p, drug) => {
+    if (!p?.name) return;
+    const cur = byName.get(p.name) || { name: p.name, drugs: [] };
+    for (const k of ['phone', 'fax', 'npi', 'address', 'city', 'state', 'zip']) if (!cur[k] && p[k]) cur[k] = p[k];
+    if (drug && !cur.drugs.includes(drug)) cur.drugs.push(drug);
+    byName.set(p.name, cur);
+  };
+  add(member?.prescriber);
   for (const x of member?.measures || []) {
     for (const d of x.medications || []) {
-      const p = d.prescriber;
-      if (!p?.name) continue;
-      const cur = byName.get(p.name) || { ...p, drugs: [] };
-      cur.drugs.push(medLabel(d));
-      byName.set(p.name, cur);
+      add(d.prescriber, medLabel(d));
+      for (const r of d.refills || []) if (r.prescriber) add({ name: r.prescriber, address: r.prescriberAddress }, medLabel(d));
     }
   }
   return [...byName.values()];
 }
 
-// Every pharmacy in the fill history, newest first. Contact details come from
-// the medications' pharmacy records; fills give the count and last date.
+// Every pharmacy in the fill history, newest first, then any the gap report
+// names with no fill. Contact details come from the member's and the
+// medications' pharmacy records; fills give the count and last date.
 export function pharmaciesUsed(member) {
   const contacts = new Map();
   for (const p of [member?.pharmacy, ...(member?.measures || []).flatMap(x => (x.medications || []).map(d => d.pharmacy))]) {
@@ -792,7 +837,9 @@ export function pharmaciesUsed(member) {
       }
     }
   }
-  return [...used.values()].toSorted((a, b) => parseMdy(b.lastFill) - parseMdy(a.lastFill));
+  // Pharmacies the gap report names with no fill on record still list, last.
+  for (const [name, p] of contacts) if (!used.has(name)) used.set(name, { ...p, fills: 0, lastFill: null });
+  return [...used.values()].toSorted((a, b) => (parseMdy(b.lastFill) ?? -Infinity) - (parseMdy(a.lastFill) ?? -Infinity));
 }
 
 const claimKey = (c) => `${c.claimId}|${c.claimSeq ?? 1}|${c.date}`;

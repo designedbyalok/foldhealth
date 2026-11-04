@@ -11,7 +11,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { worklistMemberCallId } from '../../lib/patientCall';
 import { clinicalRolesPickerLabel } from '../../lib/worklistAssignee';
 import { PharmacyActivityDrawer } from './program/PharmacyActivityLog';
-import { MANUAL_GAP_STATUSES, pharmaciesUsed, prescribersOf } from './pharmacyWorklist.utils';
+import { MANUAL_GAP_STATUSES, isReversalReopen, pharmaciesUsed, prescribersOf } from './pharmacyWorklist.utils';
 import styles from './PharmacyWorklistRow.module.css';
 
 const MAX_INLINE_GAPS = 2;
@@ -40,9 +40,11 @@ export function PharmacyWorklistRow({ member, columns, hiddenSet, isSelected, on
   const [expanded, setExpanded] = useState(false);
 
   // HEDIS pattern: show 2 gaps, the rest behind "View More N", in the same
-  // MAC, MAD, MAH order as everywhere else (m.gaps is already in it).
-  const visibleGaps = expanded ? m.gaps : m.gaps.slice(0, MAX_INLINE_GAPS);
-  const extraCount = Math.max(0, m.gaps.length - MAX_INLINE_GAPS);
+  // MAC, MAD, MAH order as everywhere else (m.gaps is already in it). A gap a
+  // claim reversal reopened always shows: the alarm never hides.
+  const collapsedGaps = m.gaps.filter((g, i) => i < MAX_INLINE_GAPS || isReversalReopen(g.status));
+  const visibleGaps = expanded ? m.gaps : collapsedGaps;
+  const extraCount = m.gaps.length - collapsedGaps.length;
   const [showActivity, setShowActivity] = useState(false);
   const dropBtnRef = useRef(null);
   const callBtnRef = useRef(null);
@@ -140,7 +142,7 @@ export function PharmacyWorklistRow({ member, columns, hiddenSet, isSelected, on
 
   return (
     <tr
-      className={`${styles.row} ${visibleGaps.length > 1 ? styles.rowMultiGap : ''}`}
+      className={`${styles.row} ${visibleGaps.length > 1 ? styles.rowMultiGap : ''} ${m.reopenedByReversal ? styles.rowReopened : ''}`}
       tabIndex={0}
       aria-label={`Open ${m.name}'s pharmacy gaps`}
       onClick={openRow}

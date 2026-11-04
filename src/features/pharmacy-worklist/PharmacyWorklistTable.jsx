@@ -117,7 +117,10 @@ export function PharmacyWorklistTable() {
     return rows.filter(m => memberMatchesFilters(m, filters, filterCtx));
   }, [enriched, searchQuery, filters, filterCtx]);
 
-  const { sorted, sortKey, sortDir, setSort, clearSort } = useTableSort(filtered);
+  const { sorted: bySort, sortKey, sortDir, setSort, clearSort } = useTableSort(filtered);
+  // Gaps a claim reversal reopened stay on top whatever the sort, since
+  // their compliance window keeps running (Monique: "a big neon sign").
+  const sorted = useMemo(() => [...bySort.filter(m => m.reopenedByReversal), ...bySort.filter(m => !m.reopenedByReversal)], [bySort]);
   // The drawer's previous / next follow the rows as shown.
   const setWorklistOrder = useAppStore(s => s.setPharmacyWorklistOrder);
   useEffect(() => { setWorklistOrder(sorted.map(m => m.id)); }, [sorted, setWorklistOrder]);
