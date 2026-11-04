@@ -362,9 +362,10 @@ still re-export them so open branches build, and lint flags new imports.
 src/components/Calendar/Calendar.jsx
 ```
 
-One month of days (Figma Fold-Pixel-1.0): the grid only. `DatePickerPopover`
-(behind `DatePicker` and `Input type="date"`) builds the single and two-month
-range pickers from it. Props: `year`, `month` (0-based), `onPick`, `mode`
+One month of days (Figma Fold-Pixel-1.0): the grid only. Every date picker
+draws its days with it: `DatePickerPopover` (behind `DatePicker` and
+`Input type="date"`), `DateRangePopover` (the filter-chip range picker) and
+`DateTimePicker`. Props: `year`, `month` (0-based), `onPick`, `mode`
 (`single` | `range`), `selected` or `rangeStart` / `rangeEnd` (plus
 `pendingStart` / `previewStart` / `previewEnd` while a range is being picked),
 `min` / `max`, `isDayDisabled(iso)` (true, or a reason shown as a tooltip),
