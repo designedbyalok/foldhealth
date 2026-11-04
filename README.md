@@ -37,6 +37,20 @@ build requires esbuild ≥ 0.28 on Node 26.
 
 ## Recent Changes
 
+- **CMP members show their programs.** A CMP worklist member opened from
+  anywhere showed "No Active Programs": the worklist reads `cmp_members` and
+  the Care Programs tab reads `patient_care_programs`, and nothing linked
+  the two. When a patient's programs load, `syncCmpEnrollments` now enrolls
+  any CMP sub-program on their roster that they aren't in yet, keeping the
+  roster's start date, due date and assignee. These enrollments aren't
+  logged as new and don't run auto-apply rules. The seed does the same. Needs
+  `supabase/cmp_members_care_program_sync_migration.sql` to backfill existing
+  members.
+- **Program step header.** Program badges name the CMP sub-program
+  ("CMP | Complex Case Management", full name in the hover card). Step
+  actions are split by dividers (assignee | Skip | Reviewed | More), and the
+  review button reads "Reviewed" as an outline primary button, green once
+  reviewed, in every program. No migration.
 - **Templates list social needs as barriers.** New Template and the template editor now show SDOH needs in the Barriers table (medium priority by default) as well as under Social Needs, matching the patient's care plan. Removing a need from the Barriers table also removes its suggested referrals; the Add Barriers picker still manages only library barriers.
 - **Every date picker uses the Figma calendar.** `DateRangePopover` (the date-range filter chips: DOB, Create Date, Last Visit and the rest) and `DateTimePicker` now draw their days with the shared `Calendar` instead of their own grids, so all date pickers look and behave alike: single-letter weekdays, the neighbouring months' days shown muted, round ends with a pale strip for a range (previewed while picking the second end), and keyboard navigation between days. `DateTimePicker` gets a story. No migration.
 - **One Calendar and one set of date helpers.** The Figma month grid that lived inside `DatePickerPopover` is now its own `Calendar` primitive (single or range, `min` / `max`, disabled days with a reason, highlighted days), and the pickers build on it. Days are reachable from the keyboard: one tab stop, arrows by day and week, Home / End, and each day reads its full date to screen readers. The date helpers that `DatePickerPopover`, `DateRangePopover`, `DatePicker` and `Input` each re-implemented (`isoFromLocal`, `addDays`, `sameDay`, `daysInMonth`, `mdyFromIso`, `isoFromMdy`, …) live in `src/lib/localDate.js`, with tests (including a DST step). No visual change. `DateRangePopover` and `DateTimePicker` still draw their own grids; moving them onto `Calendar` changes how they look, so it waits for a design call. No migration.

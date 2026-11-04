@@ -397,6 +397,8 @@ const CARE_PLAN_LOG_ACTIONS = [
   'note', 'note_deleted', 'note_cleared', 'review_requested', 'discarded', 'restored',
 ];
 
+// Patients whose CMP roster rows were already turned into enrollments this session (syncCmpEnrollments).
+const cmpSyncedPatients = new Set();
 // patientId → in-flight patient_care_programs request (see fetchCareProgramsForPatient).
 const careProgramsInFlight = new Map();
 // One gate per resync query; see lib/resyncGate.js for why these exist.
@@ -2731,6 +2733,53 @@ export const useAppStore = create((set, get) => ({
     // Auto-resume runs when the programs are next loaded on or after the resume date.
     rows.filter(r => r.status === 'Paused' && isDueToAutoResume({ status: 'paused', pause: r.pause }))
       .forEach(r => get().resumeCareProgramInstance(patientId, r, { auto: true }));
+    get().syncCmpEnrollments(patientId);
+  },
+
+  // CMP worklist members live in cmp_members (one row per sub-program), but
+  // the patient's Care Programs read patient_care_programs. Enroll any CMP
+  // sub-program the roster has and the patient doesn't, with the roster's
+  // start, due date and assignee. Once per patient per session.
+  syncCmpEnrollments: async (patientId) => {
+    if (!patientId || cmpSyncedPatients.has(patientId)) return;
+    cmpSyncedPatients.add(patientId);
+    // Only the roster's own patient id: programs also load under the member id,
+    // and syncing both would enroll the patient twice.
+    const matches = m => m.patientId && String(m.patientId) === String(patientId);
+    const { cmpMembers, cmpMembersDidFetch } = get();
+    let roster;
+    if (cmpMembersDidFetch) {
+      roster = (cmpMembers || []).filter(matches);
+    } else {
+      // Not loaded yet (patient opened outside the CMP worklist): ask for this patient only.
+      const { data, error } = await supabase
+        .from('cmp_members')
+        .select('sub_program, program_start_date, program_due_date, assignee')
+        .eq('patient_id', patientId);
+      if (error) { console.warn('syncCmpEnrollments:', error.message); return; }
+      roster = (data || []).map(r => ({
+        subProgram: r.sub_program,
+        programStartDate: r.program_start_date,
+        programDueDate: r.program_due_date,
+        assignee: r.assignee,
+      }));
+    }
+    if (!roster.length) return;
+    const cmpName = (get().careProgramTypes || []).find(t => t.code === 'CMP')?.name || 'Care Management Program';
+    roster.forEach((m) => {
+      if (!m.subProgram) return;
+      const enrolled = (get().careProgramsByPatient[patientId] || []).some(p => p.code === 'CMP' && p.subProgram === m.subProgram);
+      if (enrolled) return;
+      get().addCareProgram(patientId, {
+        code: 'CMP',
+        name: cmpName,
+        subProgram: m.subProgram,
+        startDate: m.programStartDate || undefined,
+        plannedEndDate: m.programDueDate || undefined,
+        assignee: m.assignee || undefined,
+        fromRoster: true,
+      });
+    });
   },
 
   addCareProgram: (patientId, entry) => {
@@ -2762,7 +2811,7 @@ export const useAppStore = create((set, get) => ({
           : isTriggerable ? `pcp-${patientId}-${entry.code}-${trigger}` : `pcp-${patientId}-${entry.code}${again}`,
         instance: next.instance,
         enrolledBy: state.currentUserProfile?.name || null,
-        plannedEndDate: plannedEndDate(createdStamp, maxDays),
+        plannedEndDate: entry.plannedEndDate || plannedEndDate(createdStamp, maxDays),
         code: entry.code,
         subProgram,
         // SNP: what triggered the enrollment and for which plan id (Create SNP Program).
@@ -2773,10 +2822,11 @@ export const useAppStore = create((set, get) => ({
         acuity: null,
         status: next.reEnrolled ? 'Re-enrolled' : 'New',
         statusColor: programStatusColor(next.reEnrolled ? 'Re-enrolled' : 'New'),
-        startDate: createdStamp,
+        // A roster-backed enrollment (CMP worklist) keeps the roster's dates and assignee.
+        startDate: entry.startDate || createdStamp,
         endDate: '-',
         lastUpdated: createdStamp,
-        assignee: 'Unassigned',
+        assignee: entry.assignee || 'Unassigned',
         pcp: '-',
         progress: 0,
         trigger,
@@ -2857,6 +2907,9 @@ export const useAppStore = create((set, get) => ({
         // duplicate is ignored above, and logging it anyway filled the log
         // with "Program Enrolled" for a patient enrolled once.
         if ((data || []).length === 0) return;
+        // Created from a worklist roster (syncCmpEnrollments): the patient was
+        // already in the program, so it isn't logged or run as a new enrollment.
+        if (entry.fromRoster) return;
         get().logProgramActivity({
           patientId,
           programCode: program.code,

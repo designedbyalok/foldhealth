@@ -29,6 +29,11 @@ function ProgramDetail({ program, progressFor, onSelect }) {
       ) : (
         <div className={styles.detailHead}>{head}</div>
       )}
+      {program.subProgram && (
+        <div className={styles.detailRow}>
+          <span className={styles.detailLabel}>Sub-program:</span> {program.subProgram}
+        </div>
+      )}
       <div className={styles.detailRow}>
         <span className={styles.detailLabel}>Start Date:</span> {program.startDate || '-'}
       </div>
@@ -86,13 +91,15 @@ export function ProgramBadges({ programs, progressFor, onSelect }) {
           key={p.id}
           type="button"
           className={[styles.badge, onSelect ? styles.clickable : ''].filter(Boolean).join(' ')}
-          aria-label={onSelect ? `Open ${p.code} program` : undefined}
+          aria-label={onSelect ? `Open ${p.subProgram ? `${p.subProgram} (${p.code})` : p.code} program` : undefined}
           onClick={onSelect ? () => select(p) : undefined}
           onMouseEnter={e => open(e, [p])}
           onMouseLeave={scheduleClose}
         >
           <ProgramStatusRing progress={progressFor(p.code)} size={14} />
           <span className={styles.badgeCode}>{p.code}</span>
+          {/* CMP can run several sub-programs at once; the code alone can't tell them apart. */}
+          {p.subProgram && <span className={styles.badgeSub}>{p.subProgram}</span>}
         </button>
       ))}
       {overflow.length > 0 && (

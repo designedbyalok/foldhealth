@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Icon } from '../../../../../../../components/Icon/Icon';
 import { AddIconMinimalist } from '../../../../../../../components/Icon/AddIconMinimalist';
 import { ActionButton } from '../../../../../../../components/ActionButton/ActionButton';
@@ -69,15 +69,20 @@ export function ProgramDetailViewContentHeader({
   );
   const reviewedButton = (size = 'md') => (
     <Button
-      variant="soft" tone={reviewed ? 'success' : 'primary'}
+      variant={reviewed ? 'soft' : 'outline'} tone={reviewed ? 'success' : 'primary'}
       size={size}
       leadingIcon="solar:check-circle-linear"
       disabled={lockedByRecords}
       onClick={() => onMarkStep?.(reviewed ? null : 'completed')}
     >
-      {reviewed ? 'Reviewed' : 'Mark as Reviewed'}
+      Reviewed
     </Button>
   );
+  // A divider between each action shown; hidden ones (Skip on a mandatory
+  // step, no assignee picker) don't leave two dividers side by side.
+  const withDividers = (...actions) => actions.filter(Boolean).flatMap((a, i) => (
+    i === 0 ? [<Fragment key={i}>{a}</Fragment>] : [<span key={`d${i}`} className={styles.headerDivider} />, <Fragment key={i}>{a}</Fragment>]
+  ));
   const [signOffOpen, setSignOffOpen] = useState(false);
   const patient = useAppStore(s => s.patients.find(p => p.id === s.selectedPatientId));
   const currentUserProfile = useAppStore(s => s.currentUserProfile);
@@ -199,12 +204,8 @@ export function ProgramDetailViewContentHeader({
         <div className={styles.contentActions}>
           {isMedReconStep ? (
             <>
-              {assigneePicker}
-              <span className={styles.headerDivider} />
-              {skipLink}
-              <span className={styles.headerDivider} />
-              {medReconSignature ? (
-                <Button variant="soft" leadingIcon="solar:check-circle-linear">Reviewed</Button>
+              {withDividers(assigneePicker, skipLink, medReconSignature ? (
+                <Button variant="soft" tone="success" leadingIcon="solar:check-circle-linear">Reviewed</Button>
               ) : (
                 <Button
                   variant="outline" tone="primary"
@@ -226,13 +227,12 @@ export function ProgramDetailViewContentHeader({
                 >
                   Sign
                 </Button>
-              )}
+              ), <ActionButton icon="solar:menu-dots-linear" size="sm" tooltip="More" />)}
               <SelectAssigneeModal
                 open={signOffOpen}
                 onClose={() => setSignOffOpen(false)}
                 onConfirm={(user) => { setSignOffOpen(false); createSignOffTask(user); }}
               />
-              <ActionButton icon="solar:menu-dots-linear" size="sm" tooltip="More" />
             </>
           ) : isProgramTasksStep ? (
             <>
@@ -262,9 +262,7 @@ export function ProgramDetailViewContentHeader({
             </>
           ) : isAppointmentStep ? (
             <>
-              {assigneePicker}
-              {skipLink}
-              <Button variant="soft" onClick={goNextStep} disabled={!nextStep}>Next</Button>
+              {withDividers(assigneePicker, skipLink, <Button variant="soft" onClick={goNextStep} disabled={!nextStep}>Next</Button>)}
             </>
           ) : isDiagnosisGapsStep ? (
             <>
@@ -284,15 +282,12 @@ export function ProgramDetailViewContentHeader({
                   onClick={() => setDiagGapsSearchOpen(true)}
                 />
               )}
-              {reviewedButton('md')}
-              <ActionButton icon="solar:menu-dots-linear" size="sm" tooltip="More" />
+              <span className={styles.headerDivider} />
+              {withDividers(reviewedButton('md'), <ActionButton icon="solar:menu-dots-linear" size="sm" tooltip="More" />)}
             </>
           ) : (
             <>
-              {assigneePicker}
-              {skipLink}
-              {reviewedButton()}
-              <ActionButton icon="solar:menu-dots-linear" size="sm" tooltip="More" />
+              {withDividers(assigneePicker, skipLink, reviewedButton(), <ActionButton icon="solar:menu-dots-linear" size="sm" tooltip="More" />)}
             </>
           )}
         </div>

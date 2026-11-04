@@ -20,6 +20,15 @@
 .badgeMore:hover { border-color: var(--primary-300); }
 .clickable { cursor: pointer; }
 .badgeCode { font-size: var(--font-md); color: var(--neutral-400); }
+.badgeSub {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 6px;
+  border-left: 0.5px solid var(--primary-200);
+  font-size: var(--font-md);
+  color: var(--neutral-300);
+}
 .badgeMore { justify-content: center; }
 
 /* Hover card / list (Figma 1837-16264). */
