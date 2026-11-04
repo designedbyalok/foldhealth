@@ -9,13 +9,14 @@ import { Tabs } from '../Tabs/Tabs';
 import { Calendar } from '../Calendar/Calendar';
 import styles from './DateRangePopover.module.css';
 import { isoFromLocal as toISO, parseLocalDate } from '../../lib/localDate';
-import { yearSpan } from './yearSpan';
+import { yearSpan, monthSpan } from './yearSpan';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
+const MONTH_OPTIONS = MONTH_NAMES.map((name, i) => ({ value: String(i + 1), label: name }));
 
 
 /**
@@ -36,10 +37,13 @@ const MONTH_NAMES = [
  *  - onClose    (fn)                   Dismiss on overlay click / Escape /
  *                                       Apply / Clear.
  *  - width      (number)               Default 504.
- *  - years      (boolean)              Adds a Years | Custom Dates switch (e.g.
- *                                       DOB): Years picks a From and To year,
- *                                       saved as Jan 1 to Dec 31; Custom Dates
- *                                       is the calendar, with a year jump.
+ *  - years      (boolean)              Adds a Years | Month & Year | Custom
+ *                                       Dates switch (e.g. DOB): Years picks a
+ *                                       From and To year, saved as Jan 1 to
+ *                                       Dec 31; Month & Year picks a From and
+ *                                       To month, saved as the 1st to the last
+ *                                       day of the month; Custom Dates is the
+ *                                       calendar, with a year jump.
  */
 export function DateRangePopover({
   anchorRect,
@@ -63,9 +67,18 @@ export function DateRangePopover({
     return s ? stepMonth({ y: s.getFullYear(), m: s.getMonth() }, 1) : { y: today.getFullYear(), m: today.getMonth() };
   });
   const savedYears = yearSpan(selected);
-  const [mode, setMode] = useState(() => (years && (savedYears || !selected.length) ? 'years' : 'custom'));
+  const savedMonths = savedYears ? null : monthSpan(selected);
+  const [mode, setMode] = useState(() => {
+    if (!years) return 'custom';
+    if (savedYears || !selected.length) return 'years';
+    return savedMonths ? 'months' : 'custom';
+  });
   const [fromYear, setFromYear] = useState(savedYears ? String(savedYears[0]) : '');
   const [toYear, setToYear] = useState(savedYears ? String(savedYears[1]) : '');
+  const [fromMonth, setFromMonth] = useState(savedMonths ? String(savedMonths[0][1]) : '');
+  const [fromMonthYear, setFromMonthYear] = useState(savedMonths ? String(savedMonths[0][0]) : '');
+  const [toMonth, setToMonth] = useState(savedMonths ? String(savedMonths[1][1]) : '');
+  const [toMonthYear, setToMonthYear] = useState(savedMonths ? String(savedMonths[1][0]) : '');
   const yearOptions = useMemo(() => {
     const out = [];
     for (let y = today.getFullYear(); y >= today.getFullYear() - YEAR_SPAN; y -= 1) out.push({ value: String(y), label: String(y) });
@@ -126,13 +139,25 @@ export function DateRangePopover({
   );
 
   const yearsReady = !!fromYear && !!toYear;
-  const canApply = mode === 'years' ? yearsReady : !!(start && end);
+  const monthsReady = !!fromMonth && !!fromMonthYear && !!toMonth && !!toMonthYear;
+  const canApply = mode === 'years' ? yearsReady : mode === 'months' ? monthsReady : !!(start && end);
 
   const apply = () => {
     if (mode === 'years') {
       if (!yearsReady) return;
       const [lo, hi] = [Number(fromYear), Number(toYear)].sort((a, b) => a - b);
       onChange?.([`${lo}-01-01`, `${hi}-12-31`]);
+      onClose?.();
+      return;
+    }
+    if (mode === 'months') {
+      if (!monthsReady) return;
+      const [lo, hi] = [
+        [Number(fromMonthYear), Number(fromMonth)],
+        [Number(toMonthYear), Number(toMonth)],
+      ].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+      const lastDay = new Date(hi[0], hi[1], 0).getDate();
+      onChange?.([`${lo[0]}-${pad2(lo[1])}-01`, `${hi[0]}-${pad2(hi[1])}-${pad2(lastDay)}`]);
       onClose?.();
       return;
     }
@@ -146,6 +171,10 @@ export function DateRangePopover({
     setEnd(null);
     setFromYear('');
     setToYear('');
+    setFromMonth('');
+    setFromMonthYear('');
+    setToMonth('');
+    setToMonthYear('');
     onChange?.([]);
   };
 
@@ -165,7 +194,11 @@ export function DateRangePopover({
         <Tabs
           variant="pill"
           className={styles.modeTabs}
-          items={[{ key: 'years', label: 'Years' }, { key: 'custom', label: 'Custom Dates' }]}
+          items={[
+            { key: 'years', label: 'Years' },
+            { key: 'months', label: 'Month & Year' },
+            { key: 'custom', label: 'Custom Dates' },
+          ]}
           value={mode}
           onValueChange={setMode}
         />
@@ -176,6 +209,17 @@ export function DateRangePopover({
           <Select label="From" searchable placeholder="Year" options={yearOptions} value={fromYear} onValueChange={setFromYear} />
           <Select label="To" searchable placeholder="Year" options={yearOptions} value={toYear} onValueChange={setToYear} />
         </div>
+      ) : mode === 'months' ? (
+        <>
+          <div className={styles.yearRow}>
+            <Select label="From Month" searchable placeholder="Month" options={MONTH_OPTIONS} value={fromMonth} onValueChange={setFromMonth} />
+            <Select label="From Year" searchable placeholder="Year" options={yearOptions} value={fromMonthYear} onValueChange={setFromMonthYear} />
+          </div>
+          <div className={styles.yearRow}>
+            <Select label="To Month" searchable placeholder="Month" options={MONTH_OPTIONS} value={toMonth} onValueChange={setToMonth} />
+            <Select label="To Year" searchable placeholder="Year" options={yearOptions} value={toMonthYear} onValueChange={setToMonthYear} />
+          </div>
+        </>
       ) : (
       <div className={styles.calBody}>
         <div className={styles.month}>
@@ -274,3 +318,4 @@ function stepMonth(v, delta) {
 }
 
 
+function pad2(n) { return String(n).padStart(2, '0'); }

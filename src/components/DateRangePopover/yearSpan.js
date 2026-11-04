@@ -9,16 +9,41 @@ export function yearSpan(selected = []) {
   return a && b ? [Number(a[1]), Number(b[1])] : null;
 }
 
+const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/**
+ * [[fromYear, fromMonth], [toYear, toMonth]] (months 1-12) when a
+ * [startISO, endISO] range runs from the 1st of a month to the last day of
+ * a month, else null. A DateRangePopover with `years` saves a Month & Year
+ * pick this way.
+ */
+export function monthSpan(selected = []) {
+  const a = /^(\d{4})-(\d{2})-01$/.exec(selected?.[0] || '');
+  const b = /^(\d{4})-(\d{2})-(\d{2})$/.exec(selected?.[1] || '');
+  if (!a || !b) return null;
+  const [ty, tm, td] = [Number(b[1]), Number(b[2]), Number(b[3])];
+  if (td !== new Date(ty, tm, 0).getDate()) return null;
+  return [[Number(a[1]), Number(a[2])], [ty, tm]];
+}
+
 const isoToMdY = (iso) => {
   const [y, m, d] = String(iso || '').split('-');
   return m && d ? `${m}/${d}/${y}` : iso;
 };
 
-/** A DOB filter's chip text: "1950 – 1960", "1957", or "01/10/1957 – 02/20/1957". */
+/**
+ * A DOB filter's chip text: "1950 – 1960", "1957", "Jan 1958 – Dec 1961",
+ * "Apr 1958", or "01/10/1957 – 02/20/1957".
+ */
 export function dobRangeSummary(selected = []) {
   if (!selected || selected.length < 2) return undefined;
   const ys = yearSpan(selected);
   if (ys) return ys[0] === ys[1] ? String(ys[0]) : `${ys[0]} – ${ys[1]}`;
+  const ms = monthSpan(selected);
+  if (ms) {
+    const [from, to] = ms.map(([y, m]) => `${MONTH_ABBR[m - 1]} ${y}`);
+    return from === to ? from : `${from} – ${to}`;
+  }
   return `${isoToMdY(selected[0])} – ${isoToMdY(selected[1])}`;
 }
 
