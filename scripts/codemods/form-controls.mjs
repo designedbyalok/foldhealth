@@ -105,7 +105,8 @@ function migrateFile(file, src) {
         const ariaLabel = get('ariaLabel');
         if (ariaLabel) rename(ariaLabel, 'aria-label');
       }
-      if (c === 'Textarea' && onChange && attrs.some(a => ENHANCED_TEXTAREA.has(a.name.name))) {
+      // With onValueChange already there, onChange is the native event on purpose.
+      if (c === 'Textarea' && onChange && !get('onValueChange') && attrs.some(a => ENHANCED_TEXTAREA.has(a.name.name))) {
         rename(onChange, 'onValueChange');
       }
 

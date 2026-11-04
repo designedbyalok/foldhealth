@@ -33,7 +33,7 @@ const EDITOR_TABS = [
   { key: 'steps', label: 'Program Steps' },
   { key: 'personalize', label: 'Personalize' },
 ];
-const CLINIC_SIZE = { width: 190, height: 150, format: 'PNG' };
+const CLINIC_SIZE = { width: 170, height: 150, format: 'PNG' };
 // How long the first preview waits for the fonts and logos before building without them.
 const ASSET_WAIT_MS = 3000;
 const EMPTY = [];
@@ -107,7 +107,7 @@ export function ProgramReportDrawer({ program, stepList, stepCtx, progress, acti
   const [generatedAt] = useState(() => new Date());
   useEffect(() => {
     let live = true;
-    Promise.all([loadPng(clinicLogoUrl, 190, 150), loadPng(clinicLogoWhiteUrl, 190, 150), loadInter()])
+    Promise.all([loadPng(clinicLogoUrl, 510, 450), loadPng(clinicLogoWhiteUrl, 510, 450), loadInter()])
       .then(([clinicLogo, clinicLogoWhite, fonts]) => { if (live) setAssets({ clinicLogo, clinicLogoWhite, fonts }); });
     return () => { live = false; };
   }, []);

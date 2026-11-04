@@ -11,8 +11,10 @@ export function loadSnapshot(snapshot) {
     employerImpactFilters: snapshot.filters,
     employerImpactFiltersLoaded: true,
     fetchEmployerImpactFilters: () => {},
-    // The page asks for the rows its filters need; the snapshot holds exactly those.
-    fetchEmployerImpact: () => Promise.resolve(snapshot.rows),
+    // The page asks for the rows its filters need; the snapshot holds exactly
+    // those. Snapshots saved before weekly charts have no weekRows, so their
+    // charts stay monthly.
+    fetchEmployerImpact: ({ weekly } = {}) => Promise.resolve(weekly ? (snapshot.weekRows ?? null) : snapshot.rows),
     showToast: () => {},
   };
 }

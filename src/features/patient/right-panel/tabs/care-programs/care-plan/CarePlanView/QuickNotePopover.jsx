@@ -4,6 +4,7 @@ import { Textarea } from '@/components/Textarea/Textarea';
 import { Button } from '@/components/Button/Button';
 import { Badge } from '@/components/Badge/Badge';
 import { latestItemNote } from '../lib/carePlanNotes';
+import { noteDetails } from '../lib/carePlanNoteRefs';
 import styles from './QuickNotePopover.module.css';
 
 const NOUN = { goal: 'Goal', intervention: 'Intervention', barrier: 'Barrier' };
@@ -20,7 +21,8 @@ const stamp = iso => (iso
  * audit rows outside the signed snapshot, so saving one never starts a new
  * plan version. "Open Notes" goes to the item's drawer for the full history.
  */
-export function QuickNotePopover({ kind, item, rect, audit, onSave, onOpenFull, onClose }) {
+export function QuickNotePopover({ kind, item, rect, audit, noteRefs, onSave, onOpenFull, onClose }) {
+  const [html, setHtml] = useState('');
   const [text, setText] = useState('');
   const [tags, setTags] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -30,7 +32,7 @@ export function QuickNotePopover({ kind, item, rect, audit, onSave, onOpenFull, 
   const save = async () => {
     if (!body) return;
     setSaving(true);
-    try { await onSave(body); } finally { setSaving(false); }
+    try { await onSave(body, noteDetails(html)); } finally { setSaving(false); }
   };
   const toggleTag = t => setTags(list => (list.includes(t) ? list.filter(x => x !== t) : [...list, t]));
 
@@ -48,8 +50,12 @@ export function QuickNotePopover({ kind, item, rect, audit, onSave, onOpenFull, 
           </div>
         )}
         <Textarea
-          value={text}
-          onChange={e => setText(e.target.value)}
+          richText
+          mentions
+          mentionUsers={noteRefs?.mentionUsers}
+          links={noteRefs?.links}
+          value={html}
+          onValueChange={(v, plain) => { setHtml(v); setText(plain || ''); }}
           placeholder={latest ? 'Add a newer note…' : 'Add a note…'}
           rows={3}
           autoFocus

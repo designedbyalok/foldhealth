@@ -42,7 +42,7 @@ const EDITOR_TABS = [
 ];
 const BLANK_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 // The clinic logo, drawn once to PNG for jsPDF.
-const CLINIC_LOGO = { width: 190, height: 150 };
+const CLINIC_LOGO = { width: 510, height: 450 };
 
 /**
  * Print settings and the presets that keep them. Opens on the organization's

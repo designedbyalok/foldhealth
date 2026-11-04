@@ -9,7 +9,8 @@
  * rows (Reengagement, Patients Not Engaged, Video, Self-Scheduled) to match
  * the design, which shows them empty: they render as soon as rows exist.
  */
-import { WEEKDAYS, HOURS, SAVINGS_CATEGORIES, SAVINGS_METRIC } from './employerImpactConfig';
+import { WEEKDAYS, HOURS, SAVINGS_CATEGORIES, SAVINGS_METRIC, WIDGETS } from './employerImpactConfig';
+import { mondaysOf } from './employerImpactData';
 
 export const EMPLOYER_IMPACT_EMPLOYERS = [
   { id: 'emp-northwind', name: 'Northwind Logistics', sort_order: 0 },
@@ -175,6 +176,50 @@ export function employerImpactRows(lastMonth) {
     });
   }
   return rows;
+}
+
+// The metrics the time-series charts draw (plus the survey response rate):
+// the only ones Month and Quarter read by week.
+const WEEKLY_METRICS = new Set([...WIDGETS.filter(w => w.x === 'month').map(w => w.metric), 'satisfaction']);
+const SNAPSHOT_METRICS = new Set(WIDGETS.filter(w => w.x === 'month' && w.agg === 'latest').map(w => w.metric));
+
+/**
+ * Rows for employer_impact_weekly_metrics, split from monthly rows: each
+ * month's value spreads over the weeks it owns (their Mondays) with uneven,
+ * seeded weights, so its weeks add up to it. Snapshots repeat the month's
+ * level with a little drift. A survey's sent / responded / score split with
+ * the same weights, so no week has more responses than sends.
+ *
+ * @param {object[]} monthlyRows – rows from employerImpactRows
+ * @returns {object[]} rows for employer_impact_weekly_metrics
+ */
+export function employerImpactWeeklyRows(monthlyRows) {
+  const out = [];
+  for (const r of monthlyRows) {
+    if (!WEEKLY_METRICS.has(r.metric)) continue;
+    const weeks = mondaysOf(r.month.slice(0, 7));
+    const base = [r.employer_id, r.patient_location, r.visit_location, r.metric, r.metric === 'satisfaction' ? '' : r.series, r.bucket].join('|');
+    const weights = weeks.map(w => 0.7 + rand(`${base}|${w}`) * 0.6);
+    const total = weights.reduce((a, b) => a + b, 0);
+    let left = r.value;
+    weeks.forEach((week, i) => {
+      let value;
+      if (SNAPSHOT_METRICS.has(r.metric)) value = vary(`${r.id}|${week}`, r.value, 0.04);
+      // The last week takes what's left, so rounding never drifts the month.
+      else if (i === weeks.length - 1) value = Math.max(0, left);
+      else { value = Math.round((r.value * weights[i]) / total); left -= value; }
+      out.push({
+        id: [r.employer_id, r.patient_location, r.visit_location, week, r.metric, r.series, r.bucket].join('|'),
+        employer_id: r.employer_id,
+        patient_location: r.patient_location,
+        visit_location: r.visit_location,
+        week,
+        metric: r.metric, series: r.series, bucket: r.bucket,
+        value,
+      });
+    });
+  }
+  return out;
 }
 
 // Sample export history (History button), relative to `now` so the log

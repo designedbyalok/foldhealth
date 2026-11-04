@@ -75,6 +75,34 @@ export function rangeFromStart(timeFrame, start) {
   return frameRange(timeFrame, start);
 }
 
+// ── Weeks ───────────────────────────────────────────────────────────────
+
+/**
+ * The Mondays ('YYYY-MM-DD') that fall in a month: the weeks that month
+ * owns. A week starting on the 30th belongs to that month, not the next.
+ */
+export function mondaysOf(monthKey) {
+  const [y, m] = monthKey.split('-').map(Number);
+  const first = new Date(Date.UTC(y, m - 1, 1));
+  const day = (8 - first.getUTCDay()) % 7; // days from the 1st to its first Monday
+  const out = [];
+  for (let d = new Date(Date.UTC(y, m - 1, 1 + day)); d.getUTCMonth() === m - 1; d.setUTCDate(d.getUTCDate() + 7)) {
+    out.push(d.toISOString().slice(0, 10));
+  }
+  return out;
+}
+
+/** Every week (its Monday) owned by the months `from` through `to`. */
+export function weeksBetween(from, to) {
+  return monthsBetween(from, to).flatMap(mondaysOf);
+}
+
+/** "Nov 2": a week, by its Monday. */
+export function weekLabel(key) {
+  const [, m, d] = key.split('-').map(Number);
+  return `${MONTH_NAMES[m - 1]} ${d}`;
+}
+
 /** "Mar 2026 - Sep 2026": the subtitle every card carries. */
 export function rangeLabel(from, to) {
   const f = (k) => { const [y, m] = k.split('-').map(Number); return `${MONTH_NAMES[m - 1]} ${y}`; };
@@ -121,45 +149,60 @@ function combine(byMonth, months, agg) {
 
 const round = (v) => Math.round(v * 10) / 10;
 
+/**
+ * The time axis: one period per week when the context carries weeks (Month
+ * and Quarter), otherwise the months grouped by Time Frame. Each period
+ * lists the keys it reads from the index it comes with.
+ *
+ * @returns {{ idx: Map, periods: { x: string, keys: string[] }[] }}
+ */
+function timePeriods(idx, { months, timeFrame = 'Month', weeks, weekIdx }) {
+  if (weeks) return { idx: weekIdx || new Map(), periods: weeks.map(w => ({ x: weekLabel(w), keys: [w] })) };
+  const periods = [];
+  const byLabel = new Map();
+  for (const mo of months) {
+    const x = periodOf(mo, timeFrame);
+    if (!byLabel.has(x)) { byLabel.set(x, { x, keys: [] }); periods.push(byLabel.get(x)); }
+    byLabel.get(x).keys.push(mo);
+  }
+  return { idx, periods };
+}
+
 // ── Widgets ─────────────────────────────────────────────────────────────
 
 /**
- * Bars and lines. For x 'month' the months regroup by Time Frame (a
- * snapshot takes the last month of each period, an event count sums it);
- * for weekday / hour / bucket the whole range folds into one value per
+ * Bars and lines. For x 'month' the range splits into time periods (weeks
+ * for Month and Quarter, months for Year; see timePeriods): a snapshot takes
+ * the last value in each period, an event count sums it, and a period no
+ * series has rows for (a week still to come) is null, a gap rather than a zero.
+ * For weekday / hour / bucket the whole range folds into one value per
  * category.
  *
  * @returns {{ data: object[], hasData: boolean }}: `data` rows are
- *   `{ x, [seriesKey]: number, … }`; a `line` with `meanOf` adds its key too.
+ *   `{ x, [seriesKey]: number|null, … }`; a `line` with `meanOf` adds its key too.
  */
-export function buildSeriesData(idx, widget, { months, timeFrame = 'Month' }) {
+export function buildSeriesData(idx, widget, ctx) {
+  const { months } = ctx;
   const seriesKeys = widget.series.map(s => s.key);
   let hasData = false;
 
   const withLine = (row) => {
     if (widget.line?.meanOf) {
-      const parts = widget.line.meanOf.map(k => row[k] || 0);
-      row[widget.line.key] = round(parts.reduce((a, b) => a + b, 0) / parts.length);
+      const parts = widget.line.meanOf.map(k => row[k]).filter(v => v != null);
+      row[widget.line.key] = parts.length ? round(parts.reduce((a, b) => a + b, 0) / parts.length) : null;
     }
     return row;
   };
 
   if (widget.x === 'month') {
-    const periods = [];
-    const monthsByPeriod = new Map();
-    for (const mo of months) {
-      const p = periodOf(mo, timeFrame);
-      if (!monthsByPeriod.has(p)) { monthsByPeriod.set(p, []); periods.push(p); }
-      monthsByPeriod.get(p).push(mo);
-    }
-    const data = periods.map((p) => {
-      const row = { x: p };
-      for (const key of seriesKeys) {
-        const byMonth = monthsOf(idx, widget.metric, key);
-        const inPeriod = monthsByPeriod.get(p);
-        if (inPeriod.some(mo => byMonth.has(mo))) hasData = true;
-        row[key] = combine(byMonth, inPeriod, widget.agg);
-      }
+    const time = timePeriods(idx, ctx);
+    const data = time.periods.map(({ x, keys }) => {
+      const byKey = seriesKeys.map(key => monthsOf(time.idx, widget.metric, key));
+      // A period none of the series has rows for is still to come: a gap.
+      const has = byKey.some(m => keys.some(k => m.has(k)));
+      if (has) hasData = true;
+      const row = { x };
+      seriesKeys.forEach((key, i) => { row[key] = has ? combine(byKey[i], keys, widget.agg) : null; });
       return withLine(row);
     });
     return { data, hasData };
@@ -262,8 +305,10 @@ export function buildDuration(idx, metric, { months }) {
 /**
  * Member Satisfaction for one survey: its response rate by period (% that
  * responded vs. didn't, of those sent), plus totals and the average score.
+ * Totals come from the monthly rows; the periods follow timePeriods.
  */
-export function buildSatisfaction(idx, metric, form, { months, timeFrame = 'Month' }) {
+export function buildSatisfaction(idx, metric, form, ctx) {
+  const { months } = ctx;
   const sentBy = monthsOf(idx, metric, 'sent', form);
   const respondedBy = monthsOf(idx, metric, 'responded', form);
   const scoreBy = monthsOf(idx, metric, 'score_sum', form);
@@ -272,18 +317,15 @@ export function buildSatisfaction(idx, metric, form, { months, timeFrame = 'Mont
   const responded = combine(respondedBy, months, 'sum');
   const scoreSum = combine(scoreBy, months, 'sum');
 
-  const periods = [];
-  const monthsByPeriod = new Map();
-  for (const mo of months) {
-    const p = periodOf(mo, timeFrame);
-    if (!monthsByPeriod.has(p)) { monthsByPeriod.set(p, []); periods.push(p); }
-    monthsByPeriod.get(p).push(mo);
-  }
-  const data = periods.map((p) => {
-    const s = combine(sentBy, monthsByPeriod.get(p), 'sum');
-    const r = combine(respondedBy, monthsByPeriod.get(p), 'sum');
+  const time = timePeriods(idx, ctx);
+  const sentByPeriod = monthsOf(time.idx, metric, 'sent', form);
+  const respondedByPeriod = monthsOf(time.idx, metric, 'responded', form);
+  const data = time.periods.map(({ x, keys }) => {
+    if (!keys.some(k => sentByPeriod.has(k))) return { x, responded: null, not_responded: null };
+    const s = combine(sentByPeriod, keys, 'sum');
+    const r = combine(respondedByPeriod, keys, 'sum');
     const pct = s > 0 ? round((r / s) * 100) : 0;
-    return { x: p, responded: pct, not_responded: s > 0 ? round(100 - pct) : 0 };
+    return { x, responded: pct, not_responded: s > 0 ? round(100 - pct) : 0 };
   });
 
   return {

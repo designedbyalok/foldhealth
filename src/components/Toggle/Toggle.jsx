@@ -12,19 +12,26 @@ import styles from './Toggle.module.css';
  * at the first-measured size and visibly fall behind its button.
  *
  * Props:
- *  - items         (string[] | {key, label, icon?, ariaLabel?}[])  ariaLabel names an icon-only segment
+ *  - items         (string[] | {key, label, icon?, leadingIcon?, notif?, ariaLabel?}[])
+ *                               ariaLabel names an icon-only segment; leadingIcon
+ *                               (Solar name or node) sits before the label;
+ *                               notif adds TabStrip's pulsing dot (something new)
  *  - value         (string)     Selected key (controlled)
  *  - defaultValue  (string)     Initially selected key (uncontrolled)
  *  - onValueChange (function)   Called with the key of the clicked segment
  *                               (`active` / `onChange` are the old names)
  *  - className     (string)     Extra class on the outer container
  *  - size          ('sm'|'md')  sm=28px height/13px font, md=32px height/14px font
+ *  - variant       ('soft'|'ghost') soft (default) sits the segments on a grey
+ *                               track; ghost drops the track (for a toggle on a
+ *                               grey surface): 28px segments, 14px text, only
+ *                               the selected segment's white pill shows
  *  - fullWidth     (boolean)    Stretch to parent and let buttons flex equally
  *  - ...rest       Spread on the radiogroup (e.g. `aria-label`)
  */
 export function Toggle({
   items = [], value, defaultValue, onValueChange, active, onChange,
-  className, size = 'md', fullWidth = false, ...rest
+  className, size = 'md', variant = 'soft', fullWidth = false, ...rest
 }) {
   if (active !== undefined) warnDeprecated('Toggle', 'active', true, 'value');
   if (onChange && !onValueChange) warnDeprecated('Toggle', 'onChange', true, 'onValueChange');
@@ -81,6 +88,7 @@ export function Toggle({
       className={[
         styles.toggle,
         sizeClass,
+        variant === 'ghost' ? styles.ghost : '',
         fullWidth ? styles.fullWidth : '',
         iconOnly ? styles.iconOnly : '',
         className || '',
@@ -89,7 +97,7 @@ export function Toggle({
       {...rest}
     >
       <div className={styles.slider} style={sliderStyle} />
-      {normalized.map(({ key, label, icon, ariaLabel }) => (
+      {normalized.map(({ key, label, icon, leadingIcon, notif, ariaLabel }) => (
         <button
           key={key}
           type="button"
@@ -100,7 +108,15 @@ export function Toggle({
           className={`${styles.btn} ${current === key ? styles.btnActive : ''}`}
           onClick={() => select(key)}
         >
-          {icon ? (typeof icon === 'string' ? <Icon name={icon} size={16} /> : icon) : label}
+          {icon ? (typeof icon === 'string' ? <Icon name={icon} size={16} /> : icon) : leadingIcon ? (
+            <span className={styles.withIcon}>
+              <span className={styles.leadIcon}>
+                {typeof leadingIcon === 'string' ? <Icon name={leadingIcon} size={16} color="currentColor" /> : leadingIcon}
+              </span>
+              {label}
+            </span>
+          ) : label}
+          {notif && <span className={styles.notifDot} aria-label="Something to review" />}
         </button>
       ))}
     </div>

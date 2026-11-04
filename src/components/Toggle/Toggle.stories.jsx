@@ -15,6 +15,7 @@ export default {
   },
   argTypes: {
     size: { control: 'select', options: ['sm', 'md'], description: 'sm = 28px/13px, md = 32px/14px', table: { defaultValue: { summary: 'md' } } },
+    variant: { control: 'select', options: ['soft', 'ghost'], description: 'soft: grey track; ghost: no track (on a grey surface), 28px segments, only the selected pill' },
     onValueChange: { action: 'onValueChange', description: 'Fires with the picked key.' },
     fullWidth: { control: 'boolean', description: 'Flex buttons to fill width' },
   },

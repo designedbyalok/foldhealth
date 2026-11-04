@@ -4,6 +4,7 @@ import { Button } from '../../../../../../../../components/Button/Button';
 import { Icon } from '../../../../../../../../components/Icon/Icon';
 import { Textarea } from '../../../../../../../../components/Textarea/Textarea';
 import { sanitizeRichText } from '../../../../../../../../lib/sanitizeHtml';
+import { noteDetails, noteEditorValue } from '../../lib/carePlanNoteRefs';
 import styles from './CarePlanReviewDrawer.module.css';
 
 const KIND = {
@@ -26,16 +27,18 @@ function fmtDuration(seconds) {
 
 /**
  * One care plan note in the Review drawer's Notes tab: kind, author and time
- * on one line, the note below. Its author can edit it in place. Call notes
- * are rich text; the care plan note is plain.
+ * on one line, the note below. Its author can edit it in place, with "@" tags
+ * and "/" links. Call notes are saved as rich text; the care plan note saves
+ * its plain text, with the HTML kept beside it.
  */
-export function ReviewNoteCard({ note, canEdit, onSave }) {
-  const [editing, setEditing] = useState(false);
-  const [text, setText] = useState(note.detail || '');
-  const [saving, setSaving] = useState(false);
+export function ReviewNoteCard({ note, canEdit, noteRefs, onSave }) {
   const kind = KIND[note.kind] || KIND.plan;
   const rich = note.kind === 'call';
-  const plain = (rich ? text.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ') : text).trim();
+  const initial = rich ? (note.detail || '') : noteEditorValue(note);
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(initial);
+  const [plain, setPlain] = useState(() => (note.detail || '').trim());
+  const [saving, setSaving] = useState(false);
 
   return (
     <article className={styles.noteCard}>
@@ -55,26 +58,29 @@ export function ReviewNoteCard({ note, canEdit, onSave }) {
         </span>
         {canEdit && !editing && (
           <span className={styles.noteEdit}>
-            <ActionButton icon="solar:pen-linear" size="sm" tooltip="Edit note" tooltipLeft onClick={() => { setText(note.detail || ''); setEditing(true); }} />
+            <ActionButton icon="solar:pen-linear" size="sm" tooltip="Edit note" tooltipLeft onClick={() => { setText(initial); setPlain((note.detail || '').trim()); setEditing(true); }} />
           </span>
         )}
       </div>
       {editing ? (
         <div className={styles.noteEditor}>
           <Textarea
-            richText={rich}
+            richText
+            mentions
+            mentionUsers={noteRefs?.mentionUsers}
+            links={noteRefs?.links}
             value={text}
-            onValueChange={(v) => setText(typeof v === 'string' ? v : (v?.target?.value ?? ''))}
+            onValueChange={(v, p) => { setText(v); setPlain((p || '').trim()); }}
             rows={3}
           />
           <div className={styles.completeActions}>
             <Button variant="outline" size="sm" onClick={() => setEditing(false)} disabled={saving}>Cancel</Button>
             <Button
               size="sm"
-              disabled={saving || !plain || text === note.detail}
+              disabled={saving || !plain || text === initial}
               onClick={async () => {
                 setSaving(true);
-                try { await onSave(text); setEditing(false); } finally { setSaving(false); }
+                try { await onSave(rich ? text : plain, noteDetails(text)); setEditing(false); } finally { setSaving(false); }
               }}
             >
               Save

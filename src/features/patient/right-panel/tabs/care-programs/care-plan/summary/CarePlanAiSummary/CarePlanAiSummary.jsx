@@ -1,4 +1,5 @@
 import { Icon } from '../../../../../../../../components/Icon/Icon';
+import { actionText } from './useCarePlanAiSummary';
 import styles from './CarePlanAiSummary.module.css';
 
 /* The AI care plan summary's UI: trigger, loading skeleton and saved card.
@@ -48,7 +49,7 @@ export function AiSummaryCard({ data, index = 0, total = 1, onPrev, onNext, onCo
       </ol>
       <div className={styles.summaryActionsHead}>Action Items :</div>
       <ul className={styles.summaryActions}>
-        {data.actions.map((a, i) => <li key={i}>{a}</li>)}
+        {data.actions.map((a, i) => <li key={i}>{actionText(a)}</li>)}
       </ul>
       <div className={styles.summaryFooter}>
         <div className={styles.summaryPager}>

@@ -182,6 +182,20 @@ import { fetchCaregapCommentRows, persistCaregapCommentInsert, persistCaregapCom
 import { fetchCaregapReminderRows, persistCaregapReminderInsert, persistCaregapReminderUpdate, persistCaregapReminderDelete } from './lib/caregapRemindersPersist';
 
 // cis_dose_appointments row → app object.
+// A note's "@" tags and "/" links as saved on its audit row (`text` is only
+// for the note_linked rows).
+const noteMeta = (details) => {
+  if (!details) return undefined;
+  const { text, ...meta } = details;
+  void text;
+  return meta;
+};
+// One note_linked row per goal, intervention or barrier a note links with
+// "/", so the note also shows in that item's activity.
+const noteLinkedRows = details => (details?.links || []).map(l => ({
+  entityType: l.kind, entityId: l.id, action: 'note_linked', summary: l.label, detail: details.text || '',
+}));
+
 const cisAppointmentFromRow = (r) => ({
   id: r.id,
   memberId: r.hedis_member_id,
@@ -3005,6 +3019,22 @@ export const useAppStore = create((set, get) => ({
     if (error) reportPersistFailure(`saveProgramCarePlanSummary(${key})`, error);
   },
 
+  // Tick or untick a summary's action items (`done`: their indexes). Kept in
+  // the summary itself, so generated_at still dates the summary, not the tick.
+  setProgramCarePlanSummaryDone: async (patientId, programId, done) => {
+    const key = carePlanKey(patientId, programId);
+    const entry = get().programCarePlanSummaries[key];
+    if (!entry?.summary) return;
+    const summary = { ...entry.summary, done };
+    set(s => ({ programCarePlanSummaries: { ...s.programCarePlanSummaries, [key]: { ...entry, summary } } }));
+    const { error } = await supabase
+      .from('patient_care_plan_program_summaries')
+      .update({ summary, updated_at: new Date().toISOString() })
+      .eq('patient_id', String(patientId))
+      .eq('program_id', programId);
+    if (error) reportPersistFailure(`setProgramCarePlanSummaryDone(${key})`, error);
+  },
+
   deleteProgramCarePlanSummary: async (patientId, programId) => {
     if (!patientId || !programId) return;
     const key = carePlanKey(patientId, programId);
@@ -4822,23 +4852,25 @@ export const useAppStore = create((set, get) => ({
   },
   // The call note and the finished review are also logged to the plan's
   // activity (care_plan_audit), so the Activity Log shows them.
-  saveCarePlanReviewNote: async (patientId, program, note, clock) => {
+  // `details` (noteDetails): the note's "@" tags and "/" links.
+  saveCarePlanReviewNote: async (patientId, program, note, clock, details) => {
     const seconds = reviewSeconds(clock);
     const saved = await get().patchCarePlanReview(patientId, program, {
       call_note: note,
       ...(seconds != null ? { duration_seconds: seconds } : {}),
     });
     if (saved && note?.trim()) {
-      get().logCarePlanAudit(patientId, program, {
-        entityType: 'plan', entityId: saved.id, action: 'call_note', summary: 'Call note', detail: note.trim(),
-      });
+      get().logCarePlanAudit(patientId, program, [
+        { entityType: 'plan', entityId: saved.id, action: 'call_note', summary: 'Call note', detail: note.trim(), meta: noteMeta(details) },
+        ...noteLinkedRows(details),
+      ]);
     }
     return saved;
   },
   // clock: { startedAt, stoppedAt, baseSeconds } from the drawer's review
   // timer (baseSeconds: what the review had already run before this sitting),
   // and discussedCount (items still on the plan) so the log matches the drawer.
-  finishCarePlanReview: async (patientId, program, note, clock) => {
+  finishCarePlanReview: async (patientId, program, note, clock, details) => {
     const durationMs = clock?.startedAt ? (clock.stoppedAt ?? Date.now()) - clock.startedAt : 0;
     const seconds = reviewSeconds(clock);
     const before = get().carePlanReviews[carePlanKey(patientId, program.id)]?.open;
@@ -4850,7 +4882,10 @@ export const useAppStore = create((set, get) => ({
     if (saved) {
       const rows = [];
       if (note?.trim() && note.trim() !== (before?.callNote || '')) {
-        rows.push({ entityType: 'plan', entityId: saved.id, action: 'call_note', summary: 'Call note', detail: note.trim() });
+        rows.push(
+          { entityType: 'plan', entityId: saved.id, action: 'call_note', summary: 'Call note', detail: note.trim(), meta: noteMeta(details) },
+          ...noteLinkedRows(details),
+        );
       }
       const n = clock?.discussedCount ?? Object.keys(saved.discussed || {}).length;
       rows.push({
@@ -5983,9 +6018,6 @@ export const useAppStore = create((set, get) => ({
   // so the Figma Edit / Delete actions can persist.
   addCarePlanNote: async (patientId, program, note, meta = {}) => {
     if (!note?.trim()) return;
-    // `links`: goals, interventions and barriers the note references with
-    // "/". Each gets a note_linked row so the note shows in its activity.
-    const links = meta.details?.links || [];
     get().logCarePlanAudit(patientId, program, [
       {
         entityType: meta.entityType || 'plan',
@@ -5993,27 +6025,30 @@ export const useAppStore = create((set, get) => ({
         action: 'note',
         summary: meta.summary || 'Note added',
         detail: note.trim(),
-        meta: meta.details,
+        meta: noteMeta(meta.details),
       },
-      ...links.map(l => ({
-        entityType: l.kind,
-        entityId: l.id,
-        action: 'note_linked',
-        summary: l.label,
-        detail: note.trim(),
-      })),
+      ...noteLinkedRows({ ...meta.details, text: note.trim() }),
     ]);
     get().showToast('Note added');
   },
 
-  updateCarePlanNote: async (patientId, programId, id, detail) => {
+  // `program` and `details` (noteDetails) are passed when the edit can add
+  // "/" links: a newly linked item gets its note_linked row.
+  updateCarePlanNote: async (patientId, programId, id, detail, { program, details } = {}) => {
     if (!id || !detail?.trim()) return;
     const key = carePlanKey(patientId, programId);
     const prev = get().patientCarePlanAudit[key] || [];
-    const { data, error } = await supabase.from('care_plan_audit')
+    const before = prev.find(e => e.id === id);
+    const meta = noteMeta(details);
+    const update = payload => supabase.from('care_plan_audit')
       // Call notes (Review care plan drawer) are edited the same way.
-      .update({ detail: detail.trim() }).eq('id', id).in('action', ['note', 'call_note']).select().single();
+      .update(payload).eq('id', id).in('action', ['note', 'call_note']).select().single();
+    let { data, error } = await update({ detail: detail.trim(), ...(meta ? { meta } : {}) });
+    if (error && meta && /meta/.test(error.message || '')) ({ data, error } = await update({ detail: detail.trim() }));
     if (error) { console.warn('updateCarePlanNote:', error.message); get().showToast('Could not update note'); return; }
+    const linked = new Set((before?.meta?.links || []).map(l => `${l.kind}:${l.id}`));
+    const added = (details?.links || []).filter(l => !linked.has(`${l.kind}:${l.id}`));
+    if (program && added.length) get().logCarePlanAudit(patientId, program, noteLinkedRows({ ...details, links: added }));
     const mapped = mapCarePlanAuditRow(data);
     set(s => ({
       patientCarePlanAudit: {
@@ -7149,6 +7184,9 @@ export const useAppStore = create((set, get) => ({
   // Org-level feature flags (from org_settings).
   showPatientAppIndicator: false,
   carePlanMode: DEFAULT_CARE_PLAN_MODE,
+  // Off by default: a care plan status change only asks for a reason when
+  // the org turns this on (org_settings_status_change_reason_migration.sql).
+  askStatusChangeReason: false,
   orgFeaturesDidFetch: false,
   fetchOrgFeatures: async () => {
     if (useAppStore.getState().orgFeaturesDidFetch) return;
@@ -7159,19 +7197,20 @@ export const useAppStore = create((set, get) => ({
         set({ orgFeaturesDidFetch: false });
         return;
       }
-      let { data, error } = await supabase
+      // Schema-tolerant: a column whose migration hasn't run is dropped from
+      // the select and its setting stays on the default.
+      let columns = ['show_patient_app_indicator', 'care_plan_mode', 'ask_status_change_reason'];
+      const read = () => supabase
         .from('org_settings')
-        .select('show_patient_app_indicator, care_plan_mode')
+        .select(columns.join(', '))
         .eq('user_id', session.user.id)
         .maybeSingle();
-      // Schema-tolerant: before the care_plan_mode migration runs, read the
-      // indicator alone and stay on the program-level default.
-      if (error && /care_plan_mode/.test(error.message || '')) {
-        ({ data, error } = await supabase
-          .from('org_settings')
-          .select('show_patient_app_indicator')
-          .eq('user_id', session.user.id)
-          .maybeSingle());
+      let { data, error } = await read();
+      for (let i = 0; i < 2 && error; i += 1) {
+        const missing = columns.find(c => c !== 'show_patient_app_indicator' && (error.message || '').includes(c));
+        if (!missing) break;
+        columns = columns.filter(c => c !== missing);
+        ({ data, error } = await read());
       }
       if (error) {
         console.warn('fetchOrgFeatures error:', error.message);
@@ -7181,6 +7220,7 @@ export const useAppStore = create((set, get) => ({
       set({
         showPatientAppIndicator: !!data?.show_patient_app_indicator,
         carePlanMode: normalizeCarePlanMode(data?.care_plan_mode),
+        askStatusChangeReason: !!data?.ask_status_change_reason,
       });
     } catch (err) {
       console.warn('fetchOrgFeatures failed:', err?.message || err);
@@ -16308,17 +16348,20 @@ export const useAppStore = create((set, get) => ({
     const { localEmployerImpactFilters } = await import('../features/analytics/views/employer/employerImpactLocal');
     set({ employerImpactFilters: localEmployerImpactFilters(), employerImpactFiltersLoaded: true, employerImpactLocal: true });
   },
-  fetchEmployerImpact: async ({ from, to, employer = null, scope = 'patient', location = null }) => {
-    const key = [from, to, employer || '*', scope, location || '*'].join('|');
+  // `weekly` reads the weekly table (Month and Quarter charts) instead of
+  // the monthly one. A weekly read resolves null when that table's function
+  // isn't there yet (migration not run), so the report can fall back to months.
+  fetchEmployerImpact: async ({ from, to, employer = null, scope = 'patient', location = null, weekly = false }) => {
+    const key = [weekly ? 'w' : 'm', from, to, employer || '*', scope, location || '*'].join('|');
     const cached = get().employerImpactRollups[key];
     if (cached) return cached;
     if (get().employerImpactLocal) {
-      const { localEmployerImpactRollup } = await import('../features/analytics/views/employer/employerImpactLocal');
-      const rows = localEmployerImpactRollup({ from, to, employer, scope, location });
+      const { localEmployerImpactRollup, localEmployerImpactWeeklyRollup } = await import('../features/analytics/views/employer/employerImpactLocal');
+      const rows = (weekly ? localEmployerImpactWeeklyRollup : localEmployerImpactRollup)({ from, to, employer, scope, location });
       set(s => ({ employerImpactRollups: { ...s.employerImpactRollups, [key]: rows } }));
       return rows;
     }
-    const { data, error } = await supabase.rpc('employer_impact_rollup', {
+    const { data, error } = await supabase.rpc(weekly ? 'employer_impact_weekly_rollup' : 'employer_impact_rollup', {
       p_from: `${from}-01`,
       p_to: `${to}-01`,
       p_employer: employer,
@@ -16327,7 +16370,7 @@ export const useAppStore = create((set, get) => ({
     });
     if (error) {
       console.warn('fetchEmployerImpact:', error.message);
-      return [];
+      return weekly ? null : [];
     }
     const rows = Array.isArray(data) ? data : [];
     set(s => ({ employerImpactRollups: { ...s.employerImpactRollups, [key]: rows } }));

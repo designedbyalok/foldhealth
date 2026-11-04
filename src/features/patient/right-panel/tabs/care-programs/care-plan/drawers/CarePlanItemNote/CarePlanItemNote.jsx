@@ -4,6 +4,7 @@ import { Button } from '../../../../../../../../components/Button/Button';
 import { ActionButton } from '../../../../../../../../components/ActionButton/ActionButton';
 import { useAppStore } from '../../../../../../../../store/useAppStore';
 import { itemNoteHistory, latestItemNote } from '../../lib/carePlanNotes';
+import { useCarePlanNoteRefs, noteDetails, noteEditorValue } from '../../lib/carePlanNoteRefs';
 import { CarePlanNoteChangeLog } from '../CarePlanNoteChangeLog/CarePlanNoteChangeLog';
 import styles from './CarePlanItemNote.module.css';
 
@@ -39,12 +40,16 @@ export const CarePlanItemNote = forwardRef(function CarePlanItemNote(
   const idList = useMemo(() => (ids?.length ? ids : [itemId]), [ids, itemId]);
   const latest = useMemo(() => latestItemNote(audit, idList, entityType), [audit, idList, entityType]);
   const history = useMemo(() => itemNoteHistory(audit, idList, entityType), [audit, idList, entityType]);
+  // "@" tags a care team member, "/" links a goal, intervention or barrier.
+  const { mentionUsers, links } = useCarePlanNoteRefs(patientId, program?.id);
+  const [html, setHtml] = useState(() => (latest ? noteEditorValue(latest) : ''));
   const [note, setNote] = useState(latest?.detail || '');
   const [editing, setEditing] = useState(false);
 
   // A new latest note (another item opened, or one just saved) re-seeds the
   // editor and shows the card again.
   useEffect(() => {
+    setHtml(latest ? noteEditorValue(latest) : '');
     setNote(latest?.detail || '');
     setEditing(false);
   }, [latest?.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -58,7 +63,7 @@ export const CarePlanItemNote = forwardRef(function CarePlanItemNote(
   const save = async () => {
     if (!canSave) return;
     await addCarePlanNote(patientId, program, current, {
-      entityType, entityId: itemId, summary: `Note on ${itemTitle || noun}`,
+      entityType, entityId: itemId, summary: `Note on ${itemTitle || noun}`, details: noteDetails(html),
     });
     setEditing(false);
     // addCarePlanNote shows the "Note added" toast.
@@ -72,6 +77,7 @@ export const CarePlanItemNote = forwardRef(function CarePlanItemNote(
       summary: `Note on ${itemTitle || noun} deleted`,
       detail: latest?.detail || '',
     });
+    setHtml('');
     setNote('');
     setEditing(true);
     showToast?.('Note deleted');
@@ -99,10 +105,13 @@ export const CarePlanItemNote = forwardRef(function CarePlanItemNote(
           </div>
         ) : (
           <Textarea
-            placeholder="Add a note"
-            value={note}
-            // A plain Textarea passes the change event, an enhanced one the text.
-            onChange={(value) => setNote(typeof value === 'string' ? value : (value?.target?.value ?? ''))}
+            richText
+            mentions
+            mentionUsers={mentionUsers}
+            links={links}
+            placeholder="Add a note. Type @ to tag someone, / to link a goal, intervention or barrier."
+            value={html}
+            onValueChange={(value, plain) => { setHtml(value); setNote(plain || ''); }}
             rows={3}
           />
         )}
@@ -113,7 +122,7 @@ export const CarePlanItemNote = forwardRef(function CarePlanItemNote(
             <Button
               variant="outline"
               disabled={!canDiscard}
-              onClick={() => { setNote(baseline); if (latest) setEditing(false); }}
+              onClick={() => { setHtml(latest ? noteEditorValue(latest) : ''); setNote(baseline); if (latest) setEditing(false); }}
             >
               Cancel
             </Button>

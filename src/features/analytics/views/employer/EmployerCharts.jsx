@@ -25,11 +25,13 @@ const GRID = { stroke: 'var(--neutral-100)' };
 
 // ── Tooltip (matches Analytics' FoldTooltip) ──
 function ImpactTooltip({ active, payload, label, format }) {
-  if (!active || !payload?.length) return null;
+  // A period with no data yet (a week still to come) has nothing to show.
+  const rows = payload?.filter(p => p.value != null) || [];
+  if (!active || !rows.length) return null;
   return (
     <div className={styles.tooltip}>
       <div className={styles.tooltipLabel}>{label}</div>
-      {payload.map(p => (
+      {rows.map(p => (
         <div key={p.dataKey} className={styles.tooltipRow}>
           <span className={styles.tooltipDot} style={{ background: p.color }} />
           <span className={styles.tooltipName}>{p.name}</span>
@@ -122,19 +124,27 @@ function wrapLabel(value, maxW) {
 
 /**
  * A category-axis tick that fits its slot. Month labels ("Feb 26") drop
- * the year across the whole axis when the widest won't fit; other labels
+ * the year across the whole axis when the widest won't fit, and thin out
+ * when even that is too wide; with `thin`
+ * (weeks: "Nov 2"), every second or third label shows instead; other labels
  * that don't fit wrap onto a second line between words (xAxisLayout keeps
  * room for it), so neighbouring labels never run into each other.
  */
-function fitTick(labels) {
+function fitTick(labels, thin = false) {
   const monthly = isMonthly(labels);
-  const widest = monthly ? Math.max(...labels.map(textWidth)) : 0;
-  return function FitTick({ x, y, payload, width, visibleTicksCount }) {
+  const widest = monthly || thin ? Math.max(...labels.map(textWidth)) : 0;
+  const widestShort = monthly ? Math.max(...labels.map(l => textWidth(String(l).replace(MONTH_LABEL, '$1')))) : 0;
+  // Show every nth label when even the widest won't fit its slot.
+  const nth = (w, slot) => Math.ceil((w + TICK_GAP) / slot);
+  return function FitTick({ x, y, payload, width, visibleTicksCount, index }) {
     const slot = width / Math.max(1, visibleTicksCount);
     const value = String(payload.value);
-    const lines = monthly
-      ? [widest + TICK_GAP > slot ? value.replace(MONTH_LABEL, '$1') : value]
-      : wrapLabel(value, slot - TICK_GAP);
+    let lines;
+    if (thin) lines = index % nth(widest, slot) ? [] : [value];
+    else if (monthly && widest + TICK_GAP <= slot) lines = [value];
+    // Months drop the year first, then thin out if "Sep" still won't fit.
+    else if (monthly) lines = index % nth(widestShort, slot) ? [] : [value.replace(MONTH_LABEL, '$1')];
+    else lines = wrapLabel(value, slot - TICK_GAP);
     return (
       <text x={x} y={y} textAnchor="middle" fill={AXIS_TICK.fill} fontSize={AXIS_TICK.fontSize}>
         {/* The offsets live on the lines: a line's own dy would override the
@@ -185,13 +195,14 @@ function yAxisLayout(labels, title, maxLabelWidth = Infinity) {
 
 /**
  * Props for a bottom axis; `angled` for the rotated hour ticks. Multi-word
- * category labels get room for a second line, in case they wrap.
+ * category labels get room for a second line, in case they wrap; `thin`
+ * labels (weeks) never wrap.
  */
-function xAxisLayout(labels, title, angled = false) {
+function xAxisLayout(labels, title, angled = false, thin = false) {
   const size = fontPx();
   const tickHeight = angled
     ? Math.max(0, ...labels.map(textWidth)) * Math.sin(Math.PI / 3) + size * 0.5
-    : size * (canWrap(labels) ? 1 + TICK_LINE : 1);
+    : size * (!thin && canWrap(labels) ? 1 + TICK_LINE : 1);
   return {
     height: Math.ceil(TICK_MARGIN + tickHeight + (title ? LABEL_GAP + size * 1.2 : 4)),
     tickSize: 0,
@@ -204,7 +215,7 @@ function xAxisLayout(labels, title, angled = false) {
  * Vertical bars, stacked when there is more than one series. An optional
  * `line` (e.g. an average) draws on the same axis: never a second scale.
  */
-export function StackedBars({ data, series, line, hidden, yLabel, xLabel, format, height = '100%', denseX = false }) {
+export function StackedBars({ data, series, line, hidden, yLabel, xLabel, format, height = '100%', denseX = false, thinX = false }) {
   const visible = series.map((s, i) => ({ ...s, i })).filter(s => !hidden.has(s.key));
   const topKey = visible[visible.length - 1]?.key;
   const Chart = line ? ComposedChart : BarChart;
@@ -220,11 +231,11 @@ export function StackedBars({ data, series, line, hidden, yLabel, xLabel, format
         <CartesianGrid {...GRID} vertical={false} />
         <XAxis
           dataKey="x"
-          tick={denseX ? { ...AXIS_TICK, angle: -60, textAnchor: 'end' } : fitTick(data.map(r => r.x))}
+          tick={denseX ? { ...AXIS_TICK, angle: -60, textAnchor: 'end' } : fitTick(data.map(r => r.x), thinX)}
           interval={0}
           tickLine={false}
           axisLine={{ stroke: 'var(--neutral-150)' }}
-          {...xAxisLayout(data.map(r => r.x), xLabel, denseX)}
+          {...xAxisLayout(data.map(r => r.x), xLabel, denseX, thinX)}
         />
         <YAxis
           tick={AXIS_TICK}
@@ -288,7 +299,7 @@ const lineColumns = (count) => ({ offset }) => {
   return [left, ...inner, right];
 };
 
-export function Lines({ data, series, hidden, yLabel, xLabel, format, height = '100%' }) {
+export function Lines({ data, series, hidden, yLabel, xLabel, format, height = '100%', thinX = false }) {
   const visible = series.map((s, i) => ({ ...s, i })).filter(s => !hidden.has(s.key));
   const ticks = niceTicks(Math.max(0, ...data.flatMap(r => visible.map(s => r[s.key] || 0))));
   const tickFmt = compactTick(format);
@@ -296,7 +307,7 @@ export function Lines({ data, series, hidden, yLabel, xLabel, format, height = '
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
         <CartesianGrid {...GRID} verticalCoordinatesGenerator={lineColumns(data.length)} />
-        <XAxis dataKey="x" tick={fitTick(data.map(r => r.x))} tickLine={false} axisLine={{ stroke: 'var(--neutral-150)' }} padding={{ left: LINE_INSET, right: LINE_INSET }} {...xAxisLayout(data.map(r => r.x), xLabel)} />
+        <XAxis dataKey="x" tick={fitTick(data.map(r => r.x), thinX)} interval={thinX ? 0 : undefined} tickLine={false} axisLine={{ stroke: 'var(--neutral-150)' }} padding={{ left: LINE_INSET, right: LINE_INSET }} {...xAxisLayout(data.map(r => r.x), xLabel, false, thinX)} />
         <YAxis
           tick={AXIS_TICK}
           tickLine={false}
