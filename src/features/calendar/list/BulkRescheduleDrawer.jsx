@@ -46,7 +46,7 @@ export function BulkRescheduleDrawer({ provider, appointments, onDone, onClose }
   const fetchHolidayConfigs = useAppStore(s => s.fetchHolidayConfigs);
   const platformUsers = useAppStore(s => (s.platformPeople?.length ? s.platformPeople : s.platformUsers));
   const allPatients = useAppStore(s => s.allPatients);
-  const reschedule = useAppStore(s => s.rescheduleAppointments);
+  const runRescheduleJob = useAppStore(s => s.runRescheduleJob);
   useEffect(() => { fetchUserAvailability?.(); fetchHolidayConfigs?.(); }, [fetchUserAvailability, fetchHolidayConfigs]);
 
   const person = (platformUsers || []).find(u => samePerson(u, provider));
@@ -114,8 +114,8 @@ export function BulkRescheduleDrawer({ provider, appointments, onDone, onClose }
     toast.success('Rescheduling Job Started');
     onDone?.();
     onClose();
-    const failed = await reschedule(changes);
-    if (failed) toast.error(`${failed} of ${changes.length} appointments could not be rescheduled. Try again.`);
+    // The summary (what moved, what didn't) comes as a notification.
+    await runRescheduleJob({ provider, providerRole: role, changes });
   };
 
   const patientOf = (a) => (allPatients || []).find(p => String(p.id) === String(a.patient_id) || String(p.memberId) === String(a.patient_id));

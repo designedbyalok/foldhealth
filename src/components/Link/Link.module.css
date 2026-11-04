@@ -37,3 +37,9 @@
   text-decoration: none;
   cursor: default;
 }
+
+/* Sizes: unset keeps the surrounding text size. */
+.size-xs { font-size: var(--font-sm); }
+.size-sm { font-size: var(--font-md); }
+.size-md { font-size: var(--font-base); }
+.size-lg { font-size: var(--font-lg); }

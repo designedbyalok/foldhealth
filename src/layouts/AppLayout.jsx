@@ -24,6 +24,7 @@ import { CallPopoverHost } from '../components/CallPopover/CallPopoverHost';
 import { BrowserCallCard } from '../features/messages/comms/call/BrowserCallCard';
 import { CommsDrawerHost } from '../features/messages/comms/CommsDrawerHost';
 import { ReassignmentSummaryHost } from '../features/ooo/ReassignmentSummaryHost';
+import { BulkSummaryHost } from '../features/calendar/list/BulkSummaryHost';
 import { DesignReviewHost } from '../features/design-review/DesignReviewHost';
 import { useProgramPanelSplitActive, useDiagPanelInSplit } from '../features/patient/hooks/useProgramPanelSplitActive';
 import { supabase } from '../lib/supabase';
@@ -696,6 +697,7 @@ export function AppLayout() {
         {aiTasksDrawerPatientId && <AiTasksDrawer />}
         <PgProcessingHost />
         <ReassignmentSummaryHost />{/* opens from a reassignment's "summary is ready" notification */}
+        <BulkSummaryHost />{/* opens from a bulk reschedule's or cancel's "summary is ready" notification */}
         <DesignReviewHost />{/* the floating Design Signoff review box, while a review is active */}
         <GbiStatusReasonHost />{/* asks why a care plan goal, intervention or barrier changes status */}
       </Suspense>

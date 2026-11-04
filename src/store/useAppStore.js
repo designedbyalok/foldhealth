@@ -427,6 +427,25 @@ const mapReminderRow = r => ({
 // (recordGbiStatusHistory reads them when the save's audit is written).
 const pendingStatusReasons = new Map();
 
+// Bulk appointment jobs kept in this browser until appointment_bulk_jobs exists.
+const LOCAL_BULK_KEY = 'fold.bulkAppointmentJobs';
+const LOCAL_BULK_READ_KEY = 'fold.bulkAppointmentJobs.read';
+function readLocalBulkJobs() {
+  try { return JSON.parse(localStorage.getItem(LOCAL_BULK_KEY) || '[]'); } catch { return []; }
+}
+function writeLocalBulkJobs(jobs) {
+  try { localStorage.setItem(LOCAL_BULK_KEY, JSON.stringify((jobs || []).slice(0, 20))); } catch { /* storage blocked */ }
+}
+function readLocalBulkRead() {
+  try { return JSON.parse(localStorage.getItem(LOCAL_BULK_READ_KEY) || '[]'); } catch { return []; }
+}
+// Reading a kept job's notification sticks across reloads too.
+function rememberBulkRead(notifications) {
+  const ids = (notifications || []).filter(n => n?.type === 'bulk.summary').map(n => n.id);
+  if (!ids.length) return;
+  try { localStorage.setItem(LOCAL_BULK_READ_KEY, JSON.stringify([...new Set([...readLocalBulkRead(), ...ids])].slice(-50))); } catch { /* storage blocked */ }
+}
+
 export const useAppStore = create((set, get) => ({
   ...createShellSlice(set, get),
   ...createAutomationsSlice(set, get),
@@ -7861,6 +7880,7 @@ export const useAppStore = create((set, get) => ({
     set(s => ({
       notifications: (s.notifications || []).map(n => n.id === id ? { ...n, read: true } : n),
     }));
+    rememberBulkRead([target]);
     if (!target?.persisted) return;
     const { error } = await supabase.from('notifications').update({ read: true }).eq('id', id);
     if (error) {
@@ -7875,6 +7895,7 @@ export const useAppStore = create((set, get) => ({
     const prev = get().notifications || [];
     const unreadPersisted = prev.filter(n => !n.read && n.persisted).map(n => n.id);
     set({ notifications: prev.map(n => ({ ...n, read: true })) });
+    rememberBulkRead(prev);
     if (unreadPersisted.length === 0) return;
     const { error } = await supabase
       .from('notifications')
@@ -17533,19 +17554,106 @@ export const useAppStore = create((set, get) => ({
   // Moves each appointment to its new date and time ({ appt, date:
   // 'MM-DD-YYYY', time_start, time_end }). Returns how many failed.
   rescheduleAppointments: async (changes) => {
-    const results = await Promise.all(changes.map(async ({ appt, date, time_start, time_end }) => {
-      // A cancelled appointment given a new time is booked again.
-      const rebook = appt.status === 'Cancelled' ? { status: 'Scheduled' } : {};
-      const { error } = await supabase.from('appointments').update({ date, time_start, time_end, ...rebook }).eq('id', appt.id);
-      if (error) { console.error('rescheduleAppointments:', error.message); return false; }
-      get().logAudit('Appointment', appt.id, appt.patient_name || 'Appointment', 'updated', 'Rescheduled', 'Lifecycle', [
-        { field: 'date', from: appt.date || '', to: date, type: 'text' },
-        { field: 'time', from: `${appt.time_start || ''} - ${appt.time_end || ''}`, to: `${time_start} - ${time_end}`, type: 'text' },
-      ]);
-      return true;
-    }));
+    const saved = await get()._rescheduleEach(changes);
     await get().fetchAppointments({ force: true });
-    return results.filter(ok => !ok).length;
+    return saved.filter(ok => !ok).length;
+  },
+  // Moves each appointment; resolves whether each one saved, in order.
+  _rescheduleEach: async (changes) => Promise.all(changes.map(async ({ appt, date, time_start, time_end }) => {
+    // A cancelled appointment given a new time is booked again.
+    const rebook = appt.status === 'Cancelled' ? { status: 'Scheduled' } : {};
+    const { error } = await supabase.from('appointments').update({ date, time_start, time_end, ...rebook }).eq('id', appt.id);
+    if (error) { console.error('rescheduleAppointments:', error.message); return false; }
+    get().logAudit('Appointment', appt.id, appt.patient_name || 'Appointment', 'updated', 'Rescheduled', 'Lifecycle', [
+      { field: 'date', from: appt.date || '', to: date, type: 'text' },
+      { field: 'time', from: `${appt.time_start || ''} - ${appt.time_end || ''}`, to: `${time_start} - ${time_end}`, type: 'text' },
+    ]);
+    return true;
+  })),
+
+  // ── Bulk appointment jobs (Bulk Reschedule → Save, cancelling several) ──
+  // Like reassignment: the outcome is kept in appointment_bulk_jobs, and a
+  // notification links to its summary. Until that table exists
+  // (bulkJobsLocal), jobs are kept in this browser instead, and their
+  // notifications come back on load, so a summary survives a reload.
+  bulkJobs: [],
+  bulkJobsFetched: false,
+  bulkJobsLocal: false,
+  bulkSummaryJobId: null,
+  openBulkSummary: (jobId) => set({ bulkSummaryJobId: jobId }),
+  closeBulkSummary: () => set({ bulkSummaryJobId: null }),
+  fetchBulkJobs: async ({ force = false } = {}) => {
+    if (get().bulkJobsFetched && !force) return;
+    const { rowToBulkJob } = await import('../features/calendar/list/bulkJobs');
+    const { data, error } = await supabase.from('appointment_bulk_jobs').select('*').order('created_at', { ascending: false }).limit(100);
+    if (error) {
+      console.warn('fetchBulkJobs (kept in this browser until the migration runs):', error.message);
+      const local = readLocalBulkJobs();
+      set({ bulkJobs: local, bulkJobsFetched: true, bulkJobsLocal: true });
+      local.forEach(job => get()._notifyBulkJob(job, { restore: true }));
+      return;
+    }
+    set({ bulkJobs: (data || []).map(rowToBulkJob), bulkJobsFetched: true, bulkJobsLocal: false });
+  },
+  // Keep a finished job (in the table, or in this browser) and announce it.
+  _saveBulkJob: async (job) => {
+    const { bulkJobToRow } = await import('../features/calendar/list/bulkJobs');
+    if (!get().bulkJobsLocal) {
+      const { error } = await supabase.from('appointment_bulk_jobs').insert(bulkJobToRow(job));
+      if (error) { console.warn('save bulk job:', error.message); set({ bulkJobsLocal: true }); }
+    }
+    set(st => ({ bulkJobs: [job, ...st.bulkJobs] }));
+    if (get().bulkJobsLocal) writeLocalBulkJobs(get().bulkJobs);
+    get()._notifyBulkJob(job);
+    return job;
+  },
+  /**
+   * Run a Bulk Reschedule: move each appointment to its new time, record
+   * what happened, then notify with a link to the summary. Resolves the job.
+   *
+   * @param {{ provider: { id?, name }, providerRole?, changes: { appt, date, time_start, time_end }[] }} input
+   */
+  runRescheduleJob: async ({ provider, providerRole, changes }) => {
+    const { buildRescheduleJob } = await import('../features/calendar/list/bulkJobs');
+    await get().fetchBulkJobs();
+    const saved = await get()._rescheduleEach(changes);
+    await get().fetchAppointments({ force: true });
+    return get()._saveBulkJob(buildRescheduleJob({
+      provider: provider.name, providerId: provider.id, providerRole, changes, saved,
+      createdBy: get().currentUserProfile?.name || null,
+    }));
+  },
+  /**
+   * Cancel several appointments with one reason, record it, then notify with
+   * a link to the summary. Resolves whether the cancel saved.
+   */
+  runCancelJob: async ({ appointments, reason }) => {
+    const { buildCancelJob } = await import('../features/calendar/list/bulkJobs');
+    await get().fetchBulkJobs();
+    const saved = await get().cancelAppointments(appointments, reason);
+    await get()._saveBulkJob(buildCancelJob({
+      appointments, reason, saved,
+      createdBy: get().currentUserProfile?.name || null,
+    }));
+    return saved;
+  },
+  // The "summary is ready" notification for a job; restored ones (from this
+  // browser) keep their time and read state, and aren't added twice.
+  _notifyBulkJob: async (job, { restore = false } = {}) => {
+    const { BULK_JOB_COPY } = await import('../features/calendar/list/bulkJobs');
+    const id = `n-${job.id}`;
+    if ((get().notifications || []).some(n => n.id === id)) return;
+    const copy = BULK_JOB_COPY[job.kind] || BULK_JOB_COPY.reschedule;
+    get().addNotification?.({
+      id,
+      ...(restore ? { ts: new Date(job.createdAt).getTime(), read: readLocalBulkRead().includes(id) } : {}),
+      type: 'bulk.summary',
+      kind: job.kind,
+      title: job.provider ? `${copy.ready} for ${job.provider}.` : `${copy.ready}.`,
+      body: `${job.results.length} Appointments • ${job.doneCount} ${copy.done} • ${job.failedCount} Failed`,
+      action: 'openBulkSummary',
+      bulkJobId: job.id,
+    });
   },
 
   // ── Campaign ──

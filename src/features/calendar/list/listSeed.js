@@ -132,3 +132,82 @@ export function sampleGroupAppointments(providers, now = new Date()) {
     }));
   }));
 }
+
+const DEMO_LOCATION = 'AstranaCare Centennial Hills';
+const isoOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/**
+ * Bulk Edit's location change, ready to demo: next week, one provider has
+ * seven appointments at 7 Hills Department and availability at
+ * AstranaCare Centennial Hills on Monday, Wednesday and Friday, 9 am to 1 pm.
+ * Moving them there: five patients were seen at AstranaCare before; of
+ * those, two need a new time (Mon 2 pm, Tue 10 am) and three are fine. The
+ * other two (Wed 3:30 pm, Fri 12 pm) aren't linked to AstranaCare, so they
+ * need a location they are linked to (7 Hills, where they're booked).
+ *
+ * @param {{ id, name, email? }} provider
+ * @param {{ id, name }[]} patients  – at least 7
+ * @param {Date} [now]
+ * @returns {{ availability: object, appointments: object[], history: object[] }} rows
+ */
+export function sampleLocationChangeDemo(provider, patients, now = new Date()) {
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7) + 7);
+  const day = (i) => new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+  const row = (patient, d, start, end, extra = {}) => ({
+    patient_id: patient.id ? String(patient.id) : null,
+    patient_name: patient.name,
+    appointment_type_id: null,
+    appointment_type_name: 'Follow-up Appointment',
+    mode: 'In-person',
+    location: '7 Hills Department',
+    primary_user: provider.name,
+    primary_user_id: provider.id || null,
+    secondary_users: [],
+    date: apptDate(d),
+    time_start: start,
+    time_end: end,
+    reason_for_visit: 'Medication review',
+    member_instruction: '',
+    staff_instruction: '',
+    require_rsvp: false,
+    recurring: false,
+    recurring_config: null,
+    status: 'Scheduled',
+    calendar_id: 'followup',
+    ...extra,
+  });
+  const p = patients;
+  const appointments = [
+    row(p[0], day(0), '9:30 am', '10:00 am'),
+    row(p[1], day(0), '2:00 pm', '2:30 pm'),
+    row(p[2], day(1), '10:00 am', '10:30 am'),
+    row(p[3], day(2), '11:00 am', '11:30 am'),
+    row(p[4], day(2), '3:30 pm', '4:00 pm'),
+    row(p[5], day(4), '9:00 am', '9:30 am'),
+    row(p[6], day(4), '12:00 pm', '12:30 pm'),
+  ];
+  // Seen at AstranaCare last month, so linked to it.
+  const past = new Date(monday.getFullYear(), monday.getMonth() - 1, 14);
+  const history = [p[0], p[1], p[2], p[3], p[5]].map((pt, i) => row(pt, new Date(past.getFullYear(), past.getMonth(), past.getDate() + i), '10:00 am', '10:30 am', {
+    location: DEMO_LOCATION, status: 'Checked Out',
+  }));
+  const availability = {
+    id: `ua-demo-location-${String(provider.id || provider.name).replace(/[^a-zA-Z0-9]/g, '').slice(0, 24)}`,
+    user_id: provider.id || null,
+    user_name: provider.name,
+    user_email: provider.email || null,
+    location: DEMO_LOCATION,
+    start_date: isoOf(monday),
+    end_date: isoOf(day(11)),
+    repeat: 'weekly',
+    repeat_interval: 1,
+    days: [1, 3, 5],
+    weeks: [],
+    slots: [{ start: '09:00', end: '13:00', appointmentType: 'All appointment types' }],
+    timezone: 'America/New_York',
+    skip_holidays: false,
+    advanced: false,
+    allow_overlap: true,
+  };
+  return { availability, appointments, history };
+}

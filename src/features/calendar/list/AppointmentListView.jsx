@@ -40,7 +40,8 @@ const COLUMNS = [
   { key: 'member', label: 'Member', width: 250 },
   { key: 'status', label: 'Status', width: 120 },
   { key: 'department', label: 'Department', width: 160 },
-  { key: 'when', label: 'Date & Time', width: 210, sortKey: 'date', sortType: 'date' },
+  // Wide enough for the longest, "11/16/2026, 11:30 AM–12:00 PM".
+  { key: 'when', label: 'Date & Time', width: 240, sortKey: 'date', sortType: 'date' },
   { key: 'reason', label: 'Reason for Visit' },
   { key: 'actions', width: 40 },
 ];
@@ -96,15 +97,15 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
   const updateAppointment = useAppStore(s => s.updateAppointment);
   const setAppointmentsStatus = useAppStore(s => s.setAppointmentsStatus);
 
-  // Marks the ones that have started; the rest are skipped and counted.
+  // All or nothing: if any selected appointment hasn't started, none are marked.
   const markNoShow = async () => {
-    const due = selected.filter(a => !statusBlockedReason(a, 'No Show'));
-    const skipped = selected.length - due.length;
-    const skipNote = `${skipped} ${skipped === 1 ? 'appointment hasn\'t' : 'appointments haven\'t'} started yet, so ${skipped === 1 ? 'it was' : 'they were'} skipped.`;
-    if (!due.length) { toast.error(`No appointments marked as No Show. ${skipNote}`); return; }
-    const ok = await setAppointmentsStatus(due, 'No Show');
+    if (selected.some(a => statusBlockedReason(a, 'No Show'))) {
+      toast.error('Failed to mark as no show. Some appointments have not started.');
+      return;
+    }
+    const ok = await setAppointmentsStatus(selected, 'No Show');
     if (!ok) { toast.error('Appointments could not be updated. Try again.'); return; }
-    toast.success('Status Updated Successfully', skipped ? { description: skipNote } : undefined);
+    toast.success('Status Updated Successfully');
     clear();
   };
 
@@ -215,9 +216,20 @@ export function AppointmentListView({ appointments, view, selectedDate, users, g
           </span>
         </td>
         <td className={profileCellClass}>
-          <Tooltip label={status === 'Mixed' ? 'Members have different statuses; open the appointment to see each' : ''} maxWidth={240} align="left">
-            <Badge size="sm" tone={STATUS_TONE[status] || 'neutral'} label={status} />
-          </Tooltip>
+          {/* One status for every member; "Mixed" until one is picked. A status
+              some member can't take yet is greyed out, with why. */}
+          <BadgeSelect
+            value={status}
+            options={STATUS_OPTIONS.map((st) => {
+              const blocked = st === status ? null : session.members.find(a => statusBlockedReason(a, st));
+              return blocked ? { value: st, disabled: true, tooltip: statusBlockedReason(blocked, st) } : st;
+            })}
+            onChange={(next) => changeSessionStatus(session.members, next)}
+            tone={STATUS_TONE[status] || 'neutral'}
+            size="S"
+            align="left"
+            disabled={selection.size > 0}
+          />
         </td>
         <td className={profileCellClass}>{session.location ? <TruncatedText text={session.location} /> : null}</td>
         <td className={profileCellClass}><span className={styles.cellText}>{dateLabel(session.date)}, {timeRangeLabel(session)}</span></td>

@@ -98,6 +98,9 @@
   gap: var(--space-1);
   min-width: 0;
 }
+/* Lines start at their own width; capped at the cell so "…" kicks in
+   instead of running into the next column. */
+.twoLine > .cellText { max-width: 100%; }
 
 /* The member's name, cut short with an ellipsis when the column is narrow. */
 .memberLine {
@@ -271,11 +274,6 @@
   flex-direction: column;
   gap: var(--space-6);
 }
-.fieldRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-4);
-}
 
 /* Bulk Update Preview: Fields / Change To, in a bordered card. */
 .changeTable {
@@ -374,6 +372,60 @@
   border-radius: var(--space-1);
 }
 .appliesBody .applyRow:last-child { border-bottom: 0; }
+/* Bulk Edit's Action Needed (Figma Tasks 1413:40970): a red tray of
+   conflict cards; each a header, then a Fields / Initial / Updated table. */
+.conflicts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--status-error-light);
+  border-radius: var(--space-2);
+}
+.conflictsHead { display: flex; align-items: center; justify-content: space-between; padding: var(--space-1) var(--space-2); }
+.conflictsTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-base);
+  font-weight: 500;
+  color: var(--neutral-300);
+}
+.conflictCard { background: var(--neutral-0); border: 0.5px solid var(--neutral-150); border-radius: var(--space-2); overflow: hidden; }
+.conflictHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-bottom: 0.5px solid var(--neutral-150);
+}
+.conflictBody { padding: var(--space-2); background: var(--neutral-50); }
+.conflictTable { background: var(--neutral-0); border: 0.5px solid var(--neutral-150); border-radius: var(--space-2); overflow: hidden; }
+.conflictTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 0.5px solid var(--neutral-150);
+  font-size: var(--font-base);
+}
+.conflictErrors { color: var(--status-error); }
+.conflictOk { color: var(--status-success); }
+.conflictGrid {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  column-gap: var(--space-3);
+  row-gap: var(--space-2);
+  align-items: start;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+}
+.conflictTh { font-size: var(--font-base); font-weight: 500; color: var(--neutral-300); padding-bottom: var(--space-1); }
+.conflictField { font-size: var(--font-base); color: var(--neutral-400); padding-top: var(--space-2); }
+/* Date, then that day's slots, side by side. */
+.conflictPick { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-2); min-width: 0; align-items: start; }
+/* The pick's error runs under both the date and the slot. */
+.conflictError { grid-column: 1 / -1; font-size: var(--font-sm); line-height: 1.2; color: var(--status-error); }
 
 /* ── Group appointment: the session row and its drawer ── */
 .row { cursor: pointer; }
@@ -418,6 +470,7 @@
 .sessionTitle { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
 .sessionName { font-size: var(--font-xl); font-weight: 500; line-height: 1.2; color: var(--neutral-500); }
 .copyLink { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--font-sm); }
+.sessionActivity { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-2); }
 .totalMembers {
   padding: var(--space-3);
   border: 0.5px solid var(--neutral-150);
@@ -438,3 +491,66 @@
 }
 .memberActions { display: inline-flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
 .membersEmpty { padding: var(--space-3); font-size: var(--font-sm); color: var(--neutral-300); }
+
+/* ── Bulk Edit Confirmation (Figma Tasks 1424:13811) ── */
+.confirm { display: flex; flex-direction: column; gap: var(--space-6); }
+.confirmHero { display: flex; justify-content: center; padding: var(--space-12) 0 var(--space-4); }
+.confirmMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  /* Mint greens from the Figma success green, no grey in the mix. */
+  background: color-mix(in srgb, var(--status-success-dark) 16%, var(--neutral-0));
+  color: var(--status-success-dark);
+  box-shadow: 0 0 0 12px color-mix(in srgb, var(--status-success-dark) 7%, var(--neutral-0));
+  animation: confirmPop 420ms var(--ease-out) both;
+}
+.confirmMarkFailed {
+  background: color-mix(in srgb, var(--status-error) 14%, var(--neutral-0));
+  color: var(--status-error);
+  box-shadow: 0 0 0 12px color-mix(in srgb, var(--status-error) 6%, var(--neutral-0));
+}
+@keyframes confirmPop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.confirmCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border: 0.5px solid var(--neutral-150);
+  border-radius: var(--space-2);
+  text-align: center;
+  animation: confirmRise 320ms var(--ease-out) 120ms both;
+}
+@keyframes confirmRise {
+  from { transform: translateY(6px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.confirmTitle { font-size: var(--font-base); font-weight: 500; color: var(--neutral-500); }
+.confirmCounts { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--font-base); }
+.confirmOk { color: var(--status-success); }
+.confirmDot { color: var(--neutral-200); }
+.confirmFailed {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--status-error);
+  text-decoration: underline;
+  cursor: pointer;
+}
+@media (prefers-reduced-motion: reduce) {
+  .confirmMark, .confirmCard { animation: none; }
+}
+
+/* Bulk Edit: Appointment Mode's label with its "Changed" tag, and the
+   preview's count of what changes mode. */
+.modeLabel { display: inline-flex; align-items: center; gap: var(--space-2); }
+.modeNote { font-size: var(--font-base); color: var(--neutral-400); }

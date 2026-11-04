@@ -14,9 +14,10 @@ const PAGE = 10;
 /**
  * One appointment: patient initials, name, then date, time and type. The
  * leading slot (a checkbox) and the trailing slot (covering provider,
- * status, actions) are the caller's.
+ * status, actions) are the caller's. `subPrefix` leads the date line
+ * (e.g. "Was" for a time it has since moved from).
  */
-export function ApptRow({ appt, lead, trail, tone, children }) {
+export function ApptRow({ appt, lead, trail, tone, subPrefix, children }) {
   const name = appt.patient_name ?? appt.patientName ?? 'Appointment';
   return (
     <div className={[styles.apptRow, tone ? styles[`tone_${tone}`] : ''].filter(Boolean).join(' ')}>
@@ -25,7 +26,7 @@ export function ApptRow({ appt, lead, trail, tone, children }) {
         <Avatar variant="patient" initials={initialsOf(name)} size="M" />
         <span className={styles.apptText}>
           <span className={styles.apptName}>{name}</span>
-          <span className={styles.apptSub}>{apptLine(appt)}</span>
+          <span className={styles.apptSub}>{subPrefix ? `${subPrefix} ${apptLine(appt)}` : apptLine(appt)}</span>
         </span>
         {trail && <span className={styles.apptTrail}>{trail}</span>}
       </div>

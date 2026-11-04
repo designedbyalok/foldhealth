@@ -62,7 +62,8 @@ export const statusBlockedReason = (a, status, now = Date.now()) => {
   const { start } = apptSpan(a);
   if (!start) return null;
   if (status === 'Checked In' && new Date(start).setHours(0, 0, 0, 0) > now) return 'Checked In is available from the day of the appointment';
-  if ((status === 'No Show' || status === 'Checked Out') && start > now) return `${status} is available once the appointment has started`;
+  if (status === 'No Show' && start > now) return "Appointments that haven't started can't be marked as no show";
+  if (status === 'Checked Out' && start > now) return 'Checked Out is available once the appointment has started';
   return null;
 };
 

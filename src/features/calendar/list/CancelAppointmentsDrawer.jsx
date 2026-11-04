@@ -19,6 +19,7 @@ export function CancelAppointmentsDrawer({ appointments, onDone, onClose }) {
   const reasons = useAppStore(s => s.appointmentCancelReasons);
   const fetchReasons = useAppStore(s => s.fetchAppointmentCancelReasons);
   const cancelAppointments = useAppStore(s => s.cancelAppointments);
+  const runCancelJob = useAppStore(s => s.runCancelJob);
   useEffect(() => { fetchReasons(); }, [fetchReasons]);
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
@@ -26,11 +27,21 @@ export function CancelAppointmentsDrawer({ appointments, onDone, onClose }) {
 
   const confirm = async () => {
     if (!reason || saving) return;
+    // Several at once run as a job, like Bulk Reschedule: the drawer closes
+    // once it starts and the summary (what was cancelled, what wasn't) comes
+    // as a notification.
+    if (n > 1) {
+      toast.success('Cancellation Job Started');
+      onDone?.();
+      onClose();
+      await runCancelJob({ appointments, reason });
+      return;
+    }
     setSaving(true);
     const ok = await cancelAppointments(appointments, reason);
     setSaving(false);
     if (!ok) { toast.error('Appointments could not be cancelled. Try again.'); return; }
-    toast.success(n === 1 ? 'Appointment Cancelled Successfully' : 'Appointments Cancelled Successfully');
+    toast.success('Appointment Cancelled Successfully');
     onDone?.();
     onClose();
   };
