@@ -2,8 +2,6 @@ import { useRef, useState } from 'react';
 import { useAppStore } from '../../../store/useAppStore';
 import { ActionButton } from '../../../components/ActionButton/ActionButton';
 import { Badge } from '../../../components/Badge/Badge';
-import { Button } from '../../../components/Button/Button';
-import { Input } from '../../../components/Input/Input';
 import { DashboardCard } from '../../../components/DashboardCard/DashboardCard';
 import { Icon } from '../../../components/Icon/Icon';
 import { DownChevronIcon } from '../../../components/Icon/DownChevronIcon';
@@ -11,9 +9,10 @@ import { PhoneLink } from '../../../components/PhoneLink/PhoneLink';
 import { MenuPopover } from '../../../components/MenuPopover/MenuPopover';
 import { Tooltip } from '../../../components/Tooltip/Tooltip';
 import {
-  canSetGapStatus, gapBadge, MANUAL_GAP_STATUSES, MEASURE_NAMES, daysFromToday, isActiveGap, enrichPharmacyMember, medicationStatus, pdcTone, pharmaciesUsed, prescribersOf,
+  canSetGapStatus, gapBadge, MANUAL_GAP_STATUSES, MEASURE_NAMES, daysFromToday, isActiveGap, enrichPharmacyMember, contactCallTarget, medicationStatus, pdcSourceText, pdcTone, pharmaciesUsed, prescribersOf,
 } from '../pharmacyWorklist.utils';
 import { Dash, DrugsCount, DueDate, NamesCount, FailDateValue, MeasureCode, NextFillDueValue, PdcValue, PriorYearPdc, SavabilityBadge, SubStatus } from '../PharmacyCells';
+import { PdcEditPopover } from '../PdcEditor';
 import { usePharmacyProgramMember } from './usePharmacyProgramMember';
 import styles from './PharmacySnapshotStep.module.css';
 
@@ -42,39 +41,19 @@ function ContactLines({ contacts, render }) {
 // What a compact gap row opens to: the gap's details the table leaves out,
 // label above value, three to a row (Figma 5693:49946). Its drugs are in
 // Medication Review.
-const PDC_SOURCE_TEXT = { Manual: 'Set by hand', Projected: 'Projected from a confirmed pickup', 'To date': 'Calculated to date', Plan: 'From the plan file', Calculated: 'Calculated' };
-
-// The gap's PDC with where it comes from; the pencil sets it by hand (Fold
-// keeps calculating underneath, and Use calculated goes back to it).
+// The gap's PDC with where it comes from; the pencil opens the same editor
+// as the worklist's PDC column.
 function PdcField({ gap: g, memberId }) {
-  const setOverride = useAppStore(s => s.setPharmacyPdcOverride);
-  const [draft, setDraft] = useState(null);
-  const manual = g.pdcSource === 'Manual';
-  const save = () => {
-    const n = Math.round(Number(draft));
-    if (draft === '' || !Number.isFinite(n) || n < 0 || n > 100) return;
-    setOverride(memberId, g.code, n);
-    setDraft(null);
-  };
-  if (draft != null) {
-    return (
-      <span className={styles.pdcEdit}>
-        <Input type="number" size="sm" min={0} max={100} value={draft} onChange={e => setDraft(e.target.value)} aria-label={`${g.code} PDC`} autoFocus />
-        <Button size="sm" onClick={save}>Save</Button>
-        <Button size="sm" variant="ghost" onClick={() => setDraft(null)}>Cancel</Button>
-      </span>
-    );
-  }
+  const ref = useRef(null);
+  const [editing, setEditing] = useState(false);
   return (
     <span className={styles.detailLines}>
       <span className={styles.pdcLine}>
         {g.pdc == null ? '-' : `${g.pdc}%`}
-        <ActionButton icon="solar:pen-linear" size="sm" tooltip="Set PDC by hand" onClick={() => setDraft(g.pdc == null ? '' : String(g.pdc))} />
+        <span ref={ref}><ActionButton icon="solar:pen-linear" size="sm" tooltip="Set PDC by hand" onClick={() => setEditing(true)} /></span>
       </span>
-      <span className={styles.muted}>
-        {manual ? `${PDC_SOURCE_TEXT.Manual}${g.pdcManualBy ? ` by ${g.pdcManualBy}` : ''}${g.pdcManualOn ? `, ${g.pdcManualOn}` : ''}` : PDC_SOURCE_TEXT[g.pdcSource] || ''}
-      </span>
-      {manual && <button type="button" className={styles.linkBtn} onClick={() => setOverride(memberId, g.code, null)}>Use calculated</button>}
+      <span className={styles.muted}>{pdcSourceText(g)}</span>
+      {editing && <PdcEditPopover gap={g} memberId={memberId} anchor={ref} onClose={() => setEditing(false)} />}
     </span>
   );
 }
@@ -341,13 +320,13 @@ export function PharmacyGapsCard({ member, onSetStatus, compact = false, titleEx
 
 // The card header's call action: straight to the call popover (pick the line
 // to call from) for one contact; with several, pick who first.
-function CallContactAction({ contacts, onDial }) {
+function CallContactAction({ member, contacts, kind, onDial }) {
   const openNumberCallPopover = useAppStore(st => st.openNumberCallPopover);
   const btnRef = useRef(null);
   const [menuRect, setMenuRect] = useState(null);
   const callable = contacts.filter(c => c.phone);
   if (!callable.length) return null;
-  const call = (c) => openNumberCallPopover({ number: c.phone, label: c.name, onDial: onDial(c.name, c.phone) }, btnRef);
+  const call = (c) => openNumberCallPopover({ ...contactCallTarget(member, c, kind), onDial: onDial(c.name, c.phone) }, btnRef);
   return (
     <>
       <ActionButton
@@ -382,12 +361,13 @@ export function PharmacyContacts({ member }) {
   const logActivity = useAppStore(s => s.logPharmacyDial);
   const prescribers = prescribersOf(member);
   const pharmacies = pharmaciesUsed(member);
-  const dial = (who, number) => () => logActivity?.(member.id, who, number);
+  // The number and line picked in the call popover (a phone link has one number).
+  const dial = (who, number) => (picked, line) => logActivity?.(member.id, who, picked || number, line);
   // Both cards read the same way: who (with their address under the name),
   // how to reach them, then what ties them to the member.
   return (
     <>
-      <DashboardCard size="S" title={prescribers.length === 1 ? 'Prescriber' : 'Prescribers'} actions={<CallContactAction contacts={prescribers} onDial={dial} />}>
+      <DashboardCard size="S" title={prescribers.length === 1 ? 'Prescriber' : 'Prescribers'} actions={<CallContactAction member={member} contacts={prescribers} kind="Prescriber" onDial={dial} />}>
         {prescribers.length === 0 ? <div className={styles.row}><span className={styles.muted}>No prescriber on file.</span></div> : (
           <table className={`${styles.table} ${styles.contactTable}`}>
             <thead>
@@ -410,7 +390,7 @@ export function PharmacyContacts({ member }) {
         )}
       </DashboardCard>
 
-      <DashboardCard size="S" title={pharmacies.length === 1 ? 'Pharmacy' : 'Pharmacies'} actions={<CallContactAction contacts={pharmacies} onDial={dial} />}>
+      <DashboardCard size="S" title={pharmacies.length === 1 ? 'Pharmacy' : 'Pharmacies'} actions={<CallContactAction member={member} contacts={pharmacies} kind="Pharmacy" onDial={dial} />}>
         {pharmacies.length === 0 ? <div className={styles.row}><span className={styles.muted}>No fills on record.</span></div> : (
           <table className={`${styles.table} ${styles.contactTable}`}>
             <thead>

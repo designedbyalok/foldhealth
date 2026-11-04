@@ -249,8 +249,10 @@ export function createPharmacyWorklistSlice(set, get) {
     },
 
     // Click-to-dial on a prescriber or pharmacy number (Snapshot).
-    logPharmacyDial: (id, who, number) => {
-      update(id, m => m, [], { t: 'call', title: `Dialed ${who}`, note: number });
+    // `line`: the call line it went out on, so the next call can mark it
+    // Last Used.
+    logPharmacyDial: (id, who, number, line) => {
+      update(id, m => m, [], { t: 'call', title: `Dialed ${who}`, note: number, ...(line ? { lineId: line.id, lineName: line.name } : {}) });
     },
 
     // Recent Fill for one drug, edited in Medication Review or Gap Closure.
@@ -509,7 +511,7 @@ export function createPharmacyWorklistSlice(set, get) {
         const followUpDue = pendingCodes.length ? withPickupFollowUp(m, entry.date, changes) : m.followUpDue;
         return { ...m, status: status || m.status, measures, followUpDue, callHistory: [entry, ...(m.callHistory || [])], _changes: changes };
       }, ['status', 'call_history', 'measures', 'follow_up_due'], (changes) => ({
-        t: 'call', title: `Verification call · ${entry.party || 'Pharmacy'}: ${entry.contact} (locked)`,
+        t: 'call', title: `Assessment · ${entry.party || 'Pharmacy'}: ${entry.contact} (locked)`,
         verificationId: entry.id,
         outcome: entry.outcome, outcomeColor: entry.result === 'failed' ? 'var(--status-warning)' : 'var(--status-success)',
         // What was answered for each drug, then the call note and what changed.

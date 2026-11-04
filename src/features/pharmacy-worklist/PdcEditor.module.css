@@ -1,0 +1,16 @@
+/* PDC in a worklist cell: the pencil shows on hover (or while editing). */
+.cell { display: inline-flex; align-items: center; gap: var(--space-1); }
+.pencil { opacity: 0; transition: opacity 0.12s ease; }
+.cell:hover .pencil,
+.pencil:focus-within,
+.pencilOn { opacity: 1; }
+
+/* The editor: title, where the number comes from, the input, actions. */
+.panel { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); }
+.title { font-size: var(--font-base); font-weight: 500; color: var(--neutral-500); }
+.source { font-size: var(--font-sm); color: var(--neutral-300); }
+.inputRow { display: inline-flex; align-items: center; gap: var(--space-1); }
+.inputRow input { width: 5rem; }
+.unit { font-size: var(--font-base); color: var(--neutral-400); }
+.actions { display: flex; align-items: center; gap: var(--space-2); }
+.spacer { flex: 1; }

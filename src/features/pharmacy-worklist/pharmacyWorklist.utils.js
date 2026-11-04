@@ -41,6 +41,16 @@ export const failDateSource = (x) => (x.failDateProjected != null ? 'Projected' 
 // Next Fill Due is the plan's until Fold recalculates it from fills
 // (recomputeMeasure marks `nextFillDueCalculated`).
 export const nextFillDueSource = (x) => (!x.nextFillDue ? null : x.pdcProjected != null ? 'Projected' : x.nextFillDueCalculated ? 'Calculated' : 'Plan');
+export const PDC_SOURCE_TEXT = {
+  Manual: 'Set by hand', Projected: 'Projected from a confirmed pickup', 'To date': 'Calculated to date', Plan: 'From the plan file', Calculated: 'Calculated',
+};
+
+// Where a gap's PDC comes from, in words ("Set by hand by Priya, 11/04/2026").
+export function pdcSourceText(g) {
+  if (g.pdcSource !== 'Manual') return PDC_SOURCE_TEXT[g.pdcSource] || '';
+  return `${PDC_SOURCE_TEXT.Manual}${g.pdcManualBy ? ` by ${g.pdcManualBy}` : ''}${g.pdcManualOn ? `, ${g.pdcManualOn}` : ''}`;
+}
+
 export const FAIL_DATE_HINT = 'Absolute fail date: after this day the member can no longer reach 80% PDC this year';
 
 export const medLabel = (d) => `${d.name} ${d.strength} ${d.unit}`;
@@ -383,16 +393,16 @@ export const GAP_STATUS_TONE = {
   'First Fill': 'disabled',
   'Not Eligible': 'disabled',
 };
-// A claim-reversal reopen is the alarm: a solid red badge, the row marked
-// and pinned to the top. A new fill due reopen is the next cycle, in amber.
+// A claim-reversal reopen is the alarm: the member is pinned to the top.
+// A new fill due reopen is the next cycle.
 export const REOPEN_REASONS = { reversal: 'Claim reversal', newFill: 'New fill due' };
 export const isReversalReopen = (st) => st?.gap === 'Reopened' && st.reopenReason === REOPEN_REASONS.reversal;
-// A gap status badge's look. A reopen reads "Reopened" either way; its
-// color carries the reason (the Next Fill Due and Claim columns say why).
+// A gap status badge's look. A reopen reads "Reopened" in amber either way;
+// a claim reversal pins the member to the top, and
+// the Next Fill Due and Claim columns say why.
 export function gapBadge(st) {
   if (st?.gap !== 'Reopened') return { tone: GAP_STATUS_TONE[st?.gap] || 'neutral', label: st?.gap };
-  const reversal = isReversalReopen(st);
-  return { tone: reversal ? 'danger' : 'warning', variant: reversal ? 'solid' : undefined, label: 'Reopened' };
+  return { tone: 'warning', label: 'Reopened' };
 }
 const CLOSED_GAPS = new Set(['Closed', 'Met for Year']);
 // Gaps that leave the Progress count.
@@ -434,15 +444,6 @@ function subStatus(x, worst, timers) {
 // The fill cycle starts at the gap's latest fill, or at `since` (a reversal
 // reopens the cycle).
 export const cycleStart = (x, since) => Math.max(...(x.medications || []).map(d => parseMdy(d.lastFill) || 0), parseMdy(since) || 0, 0);
-
-// An open gap still to confirm with the pharmacy: no locked verification
-// call covers it since its latest fill (a new fill cycle asks again).
-export function needsVerification(x, member) {
-  if (!isActiveGap(measureStatus(x, member))) return false;
-  const from = cycleStart(x);
-  return !(member.callHistory || []).some(e => e.kind === 'pharmacy-verification'
-    && (e.measures || []).includes(x.code) && (parseMdy(e.date) || 0) >= from);
-}
 
 // Outreach attempts logged on the gap this fill cycle.
 export function attemptsThisCycle(x, member) {
@@ -771,7 +772,7 @@ export function enrichPharmacyMember(m, { hedisGapsByMember } = {}) {
     nextFillDueSort: parseMdy(urgent?.nextFillDue),
     // Days to Save: the fewest gap days left on a gap that can still be saved,
     // so sorting puts the closest-to-failing work first.
-    // A claim reversal reopened a gap: the row is marked and sits on top.
+    // A claim reversal reopened a gap: the member sits on top.
     reopenedByReversal: gaps.some(g => isReversalReopen(g.status)),
     daysToSaveSort: (() => {
       const left = gaps.filter(g => g.savability === 'Savable' && g.allowableGapDays != null).map(g => g.allowableGapDays);
@@ -840,6 +841,31 @@ export function pharmaciesUsed(member) {
   // Pharmacies the gap report names with no fill on record still list, last.
   for (const [name, p] of contacts) if (!used.has(name)) used.set(name, { ...p, fills: 0, lastFill: null });
   return [...used.values()].toSorted((a, b) => (parseMdy(b.lastFill) ?? -Infinity) - (parseMdy(a.lastFill) ?? -Infinity));
+}
+
+// Every number a pharmacy or prescriber has: the main phone, then any others
+// on file (`phones: [{ number, label }]`, e.g. a pharmacist's direct line).
+export function contactNumbers(c) {
+  const seen = new Set();
+  return [{ number: c?.phone, label: 'Main' }, ...(c?.phones || []).map(p => ({ number: p.number, label: p.label || 'Other' }))]
+    .filter(n => n.number && !seen.has(n.number) && seen.add(n.number));
+}
+
+// What the call popover needs for a pharmacy or prescriber: their numbers
+// with how often and how recently this member's team dialed each (from the
+// "Dialed" Activity entries), and the line used last.
+export function contactCallTarget(member, contact, kind) {
+  const dials = (member?.activityLog || []).filter(e => e.t === 'call' && e.title === `Dialed ${contact.name}`);
+  const numbers = contactNumbers(contact).map(n => ({ ...n, uses: dials.filter(e => e.note === n.number).length }));
+  const last = dials.find(e => numbers.some(n => n.number === e.note));
+  const most = numbers.reduce((best, n) => (n.uses > (best?.uses || 0) ? n : best), null);
+  return {
+    label: contact.name,
+    kind,
+    number: numbers[0]?.number,
+    numbers: numbers.map(n => ({ ...n, lastUsed: n.number === last?.note, mostUsed: !!most && most.uses > 1 && n.number === most.number })),
+    lastLineId: last?.lineId || null,
+  };
 }
 
 const claimKey = (c) => `${c.claimId}|${c.claimSeq ?? 1}|${c.date}`;
