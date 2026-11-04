@@ -171,14 +171,15 @@ export function CarePlanCreateView({ onClose, onSave }) {
     icon: CARE_PLAN_INTERVENTION_ICONS[entry.kind] || 'solar:clipboard-list-linear',
   })), [interventions]);
 
-  // SDOH needs go to their own section (lib/useTemplateSdoh).
+  // SDOH needs get their own section (lib/useTemplateSdoh) and, being
+  // barriers, are listed under Barriers too, as on the patient's plan.
   const { plainBarriers, sdoh } = useTemplateSdoh({ barriers, setBarriers, interventions, setInterventions });
-  const barrierRows = useMemo(() => plainBarriers.map((entry, i) => ({
+  const barrierRows = useMemo(() => barriers.map((entry, i) => ({
     id: entry.id || `barrier-${i}`,
     title: entry.title,
     priority: entry.priority || 'medium',
     status: 'Not Started',
-  })), [plainBarriers]);
+  })), [barriers]);
 
   const norm = (v) => (v || '').trim().toLowerCase();
   const linksOf = (goal) => goal?.interventions || [];
@@ -613,7 +614,10 @@ export function CarePlanCreateView({ onClose, onSave }) {
             const { list, item } = rowMenu;
             setRowMenu(null);
             if (key === 'remove') {
+              // A social need takes its suggested referrals with it.
+              const need = list === 'barriers' && barriers.find(b => b.id === item.id && isSdohBarrier(b));
               if (list === 'goals') removeGoal(item.id);
+              else if (need) sdoh.onRemoveNeed(need);
               else removeFromList(list, item.id);
               return;
             }
