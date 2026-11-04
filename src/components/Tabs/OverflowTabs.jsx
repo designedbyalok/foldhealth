@@ -138,24 +138,17 @@ export function OverflowTabs({ items, value: activeKey, onValueChange: onChange,
 
       {(overflow.length > 0 || alwaysMore) && (
         <div className={styles.moreWrap} ref={moreBtnRef}>
-          <div
+          <button
+            type="button"
             className={[tabStripStyles.tabItem, styles.tabMore, overflowHasActive ? tabStripStyles.active : ''].filter(Boolean).join(' ')}
             onClick={() => setMoreOpen(v => !v)}
-            role="button"
-            tabIndex={0}
             aria-haspopup="menu"
             aria-expanded={moreOpen}
             aria-label={overflow.length ? `Show ${overflow.length} more tab${overflow.length === 1 ? '' : 's'}` : 'More options'}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                setMoreOpen(v => !v);
-              }
-            }}
           >
             More
             <Icon name="solar:alt-arrow-down-linear" size={12} color="currentColor" />
-          </div>
+          </button>
           {moreOpen && moreBtnRef.current && createPortal(
             <div
               ref={menuRef}
