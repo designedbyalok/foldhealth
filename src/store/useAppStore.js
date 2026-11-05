@@ -31,6 +31,7 @@ const FALLBACK_AUDIENCE_SEGMENTS = [
 import { hccDocumentRowToJs, hccDocumentJsToDb } from '../lib/hccDocumentMapper';
 import { readCachedWorklistOrder, getFirstWorklistLabel, populationEntryPatch, normalizeWorklistLabel } from '../lib/worklistDefaults';
 import { MONITORING_SEED, mapMonitoringRow } from '../features/patient/right-panel/tabs/monitoring/monitoringData';
+import { DEFAULT_WINDOWS, WINDOW_FIELD } from '../features/calendar/list/typeWindows';
 import { OVERVIEW_SEED, mapOverviewRow } from '../features/patient/data/overviewData';
 import { CLOSURE_REASONS, closureReasonLabel, statusColorFor as programStatusColor } from '../features/patient/data/programStatus';
 import { nextEnrollment, plannedEndDate } from '../features/patient/data/programLifecycle';
@@ -445,6 +446,19 @@ function rememberBulkRead(notifications) {
   if (!ids.length) return;
   try { localStorage.setItem(LOCAL_BULK_READ_KEY, JSON.stringify([...new Set([...readLocalBulkRead(), ...ids])].slice(-50))); } catch { /* storage blocked */ }
 }
+
+// Appointment types' cancel and reschedule windows, kept in this browser
+// until appointment_type_windows_migration.sql adds their columns.
+const LOCAL_TYPE_WINDOWS_KEY = 'fold.appointmentTypeWindows';
+function readLocalTypeWindows() {
+  try { return JSON.parse(localStorage.getItem(LOCAL_TYPE_WINDOWS_KEY) || '{}'); } catch { return {}; }
+}
+function writeLocalTypeWindow(id, windows) {
+  try { localStorage.setItem(LOCAL_TYPE_WINDOWS_KEY, JSON.stringify({ ...readLocalTypeWindows(), [id]: windows })); } catch { /* storage blocked */ }
+}
+// A type row with its windows: its own columns once they exist, else what
+// this browser saved, else the windows the migration seeds.
+const withTypeWindows = (t, local) => (WINDOW_FIELD.cancel in t ? t : { ...t, ...(DEFAULT_WINDOWS[t.name] || {}), ...(local[t.id] || {}) });
 
 export const useAppStore = create((set, get) => ({
   ...createShellSlice(set, get),
@@ -17294,8 +17308,28 @@ export const useAppStore = create((set, get) => ({
       .from('appointment_types')
       .select('*')
       .order('name');
-    if (!error && data) set({ appointmentTypes: data });
+    if (!error && data) {
+      const local = readLocalTypeWindows();
+      set({ appointmentTypes: data.map(t => withTypeWindows(t, local)) });
+    }
   }, opts),
+  // Appointment Type drawer: mode, duration, online booking and the cancel
+  // and reschedule windows. The windows save to this browser until their
+  // columns exist. Returns false when the save failed.
+  saveAppointmentType: async (id, patch) => {
+    const before = get().appointmentTypes.find(t => t.id === id);
+    set(s => ({ appointmentTypes: s.appointmentTypes.map(t => (t.id === id ? { ...t, ...patch } : t)) }));
+    const windows = { [WINDOW_FIELD.cancel]: patch[WINDOW_FIELD.cancel] ?? null, [WINDOW_FIELD.reschedule]: patch[WINDOW_FIELD.reschedule] ?? null };
+    const core = Object.fromEntries(Object.entries(patch).filter(([k]) => !(k in windows)));
+    const { error } = await supabase.from('appointment_types').update(core).eq('id', id);
+    if (error) {
+      set(s => ({ appointmentTypes: s.appointmentTypes.map(t => (t.id === id ? before : t)) }));
+      return false;
+    }
+    const { error: windowError } = await supabase.from('appointment_types').update(windows).eq('id', id);
+    if (windowError) writeLocalTypeWindow(id, windows);
+    return true;
+  },
   // Settings → Calendar → Online booking. Optimistic; rolls back on failure.
   setAppointmentTypeBookable: async (id, bookable) => {
     const patch = (value) => set(s => ({ appointmentTypes: s.appointmentTypes.map(t => (t.id === id ? { ...t, patient_bookable: value } : t)) }));

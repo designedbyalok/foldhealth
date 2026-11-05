@@ -122,3 +122,33 @@ export function noSlotsReason({ date, person, holidays, oooRecords, now = Date.n
   if (holiday) return `${holiday.name} (holiday)`;
   return 'No open slots on this day';
 }
+
+/**
+ * The open slot nearest an appointment's own time, so a new time reads as a
+ * small shift: its own day first (the time closest to its start), then a day
+ * either side (later first), out to `days`. Never earlier than today; an
+ * appointment already past looks from today, at its time of day.
+ *
+ * @param {object} appt
+ * @param {(iso: string) => { minutes: number }[]} slotsFor – open slots on a day
+ * @returns {{ date: string, minutes: number } | null}
+ */
+export function nearestOpenSlot(appt, slotsFor, { days = 90, now = Date.now() } = {}) {
+  const { start } = apptSpan(appt);
+  const own = new Date(Number.isFinite(start) ? start : now);
+  const want = own.getHours() * 60 + own.getMinutes();
+  const base = new Date(Math.max(own.getTime(), now));
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  for (let i = 0; i <= days; i++) {
+    for (const shift of i === 0 ? [0] : [i, -i]) {
+      const day = new Date(base.getFullYear(), base.getMonth(), base.getDate() + shift);
+      if (day < today) continue;
+      const slots = slotsFor(isoDay(day));
+      if (!slots.length) continue;
+      const best = slots.reduce((b, s) => (Math.abs(s.minutes - want) < Math.abs(b.minutes - want) ? s : b));
+      return { date: isoDay(day), minutes: best.minutes };
+    }
+  }
+  return null;
+}

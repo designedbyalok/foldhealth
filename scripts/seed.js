@@ -76,7 +76,8 @@ const LSC_PHLEBOTOMISTS = [
 ];
 import { PRACTICE_LOCATIONS } from '../src/features/settings/account/locations/data/mock.js';
 import { CANCEL_REASONS, RETIRED_CANCEL_REASON_IDS, cancelReasonToRow } from '../src/features/calendar/list/cancelReasons.js';
-import { sampleGroupAppointments, sampleListAppointments, sampleLocationChangeDemo } from '../src/features/calendar/list/listSeed.js';
+import { sampleGroupAppointments, sampleListAppointments, sampleLocationChangeDemo, sampleVirtualToInPersonDemo, sampleWindowDemo } from '../src/features/calendar/list/listSeed.js';
+import { DEFAULT_WINDOWS } from '../src/features/calendar/list/typeWindows.js';
 import { DEFAULT_TAGS, tagToRow } from '../src/features/settings/member-leads/tags/contactTags.js';
 
 // Care-program letters library. Metadata mirrors PROGRAM_LETTERS_MOCK; the PDF
@@ -1371,7 +1372,8 @@ async function main() {
 
   // Bulk Edit's location change demo: next week, Abhijit Gupta's seven
   // appointments at 7 Hills Department and availability at AstranaCare
-  // Centennial Hills. Re-running skips rows already there.
+  // Centennial Hills, and six virtual follow-ups for the Virtual → In-person
+  // demo. Re-running skips rows already there.
   console.log('Seeding location change demo...');
   {
     const { data: prov } = await supabase.from('profiles').select('id, full_name, email').ilike('full_name', 'abhijit%gupta%').limit(1);
@@ -1384,9 +1386,33 @@ async function main() {
       const { error: ue } = await supabase.from('user_availability').upsert(demo.availability, { onConflict: 'id' });
       const { data: booked } = await supabase.from('appointments').select('primary_user, date, time_start, patient_name');
       const seen = new Set((booked || []).map(a => `${a.primary_user} ${a.date} ${a.time_start} ${a.patient_name}`));
-      const rows = [...demo.appointments, ...demo.history].filter(a => !seen.has(`${a.primary_user} ${a.date} ${a.time_start} ${a.patient_name}`));
+      // With the Virtual → In-person demo's virtual follow-ups.
+      const rows = [...demo.appointments, ...demo.history, ...sampleVirtualToInPersonDemo(provider, pts)].filter(a => !seen.has(`${a.primary_user} ${a.date} ${a.time_start} ${a.patient_name}`));
       const { error: ae } = rows.length ? await supabase.from('appointments').insert(rows) : { error: null };
       if (ue || ae) { console.error('  ✗', (ue || ae).message); } else { console.log(`  ✓ availability + ${rows.length} appointments`); }
+    }
+  }
+
+  // Appointment types' cancel and reschedule windows
+  // (appointment_type_windows_migration.sql), for the bulk review step.
+  console.log('Seeding appointment type windows...');
+  for (const [name, windows] of Object.entries(DEFAULT_WINDOWS)) {
+    const { error } = await supabase.from('appointment_types').update(windows).eq('name', name);
+    if (error) { console.error('  ✗', name, error.message); break; }
+  }
+  console.log(`  ✓ ${Object.keys(DEFAULT_WINDOWS).length} types`);
+  // Abhay Chaudhary's Annual Wellness Visits, tomorrow (inside the window)
+  // and next week (outside it), relative to the day the seed runs.
+  {
+    const { data: prov } = await supabase.from('profiles').select('id, full_name, email').ilike('full_name', 'abhay chaudhary').limit(1);
+    const { data: pts } = await supabase.from('all_patients').select('id, name').not('name', 'is', null).order('name').limit(7);
+    if (prov?.[0] && (pts || []).length >= 7) {
+      const provider = { id: prov[0].id, name: prov[0].full_name.trim(), email: prov[0].email };
+      const { data: booked } = await supabase.from('appointments').select('primary_user, date, time_start, patient_name').eq('primary_user', provider.name);
+      const seen = new Set((booked || []).map(a => `${a.date} ${a.time_start} ${a.patient_name}`));
+      const rows = sampleWindowDemo(provider, pts).filter(a => !seen.has(`${a.date} ${a.time_start} ${a.patient_name}`));
+      const { error } = rows.length ? await supabase.from('appointments').insert(rows) : { error: null };
+      if (error) console.error('  ✗ window demo', error.message); else console.log(`  ✓ window demo, ${rows.length} appointments`);
     }
   }
 

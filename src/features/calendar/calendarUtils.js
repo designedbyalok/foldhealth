@@ -1,3 +1,5 @@
+import { displayAppointmentStatus } from '../../components/ScheduleDrawer/scheduleDrawerConstants';
+
 // Default calendar color configs (used when DB types aren't loaded yet)
 export const DEFAULT_CALENDARS = {
   awv:        { colorName: 'awv',        lightColors: { main: '#D9A50B', container: '#FEF9E7', onContainer: '#3A485F' }, darkColors: { main: '#D9A50B', container: '#4A3600', onContainer: '#FEF3CD' } },
@@ -75,7 +77,7 @@ export function apptToEvent(appt, T, tz) {
     start,
     end,
     title: appt.patient_name || 'Appointment',
-    description: `${appt.appointment_type_name || ''} • ${appt.status || 'Scheduled'}`,
+    description: `${appt.appointment_type_name || ''} • ${displayAppointmentStatus(appt.status)}`,
     calendarId: calId,
     // schedule-x applies these to the event element in every view, on first
     // paint. This is what makes the cancelled styling declarative instead of
@@ -86,12 +88,11 @@ export function apptToEvent(appt, T, tz) {
 
 // Appointments are stored as 'Scheduled', but older rows (and the drawer's
 // status control, before the rename) wrote 'Booked'; the two mean the same.
-// The Status filter's "Scheduled" has to match both.
+// The Status filter's "Booked" has to match both.
 export const BOOKED_STATUS_ALIASES = ['Booked', 'Scheduled'];
 
 export function appointmentMatchesStatuses(appt, selectedStatuses) {
   const status = appt.status;
-  // "Booked" (the List view's name for it) and "Scheduled" are the same status.
   return selectedStatuses.some(s => (s === 'Scheduled' || s === 'Booked'
     ? !status || BOOKED_STATUS_ALIASES.includes(status)
     : s === status));

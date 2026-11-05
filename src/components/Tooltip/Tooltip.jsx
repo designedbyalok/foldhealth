@@ -15,7 +15,8 @@ import styles from './Tooltip.module.css';
  *  - placement ('top' | 'bottom' | 'left' | 'right')  Where the bubble sits
  *             relative to the trigger. Defaults to 'top'. Left / right are
  *             the sidebar-style side placements, with the bubble centred
- *             vertically on the trigger.
+ *             vertically on the trigger; one with no room on its side of
+ *             the viewport opens on the other.
  *  - className (string)  Optional class on the inline wrapper span.
  *  - maxWidth (number)  Wrap long content at this pixel width (default is a
  *             single nowrap line: pass this for sentence-length tooltips).
@@ -59,6 +60,14 @@ export function Tooltip({ label, children, placement = 'top', className, maxWidt
   // Following the cursor near a viewport edge, the bubble opens away from
   // that edge (its right edge at the cursor on the right side) so it isn't
   // clipped or squeezed.
+  // A side bubble with no room on its side opens on the other one instead
+  // (an option in a list that runs to the right edge of a drawer).
+  let place = placement;
+  if (rect && (placement === 'left' || placement === 'right')) {
+    const need = (maxWidth || 200) + 8;
+    if (placement === 'right' && rect.right + need > window.innerWidth && rect.left - need >= 0) place = 'left';
+    else if (placement === 'left' && rect.left - need < 0 && rect.right + need <= window.innerWidth) place = 'right';
+  }
   let side = align;
   if (followCursor && rect) {
     const half = (maxWidth || 200) / 2 + 8;
@@ -71,11 +80,11 @@ export function Tooltip({ label, children, placement = 'top', className, maxWidt
         : rect.left + rect.width / 2
     : 0;
   const style = rect
-    ? placement === 'bottom'
+    ? place === 'bottom'
       ? { top: rect.bottom + 6, left: anchorX }
-      : placement === 'left'
+      : place === 'left'
         ? { top: rect.top + rect.height / 2, left: rect.left - 6 }
-        : placement === 'right'
+        : place === 'right'
           ? { top: rect.top + rect.height / 2, left: rect.right + 6 }
           : { top: rect.top - 6,     left: anchorX }
     : null;
@@ -109,9 +118,9 @@ export function Tooltip({ label, children, placement = 'top', className, maxWidt
             variant === 'light' || variant === 'card' ? styles.bubbleLight : '',
             variant === 'card' ? styles.bubbleCard : '',
             raised ? styles.bubbleRaised : '',
-            placement === 'bottom' ? styles.bubbleBottom
-              : placement === 'left' ? styles.bubbleLeft
-                : placement === 'right' ? styles.bubbleRight
+            place === 'bottom' ? styles.bubbleBottom
+              : place === 'left' ? styles.bubbleLeft
+                : place === 'right' ? styles.bubbleRight
                   : styles.bubbleTop,
             side === 'right' ? styles.bubbleAlignRight : '',
             side === 'left' ? styles.bubbleAlignLeft : '',

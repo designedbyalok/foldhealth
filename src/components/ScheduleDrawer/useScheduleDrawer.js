@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { supabase } from '../../lib/supabase';
 import { trackFunnel } from '../../lib/tracking';
-import { FALLBACK_APPOINTMENT_TYPES, displayAppointmentStatus } from './scheduleDrawerConstants';
+import { FALLBACK_APPOINTMENT_TYPES, displayAppointmentStatus, storedAppointmentStatus } from './scheduleDrawerConstants';
 import { useLocationOptions } from './useLocationOptions';
 
 export function useScheduleDrawer({ onClose, selectedSlot, onSave, existingAppointment, initialPatientId, initialSelectedPatient, initialProvider, source }) {
@@ -233,7 +233,7 @@ export function useScheduleDrawer({ onClose, selectedSlot, onSave, existingAppoi
   const handleStatusChange = async (newStatus) => {
     setApptStatus(newStatus);
     if (existingAppointment?.id) {
-      await updateAppointment(existingAppointment.id, { status: newStatus });
+      await updateAppointment(existingAppointment.id, { status: storedAppointmentStatus(newStatus) });
       if (onSave) onSave();
     }
   };

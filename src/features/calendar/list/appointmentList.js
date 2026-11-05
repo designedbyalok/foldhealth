@@ -1,6 +1,6 @@
 import { apptPerson, personKey } from '../../ooo/oooUtils';
 import { apptSpan } from '../../ooo/reassignUtils';
-import { displayAppointmentStatus } from '../../../components/ScheduleDrawer/scheduleDrawerConstants';
+import { displayAppointmentStatus, storedAppointmentStatus } from '../../../components/ScheduleDrawer/scheduleDrawerConstants';
 
 const pad = (n) => String(n).padStart(2, '0');
 const iso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -44,17 +44,16 @@ const LOCKED = {
 /** Why an appointment can't be selected for a bulk action, or null. */
 export const lockedReason = (a) => LOCKED[a?.status] || null;
 
-// The List view calls a scheduled (or older "Booked") appointment Booked.
-export const statusLabel = (a) => {
-  const label = displayAppointmentStatus(a?.status);
-  return label === 'Scheduled' ? 'Booked' : label;
-};
+export const statusLabel = (a) => displayAppointmentStatus(a?.status);
+
+// An appointment's mode as the List shows it: older rows say "At Clinic",
+// which is In-person; none set shows a hyphen.
+export const modeLabel = (a) => (/^at clinic$/i.test(String(a?.mode || '').trim()) ? 'In-person' : (a?.mode || '-'));
 
 // What an appointment's status can be changed to, in the legacy order.
 export const STATUS_OPTIONS = ['Proposed', 'Pending', 'Booked', 'Cancelled', 'No Show', 'Checked In', 'Checked Out', 'Declined'];
 
-// What a picked status saves as: Booked is stored as "Scheduled", like new bookings.
-export const statusValue = (label) => (label === 'Booked' ? 'Scheduled' : label);
+export const statusValue = storedAppointmentStatus;
 
 // Why an appointment can't take `status` yet, or null. A patient can check
 // in from the morning of the visit; No Show and Checked Out need it started.

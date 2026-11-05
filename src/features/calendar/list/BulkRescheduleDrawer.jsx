@@ -11,11 +11,15 @@ import { toast } from '../../../components/Toast/sonnerToast';
 import { useAppStore } from '../../../store/useAppStore';
 import { holidaysForUser } from '../../holidays/holidayUtils';
 import { initialsOf, samePerson } from '../../ooo/oooUtils';
-import { apptSpan } from '../../ooo/reassignUtils';
 import { getTodayInTimezone, BROWSER_TIMEZONE } from '../calendarUtils';
-import { minutesToTime, noSlotsReason, openSlots } from '../openSlots';
+import { minutesToTime, nearestOpenSlot, noSlotsReason, openSlots } from '../openSlots';
 import { dateLabel, durationMin, timeRangeLabel } from './appointmentList';
 import { UserProfileBanner } from '../../settings/account/users/UserProfileBanner';
+// Review step paused: the type's cancel / reschedule limit only governs
+// patients, so staff aren't held to it. Restore if the PO wants it to apply
+// to staff too (block, or block unless they have an override permission).
+// import { insideWindow } from './typeWindows';
+// import { WindowReview } from './WindowReview';
 import styles from './AppointmentListView.module.css';
 
 // "2026-10-02" → "10-02-2026", the format appointments store.
@@ -37,7 +41,7 @@ const spanOf = (iso, minutes, length) => {
  * @param {() => void} props.onDone  – after a save
  * @param {() => void} props.onClose
  */
-export function BulkRescheduleDrawer({ provider, appointments, onDone, onClose }) {
+export function BulkRescheduleDrawer({ provider, appointments: selected, onDone, onClose }) {
   const everyone = useAppStore(s => s.appointments);
   const oooRecords = useAppStore(s => s.oooRecords);
   const segments = useAppStore(s => s.userAvailability);
@@ -53,7 +57,14 @@ export function BulkRescheduleDrawer({ provider, appointments, onDone, onClose }
   const role = person?.role || person?.clinicalRoles?.[0] || 'Provider';
   const holidays = useMemo(() => holidaysForUser(holidayConfigs, platformUsers, provider), [holidayConfigs, platformUsers, provider]);
   const today = getTodayInTimezone(BROWSER_TIMEZONE);
-  const moving = useMemo(() => new Set(appointments.map(a => a.id)), [appointments]);
+  const moving = useMemo(() => new Set(selected.map(a => a.id)), [selected]);
+  // const types = useAppStore(s => s.appointmentTypes);
+  // const fetchTypes = useAppStore(s => s.fetchAppointmentTypes);
+  // useEffect(() => { fetchTypes(); }, [fetchTypes]);
+  // const [dropped, setDropped] = useState(() => new Set());
+  // const appointments = selected.filter(a => !dropped.has(a.id));
+  // const inWindow = appointments.filter(a => insideWindow(types, a, 'reschedule'));
+  const appointments = selected;
 
   // { [appointment id]: { date: ISO, minutes: number|null } }
   const [picks, setPicks] = useState({});
@@ -80,27 +91,21 @@ export function BulkRescheduleDrawer({ provider, appointments, onDone, onClose }
     return openCache.get(k);
   };
 
-  // "Autofill Slots": each row gets the first open slot after
-  // its current time (or from now, if that has passed), never one another
-  // row already has. Any row can still be changed before Save.
+  // "Autofill Slots": each row gets the open slot nearest its own time (its
+  // own day first, then the nearest day), never one another row already
+  // has. Any row can still be changed before Save.
   const autofill = () => {
     const next = {};
     appointments.forEach((a) => {
-      const from = Math.max(apptSpan(a).start || 0, Date.now());
-      const start = new Date(from);
-      for (let i = 0; i < 90; i++) {
-        const day = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
-        const iso = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
-        const slot = slotsOn(a, iso, next).find(s => day.getTime() + s.minutes * 60000 >= from);
-        if (slot) { next[a.id] = { date: iso, minutes: slot.minutes }; break; }
-      }
+      const slot = nearestOpenSlot(a, iso => slotsOn(a, iso, next));
+      if (slot) next[a.id] = slot;
     });
     setPicks(next);
     const missing = appointments.length - Object.keys(next).length;
     if (missing) toast.error(`No open slot found in the next 90 days for ${missing} ${missing === 1 ? 'appointment' : 'appointments'}.`);
   };
 
-  const complete = appointments.every(a => picks[a.id]?.date && picks[a.id].minutes != null);
+  const complete = appointments.length > 0 && appointments.every(a => picks[a.id]?.date && picks[a.id].minutes != null);
 
   // Like a reassignment, it runs as a job: the drawer closes once it starts
   // and the list refreshes when it's done; only a failure says more.
@@ -151,6 +156,13 @@ export function BulkRescheduleDrawer({ provider, appointments, onDone, onClose }
         <Banner tone="info" size="sm">
           Only User&apos;s open times are offered. Out of Office, Block Time and already-booked slots are hidden.
         </Banner>
+
+        {/* <WindowReview
+          items={inWindow}
+          kind="reschedule"
+          types={types}
+          onRemove={selected.length > 1 ? (a) => setDropped(d => new Set([...d, a.id])) : undefined}
+        /> */}
 
         {/* A heading with its action on the right, like the Reassign
             drawer's "Select Reassignment Providers". */}

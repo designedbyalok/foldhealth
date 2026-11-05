@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { groupByProvider, inPeriod, lockedReason, periodRange, sortAppointments, timeRangeLabel } from './appointmentList';
-import { minutesToTime, openSlots } from '../openSlots';
+import { minutesToTime, nearestOpenSlot, openSlots } from '../openSlots';
 
 describe('periodRange', () => {
   test('week runs Monday to Sunday', () => {
@@ -70,5 +70,25 @@ describe('openSlots', () => {
   test('minutesToTime', () => {
     expect(minutesToTime(0)).toBe('12:00 am');
     expect(minutesToTime(12 * 60 + 30)).toBe('12:30 pm');
+  });
+});
+
+describe('nearestOpenSlot', () => {
+  const appt = { date: '11-10-2026', time_start: '10:00 am', time_end: '10:30 am' };
+  const now = new Date(2026, 10, 5, 9, 0).getTime();
+  test('takes the time closest to its own on its own day', () => {
+    const slots = { '2026-11-10': [{ minutes: 8 * 60 }, { minutes: 11 * 60 }, { minutes: 15 * 60 }] };
+    expect(nearestOpenSlot(appt, iso => slots[iso] || [], { now })).toEqual({ date: '2026-11-10', minutes: 11 * 60 });
+  });
+  test('then the nearest day, later first', () => {
+    const slots = { '2026-11-09': [{ minutes: 10 * 60 }], '2026-11-11': [{ minutes: 14 * 60 }] };
+    expect(nearestOpenSlot(appt, iso => slots[iso] || [], { now })).toEqual({ date: '2026-11-11', minutes: 14 * 60 });
+  });
+  test('never before today', () => {
+    const slots = { '2026-11-04': [{ minutes: 10 * 60 }], '2026-11-08': [{ minutes: 10 * 60 }] };
+    expect(nearestOpenSlot({ ...appt, date: '11-05-2026' }, iso => slots[iso] || [], { now })).toEqual({ date: '2026-11-08', minutes: 10 * 60 });
+  });
+  test('none in range', () => {
+    expect(nearestOpenSlot(appt, () => [], { now, days: 5 })).toBeNull();
   });
 });

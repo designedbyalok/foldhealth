@@ -211,3 +211,67 @@ export function sampleLocationChangeDemo(provider, patients, now = new Date()) {
   };
   return { availability, appointments, history };
 }
+
+/**
+ * Bulk Edit's Virtual → In-person demo: six of the provider's virtual
+ * follow-ups next week, with the same patients as the location change demo
+ * (most of them seen at AstranaCare Centennial Hills). Changing them to
+ * In-person at AstranaCare (Mon, Wed, Fri 9–1): three keep their times, two
+ * need a new one (Tuesday, and Friday afternoon), and one patient was never
+ * seen there, so needs another location.
+ */
+export function sampleVirtualToInPersonDemo(provider, patients, now = new Date()) {
+  const { appointments: base } = sampleLocationChangeDemo(provider, patients, now);
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7) + 7);
+  const day = (i) => apptDate(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i));
+  const p = patients;
+  const virtual = (patient, d, start, end) => ({
+    ...base[0],
+    patient_id: patient.id ? String(patient.id) : null,
+    patient_name: patient.name,
+    mode: 'Virtual',
+    location: '',
+    date: day(d),
+    time_start: start,
+    time_end: end,
+    reason_for_visit: 'Virtual check-in',
+  });
+  return [
+    virtual(p[0], 0, '10:30 am', '11:00 am'),
+    virtual(p[5], 0, '11:30 am', '12:00 pm'),
+    virtual(p[1], 2, '12:00 pm', '12:30 pm'),
+    virtual(p[2], 1, '11:00 am', '11:30 am'),
+    virtual(p[3], 4, '3:00 pm', '3:30 pm'),
+    virtual(p[4], 3, '10:00 am', '10:30 am'),
+  ];
+}
+
+/**
+ * The bulk cancel and reschedule review demo: five of the provider's Annual
+ * Wellness Visits (a 24-hour cancel and reschedule window), three tomorrow
+ * morning, inside the window, and two next week, outside it.
+ */
+export function sampleWindowDemo(provider, patients, now = new Date()) {
+  const { appointments: base } = sampleLocationChangeDemo(provider, patients, now);
+  const on = (days) => apptDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() + days));
+  const awv = (patient, days, start, end) => ({
+    ...base[0],
+    patient_id: patient.id ? String(patient.id) : null,
+    patient_name: patient.name,
+    appointment_type_name: 'Annual Wellness Visit',
+    calendar_id: 'awv',
+    location: '7 Hills Department',
+    date: on(days),
+    time_start: start,
+    time_end: end,
+    reason_for_visit: 'Yearly check-up',
+  });
+  const p = patients;
+  return [
+    awv(p[0], 1, '9:00 am', '10:00 am'),
+    awv(p[1], 1, '10:00 am', '11:00 am'),
+    awv(p[2], 1, '11:00 am', '12:00 pm'),
+    awv(p[3], 7, '9:00 am', '10:00 am'),
+    awv(p[4], 8, '10:00 am', '11:00 am'),
+  ];
+}
